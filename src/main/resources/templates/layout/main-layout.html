@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layout/main-layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+<!-- Fragment head -->
+<div th:replace="fragments/global/head :: head"></div>
+
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Navbar -->
+    <div th:replace="fragments/global/navbar :: navbar"></div>
+    
+    <div class="flex flex-1">
+        <!-- Sidebar -->
+        <div th:replace="fragments/global/sidebar :: sidebar"></div>
+        
+        <!-- Main content -->
+        <main class="flex-1 p-6">
+            <div layout:fragment="content">
+                <!-- El contenido específico de cada página va aquí -->
+            </div>
+        </main>
+    </div>
+    
+    <!-- Footer -->
+    <div th:replace="fragments/global/footer :: footer"></div>
+    
+    <!-- Scripts -->
+    <div th:replace="fragments/global/scripts :: scripts"></div>
+</body>
+</html>

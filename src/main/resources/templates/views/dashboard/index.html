@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layout/main-layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org">
+
+<div layout:fragment="content">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <p class="text-gray-600">Panel de control del sistema jurídico</p>
+    </div>
+    
+    <!-- Navigation tabs -->
+    <div th:replace="fragments/dashboard/navigation-tabs :: navigation-tabs"></div>
+    
+    <!-- KPI Cards -->
+    <div th:replace="fragments/dashboard/kpi-cards :: kpi-cards"></div>
+    
+    <!-- Charts Grid -->
+    <div th:replace="fragments/dashboard/charts-grid :: charts-grid"></div>
+    
+    <!-- Calendar Widget -->
+    <div th:replace="fragments/dashboard/calendar-widget :: calendar-widget"></div>
+</div>
+
+</html>
