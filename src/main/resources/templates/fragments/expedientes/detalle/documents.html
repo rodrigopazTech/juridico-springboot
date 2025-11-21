@@ -1,0 +1,59 @@
+<div th:fragment="documents" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mt-6">
+    <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+        <h3 class="text-gob-gris font-bold font-heading text-sm uppercase tracking-wide">
+            <i class="fas fa-paperclip mr-2 text-gob-oro"></i> Documentos del Expediente
+        </h3>
+        <button class="text-xs bg-white border border-gray-300 text-gob-gris hover:text-gob-guinda font-bold py-1 px-3 rounded transition-colors flex items-center gap-2">
+            <i class="fas fa-cloud-upload-alt"></i> Subir Nuevo
+        </button>
+    </div>
+
+    <ul class="divide-y divide-gray-100">
+        
+        <li class="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between group">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded bg-red-50 flex items-center justify-center text-red-600">
+                    <i class="fas fa-file-pdf fa-lg"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold text-gob-gris group-hover:text-gob-guinda transition-colors cursor-pointer">
+                        Escrito_Inicial_Demanda.pdf
+                    </h4>
+                    <p class="text-xs text-gray-400">Subido por Lic. Martínez • 20 Nov 2023 • 2.4 MB</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button title="Descargar" class="p-2 text-gray-400 hover:text-gob-guinda transition-colors">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button title="Eliminar" class="p-2 text-gray-400 hover:text-red-600 transition-colors">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        </li>
+
+        <li class="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between group">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded bg-blue-50 flex items-center justify-center text-blue-600">
+                    <i class="fas fa-file-word fa-lg"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold text-gob-gris group-hover:text-gob-guinda transition-colors cursor-pointer">
+                        Acuerdo_Admisorio_Borrador.docx
+                    </h4>
+                    <p class="text-xs text-gray-400">Subido por Admin • Ayer • 450 KB</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button title="Descargar" class="p-2 text-gray-400 hover:text-gob-guinda transition-colors">
+                    <i class="fas fa-download"></i>
+                </button>
+            </div>
+        </li>
+
+    </ul>
+    
+    <div class="bg-gray-50 p-2 text-center border-t border-gray-200">
+        <a href="#" class="text-xs font-bold text-gob-gris hover:text-gob-guinda">Ver los 15 documentos</a>
+    </div>
+</div>

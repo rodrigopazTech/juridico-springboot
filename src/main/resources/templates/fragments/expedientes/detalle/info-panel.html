@@ -1,0 +1,55 @@
+<div th:fragment="info-panel" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+    <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+        <h3 class="text-gob-gris font-bold font-heading text-sm uppercase tracking-wide">
+            <i class="fas fa-info-circle mr-2 text-gob-oro"></i> Información del Asunto
+        </h3>
+    </div>
+    
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase">Materia</label>
+                    <div class="text-gob-gris font-medium flex items-center mt-1">
+                        <span class="w-2 h-2 rounded-full bg-gob-oro mr-2"></span> Administrativo
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase">Juzgado / Autoridad</label>
+                    <div class="text-gob-gris font-medium mt-1">Juzgado 4to de Distrito</div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase">Partes</label>
+                    <div class="text-gob-gris font-medium mt-1">Empresa X (Actor) vs. SAT (Demandado)</div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase">Abogado Responsable</label>
+                    <div class="flex items-center mt-1">
+                        <div class="w-8 h-8 rounded-full bg-gob-guinda/10 text-gob-guinda flex items-center justify-center text-xs font-bold mr-2">LM</div>
+                        <span class="text-gob-gris font-medium">Lic. Luis Martínez</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase">Gerencia</label>
+                    <div class="text-gob-gris font-medium mt-1">Jurídica y Financiera</div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase">Ubicación Física</label>
+                    <div class="text-gob-gris font-medium mt-1">Archivo 3, Estante B</div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-gray-100">
+            <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Observaciones / Descripción</label>
+            <p class="text-sm text-gray-600 leading-relaxed bg-gray-50 p-3 rounded border border-gray-100">
+                Se presentó demanda de nulidad en tiempo y forma. Estamos a la espera de la admisión por parte del tribunal. El cliente envió la documentación original ayer.
+            </p>
+        </div>
+    </div>
+</div>

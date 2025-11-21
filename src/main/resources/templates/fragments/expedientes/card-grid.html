@@ -1,0 +1,47 @@
+<div th:fragment="card-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    
+    <div class="bg-white rounded shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 group relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-1 h-full bg-gob-oro"></div>
+        
+        <div class="p-5">
+            <div class="flex justify-between items-start mb-2">
+                <span class="bg-gob-guinda/10 text-gob-guinda text-xs font-bold px-2.5 py-0.5 rounded border border-gob-guinda/20">
+                    EXP: 0001/2025
+                </span>
+                <div class="flex gap-2">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-600"></span> Activo
+                    </span>
+                </div>
+            </div>
+
+            <h3 class="text-lg font-bold text-gob-gris font-heading mb-1 group-hover:text-gob-guinda transition-colors cursor-pointer">
+                <a href="/expedientes/detalle/1">Empresa X vs. Secretaría Y</a>
+            </h3>
+            <p class="text-sm text-gray-500 mb-4 line-clamp-2">Juicio de nulidad contra resolución administrativa...</p>
+
+            <div class="space-y-2 text-sm text-gray-600 border-t border-gray-100 pt-3">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-balance-scale text-gob-plata w-4"></i>
+                    <span class="font-medium">Administrativo</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-user-tie text-gob-plata w-4"></i>
+                    <span>Lic. Martínez</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-map-marker-alt text-gob-plata w-4"></i>
+                    <span>CDMX</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gray-50 px-5 py-3 border-t border-gray-200 flex justify-between items-center">
+            <span class="text-xs text-gray-400">Actualizado: Hace 2h</span>
+            <a href="/expedientes/detalle/1" class="text-gob-guinda hover:text-gob-guindaDark text-sm font-bold flex items-center">
+                Ver Detalle <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+    </div>
+
+    </div>

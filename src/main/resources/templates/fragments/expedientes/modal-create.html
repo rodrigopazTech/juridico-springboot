@@ -1,0 +1,49 @@
+<div th:fragment="modal-create" id="modal-create-expediente" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-4xl max-h-full">
+        <div class="relative bg-white rounded-lg shadow-2xl border-t-4 border-gob-guinda">
+            
+            <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
+                <h3 class="text-xl font-bold text-gob-gris font-heading">
+                    Nuevo Expediente
+                </h3>
+                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" data-modal-hide="modal-create-expediente">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="form-nuevo-asunto" class="p-4 md:p-5">
+                <div class="grid gap-4 mb-4 grid-cols-1 md:grid-cols-2">
+                    
+                    <div class="col-span-1">
+                        <label for="expediente" class="block mb-2 text-sm font-bold text-gob-gris">No. Expediente</label>
+                        <input type="text" name="expediente" id="expediente" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded focus:ring-gob-oro focus:border-gob-oro block w-full p-2.5" placeholder="0000/2025" required="">
+                    </div>
+
+                    <div class="col-span-1">
+                        <label for="gerencia" class="block mb-2 text-sm font-bold text-gob-gris">Gerencia</label>
+                        <select id="gerencia" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded focus:ring-gob-oro focus:border-gob-oro block w-full p-2.5">
+                            <option>Seleccione...</option>
+                            <option>Gerencia Jurídica</option>
+                        </select>
+                    </div>
+
+                    <div class="col-span-1 md:col-span-2">
+                        <label for="descripcion" class="block mb-2 text-sm font-bold text-gob-gris">Descripción del Asunto</label>
+                        <textarea id="descripcion" rows="3" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded border border-gray-300 focus:ring-gob-oro focus:border-gob-oro" placeholder="Escribe una descripción breve..."></textarea>
+                    </div>
+                    
+                    </div>
+                
+                <div class="flex items-center justify-end gap-2 pt-4 border-t border-gray-200">
+                    <button type="button" data-modal-hide="modal-create-expediente" class="text-gob-gris bg-white border border-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-200 font-medium rounded text-sm px-5 py-2.5 hover:bg-gray-100 focus:z-10">Cancelar</button>
+                    
+                    <button type="submit" class="text-white bg-gob-guinda hover:bg-gob-guindaDark focus:ring-4 focus:outline-none focus:ring-gob-guinda/30 font-bold rounded text-sm px-5 py-2.5 text-center">
+                        <i class="fas fa-save mr-2"></i> Guardar Expediente
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,32 @@
+<div th:fragment="timeline" class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+    <h3 class="text-gob-gris font-bold font-heading text-sm uppercase tracking-wide mb-4 border-b border-gray-100 pb-2">
+        <i class="fas fa-history mr-2 text-gob-oro"></i> Historial
+    </h3>
+
+    <ol class="relative border-l border-gray-200 ml-2">                  
+        
+        <li class="mb-6 ml-4">
+            <div class="absolute w-3 h-3 bg-gob-guinda rounded-full mt-1.5 -left-1.5 border border-white"></div>
+            <time class="mb-1 text-xs font-normal text-gray-400">Hace 2 horas</time>
+            <h3 class="text-sm font-semibold text-gob-gris">Cambio de Estado</h3>
+            <p class="mb-2 text-xs font-normal text-gray-500">El usuario <span class="font-bold">Admin</span> cambió el estado a "En Espera".</p>
+        </li>
+
+        <li class="mb-6 ml-4">
+            <div class="absolute w-3 h-3 bg-gray-200 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+            <time class="mb-1 text-xs font-normal text-gray-400">Ayer, 14:00</time>
+            <h3 class="text-sm font-semibold text-gob-gris">Documento Cargado</h3>
+            <p class="text-xs font-normal text-gray-500">Se subió "Demanda_Final_v3.pdf".</p>
+        </li>
+        
+        <li class="ml-4">
+            <div class="absolute w-3 h-3 bg-gray-200 rounded-full mt-1.5 -left-1.5 border border-white"></div>
+            <time class="mb-1 text-xs font-normal text-gray-400">20 Nov 2023</time>
+            <h3 class="text-sm font-semibold text-gob-gris">Expediente Creado</h3>
+            <p class="text-xs font-normal text-gray-500">Alta inicial del asunto en el sistema.</p>
+        </li>
+
+    </ol>
+    
+    <button class="w-full mt-2 text-xs text-gob-guinda font-bold hover:underline text-center">Ver todo el historial</button>
+</div>

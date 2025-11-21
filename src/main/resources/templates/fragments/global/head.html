@@ -1,23 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head th:fragment="head">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Jurídico</title>
+    <title layout:title-pattern="$CONTENT_TITLE - Agenda Legal">Agenda Legal GOB.MX</title>
     
-    <!-- Tailwind CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Noto+Sans:wght@400;600&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans"', 'sans-serif'],
+                        headings: ['"Montserrat"', 'sans-serif'],
+                    },
                     colors: {
-                        'primary': '#1a5f3f',
-                        'secondary': '#d4af37'
+                        gob: {
+                            guinda: '#9D2449',      
+                            guindaDark: '#611232',  
+                            oro: '#B38E5D',         
+                            oroLight: '#DDC9A3',    
+                            gris: '#545454',        
+                            plata: '#98989A',       
+                            verde: '#13322B',       
+                            verdeDark: '#0C231E',   
+                            fondo: '#F5F5F5'        
+                        }
                     }
                 }
             }
         }
     </script>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
+</html>

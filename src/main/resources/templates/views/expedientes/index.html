@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="{fragments/layout/main}">
+<head>
+    <title>Gestión de Expedientes - Agenda Legal</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        
+        <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gob-gris font-heading tracking-tight">Gestión de Expedientes</h1>
+                <p class="text-gray-500 text-sm mt-1 border-l-4 border-gob-oro pl-2">Control centralizado de asuntos jurídicos y contenciosos.</p>
+            </div>
+            <button data-modal-target="modal-create-expediente" data-modal-toggle="modal-create-expediente" 
+                    class="flex items-center justify-center text-white bg-gob-guinda hover:bg-gob-guindaDark focus:ring-4 focus:ring-gob-guinda/30 font-bold rounded text-sm px-5 py-2.5 shadow-sm transition-all">
+                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Nuevo Expediente
+            </button>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-t-lg shadow-sm p-4">
+            <div th:replace="~{fragments/expedientes/toolbar :: toolbar}"></div>
+            <div th:replace="~{fragments/expedientes/filters :: filters}"></div>
+        </div>
+
+        <div class="bg-gray-50 border-x border-b border-gray-200 rounded-b-lg p-4">
+            <div th:replace="~{fragments/expedientes/card-grid :: card-grid}"></div>
+        </div>
+
+        <div th:replace="~{fragments/expedientes/modal-create :: modal-create}"></div>
+
+    </div>
+</body>
+</html>

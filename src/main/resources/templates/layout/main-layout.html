@@ -1,29 +1,27 @@
 <!DOCTYPE html>
-<html layout:decorate="~{layout/main-layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" 
+      lang="es">
 
-<!-- Fragment head -->
-<div th:replace="fragments/global/head :: head"></div>
+<head th:replace="~{fragments/global/head :: head}"></head>
 
-<body class="bg-gray-50 min-h-screen flex flex-col">
-    <!-- Navbar -->
-    <div th:replace="fragments/global/navbar :: navbar"></div>
-    
-    <div class="flex flex-1">
-        <!-- Sidebar -->
-        <div th:replace="fragments/global/sidebar :: sidebar"></div>
+<body class="bg-[#F5F5F5] font-sans text-gob-gris antialiased">
+
+    <aside th:replace="~{fragments/global/sidebar :: sidebar}"></aside>
+
+    <div class="p-4 sm:ml-64 min-h-screen flex flex-col relative">
         
-        <!-- Main content -->
-        <main class="flex-1 p-6">
-            <div layout:fragment="content">
-                <!-- El contenido específico de cada página va aquí -->
-            </div>
+        <nav th:replace="~{fragments/global/navbar :: navbar}"></nav>
+
+        <main class="flex-1 mt-4">
+            <div layout:fragment="content"></div>
         </main>
+
+        <footer th:replace="~{fragments/global/footer :: footer}" class="mt-10"></footer>
+
     </div>
     
-    <!-- Footer -->
-    <div th:replace="fragments/global/footer :: footer"></div>
-    
-    <!-- Scripts -->
-    <div th:replace="fragments/global/scripts :: scripts"></div>
+    <div th:replace="~{fragments/global/scripts :: scripts}"></div>
+
 </body>
 </html>

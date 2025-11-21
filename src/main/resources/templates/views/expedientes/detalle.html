@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main-layout}">
+<head>
+    <title>Detalle de Expediente - Agenda Legal</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        
+        <div th:replace="~{fragments/expedientes/detalle/header-actions :: header-actions}"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+            
+            <div class="lg:col-span-2 space-y-6">
+                
+                <div th:replace="~{fragments/expedientes/detalle/kpi-summary :: kpi-summary}"></div>
+
+                <div th:replace="~{fragments/expedientes/detalle/info-panel :: info-panel}"></div>
+                
+                <div th:replace="~{fragments/expedientes/detalle/documents :: documents}"></div>
+
+            </div>
+
+            <div class="space-y-6">
+                
+                <div th:replace="~{fragments/expedientes/detalle/timeline :: timeline}"></div>
+
+            </div>
+        </div>
+
+        <div th:replace="~{fragments/expedientes/detalle/modal-status :: modal-status}"></div>
+        </div>
+</body>
+</html>

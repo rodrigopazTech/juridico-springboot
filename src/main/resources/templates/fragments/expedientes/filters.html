@@ -1,0 +1,39 @@
+<div th:fragment="filters" class="mt-4 pt-4 border-t border-gray-100">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        
+        <div>
+            <label for="filter-gerencia" class="block mb-1 text-xs font-bold text-gob-gris uppercase">Gerencia</label>
+            <select id="filter-gerencia" class="bg-gray-50 border border-gray-300 text-gob-gris text-sm rounded focus:ring-gob-oro focus:border-gob-oro block w-full p-2">
+                <option value="">Todas</option>
+                <option>Civil Mercantil</option>
+                <option>Laboral y Penal</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="filter-materia" class="block mb-1 text-xs font-bold text-gob-gris uppercase">Materia</label>
+            <select id="filter-materia" class="bg-gray-50 border border-gray-300 text-gob-gris text-sm rounded focus:ring-gob-oro focus:border-gob-oro block w-full p-2">
+                <option value="">Todas</option>
+                <option>Administrativo</option>
+                <option>Amparo</option>
+                <option>Civil</option>
+                </select>
+        </div>
+
+        <div>
+            <label for="filter-estado" class="block mb-1 text-xs font-bold text-gob-gris uppercase">Estado</label>
+            <select id="filter-estado" class="bg-gray-50 border border-gray-300 text-gob-gris text-sm rounded focus:ring-gob-oro focus:border-gob-oro block w-full p-2">
+                <option value="">Todos</option>
+                <option>Activo</option>
+                <option>En espera</option>
+                <option>Finalizado</option>
+            </select>
+        </div>
+        
+        <div class="flex items-end">
+            <button class="w-full text-gob-guinda border border-gob-guinda hover:bg-gob-guinda hover:text-white focus:ring-4 focus:outline-none focus:ring-gob-guinda/30 font-medium rounded text-sm p-2 text-center transition-colors">
+                <i class="fas fa-eraser mr-2"></i> Limpiar
+            </button>
+        </div>
+    </div>
+</div>

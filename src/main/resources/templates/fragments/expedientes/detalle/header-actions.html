@@ -1,0 +1,32 @@
+<div th:fragment="header-actions" class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-gray-200">
+    
+    <div>
+        <nav class="flex mb-1" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li><a href="/expedientes" class="text-gray-500 hover:text-gob-guinda text-sm font-medium">Expedientes</a></li>
+                <li><span class="text-gray-400">/</span></li>
+                <li class="text-gob-gris text-sm font-bold" aria-current="page">Detalle</li>
+            </ol>
+        </nav>
+        <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-bold text-gob-gris font-heading tracking-tight">
+                Expediente 0001/2025
+            </h1>
+            <span class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-0.5 rounded border border-green-400">
+                Activo
+            </span>
+        </div>
+        <p class="text-sm text-gray-500 mt-1">Juicio de Nulidad vs. Resolución Administrativa</p>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+        <button class="text-gob-gris bg-white border border-gray-300 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-4 py-2 hover:bg-gray-50 focus:outline-none transition-colors">
+            <i class="fas fa-edit mr-2 text-gob-oro"></i> Editar
+        </button>
+        
+        <button data-modal-target="modal-status-change" data-modal-toggle="modal-status-change" 
+                class="text-white bg-gob-guinda hover:bg-gob-guindaDark focus:ring-4 focus:ring-gob-guinda/30 font-medium rounded-lg text-sm px-4 py-2 shadow-md transition-all">
+            <i class="fas fa-exchange-alt mr-2"></i> Cambiar Estado
+        </button>
+    </div>
+</div>
