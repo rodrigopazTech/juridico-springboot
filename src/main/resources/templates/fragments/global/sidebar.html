@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <aside th:fragment="sidebar" id="logo-sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0 bg-gob-verde border-r border-gob-verdeDark shadow-xl" aria-label="Sidebar">
     
     <div class="h-16 flex items-center px-6 border-b border-gob-verdeDark/50 bg-gob-verdeDark/30">
@@ -9,6 +10,106 @@
                 AGENDA<span class="text-gob-oro">LEGAL</span>
             </div>
         </a>
+=======
+<aside th:fragment="sidebar" id="logo-sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0 bg-gob-verde border-r border-gob-verdeDark shadow-xl flex flex-col" aria-label="Sidebar" xmlns:th="http://www.thymeleaf.org">
+    
+    <div class="h-16 flex-none flex items-center px-6 border-b border-gob-verdeDark/50 bg-gob-verdeDark/30">
+        <div class="text-white font-headings font-bold tracking-wider flex items-center gap-3">
+            <i class="fas fa-balance-scale text-gob-oro text-xl"></i>
+            <span>AGENDA LEGAL</span>
+        </div>
+    </div>
+  
+    <div class="flex-1 px-3 py-6 overflow-y-auto">
+        
+        <div class="px-3 mb-2 text-xs font-bold text-gob-oroLight uppercase tracking-wider font-headings">Principal</div>
+        <ul class="space-y-1 font-medium mb-6">
+            <li>
+                <a th:href="@{/dashboard}" 
+                   th:class="${currentPage == 'dashboard'} ? 'flex items-center p-2 text-white bg-white/10 border-l-4 border-gob-oro rounded-r-lg shadow-sm group' : 'nav-item flex items-center p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200'">
+                    <i class="fas fa-chart-line w-5 h-5 text-center transition duration-75" 
+                       th:classappend="${currentPage == 'dashboard'} ? 'text-gob-oro' : 'group-hover:text-gob-oro'"></i>
+                    <span class="ms-3">Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/agenda}" 
+                   th:class="${currentPage == 'agenda'} ? 'flex items-center p-2 text-white bg-white/10 border-l-4 border-gob-oro rounded-r-lg shadow-sm group' : 'nav-item flex items-center p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200'">
+                    <i class="fas fa-calendar-check w-5 h-5 text-center transition duration-75"
+                       th:classappend="${currentPage == 'agenda'} ? 'text-gob-oro' : 'group-hover:text-gob-oro'"></i>
+                    <span class="ms-3">Agenda General</span>
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/recordatorios}" 
+                   th:class="${currentPage == 'recordatorios'} ? 'flex items-center p-2 text-white bg-white/10 border-l-4 border-gob-oro rounded-r-lg shadow-sm group' : 'nav-item flex items-center p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200'">
+                    <i class="fas fa-sticky-note w-5 h-5 text-center transition duration-75"
+                       th:classappend="${currentPage == 'recordatorios'} ? 'text-gob-oro' : 'group-hover:text-gob-oro'"></i>
+                    <span class="ms-3">Recordatorios</span>
+                </a>
+            </li>
+        </ul>
+  
+        <div class="px-3 mb-2 text-xs font-bold text-gob-oroLight uppercase tracking-wider font-headings">Gestión Jurídica</div>
+        <ul class="space-y-1 font-medium mb-6">
+            <li>
+                <a th:href="@{/expedientes}" 
+                   th:class="${currentPage == 'expedientes'} ? 'flex items-center p-2 text-white bg-white/10 border-l-4 border-gob-oro rounded-r-lg shadow-sm group' : 'nav-item flex items-center p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200'">
+                    <i class="fas fa-folder-open w-5 h-5 text-center transition duration-75"
+                       th:classappend="${currentPage == 'expedientes'} ? 'text-gob-oro' : 'group-hover:text-gob-oro'"></i>
+                    <span class="ms-3">Expedientes</span>
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/audiencias}" 
+                   th:class="${currentPage == 'audiencias'} ? 'flex items-center p-2 text-white bg-white/10 border-l-4 border-gob-oro rounded-r-lg shadow-sm group' : 'nav-item flex items-center p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200'">
+                    <i class="fas fa-gavel w-5 h-5 text-center transition duration-75"
+                       th:classappend="${currentPage == 'audiencias'} ? 'text-gob-oro' : 'group-hover:text-gob-oro'"></i>
+                    <span class="ms-3">Audiencias</span>
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/terminos}" 
+                   th:class="${currentPage == 'terminos'} ? 'flex items-center p-2 text-white bg-white/10 border-l-4 border-gob-oro rounded-r-lg shadow-sm group' : 'nav-item flex items-center p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200'">
+                    <i class="fas fa-hourglass-end w-5 h-5 text-center transition duration-75"
+                       th:classappend="${currentPage == 'terminos'} ? 'text-gob-oro' : 'group-hover:text-gob-oro'"></i>
+                    <span class="ms-3">Términos</span>
+                </a>
+            </li>
+        </ul>
+  
+        <div class="px-3 mb-2 text-xs font-bold text-gob-oroLight uppercase tracking-wider font-headings">Admin</div>
+        <ul class="space-y-1 font-medium">
+            <li>
+                <a th:href="@{/usuarios}" 
+                   th:class="${currentPage == 'usuarios'} ? 'flex items-center p-2 text-white bg-white/10 border-l-4 border-gob-oro rounded-r-lg shadow-sm group' : 'nav-item flex items-center p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200'">
+                    <i class="fas fa-users-cog w-5 h-5 text-center transition duration-75"
+                       th:classappend="${currentPage == 'usuarios'} ? 'text-gob-oro' : 'group-hover:text-gob-oro'"></i>
+                    <span class="ms-3">Usuarios y Gerencias</span>
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/calendario}" 
+                   th:class="${currentPage == 'calendario'} ? 'flex items-center p-2 text-white bg-white/10 border-l-4 border-gob-oro rounded-r-lg shadow-sm group' : 'nav-item flex items-center p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200'">
+                    <i class="fas fa-calendar-alt w-5 h-5 text-center transition duration-75"
+                       th:classappend="${currentPage == 'calendario'} ? 'text-gob-oro' : 'group-hover:text-gob-oro'"></i>
+                    <span class="ms-3">Calendario</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+  
+    <div class="p-4 border-t border-gob-verdeDark/50 bg-gob-verdeDark/20">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-gob-oro flex items-center justify-center text-gob-verdeDark font-bold">
+                US
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-white truncate">Usuario Subdirector</p>
+                <p class="text-xs text-gray-400 truncate">subdirector@juridico.gob</p>
+            </div>
+        </div>
+>>>>>>> 88fd65cb8a4d7f5066d330db82efa0d5a171d622
     </div>
 
     <div class="h-[calc(100vh-8rem)] px-3 py-6 overflow-y-auto custom-scrollbar">

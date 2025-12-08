@@ -4,8 +4,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -17,34 +21,42 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    // === CREDENCIALES PROVISIONALES ===
+    @Bean
+    public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
+        // Creamos un usuario en memoria para pruebas
+        UserDetails admin = User.builder()
+                .username("admin") // Tu usuario
+                .password(passwordEncoder.encode("12345")) // Tu contraseña encriptada
+                .roles("ADMIN", "USER")
+                .build();
+
+        return new InMemoryUserDetailsManager(admin);
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(authz -> authz
-                // Recursos estáticos públicos (CSS, JS, imágenes)
+                // Recursos estáticos públicos
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
-                // Páginas de autenticación públicas
+                // Páginas públicas
                 .requestMatchers("/login", "/register").permitAll()
-                // Todas las demás rutas requieren autenticación
+                // Todo lo demás requiere login
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
-                // Página personalizada de login
                 .loginPage("/login")
-                // Redirección después de login exitoso
-                .defaultSuccessUrl("/dashboard", true)
-                // Redirección después de login fallido
+                .defaultSuccessUrl("/dashboard", true) // Forzar ir al dashboard al entrar
                 .failureUrl("/login?error=true")
                 .permitAll()
             )
             .logout(logout -> logout
-                // URL para cerrar sesión
                 .logoutUrl("/logout")
-                // Redirección después de logout
                 .logoutSuccessUrl("/login?logout=true")
                 .permitAll()
             )
-            .csrf(csrf -> csrf.disable()); // Temporal para desarrollo
+            .csrf(csrf -> csrf.disable()); // Solo para desarrollo
 
         return http.build();
     }
