@@ -1,7 +1,5 @@
-<!-- Stats Cards -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+<div th:fragment="stats-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6" xmlns:th="http://www.thymeleaf.org">
   
-  <!-- Total Expedientes -->
   <div class="bg-gradient-to-br from-gob-guinda to-gob-guindaDark rounded-lg shadow-lg p-6 text-white">
     <div class="flex items-center justify-between">
       <div>
@@ -15,7 +13,6 @@
     </div>
   </div>
 
-  <!-- Expedientes Activos -->
   <div class="bg-gradient-to-br from-gob-oro to-yellow-700 rounded-lg shadow-lg p-6 text-white">
     <div class="flex items-center justify-between">
       <div>
@@ -29,7 +26,6 @@
     </div>
   </div>
 
-  <!-- Usuarios Activos -->
   <div class="bg-gradient-to-br from-gob-verde to-gob-verdeDark rounded-lg shadow-lg p-6 text-white">
     <div class="flex items-center justify-between">
       <div>
@@ -43,7 +39,6 @@
     </div>
   </div>
 
-  <!-- Gerencias -->
   <div class="bg-gradient-to-br from-gob-gris to-gray-700 rounded-lg shadow-lg p-6 text-white">
     <div class="flex items-center justify-between">
       <div>
