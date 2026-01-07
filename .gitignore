@@ -31,3 +31,35 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Application Specific ###
+# Archivos de uploads
+uploads/
+temp/
+*.tmp
+
+# Archivos de configuración local
+application-local.properties
+application-dev.properties
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Base de datos local (si se usa H2 para testing)
+*.db
+*.trace.db
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Backups
+*.bak
+*.backup
+*.old
+
