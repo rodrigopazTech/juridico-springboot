@@ -2,7 +2,6 @@ package com.juridico.sistema_juridico.dto.response.expedientes;
 
 import lombok.Data;
 import java.util.List;
-import com.juridico.sistema_juridico.dto.response.notificaciones.NotificacionResponse;
 
 /**
  * DTO detallado para la vista 360 del expediente.
