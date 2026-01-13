@@ -3,7 +3,6 @@ package com.juridico.sistema_juridico.Entity.expediente;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 

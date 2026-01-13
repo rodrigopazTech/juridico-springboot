@@ -56,4 +56,20 @@ public class JwtTokenProvider {
             return false;
         }
     }
+
+    @Value("${app.jwt.refreshExpiration}")
+    private long refreshExpirationInMs;
+
+    public String generateRefreshToken(Authentication authentication) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + refreshExpirationInMs);
+        Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+
+        return Jwts.builder()
+                .setSubject(authentication.getName())
+                .setIssuedAt(new Date())
+                .setExpiration(expiryDate)
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact();
+    }
 }

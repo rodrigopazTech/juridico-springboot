@@ -1,16 +1,29 @@
 package com.juridico.sistema_juridico.config;
 
+import com.juridico.sistema_juridico.security.JwtAuthenticationEntryPoint;
+import com.juridico.sistema_juridico.security.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Autowired
+    private JwtAuthenticationEntryPoint unauthorizedHandler;
+
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -18,33 +31,24 @@ public class SecurityConfig {
     }
 
     @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .authorizeHttpRequests(authz -> authz
-                // Recursos estáticos públicos (CSS, JS, imágenes)
-                .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
-                // Páginas de autenticación públicas
-                .requestMatchers("/login", "/register").permitAll()
-                // Todas las demás rutas requieren autenticación
+            .csrf(csrf -> csrf.disable()) // Deshabilitar para APIs con JWT
+            .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll() // Endpoints de login/registro libres
+                .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                 .anyRequest().authenticated()
-            )
-            .formLogin(form -> form
-                // Página personalizada de login
-                .loginPage("/login")
-                // Redirección después de login exitoso
-                .defaultSuccessUrl("/dashboard", true)
-                // Redirección después de login fallido
-                .failureUrl("/login?error=true")
-                .permitAll()
-            )
-            .logout(logout -> logout
-                // URL para cerrar sesión
-                .logoutUrl("/logout")
-                // Redirección después de logout
-                .logoutSuccessUrl("/login?logout=true")
-                .permitAll()
-            )
-            .csrf(csrf -> csrf.disable()); // Temporal para desarrollo
+            );
+
+        // Añadimos el filtro de JWT
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
