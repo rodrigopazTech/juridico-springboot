@@ -1,0 +1,26 @@
+services:
+  db-juridico:
+    image: postgres:15
+    container_name: postgres-juridico
+    environment:
+      POSTGRES_USER: villalobos_admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: sistema_juridico
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin-juridico
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ricardo@juridico.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db-juridico
+
+volumes:
+  postgres_data:
