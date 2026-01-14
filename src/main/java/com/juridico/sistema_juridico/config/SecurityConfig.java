@@ -38,16 +38,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // Deshabilitar para APIs con JWT
+            .csrf(csrf -> csrf.disable())
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll() // Endpoints de login/registro libres
-                .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                // AGREGA ESTA LÍNEA (o modifica la que tenías):
+                // Permite entrar a la raiz "/", al index.html y a los recursos estáticos
+                .requestMatchers("/", "/index.html", "/api/auth/**", "/css/**", "/js/**").permitAll()
                 .anyRequest().authenticated()
             );
 
-        // Añadimos el filtro de JWT
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

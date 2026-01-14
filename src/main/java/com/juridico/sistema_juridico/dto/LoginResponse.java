@@ -7,6 +7,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class LoginResponse {
     private String accessToken;
-    private String refreshToken;
-    private String tokenType = "Bearer";
+    private String refreshToken; // Si usas refresh token
+    private String tokenType;
 }

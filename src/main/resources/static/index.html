@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema Jurídico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 flex items-center justify-center h-screen">
+
+    <div class="bg-white p-8 rounded-lg shadow-2xl w-96">
+        <h2 class="text-2xl font-bold text-center text-slate-800 mb-6">Sistema Jurídico</h2>
+        
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
+                    Correo Institucional
+                </label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                       id="email" type="email" placeholder="admin@juridico.com" required>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
+                    Contraseña
+                </label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                       id="password" type="password" placeholder="******************" required>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <button class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full transition duration-300" 
+                        type="submit">
+                    Ingresar
+                </button>
+            </div>
+            
+            <p id="errorMessage" class="text-red-500 text-xs italic mt-4 text-center hidden"></p>
+        </form>
+    </div>
+
+    <script>
+        async function handleLogin(event) {
+            event.preventDefault(); // Evita que la página se recargue
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMessage');
+
+            // Limpiar errores previos
+            errorMsg.classList.add('hidden');
+            errorMsg.innerText = '';
+
+            try {
+                // NOTA: Asegúrate que la URL coincida con tu Controller (@RequestMapping)
+                // En tu código vi que usabas loginRequest.getUsername(), así que envío "username" en el JSON
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: email, // Tu DTO espera username o email, ajústalo si es necesario
+                        password: password
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // 1. Guardar el Token JWT en el almacenamiento del navegador
+                    localStorage.setItem('jwt_token', data.accessToken);
+                    
+                    // 2. Feedback visual y redirección
+                    alert('Login exitoso. Token guardado.');
+                    console.log("Token recibido:", data.accessToken);
+                    
+                    // Aquí redirigirías al dashboard:
+                    // window.location.href = '/dashboard.html';
+                } else {
+                    errorMsg.innerText = "Credenciales incorrectas o error en el servidor";
+                    errorMsg.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMsg.innerText = "No se pudo conectar con el servidor";
+                errorMsg.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
