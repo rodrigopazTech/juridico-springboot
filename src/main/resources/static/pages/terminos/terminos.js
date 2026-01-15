@@ -1,0 +1,982 @@
+// js/terminos.js
+
+// ===============================================
+// 1. CONFIGURACIÓN Y DATOS
+// ===============================================
+const USER_ROLE = 'Direccion'; // Puedes cambiar esto para probar permisos
+
+const FLUJO_ETAPAS = {
+    'Proyectista': { siguiente: 'Revisión', accion: 'enviarRevision', label: 'Enviar a Revisión' },
+    'Revisión':    { siguiente: 'Gerencia', anterior: 'Proyectista', accion: 'aprobar', label: 'Aprobar a Gerencia' },
+    'Gerencia':    { siguiente: 'Dirección', anterior: 'Revisión', accion: 'aprobar', label: 'Aprobar a Dirección' },
+    'Dirección':   { siguiente: 'Liberado', anterior: 'Gerencia', accion: 'aprobar', label: 'Liberar Término' },
+    'Liberado':    { siguiente: 'Presentado', accion: 'subirAcuse', label: 'Subir Acuse' },
+    'Presentado':  { siguiente: 'Concluido', accion: 'concluir', label: 'Concluir' }
+};
+
+const PERMISOS_ETAPAS = {
+    'Proyectista': ['Abogado', 'Gerente','JefeDepto','Direccion', 'Subdireccion'],
+    'Revisión':    ['JefeDepto', 'Gerente', 'Direccion', 'Subdireccion'],
+    'Gerencia':    ['Gerente', 'Direccion', 'Subdireccion'],
+    'Dirección':   ['Direccion', 'Subdireccion'],
+    'Liberado':    ['Abogado', 'JefeDepto', 'Gerente','Direccion', 'Subdireccion'],
+    'Presentado':  ['Direccion', 'Subdireccion', 'Abogado'],
+    'Concluido':   []
+};
+
+if (!localStorage.getItem('jwt_token')) {
+    alert("Sesión expirada o no iniciada. Por favor identifíquese.");
+    window.location.href = '/index.html';
+}
+
+const TOKEN = localStorage.getItem('jwt_token');
+
+// Si no hay token, redirigir al login inmediatamente
+if (!TOKEN) {
+    window.location.href = '/index.html';
+}
+
+let TERMINOS = [];
+// ===============================================
+// 2. INICIALIZACIÓN
+// ===============================================
+function initTerminos() {
+    console.log("Iniciando módulo Términos V3...");
+    cargarDatosIniciales();
+    loadTerminos(); 
+    setupSearchAndFilters();
+    initModalTerminosJS();      
+    initModalPresentar();       
+    initModalReasignar();       
+    setupActionMenuListener(); 
+    cargarAsuntosEnSelectorJS();
+    cargarAbogadosSelector();
+
+    const btnNuevo = document.getElementById('add-termino');
+    if (btnNuevo) {
+        const newBtn = btnNuevo.cloneNode(true);
+        btnNuevo.parentNode.replaceChild(newBtn, btnNuevo);
+        newBtn.addEventListener('click', () => openTerminoModalJS());
+    }
+
+    const btnExportar = document.getElementById('export-terminos');
+    if (btnExportar) {
+        const newBtnExp = btnExportar.cloneNode(true);
+        btnExportar.parentNode.replaceChild(newBtnExp, btnExportar);
+        newBtnExp.addEventListener('click', () => { if(typeof XLSX !== 'undefined') exportarTablaExcel(); else alert('Librería de exportación no cargada.'); });
+    }
+
+    document.querySelectorAll('.fixed.inset-0').forEach(modal => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    });
+}
+
+function cargarDatosIniciales() {
+    try {
+        const localData = JSON.parse(localStorage.getItem('terminos'));
+        if (localData && Array.isArray(localData) && localData.length > 0) {
+            TERMINOS = localData;
+        } else {
+            TERMINOS = [];
+            localStorage.setItem('terminos', JSON.stringify(TERMINOS));
+        }
+    } catch (e) {
+        console.error("Error cargando datos iniciales", e);
+        TERMINOS = [];
+    }
+}
+// ===============================================
+// 3. RENDERIZADO
+// ===============================================
+
+async function loadTerminos() {
+    const tbody = document.getElementById('terminos-body');
+    if(!tbody) return;
+
+    try {
+        // Llamada al endpoint de Spring Boot con el Token de Seguridad
+        const response = await fetch('/api/terminos?page=0&size=10', {
+            method: 'GET',
+            headers: { 
+                'Authorization': `Bearer ${TOKEN}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.status === 401 || response.status === 403) {
+            window.location.href = '/index.html';
+            return;
+        }
+
+        if (!response.ok) throw new Error('Error al obtener datos del servidor');
+        
+        const data = await response.json();
+        
+        // Spring Boot devuelve un objeto Page, los datos están en .content
+        TERMINOS = data.content; 
+        
+        renderizarTabla(); 
+    } catch (error) {
+        console.error("Error API:", error);
+        mostrarMensajeGlobal("No hay conexión con el servidor jurídico", "danger");
+    }
+}
+
+function setupSearchAndFilters() {
+    const ids = ['search-terminos', 'filter-tribunal-termino', 'filter-estado-termino', 'filter-estatus-termino', 'filter-prioridad-termino', 'filter-materia-termino'];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', loadTerminos);
+    });
+}
+
+function renderizarTabla() {
+    const tbody = document.getElementById('terminos-body');
+    if (!tbody) return;
+
+    tbody.innerHTML = ''; // Limpiar tabla actual
+
+    if (TERMINOS.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="px-4 py-8 text-center text-gray-500 italic">No hay términos registrados en la base de datos.</td></tr>`;
+        return;
+    }
+
+    TERMINOS.forEach(termino => {
+        const fila = document.createElement('tr');
+        fila.setAttribute('data-id', termino.id);
+        fila.className = "hover:bg-gray-50 transition-colors border-b";
+
+        // Determinamos el color del semáforo basado en la fecha que viene del Java
+        const colorSemaforo = getSemaforoColor(termino.fechaVencimiento);
+
+        fila.innerHTML = `
+            <td class="px-4 py-3 text-xs">${termino.fechaIngreso || 'S/D'}</td>
+            <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full ${colorSemaforo}"></span>
+                    <span class="font-bold">${termino.fechaVencimiento}</span>
+                </div>
+            </td>
+            <td class="px-4 py-3 font-medium text-gob-guinda">${termino.expedienteNumero || 'S/N'}</td>
+            <td class="px-4 py-3 text-xs text-gray-600">${termino.actor || 'N/A'}</td>
+            <td class="px-4 py-3 font-semibold">${termino.asunto}</td>
+            <td class="px-4 py-3 text-xs">${termino.abogadoResponsable || 'Sin asignar'}</td>
+            <td class="px-4 py-3">
+                <span class="px-2 py-1 rounded-full text-[10px] font-bold border ${getBadgeClass(termino.estatus)}">
+                    ${termino.estatus}
+                </span>
+            </td>
+            <td class="px-4 py-3 text-right relative">
+                <button class="action-menu-toggle p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <i class="fas fa-ellipsis-v text-gray-400"></i>
+                </button>
+                <div class="action-menu hidden absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-xl z-50">
+                    ${generarAccionesRapidas(termino, USER_ROLE)}
+                </div>
+                <input type="file" class="input-acuse-hidden hidden" data-id="${termino.id}" accept=".pdf,.jpg,.png">
+            </td>
+        `;
+        tbody.appendChild(fila);
+    });
+}
+
+// ===============================================
+// 4. ACCIONES Y MENÚ
+// ===============================================
+function generarAccionesRapidas(termino, rol) {
+    let html = '<div class="py-1">';
+    const etapa = termino.estatus;
+    const tieneDocumento = !!termino.archivoWord;
+    const rolesPermitidos = PERMISOS_ETAPAS[etapa] || [];
+    const puedeActuar = rolesPermitidos.includes(rol);
+
+    // 1. NAVEGACIÓN (Siempre visible)
+    html += crearBoton('action-view-expediente', 'fas fa-folder-open', 'Ir al Expediente', 'text-gray-700');
+    html += crearSeparador();
+
+    // 2. ACCIONES DE DOCUMENTO (BORRADOR WORD)
+    // Se muestra en etapas previas a la liberación final
+    if (etapa !== 'Concluido' && etapa !== 'Presentado' && etapa !== 'Liberado') {
+        if (tieneDocumento) {
+            html += crearBoton('action-download-word', 'fas fa-file-word', 'Descargar Borrador', 'text-blue-600');
+            html += crearBoton('action-upload-word', 'fas fa-sync-alt', 'Subir Nueva Versión', 'text-gob-oro');
+        } else {
+            html += crearBoton('action-upload-word', 'fas fa-cloud-upload-alt', 'Subir Proyecto Word', 'text-gob-oro font-bold');
+        }
+    }
+
+
+    // 4. GESTIÓN DE FLUJO (AVANCE DE ETAPAS)
+    if (puedeActuar) {
+        const config = FLUJO_ETAPAS[etapa];
+        
+        if (config) {
+            html += crearSeparador("Flujo");
+            
+            if (etapa === 'Liberado') {
+                // REINSTALADO: Botón para subir el acuse y pasar a 'Presentado'
+                html += crearBoton('action-upload-acuse', 'fas fa-file-import', 'Subir Acuse Final', 'text-blue-600 font-bold');
+            } else if (etapa === 'Presentado') {
+                // Botón final para mover a Agenda General
+                html += crearBoton('action-conclude', 'fas fa-flag-checkered', 'Concluir Término', 'text-green-600 font-bold');
+                 html += crearBoton('action-remove-acuse', 'fas fa-undo', 'Quitar Acuse / Corregir', 'text-red-500');
+            } else {
+                // Botones de avance para Proyectista, Revisión, Gerencia y Dirección
+                const colorBoton = tieneDocumento ? 'text-green-600' : 'text-gray-300 cursor-not-allowed';
+                const labelAvance = config.label || 'Avanzar Etapa';
+                html += crearBoton('action-advance', 'fas fa-arrow-right', labelAvance, colorBoton);
+            }
+        }
+    }
+
+    // 5. ADMINISTRACIÓN (SOLO DIRECCIÓN)
+    if (rol === 'Direccion') {
+        html += crearSeparador("Admin");
+        html += crearBoton('action-delete', 'fas fa-trash-alt', 'Eliminar Término', 'text-red-600 hover:bg-red-50 font-bold');
+    }
+
+    return html + '</div>';
+}
+
+function crearBoton(claseAccion, icono, texto, color = "text-gray-700", extra = "") {
+    return `
+    <button class="${claseAccion} w-full text-left px-4 py-2 text-sm ${color} hover:bg-gray-50 hover:text-gob-guinda transition-all flex items-center gap-3 group ${extra}">
+        <div class="w-6 flex justify-center items-center text-opacity-70 group-hover:text-opacity-100 transition-opacity">
+            <i class="${icono}"></i>
+        </div>
+        <span class="font-medium">${texto}</span>
+    </button>`;
+}
+
+function crearSeparador(titulo = "") {
+    return `<div class="my-1 border-t border-gray-100">
+                ${titulo ? `<p class="px-4 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">${titulo}</p>` : ''}
+            </div>`;
+}
+
+function setupActionMenuListener() {
+    const tbody = document.getElementById('terminos-body');
+    if(!tbody) return;
+    
+    // Clonar para limpiar listeners previos
+    const newTbody = tbody.cloneNode(true);
+    tbody.parentNode.replaceChild(newTbody, tbody);
+    loadTerminos(); 
+    
+    document.getElementById('terminos-body').addEventListener('click', function(e) {
+        const target = e.target.closest('button');
+        if (!target) return;
+        const row = target.closest('tr');
+        if (!row) return;
+        const id = row.getAttribute('data-id');
+        const termino = TERMINOS.find(t => String(t.id) === String(id));
+
+        if (target.classList.contains('action-menu-toggle')) {
+            e.preventDefault(); e.stopPropagation();
+            const menu = target.nextElementSibling; 
+            document.querySelectorAll('.action-menu').forEach(m => { if(m !== menu) { m.classList.add('hidden'); m.style.cssText = ''; } });
+            if (!menu) return;
+            if (!menu.classList.contains('hidden')) { menu.classList.add('hidden'); menu.style.cssText = ''; return; }
+            menu.classList.remove('hidden');
+            const rect = target.getBoundingClientRect(); 
+            const menuWidth = 224; const menuHeight = menu.offsetHeight || 220; const spaceBelow = window.innerHeight - rect.bottom;
+            menu.style.position = 'fixed'; menu.style.zIndex = '99999'; menu.style.width = menuWidth + 'px'; menu.style.left = (rect.right - menuWidth) + 'px';
+            if (spaceBelow < menuHeight) { menu.style.top = 'auto'; menu.style.bottom = (window.innerHeight - rect.top + 5) + 'px'; menu.classList.remove('border-t-4'); menu.classList.add('border-b-4'); } else { menu.style.bottom = 'auto'; menu.style.top = (rect.bottom + 5) + 'px'; menu.classList.add('border-t-4'); menu.classList.remove('border-b-4'); }
+            return;
+        }
+
+        if (target.classList.contains('action-edit')) openTerminoModalJS(termino);
+        else if (target.classList.contains('action-view-expediente')) {
+            if (termino.asuntoId) window.location.href = `../expediente-module/expediente-detalle.html?id=${termino.asuntoId}`;
+            else mostrarMensajeGlobal("Este término no está vinculado a un expediente digital.", "warning");
+        }
+        else if (target.classList.contains('action-upload-word')) {
+            // === LÓGICA DE SUBIDA (WORD) CON HISTORIAL ===
+            const fileInput = document.getElementById('input-word-termino');
+            // Removemos listeners anteriores para evitar duplicados
+            const newFileInput = fileInput.cloneNode(true);
+            fileInput.parentNode.replaceChild(newFileInput, fileInput);
+            
+            newFileInput.onchange = (evt) => {
+                if (evt.target.files.length > 0) {
+                    const file = evt.target.files[0];
+                    const tIdx = TERMINOS.findIndex(t => String(t.id) === String(id));
+                    
+                    if (tIdx !== -1) {
+                        // 1. Guardar como actual
+                        TERMINOS[tIdx].archivoWord = file.name; 
+                        
+                        // 2. GUARDAR EN HISTORIAL (CRÍTICO)
+                        if(!TERMINOS[tIdx].historialArchivos) TERMINOS[tIdx].historialArchivos = [];
+                        TERMINOS[tIdx].historialArchivos.push({
+                            nombre: file.name,
+                            fecha: new Date().toISOString(),
+                            tipo: 'Borrador',
+                            etapa: TERMINOS[tIdx].estatus
+                        });
+
+                        registrarActividadExpediente(
+                            TERMINOS[tIdx].asuntoId, 'Borrador Actualizado', `Se cargó: ${file.name} en etapa ${TERMINOS[tIdx].estatus}`, 'upload'
+                        );
+                        guardarYRecargar();
+                        mostrarMensajeGlobal("Archivo cargado y guardado en historial", "success");
+                    }
+                }
+            };
+            newFileInput.click();
+        }
+        else if (target.classList.contains('action-download-word')) {
+            mostrarMensajeGlobal(`Descargando borrador: ${termino.archivoWord}`, "success");
+        }
+        else if (target.classList.contains('action-advance')) avanzarEtapa(id);
+        else if (target.classList.contains('action-upload-acuse')) row.querySelector('.input-acuse-hidden').click();
+        else if (target.classList.contains('action-conclude')) abrirModalPresentar(id, 'Concluir Término', 'Se marcará como finalizado.');
+        else if (target.classList.contains('action-remove-acuse')) {
+            mostrarConfirmacion(
+                'Quitar Acuse / Corregir', 
+                '¿Deseas eliminar el acuse actual? \n\nEl término regresará al estado "Liberado".', 
+                () => {
+                    const tIdx = TERMINOS.findIndex(t => String(t.id) === String(id));
+                    if (tIdx !== -1) {
+                        TERMINOS[tIdx].acuseDocumento = '';
+                        TERMINOS[tIdx].estatus = 'Liberado'; 
+                        // Nota: NO borramos el historial para mantener evidencia de que existió
+                        registrarActividadExpediente(TERMINOS[tIdx].asuntoId, 'Acuse Removido', `Se quitó el acuse del término "${TERMINOS[tIdx].asunto}".`, 'delete');  
+                        guardarYRecargar();
+                        mostrarMensajeGlobal('Acuse quitado. Estado regresado a Liberado.', 'warning');
+                    }
+                }
+            );
+        }
+        else if (target.classList.contains('action-delete')) {
+            mostrarConfirmacion('Eliminar Término', '¿Eliminar término permanentemente?', () => { TERMINOS = TERMINOS.filter(t => String(t.id) !== String(id)); guardarYRecargar(); mostrarMensajeGlobal('Término eliminado.', 'success'); });
+        }
+        
+        document.querySelectorAll('.action-menu').forEach(m => m.classList.add('hidden'));
+    });
+    
+    document.addEventListener('click', e => { if (!e.target.closest('.action-menu-toggle') && !e.target.closest('.action-menu')) { document.querySelectorAll('.action-menu').forEach(m => { m.classList.add('hidden'); m.style.cssText = ''; }); } });
+    window.addEventListener('scroll', () => { document.querySelectorAll('.action-menu:not(.hidden)').forEach(m => { m.classList.add('hidden'); m.style.cssText = ''; }); }, true);
+    
+    // === LÓGICA DE SUBIDA (ACUSE) CON HISTORIAL ===
+    document.getElementById('terminos-body').addEventListener('change', function(e) {
+        if (e.target.classList.contains('input-acuse-hidden') && e.target.files.length > 0) {
+            const id = e.target.getAttribute('data-id');
+            const idx = TERMINOS.findIndex(t => String(t.id) === String(id));
+            if(idx !== -1) {
+                const file = e.target.files[0];
+                
+                // 1. Guardar como actual
+                TERMINOS[idx].acuseDocumento = file.name;
+                if(TERMINOS[idx].estatus === 'Liberado') TERMINOS[idx].estatus = 'Presentado';
+                
+                // 2. GUARDAR EN HISTORIAL (CRÍTICO)
+                if(!TERMINOS[idx].historialArchivos) TERMINOS[idx].historialArchivos = [];
+                TERMINOS[idx].historialArchivos.push({
+                    nombre: file.name,
+                    fecha: new Date().toISOString(),
+                    tipo: 'Acuse',
+                    etapa: 'Presentado'
+                });
+
+                guardarYRecargar();
+                mostrarMensajeGlobal('Acuse subido y guardado en historial', 'success');
+            }
+        }
+    });
+}
+
+function sincronizarConAgendaGeneral(termino) {
+    if (termino.estatus !== 'Concluido') return;    
+    
+    let terminosPresentados = JSON.parse(localStorage.getItem('terminosPresentados')) || [];
+    const existe = terminosPresentados.some(t => 
+        t.id === termino.id || 
+        (t.terminoIdOriginal && String(t.terminoIdOriginal) === String(termino.id))
+    );
+    
+    if (!existe) {
+        const terminoAgenda = {
+            id: termino.id,
+            fechaIngreso: termino.fechaIngreso || new Date().toISOString().split('T')[0],
+            fechaVencimiento: termino.fechaVencimiento || '',
+            fechaPresentacion: new Date().toISOString().split('T')[0],
+            expediente: termino.expediente || 'S/N',
+            asuntoId: termino.asuntoId, // IMPORTANTE: MANTENER ID DE EXPEDIENTE
+            actuacion: termino.asunto || termino.actuacion || '',
+            partes: termino.actor || '',
+            abogado: termino.abogado || 'Sin asignar',
+            acuseDocumento: termino.acuseDocumento || '',
+            archivoWord: termino.archivoWord || '', // Mantener ref al último word
+            
+            // ** CORRECCIÓN: COPIAR EL HISTORIAL COMPLETO **
+            historialArchivos: termino.historialArchivos || [], 
+            
+            estatus: termino.estatus,
+            observaciones: termino.observaciones || 'Término concluido y finalizado',
+            fechaCreacion: new Date().toISOString(),
+            terminoIdOriginal: termino.id 
+        };
+        
+        terminosPresentados.unshift(terminoAgenda);
+        
+        localStorage.setItem('terminosPresentados', JSON.stringify(terminosPresentados));
+        
+        // Eliminar de la tabla principal
+        eliminarTerminoDeTablaPrincipal(termino.id);
+        
+        mostrarMensajeGlobal(`Término concluido y movido a Agenda General`, 'success');
+    }
+}
+
+function eliminarTerminoDeTablaPrincipal(id) {
+    const indice = TERMINOS.findIndex(t => String(t.id) === String(id));
+    if (indice !== -1) {
+        
+        TERMINOS.splice(indice, 1);
+        
+        guardarYRecargar(); 
+        
+        console.log(`🗑️ Término ${id} eliminado de la tabla principal`);
+        return true;
+    }
+    return false;
+}
+
+
+// ===============================================
+// 6. LÓGICA DE NEGOCIO (AVANZAR/RETROCEDER/GUARDAR)
+// ===============================================
+function avanzarEtapa(id) {
+    const idx = TERMINOS.findIndex(t => String(t.id) === String(id));
+    if (idx === -1) return;
+    const termino = TERMINOS[idx];
+    const actual = termino.estatus;
+
+    if (!termino.archivoWord && actual !== 'Liberado' && actual !== 'Presentado') {
+        mostrarMensajeGlobal("No puede avanzar sin subir el borrador Word primero.", "danger");
+        return;
+    }
+
+    const config = FLUJO_ETAPAS[actual];
+    if(config && config.siguiente){
+        
+        const ejecutarAvance = (nuevoEstado) => {
+            TERMINOS[idx].estatus = nuevoEstado; 
+            
+            // Generar Notificación de Cambio
+            crearNotificacionGlobal({
+                eventType: 'termino',
+                title: TERMINOS[idx].asunto,
+                expediente: TERMINOS[idx].expediente,
+                status: nuevoEstado,
+                detalles: { actuacion: `Cambio de fase: ${actual} → ${nuevoEstado}` },
+                notifyAt: new Date().toISOString()
+            });
+
+            if (nuevoEstado === 'Liberado') {
+                TERMINOS[idx].observaciones = ''; 
+                registrarActividadExpediente(
+                    TERMINOS[idx].asuntoId,
+                    'Término Liberado',
+                    `El término "${TERMINOS[idx].asunto}" ha sido liberado por Dirección.`,
+                    'status'
+                );
+            }
+            guardarYRecargar(); 
+            mostrarMensajeGlobal(`Avanzado a ${nuevoEstado}`, 'success'); 
+        };
+
+        if (actual === 'Dirección') { 
+            mostrarConfirmacion('Liberar Término', '¿Confirmar la liberación? Esto cambia el estado a "Liberado".', () => ejecutarAvance(config.siguiente));
+            return;
+        }
+        if (actual === 'Presentado') {
+             abrirModalPresentar(id, 'Concluir Término', 'Se marcará como finalizado.');
+             return;
+        }
+
+        mostrarConfirmacion('Avanzar Etapa', `¿Avanzar de "${actual}" a "${config.siguiente}"?`, () => ejecutarAvance(config.siguiente));
+    }
+}
+
+function regresarEtapa(id) {
+    const idx = TERMINOS.findIndex(t => String(t.id) === String(id));
+    if (idx === -1) return;
+    const actual = TERMINOS[idx].estatus;
+    const config = FLUJO_ETAPAS[actual];
+    
+    if(config && config.anterior) {
+        mostrarPrompt('Rechazar Término', `¿Por qué regresas el término de "${actual}"?`, 'Motivo...', (motivo) => {
+            TERMINOS[idx].estatus = config.anterior;
+            console.log(`Rechazado: ${motivo}`);
+            guardarYRecargar();
+            mostrarMensajeGlobal(`Regresado a ${config.anterior}`, 'warning');
+        });
+    }
+}
+
+function guardarYRecargar() {
+    localStorage.setItem('terminos', JSON.stringify(TERMINOS));
+    loadTerminos();
+}
+
+// ===============================================
+// 7. MODALES (MANUALES) - ROBUSTO
+// ===============================================
+function initModalTerminosJS() {
+   const modal = document.getElementById('modal-termino');
+   const btnSave = document.getElementById('save-termino');
+   
+   if (!modal) return console.error("Error Crítico: No se encontró el modal #modal-termino");
+
+   document.querySelectorAll('#close-modal-termino, #cancel-termino').forEach(btn => {
+       if(btn) btn.onclick = () => { modal.classList.remove('flex'); modal.classList.add('hidden'); };
+   });
+
+   if(btnSave) {
+       const newBtn = btnSave.cloneNode(true);
+       btnSave.parentNode.replaceChild(newBtn, btnSave);
+       newBtn.onclick = (e) => { e.preventDefault(); guardarTermino(); };
+   }
+}
+
+function openTerminoModalJS(termino = null) {
+    const modal = document.getElementById('modal-termino');
+    if (!modal) return alert("Error: El modal no se cargó correctamente.");
+
+    const form = document.getElementById('form-termino');
+    const title = document.getElementById('modal-termino-title');
+    
+    if(form) form.reset();
+    
+    const inputDias = document.getElementById('dias-antes-recordatorio');
+    if(inputDias) inputDias.value = "3";
+    
+    
+    const inputNota = document.getElementById('nota-recordatorio');
+    if(inputNota) inputNota.value = "";
+
+    cargarAsuntosEnSelectorJS();
+    
+    if (termino) {
+        title.textContent = 'Editar Datos del Término';
+        document.getElementById('termino-id').value = termino.id;
+        
+        const selAsunto = document.getElementById('asunto-selector');
+        if(selAsunto) selAsunto.value = termino.asuntoId || '';
+        
+        if(document.getElementById('fecha-ingreso')) document.getElementById('fecha-ingreso').value = termino.fechaIngreso || '';
+        if(document.getElementById('fecha-vencimiento')) document.getElementById('fecha-vencimiento').value = termino.fechaVencimiento || '';
+        if(document.getElementById('actuacion')) document.getElementById('actuacion').value = termino.asunto || '';
+        if(document.getElementById('link-documento')) document.getElementById('link-documento').value = termino.linkDocumento || '';
+        
+        if(termino.asuntoId) cargarDatosAsuntoEnModalJS(termino.asuntoId);
+    } else {
+        title.textContent = 'Nuevo Término';
+        document.getElementById('termino-id').value = '';
+    }
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+async function guardarTermino() {
+    // Recolectar datos del formulario
+    const terminoRequest = {
+        expedienteId: document.getElementById('asunto-selector')?.value, // UUID
+        actuación: document.getElementById('actuacion')?.value,
+        fechaVencimiento: document.getElementById('fecha-vencimiento')?.value,
+        prioridad: document.getElementById('termino-prioridad')?.value || 'MEDIA'
+    };
+
+    try {
+        const response = await fetch('/api/terminos', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${TOKEN}`
+            },
+            body: JSON.stringify(terminoRequest)
+        });
+
+        if (response.ok) {
+            mostrarMensajeGlobal('Término guardado en base de datos', 'success');
+            const modal = document.getElementById('modal-termino');
+            modal.classList.add('hidden');
+            loadTerminos(); // Recargar la tabla con datos frescos
+        } else {
+            const error = await response.json();
+            mostrarMensajeGlobal(`Error: ${error.message}`, 'danger');
+        }
+    } catch (error) {
+        mostrarMensajeGlobal('Error de red al intentar guardar', 'danger');
+    }
+}
+
+function initModalReasignar() {
+    const modal = document.getElementById('modal-reasignar');
+    if (!modal) return;
+    const btnSave = document.getElementById('save-reasignar');
+    document.querySelectorAll('#close-modal-reasignar, #cancel-reasignar').forEach(btn => btn.onclick = () => { modal.classList.remove('flex'); modal.classList.add('hidden'); });
+    if(btnSave) {
+        const newBtn = btnSave.cloneNode(true);
+        btnSave.parentNode.replaceChild(newBtn, btnSave);
+        newBtn.onclick = () => {
+            const id = document.getElementById('reasignar-termino-id').value;
+            const sel = document.getElementById('select-nuevo-abogado');
+            const idx = TERMINOS.findIndex(t => String(t.id) === String(id));
+            if(idx !== -1 && sel.value) {
+                TERMINOS[idx].abogado = sel.options[sel.selectedIndex].text;
+                guardarYRecargar();
+                modal.classList.remove('flex'); modal.classList.add('hidden');
+            }
+        };
+    }
+}
+
+function abrirModalReasignar(id) {
+    const modal = document.getElementById('modal-reasignar');
+    const termino = TERMINOS.find(t => String(t.id) === String(id));
+    if(!termino) return;
+    document.getElementById('reasignar-termino-id').value = id;
+    document.getElementById('reasignar-actuacion').value = termino.asunto;
+    document.getElementById('reasignar-abogado-actual').value = termino.abogado;
+    cargarAbogadosSelector();
+    modal.classList.remove('hidden'); modal.classList.add('flex');
+}
+
+function initModalPresentar() {
+    const modal = document.getElementById('modal-presentar-termino');
+    if (!modal) return;
+    
+    const btnConfirm = document.getElementById('confirmar-presentar');
+    
+    document.querySelectorAll('#close-modal-presentar, #cancel-presentar').forEach(btn => {
+        if(btn) btn.onclick = () => { 
+            modal.classList.remove('flex'); 
+            modal.classList.add('hidden'); 
+        };
+    });
+
+    if(btnConfirm) {
+        const newBtn = btnConfirm.cloneNode(true);
+        btnConfirm.parentNode.replaceChild(newBtn, btnConfirm);
+        
+        newBtn.onclick = () => {
+            const id = document.getElementById('presentar-termino-id').value;
+            const observaciones = document.getElementById('observaciones-cambio-estatus')?.value.trim();
+            
+            const idx = TERMINOS.findIndex(t => String(t.id) === String(id));
+            
+            if(idx !== -1) {
+                let nuevoEstatus = '';
+                if (TERMINOS[idx].estatus === 'Presentado') {
+                    nuevoEstatus = 'Concluido'; 
+                } else if (TERMINOS[idx].estatus === 'Dirección') {
+                    nuevoEstatus = 'Liberado';
+                } else {
+                    const siguiente = FLUJO_ETAPAS[TERMINOS[idx].estatus]?.siguiente;
+                    if(siguiente) nuevoEstatus = siguiente;
+                }
+                
+                if(nuevoEstatus) {
+                    TERMINOS[idx].estatus = nuevoEstatus;
+                    
+                    if(observaciones) {
+                        TERMINOS[idx].observaciones = observaciones;
+                    }
+                    
+                    // --- PUNTO DE SINCRONIZACIÓN ---
+                    if (nuevoEstatus === 'Concluido') {
+                        registrarActividadExpediente(
+                            TERMINOS[idx].asuntoId,
+                            'Término Concluido',
+                            `El término "${TERMINOS[idx].asunto}" ha sido presentado y finalizado.`,
+                            'status'
+                        );
+                        
+                        guardarYRecargar(); 
+                        
+                        sincronizarConAgendaGeneral(TERMINOS[idx]);
+                        
+                    } else {
+                        guardarYRecargar();
+                    }
+                    // -------------------------------
+                    
+                    mostrarMensajeGlobal(`Término actualizado a: ${nuevoEstatus}`, 'success');
+                    
+                    modal.classList.remove('flex'); 
+                    modal.classList.add('hidden');
+                }
+             
+            }
+        };
+    }
+}
+
+function abrirModalPresentar(id, titulo, mensaje) {
+    const modal = document.getElementById('modal-presentar-termino');
+    if(!modal) return;
+
+    document.getElementById('presentar-termino-id').value = id;
+    
+    const tituloEl = document.getElementById('modal-presentar-titulo');
+    const mensajeEl = document.getElementById('modal-presentar-mensaje');
+    
+    if(tituloEl) tituloEl.textContent = titulo;
+    if(mensajeEl) mensajeEl.textContent = mensaje;
+
+    const txtArea = document.getElementById('observaciones-cambio-estatus');
+    if(txtArea) {
+        txtArea.value = ''; 
+        setTimeout(() => txtArea.focus(), 100); 
+    }
+
+    modal.classList.remove('hidden'); 
+    modal.classList.add('flex');
+}
+
+// ===============================================
+// 8. HELPERS Y UTILIDADES
+// ===============================================
+function calcularDiasRestantes(fechaVencimiento) {
+    if (!fechaVencimiento) return null;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const [year, month, day] = fechaVencimiento.split('-').map(Number);
+    const vencimiento = new Date(year, month - 1, day); 
+    const diferenciaMs = vencimiento - hoy;
+    return Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24));
+}
+
+function getSemaforoColor(fecha) {
+  const dias = calcularDiasRestantes(fecha);
+    if (dias === null) return 'bg-gray-300';
+    if (dias < 3) return 'bg-red-700';      
+    if (dias <= 7) return 'bg-yellow-400';  
+    return 'bg-green-500';
+}
+
+function getBadgeClass(estatus) {
+    switch(estatus) {
+        case 'Proyectista': return 'bg-gray-100 text-gray-700 border-gray-200';
+        case 'Liberado': return 'bg-green-100 text-green-800 border-green-200';
+        case 'Concluido': return 'bg-gob-verde text-white border-gob-verdeDark';
+        default: return 'bg-yellow-100 text-yellow-800 border-yellow-200'; 
+    }
+}
+
+let onConfirmAction = null;
+function mostrarConfirmacion(titulo, mensaje, callback) {
+    const modal = document.getElementById('modal-confirmacion-global');
+    if (!modal) return;
+    document.getElementById('confirm-titulo').textContent = titulo;
+    document.getElementById('confirm-mensaje').textContent = mensaje;
+    onConfirmAction = callback;
+    document.getElementById('btn-confirm-accept').onclick = function() {
+        if (onConfirmAction) onConfirmAction();
+        cerrarConfirmacion();
+    };
+    document.getElementById('btn-confirm-cancel').onclick = cerrarConfirmacion;
+    modal.classList.remove('hidden'); modal.classList.add('flex');
+}
+
+function cerrarConfirmacion() {
+    const modal = document.getElementById('modal-confirmacion-global');
+    if (modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
+    onConfirmAction = null;
+}
+
+let onPromptAction = null; 
+function mostrarPrompt(titulo, mensaje, placeholder, callback) {
+    const modal = document.getElementById('modal-prompt-global');
+    if (!modal) return;
+    document.getElementById('prompt-titulo').textContent = titulo;
+    document.getElementById('prompt-mensaje').textContent = mensaje;
+    const input = document.getElementById('prompt-input');
+    input.placeholder = placeholder || '...';
+    input.value = '';
+    onPromptAction = callback;
+    document.getElementById('btn-prompt-accept').onclick = function() {
+        if(input.value.trim()) { if(onPromptAction) onPromptAction(input.value.trim()); cerrarPrompt(); }
+    };
+    document.getElementById('btn-prompt-cancel').onclick = cerrarPrompt;
+    modal.classList.remove('hidden'); modal.classList.add('flex');
+}
+
+function cerrarPrompt() {
+    const modal = document.getElementById('modal-prompt-global');
+    if (modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
+    onPromptAction = null;
+}
+
+function mostrarAlertaTermino(mensaje) {
+    const modal = document.getElementById('modal-alerta-termino');
+    if(!modal) return;
+    document.getElementById('alerta-mensaje-termino').textContent = mensaje;
+    document.getElementById('btn-alerta-accept-termino').onclick = () => { modal.classList.remove('flex'); modal.classList.add('hidden'); };
+    modal.classList.remove('hidden'); modal.classList.add('flex');
+}
+
+function mostrarMensajeGlobal(msg, type) {
+    const div = document.createElement('div');
+    const color = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+    div.className = `fixed top-5 right-5 px-6 py-3 text-white rounded shadow-lg z-[100] ${color} animate-fade-in-down`;
+    div.innerText = msg;
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 3000);
+}
+
+function cargarAsuntosEnSelectorJS() {
+    const sel = document.getElementById('asunto-selector');
+    if(!sel) return;
+    
+    const expedientesData = JSON.parse(localStorage.getItem('expedientesData')) || [];
+    
+    const NOMBRES_GERENCIAS = {
+        1: 'Civil, Mercantil, Fiscal y Administrativo',
+        2: 'Laboral y Penal',
+        3: 'Transparencia y Amparo'
+    };
+    
+    sel.innerHTML = '<option value="">Seleccionar...</option>';
+    expedientesData.forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e.id;
+        opt.text = `${e.numero} - ${e.descripcion ? e.descripcion.substring(0,30)+'...' : ''}`;
+        sel.appendChild(opt);
+    });
+    
+    const limpiarCampos = () => {
+        const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+        
+        setVal('termino-expediente', '');
+        setVal('termino-materia', '');
+        setVal('termino-gerencia', '');
+        setVal('termino-abogado', '');
+        setVal('termino-partes', '');
+        setVal('termino-prioridad', '');
+        const organoDato = e.organo || e.organoJurisdiccional || 'Por asignar';
+        setVal('termino-organo', organoDato);          
+        setVal('termino-organo-visual', organoDato);
+    };
+
+    sel.onchange = () => {
+        const selectedId = sel.value;
+        const e = expedientesData.find(x => String(x.id) === selectedId);
+        
+        if(e) {
+            const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ''; };
+
+            setVal('termino-expediente', e.numero);
+            setVal('termino-materia', e.materia || 'S/D');
+            setVal('termino-abogado', e.abogado || 'S/D');
+            setVal('termino-partes', e.partes || 'Actor vs Demandado');
+            setVal('termino-prioridad', e.prioridad || 'Media');            
+            let nombreGerencia = e.gerencia;
+            if (!nombreGerencia && e.gerenciaId) {
+                nombreGerencia = NOMBRES_GERENCIAS[e.gerenciaId];
+            }
+            setVal('termino-gerencia', nombreGerencia || 'Sin Gerencia');
+
+            const organoDato = e.organo || e.organoJurisdiccional || 'Por asignar';
+            setVal('termino-organo', organoDato);          
+            setVal('termino-organo-visual', organoDato);   
+            
+        } else {
+            limpiarCampos();
+        }
+    };
+}
+function cargarDatosAsuntoEnModalJS(asuntoId) {
+    const selector = document.getElementById('asunto-selector');
+    if(selector) { selector.value = asuntoId; selector.dispatchEvent(new Event('change')); }
+}
+
+function cargarAbogadosSelector() {
+    const sel = document.getElementById('select-nuevo-abogado');
+    if(!sel) return;
+    const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+    const abogados = usuarios.filter(u => u.rol === 'ABOGADO' && u.activo);
+    
+    sel.innerHTML = '<option value="">Seleccionar...</option>';
+    abogados.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.text = a.nombre;
+        sel.appendChild(opt);
+    });
+}
+
+function formatDate(date) { return date; }
+
+function exportarTablaExcel() {
+    const table = document.querySelector('table');
+    const wb = XLSX.utils.table_to_book(table);
+    XLSX.writeFile(wb, 'Terminos.xlsx');
+}
+
+// === FUNCION HELPER PARA VINCULAR CON EXPEDIENTE ===
+function registrarActividadExpediente(asuntoId, titulo, descripcion, tipoIcono = 'info') {
+    if (!asuntoId) return;
+
+    const expedientes = JSON.parse(localStorage.getItem('expedientesData')) || [];
+    const index = expedientes.findIndex(e => String(e.id) === String(asuntoId));
+
+    if (index !== -1) {
+        if (!expedientes[index].actividad) expedientes[index].actividad = [];
+
+        const nuevaActividad = {
+            fecha: new Date().toISOString(),
+            titulo: titulo,
+            descripcion: descripcion,
+            tipo: tipoIcono 
+        };
+
+        expedientes[index].actividad.unshift(nuevaActividad);
+        localStorage.setItem('expedientesData', JSON.stringify(expedientes));
+        console.log(`Actividad registrada en expediente ${asuntoId}: ${titulo}`);
+    }
+}
+
+// ===============================================
+// 10. FUNCIÓN ADICIONAL PARA SINCRONIZACIÓN MANUAL
+// ===============================================
+function sincronizarTerminosConcluidos() {
+    
+    const terminosAEnviar = TERMINOS.filter(t => t.estatus === 'Concluido');
+    let sincronizados = 0;
+    
+    terminosAEnviar.forEach(termino => {
+        sincronizarConAgendaGeneral(termino);
+        sincronizados++;
+    });
+    
+    if (sincronizados > 0) {
+        mostrarMensajeGlobal(`${sincronizados} términos Concluidos movidos a Agenda General`, 'success');
+    } else {
+        mostrarMensajeGlobal('No hay términos en estado Concluido para sincronizar', 'info');
+    }
+}
+
+function crearNotificacionGlobal(datos) {
+    const KEY = 'jl_notifications_v4';
+    const notificaciones = JSON.parse(localStorage.getItem(KEY)) || [];
+    
+    const nuevaNotif = {
+        id: Date.now().toString(36) + Math.random().toString(36).substr(2),
+        eventType: datos.eventType,
+        title: datos.title,
+        expediente: datos.expediente,
+        status: datos.status,
+        detalles: datos.detalles || {},
+        notifyAt: datos.notifyAt || new Date().toISOString(),
+        meta: datos.meta || {}
+    };
+    
+    notificaciones.push(nuevaNotif);
+    localStorage.setItem(KEY, JSON.stringify(notificaciones));
+}

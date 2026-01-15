@@ -8,5 +8,5 @@ import lombok.Data;
 public class LoginResponse {
     private String accessToken;
     private String refreshToken; // Si usas refresh token
-    private String tokenType;
+    private String tokenType = "Bearer";
 }

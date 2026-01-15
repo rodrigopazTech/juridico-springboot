@@ -42,9 +42,14 @@ public class SecurityConfig {
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // AGREGA ESTA LÍNEA (o modifica la que tenías):
-                // Permite entrar a la raiz "/", al index.html y a los recursos estáticos
-                .requestMatchers("/", "/index.html", "/api/auth/**", "/css/**", "/js/**").permitAll()
+                // 1. Permitir Login y recursos básicos
+                .requestMatchers("/", "/index.html", "/api/auth/**", "/css/**", "/js/**", "/pages/**", "/components/**", "/lib/**, /favicon.ico").permitAll()                
+                // 2. IMPORTANTE: Permitir que el navegador acceda a las carpetas de recursos si son necesarios
+                .requestMatchers("/components/**", "/lib/**").permitAll()
+                
+                // 3. Proteger las páginas de los módulos
+                .requestMatchers("/api/terminos/**", "/api/expedientes/**").authenticated()                
+                // 4. Cualquier otra petición requiere autenticación
                 .anyRequest().authenticated()
             );
 

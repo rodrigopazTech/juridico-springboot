@@ -1,0 +1,94 @@
+<aside id="logo-sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0 bg-gob-verde border-r border-gob-verdeDark shadow-xl flex flex-col" aria-label="Sidebar">
+    
+    <div class="h-16 flex-none flex items-center px-6 border-b border-gob-verdeDark/50 bg-gob-verdeDark/30">
+        <div class="text-white font-headings font-bold tracking-wider flex items-center gap-3">
+            <i class="fas fa-balance-scale text-gob-oro text-xl"></i>
+            <span>AGENDA LEGAL</span>
+        </div>
+    </div>
+  
+    <div class="flex-1 px-3 py-6 overflow-y-auto">
+        
+        <div class="px-3 mb-2 text-xs font-bold text-gob-oroLight uppercase tracking-wider font-headings">Principal</div>
+        <ul class="space-y-1 font-medium mb-6">
+            <li>
+                <a href="../dashboard-module/index.html" data-page="dashboard" class="nav-item flex items-center p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200">
+                    <i class="fas fa-chart-line w-5 h-5 text-center transition duration-75 group-hover:text-gob-oro"></i>
+                    <span class="ms-3">Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="../agenda-general-module/index.html" data-page="agenda" class="nav-item flex items-center p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200">
+                    <i class="fas fa-calendar-check w-5 h-5 text-center transition duration-75 group-hover:text-gob-oro"></i>
+                    <span class="ms-3">Agenda General</span>
+                </a>
+            </li>
+            
+            <li>
+                <a href="../notificaciones-module/index.html" data-page="notificaciones" class="nav-item flex items-center justify-between p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200">
+                    <div class="flex items-center">
+                        <i class="fas fa-bell w-5 h-5 text-center transition duration-75 group-hover:text-gob-oro"></i>
+                        <span class="ms-3">Notificaciones</span>
+                    </div>
+                    <span id="sidebar-badge-count" class="hidden bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">0</span>
+                </a>
+            </li>
+        </ul>
+  
+        <div class="px-3 mb-2 text-xs font-bold text-gob-oroLight uppercase tracking-wider font-headings">Gestión Jurídica</div>
+        <ul class="space-y-1 font-medium mb-6">
+            <li>
+                <a href="../expediente-module/index.html" data-page="expedientes" class="nav-item flex items-center p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200">
+                    <i class="fas fa-folder-open w-5 h-5 text-center transition duration-75 group-hover:text-gob-oro"></i>
+                    <span class="ms-3">Expedientes</span>
+                </a>
+            </li>
+            <li>
+                <a href="../audiencias/index.html" data-page="audiencias" class="nav-item flex items-center p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200">
+                    <i class="fas fa-gavel w-5 h-5 text-center transition duration-75 group-hover:text-gob-oro"></i>
+                    <span class="ms-3">Audiencias</span>
+                </a>
+            </li>
+            <li>
+                <a href="../terminos/index.html" data-page="terminos" class="nav-item flex items-center p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200">
+                    <i class="fas fa-hourglass-end w-5 h-5 text-center transition duration-75 group-hover:text-gob-oro"></i>
+                    <span class="ms-3">Términos</span>
+                </a>
+            </li>
+            <li>
+                <a href="../recordatorios-module/index.html" data-page="recordatorios" class="nav-item flex items-center p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200">
+                    <i class="fas fa-sticky-note w-5 h-5 text-center transition duration-75 group-hover:text-gob-oro"></i>
+                    <span class="ms-3">Recordatorios</span>
+                </a>
+            </li>
+        </ul>
+  
+        <div class="px-3 mb-2 text-xs font-bold text-gob-oroLight uppercase tracking-wider font-headings">Admin</div>
+        <ul class="space-y-1 font-medium">
+            <li>
+                <a href="../usuario-module/index.html" data-page="usuarios" class="nav-item flex items-center p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200">
+                    <i class="fas fa-users-cog w-5 h-5 text-center transition duration-75 group-hover:text-gob-oro"></i>
+                    <span class="ms-3">Usuarios y Gerencias</span>
+                </a>
+            </li>
+            <li>
+                <a href="../calendario-module/index.html" data-page="calendario" class="nav-item flex items-center p-2 text-gray-300 rounded-lg hover:bg-gob-verdeDark hover:text-white group transition-all duration-200">
+                    <i class="fas fa-calendar-alt w-5 h-5 text-center transition duration-75 group-hover:text-gob-oro"></i>
+                    <span class="ms-3">Calendario</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="p-4 border-t border-gob-verdeDark/50 bg-gob-verdeDark/20">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-gob-oro flex items-center justify-center text-gob-verdeDark font-bold">
+                US
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-white truncate">Usuario Subdirector</p>
+                <p class="text-xs text-gray-400 truncate">subdirector@juridico.gob</p>
+            </div>
+        </div>
+    </div>
+</aside>

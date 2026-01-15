@@ -94,7 +94,7 @@
                 if (response.ok) {
                     const data = await response.json();
                     localStorage.setItem('jwt_token', data.accessToken || data.token);
-                    window.location.href = 'dashboard/dashboard.html';
+                    window.location.href = '/pages/terminos/index.html';
                 } else {
                     errorMsg.innerText = "ACCESO DENEGADO: Credenciales incorrectas";
                     errorMsg.classList.remove('hidden');
