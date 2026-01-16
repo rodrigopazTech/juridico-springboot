@@ -13,7 +13,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-
+import jakarta.servlet.http.Cookie;
 import java.io.IOException;
 
 @Component
@@ -51,10 +51,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {
+        // 1. Intentar obtener del Header (para Postman o apps móviles)
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
+
+        // 2. NUEVO: Intentar obtener de las Cookies (para el Navegador/Thymeleaf)
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                // "JWT_TOKEN" debe coincidir con el nombre que pusimos en el Javascript
+                if ("JWT_TOKEN".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
         return null;
     }
 }

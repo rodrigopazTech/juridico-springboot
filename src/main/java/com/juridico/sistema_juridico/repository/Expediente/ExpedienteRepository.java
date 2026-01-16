@@ -20,13 +20,6 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
     // Filtrar por abogado responsable
     Page<Expediente> findByAbogadoResponsableId(Integer abogadoId, Pageable pageable);
 
-    /**
-     * Búsqueda "Google-like" para expedientes.
-     * Busca el texto en el número, la descripción o las partes involucradas.
-     * * @param keyword Palabra clave a buscar
-     * @param pageable Configuración de paginación
-     * @return Página de expedientes que coinciden
-     */
     @Query("SELECT e FROM Expediente e WHERE " +
            "(LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(e.descripcion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +

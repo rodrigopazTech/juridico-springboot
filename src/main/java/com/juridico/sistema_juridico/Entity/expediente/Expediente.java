@@ -9,6 +9,7 @@ import java.util.UUID;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional;
+import com.juridico.sistema_juridico.Entity.catalogo.TipoExpediente;
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
@@ -87,4 +88,8 @@ public class Expediente {
     
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @ManyToOne
+    @JoinColumn(name = "tipo_expediente_id")
+    private TipoExpediente tipoExpediente;
 }

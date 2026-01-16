@@ -73,7 +73,6 @@
     </div>
 
     <script>
-        // Lógica de handleLogin (se mantiene igual, solo cambia el estilo visual)
         async function handleLogin(event) {
             event.preventDefault();
             const email = document.getElementById('email').value;
@@ -81,6 +80,7 @@
             const errorMsg = document.getElementById('errorMessage');
             const loader = document.getElementById('loading');
 
+            // Limpiar estados previos
             errorMsg.classList.add('hidden');
             loader.classList.remove('hidden');
 
@@ -93,13 +93,19 @@
 
                 if (response.ok) {
                     const data = await response.json();
+                    
+                    // 1. Guardar en localStorage (útil para peticiones AJAX futuras)
                     localStorage.setItem('jwt_token', data.accessToken || data.token);
-                    window.location.href = 'dashboard/dashboard.html';
+                    document.cookie = `JWT_TOKEN=${data.accessToken || data.token}; path=/; max-age=86400; SameSite=Strict`;
+
+                    // 3. Redirigir a la vista protegida
+                    window.location.href = '/expedientes';
                 } else {
                     errorMsg.innerText = "ACCESO DENEGADO: Credenciales incorrectas";
                     errorMsg.classList.remove('hidden');
                 }
             } catch (error) {
+                console.error(error);
                 errorMsg.innerText = "ERROR: No hay conexión con el servidor";
                 errorMsg.classList.remove('hidden');
             } finally {

@@ -14,7 +14,6 @@ public interface ColaboradorExpedienteRepository extends JpaRepository<Colaborad
     // Ver colaboradores activos de un expediente
     List<ColaboradorExpediente> findByExpedienteIdAndFechaExpiracionAfter(UUID expedienteId, LocalDateTime ahora);
 
-    // === SEGURIDAD ===
     // Verifica si el usuario tiene permiso temporal vigente
     boolean existsByExpedienteIdAndUsuarioIdAndFechaExpiracionAfter(
             UUID expedienteId, 

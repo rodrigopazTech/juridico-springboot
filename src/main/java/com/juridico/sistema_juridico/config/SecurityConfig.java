@@ -42,8 +42,6 @@ public class SecurityConfig {
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // AGREGA ESTA LÍNEA (o modifica la que tenías):
-                // Permite entrar a la raiz "/", al index.html y a los recursos estáticos
                 .requestMatchers("/", "/index.html", "/api/auth/**", "/css/**", "/js/**").permitAll()
                 .anyRequest().authenticated()
             );
