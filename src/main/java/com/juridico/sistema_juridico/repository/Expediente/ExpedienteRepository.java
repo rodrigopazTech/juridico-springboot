@@ -1,5 +1,6 @@
-package com.juridico.sistema_juridico.repository.Expediente;
+package com.juridico.sistema_juridico.repository.Expediente; // Asegura tu paquete correcto
 
+import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,19 +15,34 @@ import java.util.UUID;
 @Repository
 public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
 
-    // Buscar por número exacto (ignorando mayúsculas/minúsculas)
     Optional<Expediente> findByNumeroIgnoreCase(String numero);
 
-    // Filtrar por abogado responsable
-    Page<Expediente> findByAbogadoResponsableId(Integer abogadoId, Pageable pageable);
-
-    @Query("SELECT e FROM Expediente e WHERE " +
-           "(LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+    /**
+     * CONSULTA MAESTRA: Búsqueda de Texto + Filtros Exactos + Paginación
+     */
+    @Query("SELECT e FROM Expediente e " +
+           "LEFT JOIN e.organoJurisdiccional o " +
+           "LEFT JOIN e.abogadoResponsable a " +
+           "WHERE " +
+           // 1. Búsqueda por Palabra Clave (Global)
+           "(:keyword IS NULL OR :keyword = '' OR " +
+           "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(e.descripcion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-           "AND e.gerencia.id = :gerenciaId")
-    Page<Expediente> buscarPorPalabraClaveYGerencia(
-            @Param("keyword") String keyword, 
-            @Param("gerenciaId") Integer gerenciaId, 
+           "LOWER(a.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(o.nombre) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           // 2. Filtros Específicos (Dropdowns)
+           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
+           "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
+           "AND (:tipoId IS NULL OR e.tipoExpediente.id = :tipoId) " +
+           "AND (:prioridad IS NULL OR e.prioridad = :prioridad) " +
+           "AND (:abogadoId IS NULL OR e.abogadoResponsable.id = :abogadoId)")
+    Page<Expediente> buscarExpedientes(
+            @Param("keyword") String keyword,
+            @Param("gerenciaId") Integer gerenciaId,
+            @Param("materiaId") Integer materiaId,
+            @Param("tipoId") Integer tipoId,
+            @Param("prioridad") Prioridad prioridad,
+            @Param("abogadoId") Integer abogadoId,
             Pageable pageable);
 }

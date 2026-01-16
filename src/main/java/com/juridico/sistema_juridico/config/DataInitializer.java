@@ -5,17 +5,13 @@ import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional;
 import com.juridico.sistema_juridico.Entity.catalogo.TipoExpediente;
-import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
-import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Catalogo.EstadoRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoExpedienteRepository;
-import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -34,7 +30,6 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired private MateriaRepository materiaRepository;
     @Autowired private TipoExpedienteRepository tipoExpedienteRepository;
     @Autowired private OrganoJurisdiccionalRepository organoRepository;
-    @Autowired private ExpedienteRepository expedienteRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private EstadoRepository estadoRepository;
 
@@ -76,33 +71,60 @@ public class DataInitializer implements CommandLineRunner {
 
         // 2. GERENCIAS
         Gerencia gCivil = null;
+        Gerencia gLaboral = null;
+        Gerencia gTransparencia = null;
+
         if (gerenciaRepository.count() == 0) {
-            gCivil = Gerencia.builder().nombre("Gerencia Civil").descripcion("Litigios civiles y mercantiles").build();
-            Gerencia gPenal = Gerencia.builder().nombre("Gerencia Penal").descripcion("Defensa penal corporativa").build();
-            Gerencia gLaboral = Gerencia.builder().nombre("Gerencia Laboral").descripcion("Conflictos obrero-patronales").build();
+            // Creamos las 3 Gerencias Nuevas
+            gCivil = Gerencia.builder()
+                    .nombre("Gerencia Civil, Mercantil, Fiscal y Administrativo")
+                    .descripcion("Atención de asuntos civiles, mercantiles y administrativos.")
+                    .build();
+
+            gLaboral = Gerencia.builder()
+                    .nombre("Gerencia Laboral y Penal")
+                    .descripcion("Atención de conflictos laborales y defensa penal.")
+                    .build();
             
-            gerenciaRepository.saveAll(List.of(gCivil, gPenal, gLaboral));
-            System.out.println("Gerencias creadas.");
+            gTransparencia = Gerencia.builder()
+                    .nombre("Gerencia Transparencia y Amparo")
+                    .descripcion("Atención de solicitudes de transparencia y juicios de amparo.")
+                    .build();
+            
+            gerenciaRepository.saveAll(List.of(gCivil, gLaboral, gTransparencia));
+            System.out.println("Nuevas Gerencias creadas.");
         } else {
-            gCivil = gerenciaRepository.findAll().get(0); // Recuperamos una para el ejemplo
+            // Si ya existen, las buscamos para usarlas abajo (Manejo de errores simplificado)
+            List<Gerencia> todas = gerenciaRepository.findAll();
+            gCivil = todas.stream().filter(g -> g.getNombre().contains("Civil")).findFirst().orElse(null);
+            gLaboral = todas.stream().filter(g -> g.getNombre().contains("Laboral")).findFirst().orElse(null);
+            gTransparencia = todas.stream().filter(g -> g.getNombre().contains("Transparencia")).findFirst().orElse(null);
         }
 
-        // 3. MATERIAS (Ligadas a Gerencias)
-        Materia mArrendamiento = null;
-        if (materiaRepository.count() == 0) {
-            Gerencia civil = gerenciaRepository.findByNombre("Gerencia Civil").orElse(gCivil);
-            Gerencia laboral = gerenciaRepository.findByNombre("Gerencia Laboral").orElse(null);
+        // 3. MATERIAS (Ligadas a las nuevas Gerencias)
+        if (materiaRepository.count() == 0 && gCivil != null) {
+            
+            // Materias para Gerencia Civil, Mercantil...
+            Materia mCivil = Materia.builder().nombre("Civil").gerencia(gCivil).build();
+            Materia mMercantil = Materia.builder().nombre("Mercantil").gerencia(gCivil).build();
+            Materia mFiscal = Materia.builder().nombre("Fiscal").gerencia(gCivil).build();
+            Materia mAdmin = Materia.builder().nombre("Administrativo").gerencia(gCivil).build();
 
-            mArrendamiento = Materia.builder().nombre("Arrendamiento Inmobiliario").gerencia(civil).build();
-            Materia mMercantil = Materia.builder().nombre("Juicio Mercantil").gerencia(civil).build();
-            Materia mDespido = Materia.builder().nombre("Despido Injustificado").gerencia(laboral).build();
+            // Materias para Gerencia Laboral y Penal
+            Materia mLaboral = Materia.builder().nombre("Laboral").gerencia(gLaboral).build();
+            Materia mPenal = Materia.builder().nombre("Penal").gerencia(gLaboral).build();
 
-            materiaRepository.saveAll(List.of(mArrendamiento, mMercantil, mDespido));
-            System.out.println(" Materias creadas.");
-        } else {
-             mArrendamiento = materiaRepository.findAll().get(0);
+            // Materias para Gerencia Transparencia y Amparo
+            Materia mAmparo = Materia.builder().nombre("Amparo").gerencia(gTransparencia).build();
+            Materia mTransp = Materia.builder().nombre("Transparencia").gerencia(gTransparencia).build();
+
+            materiaRepository.saveAll(List.of(
+                mCivil, mMercantil, mFiscal, mAdmin, 
+                mLaboral, mPenal, 
+                mAmparo, mTransp
+            ));
+            System.out.println("Nuevas Materias creadas y vinculadas.");
         }
-
         // 4. TIPOS DE EXPEDIENTE
         TipoExpediente tOrdinario = null;
         if (tipoExpedienteRepository.count() == 0) {
@@ -128,27 +150,6 @@ public class DataInitializer implements CommandLineRunner {
             oJuzgado = organoRepository.findAll().get(0);
         }
 
-        // 6. EXPEDIENTE DE PRUEBA 
-        if (expedienteRepository.count() == 0 && abogadoDemo != null && gCivil != null) {
-            Expediente exp = Expediente.builder()
-                    .numero("EXP-2026/001")
-                    .descripcion("Incumplimiento de contrato de arrendamiento local comercial zona centro.")
-                    .prioridad(Prioridad.ALTA)
-                    .etapaProcesal(EtapaProcesal.TRAMITE) 
-                    .gerencia(gCivil)
-                    .materia(mArrendamiento)
-                    .tipoExpediente(tOrdinario)
-                    .organoJurisdiccional(oJuzgado)
-                    .abogadoResponsable(abogadoDemo)
-                    .abogadoResponsableNombre(abogadoDemo.getNombreCompleto())
-                    .partes("Inmobiliaria SA de CV vs. Juan Pérez")
-                    .sede("CDMX")
-                    .createdAt(LocalDateTime.now())
-                    .build();
-
-            expedienteRepository.save(exp);
-            System.out.println("Expediente de prueba creado: EXP-2026/001");
-        }
         // 7. CATÁLOGO DE ESTADOS (MÉXICO)
         if (estadoRepository.count() == 0) {
             List<String> estadosMexico = List.of(

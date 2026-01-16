@@ -1,0 +1,61 @@
+<div th:fragment="filtros" class="bg-white p-4 rounded-lg shadow-sm mb-8 border-t border-gob-oro">
+    
+    <form th:action="@{/expedientes}" method="get" id="formFiltros">
+        
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-xs font-bold text-gob-oro uppercase">
+                <i class="fas fa-filter mr-1"></i> Filtros de Expedientes
+            </h3>
+            
+            <div class="flex gap-2">
+                <a th:href="@{/expedientes}" class="text-xs text-gray-400 hover:text-gray-600 underline">Limpiar</a>
+                <button type="submit" class="bg-gob-guinda text-white text-xs px-3 py-1 rounded hover:bg-gob-guinda-claro">
+                    Filtrar
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            
+            <select name="gerenciaId" class="border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none">
+                <option value="">Gerencia: Todas</option>
+                <option th:each="g : ${listaGerencias}" 
+                        th:value="${g.id}" 
+                        th:text="${g.nombre}"
+                        th:selected="${param.gerenciaId != null and param.gerenciaId[0] == g.id.toString()}"></option>
+            </select>
+
+            <select name="materiaId" class="border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none">
+                <option value="">Materia: Todas</option>
+                <option th:each="m : ${listaMaterias}" 
+                        th:value="${m.id}" 
+                        th:text="${m.nombre}"
+                        th:selected="${param.materiaId != null and param.materiaId[0] == m.id.toString()}"></option>
+            </select>
+
+            <select name="tipoId" class="border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none">
+                <option value="">Tipo: Todos</option>
+                <option th:each="t : ${listaTipos}" 
+                        th:value="${t.id}" 
+                        th:text="${t.nombre}"
+                        th:selected="${param.tipoId != null and param.tipoId[0] == t.id.toString()}"></option>
+            </select>
+
+            <select name="prioridad" class="border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none">
+                <option value="">Prioridad: Todas</option>
+                <option th:each="p : ${listaPrioridades}" 
+                        th:value="${p}" 
+                        th:text="${p}"
+                        th:selected="${param.prioridad != null and param.prioridad[0] == p.toString()}"></option>
+            </select>
+
+            <select name="abogadoId" class="border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none">
+                <option value="">Abogado: Todos</option>
+                <option th:each="a : ${listaAbogados}" 
+                        th:value="${a.id}" 
+                        th:text="${a.nombreCompleto}"
+                        th:selected="${param.abogadoId != null and param.abogadoId[0] == a.id.toString()}"></option>
+            </select>
+        </div>
+    </form>
+</div>

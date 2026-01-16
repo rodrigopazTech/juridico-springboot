@@ -1,8 +1,8 @@
 package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
-import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
+import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.repository.Catalogo.EstadoRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
@@ -10,15 +10,17 @@ import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRep
 import com.juridico.sistema_juridico.repository.Catalogo.TipoExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.time.LocalDateTime;
 
 @Controller
 @RequestMapping("/expedientes")
@@ -32,53 +34,63 @@ public class ExpedientesController {
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private EstadoRepository estadoRepository;
 
-
+    // MÉTODO INDEX ACTUALIZADO (Con Búsqueda y Paginación)
     @GetMapping
-    public String index(Model model) {
+    public String index(Model model,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "") String keyword,
+                        // Parámetros de los Filtros (Dropdowns)
+                        @RequestParam(required = false) Integer gerenciaId,
+                        @RequestParam(required = false) Integer materiaId,
+                        @RequestParam(required = false) Integer tipoId,
+                        @RequestParam(required = false) Prioridad prioridad,
+                        @RequestParam(required = false) Integer abogadoId) {
+        
         model.addAttribute("pageTitle", "Gestión de Expedientes");
 
-        
-        // Catálogos de Base de Datos
+        // 1. Cargar Listas para los Selects (Modal y Filtros)
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
         model.addAttribute("listaMaterias", materiaRepository.findAll());
         model.addAttribute("listaTipos", tipoExpedienteRepository.findAll());
         model.addAttribute("listaOrganos", organoRepository.findAll());
-        model.addAttribute("listaAbogados", usuarioRepository.findAll()); 
+        model.addAttribute("listaAbogados", usuarioRepository.findAll());
+        model.addAttribute("listaPrioridades", Prioridad.values());
         model.addAttribute("listaEstados", estadoRepository.findAllByOrderByNombreAsc());
 
-        // Enums (Valores fijos en código)
-        model.addAttribute("listaPrioridades", Prioridad.values());
-        
-        model.addAttribute("expedientes", expedienteRepository.findAll());
+        // 2. Configurar Paginación
+        Pageable pageable = PageRequest.of(page, 20, Sort.by("createdAt").descending());
 
+        // 3. LLAMAR A LA CONSULTA MAESTRA
+        Page<Expediente> paginaExpedientes = expedienteRepository.buscarExpedientes(
+                keyword, gerenciaId, materiaId, tipoId, prioridad, abogadoId, pageable
+        );
+
+        // 4. Enviar datos a la vista
+        model.addAttribute("expedientes", paginaExpedientes);
+        
+        // Mantener los valores seleccionados en los inputs después de recargar
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("gerenciaId", gerenciaId); // Nota: Thymeleaf param.gerenciaId funciona, pero esto es más seguro
+        
         return "views/expedientes/index";
     }
 
+    // MÉTODO GUARDAR
     @PostMapping("/guardar")
     public String guardarExpediente(@ModelAttribute Expediente expediente, RedirectAttributes flash) {
         try {
             if (expediente.getId() == null) {
                 expediente.setCreatedAt(LocalDateTime.now());
-                expediente.setEtapaProcesal(EtapaProcesal.TRAMITE); 
+                expediente.setEtapaProcesal(EtapaProcesal.TRAMITE);
             }
             expediente.setUpdatedAt(LocalDateTime.now());
 
-            // 2. (Temporal) Asignar un usuario por defecto si viene nulo
-            // En el futuro, aquí obtendrás el usuario logueado desde el SecurityContext
-            if (expediente.getAbogadoResponsable() == null) {
-                 // Puedes buscar el admin o dejarlo nulo si tu BD lo permite (pero tu entidad dice que puede ser nulo en la relación, así que está bien)
-            }
-
-            // 3. Guardar en Base de Datos
             expedienteRepository.save(expediente);
-
-            flash.addFlashAttribute("success", "Expediente guardado correctamente.");
             
         } catch (Exception e) {
-            e.printStackTrace(); // Mira la consola para ver el error real si falla
-            flash.addFlashAttribute("error", "Error al guardar el expediente: " + e.getMessage());
+            e.printStackTrace();
+            flash.addFlashAttribute("error", "Error al guardar: " + e.getMessage());
         }
-
         return "redirect:/expedientes";
     }
 }
