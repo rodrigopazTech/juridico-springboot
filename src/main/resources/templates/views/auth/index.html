@@ -1,117 +1,41 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | Sistema Jurídico</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'gob-guinda': '#621132',
-                        'gob-guinda-claro': '#95224e',
-                        'gob-oro': '#D4C19C',
-                        'gob-verde': '#10312B',
-                        'gob-gris': '#F6F6F6'
-                    }
-                }
-            }
-        }
-    </script>
 </head>
-<body class="bg-gob-gris flex items-center justify-center h-screen font-sans">
+<body class="bg-gray-100 flex items-center justify-center h-screen font-sans">
 
-    <div class="fixed top-0 w-full h-1 bg-gob-oro z-50"></div>
-
-    <div class="bg-white p-10 rounded-lg shadow-xl w-full max-w-md border-t-4 border-gob-guinda">
+    <div class="bg-white p-10 rounded-lg shadow-xl w-full max-w-md border-t-4 border-[#621132]">
         
         <div class="text-center mb-8">
-            <div class="mb-4">
-                <i class="fas fa-balance-scale text-gob-guinda text-5xl"></i>
-            </div>
-            <h2 class="text-2xl font-bold text-gob-verde uppercase tracking-wider">Sistema Jurídico</h2>
-            <div class="w-16 h-1 bg-gob-oro mx-auto mt-2"></div>
+            <i class="fas fa-balance-scale text-[#621132] text-5xl mb-4"></i>
+            <h2 class="text-3xl font-bold text-gray-800">Sistema Jurídico</h2>
         </div>
-        
-        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-6">
-            <div>
-                <label class="block text-gob-verde text-sm font-bold mb-2 uppercase" for="email">
-                    Correo Institucional
-                </label>
-                <input class="w-full py-2.5 px-4 bg-white border-b-2 border-gray-300 focus:outline-none focus:border-gob-guinda transition duration-300 text-gray-700" 
-                       id="email" type="email" placeholder="usuario@gob.mx" required>
-            </div>
 
-            <div>
-                <label class="block text-gob-verde text-sm font-bold mb-2 uppercase" for="password">
-                    Contraseña
-                </label>
-                <input class="w-full py-2.5 px-4 bg-white border-b-2 border-gray-300 focus:outline-none focus:border-gob-guinda transition duration-300 text-gray-700" 
-                       id="password" type="password" placeholder="••••••••••••" required>
-            </div>
+        <div th:if="${param.error}" class="mb-4 p-3 bg-red-100 text-red-700 rounded text-sm text-center">
+            Credenciales incorrectas.
+        </div>
+        <div th:if="${param.logout}" class="mb-4 p-3 bg-green-100 text-green-700 rounded text-sm text-center">
+            Sesión cerrada correctamente.
+        </div>
 
-            <button class="w-full bg-gob-guinda hover:bg-gob-guinda-claro text-white font-bold py-3 px-4 rounded shadow-md hover:shadow-lg transition duration-300 uppercase tracking-widest text-sm" 
-                    type="submit">
-                Entrar al Sistema
+        <form th:action="@{/perform_login}" method="POST" class="space-y-6">
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Usuario</label>
+                <input type="text" name="username" required class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-[#621132]" placeholder="admin@juridico.com">
+            </div>
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Contraseña</label>
+                <input type="password" name="password" required class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-[#621132]" placeholder="••••••••">
+            </div>
+            <button type="submit" class="w-full bg-[#621132] text-white font-bold py-3 rounded hover:bg-[#4a0d26] transition">
+                Ingresar
             </button>
-            
-            <div id="loading" class="hidden flex justify-center py-2">
-                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-gob-guinda"></div>
-            </div>
-
-            <p id="errorMessage" class="text-red-700 text-xs font-bold text-center hidden p-3 bg-red-50 border border-red-200 rounded"></p>
         </form>
-
-        <div class="mt-10 text-center border-t border-gray-100 pt-6">
-            <p class="text-[10px] text-gray-400 uppercase leading-tight">
-                Secretaría de Desarrollo Jurídico<br>Gobierno de México
-            </p>
-        </div>
     </div>
-
-    <script>
-        async function handleLogin(event) {
-            event.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const errorMsg = document.getElementById('errorMessage');
-            const loader = document.getElementById('loading');
-
-            // Limpiar estados previos
-            errorMsg.classList.add('hidden');
-            loader.classList.remove('hidden');
-
-            try {
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: email, password: password })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    // 1. Guardar en localStorage (útil para peticiones AJAX futuras)
-                    localStorage.setItem('jwt_token', data.accessToken || data.token);
-                    document.cookie = `JWT_TOKEN=${data.accessToken || data.token}; path=/; max-age=86400; SameSite=Strict`;
-
-                    // 3. Redirigir a la vista protegida
-                    window.location.href = '/expedientes';
-                } else {
-                    errorMsg.innerText = "ACCESO DENEGADO: Credenciales incorrectas";
-                    errorMsg.classList.remove('hidden');
-                }
-            } catch (error) {
-                console.error(error);
-                errorMsg.innerText = "ERROR: No hay conexión con el servidor";
-                errorMsg.classList.remove('hidden');
-            } finally {
-                loader.classList.add('hidden');
-            }
-        }
-    </script>
 </body>
 </html>

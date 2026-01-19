@@ -19,8 +19,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
+import org.springframework.web.bind.annotation.PathVariable;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Controller
 @RequestMapping("/expedientes")
@@ -92,5 +93,15 @@ public class ExpedientesController {
             flash.addFlashAttribute("error", "Error al guardar: " + e.getMessage());
         }
         return "redirect:/expedientes";
+    }
+    @GetMapping("/{id}")
+    public String verDetalle(@PathVariable UUID id, Model model) {
+        // Buscamos el expediente por su ID
+        Expediente expediente = expedienteRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Expediente no encontrado: " + id));
+
+        model.addAttribute("expediente", expediente);
+        
+        return "views/expedientes/detalle";
     }
 }

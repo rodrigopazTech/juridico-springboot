@@ -31,6 +31,9 @@
         <div class="flex items-center gap-2 text-sm">
             <span class="text-gob-guinda font-bold">Lic. Usuario</span>
             <i class="fas fa-user-circle text-gray-400 text-2xl"></i>
+            <a th:href="@{/logout}" class="text-gray-400 hover:text-red-600 ml-2" title="Cerrar Sesión">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
         </div>
     </nav>
 
@@ -40,56 +43,57 @@
         <div th:if="${error}" class="mb-4 p-4 bg-red-100 text-red-700 rounded border border-red-200" th:text="${error}"></div>
 
         <div th:replace="~{fragments/barra-busqueda-exp :: barra}"></div>
-        <div th:replace="~{fragments/filtros-expedientes :: filtros}"></div>
-
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             
-            <div th:each="exp : ${expedientes.content}" 
-                 class="bg-white rounded-lg shadow hover:shadow-md transition duration-300 border-l-4 p-5 relative"
-                 th:classappend="${exp.prioridad.name() == 'ALTA' ? 'border-red-600' : (exp.prioridad.name() == 'MEDIA' ? 'border-yellow-500' : 'border-green-500')}">
-                
-                <div class="flex justify-between items-start mb-2">
-                    <div>
-                        <h4 class="text-lg font-bold text-gob-guinda" th:text="${exp.numero}">EXP-0000</h4>
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide" 
-                              th:text="${exp.materia != null ? exp.materia.nombre : 'S/N'}">MATERIA</span>
+            <a th:each="exp : ${expedientes.content}" 
+               th:href="@{/expedientes/{id}(id=${exp.id})}" 
+               class="block group">
+               
+                <div class="bg-white rounded-lg shadow group-hover:shadow-lg transition duration-300 border-l-4 p-5 relative cursor-pointer h-full"
+                     th:classappend="${exp.prioridad.name() == 'ALTA' ? 'border-red-600' : (exp.prioridad.name() == 'MEDIA' ? 'border-yellow-500' : 'border-green-500')}">
+                    
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h4 class="text-lg font-bold text-gob-guinda group-hover:underline" th:text="${exp.numero}">EXP-0000</h4>
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide" 
+                                  th:text="${exp.materia != null ? exp.materia.nombre : 'S/N'}">MATERIA</span>
+                        </div>
+                        
+                        <div class="flex flex-col items-end gap-1">
+                            <span class="text-[10px] border border-blue-500 text-blue-600 px-2 py-0.5 rounded font-bold" 
+                                  th:text="${exp.etapaProcesal}">TRAMITE</span>
+                            
+                            <span class="text-[10px] px-2 py-0.5 rounded font-bold border"
+                                  th:text="${exp.prioridad}"
+                                  th:classappend="${exp.prioridad.name() == 'ALTA' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'}">
+                                PRIORIDAD
+                            </span>
+                        </div>
                     </div>
                     
-                    <div class="flex flex-col items-end gap-1">
-                        <span class="text-[10px] border border-blue-500 text-blue-600 px-2 py-0.5 rounded font-bold" 
-                              th:text="${exp.etapaProcesal}">TRAMITE</span>
-                        
-                        <span class="text-[10px] px-2 py-0.5 rounded font-bold border"
-                              th:text="${exp.prioridad}"
-                              th:classappend="${exp.prioridad.name() == 'ALTA' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'}">
-                            PRIORIDAD
-                        </span>
+                    <p class="text-gray-600 text-sm mb-4 line-clamp-2 h-10 font-medium" 
+                       th:text="${exp.partes != null ? exp.partes : exp.descripcion}">
+                        Descripción...
+                    </p>
+                    
+                    <div class="border-t border-gray-100 pt-3 flex justify-between items-center text-xs text-gray-500">
+                        <div class="flex items-center gap-1">
+                            <i class="fas fa-user-tie"></i> 
+                            <span th:text="${exp.abogadoResponsable != null ? exp.abogadoResponsable.nombreCompleto : 'Sin Asignar'}">Lic. Nombre</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <i class="fas fa-university"></i>
+                            <span th:text="${exp.organoJurisdiccional != null ? exp.organoJurisdiccional.nombre : 'Sin Órgano'}" class="truncate max-w-[100px]">Órgano</span>
+                        </div>
                     </div>
                 </div>
-                
-                <p class="text-gray-600 text-sm mb-4 line-clamp-2 h-10 font-medium" 
-                   th:text="${exp.partes != null ? exp.partes : exp.descripcion}">
-                    Partes...
-                </p>
-                
-                <div class="border-t border-gray-100 pt-3 flex justify-between items-center text-xs text-gray-500">
-                    <div class="flex items-center gap-1">
-                        <i class="fas fa-user-tie"></i> 
-                        <span th:text="${exp.abogadoResponsable != null ? exp.abogadoResponsable.nombreCompleto : 'Sin Asignar'}">Lic. Nombre</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <i class="fas fa-university"></i>
-                        <span th:text="${exp.organoJurisdiccional != null ? exp.organoJurisdiccional.nombre : 'Sin Órgano'}" class="truncate max-w-[100px]">Órgano</span>
-                    </div>
-                </div>
-            </div>
-
+            </a>
+            
             <div th:if="${expedientes.totalElements == 0}" class="col-span-3 text-center py-10 text-gray-400">
                 <i class="fas fa-folder-open text-4xl mb-2"></i>
                 <p class="mt-2 text-sm">No se encontraron expedientes con esa búsqueda.</p>
             </div>
-
         </div> 
 
         <div class="mt-8 flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border-t border-gray-100"
@@ -97,7 +101,6 @@
             
             <span class="text-xs text-gray-500 font-medium">
                 Página <span th:text="${expedientes.number + 1}">1</span> de <span th:text="${expedientes.totalPages}">1</span>
-                &nbsp;(Total: <span th:text="${expedientes.totalElements}">0</span> registros)
             </span>
 
             <div class="flex gap-2">
@@ -120,7 +123,6 @@
     <div th:replace="~{fragments/modal-nuevo-exp :: modal}"></div>
 
     <script>
-        // Cerrar modales con ESC
         document.onkeydown = function(evt) {
             evt = evt || window.event;
             if (evt.keyCode == 27) { 

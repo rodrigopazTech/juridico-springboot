@@ -1,33 +1,14 @@
 package com.juridico.sistema_juridico.controller;
 
-import com.juridico.sistema_juridico.dto.LoginRequest;
-import com.juridico.sistema_juridico.dto.LoginResponse;
-import com.juridico.sistema_juridico.dto.RegisterRequest;
-import com.juridico.sistema_juridico.service.AuthService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 
-@RestController
-@RequestMapping("/api/auth")
+@Controller
 public class AuthController {
-
-    @Autowired
-    private AuthService authService;
-
-    // Endpoint para LOGIN
-    // URL: http://localhost:8080/api/auth/login
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
-        LoginResponse response = authService.login(loginRequest);
-        return ResponseEntity.ok(response);
-    }
-
-    // Endpoint para REGISTRO
-    // URL: http://localhost:8080/api/auth/register
-    @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequest registerRequest) {
-        String mensaje = authService.register(registerRequest);
-        return ResponseEntity.ok(mensaje);
+    
+    // Mapeamos la raíz "/" al archivo HTML de login
+    @GetMapping("/")
+    public String login() {
+        return "views/auth/index"; 
     }
 }
