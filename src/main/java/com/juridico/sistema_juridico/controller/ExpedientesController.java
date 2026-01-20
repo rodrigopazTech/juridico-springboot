@@ -57,6 +57,7 @@ public class ExpedientesController {
         model.addAttribute("listaAbogados", usuarioRepository.findAll());
         model.addAttribute("listaPrioridades", Prioridad.values());
         model.addAttribute("listaEstados", estadoRepository.findAllByOrderByNombreAsc());
+        model.addAttribute("activePage", "expedientes");
 
         // 2. Configurar Paginación
         Pageable pageable = PageRequest.of(page, 20, Sort.by("createdAt").descending());
@@ -106,6 +107,8 @@ public class ExpedientesController {
         model.addAttribute("gerencias", gerenciaRepository.findAll());
         model.addAttribute("usuarios", usuarioRepository.findAll());
         model.addAttribute("estados", estadoRepository.findAll());
+
+        model.addAttribute("activePage", "expedientes");
 
         return "views/expedientes/detalle";
     }
