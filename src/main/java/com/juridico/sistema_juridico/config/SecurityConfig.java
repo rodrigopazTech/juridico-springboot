@@ -33,7 +33,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
-                .loginPage("/") // Login en la raíz
+                .loginPage("/login") // Login en la raíz
                 .loginProcessingUrl("/perform_login") // Ruta interna de Spring
                 .defaultSuccessUrl("/expedientes", true) // Éxito -> Expedientes
                 .failureUrl("/?error=true") // Fallo -> Login con error
@@ -41,7 +41,7 @@ public class SecurityConfig {
             )
             .logout(logout -> logout
                 .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-                .logoutSuccessUrl("/?logout")
+                .logoutSuccessUrl("/login?logout")
                 .deleteCookies("JSESSIONID")
                 .permitAll()
             );

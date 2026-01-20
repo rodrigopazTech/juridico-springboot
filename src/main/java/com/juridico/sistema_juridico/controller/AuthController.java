@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class AuthController {
     
     // Mapeamos la raíz "/" al archivo HTML de login
-    @GetMapping("/")
+    @GetMapping("/login")
     public String login() {
         return "views/auth/index"; 
     }

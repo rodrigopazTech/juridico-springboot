@@ -1,0 +1,107 @@
+<div th:fragment="modalEditar" id="modal-editar-exp" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+
+    <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+        
+        <div class="relative transform rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border border-gray-200">
+            
+            <div class="bg-gob-guinda px-4 py-3 sm:px-6 flex justify-between items-center rounded-t-lg">
+                <h3 class="text-base font-semibold leading-6 text-white" id="modal-title">
+                    <i class="fas fa-edit mr-2"></i> Editar Expediente
+                </h3>
+                <button type="button" onclick="document.getElementById('modal-editar-exp').classList.add('hidden')" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form th:action="@{/expedientes/editar}" method="post" th:object="${expediente}">
+                
+                <input type="hidden" th:field="*{id}" />
+
+                <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700">Número de Expediente</label>
+                            <input type="text" th:field="*{numero}" readonly class="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm sm:text-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700">Prioridad</label>
+                            <select th:field="*{prioridad}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-guinda sm:text-sm">
+                                <option th:each="p : ${prioridades}" th:value="${p}" th:text="${p}"></option>
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-gray-700">Gerencia</label>
+                            <select name="gerencia" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-guinda sm:text-sm">
+                                <option th:each="g : ${gerencias}" 
+                                        th:value="${g.id}" 
+                                        th:text="${g.nombre}"
+                                        th:selected="${expediente.gerencia != null and expediente.gerencia.id == g.id}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700">Materia</label>
+                            <select name="materia" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-guinda sm:text-sm">
+                                <option th:each="m : ${materias}" 
+                                        th:value="${m.id}" 
+                                        th:text="${m.nombre}"
+                                        th:selected="${expediente.materia != null and expediente.materia.id == m.id}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700">Tipo Expediente</label>
+                            <select name="tipoExpediente" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-guinda sm:text-sm">
+                                <option th:each="t : ${tipos}" 
+                                        th:value="${t.id}" 
+                                        th:text="${t.nombre}"
+                                        th:selected="${expediente.tipoExpediente != null and expediente.tipoExpediente.id == t.id}">
+                                </option>
+                            </select>
+                        </div>
+
+                         <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-gray-700">Órgano Jurisdiccional</label>
+                            <select name="organoJurisdiccional" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-guinda sm:text-sm">
+                                <option th:each="o : ${organos}" 
+                                        th:value="${o.id}" 
+                                        th:text="${o.nombre}"
+                                        th:selected="${expediente.organoJurisdiccional != null and expediente.organoJurisdiccional.id == o.id}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-gray-700">Abogado Responsable</label>
+                            <select name="abogadoResponsable" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-guinda sm:text-sm">
+                                <option value="">-- Sin Asignar --</option>
+                                <option th:each="u : ${usuarios}" 
+                                        th:value="${u.id}" 
+                                        th:text="${u.nombreCompleto}"
+                                        th:selected="${expediente.abogadoResponsable != null and expediente.abogadoResponsable.id == u.id}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-gray-700">Descripción de los Hechos</label>
+                            <textarea th:field="*{descripcion}" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-guinda focus:ring-gob-guinda sm:text-sm"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 rounded-b-lg">
+                    <button type="submit" class="inline-flex w-full justify-center rounded-md bg-gob-guinda px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gob-guindaDark sm:ml-3 sm:w-auto">Guardar Cambios</button>
+                    <button type="button" onclick="document.getElementById('modal-editar-exp').classList.add('hidden')" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
