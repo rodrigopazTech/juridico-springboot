@@ -110,6 +110,8 @@ public class ExpedientesController {
 
         model.addAttribute("activePage", "expedientes");
 
+        model.addAttribute("activePage", "expedientes");
+
         return "views/expedientes/detalle";
     }
 }
