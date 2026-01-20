@@ -22,7 +22,7 @@
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Prioridad*</label>
                     <select name="prioridad" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
-                        <option th:each="p : ${listaPrioridades}" 
+                        <option th:each="p : ${prioridades}" 
                                 th:value="${p}" 
                                 th:text="${p}"></option>
                     </select>
@@ -34,7 +34,7 @@
                     <label class="block font-bold text-gray-600 mb-1">Gerencia*</label>
                     <select name="gerencia.id" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white" required>
                         <option value="">Selecciona...</option>
-                        <option th:each="g : ${listaGerencias}" 
+                        <option th:each="g : ${gerencias}" 
                                 th:value="${g.id}" 
                                 th:text="${g.nombre}"></option>
                     </select>
@@ -43,8 +43,7 @@
                     <label class="block font-bold text-gray-600 mb-1">Estado / Sede*</label>
                     <select name="sede" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white" required>
                         <option value="">Seleccione estado...</option>
-                        
-                        <option th:each="est : ${listaEstados}" 
+                        <option th:each="est : ${estados}" 
                                 th:value="${est.nombre}" 
                                 th:text="${est.nombre}"></option>
                     </select>
@@ -56,7 +55,7 @@
                     <label class="block font-bold text-gray-600 mb-1">Materia*</label>
                     <select name="materia.id" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white" required>
                         <option value="">Selecciona...</option>
-                        <option th:each="m : ${listaMaterias}" 
+                        <option th:each="m : ${materias}" 
                                 th:value="${m.id}" 
                                 th:text="${m.nombre}"></option>
                     </select>
@@ -65,7 +64,7 @@
                     <label class="block font-bold text-gray-600 mb-1">Tipo Expediente*</label>
                     <select name="tipoExpediente.id" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white" required>
                         <option value="">Selecciona...</option>
-                        <option th:each="t : ${listaTipos}" 
+                        <option th:each="t : ${tipos}" 
                                 th:value="${t.id}" 
                                 th:text="${t.nombre}"></option>
                     </select>
@@ -76,7 +75,7 @@
                 <label class="block font-bold text-gray-600 mb-1">Abogado Responsable*</label>
                 <select name="abogadoResponsable.id" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
                     <option value="">Asignar abogado...</option>
-                    <option th:each="a : ${listaAbogados}" 
+                    <option th:each="a : ${usuarios}" 
                             th:value="${a.id}" 
                             th:text="${a.nombreCompleto}"></option>
                 </select>
@@ -88,21 +87,6 @@
                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none">
             </div>
 
-            <div>
-                <label class="block font-bold text-gray-600 mb-1">Órgano Jurisdiccional</label>
-                <div class="flex">
-                    <select name="organoJurisdiccional.id" class="w-full border border-gray-300 rounded-l p-2 focus:border-gob-guinda outline-none bg-white">
-                        <option value="">Seleccione un órgano...</option>
-                        <option th:each="o : ${listaOrganos}" 
-                                th:value="${o.id}" 
-                                th:text="${o.nombre}"></option>
-                    </select>
-                    <button type="button" class="bg-gray-100 border border-l-0 border-gray-300 px-3 rounded-r hover:bg-gray-200">
-                        <i class="fas fa-cog text-gray-500"></i>
-                    </button>
-                </div>
-            </div>
-            
             <div class="col-span-1 md:col-span-2">
                 <label class="block font-bold text-gray-600 mb-1">Descripción </label>
                 <textarea name="descripcion" rows="4" required

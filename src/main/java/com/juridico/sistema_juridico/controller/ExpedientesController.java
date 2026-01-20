@@ -11,6 +11,7 @@ import com.juridico.sistema_juridico.repository.Catalogo.TipoExpedienteRepositor
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -64,7 +65,13 @@ public class ExpedientesController {
 
         // 3. LLAMAR A LA CONSULTA MAESTRA
         Page<Expediente> paginaExpedientes = expedienteRepository.buscarExpedientes(
-                keyword, gerenciaId, materiaId, tipoId, prioridad, abogadoId, pageable
+                keyword, 
+                gerenciaId, 
+                materiaId, 
+                tipoId, 
+                prioridad, 
+                abogadoId, 
+                pageable
         );
 
         // 4. Enviar datos a la vista
@@ -80,7 +87,7 @@ public class ExpedientesController {
 
     // MÉTODO GUARDAR
     @PostMapping("/guardar")
-    public String guardarExpediente(@ModelAttribute Expediente expediente, RedirectAttributes flash) {
+    public String guardar(@ModelAttribute Expediente expediente, RedirectAttributes redirectAttrs) {
         try {
             if (expediente.getId() == null) {
                 expediente.setCreatedAt(LocalDateTime.now());
@@ -92,8 +99,10 @@ public class ExpedientesController {
             
         } catch (Exception e) {
             e.printStackTrace();
-            flash.addFlashAttribute("error", "Error al guardar: " + e.getMessage());
+            redirectAttrs.addFlashAttribute("mensaje", "Ocurrió un error inesperado al guardar.");
+            redirectAttrs.addFlashAttribute("tipo", "error");
         }
+        
         return "redirect:/expedientes";
     }
     @GetMapping("/{id}")

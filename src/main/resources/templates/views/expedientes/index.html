@@ -124,5 +124,34 @@
             }
         };
     </script>
+    <script th:if="${mensaje != null}">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Obtenemos los valores enviados desde el Controller
+            const mensaje = "[[${mensaje}]]";
+            const tipo = "[[${tipo}]]"; // 'success' o 'error'
+
+            // Configuramos el título y el icono según el tipo
+            let titulo = "¡Éxito!";
+            let icono = "success";
+            
+            if (tipo === 'error') {
+                titulo = "Atención";
+                icono = "error";
+            }
+
+            // Mostramos la alerta bonita
+            Swal.fire({
+                title: titulo,
+                text: mensaje,
+                icon: icono,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#bc955c', // Color gob-oro
+                background: '#f9fafb',
+                customClass: {
+                    confirmButton: 'font-bold'
+                }
+            });
+        });
+    </script>
 </body>
 </html>
