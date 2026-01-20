@@ -19,7 +19,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.web.bind.annotation.PathVariable;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -39,7 +39,7 @@ public class ExpedientesController {
     @GetMapping
     public String index(Model model,
                         @RequestParam(defaultValue = "0") int page,
-                        @RequestParam(defaultValue = "") String keyword,
+                        @RequestParam(required = false) String keyword,
                         // Parámetros de los Filtros (Dropdowns)
                         @RequestParam(required = false) Integer gerenciaId,
                         @RequestParam(required = false) Integer materiaId,
@@ -72,7 +72,8 @@ public class ExpedientesController {
         // Mantener los valores seleccionados en los inputs después de recargar
         model.addAttribute("keyword", keyword);
         model.addAttribute("gerenciaId", gerenciaId); // Nota: Thymeleaf param.gerenciaId funciona, pero esto es más seguro
-        
+        model.addAttribute("pageTitle", "Gestión de Expedientes - Agenda Legal");
+
         return "views/expedientes/index";
     }
 
@@ -96,12 +97,16 @@ public class ExpedientesController {
     }
     @GetMapping("/{id}")
     public String verDetalle(@PathVariable UUID id, Model model) {
-        // Buscamos el expediente por su ID
         Expediente expediente = expedienteRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Expediente no encontrado: " + id));
 
         model.addAttribute("expediente", expediente);
         
+        // Si tu detalle tiene botones de editar, también necesita los catálogos:
+        model.addAttribute("gerencias", gerenciaRepository.findAll());
+        model.addAttribute("usuarios", usuarioRepository.findAll());
+        model.addAttribute("estados", estadoRepository.findAll());
+
         return "views/expedientes/detalle";
     }
 }
