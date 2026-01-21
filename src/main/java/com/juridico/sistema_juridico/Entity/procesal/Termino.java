@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
@@ -56,4 +57,30 @@ public class Termino {
     
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public String getSemaforoColor() {
+        // Si ya está terminado, semáforo gris (apagado)
+        if ("Concluido".equalsIgnoreCase(this.estatusTermino) || "Presentado".equalsIgnoreCase(this.estatusTermino)) {
+            return "bg-gray-400"; 
+        }
+
+        long diasRestantes = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaVencimiento);
+
+        if (diasRestantes < 0) return "bg-red-800";      // Vencido (Rojo Oscuro)
+        if (diasRestantes <= 3) return "bg-red-500";     // Crítico (Rojo Brillante)
+        if (diasRestantes <= 7) return "bg-yellow-400";  // Advertencia (Amarillo)
+        return "bg-green-500";                           // A tiempo (Verde)
+    }
+
+    
+    public String getDiasRestantesTexto() {
+        if ("Concluido".equalsIgnoreCase(this.estatusTermino)) return "Término Concluido";
+        
+        long dias = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaVencimiento);
+        
+        if (dias < 0) return "Vencido hace " + Math.abs(dias) + " días";
+        if (dias == 0) return "¡Vence HOY!";
+        if (dias == 1) return "Vence MAÑANA";
+        return "Faltan " + dias + " días";
+    }
 }

@@ -1,0 +1,48 @@
+<div th:fragment="filtros" class="bg-white p-4 rounded-lg shadow-sm mb-8 border-t border-gob-oro">
+    
+    <form th:action="@{/terminos}" method="get">
+        
+        <input type="hidden" name="keyword" th:value="${keyword}">
+
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-xs font-bold text-gob-oro uppercase">
+                <i class="fas fa-filter mr-1"></i> Filtros de Términos
+            </h3>
+            
+            <div class="flex gap-2">
+                <a th:href="@{/terminos}" class="text-xs text-gray-400 hover:text-gray-600 underline">Limpiar</a>
+                <button type="submit" class="bg-gob-guinda text-white text-xs px-3 py-1 rounded hover:bg-gob-guinda-claro">
+                    Filtrar
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <select name="estatus" class="border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none bg-white">
+                <option value="">Estatus: Todos</option>
+                <option th:each="st : ${listaEstatus}" 
+                        th:value="${st}" 
+                        th:text="${st}"
+                        th:selected="${paramEstatus == st}"></option>
+            </select>
+
+            <select name="prioridad" class="border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none bg-white">
+                <option value="">Prioridad: Todas</option>
+                <option th:each="p : ${listaPrioridades}" 
+                        th:value="${p}" 
+                        th:text="${p}"
+                        th:selected="${paramPrioridad != null and paramPrioridad.toString() == p.toString()}"></option>
+            </select>
+
+            <select name="abogadoId" class="border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none bg-white">
+                <option value="">Abogado: Todos</option>
+                <option th:each="a : ${listaAbogados}" 
+                        th:value="${a.id}" 
+                        th:text="${a.nombreCompleto}"
+                        th:selected="${paramAbogadoId != null and paramAbogadoId.toString() == a.id.toString()}"></option>
+            </select>
+
+        </div>
+    </form>
+</div>

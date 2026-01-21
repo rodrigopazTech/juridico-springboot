@@ -36,34 +36,22 @@ public class ExpedientesController {
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private EstadoRepository estadoRepository;
 
-    // MÉTODO INDEX ACTUALIZADO (Con Búsqueda y Paginación)
+    // MÉTODO INDEX ACTUALIZADO (Con nombres de variables corregidos)
     @GetMapping
     public String index(Model model,
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(required = false) String keyword,
-                        // Parámetros de los Filtros (Dropdowns)
+                        // Parámetros de los Filtros
                         @RequestParam(required = false) Integer gerenciaId,
                         @RequestParam(required = false) Integer materiaId,
                         @RequestParam(required = false) Integer tipoId,
                         @RequestParam(required = false) Prioridad prioridad,
                         @RequestParam(required = false) Integer abogadoId) {
         
-        model.addAttribute("pageTitle", "Gestión de Expedientes");
-
-        // 1. Cargar Listas para los Selects (Modal y Filtros)
-        model.addAttribute("listaGerencias", gerenciaRepository.findAll());
-        model.addAttribute("listaMaterias", materiaRepository.findAll());
-        model.addAttribute("listaTipos", tipoExpedienteRepository.findAll());
-        model.addAttribute("listaOrganos", organoRepository.findAll());
-        model.addAttribute("listaAbogados", usuarioRepository.findAll());
-        model.addAttribute("listaPrioridades", Prioridad.values());
-        model.addAttribute("listaEstados", estadoRepository.findAllByOrderByNombreAsc());
-        model.addAttribute("activePage", "expedientes");
-
-        // 2. Configurar Paginación
+        // 1. Configurar Paginación
         Pageable pageable = PageRequest.of(page, 20, Sort.by("createdAt").descending());
 
-        // 3. LLAMAR A LA CONSULTA MAESTRA
+        // 2. LLAMAR A LA CONSULTA MAESTRA
         Page<Expediente> paginaExpedientes = expedienteRepository.buscarExpedientes(
                 keyword, 
                 gerenciaId, 
@@ -74,18 +62,25 @@ public class ExpedientesController {
                 pageable
         );
 
-        // 4. Enviar datos a la vista
         model.addAttribute("expedientes", paginaExpedientes);
-        
-        // Mantener los valores seleccionados en los inputs después de recargar
         model.addAttribute("keyword", keyword);
-        model.addAttribute("gerenciaId", gerenciaId); // Nota: Thymeleaf param.gerenciaId funciona, pero esto es más seguro
         model.addAttribute("pageTitle", "Gestión de Expedientes - Agenda Legal");
+        model.addAttribute("activePage", "expedientes");
+
+        // 3. Cargar Listas para los Selects (CORREGIDO A MINÚSCULAS para coincidir con el Modal)
+        model.addAttribute("gerencias", gerenciaRepository.findAll());
+        model.addAttribute("materias", materiaRepository.findAll());
+        model.addAttribute("tipos", tipoExpedienteRepository.findAll());
+        model.addAttribute("organos", organoRepository.findAll());
+        // En tu modal usas 'usuarios' para los abogados, así que lo mandamos como 'usuarios'
+        model.addAttribute("usuarios", usuarioRepository.findAll());
+        model.addAttribute("prioridades", Prioridad.values());
+        model.addAttribute("estados", estadoRepository.findAllByOrderByNombreAsc());
 
         return "views/expedientes/index";
     }
 
-    // MÉTODO GUARDAR
+    // MÉTODO GUARDAR (Restaurada la protección contra duplicados)
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute Expediente expediente, RedirectAttributes redirectAttrs) {
         try {
@@ -97,6 +92,13 @@ public class ExpedientesController {
 
             expedienteRepository.save(expediente);
             
+            redirectAttrs.addFlashAttribute("mensaje", "Expediente guardado correctamente.");
+            redirectAttrs.addFlashAttribute("tipo", "success");
+            
+        } catch (DataIntegrityViolationException e) {
+            // Error específico de duplicado
+            redirectAttrs.addFlashAttribute("mensaje", "Error: El número de expediente '" + expediente.getNumero() + "' ya existe.");
+            redirectAttrs.addFlashAttribute("tipo", "error");
         } catch (Exception e) {
             e.printStackTrace();
             redirectAttrs.addFlashAttribute("mensaje", "Ocurrió un error inesperado al guardar.");
@@ -105,6 +107,7 @@ public class ExpedientesController {
         
         return "redirect:/expedientes";
     }
+
     @GetMapping("/{id}")
     public String verDetalle(@PathVariable UUID id, Model model) {
         Expediente expediente = expedienteRepository.findById(id)
@@ -112,12 +115,14 @@ public class ExpedientesController {
 
         model.addAttribute("expediente", expediente);
         
-        // Si tu detalle tiene botones de editar, también necesita los catálogos:
+        // Listas necesarias para modales de edición en el detalle
         model.addAttribute("gerencias", gerenciaRepository.findAll());
+        model.addAttribute("materias", materiaRepository.findAll());
+        model.addAttribute("tipos", tipoExpedienteRepository.findAll());
+        model.addAttribute("organos", organoRepository.findAll());
         model.addAttribute("usuarios", usuarioRepository.findAll());
+        model.addAttribute("prioridades", Prioridad.values());
         model.addAttribute("estados", estadoRepository.findAll());
-
-        model.addAttribute("activePage", "expedientes");
 
         model.addAttribute("activePage", "expedientes");
 
