@@ -100,3 +100,17 @@ function editarTermino(id, actuacion, fecha, expedienteId, abogadoId) {
     // 3. Mostrar modal
     document.getElementById('modal-nuevo-termino').classList.remove('hidden');
 }
+
+function activarSubidaAcuse(idTermino) {
+    // 1. Asignar ID al input oculto
+    const inputId = document.getElementById('acuse-termino-id');
+    const inputFile = document.getElementById('acuse-file-input');
+    
+    if(inputId && inputFile) {
+        inputId.value = idTermino;
+        // 2. Abrir selector de archivos
+        inputFile.click();
+    } else {
+        console.error("No se encontraron los inputs de acuse");
+    }
+}

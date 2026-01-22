@@ -106,59 +106,78 @@
                 </td>
 
                 <td class="px-4 py-3 text-right relative">
-                    <button th:onclick="editarTermino(
-                        [[${t.id}]], 
-                        [[${t.actuacion}]], 
-                        [[${t.fechaVencimiento}]], 
-                        [[${t.expediente != null ? t.expediente.id : ''}]], 
-                        [[${t.abogadoResponsable != null ? t.abogadoResponsable.id : ''}]]
-                    )"
-                        class="text-gray-400 hover:text-gob-oro mr-2" title="Editar">
-                        <i class="fas fa-edit"></i>
-                    </button>
+                   <button th:if="${t.estatusTermino == 'Liberado' || t.estatusTermino == 'Presentado' || t.estatusTermino == 'Concluido'}"
+                      class="text-gray-300 cursor-not-allowed mr-2" title="Edición Bloqueada">
+                      <i class="fas fa-edit"></i>
+                  </button>
 
+                  <button th:unless="${t.estatusTermino == 'Liberado' || t.estatusTermino == 'Presentado' || t.estatusTermino == 'Concluido'}"
+                          th:onclick="editarTermino(
+                              [[${t.id}]], 
+                              [[${t.actuacion}]], 
+                              [[${t.fechaVencimiento}]], 
+                              [[${t.expediente != null ? t.expediente.id : ''}]], 
+                              [[${t.abogadoResponsable != null ? t.abogadoResponsable.id : ''}]]
+                          )"
+                          class="text-gray-400 hover:text-gob-oro mr-2" title="Editar">
+                      <i class="fas fa-edit"></i>
+                  </button>
                     <button th:onclick="'toggleMenu(' + ${t.id} + ')'" class="text-gray-400 hover:text-gob-guinda px-2">
                         <i class="fas fa-ellipsis-v"></i>
                     </button>
 
                     <div th:id="'menu-' + ${t.id}" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-md shadow-xl z-50 border border-gray-100 text-left overflow-hidden ring-1 ring-black ring-opacity-5">
-                        
-                        <a th:if="${t.expediente != null}" 
+    
+                      <a th:if="${t.expediente != null}" 
                         th:href="@{/expedientes/{id}(id=${t.expediente.id})}"
                         class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-guinda transition border-l-4 border-transparent hover:border-gob-guinda">
-                            <i class="fas fa-folder-open mr-3 w-4 text-center text-gray-400"></i> Ver Expediente
-                        </a>
+                          <i class="fas fa-folder-open mr-3 w-4 text-center text-gray-400"></i> Ver Expediente
+                      </a>
 
-                        <div class="border-t border-gray-100"></div>
+                      <div class="border-t border-gray-100"></div>
 
-                        <button th:onclick="'activarSubida(' + ${t.id} + ')'" 
-                                class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-oro transition flex items-center border-l-4 border-transparent hover:border-gob-oro">
-                            <i th:class="${t.archivoWord != null ? 'fas fa-sync-alt mr-3 w-4 text-center text-orange-400' : 'fas fa-cloud-upload-alt mr-3 w-4 text-center text-gray-400'}"></i> 
-                            <span th:text="${t.archivoWord != null ? 'Actualizar Archivo' : 'Subir Borrador'}">Subir Borrador</span>
-                        </button>
-                        
-                        <a th:if="${t.archivoWord != null}" 
-                        href="#" 
-                        onclick="Swal.fire('Descargando...', 'La descarga iniciará en breve.', 'success')"
+                      <button th:unless="${t.estatusTermino == 'Liberado' || t.estatusTermino == 'Presentado' || t.estatusTermino == 'Concluido'}"
+                              th:onclick="'activarSubida(' + ${t.id} + ')'" 
+                              class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-oro transition flex items-center border-l-4 border-transparent hover:border-gob-oro">
+                          <i th:class="${t.archivoWord != null ? 'fas fa-sync-alt mr-3 w-4 text-center text-orange-400' : 'fas fa-cloud-upload-alt mr-3 w-4 text-center text-gray-400'}"></i> 
+                          <span th:text="${t.archivoWord != null ? 'Reemplazar Borrador' : 'Subir Borrador'}">Subir Borrador</span>
+                      </button>
+                      
+                      <a th:if="${t.archivoWord != null}" 
+                        th:href="@{/terminos/descargar/{id}(id=${t.id})}" 
                         class="block w-full text-left px-4 py-3 text-sm text-blue-600 hover:bg-blue-50 transition flex items-center border-l-4 border-transparent hover:border-blue-500">
-                            <i class="fas fa-file-download mr-3 w-4 text-center"></i> 
-                            <span class="truncate font-medium" th:text="${t.archivoWord}" title="Clic para descargar">Archivo.docx</span>
-                        </a>
                         
-                        <div class="border-t border-gray-100"></div>
+                        <i class="fas fa-file-word mr-3 w-4 text-center"></i> 
+                        <span class="truncate font-medium" th:text="${t.archivoWord}">Archivo.docx</span>
+                      </a>
 
-                        <a th:href="@{/terminos/avanzar/{id}(id=${t.id})}"
+                      <button th:if="${t.estatusTermino == 'Presentado'}"
+                              th:onclick="'activarSubidaAcuse(' + ${t.id} + ')'" 
+                              class="w-full text-left px-4 py-3 text-sm text-purple-700 hover:bg-purple-50 transition flex items-center border-l-4 border-transparent hover:border-purple-500 font-bold bg-purple-50/50">
+                          <i class="fas fa-file-signature mr-3 w-4 text-center text-purple-600"></i> 
+                          Subir Acuse y Concluir
+                      </button>
+                      
+                      <div class="border-t border-gray-100"></div>
+
+                      <a th:if="${t.estatusTermino != 'Presentado' && t.estatusTermino != 'Concluido'}"
+                        th:href="@{/terminos/avanzar/{id}(id=${t.id})}"
                         class="block px-4 py-3 text-sm text-green-700 hover:bg-green-50 transition border-l-4 border-transparent hover:border-green-500">
-                            <i class="fas fa-arrow-right mr-3 w-4 text-center text-green-500"></i> Avanzar Etapa
-                        </a>
+                          <i class="fas fa-arrow-right mr-3 w-4 text-center text-green-500"></i> Avanzar Etapa
+                      </a>
+                      
+                      <span th:if="${t.estatusTermino == 'Concluido'}" class="block px-4 py-3 text-sm text-gray-400 italic bg-gray-50 text-center">
+                          <i class="fas fa-check-circle mr-1"></i> Proceso Terminado
+                      </span>
 
-                        <div class="border-t border-gray-100"></div>
+                      <div class="border-t border-gray-100"></div>
 
-                        <button th:onclick="'confirmarEliminar(' + ${t.id} + ')'"
-                                class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition font-medium border-l-4 border-transparent hover:border-red-500">
-                            <i class="fas fa-trash-alt mr-3 w-4 text-center text-red-400"></i> Eliminar
-                        </button>
-                    </div>
+                      <button th:onclick="'confirmarEliminar(' + ${t.id} + ')'"
+                              class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition font-medium border-l-4 border-transparent hover:border-red-500">
+                          <i class="fas fa-trash-alt mr-3 w-4 text-center text-red-400"></i> Eliminar
+                      </button>
+                  </div>
+
                 </td>
             </tr>
         </tbody>
@@ -192,21 +211,13 @@
 
     <div th:replace="~{fragments/terminos/modal-nuevo-termino :: modal}"></div>
 
-    <form
-      id="form-upload"
-      th:action="@{/terminos/subir-archivo}"
-      method="post"
-      enctype="multipart/form-data"
-      class="hidden"
-    >
-      <input type="hidden" name="id" id="upload-termino-id" />
-      <input
-        type="file"
-        name="archivo"
-        id="upload-file-input"
-        onchange="document.getElementById('form-upload').submit()"
-      />
+   <form id="form-upload" th:action="@{/terminos/subir-archivo}" method="post" enctype="multipart/form-data" class="hidden">
     </form>
+
+  <form id="form-acuse" th:action="@{/terminos/subir-acuse}" method="post" enctype="multipart/form-data" class="hidden">
+      <input type="hidden" name="id" id="acuse-termino-id">
+      <input type="file" name="archivoAcuse" id="acuse-file-input" onchange="document.getElementById('form-acuse').submit()">
+  </form>
 
     <script th:if="${mensaje != null}">
       document.addEventListener("DOMContentLoaded", function () {

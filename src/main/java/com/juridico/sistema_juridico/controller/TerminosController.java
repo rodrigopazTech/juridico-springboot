@@ -2,9 +2,18 @@ package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
+import com.juridico.sistema_juridico.Entity.procesal.TerminoPresentado;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
+import com.juridico.sistema_juridico.util.TerminoExcelExporter;
+
+
+import jakarta.servlet.http.HttpServletResponse;
+
+import com.juridico.sistema_juridico.repository.procesal.TerminoPresentadoRepository; 
+import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,13 +24,22 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 
-import java.io.IOException;   
-import java.nio.file.*;        
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import java.net.MalformedURLException;
+ 
+import java.io.IOException;
+import java.nio.file.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.List; 
+import java.util.Date;
 
 @Controller
 @RequestMapping("/terminos")
@@ -36,41 +54,34 @@ public class TerminosController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    // 1. VISTA PRINCIPAL (LISTADO)
+    @Autowired
+    private TerminoPresentadoRepository terminoPresentadoRepository; // Inyección nueva
+
+    // 1. VISTA PRINCIPAL
     @GetMapping
     public String index(Model model,
                         @RequestParam(defaultValue = "0") int page,
-                        // Parámetros de filtro (pueden venir vacíos)
                         @RequestParam(required = false) String keyword,
                         @RequestParam(required = false) String estatus,
                         @RequestParam(required = false) Prioridad prioridad,
                         @RequestParam(required = false) Integer abogadoId) {
 
-        // 1. Configurar Paginación (Ordenado por Vencimiento)
         Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaVencimiento").ascending());
-
-        // 2. Llamar a la consulta maestra
+        
         Page<Termino> paginaTerminos = terminoRepository.buscarConFiltros(
                 keyword, estatus, prioridad, abogadoId, pageable
         );
 
-        // 3. Pasar resultados a la vista
         model.addAttribute("terminos", paginaTerminos);
-        model.addAttribute("pageTitle", "Gestión de Términos - Agenda Legal");
-        model.addAttribute("activePage", "terminos");
-
-        // 4. Pasar listas para los SELECTS de los filtros
         model.addAttribute("listaAbogados", usuarioRepository.findAll());
         model.addAttribute("listaPrioridades", Prioridad.values());
-        
-        // Lista manual de estatus para el filtro (o podrías crear un Enum si prefieres)
         model.addAttribute("listaEstatus", new String[]{"Proyectista", "Revisión", "Gerencia", "Dirección", "Liberado", "Presentado", "Concluido"});
 
-        // 5. Listas para el Modal de Crear (Ya las tenías)
+        // Listas para Modal
         model.addAttribute("expedientesList", expedienteRepository.findAll());
         model.addAttribute("abogados", usuarioRepository.findAll());
 
-        // 6. Mantener los filtros seleccionados en la vista (UX)
+        // Mantener filtros
         model.addAttribute("keyword", keyword);
         model.addAttribute("paramEstatus", estatus);
         model.addAttribute("paramPrioridad", prioridad);
@@ -79,7 +90,7 @@ public class TerminosController {
         return "views/terminos/index";
     }
 
-    // 2. GUARDAR TÉRMINO
+    // 2. GUARDAR (CON BLOQUEO DE EDICIÓN)
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute Termino terminoForm,
                           @RequestParam(value = "expedienteId", required = false) UUID expedienteId,
@@ -87,31 +98,35 @@ public class TerminosController {
         try {
             Termino terminoGuardar;
 
-            // CASO 1: EDICIÓN (El ID viene en el formulario)
             if (terminoForm.getId() != null) {
+                // EDICIÓN
                 Termino existente = terminoRepository.findById(terminoForm.getId()).orElse(null);
-                
                 if (existente != null) {
-                    // Actualizamos solo los campos editables
+                    
+                    // --- REGLA DE NEGOCIO: BLOQUEO ---
+                    String st = existente.getEstatusTermino();
+                    if ("Liberado".equals(st) || "Presentado".equals(st) || "Concluido".equals(st)) {
+                        redirectAttrs.addFlashAttribute("mensaje", "No se puede editar un término que ya está Liberado o Concluido.");
+                        redirectAttrs.addFlashAttribute("tipo", "error");
+                        return "redirect:/terminos";
+                    }
+                    // ---------------------------------
+
                     existente.setActuacion(terminoForm.getActuacion());
                     existente.setFechaVencimiento(terminoForm.getFechaVencimiento());
                     existente.setAbogadoResponsable(terminoForm.getAbogadoResponsable());
                     existente.setUpdatedAt(LocalDateTime.now());
                     
-                    // Si cambiaron el expediente
                     if (expedienteId != null) {
                          Expediente exp = expedienteRepository.findById(expedienteId).orElse(null);
                          if (exp != null) existente.setExpediente(exp);
                     }
-                    
-                    terminoGuardar = existente; // Usamos el objeto original actualizado
+                    terminoGuardar = existente;
                 } else {
-                    redirectAttrs.addFlashAttribute("mensaje", "El término a editar no existe.");
                     return "redirect:/terminos";
                 }
-            } 
-            // CASO 2: CREACIÓN (Nuevo término)
-            else {
+            } else {
+                // CREACIÓN
                 terminoGuardar = terminoForm;
                 terminoGuardar.setFechaIngreso(LocalDate.now());
                 terminoGuardar.setEstatusTermino("Proyectista");
@@ -122,24 +137,17 @@ public class TerminosController {
                     Expediente exp = expedienteRepository.findById(expedienteId).orElse(null);
                     if (exp != null) {
                         terminoGuardar.setExpediente(exp);
-                        // Heredar prioridad
-                        if (terminoGuardar.getPrioridad() == null) {
-                            terminoGuardar.setPrioridad(exp.getPrioridad());
-                        }
+                        if (terminoGuardar.getPrioridad() == null) terminoGuardar.setPrioridad(exp.getPrioridad());
                     }
-                } else {
-                    throw new RuntimeException("Debes seleccionar un expediente.");
                 }
             }
 
             terminoRepository.save(terminoGuardar);
-
             redirectAttrs.addFlashAttribute("mensaje", "Término guardado correctamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
 
         } catch (Exception e) {
-            e.printStackTrace();
-            redirectAttrs.addFlashAttribute("mensaje", "Error al guardar: " + e.getMessage());
+            redirectAttrs.addFlashAttribute("mensaje", "Error: " + e.getMessage());
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
         return "redirect:/terminos";
@@ -151,12 +159,19 @@ public class TerminosController {
         Termino termino = terminoRepository.findById(id).orElse(null);
         if(termino != null) {
             String actual = termino.getEstatusTermino();
-            String siguiente = calcularSiguienteEstado(actual);
             
+            // --- REGLA: Si está en Presentado, NO avanza con este botón, avanza subiendo el Acuse ---
+            if("Presentado".equals(actual)) {
+                redirectAttrs.addFlashAttribute("mensaje", "Para concluir, debes subir el Acuse.");
+                redirectAttrs.addFlashAttribute("tipo", "warning");
+                return "redirect:/terminos";
+            }
+            
+            String siguiente = calcularSiguienteEstado(actual);
             termino.setEstatusTermino(siguiente);
             terminoRepository.save(termino);
             
-            redirectAttrs.addFlashAttribute("mensaje", "El término avanzó a: " + siguiente);
+            redirectAttrs.addFlashAttribute("mensaje", "Avanzó a: " + siguiente);
             redirectAttrs.addFlashAttribute("tipo", "success");
         }
         return "redirect:/terminos";
@@ -170,69 +185,161 @@ public class TerminosController {
             case "Gerencia": return "Dirección";
             case "Dirección": return "Liberado";
             case "Liberado": return "Presentado";
-            case "Presentado": return "Concluido";
+            // Presentado -> Concluido se hace via Acuse
             default: return actual;
         }
     }
 
-    // 4. ELIMINAR
-    @GetMapping("/eliminar/{id}")
-    public String eliminar(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
-        try {
-            terminoRepository.deleteById(id);
-            redirectAttrs.addFlashAttribute("mensaje", "Término eliminado correctamente.");
-            redirectAttrs.addFlashAttribute("tipo", "success");
-        } catch (Exception e) {
-            redirectAttrs.addFlashAttribute("mensaje", "No se pudo eliminar el término.");
-            redirectAttrs.addFlashAttribute("tipo", "error");
-        }
-        return "redirect:/terminos";
-    }
-
-    // 5. SUBIR ARCHIVO (¡ESTE ES EL QUE FALTABA!)
+    // 4. SUBIR ARCHIVO WORD (Bloqueado si está Liberado)
     @PostMapping("/subir-archivo")
     public String subirArchivo(@RequestParam("id") Integer id,
                                @RequestParam("archivo") MultipartFile archivo,
                                RedirectAttributes redirectAttrs) {
+        if (archivo.isEmpty()) return "redirect:/terminos";
+
+        try {
+            Termino termino = terminoRepository.findById(id).orElse(null);
+            if (termino != null) {
+                // BLOQUEO
+                String st = termino.getEstatusTermino();
+                if ("Liberado".equals(st) || "Presentado".equals(st) || "Concluido".equals(st)) {
+                    redirectAttrs.addFlashAttribute("mensaje", "Documento bloqueado por estatus.");
+                    redirectAttrs.addFlashAttribute("tipo", "error");
+                    return "redirect:/terminos";
+                }
+
+                String carpetaDestino = "uploads/terminos/";
+                Path rutaCarpeta = Paths.get(carpetaDestino);
+                if (!Files.exists(rutaCarpeta)) Files.createDirectories(rutaCarpeta);
+
+                String nombreFinal = id + "_" + archivo.getOriginalFilename();
+                Files.copy(archivo.getInputStream(), rutaCarpeta.resolve(nombreFinal), StandardCopyOption.REPLACE_EXISTING);
+
+                termino.setArchivoWord(nombreFinal);
+                terminoRepository.save(termino);
+                redirectAttrs.addFlashAttribute("mensaje", "Borrador actualizado.");
+                redirectAttrs.addFlashAttribute("tipo", "success");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "redirect:/terminos";
+    }
+
+    // 5. NUEVO: SUBIR ACUSE (Cierra el ciclo)
+    @PostMapping("/subir-acuse")
+    public String subirAcuse(@RequestParam("id") Integer id,
+                             @RequestParam("archivoAcuse") MultipartFile archivo,
+                             RedirectAttributes redirectAttrs) {
         if (archivo.isEmpty()) {
-            redirectAttrs.addFlashAttribute("mensaje", "Por favor selecciona un archivo válido.");
+            redirectAttrs.addFlashAttribute("mensaje", "Selecciona el archivo del Acuse.");
             redirectAttrs.addFlashAttribute("tipo", "error");
             return "redirect:/terminos";
         }
 
         try {
             Termino termino = terminoRepository.findById(id).orElse(null);
-            if (termino != null) {
-                // Definir carpeta de destino (ej: uploads/terminos en la raíz del proyecto)
-                String carpetaDestino = "uploads/terminos/";
-                Path rutaCarpeta = Paths.get(carpetaDestino);
+            if (termino != null && "Presentado".equals(termino.getEstatusTermino())) {
                 
-                // Crear carpeta si no existe
-                if (!Files.exists(rutaCarpeta)) {
-                    Files.createDirectories(rutaCarpeta);
-                }
+                // 1. Guardar archivo físico
+                String carpeta = "uploads/acuses/";
+                Path ruta = Paths.get(carpeta);
+                if (!Files.exists(ruta)) Files.createDirectories(ruta);
+                
+                String nombreAcuse = "ACUSE_" + id + "_" + archivo.getOriginalFilename();
+                Files.copy(archivo.getInputStream(), ruta.resolve(nombreAcuse), StandardCopyOption.REPLACE_EXISTING);
 
-                // Generar nombre único: ID_NombreOriginal
-                String nombreOriginal = archivo.getOriginalFilename();
-                String nombreFinal = id + "_" + nombreOriginal;
-                Path rutaArchivo = rutaCarpeta.resolve(nombreFinal);
+                // 2. Guardar en la tabla TerminoPresentado (Histórico)
+                TerminoPresentado presentado = TerminoPresentado.builder()
+                        .termino(termino)
+                        .expedienteNumero(termino.getExpediente().getNumero())
+                        .fechaPresentacion(LocalDate.now())
+                        .acuseDocumento(nombreAcuse)
+                        .sincronizadoAt(LocalDateTime.now())
+                        .build();
+                
+                terminoPresentadoRepository.save(presentado);
 
-                // Guardar archivo (Reemplaza si ya existe)
-                Files.copy(archivo.getInputStream(), rutaArchivo, StandardCopyOption.REPLACE_EXISTING);
-
-                // Actualizar BD
-                termino.setArchivoWord(nombreFinal);
+                // 3. CAMBIAR ESTATUS A CONCLUIDO
+                termino.setEstatusTermino("Concluido");
                 terminoRepository.save(termino);
 
-                redirectAttrs.addFlashAttribute("mensaje", "Archivo cargado correctamente: " + nombreOriginal);
+                redirectAttrs.addFlashAttribute("mensaje", "¡Término Concluido! Acuse registrado.");
                 redirectAttrs.addFlashAttribute("tipo", "success");
+            } else {
+                redirectAttrs.addFlashAttribute("mensaje", "El término no está en estatus Presentado.");
+                redirectAttrs.addFlashAttribute("tipo", "error");
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            redirectAttrs.addFlashAttribute("mensaje", "Error al subir el archivo: " + e.getMessage());
+            redirectAttrs.addFlashAttribute("mensaje", "Error al subir acuse: " + e.getMessage());
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
+        return "redirect:/terminos";
+    }
 
+    // 6. DESCARGAR ARCHIVO WORD
+    @GetMapping("/descargar/{id}")
+    public ResponseEntity<Resource> descargarArchivo(@PathVariable Integer id) {
+        try {
+            Termino termino = terminoRepository.findById(id).orElse(null);
+            
+            // Validamos que exista el término y tenga archivo
+            if (termino == null || termino.getArchivoWord() == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // Buscamos el archivo en la carpeta "uploads/terminos"
+            Path rutaArchivo = Paths.get("uploads/terminos").resolve(termino.getArchivoWord());
+            Resource recurso = new UrlResource(rutaArchivo.toUri());
+
+            if (recurso.exists() || recurso.isReadable()) {
+                // Preparamos la respuesta para forzar la descarga
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + recurso.getFilename() + "\"")
+                        .body(recurso);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // 7. EXPORTAR A EXCEL
+    @GetMapping("/exportar-excel")
+    public void exportarExcel(HttpServletResponse response,
+                              @RequestParam(required = false) String keyword,
+                              @RequestParam(required = false) String estatus,
+                              @RequestParam(required = false) Prioridad prioridad,
+                              @RequestParam(required = false) Integer abogadoId) throws IOException {
+        
+        response.setContentType("application/octet-stream");
+        DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+        String currentDateTime = dateFormatter.format(new Date());
+
+        String headerKey = "Content-Disposition";
+        String headerValue = "attachment; filename=Terminos_" + currentDateTime + ".xlsx";
+        response.setHeader(headerKey, headerValue);
+
+        // Usamos la nueva consulta que devuelve LISTA (no Page)
+        List<Termino> listaTerminos = terminoRepository.listarParaExcel(keyword, estatus, prioridad, abogadoId);
+
+        TerminoExcelExporter excelExporter = new TerminoExcelExporter(listaTerminos);
+        excelExporter.export(response);
+    }
+
+    @GetMapping("/eliminar/{id}")
+    public String eliminar(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+        try {
+            terminoRepository.deleteById(id);
+            redirectAttrs.addFlashAttribute("mensaje", "Eliminado correctamente.");
+            redirectAttrs.addFlashAttribute("tipo", "success");
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("mensaje", "Error al eliminar.");
+            redirectAttrs.addFlashAttribute("tipo", "error");
+        }
         return "redirect:/terminos";
     }
 }
