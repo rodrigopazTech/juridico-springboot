@@ -330,6 +330,42 @@ public class TerminosController {
         excelExporter.export(response);
     }
 
+    // 8. DESCARGAR ACUSE (Nuevo endpoint)
+    @GetMapping("/descargar-acuse/{id}")
+    public ResponseEntity<Resource> descargarAcuse(@PathVariable Integer id) {
+        try {
+            // Buscamos el registro histórico del acuse
+            // Nota: Aquí asumimos que buscamos el ÚLTIMO acuse subido para este término
+            List<TerminoPresentado> presentados = terminoPresentadoRepository.findByTerminoExpedienteId(
+                    terminoRepository.findById(id).get().getExpediente().getId()
+            );
+            
+            // Filtramos para encontrar el que corresponde a este término específico (ID)
+            TerminoPresentado acuse = presentados.stream()
+                    .filter(p -> p.getTermino().getId().equals(id))
+                    .findFirst()
+                    .orElse(null);
+
+            if (acuse == null || acuse.getAcuseDocumento() == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Path rutaArchivo = Paths.get("uploads/acuses").resolve(acuse.getAcuseDocumento());
+            Resource recurso = new UrlResource(rutaArchivo.toUri());
+
+            if (recurso.exists() || recurso.isReadable()) {
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + recurso.getFilename() + "\"")
+                        .body(recurso);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @GetMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
         try {

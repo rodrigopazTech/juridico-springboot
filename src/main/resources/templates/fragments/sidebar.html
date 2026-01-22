@@ -20,7 +20,22 @@
             </a>
 
           <ul class="space-y-2 font-medium flex-1">
-                <li>
+                
+            <li>
+                    <a th:href="@{/dashboard}" 
+                       class="flex items-center p-3 transition-all duration-200 border-l-4"
+                       th:classappend="${activePage == 'dashboard' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/5'}">
+                        
+                        <i class="fas fa-chart-pie w-6 h-6 transition duration-75"
+                           th:classappend="${activePage == 'dashboard' ? 'text-gob-oro' : 'text-gray-500 group-hover:text-white'}"></i>
+                        
+                        <span class="ms-3">Panel Principal</span>
+                        
+                        <i th:if="${activePage == 'dashboard'}" class="fas fa-chevron-right ms-auto text-xs text-gob-oro"></i>
+                    </a>
+                </li>
+            
+            <li>
                     <a th:href="@{/expedientes}" 
                     class="flex items-center p-3 transition-all duration-200 border-l-4"
                     th:classappend="${activePage == 'expedientes' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/5'}">

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Agenda Legal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script th:src="@{/js/tailwind.config.js}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="p-4 sm:ml-64">
+        
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gob-guinda font-headings">
+                <i class="fas fa-chart-pie text-gob-oro mr-2"></i> Panel Principal
+            </h1>
+            <p class="text-gray-500 mt-1">Bienvenido al resumen operativo del despacho.</p>
+            <hr class="h-1 w-20 bg-gob-oro border-0 mt-2 mb-4" />
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow border-l-4 border-gob-guinda">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-sm text-gray-500 font-bold uppercase">Expedientes Totales</p>
+                        <p class="text-3xl font-bold text-gray-800" th:text="${kpis.totalExpedientes}">0</p>
+                    </div>
+                    <div class="p-3 bg-red-50 rounded-full text-gob-guinda">
+                        <i class="fas fa-folder text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="font-bold text-gray-700 mb-4">Rendimiento Mensual</h3>
+                <div class="h-64 flex items-center justify-center bg-gray-50 border border-dashed border-gray-300 rounded">
+                    <p class="text-gray-400">Espacio para Gráfica (Chart.js)</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="font-bold text-gray-700 mb-4">Avisos Importantes</h3>
+                <div class="p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
+                    <p class="font-bold">Recordatorio</p>
+                    <p>Revisar los términos próximos a vencer esta semana.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
