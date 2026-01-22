@@ -1,0 +1,119 @@
+<div th:fragment="modals">
+    
+    <div id="modal-audiencia" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl border-t-4 border-gob-oro animate-fade-in-down max-h-[90vh] overflow-y-auto">
+            
+            <div class="flex justify-between items-center p-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+                <h3 id="modal-titulo-audiencia" class="text-xl font-bold text-gob-guinda flex items-center gap-2">
+                    <i class="fas fa-gavel"></i> Nueva Audiencia
+                </h3>
+                <button onclick="document.getElementById('modal-audiencia').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="form-audiencia" th:action="@{/audiencias/guardar}" method="post" class="p-6 space-y-4">
+                
+                <input type="hidden" name="id" id="input-audiencia-id">
+
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                    <label class="block font-bold text-gob-guinda mb-1">Vincular a Expediente *</label>
+                    <select name="expedienteId" id="input-expediente-audiencia" class="w-full border border-gray-300 rounded p-2 focus:ring-gob-oro outline-none bg-white" required>
+                        <option value="">Seleccione un expediente...</option>
+                        <option th:each="exp : ${expedientesList}" 
+                                th:value="${exp.id}" 
+                                th:text="${exp.numero + ' - ' + exp.partes}">
+                        </option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Tipo de Audiencia *</label>
+                        <select name="tipoAudienciaId" id="input-tipo-audiencia" class="w-full border border-gray-300 rounded p-2 bg-white" required>
+                            <option value="">Seleccione...</option>
+                            <option th:each="tipo : ${listaTiposAudiencia}" 
+                                    th:value="${tipo.id}" 
+                                    th:text="${tipo.nombre}"></option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Abogado que Comparece</label>
+                        <select name="abogadoComparece" id="input-abogado-audiencia" class="w-full border border-gray-300 rounded p-2 bg-white">
+                            <option value="">Seleccione...</option>
+                            <option th:each="abg : ${abogados}" 
+                                    th:value="${abg.nombreCompleto}" 
+                                    th:text="${abg.nombreCompleto}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Fecha *</label>
+                        <input type="date" name="fechaAudiencia" id="input-fecha-audiencia" class="w-full border border-gray-300 rounded p-2" required>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Hora *</label>
+                        <input type="time" name="horaAudiencia" id="input-hora-audiencia" class="w-full border border-gray-300 rounded p-2" required>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-gray-50 rounded border border-gray-200">
+                    <label class="block font-bold text-gray-700 mb-2">Modalidad</label>
+                    <div class="flex gap-4 mb-3">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="esVirtual" value="false" checked onclick="toggleUbicacion(false)">
+                            <span>Presencial</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="esVirtual" value="true" onclick="toggleUbicacion(true)">
+                            <span>En Línea (Virtual)</span>
+                        </label>
+                    </div>
+                    
+                    <div id="campo-sala">
+                        <label class="text-xs text-gray-500 uppercase font-bold">Sala / Lugar</label>
+                        <input type="text" name="salaLugar" id="input-sala" placeholder="Ej: Sala 3 de Oralidad" class="w-full border border-gray-300 rounded p-2 mt-1">
+                    </div>
+                    
+                    <div id="campo-url" class="hidden">
+                        <label class="text-xs text-gray-500 uppercase font-bold">Link de la Reunión</label>
+                        <input type="url" name="urlReunion" id="input-url" placeholder="https://meet.google.com/..." class="w-full border border-gray-300 rounded p-2 mt-1">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
+                    <button type="button" onclick="document.getElementById('modal-audiencia').classList.add('hidden')" class="px-4 py-2 border rounded hover:bg-gray-50">Cancelar</button>
+                    <button type="submit" class="px-6 py-2 bg-gob-guinda text-white rounded font-bold hover:bg-gob-guindaDark shadow-lg">Guardar Audiencia</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-concluir" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md border-t-4 border-green-600 animate-fade-in-down">
+            <div class="p-4 border-b bg-green-50 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-green-800"><i class="fas fa-check-circle mr-2"></i> Concluir Audiencia</h3>
+                <button onclick="document.getElementById('modal-concluir').classList.add('hidden')" class="text-green-800"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <form th:action="@{/audiencias/concluir}" method="post" enctype="multipart/form-data" class="p-6 space-y-4">
+                <input type="hidden" name="id" id="concluir-audiencia-id">
+                
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Resultados / Observaciones *</label>
+                    <textarea name="observaciones" rows="3" class="w-full border border-gray-300 rounded p-2 text-sm" placeholder="Resumen de lo ocurrido..." required></textarea>
+                </div>
+                
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Subir Acta (Opcional)</label>
+                    <input type="file" name="archivoActa" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                </div>
+
+                <button type="submit" class="w-full py-2 bg-green-600 text-white rounded font-bold shadow hover:bg-green-700">Confirmar Conclusión</button>
+            </form>
+        </div>
+    </div>
+
+</div>

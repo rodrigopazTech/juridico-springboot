@@ -1,0 +1,50 @@
+<div th:fragment="filtros" class="bg-white p-4 rounded-lg shadow-sm mb-8 border-t border-gob-oro">
+    
+    <form th:action="@{/audiencias}" method="get">
+        
+        <input type="hidden" name="keyword" th:value="${keyword}">
+
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-xs font-bold text-gob-oro uppercase">
+                <i class="fas fa-filter mr-1"></i> Filtros de Audiencias
+            </h3>
+            
+            <div class="flex gap-2">
+                <a th:href="@{/audiencias}" class="text-xs text-gray-400 hover:text-gray-600 underline flex items-center">
+                    Limpiar
+                </a>
+                <button type="submit" class="bg-gob-guinda text-white text-xs px-3 py-1 rounded hover:bg-gob-guinda-claro font-bold transition-colors">
+                    Filtrar
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <select name="tipo" class="border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none bg-white text-gray-600">
+                <option value="">Tipo: Todos</option>
+                <option th:each="t : ${listaTiposAudiencia}" 
+                        th:value="${t.nombre}" 
+                        th:text="${t.nombre}" 
+                        th:selected="${paramTipo == t.nombre}"></option>
+            </select>
+
+            <select name="gerencia" class="border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none bg-white text-gray-600">
+                <option value="">Gerencia: Todas</option>
+                <option th:each="g : ${listaGerencias}" 
+                        th:value="${g.nombre}" 
+                        th:text="${g.nombre}" 
+                        th:selected="${paramGerencia == g.nombre}"></option>
+            </select>
+
+            <select name="materia" class="border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none bg-white text-gray-600">
+                <option value="">Materia: Todas</option>
+                <option th:each="m : ${listaMaterias}" 
+                        th:value="${m.nombre}" 
+                        th:text="${m.nombre}" 
+                        th:selected="${paramMateria == m.nombre}"></option>
+            </select>
+
+        </div>
+    </form>
+</div>

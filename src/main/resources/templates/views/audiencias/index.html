@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Gestión de Audiencias - Agenda Legal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script th:src="@{/js/tailwind.config.js}"></script>
+    <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="p-4 sm:ml-64">
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gob-gris font-headings">
+                <i class="fas fa-gavel text-gob-oro mr-2"></i> Gestión de Audiencias
+            </h1>
+            <hr class="h-1 w-20 bg-gob-guinda border-0 mt-2 mb-4" />
+        </div>
+
+        <div th:replace="~{fragments/audiencias/barra-busqueda :: barra}"></div>
+        <div th:replace="~{fragments/audiencias/barra-filtros :: filtros}"></div>
+        <div th:replace="~{fragments/audiencias/tabla :: tabla}"></div>
+    </div>
+
+    <div th:replace="~{fragments/audiencias/modals :: modals}"></div>
+
+ <script>
+        // --- MENÚS ---
+        function toggleMenu(id) {
+            const menu = document.getElementById('menu-' + id);
+            document.querySelectorAll('[id^="menu-"]').forEach(m => {
+                if(m !== menu) m.classList.add('hidden');
+            });
+            menu.classList.toggle('hidden');
+        }
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('td.relative')) {
+                document.querySelectorAll('[id^="menu-"]').forEach(m => m.classList.add('hidden'));
+            }
+        });
+
+        // --- MODALES ---
+        function abrirModalAudiencia() {
+            // Limpiar formulario si es nueva
+            document.getElementById('form-audiencia').reset();
+            document.getElementById('input-audiencia-id').value = '';
+            document.getElementById('modal-titulo-audiencia').innerHTML = '<i class="fas fa-gavel"></i> Nueva Audiencia';
+            
+            // Resetear visibilidad de campos de ubicación
+            toggleUbicacion(false);
+            
+            document.getElementById('modal-audiencia').classList.remove('hidden');
+        }
+
+        function abrirModalConcluir(id) {
+            document.getElementById('concluir-audiencia-id').value = id;
+            document.getElementById('modal-concluir').classList.remove('hidden');
+        }
+
+        // --- LÓGICA VISUAL ---
+        function toggleUbicacion(isVirtual) {
+            const campoSala = document.getElementById('campo-sala');
+            const campoUrl = document.getElementById('campo-url');
+            
+            if(isVirtual) {
+                campoSala.classList.add('hidden');
+                campoUrl.classList.remove('hidden');
+                // Opcional: Limpiar el valor del otro campo
+                document.getElementById('input-sala').value = ''; 
+            } else {
+                campoSala.classList.remove('hidden');
+                campoUrl.classList.add('hidden');
+                document.getElementById('input-url').value = '';
+            }
+        }
+    </script>
+    
+    <script th:if="${mensaje != null}">
+        document.addEventListener("DOMContentLoaded", function () {
+            Swal.fire({
+                title: "[[${tipo == 'success' ? '¡Éxito!' : 'Error'}]]",
+                text: "[[${mensaje}]]",
+                icon: "[[${tipo}]]",
+                confirmButtonColor: "#bc955c",
+            });
+        });
+    </script>
+
+</body>
+</html>

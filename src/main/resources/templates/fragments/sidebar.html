@@ -62,6 +62,19 @@
                         <i th:if="${activePage == 'terminos'}" class="fas fa-chevron-right ms-auto text-xs text-gob-oro"></i>
                     </a>
                 </li>
+                <li>
+                    <a th:href="@{/audiencias}" 
+                       class="flex items-center p-3 transition-all duration-200 border-l-4"
+                       th:classappend="${activePage == 'audiencias' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/5'}">
+                        
+                        <i class="fas fa-gavel w-6 h-6 transition duration-75"
+                           th:classappend="${activePage == 'audiencias' ? 'text-gob-oro' : 'text-gray-500 group-hover:text-white'}"></i>
+                        
+                        <span class="ms-3">Audiencias</span>
+                        
+                        <i th:if="${activePage == 'audiencias'}" class="fas fa-chevron-right ms-auto text-xs text-gob-oro"></i>
+                    </a>
+                </li>
             </ul>
             <div class="mt-auto pt-4 border-t border-white/10">
                 <div class="flex items-center p-2 mb-2 bg-gob-guindaDark/20 rounded-lg border border-white/5">
