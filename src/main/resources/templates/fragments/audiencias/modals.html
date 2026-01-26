@@ -95,23 +95,25 @@
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-md border-t-4 border-green-600 animate-fade-in-down">
             <div class="p-4 border-b bg-green-50 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-green-800"><i class="fas fa-check-circle mr-2"></i> Concluir Audiencia</h3>
-                <button onclick="document.getElementById('modal-concluir').classList.add('hidden')" class="text-green-800"><i class="fas fa-times"></i></button>
+                <button type="button" onclick="document.getElementById('modal-concluir').classList.add('hidden')" class="text-green-800"><i class="fas fa-times"></i></button>
             </div>
             
-            <form th:action="@{/audiencias/concluir}" method="post" enctype="multipart/form-data" class="p-6 space-y-4">
+            <form th:action="@{/audiencias/concluir}" method="post" class="p-6 space-y-4">
                 <input type="hidden" name="id" id="concluir-audiencia-id">
                 
-                <div>
-                    <label class="block font-bold text-gray-700 mb-1">Resultados / Observaciones *</label>
-                    <textarea name="observaciones" rows="3" class="w-full border border-gray-300 rounded p-2 text-sm" placeholder="Resumen de lo ocurrido..." required></textarea>
-                </div>
-                
-                <div>
-                    <label class="block font-bold text-gray-700 mb-1">Subir Acta (Opcional)</label>
-                    <input type="file" name="archivoActa" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                <div class="bg-green-50 p-3 rounded text-sm text-green-800 border border-green-200">
+                    <i class="fas fa-info-circle mr-1"></i> El acta ya fue registrada. Agrega las observaciones finales para cerrar el caso.
                 </div>
 
-                <button type="submit" class="w-full py-2 bg-green-600 text-white rounded font-bold shadow hover:bg-green-700">Confirmar Conclusión</button>
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">Resultados / Observaciones *</label>
+                    <textarea name="observaciones" rows="4" class="w-full border border-gray-300 rounded p-2 text-sm focus:border-green-500 outline-none" placeholder="Resolución del juez, acuerdos, nueva fecha..." required></textarea>
+                </div>
+                
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="document.getElementById('modal-concluir').classList.add('hidden')" class="px-4 py-2 border rounded hover:bg-gray-50 text-sm">Cancelar</button>
+                    <button type="submit" class="w-full py-2 bg-green-600 text-white rounded font-bold shadow hover:bg-green-700 text-sm">Confirmar Cierre</button>
+                </div>
             </form>
         </div>
     </div>

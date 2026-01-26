@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 @Repository
 public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
 
@@ -38,4 +39,22 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
             @Param("materia") String materia,
             @Param("estatus") String estatus,
             Pageable pageable);
+
+       @Query("SELECT a FROM Audiencia a " +
+           "LEFT JOIN a.expediente e " +
+           "WHERE " +
+           "(:keyword IS NULL OR :keyword = '' OR " +
+           "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " + 
+           "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "AND (:tipo IS NULL OR :tipo = '' OR a.tipoAudiencia.nombre = :tipo) " + 
+           "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
+           "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
+           "AND (:estatus IS NULL OR :estatus = '' OR a.estatusAudiencia = :estatus)")
+    List<Audiencia> listarParaExcel(
+            @Param("keyword") String keyword,
+            @Param("tipo") String tipo,
+            @Param("gerencia") String gerencia,
+            @Param("materia") String materia,
+            @Param("estatus") String estatus);
 }

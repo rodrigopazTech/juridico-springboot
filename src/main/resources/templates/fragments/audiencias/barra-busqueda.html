@@ -14,9 +14,11 @@
     </form>
 
     <div class="flex gap-2 w-full md:w-auto">
-        <button class="flex-1 md:flex-none text-gob-gris bg-white border border-gray-300 hover:bg-gray-50 font-medium rounded-lg text-sm px-4 py-2.5 shadow-sm transition-colors">
+        <a th:href="@{/audiencias/exportar-excel(keyword=${keyword}, tipo=${paramTipo}, gerencia=${paramGerencia}, materia=${paramMateria}, estatus=${paramEstatus})}" 
+           class="flex-1 md:flex-none text-gob-gris bg-white border border-gray-300 hover:bg-gray-50 font-medium rounded-lg text-sm px-4 py-2.5 shadow-sm transition-colors flex items-center justify-center decoration-0"
+           title="Descargar Reporte Excel">
             <i class="fas fa-file-excel text-green-600 mr-2"></i> Exportar
-        </button>
+        </a>
         
         <button onclick="abrirModalAudiencia()"
                 class="flex-1 md:flex-none text-white bg-gob-guinda hover:bg-gob-guindaDark font-bold rounded-lg text-sm px-5 py-2.5 shadow-md transition-colors flex items-center justify-center gap-2">
