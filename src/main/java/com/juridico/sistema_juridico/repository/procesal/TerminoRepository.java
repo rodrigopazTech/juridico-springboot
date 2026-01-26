@@ -59,4 +59,6 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
 
     // Cambiado: UUID para que coincida con el ID de Expediente
     List<Termino> findByExpedienteId(UUID expedienteId);
+
+    List<Termino> findByEstatusTerminoInAndFechaVencimientoBetweenOrderByFechaVencimientoDesc(List<String> estatus, LocalDate inicio, LocalDate fin);
 }

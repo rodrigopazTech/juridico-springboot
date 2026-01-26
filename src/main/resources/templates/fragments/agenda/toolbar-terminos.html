@@ -1,0 +1,55 @@
+<div th:fragment="toolbar" class="mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+    
+    <div class="relative w-full md:w-96">
+        <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+            <i class="fas fa-search text-gray-400"></i>
+        </div>
+        <input type="text" id="search-terminos" 
+               class="bg-white border border-gray-300 text-gob-gris text-sm rounded-lg focus:ring-gob-oro focus:border-gob-oro block w-full ps-10 p-2.5" 
+               placeholder="Buscar en términos..."
+               onkeyup="filtrarTabla('tabla-terminos-presentados', this.value)">
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2 justify-end">
+        
+        <a th:href="@{/agenda(filtro='hoy', tab='terminos', anio=${anioActual})}"
+           class="px-4 py-2 text-sm font-medium rounded transition-colors border"
+           th:classappend="${filtroActual == 'hoy'} ? 'bg-gob-guinda text-white border-gob-guinda' : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-300'">
+            Hoy
+        </a>
+        
+        <a th:href="@{/agenda(filtro='semana', tab='terminos', anio=${anioActual})}"
+           class="px-4 py-2 text-sm font-medium rounded transition-colors border"
+           th:classappend="${filtroActual == 'semana'} ? 'bg-gob-guinda text-white border-gob-guinda' : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-300'">
+            Semana
+        </a>
+        
+        <form th:action="@{/agenda}" method="get" class="flex items-center gap-2 bg-white border border-gray-300 rounded-lg p-1 ml-2">
+            <input type="hidden" name="filtro" value="otro-mes">
+            <input type="hidden" name="tab" value="terminos"> <i class="fas fa-calendar-alt text-gob-gris ml-2"></i>
+            
+            <select name="mes" onchange="this.form.submit()" class="text-sm border-none focus:ring-0 text-gray-600 cursor-pointer bg-transparent py-1 pr-8">
+                <option value="" disabled th:selected="${mesActual == null}">Mes</option>
+                <option value="1" th:selected="${mesActual == '1'}">Ene</option>
+                <option value="2" th:selected="${mesActual == '2'}">Feb</option>
+                <option value="3" th:selected="${mesActual == '3'}">Mar</option>
+                <option value="4" th:selected="${mesActual == '4'}">Abr</option>
+                <option value="5" th:selected="${mesActual == '5'}">May</option>
+                <option value="6" th:selected="${mesActual == '6'}">Jun</option>
+                <option value="7" th:selected="${mesActual == '7'}">Jul</option>
+                <option value="8" th:selected="${mesActual == '8'}">Ago</option>
+                <option value="9" th:selected="${mesActual == '9'}">Sep</option>
+                <option value="10" th:selected="${mesActual == '10'}">Oct</option>
+                <option value="11" th:selected="${mesActual == '11'}">Nov</option>
+                <option value="12" th:selected="${mesActual == '12'}">Dic</option>
+            </select>
+
+            <select name="anio" onchange="this.form.submit()" class="text-sm border-l border-gray-200 focus:ring-0 text-gray-600 cursor-pointer bg-transparent py-1 pr-8 pl-2">
+                <option th:each="y : ${listaAnios}" 
+                        th:value="${y}" 
+                        th:text="${y}" 
+                        th:selected="${anioActual == y}"></option>
+            </select>
+        </form>
+    </div>
+</div>
