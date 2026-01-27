@@ -1,5 +1,6 @@
 package com.juridico.sistema_juridico.repository.Expediente; // Asegura tu paquete correcto
 
+import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import org.springframework.data.domain.Page;
@@ -45,4 +46,7 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
             @Param("prioridad") Prioridad prioridad,
             @Param("abogadoId") Integer abogadoId,
             Pageable pageable);
+
+            long countByEtapaProcesal(EtapaProcesal etapaProcesal);
 }
+
