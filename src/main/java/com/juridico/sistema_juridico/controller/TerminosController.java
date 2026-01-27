@@ -25,6 +25,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -160,9 +164,16 @@ public class TerminosController {
         if(termino != null) {
             String actual = termino.getEstatusTermino();
             
-            // --- REGLA: Si está en Presentado, NO avanza con este botón, avanza subiendo el Acuse ---
+            // Si es Proyectista y NO ha subido archivo, no dejamos avanzar.
+            if ("Proyectista".equals(actual) && termino.getArchivoWord() == null) {
+                redirectAttrs.addFlashAttribute("mensaje", "Debes subir el documento (Word) antes de enviar a Revisión.");
+                redirectAttrs.addFlashAttribute("tipo", "error");
+                return "redirect:/terminos";
+            }
+
+            // Si está en Presentado, NO avanza con este botón, avanza subiendo el Acuse
             if("Presentado".equals(actual)) {
-                redirectAttrs.addFlashAttribute("mensaje", "Para concluir, debes subir el Acuse.");
+                redirectAttrs.addFlashAttribute("mensaje", "Para concluir, utiliza el botón de 'Subir Acuse'.");
                 redirectAttrs.addFlashAttribute("tipo", "warning");
                 return "redirect:/terminos";
             }
@@ -379,14 +390,26 @@ public class TerminosController {
         }
     }
 
-    @GetMapping("/eliminar/{id}")
+ @GetMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
         try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            
+            // Verificamos si tiene el rol (Ajusta "ROLE_DIRECCION" a como se llame en tu BD, ej: "ADMIN", "DIRECTOR")
+            boolean esDireccion = auth.getAuthorities().stream()
+                .anyMatch(r -> r.getAuthority().equals("ROLE_DIRECCION") || r.getAuthority().equals("Dirección"));
+
+            if (!esDireccion) {
+                redirectAttrs.addFlashAttribute("mensaje", "Acceso denegado. Solo Dirección puede eliminar términos.");
+                redirectAttrs.addFlashAttribute("tipo", "error");
+                return "redirect:/terminos";
+            }
+
             terminoRepository.deleteById(id);
             redirectAttrs.addFlashAttribute("mensaje", "Eliminado correctamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
         } catch (Exception e) {
-            redirectAttrs.addFlashAttribute("mensaje", "Error al eliminar.");
+            redirectAttrs.addFlashAttribute("mensaje", "Error al eliminar: " + e.getMessage());
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
         return "redirect:/terminos";
