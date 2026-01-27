@@ -1,9 +1,15 @@
 package com.juridico.sistema_juridico.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class LoginRequest {
-    private String username; // O email, según como lo manejes en el front
+    private String email;
     private String password;
 }

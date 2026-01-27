@@ -1,0 +1,45 @@
+<div th:fragment="tabla" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="flex justify-between mb-4">
+        <input type="text" id="input-search-usuarios" placeholder="Buscar usuario..." class="border border-gray-300 rounded p-2 text-sm w-64 focus:ring-gob-oro focus:border-gob-oro outline-none">
+        
+        <button onclick="abrirModalUsuario()" class="bg-gob-guinda text-white px-4 py-2 rounded text-sm hover:bg-opacity-90 shadow-sm transition-colors">
+            <i class="fas fa-plus mr-2"></i> Nuevo Usuario
+        </button>
+    </div>
+
+    <table class="w-full text-sm text-left text-gray-500" id="tabla-usuarios"> <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
+            <tr>
+                <th class="px-6 py-3 font-bold">Nombre</th>
+                <th class="px-6 py-3 font-bold">Correo</th>
+                <th class="px-6 py-3 font-bold">Rol</th>
+                <th class="px-6 py-3 font-bold">Gerencia</th>
+                <th class="px-6 py-3 font-bold">Estado</th>
+                <th class="px-6 py-3 font-bold text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tabla-usuarios-body">
+            <tr th:each="u : ${listaUsuarios}" class="border-b hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 font-bold text-gray-800" th:text="${u.nombreCompleto}">Juan</td>
+                <td class="px-6 py-4" th:text="${u.email}">email</td>
+                <td class="px-6 py-4"><span class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded" th:text="${u.rol}">ROL</span></td>
+                <td class="px-6 py-4" th:text="${u.gerencia != null ? u.gerencia.nombre : 'S/A'}">Gerencia</td>
+                <td class="px-6 py-4"><span th:if="${u.activo}" class="text-green-600">Activo</span><span th:unless="${u.activo}" class="text-red-600">Inactivo</span></td>
+                
+                <td class="px-6 py-4 text-center">
+                    <button th:onclick="editarUsuario([[${u.id}]], [[${u.nombreCompleto}]], [[${u.email}]], [[${u.rol}]], [[${u.gerencia != null ? u.gerencia.id : ''}]], [[${u.activo}]])" 
+                            class="text-gob-oro hover:text-gob-guinda transition-colors" title="Editar">
+                        <i class="fas fa-edit fa-lg"></i>
+                    </button>
+                    <button type="button" 
+                            th:onclick="confirmarCambioEstatus([[${u.id}]], 'usuario')"
+                            class="hover:scale-110 transition-transform mx-1" 
+                            th:title="${u.activo ? 'Desactivar Usuario' : 'Activar Usuario'}"
+                            th:classappend="${u.activo ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'}">
+                        
+                        <i class="fas" th:classappend="${u.activo ? 'fa-user-slash' : 'fa-user-check'}"></i>
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

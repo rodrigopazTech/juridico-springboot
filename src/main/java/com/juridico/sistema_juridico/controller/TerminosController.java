@@ -27,7 +27,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
