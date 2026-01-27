@@ -29,7 +29,6 @@ import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.util.AudienciaExcelExporter;
 
-import jakarta.persistence.criteria.Path;
 import jakarta.servlet.http.HttpServletResponse;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -40,7 +39,6 @@ import java.util.UUID;
 import java.io.IOException;
 import java.util.List;
 import java.net.MalformedURLException;
-import java.nio.file.Paths;
 
 
 @Controller

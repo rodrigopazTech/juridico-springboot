@@ -5,7 +5,7 @@
         </h3>
     </div>
     <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left text-gob-gris">
+        <table class="w-full text-sm text-left text-gob-gris" id="tabla-audiencias-desahogadas">
             <thead class="text-xs text-gob-gris uppercase bg-gray-50 border-b border-gray-200 font-headings">
                 <tr>
                     <th class="px-6 py-3 font-bold">Fecha Desahogo</th>
@@ -63,5 +63,24 @@
                 </tr>
             </tbody>
         </table>
+    </div>
+
+    <div class="p-4 border-t border-gray-200 flex justify-between items-center bg-gray-50" th:if="${!audiencias.empty}">
+        <span class="text-sm text-gray-600">
+            Página <span th:text="${audiencias.number + 1}">1</span> de <span th:text="${audiencias.totalPages}">1</span>
+        </span>
+        <div class="flex gap-2">
+            <a th:if="${audiencias.hasPrevious()}" 
+               th:href="@{/agenda(page=${audiencias.number - 1}, tab='audiencias', filtro=${filtroActual}, mes=${mesActual}, anio=${anioActual})}" 
+               class="px-3 py-1 border border-gray-300 rounded hover:bg-white text-sm bg-white text-gray-600 transition-colors">
+               <i class="fas fa-chevron-left mr-1"></i> Anterior
+            </a>
+            
+            <a th:if="${audiencias.hasNext()}" 
+               th:href="@{/agenda(page=${audiencias.number + 1}, tab='audiencias', filtro=${filtroActual}, mes=${mesActual}, anio=${anioActual})}" 
+               class="px-3 py-1 border border-gray-300 rounded hover:bg-white text-sm bg-white text-gray-600 transition-colors">
+               Siguiente <i class="fas fa-chevron-right ml-1"></i>
+            </a>
+        </div>
     </div>
 </div>

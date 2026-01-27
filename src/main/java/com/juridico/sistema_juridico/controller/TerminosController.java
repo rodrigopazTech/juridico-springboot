@@ -169,6 +169,11 @@ public class TerminosController {
             
             String siguiente = calcularSiguienteEstado(actual);
             termino.setEstatusTermino(siguiente);
+        
+            if ("Presentado".equals(siguiente)) {
+                termino.setFechaPresentacion(LocalDate.now());
+            }
+
             terminoRepository.save(termino);
             
             redirectAttrs.addFlashAttribute("mensaje", "Avanzó a: " + siguiente);
@@ -226,11 +231,13 @@ public class TerminosController {
         return "redirect:/terminos";
     }
 
-    // 5. NUEVO: SUBIR ACUSE (Cierra el ciclo)
+   // 5. SUBIR ACUSE Y CONCLUIR
     @PostMapping("/subir-acuse")
     public String subirAcuse(@RequestParam("id") Integer id,
                              @RequestParam("archivoAcuse") MultipartFile archivo,
+                             @RequestParam(value = "observaciones", required = false) String observaciones, // NUEVO PARÁMETRO
                              RedirectAttributes redirectAttrs) {
+        
         if (archivo.isEmpty()) {
             redirectAttrs.addFlashAttribute("mensaje", "Selecciona el archivo del Acuse.");
             redirectAttrs.addFlashAttribute("tipo", "error");
@@ -249,7 +256,7 @@ public class TerminosController {
                 String nombreAcuse = "ACUSE_" + id + "_" + archivo.getOriginalFilename();
                 Files.copy(archivo.getInputStream(), ruta.resolve(nombreAcuse), StandardCopyOption.REPLACE_EXISTING);
 
-                // 2. Guardar en la tabla TerminoPresentado (Histórico)
+                // 2. Guardar Histórico
                 TerminoPresentado presentado = TerminoPresentado.builder()
                         .termino(termino)
                         .expedienteNumero(termino.getExpediente().getNumero())
@@ -260,8 +267,14 @@ public class TerminosController {
                 
                 terminoPresentadoRepository.save(presentado);
 
-                // 3. CAMBIAR ESTATUS A CONCLUIDO
+                // 3. ACTUALIZAR TÉRMINO (Estatus + Observaciones)
                 termino.setEstatusTermino("Concluido");
+                termino.setObservaciones(observaciones); 
+                
+                if (termino.getFechaPresentacion() == null) {
+                    termino.setFechaPresentacion(LocalDate.now());
+                }
+
                 terminoRepository.save(termino);
 
                 redirectAttrs.addFlashAttribute("mensaje", "¡Término Concluido! Acuse registrado.");

@@ -2,8 +2,8 @@ package com.juridico.sistema_juridico.repository.procesal;
 
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page; // IMPORTANTE
+import org.springframework.data.domain.Pageable; // IMPORTANTE
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,7 +16,7 @@ import java.util.UUID;
 @Repository
 public interface TerminoRepository extends JpaRepository<Termino, Integer> {
 
-// 1. CONSULTA PARA EXCEL (Devuelve List)
+    // 1. CONSULTA PARA EXCEL (Devuelve List)
     @Query("SELECT t FROM Termino t " +
            "LEFT JOIN t.expediente e " +
            "LEFT JOIN t.abogadoResponsable a " +
@@ -34,7 +34,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("prioridad") Prioridad prioridad,
             @Param("abogadoId") Integer abogadoId);
 
-    // 2. CONSULTA PARA PAGINACIÓN (Devuelve Page) <-- ¡AQUÍ FALTABA LA ANOTACIÓN!
+    // 2. CONSULTA PARA PAGINACIÓN
     @Query("SELECT t FROM Termino t " +
            "LEFT JOIN t.expediente e " +
            "LEFT JOIN t.abogadoResponsable a " +
@@ -53,12 +53,16 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("abogadoId") Integer abogadoId,
             Pageable pageable);
 
-
-    // Cambiado: 'estatusTermino' para que coincida con la Entity
+    // Métodos auxiliares
     List<Termino> findByFechaVencimientoBeforeAndEstatusTerminoNot(LocalDate fecha, String estatus);
-
-    // Cambiado: UUID para que coincida con el ID de Expediente
     List<Termino> findByExpedienteId(UUID expedienteId);
 
-    List<Termino> findByEstatusTerminoInAndFechaVencimientoBetweenOrderByFechaVencimientoDesc(List<String> estatus, LocalDate inicio, LocalDate fin);
+    Page<Termino> findByEstatusTerminoInAndFechaPresentacionBetweenOrderByFechaPresentacionDesc(
+            List<String> estatus, 
+            LocalDate inicio, 
+            LocalDate fin, 
+            Pageable pageable
+    );
+
+    
 }

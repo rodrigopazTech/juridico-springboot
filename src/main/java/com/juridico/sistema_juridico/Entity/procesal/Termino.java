@@ -58,6 +58,12 @@ public class Termino {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "observaciones", columnDefinition = "TEXT")
+    private String observaciones;
+
+    @Column(name = "fecha_presentacion")
+    private LocalDate fechaPresentacion;
+
     public String getSemaforoColor() {
         // Si ya está terminado, semáforo gris (apagado)
         if ("Concluido".equalsIgnoreCase(this.estatusTermino) || "Presentado".equalsIgnoreCase(this.estatusTermino)) {
