@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function initCharts() {
     estatusExpedientesChart();
-    trabajoCompletadoChart();
+    cargaTrabajoUsuariosChart();
 }
 
 function estatusExpedientesChart() {
@@ -34,20 +34,17 @@ function estatusExpedientesChart() {
     });
 }
 
-function trabajoCompletadoChart() {
-    const canvas = document.getElementById("chartTrabajoCompletado");
+function cargaTrabajoUsuariosChart() {
+    const canvas = document.getElementById("chartCargaTrabajoUsuarios");
     if (!canvas) return;
 
     new Chart(canvas.getContext("2d"), {
-        type: "line",
+        type: "bar",
         data: {
-            labels: window.dashboardData.trabajoCompletado.meses,
+            labels: window.dashboardData.cargaTrabajoUsuarios.labels,
             datasets: [{
-                label: "Casos cerrados",
-                data: window.dashboardData.trabajoCompletado.valores,
-                borderWidth: 2,
-                tension: 0.3,
-                fill: false
+                label: "Expedientes asignados",
+                data: window.dashboardData.cargaTrabajoUsuarios.values
             }]
         },
         options: {

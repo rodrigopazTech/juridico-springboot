@@ -1,6 +1,5 @@
 package com.juridico.sistema_juridico.service;
 
-
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.dto.response.dashboard.EstadisticasResponse;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
@@ -37,7 +36,7 @@ public class DashboardService {
                 .expedientesActivos(
                         expedienteRepository.countByEtapaProcesal(EtapaProcesal.TRAMITE)
                 )
-                // 🔥 mientras no tengas campo "concluida"
+                // Mientras no exista campo "concluida"
                 .audienciasProgramadas(audienciaRepository.count())
                 .terminosActivos(terminoRepository.count())
                 .build();
@@ -47,15 +46,41 @@ public class DashboardService {
     // GRÁFICAS
     // =========================
     public Map<String, Object> obtenerMetricas() {
+
+        // =========================
+        // CARGA DE TRABAJO POR USUARIO
+        // =========================
+        // Resultado esperado:
+        // [ ["Juan Pérez", 10], ["Ana López", 5] ]
+        List<Object[]> cargaTrabajo = expedienteRepository.contarExpedientesPorUsuario();
+
+        List<String> usuarios = cargaTrabajo.stream()
+                .map(row -> (String) row[0])
+                .toList();
+
+        List<Long> cantidades = cargaTrabajo.stream()
+                .map(row -> (Long) row[1])
+                .toList();
+
         return Map.of(
+                // =========================
+                // ESTATUS DE EXPEDIENTES
+                // =========================
                 "estatusExpedientes", Map.of(
                         "labels", List.of("Trámite", "Laudo", "Firme"),
                         "values", List.of(
                                 expedienteRepository.countByEtapaProcesal(EtapaProcesal.TRAMITE),
                                 expedienteRepository.countByEtapaProcesal(EtapaProcesal.LAUDO),
                                 expedienteRepository.countByEtapaProcesal(EtapaProcesal.FIRME)
-                              //  expedienteRepository.countByEtapaProcesal(EtapaProcesal.CONCLUIDO)
                         )
+                ),
+
+                // =========================
+                // CARGA DE TRABAJO POR USUARIO
+                // =========================
+                "cargaTrabajoUsuarios", Map.of(
+                        "labels", usuarios,
+                        "values", cantidades
                 )
         );
     }

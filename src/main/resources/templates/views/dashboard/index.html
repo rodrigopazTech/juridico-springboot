@@ -28,10 +28,13 @@
 
 <body class="bg-gray-100 text-gray-800 font-sans">
 
+<!-- SIDEBAR -->
 <div th:replace="~{fragments/sidebar :: sidebar}"></div>
 
+<!-- CONTENIDO -->
 <div class="p-4 sm:ml-64">
 
+    <!-- HEADER -->
     <div class="mb-6">
         <h1 class="text-3xl font-bold text-gob-guinda">
             <i class="fas fa-chart-line text-gob-oro mr-2"></i> Dashboard
@@ -42,13 +45,14 @@
 
     <!-- KPIs -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+
         <div class="bg-white p-5 rounded shadow border-l-4 border-gob-guinda">
             <p class="text-xs uppercase text-gray-500">Expedientes</p>
             <h3 class="text-3xl font-bold" th:text="${kpis.totalExpedientes}">0</h3>
         </div>
 
         <div class="bg-white p-5 rounded shadow border-l-4 border-blue-500">
-            <p class="text-xs uppercase text-gray-500">Activos</p>
+            <p class="text-xs uppercase text-gray-500">En trámite</p>
             <h3 class="text-3xl font-bold" th:text="${kpis.expedientesActivos}">0</h3>
         </div>
 
@@ -61,10 +65,13 @@
             <p class="text-xs uppercase text-gray-500">Términos</p>
             <h3 class="text-3xl font-bold" th:text="${kpis.terminosActivos}">0</h3>
         </div>
+
     </div>
 
     <!-- GRÁFICAS -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+        <!-- Estatus Expedientes -->
         <div class="bg-white p-6 rounded shadow">
             <h3 class="font-bold mb-4">Estatus de Expedientes</h3>
             <div class="chart-container">
@@ -72,24 +79,26 @@
             </div>
         </div>
 
+        <!-- Carga de Trabajo por Usuario -->
         <div class="bg-white p-6 rounded shadow">
-            <h3 class="font-bold mb-4">Trabajo Completado</h3>
+            <h3 class="font-bold mb-4">Carga de Trabajo por Usuario</h3>
             <div class="chart-container">
-                <canvas id="chartTrabajoCompletado"></canvas>
+                <canvas id="chartCargaTrabajoUsuarios"></canvas>
             </div>
         </div>
+
     </div>
 
 </div>
 
-<!-- 🔴 INYECCIÓN CLAVE DE DATOS -->
+<!-- 🔴 INYECCIÓN DE DATOS DESDE SPRING -->
 <script th:inline="javascript">
     /*<![CDATA[*/
     window.dashboardData = /*[[${dashboardData}]]*/ {};
     /*]]>*/
 </script>
 
-
+<!-- JS DEL DASHBOARD -->
 <script th:src="@{/js/dashboard.js}"></script>
 
 </body>
