@@ -1,0 +1,43 @@
+<div th:fragment="grid">
+    <div th:if="${recordatorios.empty}" class="text-center py-12 bg-white rounded-lg border border-dashed border-gray-300">
+        <i class="fas fa-sticky-note text-4xl text-gray-200 mb-3 block"></i>
+        <p class="text-gray-500">No tienes recordatorios pendientes.</p>
+        <button onclick="abrirModalRecordatorio()" class="text-gob-guinda font-bold hover:underline mt-2 text-sm">Crear uno ahora</button>
+    </div>
+
+    <div id="grid-recordatorios-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div th:each="r : ${recordatorios}" 
+             class="relative bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all group">
+            
+            <a th:href="@{/alertas/recordatorios/eliminar/{id}(id=${r.id})}" 
+               class="absolute top-3 right-3 text-gray-300 hover:text-red-500 transition-colors" title="Eliminar">
+                <i class="fas fa-trash-alt"></i>
+            </a>
+
+            <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+                     th:classappend="${r.prioridad.name() == 'ALTA' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-600'}">
+                    <i class="fas" th:classappend="${r.prioridad.name() == 'ALTA' ? 'fa-exclamation' : 'fa-thumbtack'}"></i>
+                </div>
+                
+                <div class="flex-1">
+                    <h4 class="font-bold text-gray-800 leading-tight" th:text="${r.titulo}">Reunión</h4>
+                    <p class="text-sm text-gray-500 mt-1 mb-3 line-clamp-2" th:text="${r.detalles}">Detalles...</p>
+                    
+                    <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                        <div class="flex items-center gap-2 text-xs font-bold" 
+                             th:classappend="${r.fechaRecordatorio.isBefore(T(java.time.LocalDate).now()) ? 'text-red-600' : 'text-gob-guinda'}">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span th:text="${#temporals.format(r.fechaRecordatorio, 'dd MMM') + ' ' + r.horaRecordatorio}">Fecha</span>
+                        </div>
+                        
+                        <a th:href="@{/alertas/recordatorios/completar/{id}(id=${r.id})}" 
+                           class="text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-100 hover:bg-green-100 transition-colors">
+                            <i class="fas fa-check mr-1"></i> Completar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

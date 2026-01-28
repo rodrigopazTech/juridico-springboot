@@ -6,7 +6,9 @@ import com.juridico.sistema_juridico.Entity.procesal.TerminoPresentado;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
+import com.juridico.sistema_juridico.service.NotificacionService;
 import com.juridico.sistema_juridico.util.TerminoExcelExporter;
+import com.juridico.sistema_juridico.service.NotificacionService; // Importar
 
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -58,7 +60,10 @@ public class TerminosController {
     private UsuarioRepository usuarioRepository;
 
     @Autowired
-    private TerminoPresentadoRepository terminoPresentadoRepository; // Inyección nueva
+    private TerminoPresentadoRepository terminoPresentadoRepository;
+
+    @Autowired 
+    private NotificacionService notificacionService; // Inyectar
 
     // 1. VISTA PRINCIPAL
     @GetMapping
@@ -287,6 +292,17 @@ public class TerminosController {
 
                 terminoRepository.save(termino);
 
+               if (termino.getAbogadoResponsable() != null) {
+                    notificacionService.crearNotificacion(
+                        termino.getAbogadoResponsable(),
+                        "Acuse Subido: " + termino.getExpediente().getNumero(),
+                        "Se ha cargado el acuse del término. Estatus: Concluido.",
+                        "TERMINO",
+                        Prioridad.MEDIA,
+                        termino.getId().toString()
+                    );
+                }
+                
                 redirectAttrs.addFlashAttribute("mensaje", "¡Término Concluido! Acuse registrado.");
                 redirectAttrs.addFlashAttribute("tipo", "success");
             } else {

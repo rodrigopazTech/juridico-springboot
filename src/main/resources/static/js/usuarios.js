@@ -235,6 +235,7 @@ function confirmarCambioEstatus(id, tipo) {
         }
     });
 }
+
 function eliminarMateriaJS(materiaId, gerenciaId) {
     if(!confirm("¿Seguro que deseas eliminar esta materia?")) return;
 

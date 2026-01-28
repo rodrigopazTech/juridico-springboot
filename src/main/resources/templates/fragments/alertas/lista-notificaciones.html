@@ -1,0 +1,46 @@
+<div th:fragment="lista" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-500">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-3 w-32">Fecha</th>
+                    <th class="px-6 py-3 w-24">Tipo</th>
+                    <th class="px-6 py-3">Mensaje / Detalle</th>
+                    <th class="px-6 py-3 text-right w-24">Acción</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-notificaciones-body" class="divide-y divide-gray-200">
+                <tr th:if="${notificaciones.empty}">
+                    <td colspan="4" class="px-6 py-12 text-center text-gray-400">
+                        <i class="fas fa-check-circle text-4xl mb-3 block text-green-100"></i>
+                        Estás al día. No tienes notificaciones nuevas.
+                    </td>
+                </tr>
+
+                <tr th:each="n : ${notificaciones}" class="bg-white hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-bold text-gray-900" th:text="${#temporals.format(n.notificarEn, 'dd MMM')}">25 Ene</div>
+                        <div class="text-xs text-gray-500" th:text="${#temporals.format(n.notificarEn, 'HH:mm')}">10:00</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border"
+                              th:classappend="${n.tipo == 'AUDIENCIA' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
+                                               (n.tipo == 'TERMINO' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200')}">
+                            <i class="fas" th:classappend="${n.tipo == 'AUDIENCIA' ? 'fa-gavel' : (n.tipo == 'TERMINO' ? 'fa-hourglass-end' : 'fa-bell')}"></i>
+                            <span th:text="${n.tipo}">TIPO</span>
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-bold text-gray-800" th:text="${n.titulo}">Título</div>
+                        <div class="text-xs text-gray-500 mt-1" th:text="${n.mensaje}">Mensaje descriptivo</div>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <a th:href="@{/alertas/notificaciones/eliminar/{id}(id=${n.id})}" class="text-gray-300 hover:text-red-500 transition-colors" title="Marcar como leída / Eliminar">
+                            <i class="fas fa-times-circle text-lg"></i>
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

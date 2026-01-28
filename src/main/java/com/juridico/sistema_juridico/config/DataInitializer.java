@@ -70,33 +70,63 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("✅ Gerencias y Materias inicializadas correctamente.");
         }
 
-        // 2. USUARIOS
+       // 2. USUARIOS
         if (usuarioRepository.count() == 0) {
-            // Buscamos una gerencia para asignarla al usuario (opcional)
             Gerencia gerenciaDefault = gerenciaRepository.findAll().stream().findFirst().orElse(null);
 
-            Usuario admin = Usuario.builder()
-                    .nombreCompleto("Ricardo Villalobos")
-                    .email("admin@juridico.com")
-                    .password(passwordEncoder.encode("admin123"))
+            // 1. NIVEL ALTO (Ve todo)
+            Usuario director = Usuario.builder()
+                    .nombreCompleto("Director General")
+                    .email("director@juridico.com")
+                    .password(passwordEncoder.encode("12345"))
                     .rol(RolUsuario.DIRECCION)
                     .activo(true)
-                    // .gerencia(gerenciaDefault) // Si el admin pertenece a una gerencia
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            
+            Usuario subdirector = Usuario.builder()
+                    .nombreCompleto("Subdirector Jurídico")
+                    .email("subdirector@juridico.com")
+                    .password(passwordEncoder.encode("12345"))
+                    .rol(RolUsuario.SUBDIRECCION)
+                    .activo(true)
                     .createdAt(LocalDateTime.now())
                     .build();
 
+            // 2. NIVEL MEDIO (Ve Dashboard, pero NO Usuarios ni Agenda General)
+            Usuario gerente = Usuario.builder()
+                    .nombreCompleto("Gerente Civil")
+                    .email("gerente@juridico.com")
+                    .password(passwordEncoder.encode("12345"))
+                    .rol(RolUsuario.GERENTE)
+                    .activo(true)
+                    .gerencia(gerenciaDefault)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            
+            Usuario jefe = Usuario.builder()
+                    .nombreCompleto("Jefe de Depto")
+                    .email("jefe@juridico.com")
+                    .password(passwordEncoder.encode("12345"))
+                    .rol(RolUsuario.JEFE_DEPTO)
+                    .activo(true)
+                    .gerencia(gerenciaDefault)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            // 3. NIVEL OPERATIVO (Solo Expedientes, Términos, Audiencias)
             Usuario abogado = Usuario.builder()
-                    .nombreCompleto("Juan Pérez")
-                    .email("juan@juridico.com")
-                    .password(passwordEncoder.encode("user123"))
+                    .nombreCompleto("Abogado Litigante")
+                    .email("abogado@juridico.com")
+                    .password(passwordEncoder.encode("12345"))
                     .rol(RolUsuario.ABOGADO)
                     .activo(true)
-                    .gerencia(gerenciaDefault) // Asignamos gerencia al abogado
+                    .gerencia(gerenciaDefault)
                     .createdAt(LocalDateTime.now())
                     .build();
 
-            usuarioRepository.saveAll(List.of(admin, abogado));
-            System.out.println("✅ Usuarios inicializados.");
+            usuarioRepository.saveAll(List.of(director, subdirector, gerente, jefe, abogado));
+            System.out.println("✅ Usuarios de prueba creados para todos los roles.");
         }
 
         // 3. TIPOS DE EXPEDIENTE
