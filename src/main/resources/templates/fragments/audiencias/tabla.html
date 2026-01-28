@@ -5,6 +5,7 @@
                 <tr>
                     <th class="px-4 py-3">Fecha / Hora</th>
                     <th class="px-4 py-3">Expediente</th>
+                    <th class="px-4 py-3">Gerencia / Materia</th>
                     <th class="px-4 py-3">Tipo / Ubicación</th>
                     <th class="px-4 py-3">Estatus</th>
                     <th class="px-4 py-3 text-right">Acciones</th>
@@ -12,7 +13,7 @@
             </thead>
             <tbody class="divide-y divide-gray-200">
                 <tr th:if="${audiencias.empty}">
-                    <td colspan="5" class="px-4 py-8 text-center text-gray-400">No se encontraron audiencias.</td>
+                    <td colspan="6" class="px-4 py-8 text-center text-gray-400">No se encontraron audiencias.</td>
                 </tr>
 
                 <tr th:each="a : ${audiencias}" class="bg-white hover:bg-gray-50 transition-colors group">
@@ -35,18 +36,34 @@
                                class="text-sm font-bold text-gob-guinda hover:underline"
                                th:text="${a.expediente.numero}">EXP-001</a>
                             <span class="text-[10px] text-gray-500 truncate max-w-[150px]" 
-                                  th:text="${a.expediente.partes}">Actor vs Demandado</span>
+                                  th:text="${a.expediente.partes}">Partes</span>
+                        </div>
+                    </td>
+
+                    <td class="px-4 py-3">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold text-gray-700" 
+                                  th:text="${a.expediente.gerencia != null ? a.expediente.gerencia.nombre : 'Sin Gerencia'}">Gerencia</span>
+                            <span class="text-[10px] text-gray-500" 
+                                  th:text="${a.expediente.materia != null ? a.expediente.materia.nombre : 'Sin Materia'}">Materia</span>
                         </div>
                     </td>
 
                     <td class="px-4 py-3">
                         <span class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-semibold border border-gray-200"
-                              th:text="${a.tipoAudiencia != null ? a.tipoAudiencia.nombre : 'General'}">Inicial</span>
+                              th:text="${a.tipoAudiencia != null ? a.tipoAudiencia.nombre : 'General'}">Tipo</span>
                         
                         <div class="flex items-center gap-1 mt-1 text-xs text-gray-700">
                             <i th:if="${a.esVirtual}" class="fas fa-video text-blue-600"></i>
                             <i th:unless="${a.esVirtual}" class="fas fa-map-marker-alt text-gray-500"></i>
+                            
                             <span th:text="${a.esVirtual ? 'En Línea' : 'Presencial'}">Ubicación</span>
+                            
+                            <a th:if="${a.estatusAudiencia != 'CONCLUIDA' and a.esVirtual == true and a.urlReunion != null and !#strings.isEmpty(a.urlReunion)}"
+                               th:href="${a.urlReunion}" target="_blank" 
+                               class="ml-2 text-blue-600 hover:text-blue-800 hover:scale-110 transition-transform">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
                         </div>
                     </td>
 
@@ -54,42 +71,82 @@
                         <span th:if="${a.estatusAudiencia == 'PENDIENTE'}" class="inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-bold px-2.5 py-0.5 rounded border border-yellow-200">
                             <i class="fas fa-clock mr-1"></i> Pendiente
                         </span>
+                        <span th:if="${a.estatusAudiencia == 'CON_ACTA'}" class="inline-flex items-center bg-purple-100 text-purple-800 text-xs font-bold px-2.5 py-0.5 rounded border border-purple-200">
+                            <i class="fas fa-file-upload mr-1"></i> Con Acta
+                        </span>
                         <span th:if="${a.estatusAudiencia == 'CONCLUIDA'}" class="inline-flex items-center bg-gray-800 text-white text-xs font-bold px-2.5 py-0.5 rounded border border-gray-600">
-                            <i class="fas fa-flag-checkered mr-1"></i> Concluida
+                            <i class="fas fa-check-double mr-1"></i> Concluida
                         </span>
                     </td>
 
                     <td class="px-4 py-3 text-right relative">
-                        <button th:if="${a.estatusAudiencia != 'CONCLUIDA'}"
-                                th:onclick="'abrirModalConcluir(' + ${a.id} + ')'"
-                                class="text-green-600 hover:text-green-800 mr-2" title="Concluir y Subir Acta">
-                            <i class="fas fa-check-circle"></i>
+                        
+                        <button th:unless="${a.estatusAudiencia == 'CONCLUIDA'}"
+                                th:onclick="abrirModalEditar(
+                                    [[${a.id}]], 
+                                    [[${a.expediente.id}]], 
+                                    [[${a.tipoAudiencia != null ? a.tipoAudiencia.id : ''}]], 
+                                    [[${a.fechaAudiencia}]], 
+                                    [[${a.horaAudiencia}]], 
+                                    [[${a.esVirtual}]], 
+                                    [[${a.salaLugar}]], 
+                                    [[${a.urlReunion}]], 
+                                    [[${a.abogadoComparece}]]
+                                )"
+                                class="text-gray-400 hover:text-gob-oro mr-2 transition-colors"
+                                title="Editar">
+                            <i class="fas fa-edit"></i>
                         </button>
 
-                        <button th:onclick="'toggleMenu(' + ${a.id} + ')'" class="text-gray-400 hover:text-gob-guinda px-2">
+                        <button th:if="${a.estatusAudiencia == 'CONCLUIDA'}" class="text-gray-200 cursor-not-allowed mr-2" title="Edición Bloqueada">
+                            <i class="fas fa-edit"></i>
+                        </button>
+
+                        <button th:onclick="'toggleMenu(' + ${a.id} + ')'" class="text-gray-400 hover:text-gob-guinda px-2 transition-colors">
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
 
-                        <div th:id="'menu-' + ${a.id}" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-md shadow-xl z-50 border border-gray-100 text-left overflow-hidden ring-1 ring-black ring-opacity-5">
+                        <div th:id="'menu-' + ${a.id}" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-md shadow-xl z-50 border border-gray-100 text-left overflow-hidden ring-1 ring-black ring-opacity-5">
                             
-                            <a th:href="@{/expedientes/{id}(id=${a.expediente.id})}" class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
-                                <i class="fas fa-folder-open mr-2 text-gray-400"></i> Ir al Expediente
-                            </a>
-                            
-                            <a th:if="${a.esVirtual && a.urlReunion != null}" 
+                            <a th:if="${a.estatusAudiencia != 'CONCLUIDA' and a.esVirtual == true and a.urlReunion != null and !#strings.isEmpty(a.urlReunion)}"
                                th:href="${a.urlReunion}" target="_blank"
-                               class="block px-4 py-3 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-500">
-                                <i class="fas fa-video mr-2"></i> Unirse a Reunión
+                               class="block px-4 py-3 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-500 font-bold transition-colors">
+                                <i class="fas fa-video mr-3 w-4 text-center"></i> Unirse a Reunión
                             </a>
 
-                            <a th:if="${a.actaDocumento != null}" href="#" class="block px-4 py-3 text-sm text-purple-700 hover:bg-purple-50">
-                                <i class="fas fa-file-pdf mr-2"></i> Descargar Acta
+                            <button th:unless="${a.estatusAudiencia == 'CONCLUIDA'}"
+                                    th:onclick="'activarSubidaActa(' + ${a.id} + ')'"
+                                    class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-oro transition flex items-center border-l-4 border-transparent hover:border-gob-oro">
+                                <i class="fas fa-cloud-upload-alt mr-3 w-4 text-center" 
+                                   th:classappend="${a.actaDocumento != null ? 'text-orange-400' : 'text-gray-400'}"></i>
+                                <span th:text="${a.actaDocumento != null ? 'Reemplazar Acta' : 'Subir Acta'}">Subir Acta</span>
+                            </button>
+
+                            <a th:if="${a.actaDocumento != null}" 
+                               th:href="@{/audiencias/descargar-acta/{id}(id=${a.id})}" 
+                               class="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition flex items-center border-l-4 border-transparent hover:border-red-500">
+                                <i class="fas fa-file-pdf mr-3 w-4 text-center text-red-500"></i> Ver Acta Subida
                             </a>
 
                             <div class="border-t border-gray-100"></div>
-                            
-                            <a th:href="@{/audiencias/eliminar/{id}(id=${a.id})}" class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50">
-                                <i class="fas fa-trash-alt mr-2"></i> Eliminar
+
+                            <button th:if="${a.estatusAudiencia == 'CON_ACTA'}"
+                                    th:onclick="'abrirModalConcluir(' + ${a.id} + ')'"
+                                    class="w-full text-left px-4 py-3 text-sm text-green-700 hover:bg-green-50 transition flex items-center font-bold border-l-4 border-transparent hover:border-green-500">
+                                <i class="fas fa-check-circle mr-3 w-4 text-center text-green-600"></i> Concluir y Cerrar
+                            </button>
+
+                            <div th:if="${a.estatusAudiencia == 'CON_ACTA'}" class="border-t border-gray-100"></div>
+
+                            <a th:href="@{/expedientes/{id}(id=${a.expediente.id})}" 
+                               class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-guinda transition border-l-4 border-transparent hover:border-gob-guinda">
+                                <i class="fas fa-folder-open mr-3 w-4 text-center text-gray-400"></i> Ver Expediente
+                            </a>
+
+                            <a th:unless="${a.estatusAudiencia == 'CONCLUIDA'}"
+                               th:href="@{/audiencias/eliminar/{id}(id=${a.id})}" 
+                               class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition border-l-4 border-transparent hover:border-red-500">
+                                <i class="fas fa-trash-alt mr-3 w-4 text-center text-red-400"></i> Eliminar
                             </a>
                         </div>
                     </td>

@@ -35,60 +35,62 @@ public class AuthService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public LoginResponse login(LoginRequest loginRequest) {
-        // Usamos el email que viene en el DTO para autenticar
+    public LoginResponse login(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
+            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
-        String jwt = tokenProvider.generateToken(authentication);
-        return new LoginResponse(jwt, jwt, "Bearer");
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        
+        Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        
+        usuario.setUltimoAcceso(LocalDateTime.now());
+        usuarioRepository.save(usuario);
+
+        String accessToken = tokenProvider.generateToken(authentication);
+        String refreshToken = tokenProvider.generateRefreshToken(authentication);
+
+        return new LoginResponse(accessToken, refreshToken, "Bearer");
     }
 
-    public String register(RegisterRequest registerRequest) {
-        // Usamos existsByEmail que es el método oficial del repositorio
-        if(usuarioRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new ConflictException("El email ya está registrado en el sistema jurídico.");
+    public String register(RegisterRequest request) {
+        if (usuarioRepository.existsByEmail(request.getEmail())) {
+            throw new ConflictException("El email ya está registrado.");
         }
 
         Usuario usuario = Usuario.builder()
-                .nombreCompleto(registerRequest.getNombre())
-                .email(registerRequest.getEmail())
-                .passwordHash(passwordEncoder.encode(registerRequest.getPassword()))
-                .createdAt(LocalDateTime.now())
+                .nombreCompleto(request.getNombreCompleto())
+                .email(request.getEmail())
+                // CAMBIO: .password en lugar de .passwordHash
+                .password(passwordEncoder.encode(request.getPassword())) 
+                .rol(request.getRol())
                 .activo(true)
                 .build();
-        
+
         usuarioRepository.save(usuario);
         return "Abogado registrado exitosamente";
     }
 
     public LoginResponse refreshToken(RefreshTokenRequest request) {
-        // 1. Validar si el refresh token es legítimo
         if (!tokenProvider.validateToken(request.getRefreshToken())) {
             throw new UnauthorizedException("El token de refresco ha expirado o es inválido.");
         }
 
-        // 2. Extraer el email del token (AQUÍ usamos la variable que causaba el aviso)
         String email = tokenProvider.getUsernameFromJWT(request.getRefreshToken());
         
-        // 3. Buscamos al usuario en la base de datos para asegurarnos que sigue activo
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
-        // 4. Creamos una nueva autenticación para generar el nuevo Access Token
-        // Usamos una implementación simple de Authentication para el token
         Authentication auth = new UsernamePasswordAuthenticationToken(usuario.getEmail(), null, java.util.Collections.emptyList());
         
         String newAccessToken = tokenProvider.generateToken(auth);
 
-        // Devolvemos el nuevo Access Token y conservamos el mismo Refresh Token
         return new LoginResponse(newAccessToken, request.getRefreshToken(), "Bearer");
-        }
+    }
 
     public String logout() {
         SecurityContextHolder.clearContext();
         return "Sesión cerrada exitosamente";
     }
-
 }

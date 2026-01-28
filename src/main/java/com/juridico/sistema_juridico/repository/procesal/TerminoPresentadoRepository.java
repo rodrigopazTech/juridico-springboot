@@ -8,6 +8,7 @@ import java.util.UUID;
 
 @Repository
 public interface TerminoPresentadoRepository extends JpaRepository<TerminoPresentado, Integer> {
-    // Cambiado a UUID para el historial
+    
+    // Este es el método que te faltaba para descargar el acuse
     List<TerminoPresentado> findByTerminoExpedienteId(UUID expedienteId);
 }

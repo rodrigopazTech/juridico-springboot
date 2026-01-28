@@ -25,11 +25,15 @@ public class Usuario {
     @Column(name = "nombre_completo", nullable = false, length = 200)
     private String nombreCompleto;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 100)
     private String email;
 
+    // --- CAMBIO CLAVE AQUÍ ---
+    // Renombramos la variable a 'password' para que Lombok genere getPassword()
+    // Pero mantenemos name="password_hash" para que la BD no cambie.
     @Column(name = "password_hash", nullable = false)
-    private String passwordHash;
+    private String password;
+    // -------------------------
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
@@ -50,4 +54,17 @@ public class Usuario {
     
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    // Auditoría automática antes de insertar
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    // Auditoría automática antes de actualizar
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

@@ -114,3 +114,24 @@ function activarSubidaAcuse(idTermino) {
         console.error("No se encontraron los inputs de acuse");
     }
 }
+
+function activarSubidaAcuse(idTermino) {
+    // 1. Asignar el ID al input oculto dentro del modal nuevo
+    const inputId = document.getElementById('input-acuse-id');
+    
+    if(inputId) {
+        inputId.value = idTermino;
+        
+        // 2. Mostrar el modal
+        const modal = document.getElementById('modal-subir-acuse');
+        if(modal) {
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex'; // Asegurar display flex para centrado
+            modal.classList.add('flex');
+            modal.classList.add('items-center');
+            modal.classList.add('justify-center');
+        }
+    } else {
+        console.error("Error: No se encontró el input 'input-acuse-id' en el modal de acuse.");
+    }
+}

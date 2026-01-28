@@ -25,6 +25,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -160,15 +163,27 @@ public class TerminosController {
         if(termino != null) {
             String actual = termino.getEstatusTermino();
             
-            // --- REGLA: Si está en Presentado, NO avanza con este botón, avanza subiendo el Acuse ---
+            // Si es Proyectista y NO ha subido archivo, no dejamos avanzar.
+            if ("Proyectista".equals(actual) && termino.getArchivoWord() == null) {
+                redirectAttrs.addFlashAttribute("mensaje", "Debes subir el documento (Word) antes de enviar a Revisión.");
+                redirectAttrs.addFlashAttribute("tipo", "error");
+                return "redirect:/terminos";
+            }
+
+            // Si está en Presentado, NO avanza con este botón, avanza subiendo el Acuse
             if("Presentado".equals(actual)) {
-                redirectAttrs.addFlashAttribute("mensaje", "Para concluir, debes subir el Acuse.");
+                redirectAttrs.addFlashAttribute("mensaje", "Para concluir, utiliza el botón de 'Subir Acuse'.");
                 redirectAttrs.addFlashAttribute("tipo", "warning");
                 return "redirect:/terminos";
             }
             
             String siguiente = calcularSiguienteEstado(actual);
             termino.setEstatusTermino(siguiente);
+        
+            if ("Presentado".equals(siguiente)) {
+                termino.setFechaPresentacion(LocalDate.now());
+            }
+
             terminoRepository.save(termino);
             
             redirectAttrs.addFlashAttribute("mensaje", "Avanzó a: " + siguiente);
@@ -226,11 +241,13 @@ public class TerminosController {
         return "redirect:/terminos";
     }
 
-    // 5. NUEVO: SUBIR ACUSE (Cierra el ciclo)
+   // 5. SUBIR ACUSE Y CONCLUIR
     @PostMapping("/subir-acuse")
     public String subirAcuse(@RequestParam("id") Integer id,
                              @RequestParam("archivoAcuse") MultipartFile archivo,
+                             @RequestParam(value = "observaciones", required = false) String observaciones, // NUEVO PARÁMETRO
                              RedirectAttributes redirectAttrs) {
+        
         if (archivo.isEmpty()) {
             redirectAttrs.addFlashAttribute("mensaje", "Selecciona el archivo del Acuse.");
             redirectAttrs.addFlashAttribute("tipo", "error");
@@ -249,7 +266,7 @@ public class TerminosController {
                 String nombreAcuse = "ACUSE_" + id + "_" + archivo.getOriginalFilename();
                 Files.copy(archivo.getInputStream(), ruta.resolve(nombreAcuse), StandardCopyOption.REPLACE_EXISTING);
 
-                // 2. Guardar en la tabla TerminoPresentado (Histórico)
+                // 2. Guardar Histórico
                 TerminoPresentado presentado = TerminoPresentado.builder()
                         .termino(termino)
                         .expedienteNumero(termino.getExpediente().getNumero())
@@ -260,8 +277,14 @@ public class TerminosController {
                 
                 terminoPresentadoRepository.save(presentado);
 
-                // 3. CAMBIAR ESTATUS A CONCLUIDO
+                // 3. ACTUALIZAR TÉRMINO (Estatus + Observaciones)
                 termino.setEstatusTermino("Concluido");
+                termino.setObservaciones(observaciones); 
+                
+                if (termino.getFechaPresentacion() == null) {
+                    termino.setFechaPresentacion(LocalDate.now());
+                }
+
                 terminoRepository.save(termino);
 
                 redirectAttrs.addFlashAttribute("mensaje", "¡Término Concluido! Acuse registrado.");
@@ -366,14 +389,26 @@ public class TerminosController {
         }
     }
 
-    @GetMapping("/eliminar/{id}")
+ @GetMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
         try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            
+            // Verificamos si tiene el rol (Ajusta "ROLE_DIRECCION" a como se llame en tu BD, ej: "ADMIN", "DIRECTOR")
+            boolean esDireccion = auth.getAuthorities().stream()
+                .anyMatch(r -> r.getAuthority().equals("ROLE_DIRECCION") || r.getAuthority().equals("Dirección"));
+
+            if (!esDireccion) {
+                redirectAttrs.addFlashAttribute("mensaje", "Acceso denegado. Solo Dirección puede eliminar términos.");
+                redirectAttrs.addFlashAttribute("tipo", "error");
+                return "redirect:/terminos";
+            }
+
             terminoRepository.deleteById(id);
             redirectAttrs.addFlashAttribute("mensaje", "Eliminado correctamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
         } catch (Exception e) {
-            redirectAttrs.addFlashAttribute("mensaje", "Error al eliminar.");
+            redirectAttrs.addFlashAttribute("mensaje", "Error al eliminar: " + e.getMessage());
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
         return "redirect:/terminos";
