@@ -54,6 +54,7 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
     // =========================
     long countByEtapaProcesal(EtapaProcesal etapaProcesal);
 
+    // -------- Carga de trabajo por usuario --------
     @Query("""
         SELECT u.nombreCompleto, COUNT(e)
         FROM Expediente e
@@ -62,4 +63,29 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
         ORDER BY COUNT(e) DESC
     """)
     List<Object[]> contarExpedientesPorUsuario();
+
+    // -------- Distribución por gerencia --------
+    @Query("""
+        SELECT g.nombre, COUNT(e)
+        FROM Expediente e
+        JOIN e.gerencia g
+        GROUP BY g.nombre
+        ORDER BY COUNT(e) DESC
+    """)
+    List<Object[]> contarExpedientesPorGerencia();
+
+    // ✅ TRABAJO COMPLETADO POR MES (CORREGIDO)
+    @Query("""
+        SELECT 
+            FUNCTION('to_char', e.updatedAt, 'YYYY-MM'),
+            COUNT(e)
+        FROM Expediente e
+        WHERE e.etapaProcesal IN (:etapas)
+          AND e.updatedAt IS NOT NULL
+        GROUP BY FUNCTION('to_char', e.updatedAt, 'YYYY-MM')
+        ORDER BY FUNCTION('to_char', e.updatedAt, 'YYYY-MM')
+    """)
+    List<Object[]> contarTrabajoCompletadoMensual(
+            @Param("etapas") List<EtapaProcesal> etapas
+    );
 }

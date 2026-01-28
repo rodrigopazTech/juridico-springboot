@@ -36,7 +36,6 @@ public class DashboardService {
                 .expedientesActivos(
                         expedienteRepository.countByEtapaProcesal(EtapaProcesal.TRAMITE)
                 )
-                // Mientras no exista campo "concluida"
                 .audienciasProgramadas(audienciaRepository.count())
                 .terminosActivos(terminoRepository.count())
                 .build();
@@ -47,25 +46,26 @@ public class DashboardService {
     // =========================
     public Map<String, Object> obtenerMetricas() {
 
-        // =========================
-        // CARGA DE TRABAJO POR USUARIO
-        // =========================
-        // Resultado esperado:
-        // [ ["Juan Pérez", 10], ["Ana López", 5] ]
+        // -------- CARGA POR USUARIO --------
         List<Object[]> cargaTrabajo = expedienteRepository.contarExpedientesPorUsuario();
+        List<String> usuarios = cargaTrabajo.stream().map(r -> (String) r[0]).toList();
+        List<Long> cantidadesUsuarios = cargaTrabajo.stream().map(r -> (Long) r[1]).toList();
 
-        List<String> usuarios = cargaTrabajo.stream()
-                .map(row -> (String) row[0])
-                .toList();
+        // -------- DISTRIBUCIÓN POR GERENCIA --------
+        List<Object[]> porGerencia = expedienteRepository.contarExpedientesPorGerencia();
+        List<String> gerencias = porGerencia.stream().map(r -> (String) r[0]).toList();
+        List<Long> cantidadesGerencias = porGerencia.stream().map(r -> (Long) r[1]).toList();
 
-        List<Long> cantidades = cargaTrabajo.stream()
-                .map(row -> (Long) row[1])
-                .toList();
+        // -------- TRABAJO COMPLETADO MENSUAL --------
+        List<Object[]> trabajoMensual =
+                expedienteRepository.contarTrabajoCompletadoMensual(
+                        List.of(EtapaProcesal.LAUDO, EtapaProcesal.FIRME)
+                );
+
+        List<String> meses = trabajoMensual.stream().map(r -> (String) r[0]).toList();
+        List<Long> cantidadesMes = trabajoMensual.stream().map(r -> (Long) r[1]).toList();
 
         return Map.of(
-                // =========================
-                // ESTATUS DE EXPEDIENTES
-                // =========================
                 "estatusExpedientes", Map.of(
                         "labels", List.of("Trámite", "Laudo", "Firme"),
                         "values", List.of(
@@ -74,13 +74,18 @@ public class DashboardService {
                                 expedienteRepository.countByEtapaProcesal(EtapaProcesal.FIRME)
                         )
                 ),
-
-                // =========================
-                // CARGA DE TRABAJO POR USUARIO
-                // =========================
                 "cargaTrabajoUsuarios", Map.of(
                         "labels", usuarios,
-                        "values", cantidades
+                        "values", cantidadesUsuarios
+                ),
+                "distribucionGerencias", Map.of(
+                        "labels", gerencias,
+                        "values", cantidadesGerencias
+                ),
+                // ✅ NUEVO
+                "trabajoCompletadoMensual", Map.of(
+                        "labels", meses,
+                        "values", cantidadesMes
                 )
         );
     }

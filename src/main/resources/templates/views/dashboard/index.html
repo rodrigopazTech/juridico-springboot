@@ -2,7 +2,7 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Dashboard - Agenda Legal</title>
+    <title>Dashboard - Sistema Jurídico</title>
 
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -37,22 +37,25 @@
     <!-- HEADER -->
     <div class="mb-6">
         <h1 class="text-3xl font-bold text-gob-guinda">
-            <i class="fas fa-chart-line text-gob-oro mr-2"></i> Dashboard
+            <i class="fas fa-chart-line text-gob-oro mr-2"></i>
+            Dashboard
         </h1>
         <p class="text-sm text-gray-500">Resumen general del sistema</p>
         <hr class="h-1 w-20 bg-gob-oro border-0 mt-2"/>
     </div>
 
-    <!-- KPIs -->
+    <!-- =========================
+         KPIs
+    ========================== -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
 
         <div class="bg-white p-5 rounded shadow border-l-4 border-gob-guinda">
-            <p class="text-xs uppercase text-gray-500">Expedientes</p>
+            <p class="text-xs uppercase text-gray-500">Total Expedientes</p>
             <h3 class="text-3xl font-bold" th:text="${kpis.totalExpedientes}">0</h3>
         </div>
 
         <div class="bg-white p-5 rounded shadow border-l-4 border-blue-500">
-            <p class="text-xs uppercase text-gray-500">En trámite</p>
+            <p class="text-xs uppercase text-gray-500">En Trámite</p>
             <h3 class="text-3xl font-bold" th:text="${kpis.expedientesActivos}">0</h3>
         </div>
 
@@ -68,10 +71,12 @@
 
     </div>
 
-    <!-- GRÁFICAS -->
+    <!-- =========================
+         GRÁFICAS
+    ========================== -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
-        <!-- Estatus Expedientes -->
+        <!-- Estatus de Expedientes -->
         <div class="bg-white p-6 rounded shadow">
             <h3 class="font-bold mb-4">Estatus de Expedientes</h3>
             <div class="chart-container">
@@ -87,11 +92,29 @@
             </div>
         </div>
 
+        <!-- Distribución por Gerencia -->
+        <div class="bg-white p-6 rounded shadow">
+            <h3 class="font-bold mb-4">Distribución por Gerencia</h3>
+            <div class="chart-container">
+                <canvas id="chartDistribucionGerencias"></canvas>
+            </div>
+        </div>
+
+        <!-- Trabajo Completado Mensual -->
+        <div class="bg-white p-6 rounded shadow">
+            <h3 class="font-bold mb-4">Trabajo Completado (Tendencia Mensual)</h3>
+            <div class="chart-container">
+                <canvas id="chartTrabajoCompletado"></canvas>
+            </div>
+        </div>
+
     </div>
 
 </div>
 
-<!-- 🔴 INYECCIÓN DE DATOS DESDE SPRING -->
+<!-- =========================
+     INYECCIÓN DE DATOS
+========================== -->
 <script th:inline="javascript">
     /*<![CDATA[*/
     window.dashboardData = /*[[${dashboardData}]]*/ {};
