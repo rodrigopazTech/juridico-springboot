@@ -2,8 +2,8 @@ package com.juridico.sistema_juridico.repository.procesal;
 
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
-import org.springframework.data.domain.Page; // IMPORTANTE
-import org.springframework.data.domain.Pageable; // IMPORTANTE
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +17,7 @@ import java.util.UUID;
 public interface TerminoRepository extends JpaRepository<Termino, Integer> {
 
     // 1. CONSULTA PARA EXCEL (Devuelve List)
+    // MODIFICADO: Agregado filtro e.gerencia.id para seguridad
     @Query("SELECT t FROM Termino t " +
            "LEFT JOIN t.expediente e " +
            "LEFT JOIN t.abogadoResponsable a " +
@@ -27,14 +28,17 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
            "AND (:estatus IS NULL OR :estatus = '' OR t.estatusTermino = :estatus) " +
            "AND (:prioridad IS NULL OR t.prioridad = :prioridad) " +
-           "AND (:abogadoId IS NULL OR a.id = :abogadoId)")
+           "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
+           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId)") // <--- NUEVO FILTRO
     List<Termino> listarParaExcel(
             @Param("keyword") String keyword,
             @Param("estatus") String estatus,
             @Param("prioridad") Prioridad prioridad,
-            @Param("abogadoId") Integer abogadoId);
+            @Param("abogadoId") Integer abogadoId,
+            @Param("gerenciaId") Integer gerenciaId); // <--- NUEVO PARAMETRO
 
-    // 2. CONSULTA PARA PAGINACIÓN
+    // 2. CONSULTA PARA PAGINACIÓN (La principal)
+    // MODIFICADO: Agregado filtro e.gerencia.id para seguridad
     @Query("SELECT t FROM Termino t " +
            "LEFT JOIN t.expediente e " +
            "LEFT JOIN t.abogadoResponsable a " +
@@ -45,15 +49,17 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
            "AND (:estatus IS NULL OR :estatus = '' OR t.estatusTermino = :estatus) " +
            "AND (:prioridad IS NULL OR t.prioridad = :prioridad) " +
-           "AND (:abogadoId IS NULL OR a.id = :abogadoId)")
+           "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
+           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId)")
     Page<Termino> buscarConFiltros(
             @Param("keyword") String keyword,
             @Param("estatus") String estatus,
             @Param("prioridad") Prioridad prioridad,
             @Param("abogadoId") Integer abogadoId,
+            @Param("gerenciaId") Integer gerenciaId,
             Pageable pageable);
 
-    // Métodos auxiliares
+    // Métodos auxiliares (Se mantienen igual)
     List<Termino> findByFechaVencimientoBeforeAndEstatusTerminoNot(LocalDate fecha, String estatus);
     List<Termino> findByExpedienteId(UUID expedienteId);
 
@@ -63,6 +69,4 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             LocalDate fin, 
             Pageable pageable
     );
-
-    
 }

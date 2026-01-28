@@ -114,7 +114,7 @@
                                 <span class="truncate font-medium" th:text="${t.archivoWord}">Archivo.docx</span>
                             </a>
 
-                            <button th:if="${t.estatusTermino == 'Presentado'}"
+                            <button th:if="${t.estatusTermino == 'Presentado' and mapaPermisos.get('Presentado').contains(rolActual)}"
                                     th:onclick="'activarSubidaAcuse(' + ${t.id} + ')'" 
                                     class="w-full text-left px-4 py-3 text-sm text-purple-700 hover:bg-purple-50 transition flex items-center border-l-4 border-transparent hover:border-purple-500 font-bold bg-purple-50/50">
                                 <i class="fas fa-file-signature mr-3 w-4 text-center text-purple-600"></i> 
@@ -123,7 +123,7 @@
                             
                             <div class="border-t border-gray-100"></div>
 
-                            <a th:if="${t.estatusTermino != 'Presentado' && t.estatusTermino != 'Concluido' && t.archivoWord != null}"
+                            <a th:if="${t.estatusTermino != 'Presentado' and t.estatusTermino != 'Concluido' and t.archivoWord != null and mapaPermisos.containsKey(t.estatusTermino) and mapaPermisos.get(t.estatusTermino).contains(rolActual)}"
                                 th:href="@{/terminos/avanzar/{id}(id=${t.id})}"
                                 class="block px-4 py-3 text-sm text-green-700 hover:bg-green-50 transition border-l-4 border-transparent hover:border-green-500">
                                 <i class="fas fa-arrow-right mr-3 w-4 text-center text-green-500"></i> Avanzar Etapa
