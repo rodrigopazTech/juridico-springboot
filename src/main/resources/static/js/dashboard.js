@@ -57,11 +57,10 @@ function renderGerencias() {
     if (!d) return;
 
     new Chart(document.getElementById("chartDistribucionGerencias"), {
-        type: "bar",
+        type: "doughnut",
         data: {
             labels: d.labels,
             datasets: [{
-                label: "Expedientes",
                 data: d.values
             }]
         }
