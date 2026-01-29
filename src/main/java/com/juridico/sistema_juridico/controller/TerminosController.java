@@ -60,7 +60,7 @@ public class TerminosController {
         PERMISOS_ETAPAS.put("Gerencia",    Arrays.asList(RolUsuario.GERENTE, RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
         PERMISOS_ETAPAS.put("Dirección",   Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
         PERMISOS_ETAPAS.put("Liberado",    Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE, RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
-        PERMISOS_ETAPAS.put("Presentado",  Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION, RolUsuario.ABOGADO));
+        PERMISOS_ETAPAS.put("Presentado",  Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION, RolUsuario.ABOGADO, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO));
     }
 
 
@@ -240,6 +240,52 @@ public class TerminosController {
                 notificacionService.crearNotificacion(u, titulo, mensajeBase, "TERMINO", Prioridad.ALTA, termino.getId().toString());
             }
         }
+    }
+    @PostMapping("/subir-archivo")
+    public String subirArchivo(@RequestParam("id") Integer id,
+                               @RequestParam("archivo") MultipartFile archivo,
+                               RedirectAttributes redirectAttrs) {
+        
+        if (archivo.isEmpty()) {
+            redirectAttrs.addFlashAttribute("mensaje", "Por favor selecciona un archivo.");
+            redirectAttrs.addFlashAttribute("tipo", "error");
+            return "redirect:/terminos";
+        }
+
+        try {
+            Termino termino = terminoRepository.findById(id).orElse(null);
+            if (termino != null) {
+                // Validación: No permitir cambiar archivo si ya está en etapas finales
+                String st = termino.getEstatusTermino();
+                if ("Liberado".equals(st) || "Presentado".equals(st) || "Concluido".equals(st)) {
+                    redirectAttrs.addFlashAttribute("mensaje", "El documento está bloqueado en esta etapa.");
+                    redirectAttrs.addFlashAttribute("tipo", "error");
+                    return "redirect:/terminos";
+                }
+
+                // 1. Crear directorio si no existe
+                String carpetaDestino = "uploads/terminos/";
+                Path rutaCarpeta = Paths.get(carpetaDestino);
+                if (!Files.exists(rutaCarpeta)) Files.createDirectories(rutaCarpeta);
+
+                // 2. Guardar archivo con nombre único (ID_NombreOriginal)
+                String nombreFinal = id + "_" + archivo.getOriginalFilename();
+                Files.copy(archivo.getInputStream(), rutaCarpeta.resolve(nombreFinal), StandardCopyOption.REPLACE_EXISTING);
+
+                // 3. Actualizar base de datos
+                termino.setArchivoWord(nombreFinal);
+                termino.setUpdatedAt(LocalDateTime.now());
+                terminoRepository.save(termino);
+
+                redirectAttrs.addFlashAttribute("mensaje", "Borrador actualizado correctamente.");
+                redirectAttrs.addFlashAttribute("tipo", "success");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            redirectAttrs.addFlashAttribute("mensaje", "Error al guardar el archivo: " + e.getMessage());
+            redirectAttrs.addFlashAttribute("tipo", "error");
+        }
+        return "redirect:/terminos";
     }
 
     // 4. SUBIR ACUSE (CON SEGURIDAD RBAC)

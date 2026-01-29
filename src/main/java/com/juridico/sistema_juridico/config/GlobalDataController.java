@@ -15,15 +15,22 @@ public class GlobalDataController {
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private NotificacionService notificacionService;
 
-    // Este método se ejecuta antes de CUALQUIER vista
-    @ModelAttribute("notificacionesNoLeidas")
-    public long agregarDatosGlobales() {
+    // 1. INYECTAR USUARIO ACTUAL (Para Nombre, Rol e Inicial en Sidebar)
+    @ModelAttribute("usuarioGlobal")
+    public Usuario agregarUsuarioGlobal() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        
-        // Si el usuario está logueado y no es anónimo
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
-            String email = auth.getName();
-            return usuarioRepository.findByEmail(email)
+            return usuarioRepository.findByEmail(auth.getName()).orElse(null);
+        }
+        return null;
+    }
+
+    // 2. INYECTAR CONTADOR DE NOTIFICACIONES (Para la burbuja roja)
+    @ModelAttribute("notificacionesNoLeidas")
+    public long agregarConteoNotificaciones() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+            return usuarioRepository.findByEmail(auth.getName())
                     .map(usuario -> notificacionService.contarNoLeidas(usuario))
                     .orElse(0L);
         }

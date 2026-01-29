@@ -13,6 +13,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import org.springframework.http.ResponseEntity;
 
+import java.util.stream.Collectors; 
+import java.util.List;
+import java.util.ArrayList;
+
 @Controller
 @RequestMapping("/usuarios")
 public class UsuariosController {
@@ -34,9 +38,11 @@ public class UsuariosController {
     }
 
     @PostMapping("/guardar")
-    public String guardarUsuario(@ModelAttribute Usuario usuario, RedirectAttributes redirectAttrs) {
+    public String guardarUsuario(@ModelAttribute Usuario usuario, 
+                                 @RequestParam(required = false) java.util.List<Integer> materiasIds, // Recibe checkboxes
+                                 RedirectAttributes redirectAttrs) {
         try {
-            usuarioService.guardarUsuario(usuario);
+            usuarioService.guardarUsuario(usuario, materiasIds);
             redirectAttrs.addFlashAttribute("mensaje", "Usuario guardado correctamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
         } catch (Exception e) {
@@ -57,6 +63,17 @@ public class UsuariosController {
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
         return "redirect:/usuarios?tab=gerencias";
+    }
+
+    @GetMapping("/api/materias-por-gerencia/{id}")
+    @ResponseBody
+    public ResponseEntity<java.util.List<Materia>> getMateriasJson(@PathVariable Integer id) {
+        try {
+            Gerencia gerencia = usuarioService.buscarGerenciaPorId(id);
+            return ResponseEntity.ok(new ArrayList<>(gerencia.getMaterias()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @GetMapping("/gerencias/{id}/materias")
@@ -82,13 +99,19 @@ public class UsuariosController {
     @GetMapping("/toggle/{id}")
     public String toggleStatusUsuario(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
         try {
-            Usuario usuario = usuarioService.buscarPorId(id); 
-            usuario.setActivo(!usuario.getActivo()); 
-            usuarioService.guardarUsuario(usuario);
-            
+            Usuario usuario = usuarioService.buscarPorId(id);
+            usuario.setActivo(!usuario.getActivo());
+
+            List<Integer> materiasIds = usuario.getMaterias().stream()
+                    .map(Materia::getId)
+                    .collect(Collectors.toList());
+
+            usuarioService.guardarUsuario(usuario, materiasIds);
+
             redirectAttrs.addFlashAttribute("mensaje", "Estatus del usuario actualizado.");
             redirectAttrs.addFlashAttribute("tipo", "success");
         } catch (Exception e) {
+            e.printStackTrace();
             redirectAttrs.addFlashAttribute("mensaje", "Error al actualizar estatus.");
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
@@ -122,13 +145,10 @@ public class UsuariosController {
         }
     }
 
-    // 3. ELIMINAR USUARIO (Borrado Físico)
     @DeleteMapping("/eliminar/{id}")
     @ResponseBody
     public ResponseEntity<?> eliminarUsuario(@PathVariable Integer id) {
         try {
-            Usuario u = usuarioService.buscarPorId(id);
-            
             usuarioService.eliminarUsuario(id);
             return ResponseEntity.ok().build();
         } catch (Exception e) {

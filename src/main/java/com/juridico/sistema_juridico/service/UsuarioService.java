@@ -9,6 +9,8 @@ import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.util.Set;
+import java.util.HashSet;
 
 import java.util.List;
 
@@ -26,38 +28,49 @@ public class UsuarioService {
         return usuarioRepository.findAll();
     }
 
-    // ESTE ES EL MÉTODO QUE FALTABA
     public Usuario buscarPorId(Integer id) {
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
     }
 
-    public Usuario guardarUsuario(Usuario usuario) {
-        // 1. Nuevo Usuario
+   public Usuario guardarUsuario(Usuario usuario, List<Integer> materiasIds) {
+        
+        Set<Materia> materiasSeleccionadas = new HashSet<>();
+        if (materiasIds != null && !materiasIds.isEmpty()) {
+            materiasSeleccionadas.addAll(materiaRepository.findAllById(materiasIds));
+        }
+
         if (usuario.getId() == null) {
             usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+            usuario.setMaterias(materiasSeleccionadas); 
             return usuarioRepository.save(usuario);
         } 
-        // 2. Editar Usuario
         else {
-            Usuario usuarioExistente = buscarPorId(usuario.getId());
+            Usuario existente = buscarPorId(usuario.getId());
 
-            usuarioExistente.setNombreCompleto(usuario.getNombreCompleto());
-            usuarioExistente.setEmail(usuario.getEmail());
-            usuarioExistente.setRol(usuario.getRol());
-            usuarioExistente.setGerencia(usuario.getGerencia());
-            usuarioExistente.setActivo(usuario.getActivo());
+            existente.setNombreCompleto(usuario.getNombreCompleto());
+            existente.setEmail(usuario.getEmail());
+            existente.setRol(usuario.getRol());
+            
+            if (usuario.getRol().name().equals("DIRECCION") || usuario.getRol().name().equals("SUBDIRECCION")) {
+                existente.setGerencia(null);
+                existente.getMaterias().clear(); 
+            } else {
+                existente.setGerencia(usuario.getGerencia());
+                
+                existente.getMaterias().clear();
+                existente.getMaterias().addAll(materiasSeleccionadas);
+            }
+            
+            existente.setActivo(usuario.getActivo());
 
-            // Solo actualizamos password si viene una nueva
             if (usuario.getPassword() != null && !usuario.getPassword().isBlank()) {
-                usuarioExistente.setPassword(passwordEncoder.encode(usuario.getPassword()));
+                existente.setPassword(passwordEncoder.encode(usuario.getPassword()));
             }
 
-            return usuarioRepository.save(usuarioExistente);
+            return usuarioRepository.save(existente);
         }
     }
-
-    // --- GERENCIAS ---
 
     public List<Gerencia> listarGerencias() {
         return gerenciaRepository.findAll();

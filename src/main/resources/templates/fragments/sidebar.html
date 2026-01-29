@@ -107,16 +107,25 @@
                 </li>
             </ul>
 
-            <div class="mt-auto pt-4 border-t border-white/10">
+          <div class="mt-auto pt-4 border-t border-white/10" th:if="${usuarioGlobal != null}">
                 <div class="flex items-center p-2 mb-2 bg-gob-guindaDark/20 rounded-lg border border-white/5">
+                    
                     <div class="flex-shrink-0">
-                        <div class="w-10 h-10 rounded-full bg-gob-oro flex items-center justify-center text-gob-verde font-bold text-lg shadow-md border-2 border-gob-verde">
-                            R
+                        <div class="w-10 h-10 rounded-full bg-gob-oro flex items-center justify-center text-gob-verde font-bold text-lg shadow-md border-2 border-gob-verde"
+                             th:text="${#strings.substring(usuarioGlobal.nombreCompleto, 0, 1)}">
+                            U
                         </div>
                     </div>
+                    
                     <div class="ms-3 overflow-hidden">
-                        <p class="text-sm font-bold text-white truncate font-headings">Ricardo</p>
-                        <p class="text-xs text-gray-400 truncate">Administrador</p>
+                        <p class="text-sm font-bold text-white truncate font-headings" 
+                           th:text="${usuarioGlobal.nombreCompleto}">
+                            Usuario
+                        </p>
+                        <p class="text-xs text-gray-400 truncate" 
+                           th:text="${usuarioGlobal.rol}">
+                            Rol
+                        </p>
                     </div>
                 </div>
 

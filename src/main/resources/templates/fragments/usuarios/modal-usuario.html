@@ -39,12 +39,24 @@
                 </div>
             </div>
 
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1">Gerencia Asignada</label>
-                <select th:field="*{gerencia}" id="select-usuario-gerencia" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-white focus:ring-gob-oro focus:border-gob-oro outline-none">
-                    <option value="">-- Sin Asignar --</option>
-                    <option th:each="g : ${listaGerencias}" th:value="${g.id}" th:text="${g.nombre}"></option>
-                </select>
+            <div id="seccion-asignacion" class="space-y-4 border-t border-gray-100 pt-4">
+                
+                <div>
+                    <label class="block text-sm font-bold text-gob-guinda mb-1">Gerencia Asignada</label>
+                    <select th:field="*{gerencia}" id="select-usuario-gerencia" onchange="cargarMateriasDeGerencia()"
+                            class="w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-blue-50 focus:ring-gob-oro outline-none">
+                        <option value="">-- Seleccione Gerencia --</option>
+                        <option th:each="g : ${listaGerencias}" th:value="${g.id}" th:text="${g.nombre}"></option>
+                    </select>
+                    <p class="text-[10px] text-gray-400 mt-1 ml-1">* Requerido para roles operativos.</p>
+                </div>
+
+                <div id="contenedor-materias" class="hidden">
+                    <label class="block text-xs font-bold text-gob-guinda uppercase mb-2">Materias Autorizadas</label>
+                    <div id="lista-materias-checkboxes" class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 max-h-32 overflow-y-auto">
+                        </div>
+                    <p class="text-[10px] text-gray-400 mt-1">* Selecciona las materias que atenderá este usuario.</p>
+                </div>
             </div>
 
             <div class="flex items-center pt-2">
