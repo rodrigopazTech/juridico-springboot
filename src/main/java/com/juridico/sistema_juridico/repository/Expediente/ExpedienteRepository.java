@@ -19,9 +19,6 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
 
     Optional<Expediente> findByNumeroIgnoreCase(String numero);
 
-    // =========================
-    // CONSULTA MAESTRA
-    // =========================
     @Query("""
         SELECT e FROM Expediente e
         LEFT JOIN e.organoJurisdiccional o
@@ -49,43 +46,39 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
             Pageable pageable
     );
 
-    // =========================
-    // DASHBOARD
-    // =========================
+    // ===== DASHBOARD =====
+
     long countByEtapaProcesal(EtapaProcesal etapaProcesal);
 
-    // -------- Carga de trabajo por usuario --------
     @Query("""
         SELECT u.nombreCompleto, COUNT(e)
         FROM Expediente e
         JOIN e.abogadoResponsable u
         GROUP BY u.nombreCompleto
-        ORDER BY COUNT(e) DESC
     """)
     List<Object[]> contarExpedientesPorUsuario();
 
-    // -------- Distribución por gerencia --------
     @Query("""
         SELECT g.nombre, COUNT(e)
         FROM Expediente e
         JOIN e.gerencia g
         GROUP BY g.nombre
-        ORDER BY COUNT(e) DESC
     """)
     List<Object[]> contarExpedientesPorGerencia();
 
-    // ✅ TRABAJO COMPLETADO POR MES (CORREGIDO)
     @Query("""
-        SELECT 
-            FUNCTION('to_char', e.updatedAt, 'YYYY-MM'),
-            COUNT(e)
+        SELECT e.etapaProcesal, COUNT(e)
         FROM Expediente e
-        WHERE e.etapaProcesal IN (:etapas)
-          AND e.updatedAt IS NOT NULL
-        GROUP BY FUNCTION('to_char', e.updatedAt, 'YYYY-MM')
-        ORDER BY FUNCTION('to_char', e.updatedAt, 'YYYY-MM')
+        GROUP BY e.etapaProcesal
     """)
-    List<Object[]> contarTrabajoCompletadoMensual(
-            @Param("etapas") List<EtapaProcesal> etapas
-    );
+    List<Object[]> contarExpedientesPorEstatus();
+
+    // ✅ FIX POSTGRES
+    @Query("""
+        SELECT EXTRACT(MONTH FROM e.createdAt), COUNT(e)
+        FROM Expediente e
+        GROUP BY EXTRACT(MONTH FROM e.createdAt)
+        ORDER BY EXTRACT(MONTH FROM e.createdAt)
+    """)
+    List<Object[]> contarExpedientesPorMes();
 }

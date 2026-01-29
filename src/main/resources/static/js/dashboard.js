@@ -1,77 +1,87 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     if (!window.dashboardData) {
-        console.error("dashboardData NO está definido");
+        console.error("dashboardData no definido");
         return;
     }
 
-    initCharts();
+    renderEstatus();
+    renderCargaUsuarios();
+    renderGerencias();
+    renderTrabajoMensual();
 });
 
-function initCharts() {
-    estatusExpedientesChart();
-    cargaTrabajoUsuariosChart();
-    distribucionGerenciasChart();
-    trabajoCompletadoMensualChart(); // ✅ NUEVO
-}
+// =========================
+// ESTATUS EXPEDIENTES
+// =========================
+function renderEstatus() {
+    const d = dashboardData.estatusExpedientes;
+    if (!d) return;
 
-function estatusExpedientesChart() {
-    const canvas = document.getElementById("chartEstatusExpedientes");
-    if (!canvas) return;
-
-    new Chart(canvas, {
-        type: "pie",
-        data: {
-            labels: window.dashboardData.estatusExpedientes.labels,
-            datasets: [{ data: window.dashboardData.estatusExpedientes.values }]
-        }
-    });
-}
-
-function cargaTrabajoUsuariosChart() {
-    const canvas = document.getElementById("chartCargaTrabajoUsuarios");
-    if (!canvas) return;
-
-    new Chart(canvas, {
-        type: "bar",
-        data: {
-            labels: window.dashboardData.cargaTrabajoUsuarios.labels,
-            datasets: [{
-                label: "Expedientes",
-                data: window.dashboardData.cargaTrabajoUsuarios.values
-            }]
-        }
-    });
-}
-
-function distribucionGerenciasChart() {
-    const canvas = document.getElementById("chartDistribucionGerencias");
-    if (!canvas) return;
-
-    new Chart(canvas, {
+    new Chart(document.getElementById("chartEstatusExpedientes"), {
         type: "doughnut",
         data: {
-            labels: window.dashboardData.distribucionGerencias.labels,
+            labels: d.labels,
             datasets: [{
-                data: window.dashboardData.distribucionGerencias.values
+                data: d.values
             }]
         }
     });
 }
 
-// ✅ NUEVO
-function trabajoCompletadoMensualChart() {
-    const canvas = document.getElementById("chartTrabajoCompletado");
-    if (!canvas) return;
+// =========================
+// CARGA POR USUARIO
+// =========================
+function renderCargaUsuarios() {
+    const d = dashboardData.cargaTrabajoUsuarios;
+    if (!d) return;
 
-    new Chart(canvas, {
+    new Chart(document.getElementById("chartCargaTrabajoUsuarios"), {
+        type: "bar",
+        data: {
+            labels: d.labels,
+            datasets: [
+                { label: "Expedientes", data: d.expedientes },
+                { label: "Audiencias", data: d.audiencias },
+                { label: "Términos", data: d.terminos }
+            ]
+        }
+    });
+}
+
+// =========================
+// GERENCIAS
+// =========================
+function renderGerencias() {
+    const d = dashboardData.distribucionGerencias;
+    if (!d) return;
+
+    new Chart(document.getElementById("chartDistribucionGerencias"), {
+        type: "bar",
+        data: {
+            labels: d.labels,
+            datasets: [{
+                label: "Expedientes",
+                data: d.values
+            }]
+        }
+    });
+}
+
+// =========================
+// TRABAJO MENSUAL
+// =========================
+function renderTrabajoMensual() {
+    const d = dashboardData.trabajoMensual;
+    if (!d) return;
+
+    new Chart(document.getElementById("chartTrabajoCompletado"), {
         type: "line",
         data: {
-            labels: window.dashboardData.trabajoCompletadoMensual.labels,
+            labels: d.labels,
             datasets: [{
-                label: "Expedientes Completados",
-                data: window.dashboardData.trabajoCompletadoMensual.values,
-                fill: false,
+                label: "Expedientes",
+                data: d.values,
                 tension: 0.3
             }]
         }

@@ -2,8 +2,8 @@ package com.juridico.sistema_juridico.repository.procesal;
 
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
-import org.springframework.data.domain.Page; // IMPORTANTE
-import org.springframework.data.domain.Pageable; // IMPORTANTE
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,7 +32,8 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("keyword") String keyword,
             @Param("estatus") String estatus,
             @Param("prioridad") Prioridad prioridad,
-            @Param("abogadoId") Integer abogadoId);
+            @Param("abogadoId") Integer abogadoId
+    );
 
     // 2. CONSULTA PARA PAGINACIÓN
     @Query("SELECT t FROM Termino t " +
@@ -51,7 +52,8 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("estatus") String estatus,
             @Param("prioridad") Prioridad prioridad,
             @Param("abogadoId") Integer abogadoId,
-            Pageable pageable);
+            Pageable pageable
+    );
 
     // Métodos auxiliares
     List<Termino> findByFechaVencimientoBeforeAndEstatusTerminoNot(LocalDate fecha, String estatus);
@@ -64,5 +66,15 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             Pageable pageable
     );
 
-    
+    // =========================
+    // ✅ NUEVO: CARGA DE TRABAJO POR USUARIO
+    // =========================
+    @Query("""
+        SELECT u.nombreCompleto, COUNT(t)
+        FROM Termino t
+        JOIN t.abogadoResponsable u
+        GROUP BY u.nombreCompleto
+    """)
+    List<Object[]> contarTerminosPorUsuario();
+
 }

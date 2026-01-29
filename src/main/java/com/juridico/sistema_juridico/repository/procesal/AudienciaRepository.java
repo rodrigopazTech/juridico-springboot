@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+
 @Repository
 public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
 
@@ -21,16 +22,10 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
            "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " + 
            "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
            
-           // FILTROS (Usando .nombre para acceder al texto de los objetos)
-           
+           // FILTROS
            "AND (:tipo IS NULL OR :tipo = '' OR a.tipoAudiencia.nombre = :tipo) " + 
-           
-           // Corrección crítica: e.gerencia.nombre
            "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
-           
-           // Corrección crítica: e.materia.nombre
            "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
-           
            "AND (:estatus IS NULL OR :estatus = '' OR a.estatusAudiencia = :estatus)")
     Page<Audiencia> buscarConFiltros(
             @Param("keyword") String keyword,
@@ -38,9 +33,10 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
             @Param("gerencia") String gerencia,
             @Param("materia") String materia,
             @Param("estatus") String estatus,
-            Pageable pageable);
+            Pageable pageable
+    );
 
-       @Query("SELECT a FROM Audiencia a " +
+    @Query("SELECT a FROM Audiencia a " +
            "LEFT JOIN a.expediente e " +
            "WHERE " +
            "(:keyword IS NULL OR :keyword = '' OR " +
@@ -56,5 +52,18 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
             @Param("tipo") String tipo,
             @Param("gerencia") String gerencia,
             @Param("materia") String materia,
-            @Param("estatus") String estatus);
+            @Param("estatus") String estatus
+    );
+
+    // =========================
+    // ✅ NUEVO: CARGA DE TRABAJO POR USUARIO
+    // =========================
+    @Query("""
+        SELECT u.nombreCompleto, COUNT(a)
+        FROM Audiencia a
+        JOIN a.expediente e
+        JOIN e.abogadoResponsable u
+        GROUP BY u.nombreCompleto
+    """)
+    List<Object[]> contarAudienciasPorUsuario();
 }
