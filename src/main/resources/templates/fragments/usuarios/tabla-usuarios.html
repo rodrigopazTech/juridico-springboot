@@ -19,7 +19,7 @@
             </tr>
         </thead>
         <tbody id="tabla-usuarios-body">
-            <tr th:each="u : ${listaUsuarios}" class="border-b hover:bg-gray-50 transition-colors">
+            <tr th:each="u : ${listaUsuarios.content}" class="border-b hover:bg-gray-50 transition-colors">
                 
                 <td class="px-6 py-4">
                     <div class="font-bold text-gray-800" th:text="${u.nombreCompleto}">Juan</div>
@@ -58,4 +58,24 @@
             </tr>
         </tbody>
     </table>
+
+    <div class="mt-4 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500" th:if="${!listaUsuarios.empty}">
+        <span class="mb-2 sm:mb-0">
+            Página <span th:text="${listaUsuarios.number + 1}" class="font-bold text-gray-700"></span> de <span th:text="${listaUsuarios.totalPages}" class="font-bold text-gray-700"></span>
+        </span>
+        
+        <div class="flex gap-2">
+            <a th:if="${listaUsuarios.hasPrevious()}" 
+               th:href="@{/usuarios(pageUsuarios=${listaUsuarios.number - 1}, tab='usuarios')}" 
+               class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">
+               <i class="fas fa-chevron-left mr-1"></i> Anterior
+            </a>
+            
+            <a th:if="${listaUsuarios.hasNext()}" 
+               th:href="@{/usuarios(pageUsuarios=${listaUsuarios.number + 1}, tab='usuarios')}" 
+               class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">
+               Siguiente <i class="fas fa-chevron-right ml-1"></i>
+            </a>
+        </div>
+    </div>
 </div>

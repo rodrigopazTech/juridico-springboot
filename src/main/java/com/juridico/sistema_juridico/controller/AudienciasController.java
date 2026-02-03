@@ -5,7 +5,8 @@ import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.service.procesal.AudienciaService;
-// IMPORTS NUEVOS
+import com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository;
+import com.juridico.sistema_juridico.Entity.expediente.ColaboradorExpediente;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
@@ -50,7 +51,7 @@ public class AudienciasController {
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private AudienciaService audienciaService;
     
-    // Inyectamos tus nuevos repositorios
+    @Autowired private ColaboradorExpedienteRepository colaboradorRepository;
     @Autowired private GerenciaRepository gerenciaRepository;
     @Autowired private MateriaRepository materiaRepository;
     @Autowired private TipoAudienciaRepository tipoAudienciaRepository;
@@ -93,33 +94,63 @@ public class AudienciasController {
         return "views/audiencias/index";
     }
 
-    @PostMapping("/guardar")
-    public String guardar(@ModelAttribute Audiencia audiencia,
-                          @RequestParam("expedienteId") UUID expedienteId, // Recibe UUID
-                          @RequestParam("tipoAudienciaId") Integer tipoAudienciaId, // Recibe ID del tipo
+  @PostMapping("/guardar")
+    public String guardar(@ModelAttribute Audiencia audienciaForm, 
+                          @RequestParam("expedienteId") UUID expedienteId,
+                          @RequestParam("tipoAudienciaId") Integer tipoAudienciaId,
                           RedirectAttributes redirectAttrs) {
         try {
-            // 1. Vincular Expediente
+            Audiencia audienciaFinal;
+
+            if (audienciaForm.getId() != null) {
+                Audiencia existente = audienciaRepository.findById(audienciaForm.getId())
+                        .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
+
+                existente.setFechaAudiencia(audienciaForm.getFechaAudiencia());
+                existente.setHoraAudiencia(audienciaForm.getHoraAudiencia());
+                existente.setSalaLugar(audienciaForm.getSalaLugar());
+                existente.setEsVirtual(audienciaForm.getEsVirtual());
+                existente.setUrlReunion(audienciaForm.getUrlReunion());
+                existente.setAbogadoComparece(audienciaForm.getAbogadoComparece());
+                
+                audienciaFinal = existente;
+            } else {
+                audienciaFinal = audienciaForm;
+                audienciaFinal.setEstatusAudiencia("PENDIENTE");
+                audienciaFinal.setCreatedAt(LocalDateTime.now());
+            }
+
             Expediente exp = expedienteRepository.findById(expedienteId)
                     .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
-            audiencia.setExpediente(exp);
+            audienciaFinal.setExpediente(exp);
 
-            // 2. Vincular Tipo de Audiencia
             TipoAudiencia tipo = tipoAudienciaRepository.findById(tipoAudienciaId)
                     .orElseThrow(() -> new RuntimeException("Tipo de audiencia no encontrado"));
-            audiencia.setTipoAudiencia(tipo);
+            audienciaFinal.setTipoAudiencia(tipo);
 
-            // 3. Configurar Estatus Inicial (Si es nueva)
-            if(audiencia.getId() == null) {
-                audiencia.setEstatusAudiencia("PENDIENTE");
-                audiencia.setCreatedAt(LocalDateTime.now());
+            audienciaFinal.setUpdatedAt(LocalDateTime.now());
+
+            Audiencia guardada = audienciaRepository.save(audienciaFinal);
+
+            if (guardada.getAbogadoComparece() != null && 
+                !guardada.getAbogadoComparece().getId().equals(exp.getAbogadoResponsable().getId())) {
+                
+                ColaboradorExpediente colaborador = colaboradorRepository
+                    .findByExpedienteIdAndUsuarioId(exp.getId(), guardada.getAbogadoComparece().getId())
+                    .stream().findFirst().orElse(new ColaboradorExpediente());
+
+                colaborador.setExpediente(exp);
+                colaborador.setUsuario(guardada.getAbogadoComparece());
+                colaborador.setPermisoNivel("LECTURA_TOTAL");
+                colaborador.setMotivo("Comparecencia en Audiencia: " + tipo.getNombre());
+                
+                LocalDateTime fechaBase = LocalDateTime.of(guardada.getFechaAudiencia(), guardada.getHoraAudiencia());
+                colaborador.setFechaExpiracion(fechaBase.plusDays(1).withHour(23).withMinute(59));
+
+                colaboradorRepository.save(colaborador);
             }
-            audiencia.setUpdatedAt(LocalDateTime.now());
 
-            // 4. Guardar
-            audienciaRepository.save(audiencia);
-
-            redirectAttrs.addFlashAttribute("mensaje", "Audiencia agendada correctamente.");
+            redirectAttrs.addFlashAttribute("mensaje", "Audiencia guardada correctamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
 
         } catch (Exception e) {
@@ -130,6 +161,13 @@ public class AudienciasController {
         return "redirect:/audiencias";
     }
     
+    @GetMapping("/obtener/{id}")
+    @ResponseBody
+    public ResponseEntity<Audiencia> obtenerPorId(@PathVariable Integer id) {
+        return audienciaRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 
     @PostMapping("/subir-acta")
     public String subirActa(@RequestParam("id") Integer id,
@@ -146,7 +184,6 @@ public class AudienciasController {
         return "redirect:/audiencias";
     }
 
-    // MODIFICADO: CONCLUIR (Ya no pide archivo, solo observaciones)
     @PostMapping("/concluir")
     public String concluir(@RequestParam("id") Integer id, 
                            @RequestParam("observaciones") String observaciones, 

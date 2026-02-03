@@ -1,20 +1,19 @@
-/**
- * Lógica del Módulo de Audiencias
- */
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializaciones si fueran necesarias
+    console.log("Sistema de Audiencias v2.0 - Cargado");
 });
 
-// --- MENÚS Y NAVEGACIÓN ---
+// --- MENÚS (ACCIONES RÁPIDAS) ---
 function toggleMenu(id) {
     const menu = document.getElementById('menu-' + id);
-    // Cierra otros menús abiertos
+    if (!menu) return;
+
+    // Cerramos todos los demás
     document.querySelectorAll('[id^="menu-"]').forEach(m => {
-        if(m !== menu) m.classList.add('hidden');
+        if (m !== menu) m.classList.add('hidden');
     });
-    // Alterna el actual
-    if(menu) menu.classList.toggle('hidden');
+
+    // Alternamos el actual
+    menu.classList.toggle('hidden');
 }
 
 // Cerrar menús al hacer clic fuera
@@ -24,9 +23,9 @@ window.addEventListener('click', function(e) {
     }
 });
 
-// --- FUNCIONES DEL MODAL (CRUD) ---
+// --- FUNCIONES DEL MODAL ---
 
-// 1. ABRIR PARA CREAR
+// 1. NUEVA AUDIENCIA
 function abrirModalAudiencia() {
     const form = document.getElementById('form-audiencia');
     if(form) form.reset();
@@ -34,30 +33,39 @@ function abrirModalAudiencia() {
     document.getElementById('input-audiencia-id').value = '';
     document.getElementById('modal-titulo-audiencia').innerHTML = '<i class="fas fa-gavel"></i> Nueva Audiencia';
     
-    // Valores por defecto
-    toggleUbicacion(false); // Presencial por defecto
+    toggleUbicacion(false); 
     const radioPresencial = document.querySelector('input[name="esVirtual"][value="false"]');
     if(radioPresencial) radioPresencial.checked = true;
     
     document.getElementById('modal-audiencia').classList.remove('hidden');
 }
 
-// 2. ABRIR PARA EDITAR
-function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, esVirtual, sala, url, abogado) {
-    // Rellenar IDs y Títulos
+// 2. PREPARAR EDICIÓN (Lee los datos seguros del botón)
+function prepararEdicion(btn) {
+    // Leemos los datos de los atributos data-*
+    const id = btn.getAttribute('data-id');
+    const expedienteId = btn.getAttribute('data-expediente-id');
+    const tipoId = btn.getAttribute('data-tipo-id');
+    const fecha = btn.getAttribute('data-fecha');
+    const hora = btn.getAttribute('data-hora');
+    const esVirtual = btn.getAttribute('data-virtual') === 'true';
+    const sala = btn.getAttribute('data-sala');
+    const url = btn.getAttribute('data-url');
+    const abogadoId = btn.getAttribute('data-abogado-id');
+
+    console.log("Editando ID:", id);
+
+    // Llenamos el formulario
     document.getElementById('input-audiencia-id').value = id;
     document.getElementById('modal-titulo-audiencia').innerHTML = '<i class="fas fa-edit"></i> Editar Audiencia';
 
-    // Seleccionar en desplegables
-    document.getElementById('input-expediente-audiencia').value = expedienteId;
-    document.getElementById('input-tipo-audiencia').value = tipoId;
-    document.getElementById('input-abogado-audiencia').value = abogado || '';
+    setValueIfExists('input-expediente-audiencia', expedienteId);
+    setValueIfExists('input-tipo-audiencia', tipoId);
+    setValueIfExists('input-abogado-audiencia', abogadoId);
 
-    // Fechas
     document.getElementById('input-fecha-audiencia').value = fecha;
     document.getElementById('input-hora-audiencia').value = hora;
 
-    // Lógica Virtual/Presencial
     if (esVirtual) {
         const radioVirtual = document.querySelector('input[name="esVirtual"][value="true"]');
         if(radioVirtual) radioVirtual.checked = true;
@@ -73,7 +81,30 @@ function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, esVirtual, sala
     document.getElementById('modal-audiencia').classList.remove('hidden');
 }
 
-// --- FUNCIONES DE ESTADO (ACTAS Y CIERRE) ---
+function setValueIfExists(elementId, value) {
+    const el = document.getElementById(elementId);
+    if(el) el.value = value || ''; 
+}
+
+// --- UTILIDADES ---
+function toggleUbicacion(isVirtual) {
+    const campoSala = document.getElementById('campo-sala');
+    const campoUrl = document.getElementById('campo-url');
+    const inputSala = document.getElementById('input-sala');
+    const inputUrl = document.getElementById('input-url');
+    
+    if(isVirtual) {
+        campoSala.classList.add('hidden');
+        campoUrl.classList.remove('hidden');
+        if(inputUrl) inputUrl.setAttribute('required', 'required');
+        if(inputSala) inputSala.removeAttribute('required');
+    } else {
+        campoSala.classList.remove('hidden');
+        campoUrl.classList.add('hidden');
+        if(inputSala) inputSala.setAttribute('required', 'required');
+        if(inputUrl) inputUrl.removeAttribute('required');
+    }
+}
 
 function activarSubidaActa(id) {
     document.getElementById('input-acta-id').value = id;
@@ -83,21 +114,4 @@ function activarSubidaActa(id) {
 function abrirModalConcluir(id) {
     document.getElementById('concluir-audiencia-id').value = id;
     document.getElementById('modal-concluir').classList.remove('hidden');
-}
-
-// --- LÓGICA VISUAL (FORMULARIOS) ---
-function toggleUbicacion(isVirtual) {
-    const campoSala = document.getElementById('campo-sala');
-    const campoUrl = document.getElementById('campo-url');
-    
-    if(isVirtual) {
-        campoSala.classList.add('hidden');
-        campoUrl.classList.remove('hidden');
-        // Opcional: Limpiar el otro campo para no enviar basura
-        // document.getElementById('input-sala').value = ''; 
-    } else {
-        campoSala.classList.remove('hidden');
-        campoUrl.classList.add('hidden');
-        // document.getElementById('input-url').value = '';
-    }
 }

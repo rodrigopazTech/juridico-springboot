@@ -40,10 +40,11 @@
                     <div>
                         <label class="block font-bold text-gray-700 mb-1">Abogado que Comparece</label>
                         <select name="abogadoComparece" id="input-abogado-audiencia" class="w-full border border-gray-300 rounded p-2 bg-white">
-                            <option value="">Seleccione...</option>
-                            <option th:each="abg : ${abogados}" 
-                                    th:value="${abg.nombreCompleto}" 
-                                    th:text="${abg.nombreCompleto}"></option>
+                            <option value="">-- Seleccionar Abogado --</option>                        
+                            <option th:each="abogado : ${abogados}" 
+                                    th:value="${abogado.id}" 
+                                    th:text="${abogado.nombreCompleto}">
+                            </option>
                         </select>
                     </div>
                 </div>

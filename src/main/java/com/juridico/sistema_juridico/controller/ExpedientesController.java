@@ -2,7 +2,10 @@ package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario; 
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
+import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
+import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Catalogo.EstadoRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
@@ -10,19 +13,26 @@ import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRep
 import com.juridico.sistema_juridico.repository.Catalogo.TipoExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder; 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate; // <--- IMPORTANTE: AGREGAR ESTE IMPORT
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors; 
 
 @Controller
 @RequestMapping("/expedientes")
@@ -35,52 +45,71 @@ public class ExpedientesController {
     @Autowired private OrganoJurisdiccionalRepository organoRepository;
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private EstadoRepository estadoRepository;
+    @Autowired private AudienciaRepository audienciaRepository;
 
-    // MÉTODO INDEX ACTUALIZADO (Con nombres de variables corregidos)
     @GetMapping
     public String index(Model model,
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(required = false) String keyword,
-                        // Parámetros de los Filtros
                         @RequestParam(required = false) Integer gerenciaId,
                         @RequestParam(required = false) Integer materiaId,
                         @RequestParam(required = false) Integer tipoId,
                         @RequestParam(required = false) Prioridad prioridad,
+                        @RequestParam(required = false) EtapaProcesal etapa,
                         @RequestParam(required = false) Integer abogadoId) {
         
-        // 1. Configurar Paginación
-        Pageable pageable = PageRequest.of(page, 20, Sort.by("createdAt").descending());
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+        
+        Integer secGerenciaId = null;
+        List<Integer> secMateriaIds = null;
+        Integer secUsuarioId = usuario.getId();
 
-        // 2. LLAMAR A LA CONSULTA MAESTRA
-        Page<Expediente> paginaExpedientes = expedienteRepository.buscarExpedientes(
-                keyword, 
-                gerenciaId, 
-                materiaId, 
-                tipoId, 
-                prioridad, 
-                abogadoId, 
+        if (usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+        } else if (usuario.getRol() == RolUsuario.GERENTE) {
+            if (usuario.getGerencia() != null) secGerenciaId = usuario.getGerencia().getId();
+        } else {
+            if (usuario.getGerencia() != null) secGerenciaId = usuario.getGerencia().getId();
+            if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
+                secMateriaIds = usuario.getMaterias().stream().map(m -> m.getId()).collect(Collectors.toList());
+            } else {
+                secMateriaIds = Collections.emptyList();
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page, 20, Sort.by("createdAt").descending());
+        
+        Page<Expediente> paginaExpedientes = expedienteRepository.buscarConSeguridad(
+                keyword, gerenciaId, materiaId, tipoId, prioridad, etapa, abogadoId,
+                secGerenciaId, secMateriaIds, secUsuarioId,
                 pageable
         );
 
         model.addAttribute("expedientes", paginaExpedientes);
         model.addAttribute("keyword", keyword);
-        model.addAttribute("pageTitle", "Gestión de Expedientes - Agenda Legal");
+        model.addAttribute("pageTitle", "Gestión de Expedientes");
         model.addAttribute("activePage", "expedientes");
-
-        // 3. Cargar Listas para los Selects (CORREGIDO A MINÚSCULAS para coincidir con el Modal)
+        
+        model.addAttribute("rolActual", usuario.getRol());
+        
+        model.addAttribute("listaGerencias", gerenciaRepository.findAll());
+        model.addAttribute("listaMaterias", materiaRepository.findAll());
+        model.addAttribute("listaTipos", tipoExpedienteRepository.findAll());
+        model.addAttribute("listaPrioridades", Prioridad.values());
+        model.addAttribute("listaEtapas", EtapaProcesal.values());
+        model.addAttribute("listaAbogados", usuarioRepository.findAll());
+        
         model.addAttribute("gerencias", gerenciaRepository.findAll());
         model.addAttribute("materias", materiaRepository.findAll());
         model.addAttribute("tipos", tipoExpedienteRepository.findAll());
         model.addAttribute("organos", organoRepository.findAll());
-        // En tu modal usas 'usuarios' para los abogados, así que lo mandamos como 'usuarios'
         model.addAttribute("usuarios", usuarioRepository.findAll());
         model.addAttribute("prioridades", Prioridad.values());
         model.addAttribute("estados", estadoRepository.findAllByOrderByNombreAsc());
 
         return "views/expedientes/index";
     }
-
-    // MÉTODO GUARDAR (Restaurada la protección contra duplicados)
+   
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute Expediente expediente, RedirectAttributes redirectAttrs) {
         try {
@@ -96,7 +125,6 @@ public class ExpedientesController {
             redirectAttrs.addFlashAttribute("tipo", "success");
             
         } catch (DataIntegrityViolationException e) {
-            // Error específico de duplicado
             redirectAttrs.addFlashAttribute("mensaje", "Error: El número de expediente '" + expediente.getNumero() + "' ya existe.");
             redirectAttrs.addFlashAttribute("tipo", "error");
         } catch (Exception e) {
@@ -110,12 +138,24 @@ public class ExpedientesController {
 
     @GetMapping("/{id}")
     public String verDetalle(@PathVariable UUID id, Model model) {
+        
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+        
+        model.addAttribute("usuario", usuario);      
+        model.addAttribute("rolActual", usuario.getRol());
+
         Expediente expediente = expedienteRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Expediente no encontrado: " + id));
 
         model.addAttribute("expediente", expediente);
+       
+        Audiencia proxima = audienciaRepository.findTopByExpedienteIdAndFechaAudienciaAfterOrderByFechaAudienciaAsc(
+                id, 
+                LocalDate.now() 
+        ).orElse(null);
+        model.addAttribute("proximaAudiencia", proxima);
         
-        // Listas necesarias para modales de edición en el detalle
         model.addAttribute("gerencias", gerenciaRepository.findAll());
         model.addAttribute("materias", materiaRepository.findAll());
         model.addAttribute("tipos", tipoExpedienteRepository.findAll());

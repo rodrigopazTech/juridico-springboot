@@ -9,6 +9,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import org.springframework.http.ResponseEntity;
@@ -23,14 +26,22 @@ public class UsuariosController {
 
     @Autowired private UsuarioService usuarioService;
 
-    @GetMapping
-    public String index(Model model) {
-        // Cargar listas para las tablas y selectores
-        model.addAttribute("listaUsuarios", usuarioService.listarUsuarios());
-        model.addAttribute("listaGerencias", usuarioService.listarGerencias());
-        model.addAttribute("listaRoles", RolUsuario.values()); // Enum de roles
+   @GetMapping
+    public String index(Model model,
+                        @RequestParam(defaultValue = "0") int pageUsuarios,   // Página para usuarios
+                        @RequestParam(defaultValue = "0") int pageGerencias) { // Página para gerencias
         
-        // Objetos vacíos para los formularios de creación
+        Page<Usuario> usuariosPage = usuarioService.listarUsuariosPaginados(PageRequest.of(pageUsuarios, 10, Sort.by("nombreCompleto").ascending()));
+        
+        Page<Gerencia> gerenciasPage = usuarioService.listarGerenciasPaginadas(PageRequest.of(pageGerencias, 10, Sort.by("nombre").ascending()));
+
+        model.addAttribute("listaUsuarios", usuariosPage); 
+        model.addAttribute("listaGerencias", gerenciasPage);
+        
+        // Listas completas (sin paginar) para los Selects de los modales
+        model.addAttribute("allGerencias", usuarioService.listarGerencias()); 
+        
+        model.addAttribute("listaRoles", RolUsuario.values());
         model.addAttribute("nuevoUsuario", new Usuario());
         model.addAttribute("nuevaGerencia", new Gerencia());
         

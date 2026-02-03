@@ -82,27 +82,28 @@
                     <td class="px-4 py-3 text-right relative">
                         
                         <button th:unless="${a.estatusAudiencia == 'CONCLUIDA'}"
-                                th:onclick="abrirModalEditar(
-                                    [[${a.id}]], 
-                                    [[${a.expediente.id}]], 
-                                    [[${a.tipoAudiencia != null ? a.tipoAudiencia.id : ''}]], 
-                                    [[${a.fechaAudiencia}]], 
-                                    [[${a.horaAudiencia}]], 
-                                    [[${a.esVirtual}]], 
-                                    [[${a.salaLugar}]], 
-                                    [[${a.urlReunion}]], 
-                                    [[${a.abogadoComparece}]]
-                                )"
-                                class="text-gray-400 hover:text-gob-oro mr-2 transition-colors"
-                                title="Editar">
-                            <i class="fas fa-edit"></i>
+                                type="button"
+                                class="text-gray-400 hover:text-gob-oro mr-2 transition-colors btn-editar"
+                                title="Editar"
+                                th:data-id="${a.id}"
+                                th:data-expediente-id="${a.expediente.id}"
+                                th:data-tipo-id="${a.tipoAudiencia != null ? a.tipoAudiencia.id : ''}"
+                                th:data-fecha="${a.fechaAudiencia}"
+                                th:data-hora="${a.horaAudiencia}"
+                                th:data-virtual="${a.esVirtual}"
+                                th:data-sala="${a.salaLugar != null ? a.salaLugar : ''}"
+                                th:data-url="${a.urlReunion != null ? a.urlReunion : ''}"
+                                th:data-abogado-id="${a.abogadoComparece != null ? a.abogadoComparece.id : ''}"
+                                onclick="prepararEdicion(this)"> <i class="fas fa-edit"></i>
                         </button>
 
                         <button th:if="${a.estatusAudiencia == 'CONCLUIDA'}" class="text-gray-200 cursor-not-allowed mr-2" title="Edición Bloqueada">
                             <i class="fas fa-edit"></i>
                         </button>
 
-                        <button th:onclick="'toggleMenu(' + ${a.id} + ')'" class="text-gray-400 hover:text-gob-guinda px-2 transition-colors">
+                        <button type="button" 
+                                th:onclick="'toggleMenu(' + ${a.id} + ')'"
+                                class="text-gray-400 hover:text-gob-guinda px-2 transition-colors">
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
 
@@ -154,7 +155,6 @@
             </tbody>
         </table>
     </div>
-    
     <div class="p-4 border-t border-gray-200 flex justify-between items-center" th:if="${!audiencias.empty}">
         <span class="text-sm text-gray-600">Página <span th:text="${audiencias.number + 1}">1</span> de <span th:text="${audiencias.totalPages}">10</span></span>
         <div class="flex gap-2">

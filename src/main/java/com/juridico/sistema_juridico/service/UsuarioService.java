@@ -9,6 +9,10 @@ import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+
 import java.util.Set;
 import java.util.HashSet;
 
@@ -31,6 +35,15 @@ public class UsuarioService {
     public Usuario buscarPorId(Integer id) {
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
+    }
+
+
+    public Page<Usuario> listarUsuariosPaginados(Pageable pageable) {
+        return usuarioRepository.findAll(pageable);
+    }
+
+    public Page<Gerencia> listarGerenciasPaginadas(Pageable pageable) {
+        return gerenciaRepository.findAll(pageable);
     }
 
    public Usuario guardarUsuario(Usuario usuario, List<Integer> materiasIds) {
