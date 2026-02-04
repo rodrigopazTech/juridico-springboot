@@ -1,13 +1,7 @@
-# TODO - Modificar gráfica de estatus de expediente
+# TODO: Aplicar paleta de colores de Tailwind a gráficas del dashboard
 
-## Tareas Completadas
-- [x] Modificar la consulta en ExpedienteRepository.java para ordenar los estatus como TRAMITE, LAUDO, FIRME
-- [x] Actualizar los colores de la gráfica en dashboard.js a tonos pasteles
-- [x] Cambiar colores de Carga de Trabajo por Usuario a pasteles
-- [x] Cambiar colores de Distribución por Gerencia a pasteles
-- [x] Modificar gráfica Trabajo Completado para mostrar solo expedientes en FIRME
-- [x] Cambiar colores de Trabajo Completado a pasteles
-
-## Próximos Pasos
-- [ ] Probar los cambios ejecutando la aplicación y verificando las gráficas en el dashboard
-- [ ] Confirmar que el orden, colores y filtros se muestran correctamente
+- [x] Definir array colorPalette en dashboard.js con colores de tailwind.config.js
+- [x] Actualizar renderEstatus para usar colorPalette.slice(0,4)
+- [x] Actualizar renderCargaUsuarios para usar colores de colorPalette para cada dataset
+- [x] Actualizar renderGerencias para usar colorPalette.slice(0,5)
+- [x] Actualizar renderTrabajoMensual para usar colorPalette[0] para borderColor y rgba para backgroundColor

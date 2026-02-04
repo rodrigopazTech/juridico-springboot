@@ -3,6 +3,18 @@
  * Manejo de gráficas dinámicas y filtros por gerencia
  */
 
+// Paleta de colores basada en tailwind.config.js
+const colorPalette = [
+    '#691228', // gob-guinda
+    '#4e0c1d', // gob-guindaDark
+    '#D4C19C', // gob-oro
+    '#545454', // gob-gris
+    '#98989A', // gob-plata
+    '#13322B', // gob-verde
+    '#0C231E', // gob-verdeDark
+    '#F5F5F5'  // gob-fondo
+];
+
 // Objeto global para almacenar las instancias de las gráficas
 let chartInstances = {};
 
@@ -99,7 +111,7 @@ function renderEstatus(d) {
             labels: d.labels,
             datasets: [{
                 data: d.values,
-                backgroundColor: ['#AEC6CF', '#B2D8B2', '#F8B8C4', '#FCE4A6'],
+                backgroundColor: colorPalette.slice(0, 4),
                 borderWidth: 1
             }]
         },
@@ -121,9 +133,9 @@ function renderCargaUsuarios(d) {
         data: {
             labels: d.labels,
             datasets: [
-                { label: "Expedientes", data: d.expedientes, backgroundColor: '#AEC6CF' },
-                { label: "Audiencias", data: d.audiencias, backgroundColor: '#B2D8B2' },
-                { label: "Términos", data: d.terminos, backgroundColor: '#F8B8C4' }
+                { label: "Expedientes", data: d.expedientes, backgroundColor: colorPalette[0] },
+                { label: "Audiencias", data: d.audiencias, backgroundColor: colorPalette[1] },
+                { label: "Términos", data: d.terminos, backgroundColor: colorPalette[2] }
             ]
         },
         options: {
@@ -145,7 +157,7 @@ function renderGerencias(d) {
             labels: d.labels,
             datasets: [{
                 data: d.values,
-                backgroundColor: ['#AEC6CF', '#B2D8B2', '#F8B8C4', '#FCE4A6', '#DDA0DD']
+                backgroundColor: colorPalette.slice(0, 5)
             }]
         },
         options: {
@@ -161,6 +173,10 @@ function renderTrabajoMensual(d) {
     const canvasId = "chartTrabajoCompletado";
     destroyExistingChart(canvasId);
 
+    const baseColor = colorPalette[0];
+    const rgbaColor = baseColor.replace('#', '').match(/.{2}/g).map(x => parseInt(x, 16)).join(', ');
+    const backgroundColor = `rgba(${rgbaColor}, 0.1)`;
+
     chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
         type: "line",
         data: {
@@ -168,8 +184,8 @@ function renderTrabajoMensual(d) {
             datasets: [{
                 label: "Expedientes Completados",
                 data: d.values,
-                borderColor: '#AEC6CF',
-                backgroundColor: 'rgba(174, 198, 207, 0.1)',
+                borderColor: baseColor,
+                backgroundColor: backgroundColor,
                 fill: true,
                 tension: 0.4
             }]
