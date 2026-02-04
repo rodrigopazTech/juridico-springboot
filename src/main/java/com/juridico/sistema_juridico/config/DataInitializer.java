@@ -20,137 +20,144 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
 
-    @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private GerenciaRepository gerenciaRepository;
     @Autowired private MateriaRepository materiaRepository;
+    @Autowired private UsuarioRepository usuarioRepository;
+    @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private TipoExpedienteRepository tipoExpedienteRepository;
     @Autowired private OrganoJurisdiccionalRepository organoRepository;
-    @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private EstadoRepository estadoRepository;
 
     @Override
-    @Transactional 
+    @Transactional
     public void run(String... args) throws Exception {
         
-        System.out.println(" Iniciando sembrado de datos (Data Seeding)...");
+        // 1. GERENCIAS Y MATERIAS (Vinculadas correctamente)
+        if (gerenciaRepository.count() == 0) {
+            
+            // Crear Gerencia 1
+            Gerencia gLitigio = Gerencia.builder()
+                    .nombre("Gerencia de Litigio y Defensa")
+                    .descripcion("Encargada de atender juicios civiles y mercantiles.")
+                    .activo(true)
+                    .build();
+            gLitigio = gerenciaRepository.save(gLitigio); // Guardamos para tener ID
 
-        // 1. USUARIOS (Admin y Abogado)
-        Usuario abogadoDemo = null;
+            // Crear Materias para Gerencia 1
+            Materia mCivil = Materia.builder().nombre("Civil").gerencia(gLitigio).activo(true).build();
+            Materia mMercantil = Materia.builder().nombre("Mercantil").gerencia(gLitigio).activo(true).build();
+            materiaRepository.saveAll(List.of(mCivil, mMercantil));
+
+            // Crear Gerencia 2
+            Gerencia gLaboral = Gerencia.builder()
+                    .nombre("Gerencia de Asuntos Laborales")
+                    .descripcion("Atención a demandas de trabajadores y sindicatos.")
+                    .activo(true)
+                    .build();
+            gLaboral = gerenciaRepository.save(gLaboral); // Guardamos
+
+            // Crear Materias para Gerencia 2
+            Materia mLaboral = Materia.builder().nombre("Laboral").gerencia(gLaboral).activo(true).build();
+            Materia mAmparo = Materia.builder().nombre("Amparo").gerencia(gLaboral).activo(true).build();
+            materiaRepository.saveAll(List.of(mLaboral, mAmparo));
+
+            System.out.println("✅ Gerencias y Materias inicializadas correctamente.");
+        }
+
+       // 2. USUARIOS
         if (usuarioRepository.count() == 0) {
-            // Admin
-            Usuario admin = Usuario.builder()
-                    .nombreCompleto("Administrador del Sistema")
-                    .email("admin@juridico.com")
-                    .passwordHash(passwordEncoder.encode("12345"))
+            Gerencia gerenciaDefault = gerenciaRepository.findAll().stream().findFirst().orElse(null);
+
+            // 1. NIVEL ALTO (Ve todo)
+            Usuario director = Usuario.builder()
+                    .nombreCompleto("Director General")
+                    .email("director@juridico.com")
+                    .password(passwordEncoder.encode("12345"))
                     .rol(RolUsuario.DIRECCION)
                     .activo(true)
                     .createdAt(LocalDateTime.now())
                     .build();
-            usuarioRepository.save(admin);
-
-            // Abogado Demo
-            abogadoDemo = Usuario.builder()
-                    .nombreCompleto("Lic. Juan Pérez")
-                    .email("juan@juridico.com")
-                    .passwordHash(passwordEncoder.encode("12345"))
-                    .rol(RolUsuario.ABOGADO) // Asegúrate de tener este ROL en tu Enum
+            
+            Usuario subdirector = Usuario.builder()
+                    .nombreCompleto("Subdirector Jurídico")
+                    .email("subdirector@juridico.com")
+                    .password(passwordEncoder.encode("12345"))
+                    .rol(RolUsuario.SUBDIRECCION)
                     .activo(true)
                     .createdAt(LocalDateTime.now())
                     .build();
-            usuarioRepository.save(abogadoDemo);
-            
-            System.out.println(" Usuarios creados.");
-        } else {
-            abogadoDemo = usuarioRepository.findByEmail("juan@juridico.com").orElse(null);
-        }
 
-        // 2. GERENCIAS
-        Gerencia gCivil = null;
-        Gerencia gLaboral = null;
-        Gerencia gTransparencia = null;
-
-        if (gerenciaRepository.count() == 0) {
-            // Creamos las 3 Gerencias Nuevas
-            gCivil = Gerencia.builder()
-                    .nombre("Gerencia Civil, Mercantil, Fiscal y Administrativo")
-                    .descripcion("Atención de asuntos civiles, mercantiles y administrativos.")
-                    .build();
-
-            gLaboral = Gerencia.builder()
-                    .nombre("Gerencia Laboral y Penal")
-                    .descripcion("Atención de conflictos laborales y defensa penal.")
+            // 2. NIVEL MEDIO (Ve Dashboard, pero NO Usuarios ni Agenda General)
+            Usuario gerente = Usuario.builder()
+                    .nombreCompleto("Gerente Civil")
+                    .email("gerente@juridico.com")
+                    .password(passwordEncoder.encode("12345"))
+                    .rol(RolUsuario.GERENTE)
+                    .activo(true)
+                    .gerencia(gerenciaDefault)
+                    .createdAt(LocalDateTime.now())
                     .build();
             
-            gTransparencia = Gerencia.builder()
-                    .nombre("Gerencia Transparencia y Amparo")
-                    .descripcion("Atención de solicitudes de transparencia y juicios de amparo.")
+            Usuario jefe = Usuario.builder()
+                    .nombreCompleto("Jefe de Depto")
+                    .email("jefe@juridico.com")
+                    .password(passwordEncoder.encode("12345"))
+                    .rol(RolUsuario.JEFE_DEPTO)
+                    .activo(true)
+                    .gerencia(gerenciaDefault)
+                    .createdAt(LocalDateTime.now())
                     .build();
-            
-            gerenciaRepository.saveAll(List.of(gCivil, gLaboral, gTransparencia));
-            System.out.println("Nuevas Gerencias creadas.");
-        } else {
-            // Si ya existen, las buscamos para usarlas abajo (Manejo de errores simplificado)
-            List<Gerencia> todas = gerenciaRepository.findAll();
-            gCivil = todas.stream().filter(g -> g.getNombre().contains("Civil")).findFirst().orElse(null);
-            gLaboral = todas.stream().filter(g -> g.getNombre().contains("Laboral")).findFirst().orElse(null);
-            gTransparencia = todas.stream().filter(g -> g.getNombre().contains("Transparencia")).findFirst().orElse(null);
+
+            // 3. NIVEL OPERATIVO (Solo Expedientes, Términos, Audiencias)
+            Usuario abogado = Usuario.builder()
+                    .nombreCompleto("Abogado Litigante")
+                    .email("abogado@juridico.com")
+                    .password(passwordEncoder.encode("12345"))
+                    .rol(RolUsuario.ABOGADO)
+                    .activo(true)
+                    .gerencia(gerenciaDefault)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            usuarioRepository.saveAll(List.of(director, subdirector, gerente, jefe, abogado));
+            System.out.println("✅ Usuarios de prueba creados para todos los roles.");
         }
 
-        // 3. MATERIAS (Ligadas a las nuevas Gerencias)
-        if (materiaRepository.count() == 0 && gCivil != null) {
-            
-            // Materias para Gerencia Civil, Mercantil...
-            Materia mCivil = Materia.builder().nombre("Civil").gerencia(gCivil).build();
-            Materia mMercantil = Materia.builder().nombre("Mercantil").gerencia(gCivil).build();
-            Materia mFiscal = Materia.builder().nombre("Fiscal").gerencia(gCivil).build();
-            Materia mAdmin = Materia.builder().nombre("Administrativo").gerencia(gCivil).build();
-
-            // Materias para Gerencia Laboral y Penal
-            Materia mLaboral = Materia.builder().nombre("Laboral").gerencia(gLaboral).build();
-            Materia mPenal = Materia.builder().nombre("Penal").gerencia(gLaboral).build();
-
-            // Materias para Gerencia Transparencia y Amparo
-            Materia mAmparo = Materia.builder().nombre("Amparo").gerencia(gTransparencia).build();
-            Materia mTransp = Materia.builder().nombre("Transparencia").gerencia(gTransparencia).build();
-
-            materiaRepository.saveAll(List.of(
-                mCivil, mMercantil, mFiscal, mAdmin, 
-                mLaboral, mPenal, 
-                mAmparo, mTransp
-            ));
-            System.out.println("Nuevas Materias creadas y vinculadas.");
-        }
-        // 4. TIPOS DE EXPEDIENTE
-        TipoExpediente tOrdinario = null;
+        // 3. TIPOS DE EXPEDIENTE
         if (tipoExpedienteRepository.count() == 0) {
-            tOrdinario = TipoExpediente.builder().nombre("Juicio Ordinario").build();
-            TipoExpediente tEjecutivo = TipoExpediente.builder().nombre("Juicio Ejecutivo").build();
+            TipoExpediente tJuicio = TipoExpediente.builder().nombre("Juicio Ordinario").build();
+            TipoExpediente tEjecutivo = TipoExpediente.builder().nombre("Juicio Ejecutivo Mercantil").build();
             TipoExpediente tAmparo = TipoExpediente.builder().nombre("Amparo Indirecto").build();
             
-            tipoExpedienteRepository.saveAll(List.of(tOrdinario, tEjecutivo, tAmparo));
-            System.out.println("Tipos de Expediente creados.");
-        } else {
-            tOrdinario = tipoExpedienteRepository.findAll().get(0);
+            tipoExpedienteRepository.saveAll(List.of(tJuicio, tEjecutivo, tAmparo));
+            System.out.println("✅ Tipos de Expediente creados.");
         }
 
-        // 5. ORGANOS JURISDICCIONALES
-        OrganoJurisdiccional oJuzgado = null;
+        // 4. ÓRGANOS JURISDICCIONALES
         if (organoRepository.count() == 0) {
-            oJuzgado = OrganoJurisdiccional.builder().nombre("Juzgado 34 de lo Civil CDMX").tipo("Juzgado").sede("CDMX").build();
-            OrganoJurisdiccional oTribunal = OrganoJurisdiccional.builder().nombre("Primer Tribunal Colegiado").tipo("Tribunal").sede("CDMX").build();
+            OrganoJurisdiccional oJuzgado = OrganoJurisdiccional.builder()
+                    .nombre("Juzgado 34 de lo Civil CDMX")
+                    .tipo("Juzgado")
+                    .sede("CDMX")
+                    .build();
+            
+            OrganoJurisdiccional oTribunal = OrganoJurisdiccional.builder()
+                    .nombre("Primer Tribunal Colegiado")
+                    .tipo("Tribunal")
+                    .sede("CDMX")
+                    .build();
             
             organoRepository.saveAll(List.of(oJuzgado, oTribunal));
-            System.out.println("Órganos creados.");
-        } else {
-            oJuzgado = organoRepository.findAll().get(0);
+            System.out.println("✅ Órganos creados.");
         }
 
-        // 7. CATÁLOGO DE ESTADOS (MÉXICO)
+        // 5. CATÁLOGO DE ESTADOS
         if (estadoRepository.count() == 0) {
             List<String> estadosMexico = List.of(
                 "Aguascalientes", "Baja California", "Baja California Sur", "Campeche", 
@@ -161,13 +168,13 @@ public class DataInitializer implements CommandLineRunner {
                 "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz", "Yucatán", "Zacatecas"
             );
 
-            List<Estado> listaEstados = estadosMexico.stream()
-                    .map(nombre -> Estado.builder().nombre(nombre).build())
-                    .toList();
+            List<Estado> listaEstados = new ArrayList<>();
+            for (String nombre : estadosMexico) {
+                listaEstados.add(Estado.builder().nombre(nombre).build());
+            }
 
             estadoRepository.saveAll(listaEstados);
-            System.out.println("Catálogo de 32 Estados insertado.");
+            System.out.println("✅ Catálogo de Estados cargado.");
         }
-        System.out.println("Carga de datos inicial completada correctamente.");
     }
 }

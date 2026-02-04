@@ -1,12 +1,11 @@
 <div th:fragment="encabezado(expediente)" class="bg-white border-b border-gray-200 shadow-sm p-6 mb-6">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        
+
         <div>
             <div class="flex items-center gap-3">
                 <h2 class="text-2xl font-bold text-gob-guinda" th:text="${expediente.numero}">EXP-0000/2026</h2>
-                <span class="px-2 py-1 rounded text-xs font-bold border"
-                      th:text="${expediente.etapaProcesal}"
-                      th:classappend="${expediente.etapaProcesal.name() == 'CONCLUIDO' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-blue-50 text-blue-700 border-blue-200'}">
+                <span class="px-2 py-1 rounded text-xs font-bold border" th:text="${expediente.etapaProcesal}"
+                    th:classappend="${expediente.etapaProcesal.name() == 'CONCLUIDO' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-blue-50 text-blue-700 border-blue-200'}">
                     ETAPA
                 </span>
             </div>
@@ -14,20 +13,25 @@
         </div>
 
         <div class="flex flex-wrap gap-2">
-            <a th:href="@{/expedientes}" class="px-4 py-2 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 text-sm font-medium transition">
+            <a th:href="@{/expedientes}"
+                class="px-4 py-2 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 text-sm font-medium transition">
                 <i class="fas fa-arrow-left mr-1"></i> Volver
             </a>
 
-            <button class="px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition">
+            <button onclick="openObservaciones()"
+                class="px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition">
                 <i class="fas fa-comment-dots mr-1"></i> Observaciones
             </button>
-            <button class="px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition">
+            <button onclick="openModal('modal-editar')"
+                class="px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition">
                 <i class="fas fa-edit mr-1"></i> Editar
             </button>
-            <button class="px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition">
+            <button onclick="openModal('modal-etapa')"
+                class="px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition">
                 <i class="fas fa-step-forward mr-1"></i> Cambiar Etapa
             </button>
-            <button class="px-4 py-2 bg-gob-guinda text-white rounded hover:bg-gob-guinda-claro text-sm font-medium transition shadow-sm">
+            <button onclick="openGestorDocumental()"
+                class="px-4 py-2 bg-gob-guinda text-white rounded hover:bg-gob-guinda-claro text-sm font-medium transition shadow-sm">
                 <i class="fas fa-file-archive mr-1"></i> Gestor Documental
             </button>
         </div>

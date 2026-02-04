@@ -3,7 +3,7 @@ package com.juridico.sistema_juridico.Entity.catalogo;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * Especialidades jurídicas asociadas a gerencias.
  */
@@ -26,6 +26,7 @@ public class Materia {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gerencia_id", nullable = false)
+    @JsonIgnore
     private Gerencia gerencia;
 
     @Column(columnDefinition = "TEXT")

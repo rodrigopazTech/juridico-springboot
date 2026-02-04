@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     <style>
         .table-responsive { overflow-x: visible; }
+        /* Asegura que los modales estén por encima de todo */
+        .z-50 { z-index: 50; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans">
@@ -25,23 +27,17 @@
         </div>
 
         <div th:replace="~{fragments/terminos/barra-busqueda :: barra}"></div>
-
         <div th:replace="~{fragments/terminos/barra-filtros :: filtros}"></div>
-
         <div th:replace="~{fragments/terminos/tabla :: tabla-resultados}"></div>
 
     </div>
 
     <div th:replace="~{fragments/terminos/modal-nuevo-termino :: modal}"></div>
+    <div th:replace="~{fragments/terminos/modal-subir-acuse :: modal}"></div>
 
     <form id="form-upload" th:action="@{/terminos/subir-archivo}" method="post" enctype="multipart/form-data" class="hidden">
         <input type="hidden" name="id" id="upload-termino-id">
         <input type="file" name="archivo" id="upload-file-input" onchange="document.getElementById('form-upload').submit()">
-    </form>
-
-    <form id="form-acuse" th:action="@{/terminos/subir-acuse}" method="post" enctype="multipart/form-data" class="hidden">
-        <input type="hidden" name="id" id="acuse-termino-id">
-        <input type="file" name="archivoAcuse" id="acuse-file-input" onchange="document.getElementById('form-acuse').submit()">
     </form>
 
     <script th:if="${mensaje != null}">
@@ -56,6 +52,5 @@
     </script>
 
     <script th:src="@{/js/terminos.js}"></script>
-  
 </body>
 </html>

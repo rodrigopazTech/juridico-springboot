@@ -3,7 +3,6 @@ package com.juridico.sistema_juridico.Entity.expediente;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
-
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 
 @Data
@@ -30,7 +29,7 @@ public class ColaboradorExpediente {
     private LocalDateTime fechaExpiracion;
 
     @Column(name = "permiso_nivel")
-    private String permisoNivel; // "LECTURA"
+    private String permisoNivel; // "LECTURA_TOTAL"
 
     @Column(columnDefinition = "TEXT")
     private String motivo;

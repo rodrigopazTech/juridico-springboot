@@ -1,0 +1,88 @@
+<div th:fragment="modal" id="modal-usuario" class="modal fixed inset-0 bg-gray-900/50 z-50 hidden items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 animate-fade-in-down">
+        
+        <div class="flex justify-between items-center p-4 border-b bg-gob-guinda text-white rounded-t-lg">
+            <h3 class="font-bold text-lg" id="titulo-modal-usuario">
+                <i class="fas fa-user-plus mr-2"></i> Nuevo Usuario
+            </h3>
+            <button onclick="document.getElementById('modal-usuario').classList.add('hidden')" class="hover:text-gray-200 transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <form th:action="@{/usuarios/guardar}" th:object="${nuevoUsuario}" method="post" class="p-6 space-y-4">
+            <input type="hidden" th:field="*{id}" id="input-usuario-id">
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Nombre Completo *</label>
+                <input type="text" th:field="*{nombreCompleto}" id="input-usuario-nombre" required 
+                       class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-gob-oro focus:border-gob-oro outline-none">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Correo Electrónico *</label>
+                <input type="email" th:field="*{email}" id="input-usuario-email" required 
+                       class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-gob-oro focus:border-gob-oro outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Contraseña</label>
+                    <input type="password" th:field="*{password}" id="input-usuario-password" required 
+                           class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-gob-oro focus:border-gob-oro outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Rol *</label>
+                    <select th:field="*{rol}" id="select-usuario-rol" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-white focus:ring-gob-oro focus:border-gob-oro outline-none">
+                        <option th:each="rol : ${listaRoles}" th:value="${rol}" th:text="${rol}"></option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="seccion-asignacion" class="space-y-4 border-t border-gray-100 pt-4">
+                
+              <div>
+                    <label class="block text-sm font-bold text-gob-guinda mb-1">Gerencia Asignada</label>
+                    <select th:field="*{gerencia}" id="select-usuario-gerencia" onchange="cargarMateriasDeGerencia()"
+                            class="w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-blue-50 focus:ring-gob-oro outline-none">
+                        <option value="">-- Seleccione Gerencia --</option>
+                        
+                        <option th:each="g : ${allGerencias}" th:value="${g.id}" th:text="${g.nombre}"></option>
+                        
+                    </select>
+                    <p class="text-[10px] text-gray-400 mt-1 ml-1">* Requerido para roles operativos.</p>
+                </div>
+
+                <div id="contenedor-materias" class="hidden">
+                    <label class="block text-xs font-bold text-gob-guinda uppercase mb-2">Materias Autorizadas</label>
+                    <div id="lista-materias-checkboxes" class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 max-h-32 overflow-y-auto">
+                        </div>
+                    <p class="text-[10px] text-gray-400 mt-1">* Selecciona las materias que atenderá este usuario.</p>
+                </div>
+            </div>
+
+            <div class="flex items-center pt-2">
+                <input type="checkbox" th:field="*{activo}" id="check-usuario-activo" class="w-4 h-4 text-gob-guinda bg-gray-100 border-gray-300 rounded focus:ring-gob-oro">
+                <label for="check-usuario-activo" class="ms-2 text-sm font-medium text-gray-900">Usuario Activo</label>
+            </div>
+
+           <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-100">
+                
+                <button type="button" id="btn-eliminar-usuario" onclick="eliminarUsuarioDesdeModal()"
+                        class="hidden text-red-600 hover:text-red-800 font-medium text-sm hover:underline transition-colors">
+                    <i class="fas fa-trash-alt mr-1"></i> Eliminar Usuario
+                </button>
+
+                <div class="flex gap-3 ml-auto">
+                    <button type="button" onclick="document.getElementById('modal-usuario').classList.add('hidden')" 
+                            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-gob-guinda text-white rounded-lg hover:bg-opacity-90 transition-colors shadow-md">
+                        Guardar Usuario
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

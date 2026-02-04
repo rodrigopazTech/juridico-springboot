@@ -1,0 +1,38 @@
+
+/* ==================================================
+   NUEVOS ESTILOS PARA MODALES Y TABS
+   ================================================== */
+
+/* Utilidad para ocultar elementos */
+.hidden { 
+    display: none !important; 
+}
+
+/* IMPORTANTE: Esto hace que el modal se muestre cuando el JS le quita 'hidden' */
+.modal:not(.hidden) { 
+    display: flex !important; 
+    align-items: center; 
+    justify-content: center;
+}
+
+/* Control de pestañas */
+.tab-content { 
+    display: none; 
+}
+
+.tab-content.active { 
+    display: block; 
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.tab-btn.active { 
+    border-bottom-color: #9D2449; 
+    color: #9D2449; 
+    font-weight: bold; 
+    background-color: rgba(157, 36, 73, 0.05); 
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}

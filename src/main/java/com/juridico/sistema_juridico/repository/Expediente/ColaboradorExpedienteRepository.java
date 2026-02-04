@@ -11,13 +11,16 @@ import java.util.UUID;
 @Repository
 public interface ColaboradorExpedienteRepository extends JpaRepository<ColaboradorExpediente, Integer> {
 
-    // Ver colaboradores activos de un expediente
+    // 1. Ver colaboradores activos de un expediente
     List<ColaboradorExpediente> findByExpedienteIdAndFechaExpiracionAfter(UUID expedienteId, LocalDateTime ahora);
 
-    // Verifica si el usuario tiene permiso temporal vigente
+    // 2. Verificar si el usuario tiene permiso temporal vigente
     boolean existsByExpedienteIdAndUsuarioIdAndFechaExpiracionAfter(
             UUID expedienteId, 
             Integer usuarioId, 
             LocalDateTime ahora
     );
+
+    // 3. Buscar permiso específico para editarlo (El que usas en AudienciasController)
+    List<ColaboradorExpediente> findByExpedienteIdAndUsuarioId(UUID expedienteId, Integer usuarioId);
 }

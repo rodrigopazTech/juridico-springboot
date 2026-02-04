@@ -35,3 +35,9 @@ build/
 /tailwindcss
 
 .yml
+
+# Archivos subidos por usuarios
+uploads/
+
+# Imágenes Docker
+*.tar

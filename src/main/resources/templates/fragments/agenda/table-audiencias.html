@@ -1,0 +1,86 @@
+<div th:fragment="tabla" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+      <div class="bg-gray-50 p-4 border-b border-gray-200">
+        <h3 class="text-lg font-heading font-semibold text-gob-gris flex items-center">
+            <i class="fas fa-gavel text-gob-guinda mr-2"></i> Audiencias Desahogadas
+        </h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gob-gris" id="tabla-audiencias-desahogadas">
+            <thead class="text-xs text-gob-gris uppercase bg-gray-50 border-b border-gray-200 font-headings">
+                <tr>
+                    <th class="px-6 py-3 font-bold">Fecha Desahogo</th>
+                    <th class="px-6 py-3 font-bold">Expediente</th>
+                    <th class="px-6 py-3 font-bold">Tipo Audiencia</th>
+                    <th class="px-6 py-3 font-bold">Partes</th>
+                    <th class="px-6 py-3 font-bold text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200" id="audiencias-desahogadas-body">
+                <tr th:if="${audiencias.empty}">
+                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                        No hay audiencias desahogadas en este periodo.
+                    </td>
+                </tr>
+
+                <tr th:each="a : ${audiencias}" class="bg-white hover:bg-gray-50 transition-colors">
+                    
+                    <td class="px-6 py-4 font-bold text-gray-700" 
+                        th:text="${#temporals.format(a.fechaDesahogo, 'dd/MM/yyyy')}">01/01/2026</td>
+                    
+                    <td class="px-6 py-4 text-gob-guinda font-bold" 
+                        th:text="${a.expedienteNumero}">EXP-001</td>
+                    
+                    <td class="px-6 py-4">
+                        <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded" 
+                              th:text="${a.audiencia.tipoAudiencia.nombre}">Tipo</span>
+                    </td>
+                    
+                    <td class="px-6 py-4 truncate max-w-xs" 
+                        th:text="${a.audiencia.expediente.partes}">Partes</td>
+                    
+                    <td class="px-6 py-4 text-center">
+                        <div class="flex justify-center gap-3">
+                            
+                            <a th:if="${a.audiencia.actaDocumento != null}"
+                               th:href="@{/audiencias/descargar-acta/{id}(id=${a.audiencia.id})}"
+                               class="text-red-600 hover:text-red-800 transition-colors" 
+                               title="Descargar Acta">
+                                <i class="fas fa-file-pdf fa-lg"></i>
+                            </a>
+
+                            <button type="button"
+                                    th:data-id="${a.id}"
+                                    th:data-expediente="${a.expedienteNumero}"
+                                    th:data-obs="${a.audiencia.observaciones}"
+                                    onclick="window.verObservaciones(this.getAttribute('data-id'), 'audiencia', this.getAttribute('data-expediente'), this.getAttribute('data-obs'))"
+                                    class="text-gray-500 hover:text-blue-600 transition-colors"
+                                    title="Ver Observaciones">
+                                <i class="fas fa-eye fa-lg"></i>
+                            </button>
+
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="p-4 border-t border-gray-200 flex justify-between items-center bg-gray-50" th:if="${!audiencias.empty}">
+        <span class="text-sm text-gray-600">
+            Página <span th:text="${audiencias.number + 1}">1</span> de <span th:text="${audiencias.totalPages}">1</span>
+        </span>
+        <div class="flex gap-2">
+            <a th:if="${audiencias.hasPrevious()}" 
+               th:href="@{/agenda(page=${audiencias.number - 1}, tab='audiencias', filtro=${filtroActual}, mes=${mesActual}, anio=${anioActual})}" 
+               class="px-3 py-1 border border-gray-300 rounded hover:bg-white text-sm bg-white text-gray-600 transition-colors">
+               <i class="fas fa-chevron-left mr-1"></i> Anterior
+            </a>
+            
+            <a th:if="${audiencias.hasNext()}" 
+               th:href="@{/agenda(page=${audiencias.number + 1}, tab='audiencias', filtro=${filtroActual}, mes=${mesActual}, anio=${anioActual})}" 
+               class="px-3 py-1 border border-gray-300 rounded hover:bg-white text-sm bg-white text-gray-600 transition-colors">
+               Siguiente <i class="fas fa-chevron-right ml-1"></i>
+            </a>
+        </div>
+    </div>
+</div>

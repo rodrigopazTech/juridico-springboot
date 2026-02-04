@@ -1,0 +1,53 @@
+<div th:fragment="modal" id="modal-materias" class="modal fixed inset-0 bg-gray-900/50 z-50 hidden items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 animate-fade-in-down">
+        
+        <div class="flex justify-between items-center p-4 border-b bg-blue-600 text-white rounded-t-lg">
+            <div>
+                <h3 class="font-bold text-lg"><i class="fas fa-list-ul mr-2"></i> Gestionar Materias</h3>
+                <p class="text-xs text-blue-100" id="subtitulo-gerencia">Cargando...</p>
+            </div>
+            <button onclick="cerrarModalMaterias()" class="hover:text-gray-200 transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="p-6">
+            <div class="flex gap-2 mb-6 border-b border-gray-100 pb-4">
+                <input type="hidden" id="hidden-gerencia-id">
+                <input type="text" id="input-nueva-materia" placeholder="Nueva Materia (Ej. Mercantil)" 
+                       class="flex-1 border border-gray-300 rounded-lg p-2 text-sm focus:ring-blue-500 focus:border-blue-500 outline-none">
+                <button onclick="guardarMateriaJS()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+
+            <div id="contenedor-lista-materias">
+                <div class="text-center text-gray-400 py-4">
+                    <i class="fas fa-spinner fa-spin mr-2"></i> Cargando materias...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div th:fragment="lista">
+    <ul class="space-y-2 max-h-60 overflow-y-auto pr-1" th:if="${!materias.empty}">
+        <li th:each="m : ${materias}" class="flex justify-between items-center bg-gray-50 p-3 rounded border border-gray-200 hover:bg-gray-100 transition-colors group">
+            
+            <div class="flex items-center gap-2">
+                <i class="fas fa-book text-gray-400 text-xs"></i>
+                <span class="text-gray-700 font-medium text-sm" th:text="${m.nombre}">Civil</span>
+            </div>
+
+            <button th:onclick="eliminarMateriaJS([[${m.id}]], [[${m.gerencia.id}]])" 
+                    class="text-gray-300 hover:text-red-600 transition-colors p-1"
+                    title="Eliminar materia">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </li>
+    </ul>
+    
+    <div th:if="${materias.empty}" class="text-center text-gray-400 py-6 italic text-sm border-2 border-dashed border-gray-100 rounded-lg bg-gray-50">
+        <i class="fas fa-folder-open mb-2 block text-gray-300 text-xl"></i>
+        Esta gerencia no tiene materias asignadas aún.
+    </div>
+</div>

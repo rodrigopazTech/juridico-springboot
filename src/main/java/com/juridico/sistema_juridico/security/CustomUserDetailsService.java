@@ -21,23 +21,23 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        // 1. Buscamos el usuario en tu base de datos usando tu repositorio
+        // 1. Buscamos el usuario en tu base de datos
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
 
         // 2. Convertimos tu Rol (Enum) a una autoridad de Spring Security
-        // Asumiendo que 'RolUsuario' es un Enum, obtenemos su nombre string
         GrantedAuthority authority = new SimpleGrantedAuthority(usuario.getRol().name());
 
-        // 3. Retornamos un objeto 'User' oficial de Spring Security con tus datos
+        // 3. Retornamos el objeto User
         return new User(
-                usuario.getEmail(),           // Username
-                usuario.getPasswordHash(),    // Password (hasheada)
+                usuario.getEmail(),
+                // CAMBIO: getPassword() en lugar de getPasswordHash()
+                usuario.getPassword(),    
                 usuario.getActivo(),          // Enabled
                 true,                         // Account Non Expired
                 true,                         // Credentials Non Expired
                 true,                         // Account Non Locked
-                Collections.singletonList(authority) // Lista de roles/autoridades
+                Collections.singletonList(authority) // Lista de roles
         );
     }
 }

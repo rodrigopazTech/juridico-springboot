@@ -1,31 +1,30 @@
-<div th:fragment="barra" class="bg-white p-4 rounded-lg shadow-sm mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+<div th:fragment="barra" class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
     
-    <form th:action="@{/terminos}" method="get" class="relative w-full md:w-2/3">
+    <form th:action="@{/terminos}" method="get" class="relative w-full md:w-96">
         
         <input type="hidden" name="estatus" th:value="${paramEstatus}">
         <input type="hidden" name="prioridad" th:value="${paramPrioridad}">
         <input type="hidden" name="abogadoId" th:value="${paramAbogadoId}">
 
-        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-            <i class="fas fa-search"></i>
-        </span>
-        
+        <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+            <i class="fas fa-search text-gray-400"></i>
+        </div>
         <input type="text" name="keyword" th:value="${keyword}"
-               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gob-oro focus:border-transparent text-sm" 
+               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-gob-oro block w-full ps-10 p-2.5 focus:outline-none"
                placeholder="Buscar por Asunto, Expediente, Partes...">
     </form>
-    <div class="flex items-center gap-2 w-full md:w-auto">
-                
+
+    <div class="flex gap-2 w-full md:w-auto">
+        
         <a th:href="@{/terminos/exportar-excel(keyword=${keyword}, estatus=${paramEstatus}, prioridad=${paramPrioridad}, abogadoId=${paramAbogadoId})}" 
-            class="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg shadow transition duration-300 flex items-center justify-center gap-2"
-            title="Descargar Excel
-            ">
-            <i class="fas fa-file-excel"></i> <span class="hidden lg:inline">Excel</span>
+           class="flex-1 md:flex-none text-gob-gris bg-white border border-gray-300 hover:bg-gray-50 font-medium rounded-lg text-sm px-4 py-2.5 shadow-sm transition-colors flex items-center justify-center decoration-0"
+           title="Descargar Excel">
+            <i class="fas fa-file-excel text-green-600 mr-2"></i> Exportar
         </a>
-                
+        
+        <button onclick="abrirModalNuevo()" 
+                class="flex-1 md:flex-none text-white bg-gob-guinda hover:bg-gob-guindaDark font-bold rounded-lg text-sm px-5 py-2.5 shadow-md transition-colors flex items-center justify-center gap-2">
+            <i class="fas fa-plus"></i> Nuevo Término
+        </button>
     </div>
-    <button onclick="abrirModalNuevo()" 
-            class="w-full md:w-auto bg-gob-guinda hover:bg-gob-guinda-claro text-white font-bold py-2 px-6 rounded shadow transition duration-300 flex items-center justify-center gap-2">
-        <i class="fas fa-plus"></i> Nuevo Término
-    </button>
 </div>

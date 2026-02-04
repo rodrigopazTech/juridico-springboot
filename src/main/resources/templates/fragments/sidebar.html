@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    </head>
+</head>
 <body>
 
     <aside th:fragment="sidebar" id="logo-sidebar" 
@@ -19,73 +19,113 @@
                 </span>
             </a>
 
-          <ul class="space-y-2 font-medium flex-1">
+           <ul class="space-y-2 font-medium flex-1">
                 
-            <li>
+                <li sec:authorize="hasAnyAuthority('DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')">
                     <a th:href="@{/dashboard}" 
                        class="flex items-center p-3 transition-all duration-200 border-l-4"
-                       th:classappend="${activePage == 'dashboard' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/5'}">
-                        
-                        <i class="fas fa-chart-pie w-6 h-6 transition duration-75"
-                           th:classappend="${activePage == 'dashboard' ? 'text-gob-oro' : 'text-gray-500 group-hover:text-white'}"></i>
-                        
-                        <span class="ms-3">Panel Principal</span>
-                        
-                        <i th:if="${activePage == 'dashboard'}" class="fas fa-chevron-right ms-auto text-xs text-gob-oro"></i>
+                       th:classappend="${activePage == 'dashboard' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-chart-pie w-5 h-5 transition duration-75"
+                           th:classappend="${activePage == 'dashboard' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
+                        <span class="ms-3">Dashboard</span>
                     </a>
                 </li>
-            
-            <li>
+
+                <li sec:authorize="hasAnyAuthority('DIRECCION', 'SUBDIRECCION')">
+                    <a th:href="@{/agenda}" 
+                       class="flex items-center p-3 transition-all duration-200 border-l-4"
+                       th:classappend="${activePage == 'agenda' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-calendar-alt w-5 h-5 transition duration-75"
+                           th:classappend="${activePage == 'agenda' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
+                        <span class="ms-3">Agenda General</span>
+                    </a>
+                </li>
+
+               <li>
+                    <a th:href="@{/alertas}" 
+                       class="flex items-center p-3 transition-all duration-200 border-l-4 group relative"
+                       th:classappend="${activePage == 'alertas' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
+                        
+                        <div class="relative">
+                            <i class="fas fa-bell w-5 h-5 transition duration-75"
+                               th:classappend="${activePage == 'alertas' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
+                            
+                            <div th:if="${notificacionesNoLeidas > 0}" 
+                                 class="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-red-600 border-2 border-gob-verde rounded-full animate-pulse">
+                                <span class="text-[10px] font-bold text-white leading-none" 
+                                      th:text="${notificacionesNoLeidas > 99 ? '99+' : notificacionesNoLeidas}"></span>
+                            </div>
+                        </div>
+
+                        <span class="ms-3">Centro de Alertas</span>
+                        
+                        <span th:if="${notificacionesNoLeidas > 0}" 
+                              class="inline-flex items-center justify-center px-2 ms-3 text-xs font-medium text-gob-verde bg-gob-oro rounded-full">
+                            Nuevas
+                        </span>
+                    </a>
+                </li>
+
+                <li>
                     <a th:href="@{/expedientes}" 
-                    class="flex items-center p-3 transition-all duration-200 border-l-4"
-                    th:classappend="${activePage == 'expedientes' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/5'}">
-                        
-                        <i class="fas fa-folder-open w-6 h-6 transition duration-75"
-                        th:classappend="${activePage == 'expedientes' ? 'text-gob-oro' : 'text-gray-500 group-hover:text-white'}"></i>
-                        
+                       class="flex items-center p-3 transition-all duration-200 border-l-4"
+                       th:classappend="${activePage == 'expedientes' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-folder-open w-5 h-5 transition duration-75"
+                           th:classappend="${activePage == 'expedientes' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
                         <span class="ms-3">Expedientes</span>
-                        
-                        <i th:if="${activePage == 'expedientes'}" class="fas fa-chevron-right ms-auto text-xs text-gob-oro"></i>
                     </a>
                 </li>
 
                 <li>
                     <a th:href="@{/terminos}" 
-                    class="flex items-center p-3 transition-all duration-200 border-l-4"
-                    th:classappend="${activePage == 'terminos' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/5'}">
-                        
-                        <i class="fas fa-hourglass-end w-6 h-6 transition duration-75"
-                        th:classappend="${activePage == 'terminos' ? 'text-gob-oro' : 'text-gray-500 group-hover:text-white'}"></i>
-                        
+                       class="flex items-center p-3 transition-all duration-200 border-l-4"
+                       th:classappend="${activePage == 'terminos' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-hourglass-half w-5 h-5 transition duration-75"
+                           th:classappend="${activePage == 'terminos' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
                         <span class="ms-3">Términos</span>
-                        
-                        <i th:if="${activePage == 'terminos'}" class="fas fa-chevron-right ms-auto text-xs text-gob-oro"></i>
                     </a>
                 </li>
+                
                 <li>
                     <a th:href="@{/audiencias}" 
                        class="flex items-center p-3 transition-all duration-200 border-l-4"
-                       th:classappend="${activePage == 'audiencias' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/5'}">
-                        
-                        <i class="fas fa-gavel w-6 h-6 transition duration-75"
-                           th:classappend="${activePage == 'audiencias' ? 'text-gob-oro' : 'text-gray-500 group-hover:text-white'}"></i>
-                        
+                       th:classappend="${activePage == 'audiencias' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-gavel w-5 h-5 transition duration-75"
+                           th:classappend="${activePage == 'audiencias' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
                         <span class="ms-3">Audiencias</span>
-                        
-                        <i th:if="${activePage == 'audiencias'}" class="fas fa-chevron-right ms-auto text-xs text-gob-oro"></i>
+                    </a>
+                </li>
+
+                <li sec:authorize="hasAnyAuthority('DIRECCION', 'SUBDIRECCION')">
+                    <a th:href="@{/usuarios}" 
+                       class="flex items-center p-3 transition-all duration-200 border-l-4"
+                       th:classappend="${activePage == 'usuarios' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-users-cog w-5 h-5 transition duration-75"
+                           th:classappend="${activePage == 'usuarios' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
+                        <span class="ms-3">Usuarios</span>
                     </a>
                 </li>
             </ul>
-            <div class="mt-auto pt-4 border-t border-white/10">
+
+          <div class="mt-auto pt-4 border-t border-white/10" th:if="${usuarioGlobal != null}">
                 <div class="flex items-center p-2 mb-2 bg-gob-guindaDark/20 rounded-lg border border-white/5">
+                    
                     <div class="flex-shrink-0">
-                        <div class="w-10 h-10 rounded-full bg-gob-oro flex items-center justify-center text-gob-verde font-bold text-lg shadow-md border-2 border-gob-verde">
-                            R
+                        <div class="w-10 h-10 rounded-full bg-gob-oro flex items-center justify-center text-gob-verde font-bold text-lg shadow-md border-2 border-gob-verde"
+                             th:text="${#strings.substring(usuarioGlobal.nombreCompleto, 0, 1)}">
+                            U
                         </div>
                     </div>
+                    
                     <div class="ms-3 overflow-hidden">
-                        <p class="text-sm font-bold text-white truncate font-headings">Ricardo</p>
-                        <p class="text-xs text-gray-400 truncate">Administrador</p>
+                        <p class="text-sm font-bold text-white truncate font-headings" 
+                           th:text="${usuarioGlobal.nombreCompleto}">
+                            Usuario
+                        </p>
+                        <p class="text-xs text-gray-400 truncate" 
+                           th:text="${usuarioGlobal.rol}">
+                            Rol
+                        </p>
                     </div>
                 </div>
 
@@ -95,7 +135,6 @@
                     <span class="ms-3 text-sm font-bold tracking-wider uppercase">Cerrar Sesión</span>
                 </a>
             </div>
-            
         </div>
     </aside>
 

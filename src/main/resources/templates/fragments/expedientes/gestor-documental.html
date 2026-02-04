@@ -1,0 +1,168 @@
+<!-- Fragmento Modal Gestor Documental -->
+<div th:fragment="gestor-documental(expediente)">
+
+    <!-- MODAL GESTOR DOCUMENTAL -->
+    <div id="modal-gestor-documental"
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+        <div
+            class="relative w-full max-w-6xl h-[85vh] bg-white rounded-lg shadow-2xl border-t-4 border-gob-oro flex flex-col">
+
+            <!-- Header -->
+            <div class="flex-none flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-lg">
+                <div>
+                    <h2 class="text-xl font-bold text-gob-guinda flex items-center gap-2">
+                        <i class="fas fa-folder-open text-gob-oro"></i> Gestor Documental
+                    </h2>
+                    <p class="text-xs text-gray-500 mt-1">EXPEDIENTE DIGITAL</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="espacio-ocupado" class="text-xs text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                        <i class="fas fa-hdd mr-1"></i> Cargando...
+                    </span>
+                    <button onclick="closeGestorDocumental()"
+                        class="text-gray-400 hover:text-gray-900 transition-colors">
+                        <i class="fas fa-times fa-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contenido Principal -->
+            <div class="flex-1 flex overflow-hidden">
+
+                <!-- Panel Lateral - Navegación -->
+                <div class="w-64 border-r bg-gray-50 p-4 overflow-y-auto">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase mb-3">NAVEGACIÓN</h3>
+
+                    <div class="space-y-1">
+                        <button onclick="cambiarCategoria(null)" id="btn-cat-todos"
+                            class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 text-sm categoria-btn bg-gray-200">
+                            <i class="fas fa-folder text-gob-oro"></i>
+                            <span th:text="${expediente.numero}">EXP-0001</span>
+                        </button>
+
+                        <button onclick="cambiarCategoria('AUDIENCIAS')" id="btn-cat-audiencias"
+                            class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 text-sm categoria-btn">
+                            <i class="fas fa-gavel text-gray-500"></i>
+                            <span>Audiencias</span>
+                        </button>
+
+                        <button onclick="cambiarCategoria('TERMINOS')" id="btn-cat-terminos"
+                            class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 text-sm categoria-btn">
+                            <i class="fas fa-file-contract text-gray-500"></i>
+                            <span>Términos Legales</span>
+                        </button>
+
+                        <button onclick="cambiarCategoria('ANEXOS')" id="btn-cat-anexos"
+                            class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 text-sm categoria-btn">
+                            <i class="fas fa-paperclip text-gray-500"></i>
+                            <span>Anexos y Pruebas</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Área Principal -->
+                <div class="flex-1 flex flex-col">
+
+                    <!-- Barra de Herramientas -->
+                    <div class="flex-none p-4 border-b bg-white flex items-center justify-between gap-4">
+                        <div class="flex-1 relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                            <input type="text" id="search-documentos-gestor"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-gob-oro focus:border-gob-oro block w-full pl-10 p-2.5"
+                                placeholder="Buscar archivo en esta carpeta...">
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button onclick="cambiarVista('grid')" id="btn-vista-grid"
+                                class="p-2 rounded hover:bg-gray-100 text-gray-600">
+                                <i class="fas fa-th"></i>
+                            </button>
+                            <button onclick="cambiarVista('list')" id="btn-vista-list"
+                                class="p-2 rounded hover:bg-gray-100 text-gob-guinda">
+                                <i class="fas fa-list"></i>
+                            </button>
+                            <button onclick="abrirModalSubirDocumento()"
+                                class="bg-gob-guinda hover:bg-gob-guinda-claro text-white text-sm font-bold py-2 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2">
+                                <i class="fas fa-cloud-upload-alt"></i> Subir Documento
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Documentos -->
+                    <div class="flex-1 overflow-y-auto p-6" id="area-documentos">
+                        <!-- Vista de Lista (por defecto) -->
+                        <div id="vista-lista" class="space-y-2">
+                            <div class="text-center text-gray-400 py-12">
+                                <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                                <p>Cargando documentos...</p>
+                            </div>
+                        </div>
+
+                        <!-- Vista de Cuadrícula (oculta por defecto) -->
+                        <div id="vista-grid" class="hidden grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SUBIR DOCUMENTO -->
+    <div id="modal-subir-documento-gestor"
+        class="fixed inset-0 z-[60] hidden items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+        <div class="relative w-full max-w-lg bg-white rounded-lg shadow-2xl border-t-4 border-gob-oro">
+            <div class="flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-lg">
+                <h3 class="text-lg font-bold text-gob-guinda">
+                    <i class="fas fa-file-upload mr-2"></i> Adjuntar Documento
+                </h3>
+                <button onclick="cerrarModalSubirDocumento()" class="text-gray-400 hover:text-gray-900 rounded-lg p-1">
+                    <i class="fas fa-times fa-lg"></i>
+                </button>
+            </div>
+
+            <form id="form-subir-documento-gestor" class="p-6 space-y-4">
+                <input type="hidden" id="expediente-id-upload" th:value="${expediente.id}">
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Seleccionar Archivo *</label>
+                    <input type="file" id="doc-file-gestor" required
+                        class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none">
+                    <p class="mt-1 text-xs text-gray-500">Todos los formatos permitidos. Sin límite de tamaño.</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Categoría *</label>
+                    <select id="doc-categoria-gestor" required
+                        class="w-full bg-white border border-gray-300 rounded p-2.5 text-sm focus:ring-gob-oro focus:border-gob-oro">
+                        <option value="">Seleccione...</option>
+                        <option value="AUDIENCIAS">Audiencias</option>
+                        <option value="TERMINOS">Términos Legales</option>
+                        <option value="ANEXOS">Anexos y Pruebas</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Descripción</label>
+                    <textarea id="doc-descripcion-gestor" rows="3"
+                        class="w-full bg-white border border-gray-300 rounded p-2.5 text-sm focus:ring-gob-oro focus:border-gob-oro"
+                        placeholder="Descripción breve del documento..."></textarea>
+                </div>
+            </form>
+
+            <div class="flex items-center justify-end p-4 border-t bg-gray-50 rounded-b-lg gap-3">
+                <button onclick="cerrarModalSubirDocumento()"
+                    class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-100">
+                    Cancelar
+                </button>
+                <button onclick="subirDocumento()" id="btn-subir-documento-gestor"
+                    class="px-4 py-2 text-sm font-bold text-white bg-gob-guinda rounded hover:bg-gob-guinda-claro shadow-md">
+                    <i class="fas fa-upload mr-1"></i> Subir Ahora
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -5,10 +5,12 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.ChronoUnit;
+
+import org.springframework.format.annotation.DateTimeFormat;
 
 import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
+import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 
 import java.time.LocalDateTime;
 
@@ -31,9 +33,11 @@ public class Audiencia {
     @JoinColumn(name = "expediente_id", nullable = false)
     private Expediente expediente;
 
+    @DateTimeFormat(pattern = "yyyy-MM-dd") 
     @Column(name = "fecha_audiencia", nullable = false)
     private LocalDate fechaAudiencia;
 
+    @DateTimeFormat(pattern = "HH:mm") 
     @Column(name = "hora_audiencia", nullable = false)
     private LocalTime horaAudiencia;
 
@@ -66,8 +70,11 @@ public class Audiencia {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "abogado_comparece")
-    private String abogadoComparece; // Nombre del abogado que asiste
+
+
+    @ManyToOne
+    @JoinColumn(name = "abogado_comparece_id")
+    private Usuario abogadoComparece; 
 
     @Column(name = "observaciones", columnDefinition = "TEXT")
     private String observaciones; // Resultados o notas de la audiencia
