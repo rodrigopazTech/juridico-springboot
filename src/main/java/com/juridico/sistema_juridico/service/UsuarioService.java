@@ -26,10 +26,18 @@ public class UsuarioService {
         return usuarioRepository.findAll();
     }
 
-    // ESTE ES EL MÉTODO QUE FALTABA
     public Usuario buscarPorId(Integer id) {
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
+    }
+
+    /**
+     * Busca al usuario por su identificador de inicio de sesión (email).
+     * Requerido por el DashboardController.
+     */
+    public Usuario obtenerPorUsername(String email) {
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con email: " + email));
     }
 
     public Usuario guardarUsuario(Usuario usuario) {
@@ -57,6 +65,10 @@ public class UsuarioService {
         }
     }
 
+    public void eliminarUsuario(Integer id) { 
+        usuarioRepository.deleteById(id); 
+    }
+
     // --- GERENCIAS ---
 
     public List<Gerencia> listarGerencias() {
@@ -80,9 +92,5 @@ public class UsuarioService {
     
     public void eliminarMateria(Integer id) {
         materiaRepository.deleteById(id);
-    }
-
-    public void eliminarUsuario(Integer id) { 
-        usuarioRepository.deleteById(id); 
     }
 }

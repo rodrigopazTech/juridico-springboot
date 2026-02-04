@@ -1,37 +1,73 @@
-let charts = {}; // Objeto para guardar instancias de Chart.js
+/**
+ * dashboard.js
+ * Manejo de gráficas dinámicas y filtros por gerencia
+ */
+
+// Objeto global para almacenar las instancias de las gráficas
+let chartInstances = {};
 
 document.addEventListener("DOMContentLoaded", () => {
+
     if (!window.dashboardData) {
-        console.error("dashboardData no definido");
+        console.error("dashboardData no está definido desde el servidor.");
         return;
     }
 
-    // Renderizado inicial
+    // 1. Renderizar gráficas con los datos cargados inicialmente por Thymeleaf
     renderAllCharts(window.dashboardData);
 
-    // Evento para el filtro
-    const filtro = document.getElementById("filtroGerencia");
-    filtro.addEventListener("change", async (e) => {
-        const gerenciaId = e.target.value;
-        
-        try {
-            const response = await fetch(`/dashboard/data?gerenciaId=${gerenciaId}`);
-            const data = await response.json();
-            
-            // Actualizar KPIs manualmente
-            document.getElementById("kpiTotalExp").innerText = data.kpis.totalExpedientes;
-            document.getElementById("kpiActivos").innerText = data.kpis.expedientesActivos;
-            document.getElementById("kpiAudiencias").innerText = data.kpis.audienciasProgramadas;
-            document.getElementById("kpiTerminos").innerText = data.kpis.terminosActivos;
-
-            // Actualizar Gráficas
-            renderAllCharts(data.dashboardData);
-        } catch (error) {
-            console.error("Error al filtrar:", error);
-        }
-    });
+    // 2. Escuchar cambios en el filtro de gerencia
+    const filtroGerencia = document.getElementById("filtroGerencia");
+    
+    // Verificamos si es un SELECT (Directivos) para añadir el evento de cambio
+    if (filtroGerencia && filtroGerencia.tagName === 'SELECT') {
+        filtroGerencia.addEventListener("change", (e) => {
+            const idGerencia = e.target.value;
+            actualizarDashboard(idGerencia);
+        });
+    }
 });
 
+/**
+ * Solicita nuevos datos al servidor y actualiza la vista
+ * @param {string} gerenciaId 
+ */
+async function actualizarDashboard(gerenciaId) {
+    try {
+        // Mostrar un pequeño indicador de carga (opcional con SweetAlert o CSS)
+        
+        const url = gerenciaId ? `/dashboard/data?gerenciaId=${gerenciaId}` : '/dashboard/data';
+        const response = await fetch(url);
+        
+        if (!response.ok) throw new Error("Error en la respuesta del servidor");
+        
+        const data = await response.json();
+
+        // 3. Actualizar los números (KPIs) en la parte superior
+        updateKPIs(data.kpis);
+
+        // 4. Re-renderizar todas las gráficas con los nuevos datos
+        renderAllCharts(data.dashboardData);
+
+    } catch (error) {
+        console.error("Error al actualizar el dashboard:", error);
+        Swal.fire("Error", "No se pudieron obtener los datos filtrados", "error");
+    }
+}
+
+/**
+ * Actualiza los elementos de texto de los KPIs
+ */
+function updateKPIs(kpis) {
+    document.getElementById("kpiTotalExp").innerText = kpis.totalExpedientes || 0;
+    document.getElementById("kpiActivos").innerText = kpis.expedientesActivos || 0;
+    document.getElementById("kpiAudiencias").innerText = kpis.audienciasProgramadas || 0;
+    document.getElementById("kpiTerminos").innerText = kpis.terminosActivos || 0;
+}
+
+/**
+ * Llama a las funciones de renderizado de cada gráfica
+ */
 function renderAllCharts(data) {
     renderEstatus(data.estatusExpedientes);
     renderCargaUsuarios(data.cargaTrabajoUsuarios);
@@ -39,30 +75,48 @@ function renderAllCharts(data) {
     renderTrabajoMensual(data.trabajoMensual);
 }
 
-// Función auxiliar para destruir chart si ya existe
-function prepareCanvas(id) {
-    if (charts[id]) {
-        charts[id].destroy();
+/**
+ * Función auxiliar para destruir una gráfica si ya existe en el canvas
+ */
+function destroyExistingChart(id) {
+    if (chartInstances[id]) {
+        chartInstances[id].destroy();
     }
 }
 
+// ==========================================
+// RENDERS DE GRÁFICAS INDIVIDUALEES
+// ==========================================
+
 function renderEstatus(d) {
     if (!d) return;
-    prepareCanvas("chartEstatusExpedientes");
-    charts["chartEstatusExpedientes"] = new Chart(document.getElementById("chartEstatusExpedientes"), {
+    const canvasId = "chartEstatusExpedientes";
+    destroyExistingChart(canvasId);
+
+    chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
         type: "doughnut",
         data: {
             labels: d.labels,
-            datasets: [{ data: d.values }]
+            datasets: [{
+                data: d.values,
+                backgroundColor: ['#8B1E3F', '#D4AF37', '#1e293b', '#64748b'],
+                borderWidth: 1
+            }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+        }
     });
 }
 
 function renderCargaUsuarios(d) {
     if (!d) return;
-    prepareCanvas("chartCargaTrabajoUsuarios");
-    charts["chartCargaTrabajoUsuarios"] = new Chart(document.getElementById("chartCargaTrabajoUsuarios"), {
+    const canvasId = "chartCargaTrabajoUsuarios";
+    destroyExistingChart(canvasId);
+
+    chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
         type: "bar",
         data: {
             labels: d.labels,
@@ -72,39 +126,58 @@ function renderCargaUsuarios(d) {
                 { label: "Términos", data: d.terminos, backgroundColor: '#166534' }
             ]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } }
+        }
     });
 }
 
 function renderGerencias(d) {
     if (!d) return;
-    prepareCanvas("chartDistribucionGerencias");
-    charts["chartDistribucionGerencias"] = new Chart(document.getElementById("chartDistribucionGerencias"), {
-        type: "doughnut",
+    const canvasId = "chartDistribucionGerencias";
+    destroyExistingChart(canvasId);
+
+    chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+        type: "pie",
         data: {
             labels: d.labels,
-            datasets: [{ data: d.values }]
+            datasets: [{
+                data: d.values,
+                backgroundColor: ['#0f172a', '#334155', '#475569', '#94a3b8', '#cbd5e1']
+            }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'right' } }
+        }
     });
 }
 
 function renderTrabajoMensual(d) {
     if (!d) return;
-    prepareCanvas("chartTrabajoCompletado");
-    charts["chartTrabajoCompletado"] = new Chart(document.getElementById("chartTrabajoCompletado"), {
+    const canvasId = "chartTrabajoCompletado";
+    destroyExistingChart(canvasId);
+
+    chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
         type: "line",
         data: {
             labels: d.labels,
             datasets: [{
-                label: "Expedientes",
+                label: "Expedientes Creados",
                 data: d.values,
                 borderColor: '#8B1E3F',
-                tension: 0.3,
+                backgroundColor: 'rgba(139, 30, 63, 0.1)',
                 fill: true,
-                backgroundColor: 'rgba(139, 30, 63, 0.1)'
+                tension: 0.4
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } }
+        }
     });
 }
