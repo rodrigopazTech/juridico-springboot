@@ -24,67 +24,45 @@ public class DashboardService {
         this.terminoRepository = terminoRepository;
     }
 
-    // =========================
-    // KPIs
-    // =========================
-    public Map<String, Long> obtenerKpis() {
+    public Map<String, Long> obtenerKpis(Long gerenciaId) {
         Map<String, Long> kpis = new HashMap<>();
-
-        kpis.put("totalExpedientes", expedienteRepository.count());
-        kpis.put("expedientesActivos", expedienteRepository.count());
-        kpis.put("audienciasProgramadas", audienciaRepository.count());
+        // Aquí deberías usar métodos en el repo que acepten el gerenciaId
+        // Ejemplo: expedienteRepository.countByGerenciaId(gerenciaId)
+        kpis.put("totalExpedientes", gerenciaId == null ? expedienteRepository.count() : expedienteRepository.countByGerenciaId(gerenciaId));
+        kpis.put("expedientesActivos", gerenciaId == null ? expedienteRepository.count() : expedienteRepository.countByGerenciaId(gerenciaId));
+        kpis.put("audienciasProgramadas", audienciaRepository.count()); 
         kpis.put("terminosActivos", terminoRepository.count());
 
         return kpis;
     }
 
-    // =========================
-    // MÉTRICAS DASHBOARD
-    // =========================
-    public Map<String, Object> obtenerMetricas() {
+    public Map<String, Object> obtenerMetricas(Long gerenciaId) {
         Map<String, Object> data = new HashMap<>();
-
-        data.put("estatusExpedientes", obtenerEstatusExpedientes());
-        data.put("cargaTrabajoUsuarios", obtenerCargaTrabajoUsuarios());
-        data.put("distribucionGerencias", obtenerDistribucionGerencias());
-        data.put("trabajoMensual", obtenerTrabajoMensual());
-
+        data.put("estatusExpedientes", obtenerEstatusExpedientes(gerenciaId));
+        data.put("cargaTrabajoUsuarios", obtenerCargaTrabajoUsuarios(gerenciaId));
+        data.put("distribucionGerencias", obtenerDistribucionGerencias()); // Esta no suele filtrarse por sí misma
+        data.put("trabajoMensual", obtenerTrabajoMensual(gerenciaId));
         return data;
     }
 
-    // =========================
-    // ESTATUS EXPEDIENTES
-    // =========================
-    private Map<String, Object> obtenerEstatusExpedientes() {
-        List<Object[]> rows = expedienteRepository.contarExpedientesPorEstatus();
+    private Map<String, Object> obtenerEstatusExpedientes(Long gerenciaId) {
+        List<Object[]> rows = (gerenciaId == null) 
+            ? expedienteRepository.contarExpedientesPorEstatus() 
+            : expedienteRepository.contarExpedientesPorEstatusYGerencia(gerenciaId);
 
         List<String> labels = new ArrayList<>();
         List<Long> values = new ArrayList<>();
-
         for (Object[] row : rows) {
             labels.add(row[0].toString());
             values.add((Long) row[1]);
         }
-
-        return Map.of(
-                "labels", labels,
-                "values", values
-        );
+        return Map.of("labels", labels, "values", values);
     }
 
-    // =========================
-    // CARGA DE TRABAJO
-    // =========================
-    private Map<String, Object> obtenerCargaTrabajoUsuarios() {
-
-        Map<String, Integer> expedientesMap =
-                toMap(expedienteRepository.contarExpedientesPorUsuario());
-
-        Map<String, Integer> audienciasMap =
-                toMap(audienciaRepository.contarAudienciasPorUsuario());
-
-        Map<String, Integer> terminosMap =
-                toMap(terminoRepository.contarTerminosPorUsuario());
+    private Map<String, Object> obtenerCargaTrabajoUsuarios(Long gerenciaId) {
+        Map<String, Integer> expedientesMap = toMap(expedienteRepository.contarExpedientesPorUsuario());
+        Map<String, Integer> audienciasMap = toMap(audienciaRepository.contarAudienciasPorUsuario());
+        Map<String, Integer> terminosMap = toMap(terminoRepository.contarTerminosPorUsuario());
 
         Set<String> usuarios = new LinkedHashSet<>();
         usuarios.addAll(expedientesMap.keySet());
@@ -103,58 +81,31 @@ public class DashboardService {
             terminos.add(terminosMap.getOrDefault(usuario, 0));
         }
 
-        Map<String, Object> chart = new HashMap<>();
-        chart.put("labels", labels);
-        chart.put("expedientes", expedientes);
-        chart.put("audiencias", audiencias);
-        chart.put("terminos", terminos);
-
-        return chart;
+        return Map.of("labels", labels, "expedientes", expedientes, "audiencias", audiencias, "terminos", terminos);
     }
 
-    // =========================
-    // GERENCIAS
-    // =========================
     private Map<String, Object> obtenerDistribucionGerencias() {
         List<Object[]> rows = expedienteRepository.contarExpedientesPorGerencia();
-
         List<String> labels = new ArrayList<>();
         List<Long> values = new ArrayList<>();
-
         for (Object[] row : rows) {
             labels.add((String) row[0]);
             values.add((Long) row[1]);
         }
-
-        return Map.of(
-                "labels", labels,
-                "values", values
-        );
+        return Map.of("labels", labels, "values", values);
     }
 
-    // =========================
-    // TRABAJO MENSUAL
-    // =========================
-    private Map<String, Object> obtenerTrabajoMensual() {
+    private Map<String, Object> obtenerTrabajoMensual(Long gerenciaId) {
         List<Object[]> rows = expedienteRepository.contarExpedientesPorMes();
-
         List<String> labels = new ArrayList<>();
         List<Long> values = new ArrayList<>();
-
         for (Object[] row : rows) {
             labels.add("Mes " + row[0]);
             values.add((Long) row[1]);
         }
-
-        return Map.of(
-                "labels", labels,
-                "values", values
-        );
+        return Map.of("labels", labels, "values", values);
     }
 
-    // =========================
-    // UTILIDAD
-    // =========================
     private Map<String, Integer> toMap(List<Object[]> rows) {
         Map<String, Integer> map = new HashMap<>();
         for (Object[] row : rows) {

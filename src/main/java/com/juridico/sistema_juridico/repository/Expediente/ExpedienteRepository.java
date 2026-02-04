@@ -46,7 +46,26 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
             Pageable pageable
     );
 
-    // ===== DASHBOARD =====
+    // ===== DASHBOARD - FILTROS DINÁMICOS =====
+
+    /**
+     * Cuenta el total de expedientes filtrados por una gerencia específica.
+     */
+    long countByGerenciaId(Long gerenciaId);
+
+    /**
+     * Cuenta expedientes agrupados por etapa procesal filtrando por gerencia.
+     */
+    @Query("""
+        SELECT e.etapaProcesal, COUNT(e)
+        FROM Expediente e
+        WHERE (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId)
+        GROUP BY e.etapaProcesal
+    """)
+    List<Object[]> contarExpedientesPorEstatusYGerencia(@Param("gerenciaId") Long gerenciaId);
+
+
+    // ===== DASHBOARD - MÉTODOS GENERALES =====
 
     long countByEtapaProcesal(EtapaProcesal etapaProcesal);
 
