@@ -18,10 +18,12 @@
                 </tr>
 
                 <tr th:each="n : ${notificaciones}" class="bg-white hover:bg-gray-50 transition-colors">
+                    
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm font-bold text-gray-900" th:text="${#temporals.format(n.notificarEn, 'dd MMM')}">25 Ene</div>
                         <div class="text-xs text-gray-500" th:text="${#temporals.format(n.notificarEn, 'HH:mm')}">10:00</div>
                     </td>
+
                     <td class="px-6 py-4">
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border"
                               th:classappend="${n.tipo == 'AUDIENCIA' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
@@ -30,10 +32,19 @@
                             <span th:text="${n.tipo}">TIPO</span>
                         </span>
                     </td>
-                    <td class="px-6 py-4">
-                        <div class="text-sm font-bold text-gray-800" th:text="${n.titulo}">Título</div>
-                        <div class="text-xs text-gray-500 mt-1" th:text="${n.mensaje}">Mensaje descriptivo</div>
+
+                    <td class="px-6 py-4 cursor-pointer group">
+                        <a th:href="@{/alertas/notificaciones/leer/{id}(id=${n.id})}" class="block">
+                            <div class="text-sm font-bold text-gray-800 group-hover:text-gob-guinda transition-colors" 
+                                 th:text="${n.titulo}">
+                                Título
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1" th:text="${n.mensaje}">
+                                Mensaje descriptivo
+                            </div>
+                        </a>
                     </td>
+
                     <td class="px-6 py-4 text-right">
                         <a th:href="@{/alertas/notificaciones/eliminar/{id}(id=${n.id})}" class="text-gray-300 hover:text-red-500 transition-colors" title="Marcar como leída / Eliminar">
                             <i class="fas fa-times-circle text-lg"></i>

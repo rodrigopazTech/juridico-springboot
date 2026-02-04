@@ -49,7 +49,7 @@ public class NotificacionesController {
     }
 
     // GUARDAR RECORDATORIO (Y GENERAR NOTIFICACIÓN AUTOMÁTICA)
-   @PostMapping("/recordatorios/guardar")
+    @PostMapping("/recordatorios/guardar")
     public String guardarRecordatorio(@ModelAttribute Recordatorio recordatorio, RedirectAttributes redirectAttrs) {
          try {
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -87,6 +87,25 @@ public class NotificacionesController {
         return "redirect:/alertas?tab=recordatorios";
     }
 
+    // Marcar como leída y redirigir al origen
+    @GetMapping("/notificaciones/leer/{id}")
+    public String leerNotificacion(@PathVariable Integer id) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        
+        Notificacion notificacion = notificacionRepository.findById(id).orElse(null);
+        
+        if (notificacion != null && notificacion.getUsuario().getEmail().equals(email)) {
+            notificacion.setLeida(true);
+            notificacion.setFechaLeida(LocalDateTime.now());
+            notificacionRepository.save(notificacion);
+            
+            if ("AUDIENCIA".equals(notificacion.getEntidadTipo()) && notificacion.getEntidadId() != null) {
+                return "redirect:/audiencias?keyword=" + notificacion.getEntidadId();                
+            }
+        }
+        return "redirect:/alertas";
+    }
+
     // ELIMINAR NOTIFICACIÓN
    @GetMapping("/notificaciones/eliminar/{id}")
     public String eliminarNotificacion(@PathVariable Integer id) {
@@ -111,4 +130,6 @@ public class NotificacionesController {
         recordatorioRepository.deleteById(id);
         return "redirect:/alertas?tab=recordatorios";
     }
+
+    
 }

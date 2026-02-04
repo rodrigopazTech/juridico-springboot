@@ -8,7 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate; 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,16 +18,17 @@ import java.util.UUID;
 public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
 
     @Query("SELECT a FROM Audiencia a " +
-           "LEFT JOIN a.expediente e " +
-           "WHERE " +
-           "(:keyword IS NULL OR :keyword = '' OR " +
-           "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " + 
-           "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-           "AND (:tipo IS NULL OR :tipo = '' OR a.tipoAudiencia.nombre = :tipo) " + 
-           "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
-           "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
-           "AND (:estatus IS NULL OR :estatus = '' OR a.estatusAudiencia = :estatus)")
+        "LEFT JOIN a.expediente e " +
+        "WHERE " +
+        "(:keyword IS NULL OR :keyword = '' OR " +
+        "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+        "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " + 
+        "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+        "CAST(a.id AS string) LIKE :keyword) " + // <--- ¡AGREGA ESTA LÍNEA!
+        "AND (:tipo IS NULL OR :tipo = '' OR a.tipoAudiencia.nombre = :tipo) " + 
+        "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
+        "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
+        "AND (:estatus IS NULL OR :estatus = '' OR a.estatusAudiencia = :estatus)")
     Page<Audiencia> buscarConFiltros(
             @Param("keyword") String keyword,
             @Param("tipo") String tipo,
@@ -56,5 +58,14 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
     Optional<Audiencia> findTopByExpedienteIdAndFechaAudienciaAfterOrderByFechaAudienciaAsc(
         UUID expedienteId, 
         LocalDate fechaActual
+    );
+
+    List<Audiencia> findByFechaAudienciaAndEstatusAudienciaNot(LocalDate fecha, String estatusExcluido);
+
+    List<Audiencia> findByFechaAudienciaAndHoraAudienciaBetweenAndEstatusAudienciaNot(
+        LocalDate fecha, 
+        LocalTime horaInicio, 
+        LocalTime horaFin, 
+        String estatusExcluido
     );
 }

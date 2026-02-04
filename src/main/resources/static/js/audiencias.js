@@ -1,37 +1,42 @@
+/**
+ * Lógica del Módulo de Audiencias
+ * Versión v3.0
+ */
+
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("Sistema de Audiencias v2.0 - Cargado");
+    console.log("Sistema de Audiencias Cargado - v3.0");
 });
 
-// --- MENÚS (ACCIONES RÁPIDAS) ---
+// --- MENÚS Y NAVEGACIÓN ---
 function toggleMenu(id) {
     const menu = document.getElementById('menu-' + id);
     if (!menu) return;
 
-    // Cerramos todos los demás
     document.querySelectorAll('[id^="menu-"]').forEach(m => {
         if (m !== menu) m.classList.add('hidden');
     });
 
-    // Alternamos el actual
     menu.classList.toggle('hidden');
 }
 
-// Cerrar menús al hacer clic fuera
 window.addEventListener('click', function(e) {
     if (!e.target.closest('td.relative')) {
         document.querySelectorAll('[id^="menu-"]').forEach(m => m.classList.add('hidden'));
     }
 });
 
-// --- FUNCIONES DEL MODAL ---
+// --- FUNCIONES DEL MODAL (CRUD) ---
 
-// 1. NUEVA AUDIENCIA
+// 1. ABRIR PARA CREAR
 function abrirModalAudiencia() {
     const form = document.getElementById('form-audiencia');
     if(form) form.reset();
     
-    document.getElementById('input-audiencia-id').value = '';
-    document.getElementById('modal-titulo-audiencia').innerHTML = '<i class="fas fa-gavel"></i> Nueva Audiencia';
+    const inputId = document.getElementById('input-audiencia-id');
+    if(inputId) inputId.value = '';
+    
+    const titulo = document.getElementById('modal-titulo-audiencia');
+    if(titulo) titulo.innerHTML = '<i class="fas fa-gavel"></i> Nueva Audiencia';
     
     toggleUbicacion(false); 
     const radioPresencial = document.querySelector('input[name="esVirtual"][value="false"]');
@@ -40,9 +45,8 @@ function abrirModalAudiencia() {
     document.getElementById('modal-audiencia').classList.remove('hidden');
 }
 
-// 2. PREPARAR EDICIÓN (Lee los datos seguros del botón)
+// 2. PREPARAR EDICIÓN
 function prepararEdicion(btn) {
-    // Leemos los datos de los atributos data-*
     const id = btn.getAttribute('data-id');
     const expedienteId = btn.getAttribute('data-expediente-id');
     const tipoId = btn.getAttribute('data-tipo-id');
@@ -53,9 +57,8 @@ function prepararEdicion(btn) {
     const url = btn.getAttribute('data-url');
     const abogadoId = btn.getAttribute('data-abogado-id');
 
-    console.log("Editando ID:", id);
+    console.log("Editando Audiencia ID:", id);
 
-    // Llenamos el formulario
     document.getElementById('input-audiencia-id').value = id;
     document.getElementById('modal-titulo-audiencia').innerHTML = '<i class="fas fa-edit"></i> Editar Audiencia';
 
@@ -94,13 +97,13 @@ function toggleUbicacion(isVirtual) {
     const inputUrl = document.getElementById('input-url');
     
     if(isVirtual) {
-        campoSala.classList.add('hidden');
-        campoUrl.classList.remove('hidden');
+        if(campoSala) campoSala.classList.add('hidden');
+        if(campoUrl) campoUrl.classList.remove('hidden');
         if(inputUrl) inputUrl.setAttribute('required', 'required');
         if(inputSala) inputSala.removeAttribute('required');
     } else {
-        campoSala.classList.remove('hidden');
-        campoUrl.classList.add('hidden');
+        if(campoSala) campoSala.classList.remove('hidden');
+        if(campoUrl) campoUrl.classList.add('hidden');
         if(inputSala) inputSala.setAttribute('required', 'required');
         if(inputUrl) inputUrl.removeAttribute('required');
     }
