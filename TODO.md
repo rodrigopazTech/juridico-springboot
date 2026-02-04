@@ -1,20 +1,13 @@
-# TODO: Implementar módulo de dashboard
+# TODO - Modificar gráfica de estatus de expediente
 
-## Información recopilada
-- DashboardController.java proporciona datos mock para KPIs (EstadisticasResponse) y gráfica (MetricasResponse con etiquetas, valores, metricaNombre).
-- index.html de dashboard muestra KPIs y dos gráficas: una de pastel para "Estatus Global de Expedientes" y una de línea para "Trabajo Completado".
-- dashboard.js lee datos desde elementos HTML inyectados por Thymeleaf.
-- Referencia: módulo de términos usa estructura similar con fragments, pero dashboard es más simple con gráficas.
+## Tareas Completadas
+- [x] Modificar la consulta en ExpedienteRepository.java para ordenar los estatus como TRAMITE, LAUDO, FIRME
+- [x] Actualizar los colores de la gráfica en dashboard.js a tonos pasteles
+- [x] Cambiar colores de Carga de Trabajo por Usuario a pasteles
+- [x] Cambiar colores de Distribución por Gerencia a pasteles
+- [x] Modificar gráfica Trabajo Completado para mostrar solo expedientes en FIRME
+- [x] Cambiar colores de Trabajo Completado a pasteles
 
-## Plan
-- [x] Actualizar dashboard.js para leer datos de dashboardData desde elemento HTML (dashboard-data) para las gráficas.
-- [x] Verificar que index.html use correctamente los datos del controller (kpis, dashboardData).
-- [x] Ajustar estructura de gráficas para que coincida con el controller.
-
-## Archivos dependientes
-- src/main/resources/templates/views/dashboard/index.html
-- src/main/resources/static/js/dashboard.js
-
-## Pasos de seguimiento
-- [] Probar que las gráficas se rendericen correctamente con los datos del controller.
-- [] Verificar que los KPIs se muestren correctamente.
+## Próximos Pasos
+- [ ] Probar los cambios ejecutando la aplicación y verificando las gráficas en el dashboard
+- [ ] Confirmar que el orden, colores y filtros se muestran correctamente

@@ -89,6 +89,12 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
         SELECT e.etapaProcesal, COUNT(e)
         FROM Expediente e
         GROUP BY e.etapaProcesal
+        ORDER BY CASE e.etapaProcesal
+            WHEN 'TRAMITE' THEN 1
+            WHEN 'LAUDO' THEN 2
+            WHEN 'FIRME' THEN 3
+            ELSE 4
+        END
     """)
     List<Object[]> contarExpedientesPorEstatus();
 
@@ -96,6 +102,7 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
     @Query("""
         SELECT EXTRACT(MONTH FROM e.createdAt), COUNT(e)
         FROM Expediente e
+        WHERE e.etapaProcesal = 'FIRME'
         GROUP BY EXTRACT(MONTH FROM e.createdAt)
         ORDER BY EXTRACT(MONTH FROM e.createdAt)
     """)

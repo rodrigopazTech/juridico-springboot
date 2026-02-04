@@ -99,7 +99,7 @@ function renderEstatus(d) {
             labels: d.labels,
             datasets: [{
                 data: d.values,
-                backgroundColor: ['#8B1E3F', '#D4AF37', '#1e293b', '#64748b'],
+                backgroundColor: ['#AEC6CF', '#B2D8B2', '#F8B8C4', '#FCE4A6'],
                 borderWidth: 1
             }]
         },
@@ -121,9 +121,9 @@ function renderCargaUsuarios(d) {
         data: {
             labels: d.labels,
             datasets: [
-                { label: "Expedientes", data: d.expedientes, backgroundColor: '#8B1E3F' },
-                { label: "Audiencias", data: d.audiencias, backgroundColor: '#D4AF37' },
-                { label: "Términos", data: d.terminos, backgroundColor: '#166534' }
+                { label: "Expedientes", data: d.expedientes, backgroundColor: '#AEC6CF' },
+                { label: "Audiencias", data: d.audiencias, backgroundColor: '#B2D8B2' },
+                { label: "Términos", data: d.terminos, backgroundColor: '#F8B8C4' }
             ]
         },
         options: {
@@ -145,7 +145,7 @@ function renderGerencias(d) {
             labels: d.labels,
             datasets: [{
                 data: d.values,
-                backgroundColor: ['#0f172a', '#334155', '#475569', '#94a3b8', '#cbd5e1']
+                backgroundColor: ['#AEC6CF', '#B2D8B2', '#F8B8C4', '#FCE4A6', '#DDA0DD']
             }]
         },
         options: {
@@ -166,10 +166,10 @@ function renderTrabajoMensual(d) {
         data: {
             labels: d.labels,
             datasets: [{
-                label: "Expedientes Creados",
+                label: "Expedientes Completados",
                 data: d.values,
-                borderColor: '#8B1E3F',
-                backgroundColor: 'rgba(139, 30, 63, 0.1)',
+                borderColor: '#AEC6CF',
+                backgroundColor: 'rgba(174, 198, 207, 0.1)',
                 fill: true,
                 tension: 0.4
             }]
