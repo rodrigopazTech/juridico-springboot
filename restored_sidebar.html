@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <aside th:fragment="sidebar" id="logo-sidebar" 
+    class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full bg-gob-verde border-r border-gob-oro sm:translate-x-0">           aria-label="Sidebar">
+    </aside>    
+        <div class="h-full px-3 py-4 overflow-y-auto bg-gob-verde">
+            <a href="/" class="flex items-center ps-2.5 mb-8 group">
+                <i class="fas fa-balance-scale text-gob-oro text-2xl mr-3 group-hover:scale-110 transition-transform"></i>
+                <span class="self-center text-xl font-bold whitespace-nowrap text-white font-headings">Agenda Legal</span>
+            </a>
+
+            <ul class="space-y-2 font-medium">
+                <li>
+                    <a th:href="@{/expedientes}" 
+                       class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-white/10 hover:text-white group transition-all duration-200">
+                        <i class="fas fa-folder-open text-gob-oro w-5 h-5 transition duration-75 group-hover:text-white"></i>
+                        <span class="ms-3">Expedientes</span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a th:href="@{/terminos}" 
+                       class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-white/10 hover:text-white group transition-all duration-200">
+                        <i class="fas fa-hourglass-end text-gob-oro w-5 h-5 transition duration-75 group-hover:text-white"></i>
+                        <span class="ms-3">Gestión de Términos</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="absolute bottom-0 left-0 w-full p-4 bg-gob-verdeDark/50 border-t border-white/10">
+                <div class="flex items-center p-2 text-white">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gob-oro flex items-center justify-center text-gob-verde font-bold">
+                        R
+                    </div>
+                    <div class="ms-3">
+                        <p class="text-xs font-bold font-headings">Ricardo</p>
+                        <p class="text-[10px] text-gray-400">Administrador</p>
+                    </div>
+                </div>
+                <a th:href="@{/logout}" class="flex items-center p-2 mt-2 text-red-400 hover:bg-red-900/20 rounded-lg group transition-colors">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="ms-3 text-xs font-bold uppercase tracking-wider">Cerrar Sesión</span>
+                </a>
+            </div>
+        </div>
+    </aside>
+</body>
+</html>
