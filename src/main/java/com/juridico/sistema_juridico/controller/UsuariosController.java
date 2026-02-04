@@ -28,8 +28,8 @@ public class UsuariosController {
 
    @GetMapping
     public String index(Model model,
-                        @RequestParam(defaultValue = "0") int pageUsuarios,   // Página para usuarios
-                        @RequestParam(defaultValue = "0") int pageGerencias) { // Página para gerencias
+                        @RequestParam(defaultValue = "0") int pageUsuarios,  
+                        @RequestParam(defaultValue = "0") int pageGerencias) { 
         
         Page<Usuario> usuariosPage = usuarioService.listarUsuariosPaginados(PageRequest.of(pageUsuarios, 10, Sort.by("nombreCompleto").ascending()));
         
@@ -38,12 +38,13 @@ public class UsuariosController {
         model.addAttribute("listaUsuarios", usuariosPage); 
         model.addAttribute("listaGerencias", gerenciasPage);
         
-        // Listas completas (sin paginar) para los Selects de los modales
         model.addAttribute("allGerencias", usuarioService.listarGerencias()); 
         
         model.addAttribute("listaRoles", RolUsuario.values());
         model.addAttribute("nuevoUsuario", new Usuario());
         model.addAttribute("nuevaGerencia", new Gerencia());
+
+        model.addAttribute("activePage", "usuarios");
         
         return "views/usuarios/index";
     }

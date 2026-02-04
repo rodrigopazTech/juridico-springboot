@@ -45,6 +45,8 @@ public class NotificacionesController {
         List<Recordatorio> recordatorios = recordatorioRepository.findByUsuarioAndCompletadoFalseOrderByFechaRecordatorioAsc(usuario);
         model.addAttribute("recordatorios", recordatorios);
 
+        model.addAttribute("activePage", "alertas"); 
+
         return "views/alertas/index";
     }
 

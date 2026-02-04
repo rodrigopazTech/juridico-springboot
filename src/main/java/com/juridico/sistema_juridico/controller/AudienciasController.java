@@ -1,6 +1,8 @@
 package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
+import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
@@ -16,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -34,13 +37,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
+import java.util.stream.Collectors;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.io.IOException;
 import java.util.List;
 import java.net.MalformedURLException;
-
+import java.util.ArrayList;
 
 @Controller
 @RequestMapping("/audiencias")
@@ -56,44 +60,102 @@ public class AudienciasController {
     @Autowired private MateriaRepository materiaRepository;
     @Autowired private TipoAudienciaRepository tipoAudienciaRepository;
 
-    @GetMapping
+@GetMapping
     public String index(Model model,
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(required = false) String keyword,
                         @RequestParam(required = false) String tipo,
                         @RequestParam(required = false) String gerencia,
                         @RequestParam(required = false) String materia,
-                        @RequestParam(required = false) String estatus) {
+                        @RequestParam(required = false) String estatus,
+                        @RequestParam(required = false) Integer abogadoId, 
+                        @RequestParam(required = false) String periodo) {  
 
+        // 1. SEGURIDAD DE ROLES
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+        String rol = usuario.getRol().name();
+
+        Integer filtroUsuarioId = null;
+        Integer filtroGerenciaId = null;
+        List<Integer> filtroMateriaIds = null;
+
+        switch (rol) {
+            case "ABOGADO":
+                filtroUsuarioId = usuario.getId();
+                break;
+            case "GERENTE":
+                if(usuario.getGerencia() != null) filtroGerenciaId = usuario.getGerencia().getId();
+                break;
+            case "JEFE_DEPTO":
+                if(usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
+                    filtroMateriaIds = usuario.getMaterias().stream().map(Materia::getId).collect(Collectors.toList());
+                } else {
+                    filtroMateriaIds = new ArrayList<>();
+                    filtroMateriaIds.add(-1); 
+                }
+                break;
+        }
+
+        // 2. LÓGICA DE FECHAS (CORRECCIÓN: USAR CENTINELAS, NO NULL)
+        // Por defecto: Rango histórico amplio (1900 - 2100)
+        LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
+        LocalDate fechaFin = LocalDate.of(2100, 12, 31);
+        
+        if (periodo != null && !periodo.isEmpty()) {
+            LocalDate hoy = LocalDate.now();
+            switch (periodo) {
+                case "HOY":
+                    fechaInicio = hoy;
+                    fechaFin = hoy;
+                    break;
+                case "MANANA":
+                    fechaInicio = hoy.plusDays(1);
+                    fechaFin = hoy.plusDays(1);
+                    break;
+                case "SEMANA":
+                    fechaInicio = hoy; 
+                    fechaFin = hoy.plusDays(7); 
+                    break;
+                case "MES":
+                    fechaInicio = hoy.withDayOfMonth(1);
+                    fechaFin = hoy.withDayOfMonth(hoy.lengthOfMonth());
+                    break;
+            }
+        }
+
+        // 3. CONSULTA AL REPOSITORIO
+        // Ahora siempre enviamos fechas válidas, nunca NULL
         Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaAudiencia").ascending());
 
         Page<Audiencia> audiencias = audienciaRepository.buscarConFiltros(
-                keyword, tipo, gerencia, materia, estatus, pageable
+                keyword, tipo, gerencia, materia, estatus, 
+                abogadoId, fechaInicio, fechaFin, 
+                filtroUsuarioId, filtroGerenciaId, filtroMateriaIds,
+                pageable
         );
 
+        // 4. MODELO
         model.addAttribute("audiencias", audiencias);
         model.addAttribute("pageTitle", "Gestión de Audiencias");
         model.addAttribute("activePage", "audiencias");
 
-        // --- CARGAMOS LAS LISTAS DINÁMICAS PARA LOS FILTROS ---
         model.addAttribute("listaTiposAudiencia", tipoAudienciaRepository.findAll());
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
         model.addAttribute("listaMaterias", materiaRepository.findAll());
-        // -----------------------------------------------------
-
-        model.addAttribute("expedientesList", expedienteRepository.findAll());
         model.addAttribute("abogados", usuarioRepository.findAll()); 
         
-        // Mantener filtros seleccionados
         model.addAttribute("keyword", keyword);
         model.addAttribute("paramTipo", tipo);
         model.addAttribute("paramGerencia", gerencia);
         model.addAttribute("paramMateria", materia);
         model.addAttribute("paramEstatus", estatus);
-
+        model.addAttribute("paramAbogadoId", abogadoId);
+        model.addAttribute("paramPeriodo", periodo);
+        
         return "views/audiencias/index";
     }
-
+    
   @PostMapping("/guardar")
     public String guardar(@ModelAttribute Audiencia audienciaForm, 
                           @RequestParam("expedienteId") UUID expedienteId,
@@ -221,7 +283,6 @@ public class AudienciasController {
                 return ResponseEntity.notFound().build();
             }
 
-            // CORRECCIÓN AQUÍ: Usamos el nombre completo de la clase para evitar confusiones
             java.nio.file.Path rutaArchivo = java.nio.file.Paths.get("uploads/audiencias").resolve(audiencia.getActaDocumento());
             Resource recurso = new UrlResource(rutaArchivo.toUri());
 
@@ -245,7 +306,9 @@ public class AudienciasController {
                               @RequestParam(required = false) String tipo,
                               @RequestParam(required = false) String gerencia,
                               @RequestParam(required = false) String materia,
-                              @RequestParam(required = false) String estatus) throws IOException {
+                              @RequestParam(required = false) String estatus,
+                              @RequestParam(required = false) Integer abogadoId,
+                              @RequestParam(required = false) String periodo) throws IOException { 
         
         response.setContentType("application/octet-stream");
         DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
@@ -255,9 +318,69 @@ public class AudienciasController {
         String headerValue = "attachment; filename=Audiencias_" + currentDateTime + ".xlsx";
         response.setHeader(headerKey, headerValue);
 
-        List<Audiencia> listado = audienciaRepository.listarParaExcel(keyword, tipo, gerencia, materia, estatus);
+        // 1. SEGURIDAD DE ROLES
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+        String rol = usuario.getRol().name();
+
+        Integer filtroUsuarioId = null;
+        Integer filtroGerenciaId = null;
+        List<Integer> filtroMateriaIds = null;
+
+        switch (rol) {
+            case "ABOGADO":
+                filtroUsuarioId = usuario.getId();
+                break;
+            case "GERENTE":
+                if(usuario.getGerencia() != null) filtroGerenciaId = usuario.getGerencia().getId();
+                break;
+            case "JEFE_DEPTO":
+                if(usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
+                    filtroMateriaIds = usuario.getMaterias().stream().map(Materia::getId).collect(Collectors.toList());
+                } else {
+                    filtroMateriaIds = new ArrayList<>();
+                    filtroMateriaIds.add(-1);
+                }
+                break;
+        }
+
+        // 2. LÓGICA DE FECHAS "CENTINELA" (CORRECCIÓN CLAVE)
+        // Por defecto: Rango histórico amplio para evitar NULLs en la BD
+        LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
+        LocalDate fechaFin = LocalDate.of(2100, 12, 31);
+        
+        if (periodo != null && !periodo.isEmpty()) {
+            LocalDate hoy = LocalDate.now();
+            switch (periodo) {
+                case "HOY":
+                    fechaInicio = hoy;
+                    fechaFin = hoy;
+                    break;
+                case "MANANA":
+                    fechaInicio = hoy.plusDays(1);
+                    fechaFin = hoy.plusDays(1);
+                    break;
+                case "SEMANA":
+                    fechaInicio = hoy; 
+                    fechaFin = hoy.plusDays(7); 
+                    break;
+                case "MES":
+                    fechaInicio = hoy.withDayOfMonth(1);
+                    fechaFin = hoy.withDayOfMonth(hoy.lengthOfMonth());
+                    break;
+            }
+        }
+
+        // 3. LLAMAR AL REPOSITORIO
+        // Ahora fechaInicio y fechaFin SIEMPRE tienen valor, nunca son null.
+        List<Audiencia> listado = audienciaRepository.listarParaExcel(
+            keyword, tipo, gerencia, materia, estatus, 
+            abogadoId, fechaInicio, fechaFin,
+            filtroUsuarioId, filtroGerenciaId, filtroMateriaIds
+        );
 
         AudienciaExcelExporter excelExporter = new AudienciaExcelExporter(listado);
         excelExporter.export(response);
     }
+  
 }

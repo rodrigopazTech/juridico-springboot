@@ -17,26 +17,43 @@ import java.util.UUID;
 @Repository
 public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
 
+    // --- 1. BUSQUEDA PAGINADA (INDEX) ---
     @Query("SELECT a FROM Audiencia a " +
-        "LEFT JOIN a.expediente e " +
-        "WHERE " +
-        "(:keyword IS NULL OR :keyword = '' OR " +
-        "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-        "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " + 
-        "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-        "CAST(a.id AS string) LIKE :keyword) " + // <--- ¡AGREGA ESTA LÍNEA!
-        "AND (:tipo IS NULL OR :tipo = '' OR a.tipoAudiencia.nombre = :tipo) " + 
-        "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
-        "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
-        "AND (:estatus IS NULL OR :estatus = '' OR a.estatusAudiencia = :estatus)")
+           "LEFT JOIN a.expediente e " +
+           "WHERE " +
+           "(:keyword IS NULL OR :keyword = '' OR " +
+           "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " + 
+           "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "CAST(a.id as string) LIKE :keyword) " + // CORREGIDO: CAST estándar
+           "AND (:tipo IS NULL OR :tipo = '' OR a.tipoAudiencia.nombre = :tipo) " + 
+           "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
+           "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
+           "AND (:estatus IS NULL OR :estatus = '' OR a.estatusAudiencia = :estatus) " +
+           
+           // CORREGIDO: Comparación directa de fechas (tu Controlador ya envía fechas válidas)
+           "AND (a.fechaAudiencia >= :fechaInicio) " + 
+           "AND (a.fechaAudiencia <= :fechaFin) " +
+           
+           "AND (:targetAbogadoId IS NULL OR (e.abogadoResponsable.id = :targetAbogadoId OR a.abogadoComparece.id = :targetAbogadoId)) " +
+           "AND (:filtroUsuarioId IS NULL OR (e.abogadoResponsable.id = :filtroUsuarioId OR a.abogadoComparece.id = :filtroUsuarioId)) " +
+           "AND (:filtroGerenciaId IS NULL OR e.gerencia.id = :filtroGerenciaId) " +
+           "AND ((:filtroMateriaIds) IS NULL OR e.materia.id IN (:filtroMateriaIds))")
     Page<Audiencia> buscarConFiltros(
             @Param("keyword") String keyword,
             @Param("tipo") String tipo,
             @Param("gerencia") String gerencia,
             @Param("materia") String materia,
             @Param("estatus") String estatus,
+            @Param("targetAbogadoId") Integer targetAbogadoId,
+            @Param("fechaInicio") LocalDate fechaInicio,
+            @Param("fechaFin") LocalDate fechaFin,
+            @Param("filtroUsuarioId") Integer filtroUsuarioId,
+            @Param("filtroGerenciaId") Integer filtroGerenciaId,
+            @Param("filtroMateriaIds") List<Integer> filtroMateriaIds,
             Pageable pageable);
 
+    // --- 2. LISTADO PARA EXCEL (Sin paginación) ---
     @Query("SELECT a FROM Audiencia a " +
            "LEFT JOIN a.expediente e " +
            "WHERE " +
@@ -47,19 +64,30 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
            "AND (:tipo IS NULL OR :tipo = '' OR a.tipoAudiencia.nombre = :tipo) " + 
            "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
            "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
-           "AND (:estatus IS NULL OR :estatus = '' OR a.estatusAudiencia = :estatus)")
+           "AND (:estatus IS NULL OR :estatus = '' OR a.estatusAudiencia = :estatus) " +
+           
+           // MISMAS CORRECCIONES
+           "AND (a.fechaAudiencia >= :fechaInicio) " +
+           "AND (a.fechaAudiencia <= :fechaFin) " +
+           
+           "AND (:targetAbogadoId IS NULL OR (e.abogadoResponsable.id = :targetAbogadoId OR a.abogadoComparece.id = :targetAbogadoId)) " +
+           "AND (:filtroUsuarioId IS NULL OR (e.abogadoResponsable.id = :filtroUsuarioId OR a.abogadoComparece.id = :filtroUsuarioId)) " +
+           "AND (:filtroGerenciaId IS NULL OR e.gerencia.id = :filtroGerenciaId) " +
+           "AND ((:filtroMateriaIds) IS NULL OR e.materia.id IN (:filtroMateriaIds))")
     List<Audiencia> listarParaExcel(
             @Param("keyword") String keyword,
             @Param("tipo") String tipo,
             @Param("gerencia") String gerencia,
             @Param("materia") String materia,
-            @Param("estatus") String estatus);
+            @Param("estatus") String estatus,
+            @Param("targetAbogadoId") Integer targetAbogadoId,
+            @Param("fechaInicio") LocalDate fechaInicio,
+            @Param("fechaFin") LocalDate fechaFin,
+            @Param("filtroUsuarioId") Integer filtroUsuarioId,
+            @Param("filtroGerenciaId") Integer filtroGerenciaId,
+            @Param("filtroMateriaIds") List<Integer> filtroMateriaIds);
 
-    Optional<Audiencia> findTopByExpedienteIdAndFechaAudienciaAfterOrderByFechaAudienciaAsc(
-        UUID expedienteId, 
-        LocalDate fechaActual
-    );
-
+    // --- 3. MÉTODOS AUXILIARES ---
     List<Audiencia> findByFechaAudienciaAndEstatusAudienciaNot(LocalDate fecha, String estatusExcluido);
 
     List<Audiencia> findByFechaAudienciaAndHoraAudienciaBetweenAndEstatusAudienciaNot(
@@ -67,5 +95,10 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
         LocalTime horaInicio, 
         LocalTime horaFin, 
         String estatusExcluido
+    );
+
+    Optional<Audiencia> findTopByExpedienteIdAndFechaAudienciaAfterOrderByFechaAudienciaAsc(
+        UUID expedienteId, 
+        LocalDate fechaActual
     );
 }
