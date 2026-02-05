@@ -86,7 +86,7 @@ public class DashboardService {
     }
 
     private Map<String, Object> obtenerTrabajoMensual(Long gerenciaId) {
-        return processRows(expedienteRepository.contarExpedientesPorMes());
+        return processRows(expedienteRepository.contarExpedientesCompletadosPorMes());
     }
 
     private Map<String, Object> processRows(List<Object[]> rows) {

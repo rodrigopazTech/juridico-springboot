@@ -56,4 +56,7 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
 
     @Query(value = "SELECT TO_CHAR(created_at, 'Month'), COUNT(*) FROM expedientes GROUP BY TO_CHAR(created_at, 'Month')", nativeQuery = true)
     List<Object[]> contarExpedientesPorMes();
+
+    @Query(value = "SELECT TO_CHAR(created_at, 'Month'), COUNT(*) FROM expedientes WHERE etapa_procesal = 'FIRME' GROUP BY TO_CHAR(created_at, 'Month')", nativeQuery = true)
+    List<Object[]> contarExpedientesCompletadosPorMes();
 }
