@@ -42,7 +42,19 @@ public class DashboardService {
 
     private Map<String, Object> obtenerEstatusExpedientes(Long gerenciaId) {
         List<Object[]> rows = (gerenciaId == null) ? expedienteRepository.contarExpedientesPorEstatus() : expedienteRepository.contarExpedientesPorEstatusYGerencia(gerenciaId);
-        return processRows(rows);
+        Map<EtapaProcesal, Long> statusMap = new HashMap<>();
+        for (Object[] row : rows) {
+            EtapaProcesal etapa = (EtapaProcesal) row[0];
+            Long count = ((Number) row[1]).longValue();
+            statusMap.put(etapa, count);
+        }
+        List<String> labels = new ArrayList<>();
+        List<Long> values = new ArrayList<>();
+        for (EtapaProcesal etapa : Arrays.asList(EtapaProcesal.TRAMITE, EtapaProcesal.LAUDO, EtapaProcesal.FIRME)) {
+            labels.add(etapa.name());
+            values.add(statusMap.getOrDefault(etapa, 0L));
+        }
+        return Map.of("labels", labels, "values", values);
     }
 
     private Map<String, Object> obtenerCargaTrabajoUsuarios(Long gerenciaId) {
