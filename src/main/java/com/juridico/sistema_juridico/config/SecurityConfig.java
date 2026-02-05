@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .requestMatchers("/expedientes/**", "/terminos/**", "/audiencias/**").authenticated()
 
                 // 5. API REST: Gestor Documental (TODOS los autenticados)
-                .requestMatchers("/api/documentos/**").authenticated()
+                .requestMatchers("/api/documentos/**", "/api/carpetas/**").authenticated()
 
                 // 6. Resto bloqueado
                 .anyRequest().authenticated()

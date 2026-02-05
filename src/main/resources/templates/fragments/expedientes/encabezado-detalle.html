@@ -30,7 +30,9 @@
                 class="px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition">
                 <i class="fas fa-step-forward mr-1"></i> Cambiar Etapa
             </button>
-            <button onclick="openGestorDocumental()"
+            <button th:data-expediente-id="${expediente.id}" 
+                th:data-expediente-numero="${expediente.numero}"
+                onclick="openGestorDocumental(this.dataset.expedienteId, this.dataset.expedienteNumero)"
                 class="px-4 py-2 bg-gob-guinda text-white rounded hover:bg-gob-guinda-claro text-sm font-medium transition shadow-sm">
                 <i class="fas fa-file-archive mr-1"></i> Gestor Documental
             </button>

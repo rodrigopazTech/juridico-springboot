@@ -38,7 +38,9 @@
                 <span class="text-gray-700 font-medium text-sm" th:text="${m.nombre}">Civil</span>
             </div>
 
-            <button th:onclick="eliminarMateriaJS([[${m.id}]], [[${m.gerencia.id}]])" 
+            <button th:data-materia-id="${m.id}" 
+                    th:data-gerencia-id="${m.gerencia.id}"
+                    onclick="eliminarMateriaJS(this.dataset.materiaId, this.dataset.gerenciaId)"
                     class="text-gray-300 hover:text-red-600 transition-colors p-1"
                     title="Eliminar materia">
                 <i class="fas fa-trash-alt"></i>

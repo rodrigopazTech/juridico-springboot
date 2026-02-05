@@ -27,17 +27,24 @@
                     <span th:unless="${g.activo}" class="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded">Inactivo</span>
                 </td>
                 <td class="px-6 py-4 text-center">
-                    <button th:onclick="editarGerencia([[${g.id}]], [[${g.nombre}]], [[${g.descripcion}]], [[${g.activo}]])" 
+                    <button th:data-id="${g.id}" 
+                            th:data-nombre="${g.nombre}" 
+                            th:data-descripcion="${g.descripcion}" 
+                            th:data-activo="${g.activo}"
+                            onclick="editarGerencia(this.dataset.id, this.dataset.nombre, this.dataset.descripcion, this.dataset.activo)"
                             class="text-gob-oro hover:text-gob-guinda transition-colors mx-1">
                         <i class="fas fa-edit fa-lg"></i>
                     </button>
                     
-                    <button th:onclick="verMaterias([[${g.id}]], [[${g.nombre}]])" 
+                    <button th:data-id="${g.id}" 
+                            th:data-nombre="${g.nombre}"
+                            onclick="verMaterias(this.dataset.id, this.dataset.nombre)"
                             class="text-blue-600 hover:text-blue-800 transition-colors mx-1" title="Gestionar Materias">
                         <i class="fas fa-list-ul fa-lg"></i>
                     </button>
                     <button type="button" 
-                            th:onclick="confirmarCambioEstatus([[${g.id}]], 'gerencia')"
+                            th:data-id="${g.id}"
+                            onclick="confirmarCambioEstatus(this.dataset.id, 'gerencia')"
                             class="hover:scale-110 transition-transform mx-1" 
                             th:title="${g.activo ? 'Desactivar Gerencia' : 'Activar Gerencia'}"
                             th:classappend="${g.activo ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'}">
