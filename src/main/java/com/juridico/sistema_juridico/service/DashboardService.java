@@ -3,6 +3,7 @@ package com.juridico.sistema_juridico.service;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
+import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal; 
 import org.springframework.stereotype.Service;
 import java.util.*;
 
@@ -23,10 +24,9 @@ public class DashboardService {
 
     public Map<String, Long> obtenerKpis(Long gerenciaId) {
         Map<String, Long> kpis = new HashMap<>();
-        // Asumiendo que has agregado estos métodos al Repository
         kpis.put("totalExpedientes", gerenciaId == null ? expedienteRepository.count() : expedienteRepository.countByGerenciaId(gerenciaId));
-        kpis.put("expedientesActivos", gerenciaId == null ? expedienteRepository.count() : expedienteRepository.countByGerenciaId(gerenciaId));
-        kpis.put("audienciasProgramadas", audienciaRepository.count()); 
+        kpis.put("expedientesActivos", gerenciaId == null ? expedienteRepository.countByEtapaProcesal(EtapaProcesal.TRAMITE) : expedienteRepository.countByEtapaProcesalAndGerenciaId(EtapaProcesal.TRAMITE, gerenciaId));
+        kpis.put("audienciasProgramadas", audienciaRepository.count());
         kpis.put("terminosActivos", terminoRepository.count());
         return kpis;
     }
@@ -41,15 +41,11 @@ public class DashboardService {
     }
 
     private Map<String, Object> obtenerEstatusExpedientes(Long gerenciaId) {
-        List<Object[]> rows = (gerenciaId == null) 
-            ? expedienteRepository.contarExpedientesPorEstatus() 
-            : expedienteRepository.contarExpedientesPorEstatusYGerencia(gerenciaId);
-
+        List<Object[]> rows = (gerenciaId == null) ? expedienteRepository.contarExpedientesPorEstatus() : expedienteRepository.contarExpedientesPorEstatusYGerencia(gerenciaId);
         return processRows(rows);
     }
 
     private Map<String, Object> obtenerCargaTrabajoUsuarios(Long gerenciaId) {
-        // Aquí deberías filtrar por gerencia también en el conteo de usuarios
         Map<String, Integer> expedientesMap = toMap(expedienteRepository.contarExpedientesPorUsuario());
         Map<String, Integer> audienciasMap = toMap(audienciaRepository.contarAudienciasPorUsuario());
         Map<String, Integer> terminosMap = toMap(terminoRepository.contarTerminosPorUsuario());
@@ -70,7 +66,6 @@ public class DashboardService {
             audiencias.add(audienciasMap.getOrDefault(u, 0));
             terminos.add(terminosMap.getOrDefault(u, 0));
         }
-
         return Map.of("labels", labels, "expedientes", expedientes, "audiencias", audiencias, "terminos", terminos);
     }
 
@@ -86,8 +81,8 @@ public class DashboardService {
         List<String> labels = new ArrayList<>();
         List<Long> values = new ArrayList<>();
         for (Object[] row : rows) {
-            labels.add(row[0].toString());
-            values.add((Long) row[1]);
+            labels.add(row[0] != null ? row[0].toString() : "N/A");
+            values.add(row[1] != null ? ((Number) row[1]).longValue() : 0L);
         }
         return Map.of("labels", labels, "values", values);
     }
@@ -95,7 +90,7 @@ public class DashboardService {
     private Map<String, Integer> toMap(List<Object[]> rows) {
         Map<String, Integer> map = new HashMap<>();
         for (Object[] row : rows) {
-            map.put((String) row[0], ((Number) row[1]).intValue());
+            if (row[0] != null) map.put(row[0].toString(), ((Number) row[1]).intValue());
         }
         return map;
     }
