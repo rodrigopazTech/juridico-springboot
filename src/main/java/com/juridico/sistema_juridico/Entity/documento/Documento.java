@@ -1,6 +1,6 @@
 package com.juridico.sistema_juridico.Entity.documento;
 
-import com.juridico.sistema_juridico.Entity.enums.CategoriaDocumento;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,10 +12,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "documentos", indexes = {
-        @Index(name = "idx_documentos_expediente", columnList = "expediente_id"),
-        @Index(name = "idx_documentos_categoria", columnList = "categoria")
-})
+@Table(name = "documentos")
 public class Documento {
 
     @Id
@@ -40,15 +37,17 @@ public class Documento {
     @Column(name = "tamanio_bytes", nullable = false)
     private Long tamanioBytes;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private CategoriaDocumento categoria;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "carpeta_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "subcarpetas", "carpetaPadre", "usuarioCreador"})
+    private Carpeta carpeta;
 
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_subida_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "passwordHash", "materias"})
     private Usuario usuarioSubida;
 
     @Column(name = "fecha_subida", nullable = false)

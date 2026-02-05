@@ -1,16 +1,18 @@
 package com.juridico.sistema_juridico.service;
 
+import com.juridico.sistema_juridico.Entity.documento.Carpeta;
 import com.juridico.sistema_juridico.Entity.documento.Documento;
-import com.juridico.sistema_juridico.Entity.enums.CategoriaDocumento;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.repository.documento.CarpetaRepository;
 import com.juridico.sistema_juridico.repository.documento.DocumentoRepository;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -23,6 +25,9 @@ public class DocumentoService {
 
     @Autowired
     private DocumentoRepository documentoRepository;
+
+    @Autowired
+    private CarpetaRepository carpetaRepository;
 
     @Autowired
     private ExpedienteRepository expedienteRepository;
@@ -73,13 +78,26 @@ public class DocumentoService {
     }
 
     /**
-     * Guarda un documento
+     * Guarda un documento en una carpeta específica
      */
-    public Documento guardarDocumento(MultipartFile file, UUID expedienteId, CategoriaDocumento categoria,
+    @Transactional
+    public Documento guardarDocumento(MultipartFile file, UUID expedienteId, UUID carpetaId,
             String descripcion, Usuario usuario) throws IOException {
 
+        // Validar que la carpeta existe y pertenece al expediente
+        Carpeta carpeta = null;
+        if (carpetaId != null) {
+            carpeta = carpetaRepository.findById(carpetaId)
+                    .orElseThrow(() -> new IllegalArgumentException("Carpeta no encontrada"));
+
+            if (!carpeta.getExpedienteId().equals(expedienteId)) {
+                throw new IllegalArgumentException("La carpeta no pertenece a este expediente");
+            }
+        }
+
         // Guardar archivo en filesystem
-        String rutaArchivo = fileStorageService.guardarArchivo(file, expedienteId, categoria.name());
+        String nombreCarpeta = carpeta != null ? carpeta.getNombre() : "raiz";
+        String rutaArchivo = fileStorageService.guardarArchivo(file, expedienteId, nombreCarpeta);
 
         // Crear registro en BD
         Documento documento = Documento.builder()
@@ -89,7 +107,7 @@ public class DocumentoService {
                 .rutaArchivo(rutaArchivo)
                 .tipoMime(file.getContentType())
                 .tamanioBytes(file.getSize())
-                .categoria(categoria)
+                .carpeta(carpeta)
                 .descripcion(descripcion)
                 .usuarioSubida(usuario)
                 .build();
@@ -98,13 +116,24 @@ public class DocumentoService {
     }
 
     /**
-     * Lista documentos de un expediente
+     * Lista documentos de una carpeta específica
      */
-    public List<Documento> listarDocumentos(UUID expedienteId, CategoriaDocumento categoria) {
-        if (categoria != null) {
-            return documentoRepository.findByExpedienteIdAndCategoriaOrderByFechaSubidaDesc(expedienteId, categoria);
-        }
+    public List<Documento> listarDocumentosPorCarpeta(UUID carpetaId) {
+        return documentoRepository.findByCarpetaIdOrderByFechaSubidaDesc(carpetaId);
+    }
+
+    /**
+     * Lista todos los documentos de un expediente
+     */
+    public List<Documento> listarDocumentos(UUID expedienteId) {
         return documentoRepository.findByExpedienteIdOrderByFechaSubidaDesc(expedienteId);
+    }
+
+    /**
+     * Lista documentos en la raíz del expediente (sin carpeta asignada)
+     */
+    public List<Documento> listarDocumentosRaiz(UUID expedienteId) {
+        return documentoRepository.findByExpedienteIdAndCarpetaIsNullOrderByFechaSubidaDesc(expedienteId);
     }
 
     /**
@@ -112,6 +141,13 @@ public class DocumentoService {
      */
     public List<Documento> buscarDocumentos(UUID expedienteId, String busqueda) {
         return documentoRepository.buscarEnExpediente(expedienteId, busqueda);
+    }
+
+    /**
+     * Busca documentos en una carpeta específica
+     */
+    public List<Documento> buscarDocumentosEnCarpeta(UUID carpetaId, String busqueda) {
+        return documentoRepository.buscarEnCarpeta(carpetaId, busqueda);
     }
 
     /**
@@ -125,6 +161,7 @@ public class DocumentoService {
     /**
      * Elimina un documento
      */
+    @Transactional
     public void eliminarDocumento(UUID documentoId) throws IOException {
         Documento documento = documentoRepository.findById(documentoId)
                 .orElseThrow(() -> new IllegalArgumentException("Documento no encontrado"));
@@ -142,5 +179,27 @@ public class DocumentoService {
     public Documento obtenerDocumento(UUID documentoId) {
         return documentoRepository.findById(documentoId)
                 .orElseThrow(() -> new IllegalArgumentException("Documento no encontrado"));
+    }
+
+    /**
+     * Mueve un documento a otra carpeta
+     */
+    @Transactional
+    public Documento moverDocumento(UUID documentoId, UUID nuevaCarpetaId) {
+        Documento documento = obtenerDocumento(documentoId);
+
+        Carpeta nuevaCarpeta = null;
+        if (nuevaCarpetaId != null) {
+            nuevaCarpeta = carpetaRepository.findById(nuevaCarpetaId)
+                    .orElseThrow(() -> new IllegalArgumentException("Carpeta destino no encontrada"));
+
+            // Validar que la carpeta pertenece al mismo expediente
+            if (!nuevaCarpeta.getExpedienteId().equals(documento.getExpedienteId())) {
+                throw new IllegalArgumentException("La carpeta destino no pertenece al mismo expediente");
+            }
+        }
+
+        documento.setCarpeta(nuevaCarpeta);
+        return documentoRepository.save(documento);
     }
 }

@@ -1,7 +1,7 @@
 package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.Entity.documento.Documento;
-import com.juridico.sistema_juridico.Entity.enums.CategoriaDocumento;
+
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.service.DocumentoService;
@@ -37,6 +37,10 @@ public class DocumentoController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    // ========================================
+    // DOCUMENTOS
+    // ========================================
+
     /**
      * Subir documento
      */
@@ -44,7 +48,7 @@ public class DocumentoController {
     public ResponseEntity<?> subirDocumento(
             @PathVariable UUID expedienteId,
             @RequestParam("file") MultipartFile file,
-            @RequestParam("categoria") CategoriaDocumento categoria,
+            @RequestParam(value = "carpetaId", required = false) UUID carpetaId,
             @RequestParam(value = "descripcion", required = false) String descripcion) {
 
         try {
@@ -65,8 +69,7 @@ public class DocumentoController {
             }
 
             // Guardar documento
-            Documento documento = documentoService.guardarDocumento(file, expedienteId, categoria, descripcion,
-                    usuario);
+            Documento documento = documentoService.guardarDocumento(file, expedienteId, carpetaId, descripcion, usuario);
 
             return ResponseEntity.ok(documento);
 
@@ -83,9 +86,7 @@ public class DocumentoController {
      * Listar documentos de un expediente
      */
     @GetMapping("/expedientes/{expedienteId}")
-    public ResponseEntity<?> listarDocumentos(
-            @PathVariable UUID expedienteId,
-            @RequestParam(value = "categoria", required = false) CategoriaDocumento categoria) {
+    public ResponseEntity<?> listarDocumentos(@PathVariable UUID expedienteId) {
 
         try {
             // Obtener usuario actual
@@ -98,7 +99,33 @@ public class DocumentoController {
                         .body(Map.of("error", "No tiene permisos para ver documentos de este expediente"));
             }
 
-            List<Documento> documentos = documentoService.listarDocumentos(expedienteId, categoria);
+            List<Documento> documentos = documentoService.listarDocumentos(expedienteId);
+            return ResponseEntity.ok(documentos);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al listar documentos: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Listar documentos en la raíz del expediente (sin carpeta)
+     */
+    @GetMapping("/expedientes/{expedienteId}/raiz")
+    public ResponseEntity<?> listarDocumentosRaiz(@PathVariable UUID expedienteId) {
+
+        try {
+            // Obtener usuario actual
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+
+            // Verificar permisos
+            if (!documentoService.tienePermiso(usuario, expedienteId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "No tiene permisos para ver documentos de este expediente"));
+            }
+
+            List<Documento> documentos = documentoService.listarDocumentosRaiz(expedienteId);
             return ResponseEntity.ok(documentos);
 
         } catch (Exception e) {
@@ -262,6 +289,67 @@ public class DocumentoController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error al eliminar documento: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Listar documentos de una carpeta específica
+     */
+    @GetMapping("/carpetas/{carpetaId}")
+    public ResponseEntity<?> listarDocumentosPorCarpeta(@PathVariable UUID carpetaId) {
+        try {
+            // Obtener usuario actual
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+
+            List<Documento> documentos = documentoService.listarDocumentosPorCarpeta(carpetaId);
+
+            // Verificar permisos (usando el primer documento si existe)
+            if (!documentos.isEmpty()) {
+                if (!documentoService.tienePermiso(usuario, documentos.get(0).getExpedienteId())) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("error", "No tiene permisos"));
+                }
+            }
+
+            return ResponseEntity.ok(documentos);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al listar documentos: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Mover documento a otra carpeta
+     */
+    @PutMapping("/{documentoId}/mover")
+    public ResponseEntity<?> moverDocumento(
+            @PathVariable UUID documentoId,
+            @RequestParam(value = "carpetaId", required = false) UUID nuevaCarpetaId) {
+
+        try {
+            // Obtener usuario actual
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+
+            Documento documento = documentoService.obtenerDocumento(documentoId);
+
+            // Verificar permisos
+            if (!documentoService.tienePermiso(usuario, documento.getExpedienteId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "No tiene permisos para mover este documento"));
+            }
+
+            Documento documentoMovido = documentoService.moverDocumento(documentoId, nuevaCarpetaId);
+            return ResponseEntity.ok(documentoMovido);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al mover documento: " + e.getMessage()));
         }
     }
 }
