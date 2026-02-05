@@ -81,7 +81,7 @@
 
                     <td class="px-4 py-3 text-right relative">
                         
-                        <button th:unless="${a.estatusAudiencia == 'CONCLUIDA'}"
+                        <button th:if="${a.estatusAudiencia == 'PENDIENTE'}"
                                 type="button"
                                 class="text-gray-400 hover:text-gob-oro mr-2 transition-colors btn-editar"
                                 title="Editar"
@@ -97,7 +97,9 @@
                                 onclick="prepararEdicion(this)"> <i class="fas fa-edit"></i>
                         </button>
 
-                        <button th:if="${a.estatusAudiencia == 'CONCLUIDA'}" class="text-gray-200 cursor-not-allowed mr-2" title="Edición Bloqueada">
+                        <button th:unless="${a.estatusAudiencia == 'PENDIENTE'}" 
+                                class="text-gray-200 cursor-not-allowed mr-2" 
+                                title="Edición Bloqueada (Ya tiene acta o concluyó)">
                             <i class="fas fa-edit"></i>
                         </button>
 
@@ -109,12 +111,6 @@
 
                         <div th:id="'menu-' + ${a.id}" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-md shadow-xl z-50 border border-gray-100 text-left overflow-hidden ring-1 ring-black ring-opacity-5">
                             
-                            <a th:if="${a.estatusAudiencia != 'CONCLUIDA' and a.esVirtual == true and a.urlReunion != null and !#strings.isEmpty(a.urlReunion)}"
-                               th:href="${a.urlReunion}" target="_blank"
-                               class="block px-4 py-3 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-500 font-bold transition-colors">
-                                <i class="fas fa-video mr-3 w-4 text-center"></i> Unirse a Reunión
-                            </a>
-
                             <button th:unless="${a.estatusAudiencia == 'CONCLUIDA'}"
                                     th:onclick="'activarSubidaActa(' + ${a.id} + ')'"
                                     class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-oro transition flex items-center border-l-4 border-transparent hover:border-gob-oro">
@@ -132,10 +128,17 @@
                             <div class="border-t border-gray-100"></div>
 
                             <button th:if="${a.estatusAudiencia == 'CON_ACTA'}"
+                                    sec:authorize="hasAnyAuthority('DIRECCION', 'SUBDIRECCION', 'GERENTE')"
                                     th:onclick="'abrirModalConcluir(' + ${a.id} + ')'"
                                     class="w-full text-left px-4 py-3 text-sm text-green-700 hover:bg-green-50 transition flex items-center font-bold border-l-4 border-transparent hover:border-green-500">
-                                <i class="fas fa-check-circle mr-3 w-4 text-center text-green-600"></i> Concluir y Cerrar
+                                <i class="fas fa-check-circle mr-3 w-4 text-center text-green-600"></i> Validar y Concluir
                             </button>
+                            
+                            <div th:if="${a.estatusAudiencia == 'CON_ACTA'}"
+                                 sec:authorize="hasAuthority('ABOGADO')"
+                                 class="px-4 py-2 text-xs text-gray-400 italic text-center bg-gray-50">
+                                <i class="fas fa-clock mr-1"></i> Esperando validación de Dirección
+                            </div>
 
                             <div th:if="${a.estatusAudiencia == 'CON_ACTA'}" class="border-t border-gray-100"></div>
 

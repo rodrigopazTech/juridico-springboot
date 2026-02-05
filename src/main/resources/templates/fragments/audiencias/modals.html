@@ -175,40 +175,47 @@
     </div>
 
 
-    <div id="modal-concluir" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-titulo-concluir" role="dialog" aria-modal="true">
+   <div id="modal-concluir" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-titulo-concluir" role="dialog" aria-modal="true">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm transition-opacity"></div>
 
         <div class="fixed inset-0 z-10 overflow-y-auto">
             <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-                <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg border-t-4 border-green-600">
+                    
                     <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <div class="sm:flex sm:items-start">
                             <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
                                 <i class="fas fa-check-circle text-green-600 text-lg"></i>
                             </div>
-                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                                <h3 class="text-lg font-medium leading-6 text-gray-900 font-headings" id="modal-titulo-concluir">
-                                    Concluir Audiencia
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                <h3 class="text-lg font-bold leading-6 text-gray-900 font-headings" id="modal-titulo-concluir">
+                                    Validar y Concluir Audiencia
                                 </h3>
                                 <div class="mt-2">
-                                    <p class="text-sm text-gray-500">
-                                        ¿Estás seguro de que deseas marcar esta audiencia como <strong>CONCLUIDA</strong>?
+                                    <p class="text-sm text-gray-500 mb-4">
+                                        ¿Confirmas que el acta es correcta y la audiencia se celebró exitosamente? Esta acción es irreversible.
                                     </p>
-                                    <p class="text-sm text-gray-500 mt-2">
-                                        Esta acción es irreversible y cerrará el ciclo de la audiencia. Asegúrate de que el acta subida es la correcta.
-                                    </p>
+                                    
+                                    <form id="form-concluir" th:action="@{/audiencias/concluir}" method="post">
+                                        <input type="hidden" id="concluir-audiencia-id" name="id" />
+                                        
+                                        <label for="observaciones" class="block text-xs font-bold text-gray-700 uppercase mb-1 text-left">
+                                            Resultados / Observaciones *
+                                        </label>
+                                        <textarea id="observaciones" name="observaciones" rows="3" required
+                                                  class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-green-500 focus:border-green-500 bg-gray-50"
+                                                  placeholder="Escribe aquí el resultado de la audiencia (sentencia, diferida, acuerdos, etc.) para la Agenda General..."></textarea>
+                                    </form>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    
                     <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                        <form th:action="@{/audiencias/concluir}" method="post">
-                            <input type="hidden" id="concluir-audiencia-id" name="id" />
-                            <button type="submit"
-                                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-base font-bold text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
-                                Confirmar Conclusión
-                            </button>
-                        </form>
+                        <button type="submit" form="form-concluir"
+                                class="inline-flex w-full justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-base font-bold text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                            <i class="fas fa-save mr-2"></i> Confirmar Conclusión
+                        </button>
                         <button type="button" onclick="document.getElementById('modal-concluir').classList.add('hidden')"
                                 class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-bold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gob-oro focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
                             Cancelar

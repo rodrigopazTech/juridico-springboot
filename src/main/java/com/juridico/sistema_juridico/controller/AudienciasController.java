@@ -60,7 +60,7 @@ public class AudienciasController {
     @Autowired private MateriaRepository materiaRepository;
     @Autowired private TipoAudienciaRepository tipoAudienciaRepository;
 
-@GetMapping
+  @GetMapping
     public String index(Model model,
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(required = false) String keyword,
@@ -71,11 +71,17 @@ public class AudienciasController {
                         @RequestParam(required = false) Integer abogadoId, 
                         @RequestParam(required = false) String periodo) {  
 
-        // 1. SEGURIDAD DE ROLES
+        if (keyword != null && keyword.contains("?keyword=")) {
+            // Nos quedamos solo con lo que esté después del último igual (=)
+            keyword = keyword.substring(keyword.lastIndexOf("=") + 1);
+        }
+
+        // 1. OBTENER USUARIO ACTUAL
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
         String rol = usuario.getRol().name();
 
+        // 2. CONFIGURAR FILTROS DE SEGURIDAD
         Integer filtroUsuarioId = null;
         Integer filtroGerenciaId = null;
         List<Integer> filtroMateriaIds = null;
@@ -97,35 +103,21 @@ public class AudienciasController {
                 break;
         }
 
-        // 2. LÓGICA DE FECHAS (CORRECCIÓN: USAR CENTINELAS, NO NULL)
-        // Por defecto: Rango histórico amplio (1900 - 2100)
+        // 3. FECHAS CENTINELA
         LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
         LocalDate fechaFin = LocalDate.of(2100, 12, 31);
         
         if (periodo != null && !periodo.isEmpty()) {
             LocalDate hoy = LocalDate.now();
             switch (periodo) {
-                case "HOY":
-                    fechaInicio = hoy;
-                    fechaFin = hoy;
-                    break;
-                case "MANANA":
-                    fechaInicio = hoy.plusDays(1);
-                    fechaFin = hoy.plusDays(1);
-                    break;
-                case "SEMANA":
-                    fechaInicio = hoy; 
-                    fechaFin = hoy.plusDays(7); 
-                    break;
-                case "MES":
-                    fechaInicio = hoy.withDayOfMonth(1);
-                    fechaFin = hoy.withDayOfMonth(hoy.lengthOfMonth());
-                    break;
+                case "HOY": fechaInicio = hoy; fechaFin = hoy; break;
+                case "MANANA": fechaInicio = hoy.plusDays(1); fechaFin = hoy.plusDays(1); break;
+                case "SEMANA": fechaInicio = hoy; fechaFin = hoy.plusDays(7); break;
+                case "MES": fechaInicio = hoy.withDayOfMonth(1); fechaFin = hoy.withDayOfMonth(hoy.lengthOfMonth()); break;
             }
         }
 
-        // 3. CONSULTA AL REPOSITORIO
-        // Ahora siempre enviamos fechas válidas, nunca NULL
+        // 4. CONSULTA
         Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaAudiencia").ascending());
 
         Page<Audiencia> audiencias = audienciaRepository.buscarConFiltros(
@@ -135,17 +127,39 @@ public class AudienciasController {
                 pageable
         );
 
-        // 4. MODELO
         model.addAttribute("audiencias", audiencias);
         model.addAttribute("pageTitle", "Gestión de Audiencias");
         model.addAttribute("activePage", "audiencias");
 
+        // 5. DROPDOWN INTELIGENTE
+        List<Expediente> expedientesParaDropdown;
+        if (rol.equals("ABOGADO")) {
+            expedientesParaDropdown = expedienteRepository.findAll().stream()
+                .filter(e -> e.getAbogadoResponsable() != null && e.getAbogadoResponsable().getId().equals(usuario.getId()))
+                .collect(Collectors.toList());
+        } else if (rol.equals("GERENTE")) {
+            expedientesParaDropdown = expedienteRepository.findAll().stream()
+                .filter(e -> e.getGerencia() != null && usuario.getGerencia() != null && 
+                             e.getGerencia().getId().equals(usuario.getGerencia().getId()))
+                .collect(Collectors.toList());
+        } else if (rol.equals("JEFE_DEPTO")) {
+            expedientesParaDropdown = expedienteRepository.findAll().stream()
+                .filter(e -> e.getMateria() != null && usuario.getMaterias().stream()
+                             .anyMatch(m -> m.getId().equals(e.getMateria().getId())))
+                .collect(Collectors.toList());
+        } else {
+            expedientesParaDropdown = expedienteRepository.findAll();
+        }
+        model.addAttribute("expedientesList", expedientesParaDropdown);
+
+        // Listas generales
         model.addAttribute("listaTiposAudiencia", tipoAudienciaRepository.findAll());
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
         model.addAttribute("listaMaterias", materiaRepository.findAll());
         model.addAttribute("abogados", usuarioRepository.findAll()); 
         
-        model.addAttribute("keyword", keyword);
+        // Filtros en vista
+        model.addAttribute("keyword", keyword); 
         model.addAttribute("paramTipo", tipo);
         model.addAttribute("paramGerencia", gerencia);
         model.addAttribute("paramMateria", materia);
@@ -251,9 +265,23 @@ public class AudienciasController {
                            @RequestParam("observaciones") String observaciones, 
                            RedirectAttributes redirectAttrs) {
         try {
+            // 1. OBTENER USUARIO ACTUAL
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+            
+            // 2. VALIDAR PERMISOS (Solo Jefes hacia arriba pueden concluir)
+            if (usuario.getRol().name().equals("ABOGADO")) {
+                redirectAttrs.addFlashAttribute("mensaje", "Acceso denegado: Solo Dirección o Gerencia pueden validar y concluir audiencias.");
+                redirectAttrs.addFlashAttribute("tipo", "error");
+                return "redirect:/audiencias";
+            }
+
+            // 3. EJECUTAR LÓGICA
             audienciaService.concluirAudiencia(id, observaciones);
-            redirectAttrs.addFlashAttribute("mensaje", "Audiencia concluida exitosamente.");
+            
+            redirectAttrs.addFlashAttribute("mensaje", "Audiencia validada y concluida exitosamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
+            
         } catch (Exception e) {
             redirectAttrs.addFlashAttribute("mensaje", "Error: " + e.getMessage());
             redirectAttrs.addFlashAttribute("tipo", "error");

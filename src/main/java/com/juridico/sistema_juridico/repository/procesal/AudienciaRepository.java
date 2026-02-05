@@ -25,13 +25,13 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
            "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " + 
            "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "CAST(a.id as string) LIKE :keyword) " + // CORREGIDO: CAST estándar
+           "CONCAT(a.id, '') LIKE CONCAT('%', :keyword, '%')) " + 
+           
            "AND (:tipo IS NULL OR :tipo = '' OR a.tipoAudiencia.nombre = :tipo) " + 
            "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
            "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
            "AND (:estatus IS NULL OR :estatus = '' OR a.estatusAudiencia = :estatus) " +
            
-           // CORREGIDO: Comparación directa de fechas (tu Controlador ya envía fechas válidas)
            "AND (a.fechaAudiencia >= :fechaInicio) " + 
            "AND (a.fechaAudiencia <= :fechaFin) " +
            
@@ -60,13 +60,15 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
            "(:keyword IS NULL OR :keyword = '' OR " +
            "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " + 
-           "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           // APLICAMOS LA MISMA CORRECCIÓN AQUÍ
+           "CONCAT(a.id, '') LIKE CONCAT('%', :keyword, '%')) " + 
+           
            "AND (:tipo IS NULL OR :tipo = '' OR a.tipoAudiencia.nombre = :tipo) " + 
            "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
            "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
            "AND (:estatus IS NULL OR :estatus = '' OR a.estatusAudiencia = :estatus) " +
            
-           // MISMAS CORRECCIONES
            "AND (a.fechaAudiencia >= :fechaInicio) " +
            "AND (a.fechaAudiencia <= :fechaFin) " +
            
