@@ -139,8 +139,7 @@ public class ExpedientesController {
             redirectAttrs.addFlashAttribute("tipo", "success");
 
         } catch (DataIntegrityViolationException e) {
-            redirectAttrs.addFlashAttribute("mensaje",
-                    "Error: El número de expediente '" + expediente.getNumero() + "' ya existe.");
+            redirectAttrs.addFlashAttribute("mensaje", "Error: El número de expediente '" + expediente.getNumero() + "' ya existe.");
             redirectAttrs.addFlashAttribute("tipo", "error");
         } catch (Exception e) {
             e.printStackTrace();

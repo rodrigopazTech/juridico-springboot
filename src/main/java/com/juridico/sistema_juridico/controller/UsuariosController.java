@@ -44,6 +44,7 @@ public class UsuariosController {
         model.addAttribute("listaRoles", RolUsuario.values());
         model.addAttribute("nuevoUsuario", new Usuario());
         model.addAttribute("nuevaGerencia", new Gerencia());
+        model.addAttribute("activePage", "usuarios");
         
         return "views/usuarios/index";
     }

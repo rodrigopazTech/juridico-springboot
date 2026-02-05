@@ -1,122 +1,229 @@
-<div th:fragment="modals">
-    
-    <div id="modal-audiencia" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl border-t-4 border-gob-oro animate-fade-in-down max-h-[90vh] overflow-y-auto">
-            
-            <div class="flex justify-between items-center p-4 border-b border-gray-100 sticky top-0 bg-white z-10">
-                <h3 id="modal-titulo-audiencia" class="text-xl font-bold text-gob-guinda flex items-center gap-2">
-                    <i class="fas fa-gavel"></i> Nueva Audiencia
-                </h3>
-                <button onclick="document.getElementById('modal-audiencia').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
+﻿<div th:fragment="modals">
+
+    <div id="modal-audiencia" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-titulo-audiencia" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm transition-opacity"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border border-gray-200">
+
+                    <div class="flex justify-between items-center px-6 py-4 border-b border-gob-guinda bg-gob-guinda text-white rounded-t-xl shadow-sm">
+                        <h3 class="text-lg font-bold flex items-center gap-2 font-headings" id="modal-titulo-audiencia">
+                        </h3>
+                        <button type="button" onclick="document.getElementById('modal-audiencia').classList.add('hidden')"
+                                class="text-white/80 hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/10 focus:outline-none">
+                            <span class="sr-only">Cerrar</span>
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <form id="form-audiencia" th:action="@{/audiencias/guardar}" method="post" class="p-6">
+                        <input type="hidden" id="input-audiencia-id" name="id" />
+
+                        <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+
+                            <div class="sm:col-span-2">
+                                <label for="input-expediente-audiencia" class="block text-sm font-bold text-gob-gris mb-1">Vincular Expediente</label>
+                                <div class="relative">
+                                    <select id="input-expediente-audiencia" name="expedienteId" required
+                                            class="block w-full pl-3 pr-10 py-2.5 text-sm border-gray-300 focus:outline-none focus:ring-gob-oro focus:border-gob-oro rounded-md shadow-sm appearance-none bg-white">
+                                        <option value="">-- Seleccionar Expediente --</option>
+                                        <option th:each="exp : ${expedientesList}"
+                                                th:value="${exp.id}"
+                                                th:text="${#strings.abbreviate(exp.numero + ' - ' + exp.partes, 60)}"
+                                                th:title="${exp.numero + ' - ' + exp.partes}">
+                                        </option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                        <i class="fas fa-chevron-down text-xs"></i>
+                                    </div>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500 flex items-center gap-1">
+                                    <i class="fas fa-info-circle"></i> Expedientes activos y en trámite.
+                                </p>
+                            </div>
+
+                            <div class="sm:col-span-2">
+                                <label for="input-tipo-audiencia" class="block text-sm font-bold text-gob-gris mb-1">Tipo de Audiencia</label>
+                                <div class="relative">
+                                    <select id="input-tipo-audiencia" name="tipoAudienciaId" required
+                                            class="block w-full pl-3 pr-10 py-2.5 text-sm border-gray-300 focus:outline-none focus:ring-gob-oro focus:border-gob-oro rounded-md shadow-sm appearance-none bg-white">
+                                        <option value="">-- Seleccionar Tipo --</option>
+                                        <option th:each="tipo : ${listaTiposAudiencia}"
+                                                th:value="${tipo.id}"
+                                                th:text="${tipo.nombre}"></option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                        <i class="fas fa-chevron-down text-xs"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="input-fecha-audiencia" class="block text-sm font-bold text-gob-gris mb-1">Fecha</label>
+                                <div class="relative">
+                                    <input type="date" id="input-fecha-audiencia" name="fechaAudiencia" required
+                                           class="block w-full pl-10 pr-3 py-2.5 text-sm border-gray-300 focus:outline-none focus:ring-gob-oro focus:border-gob-oro rounded-md shadow-sm" />
+                                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-3 text-gray-400">
+                                        <i class="far fa-calendar-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="input-hora-audiencia" class="block text-sm font-bold text-gob-gris mb-1">Hora</label>
+                                <div class="relative">
+                                    <input type="time" id="input-hora-audiencia" name="horaAudiencia" required
+                                           class="block w-full pl-10 pr-3 py-2.5 text-sm border-gray-300 focus:outline-none focus:ring-gob-oro focus:border-gob-oro rounded-md shadow-sm" />
+                                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-3 text-gray-400">
+                                        <i class="far fa-clock"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-bold text-gob-gris mb-2">Modalidad</label>
+                                <div class="flex items-center space-x-6 bg-gray-50 p-3 rounded-md border border-gray-200">
+                                    <label class="inline-flex items-center cursor-pointer group">
+                                        <input type="radio" name="esVirtual" value="false" checked
+                                               class="form-radio h-4 w-4 text-gob-guinda border-gray-300 focus:ring-gob-guinda"
+                                               onclick="toggleUbicacion(false)">
+                                        <span class="ml-2 text-sm text-gray-700 group-hover:text-gob-guinda flex items-center gap-2">
+                                            <i class="fas fa-building text-gray-500"></i> Presencial
+                                        </span>
+                                    </label>
+                                    <label class="inline-flex items-center cursor-pointer group">
+                                        <input type="radio" name="esVirtual" value="true"
+                                               class="form-radio h-4 w-4 text-gob-guinda border-gray-300 focus:ring-gob-guinda"
+                                               onclick="toggleUbicacion(true)">
+                                        <span class="ml-2 text-sm text-gray-700 group-hover:text-gob-guinda flex items-center gap-2">
+                                            <i class="fas fa-video text-gray-500"></i> Virtual / En Línea
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="sm:col-span-2">
+                                <div id="campo-sala">
+                                    <label for="input-sala" class="block text-sm font-bold text-gob-gris mb-1">Sala o Lugar</label>
+                                    <div class="relative">
+                                        <input type="text" id="input-sala" name="salaLugar"
+                                               class="block w-full pl-10 pr-3 py-2.5 text-sm border-gray-300 focus:outline-none focus:ring-gob-oro focus:border-gob-oro rounded-md shadow-sm placeholder-gray-400"
+                                               placeholder="Ej. Sala 3 de Juicios Orales">
+                                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-3 text-gray-400">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="campo-url" class="hidden">
+                                    <label for="input-url" class="block text-sm font-bold text-gob-gris mb-1">Link de la Reunión</label>
+                                    <div class="relative">
+                                        <input type="url" id="input-url" name="urlReunion"
+                                               class="block w-full pl-10 pr-3 py-2.5 text-sm border-gray-300 focus:outline-none focus:ring-gob-oro focus:border-gob-oro rounded-md shadow-sm placeholder-gray-400"
+                                               placeholder="https://zoom.us/j/123456789">
+                                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-3 text-gray-400">
+                                            <i class="fas fa-link"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="sm:col-span-2">
+                                <label for="input-abogado-audiencia" class="block text-sm font-bold text-gob-gris mb-1">Abogado que Comparece</label>
+                                <div class="relative">
+                                    <select id="input-abogado-audiencia" name="abogadoComparece"
+                                            class="block w-full pl-10 pr-10 py-2.5 text-sm border-gray-300 focus:outline-none focus:ring-gob-oro focus:border-gob-oro rounded-md shadow-sm appearance-none bg-white">
+                                        <option value="">-- Seleccionar Abogado (Opcional) --</option>
+                                        <option th:each="abogado : ${abogados}"
+                                                th:value="${abogado.id}"
+                                                th:text="${abogado.nombreCompleto}">
+                                        </option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-3 text-gray-400">
+                                        <i class="fas fa-user-tie"></i>
+                                    </div>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                        <i class="fas fa-chevron-down text-xs"></i>
+                                    </div>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500 flex items-center gap-1">
+                                    <i class="fas fa-info-circle"></i> Si se deja vacío, se asume el titular del expediente.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t border-gray-200">
+                            <button type="button" onclick="document.getElementById('modal-audiencia').classList.add('hidden')"
+                                    class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2.5 border border-gray-300 shadow-sm text-sm font-bold rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gob-oro transition-colors">
+                                Cancelar
+                            </button>
+                            <button type="submit"
+                                    class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2.5 border border-transparent shadow-sm text-sm font-bold rounded-md text-white bg-gob-guinda hover:bg-gob-guinda-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gob-guinda transition-colors">
+                                <i class="fas fa-save mr-2"></i> Guardar Audiencia
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            
-            <form id="form-audiencia" th:action="@{/audiencias/guardar}" method="post" class="p-6 space-y-4">
-                
-                <input type="hidden" name="id" id="input-audiencia-id">
-
-                <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                    <label class="block font-bold text-gob-guinda mb-1">Vincular a Expediente *</label>
-                    <select name="expedienteId" id="input-expediente-audiencia" class="w-full border border-gray-300 rounded p-2 focus:ring-gob-oro outline-none bg-white" required>
-                        <option value="">Seleccione un expediente...</option>
-                        <option th:each="exp : ${expedientesList}" 
-                                th:value="${exp.id}" 
-                                th:text="${exp.numero + ' - ' + exp.partes}">
-                        </option>
-                    </select>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block font-bold text-gray-700 mb-1">Tipo de Audiencia *</label>
-                        <select name="tipoAudienciaId" id="input-tipo-audiencia" class="w-full border border-gray-300 rounded p-2 bg-white" required>
-                            <option value="">Seleccione...</option>
-                            <option th:each="tipo : ${listaTiposAudiencia}" 
-                                    th:value="${tipo.id}" 
-                                    th:text="${tipo.nombre}"></option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block font-bold text-gray-700 mb-1">Abogado que Comparece</label>
-                        <select name="abogadoComparece" id="input-abogado-audiencia" class="w-full border border-gray-300 rounded p-2 bg-white">
-                            <option value="">-- Seleccionar Abogado --</option>                        
-                            <option th:each="abogado : ${abogados}" 
-                                    th:value="${abogado.id}" 
-                                    th:text="${abogado.nombreCompleto}">
-                            </option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block font-bold text-gray-700 mb-1">Fecha *</label>
-                        <input type="date" name="fechaAudiencia" id="input-fecha-audiencia" class="w-full border border-gray-300 rounded p-2" required>
-                    </div>
-                    <div>
-                        <label class="block font-bold text-gray-700 mb-1">Hora *</label>
-                        <input type="time" name="horaAudiencia" id="input-hora-audiencia" class="w-full border border-gray-300 rounded p-2" required>
-                    </div>
-                </div>
-
-                <div class="p-4 bg-gray-50 rounded border border-gray-200">
-                    <label class="block font-bold text-gray-700 mb-2">Modalidad</label>
-                    <div class="flex gap-4 mb-3">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="esVirtual" value="false" checked onclick="toggleUbicacion(false)">
-                            <span>Presencial</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="esVirtual" value="true" onclick="toggleUbicacion(true)">
-                            <span>En Línea (Virtual)</span>
-                        </label>
-                    </div>
-                    
-                    <div id="campo-sala">
-                        <label class="text-xs text-gray-500 uppercase font-bold">Sala / Lugar</label>
-                        <input type="text" name="salaLugar" id="input-sala" placeholder="Ej: Sala 3 de Oralidad" class="w-full border border-gray-300 rounded p-2 mt-1">
-                    </div>
-                    
-                    <div id="campo-url" class="hidden">
-                        <label class="text-xs text-gray-500 uppercase font-bold">Link de la Reunión</label>
-                        <input type="url" name="urlReunion" id="input-url" placeholder="https://meet.google.com/..." class="w-full border border-gray-300 rounded p-2 mt-1">
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
-                    <button type="button" onclick="document.getElementById('modal-audiencia').classList.add('hidden')" class="px-4 py-2 border rounded hover:bg-gray-50">Cancelar</button>
-                    <button type="submit" class="px-6 py-2 bg-gob-guinda text-white rounded font-bold hover:bg-gob-guindaDark shadow-lg">Guardar Audiencia</button>
-                </div>
-            </form>
         </div>
     </div>
 
-    <div id="modal-concluir" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md border-t-4 border-green-600 animate-fade-in-down">
-            <div class="p-4 border-b bg-green-50 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-green-800"><i class="fas fa-check-circle mr-2"></i> Concluir Audiencia</h3>
-                <button type="button" onclick="document.getElementById('modal-concluir').classList.add('hidden')" class="text-green-800"><i class="fas fa-times"></i></button>
-            </div>
-            
-            <form th:action="@{/audiencias/concluir}" method="post" class="p-6 space-y-4">
-                <input type="hidden" name="id" id="concluir-audiencia-id">
-                
-                <div class="bg-green-50 p-3 rounded text-sm text-green-800 border border-green-200">
-                    <i class="fas fa-info-circle mr-1"></i> El acta ya fue registrada. Agrega las observaciones finales para cerrar el caso.
-                </div>
 
-                <div>
-                    <label class="block font-bold text-gray-700 mb-1">Resultados / Observaciones *</label>
-                    <textarea name="observaciones" rows="4" class="w-full border border-gray-300 rounded p-2 text-sm focus:border-green-500 outline-none" placeholder="Resolución del juez, acuerdos, nueva fecha..." required></textarea>
+   <div id="modal-concluir" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-titulo-concluir" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm transition-opacity"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg border-t-4 border-green-600">
+
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <i class="fas fa-check-circle text-green-600 text-lg"></i>
+                            </div>
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                <h3 class="text-lg font-bold leading-6 text-gray-900 font-headings" id="modal-titulo-concluir">
+                                    Validar y Concluir Audiencia
+                                </h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500 mb-4">
+                                        ¿Confirmas que el acta es correcta y la audiencia se celebró exitosamente? Esta acción es irreversible.
+                                    </p>
+
+                                    <form id="form-concluir" th:action="@{/audiencias/concluir}" method="post">
+                                        <input type="hidden" id="concluir-audiencia-id" name="id" />
+
+                                        <label for="observaciones" class="block text-xs font-bold text-gray-700 uppercase mb-1 text-left">
+                                            Resultados / Observaciones *
+                                        </label>
+                                        <textarea id="observaciones" name="observaciones" rows="3" required
+                                                  class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-green-500 focus:border-green-500 bg-gray-50"
+                                                  placeholder="Escribe aquí el resultado de la audiencia (sentencia, diferida, acuerdos, etc.) para la Agenda General..."></textarea>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                        <button type="submit" form="form-concluir"
+                                class="inline-flex w-full justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-base font-bold text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                            <i class="fas fa-save mr-2"></i> Confirmar Conclusión
+                        </button>
+                        <button type="button" onclick="document.getElementById('modal-concluir').classList.add('hidden')"
+                                class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-bold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gob-oro focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                            Cancelar
+                        </button>
+                    </div>
                 </div>
-                
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="document.getElementById('modal-concluir').classList.add('hidden')" class="px-4 py-2 border rounded hover:bg-gray-50 text-sm">Cancelar</button>
-                    <button type="submit" class="w-full py-2 bg-green-600 text-white rounded font-bold shadow hover:bg-green-700 text-sm">Confirmar Cierre</button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
+
+    <form id="form-subir-acta" th:action="@{/audiencias/subir-acta}" method="post" enctype="multipart/form-data" class="hidden">
+        <input type="hidden" id="input-acta-id" name="id" />
+        <input type="file" id="input-acta-file" name="archivo" accept=".pdf,.doc,.docx" onchange="document.getElementById('form-subir-acta').submit()" />
+    </form>
 
 </div>

@@ -1,8 +1,13 @@
+/**
+ * Lógica del Módulo de Audiencias
+ * Versión v3.0
+ */
+
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("Sistema de Audiencias v2.0 - Cargado");
+    console.log("Sistema de Audiencias Cargado - v3.0");
 });
 
-// --- MENÚS (ACCIONES RÁPIDAS) ---
+// --- MENÚS Y NAVEGACIÓN ---
 function toggleMenu(id) {
     const menu = document.getElementById('menu-' + id);
     if (!menu) return;
@@ -23,20 +28,23 @@ window.addEventListener('click', function(e) {
     }
 });
 
-// --- FUNCIONES DEL MODAL ---
+// --- FUNCIONES DEL MODAL (CRUD) ---
 
-// 1. NUEVA AUDIENCIA
+// 1. ABRIR PARA CREAR
 function abrirModalAudiencia() {
     const form = document.getElementById('form-audiencia');
     if(form) form.reset();
-    
-    document.getElementById('input-audiencia-id').value = '';
-    document.getElementById('modal-titulo-audiencia').innerHTML = '<i class="fas fa-gavel"></i> Nueva Audiencia';
-    
-    toggleUbicacion(false); 
+
+    const inputId = document.getElementById('input-audiencia-id');
+    if(inputId) inputId.value = '';
+
+    const titulo = document.getElementById('modal-titulo-audiencia');
+    if(titulo) titulo.innerHTML = '<i class="fas fa-gavel"></i> Nueva Audiencia';
+
+    toggleUbicacion(false);
     const radioPresencial = document.querySelector('input[name="esVirtual"][value="false"]');
     if(radioPresencial) radioPresencial.checked = true;
-    
+
     document.getElementById('modal-audiencia').classList.remove('hidden');
 }
 
@@ -53,7 +61,7 @@ function prepararEdicion(btn) {
     const url = btn.getAttribute('data-url');
     const abogadoId = btn.getAttribute('data-abogado-id');
 
-    console.log("Editando ID:", id);
+    console.log("Editando Audiencia ID:", id);
 
     // Llenamos el formulario
     document.getElementById('input-audiencia-id').value = id;
@@ -83,7 +91,7 @@ function prepararEdicion(btn) {
 
 function setValueIfExists(elementId, value) {
     const el = document.getElementById(elementId);
-    if(el) el.value = value || ''; 
+    if(el) el.value = value || '';
 }
 
 // --- UTILIDADES ---
@@ -92,15 +100,15 @@ function toggleUbicacion(isVirtual) {
     const campoUrl = document.getElementById('campo-url');
     const inputSala = document.getElementById('input-sala');
     const inputUrl = document.getElementById('input-url');
-    
+
     if(isVirtual) {
-        campoSala.classList.add('hidden');
-        campoUrl.classList.remove('hidden');
+        if(campoSala) campoSala.classList.add('hidden');
+        if(campoUrl) campoUrl.classList.remove('hidden');
         if(inputUrl) inputUrl.setAttribute('required', 'required');
         if(inputSala) inputSala.removeAttribute('required');
     } else {
-        campoSala.classList.remove('hidden');
-        campoUrl.classList.add('hidden');
+        if(campoSala) campoSala.classList.remove('hidden');
+        if(campoUrl) campoUrl.classList.add('hidden');
         if(inputSala) inputSala.setAttribute('required', 'required');
         if(inputUrl) inputUrl.removeAttribute('required');
     }

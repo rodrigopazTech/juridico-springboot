@@ -107,6 +107,8 @@ public class TerminosController {
         model.addAttribute("paramPrioridad", prioridad);
         model.addAttribute("paramAbogadoId", abogadoId);
 
+        model.addAttribute("activePage", "terminos");
+
         return "views/terminos/index";
     }
 

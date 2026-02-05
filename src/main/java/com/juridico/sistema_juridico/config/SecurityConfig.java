@@ -26,52 +26,52 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        // 1. Recursos Públicos
-                        .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**", "/lib/**").permitAll()
-                        .requestMatchers("/", "/login", "/register", "/api/auth/**").permitAll()
+            .csrf(csrf -> csrf.disable()) 
+            .authorizeHttpRequests(auth -> auth
+                // 1. Recursos Públicos
+                .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**", "/lib/**").permitAll()
+                .requestMatchers("/", "/login", "/register", "/api/auth/**").permitAll()
 
-                        // 2. NIVEL ALTO: Usuarios y Agenda General (Solo Dirección y Subdirección)
-                        .requestMatchers("/usuarios/**", "/agenda/**").hasAnyAuthority("DIRECCION", "SUBDIRECCION")
+                // 2. NIVEL ALTO: Usuarios y Agenda General (Solo Dirección y Subdirección)
+                .requestMatchers("/usuarios/**", "/agenda/**").hasAnyAuthority("DIRECCION", "SUBDIRECCION")
 
-                        // 3. NIVEL MEDIO: Dashboard (Dirección, Subdirección, Gerentes y Jefes)
-                        // Nota: Los Abogados NO entran aquí.
-                        .requestMatchers("/dashboard/**")
-                        .hasAnyAuthority("DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO")
+                // 3. NIVEL MEDIO: Dashboard (Dirección, Subdirección, Gerentes y Jefes)
+                // Nota: Los Abogados NO entran aquí.
+                .requestMatchers("/dashboard/**").hasAnyAuthority("DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO")
 
-                        // 4. NIVEL OPERATIVO: Expedientes, Términos, Audiencias (TODOS los
-                        // autenticados)
-                        .requestMatchers("/expedientes/**", "/terminos/**", "/audiencias/**").authenticated()
+                // 4. NIVEL OPERATIVO: Expedientes, Términos, Audiencias (TODOS los autenticados)
+                .requestMatchers("/expedientes/**", "/terminos/**", "/audiencias/**").authenticated()
 
-                        // 5. API REST: Gestor Documental (TODOS los autenticados)
-                        .requestMatchers("/api/documentos/**").authenticated()
+                // 5. API REST: Gestor Documental (TODOS los autenticados)
+                .requestMatchers("/api/documentos/**").authenticated()
 
-                        // 6. Resto bloqueado
-                        .anyRequest().authenticated())
-                .formLogin(form -> form
-                        .loginPage("/")
-                        .loginProcessingUrl("/perform_login")
-                        .successHandler((request, response, authentication) -> {
-                            // LÓGICA DE REDIRECCIÓN INTELIGENTE SEGÚN ROL
-                            String role = authentication.getAuthorities().iterator().next().getAuthority();
-                            if (role.equals("ABOGADO")) {
-                                response.sendRedirect("/expedientes");
-                            } else {
-                                response.sendRedirect("/dashboard");
-                            }
-                        })
-                        .failureUrl("/?error=true")
-                        .permitAll())
-                .logout(logout -> logout
-                        .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-                        .logoutSuccessUrl("/?logout")
-                        .deleteCookies("JSESSIONID")
-                        .permitAll());
+                // 6. Resto bloqueado
+                .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .loginPage("/")
+                .loginProcessingUrl("/perform_login")
+                .successHandler((request, response, authentication) -> {
+                    // LÓGICA DE REDIRECCIÓN INTELIGENTE SEGÚN ROL
+                    String role = authentication.getAuthorities().iterator().next().getAuthority();
+                    if (role.equals("ABOGADO")) {
+                        response.sendRedirect("/expedientes");
+                    } else {
+                        response.sendRedirect("/dashboard");
+                    }
+                })
+                .failureUrl("/?error=true")
+                .permitAll()
+            )
+            .logout(logout -> logout
+                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                .logoutSuccessUrl("/?logout")
+                .deleteCookies("JSESSIONID")
+                .permitAll()
+            );
 
         return http.build();
     }
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
