@@ -32,14 +32,19 @@
                         </div>
                     </td>
 
-                    <td class="px-4 py-3">
-                        <div class="flex flex-col">
-                            <a th:if="${t.expediente != null}" 
-                            th:href="@{/expedientes/{id}(id=${t.expediente.id})}"
-                            class="font-bold text-gob-guinda hover:underline" 
-                            th:text="${t.expediente.numero}">EXP-001</a>
-                            <span class="text-xs text-gray-400" 
-                                th:text="${t.expediente != null ? t.expediente.partes : 'Sin Partes'}">Partes</span>
+                   <td class="px-4 py-3">
+                        <div class="flex flex-col max-w-[180px]"> <a th:if="${t.expediente != null}" 
+                               th:href="@{/expedientes/{id}(id=${t.expediente.id})}"
+                               class="font-bold text-gob-guinda hover:underline text-sm truncate" 
+                               th:title="'Ver expediente: ' + ${t.expediente.numero}"
+                               th:text="${t.expediente.numero}">EXP-001</a>
+                            
+                            <span class="text-xs text-gray-400 truncate cursor-help" 
+                                  th:if="${t.expediente != null}"
+                                  th:title="${t.expediente.partes}" 
+                                  th:text="${t.expediente.partes}">Partes</span>
+                                  
+                            <span class="text-xs text-gray-300 italic" th:if="${t.expediente == null}">Sin Asignar</span>
                         </div>
                     </td>
 
