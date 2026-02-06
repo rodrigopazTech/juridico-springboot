@@ -35,7 +35,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("estatus") String estatus,
             @Param("prioridad") Prioridad prioridad,
             @Param("abogadoId") Integer abogadoId,
-            @Param("gerenciaId") Integer gerenciaId); // <--- NUEVO PARAMETRO
+            @Param("gerenciaId") Integer gerenciaId);
 
     // 2. CONSULTA PARA PAGINACIÓN (La principal)
     // MODIFICADO: Agregado filtro e.gerencia.id para seguridad
@@ -69,4 +69,16 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             LocalDate fin, 
             Pageable pageable
     );
+
+    // =========================
+    // ✅ NUEVO: CARGA DE TRABAJO POR USUARIO
+    // =========================
+    @Query("""
+        SELECT u.nombreCompleto, COUNT(t)
+        FROM Termino t
+        JOIN t.abogadoResponsable u
+        GROUP BY u.nombreCompleto
+    """)
+    List<Object[]> contarTerminosPorUsuario();
+
 }

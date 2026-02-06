@@ -98,4 +98,14 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
     );
 
     List<Audiencia> findByExpedienteIdAndFechaAudiencia(UUID expedienteId, LocalDate fecha);
+
+    // --- 4. CARGA DE TRABAJO POR USUARIO (from aurora5) ---
+    @Query("""
+        SELECT u.nombreCompleto, COUNT(a)
+        FROM Audiencia a
+        JOIN a.expediente e
+        JOIN e.abogadoResponsable u
+        GROUP BY u.nombreCompleto
+    """)
+    List<Object[]> contarAudienciasPorUsuario();
 }

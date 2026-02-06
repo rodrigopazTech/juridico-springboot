@@ -1,44 +1,83 @@
 package com.juridico.sistema_juridico.controller;
 
-import com.juridico.sistema_juridico.dto.response.dashboard.EstadisticasResponse;
-import com.juridico.sistema_juridico.dto.response.dashboard.MetricasResponse;
+import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
+import com.juridico.sistema_juridico.service.DashboardService;
+import com.juridico.sistema_juridico.service.UsuarioService;
+import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/dashboard")
 public class DashboardController {
 
+    private final DashboardService dashboardService;
+    private final GerenciaRepository gerenciaRepository;
+    private final UsuarioService usuarioService;
+
+    public DashboardController(DashboardService dashboardService, 
+                               GerenciaRepository gerenciaRepository, 
+                               UsuarioService usuarioService) {
+        this.dashboardService = dashboardService;
+        this.gerenciaRepository = gerenciaRepository;
+        this.usuarioService = usuarioService;
+    }
+
     @GetMapping
-    public String dashboard(Model model) {
+    public String dashboard(Model model, @RequestParam(required = false) Long gerenciaId) {
+        // Obtenemos el nombre del usuario logueado
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
         
-        // 1. Configuración básica de la página
-        model.addAttribute("pageTitle", "Panel Principal");
-        model.addAttribute("activePage", "dashboard"); // IMPORTANTE: Debe coincidir con el sidebar
-
-        // 2. DATOS MOCK (CIMIENTOS PARA TU COMPAÑERA)
-        // Ella podrá ver estos números en pantalla y luego tú conectarás la BD real.
+        // Buscamos el objeto Usuario completo
+        Usuario usuario = usuarioService.obtenerPorUsername(username);
         
-        // A) KPIs Generales
-        EstadisticasResponse stats = EstadisticasResponse.builder()
-                .totalExpedientes(150)
-                .expedientesActivos(45)
-                .audienciasProgramadas(3)
-                .terminosActivos(12)
-                .build();
-        model.addAttribute("kpis", stats);
+        // Aplicamos la lógica de restricción
+        Long idAFiltrar = validarGerenciaPorRol(usuario, gerenciaId);
 
-        // B) Datos para Gráfica (Ej: Carga de trabajo)
-        MetricasResponse metrica = new MetricasResponse();
-        metrica.setEtiquetas(Arrays.asList("Enero", "Febrero", "Marzo", "Abril"));
-        metrica.setValores(Arrays.asList(10, 25, 15, 30));
-        metrica.setMetricaNombre("Expedientes Nuevos 2026");
-        model.addAttribute("graficaData", metrica);
+        model.addAttribute("usuario", usuario);
+        model.addAttribute("gerencias", gerenciaRepository.findAll());
+        model.addAttribute("kpis", dashboardService.obtenerKpis(idAFiltrar));
+        model.addAttribute("dashboardData", dashboardService.obtenerMetricas(idAFiltrar));
+        model.addAttribute("gerenciaSeleccionada", idAFiltrar);
 
         return "views/dashboard/index";
+    }
+
+    @GetMapping("/data")
+    @ResponseBody
+    public Map<String, Object> obtenerDatosFiltrados(@RequestParam(required = false) Long gerenciaId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Usuario usuario = usuarioService.obtenerPorUsername(auth.getName());
+        
+        Long idAFiltrar = validarGerenciaPorRol(usuario, gerenciaId);
+
+        return Map.of(
+            "kpis", dashboardService.obtenerKpis(idAFiltrar),
+            "dashboardData", dashboardService.obtenerMetricas(idAFiltrar)
+        );
+    }
+
+    /**
+     * Esta función centraliza la lógica de permisos
+     */
+    private Long validarGerenciaPorRol(Usuario usuario, Long gerenciaIdSolicitada) {
+        // Verifica que los nombres del ENUM coincidan (pueden ser RolUsuario.ROLE_DIRECTOR etc)
+        boolean esDirectivo = usuario.getRol() == RolUsuario.DIRECTOR || 
+                              usuario.getRol() == RolUsuario.SUBDIRECTOR;
+
+        if (esDirectivo) {
+            return gerenciaIdSolicitada; // El director puede ver todo (null) o una específica
+        } else {
+            // Si es Gerente o Jefe, obligatoriamente solo ve su gerencia
+            // Convertimos el Integer del ID de gerencia a Long para el Service
+            return (usuario.getGerencia() != null) ? usuario.getGerencia().getId().longValue() : null;
+        }
     }
 }

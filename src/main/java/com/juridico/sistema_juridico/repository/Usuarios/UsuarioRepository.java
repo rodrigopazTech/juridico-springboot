@@ -11,11 +11,17 @@ import java.util.Optional;
 
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
-    
-    // Métodos básicos de Login
-    Optional<Usuario> findByEmail(String email);
-    boolean existsByEmail(String email);
 
+    /**
+     * Busca un usuario por su correo electrónico.
+     * Utilizado para la autenticación y para cargar el perfil en el Dashboard.
+     */
+    Optional<Usuario> findByEmail(String email);
+
+    /**
+     * Verifica si existe un usuario con el email proporcionado.
+     */
+    boolean existsByEmail(String email);
 
     // 1. Para el Select del Modal (Solo mostrar ABOGADOS activos)
     List<Usuario> findByRolAndActivoTrue(RolUsuario rol);

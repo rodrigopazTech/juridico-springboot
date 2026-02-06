@@ -1,60 +1,147 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>Dashboard - Agenda Legal</title>
+    <meta charset="UTF-8" />
+    <title>Dashboard - Sistema Jurídico</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+    <script th:src="@{/lib/chart.umd.min.js}"></script>
+
+    <style>
+        .chart-container {
+            position: relative;
+            height: 20rem;
+        }
+        .bg-gob-guinda { background-color: #8B1E3F; }
+        .text-gob-guinda { color: #8B1E3F; }
+        .bg-gob-oro { background-color: #D4AF37; }
+        .text-gob-oro { color: #D4AF37; }
+    </style>
 </head>
+
 <body class="bg-gray-100 text-gray-800 font-sans">
 
-    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+<div th:replace="~{fragments/sidebar :: sidebar}"></div>
 
-    <div class="p-4 sm:ml-64">
-        
-        <div class="mb-6">
-            <h1 class="text-3xl font-bold text-gob-guinda font-headings">
-                <i class="fas fa-chart-pie text-gob-oro mr-2"></i> Panel Principal
+<div class="p-4 sm:ml-64">
+
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 border-b pb-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gob-guinda">
+                <i class="fas fa-chart-line text-gob-oro mr-2"></i>
+                Dashboard
             </h1>
-            <p class="text-gray-500 mt-1">Bienvenido al resumen operativo del despacho.</p>
-            <hr class="h-1 w-20 bg-gob-oro border-0 mt-2 mb-4" />
+            <p class="text-sm text-gray-500">Resumen general del sistema</p>
+            <hr class="h-1 w-20 bg-gob-oro border-0 mt-2"/>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white p-6 rounded-lg shadow border-l-4 border-gob-guinda">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="text-sm text-gray-500 font-bold uppercase">Expedientes Totales</p>
-                        <p class="text-3xl font-bold text-gray-800" th:text="${kpis.totalExpedientes}">0</p>
-                    </div>
-                    <div class="p-3 bg-red-50 rounded-full text-gob-guinda">
-                        <i class="fas fa-folder text-xl"></i>
-                    </div>
-                </div>
+        <div class="mt-4 md:mt-0 flex items-center space-x-3">
+            
+            <div th:if="${usuario.rol.name() == 'DIRECTOR' || usuario.rol.name() == 'SUBDIRECTOR'}" 
+                 class="flex items-center bg-white p-2 rounded shadow-sm border border-gray-200">
+                <label for="filtroGerencia" class="mr-2 text-sm font-semibold text-gray-600">
+                    <i class="fas fa-filter text-gob-oro mr-1"></i> Filtrar Gerencia:
+                </label>
+                <select id="filtroGerencia" class="border-gray-300 rounded text-sm p-1 focus:ring-gob-guinda focus:border-gob-guinda outline-none">
+                    <option value="">Todas las Gerencias</option>
+                    <option th:each="g : ${gerencias}" 
+                            th:value="${g.id}" 
+                            th:text="${g.nombre}"
+                            th:selected="${g.id == gerenciaSeleccionada}"></option>
+                </select>
             </div>
 
+            <div th:unless="${usuario.rol.name() == 'DIRECTOR' || usuario.rol.name() == 'SUBDIRECTOR'}" 
+                 class="flex items-center">
+                <span class="bg-gob-guinda text-white text-xs font-bold px-4 py-2 rounded-full shadow-sm flex items-center">
+                    <i class="fas fa-lock mr-2 text-gob-oro"></i> 
+                    VISTA: <span class="ml-1 italic" th:text="${usuario.gerencia.nombre}">Gerencia Actual</span>
+                </span>
+                <input type="hidden" id="filtroGerencia" th:value="${usuario.gerencia.id}">
             </div>
+        </div>
+    </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h3 class="font-bold text-gray-700 mb-4">Rendimiento Mensual</h3>
-                <div class="h-64 flex items-center justify-center bg-gray-50 border border-dashed border-gray-300 rounded">
-                    <p class="text-gray-400">Espacio para Gráfica (Chart.js)</p>
-                </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+
+        <div class="bg-white p-5 rounded shadow border-l-4 border-gob-guinda">
+            <p class="text-xs uppercase text-gray-500 font-bold">Total Expedientes</p>
+            <h3 class="text-3xl font-bold" id="kpiTotalExp" th:text="${kpis.totalExpedientes}">0</h3>
+        </div>
+
+        <div class="bg-white p-5 rounded shadow border-l-4 border-blue-500">
+            <p class="text-xs uppercase text-gray-500 font-bold">En Trámite</p>
+            <h3 class="text-3xl font-bold" id="kpiActivos" th:text="${kpis.expedientesActivos}">0</h3>
+        </div>
+
+        <div class="bg-white p-5 rounded shadow border-l-4 border-gob-oro">
+            <p class="text-xs uppercase text-gray-500 font-bold">Audiencias</p>
+            <h3 class="text-3xl font-bold" id="kpiAudiencias" th:text="${kpis.audienciasProgramadas}">0</h3>
+        </div>
+
+        <div class="bg-white p-5 rounded shadow border-l-4 border-green-600">
+            <p class="text-xs uppercase text-gray-500 font-bold">Términos</p>
+            <h3 class="text-3xl font-bold" id="kpiTerminos" th:text="${kpis.terminosActivos}">0</h3>
+        </div>
+
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+        <div class="bg-white p-6 rounded shadow border-t-2 border-gob-oro">
+            <h3 class="font-bold mb-4 text-gray-700 uppercase text-sm tracking-wider">
+                <i class="fas fa-tasks mr-2"></i>Estatus de Expedientes
+            </h3>
+            <div class="chart-container">
+                <canvas id="chartEstatusExpedientes"></canvas>
             </div>
+        </div>
 
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h3 class="font-bold text-gray-700 mb-4">Avisos Importantes</h3>
-                <div class="p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
-                    <p class="font-bold">Recordatorio</p>
-                    <p>Revisar los términos próximos a vencer esta semana.</p>
-                </div>
+        <div class="bg-white p-6 rounded shadow border-t-2 border-gob-oro">
+            <h3 class="font-bold mb-4 text-gray-700 uppercase text-sm tracking-wider">
+                <i class="fas fa-users mr-2"></i>Carga de Trabajo por Usuario
+            </h3>
+            <div class="chart-container">
+                <canvas id="chartCargaTrabajoUsuarios"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded shadow border-t-2 border-gob-oro">
+            <h3 class="font-bold mb-4 text-gray-700 uppercase text-sm tracking-wider">
+                <i class="fas fa-landmark mr-2"></i>Distribución por Gerencia
+            </h3>
+            <div class="chart-container">
+                <canvas id="chartDistribucionGerencias"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded shadow border-t-2 border-gob-oro">
+            <h3 class="font-bold mb-4 text-gray-700 uppercase text-sm tracking-wider">
+                <i class="fas fa-calendar-alt mr-2"></i>Trabajo Completado (Mensual)
+            </h3>
+            <div class="chart-container">
+                <canvas id="chartTrabajoCompletado"></canvas>
             </div>
         </div>
 
     </div>
+
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    window.dashboardData = /*[[${dashboardData}]]*/ {};
+    /*]]>*/
+</script>
+
+<script th:src="@{/js/dashboard.js}"></script>
 
 </body>
 </html>

@@ -37,6 +37,14 @@ public class UsuarioService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
     }
 
+    /**
+     * Busca al usuario por su identificador de inicio de sesión (email).
+     * Requerido por el DashboardController.
+     */
+    public Usuario obtenerPorUsername(String email) {
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con email: " + email));
+    }
 
     public Page<Usuario> listarUsuariosPaginados(Pageable pageable) {
         return usuarioRepository.findAll(pageable);
@@ -46,7 +54,7 @@ public class UsuarioService {
         return gerenciaRepository.findAll(pageable);
     }
 
-   public Usuario guardarUsuario(Usuario usuario, List<Integer> materiasIds) {
+    public Usuario guardarUsuario(Usuario usuario, List<Integer> materiasIds) {
         
         Set<Materia> materiasSeleccionadas = new HashSet<>();
         if (materiasIds != null && !materiasIds.isEmpty()) {
@@ -85,6 +93,12 @@ public class UsuarioService {
         }
     }
 
+    public void eliminarUsuario(Integer id) { 
+        usuarioRepository.deleteById(id); 
+    }
+
+    // --- GERENCIAS ---
+
     public List<Gerencia> listarGerencias() {
         return gerenciaRepository.findAll();
     }
@@ -106,9 +120,5 @@ public class UsuarioService {
     
     public void eliminarMateria(Integer id) {
         materiaRepository.deleteById(id);
-    }
-
-    public void eliminarUsuario(Integer id) { 
-        usuarioRepository.deleteById(id); 
     }
 }
