@@ -1,19 +1,18 @@
 package com.juridico.sistema_juridico.dto.response.calendario;
 
+import lombok.Builder;
 import lombok.Data;
-import java.time.LocalDate;
-import java.time.LocalTime;
 
-/**
- * Representación unificada de cualquier evento en el calendario.
- */
 @Data
+@Builder
 public class EventoResponse {
     private Long id;
     private String titulo;
-    private String tipo; // 'audiencia', 'termino', 'recordatorio'
-    private LocalDate fecha;
-    private LocalTime hora;
-    private String colorSolid; // Para respetar tus 'gobColors'
-    private Integer asuntoId; // ID del expediente relacionado
+    private String tipo;      // "audiencia", "termino", "recordatorio"
+    private String fecha;     // Formato "yyyy-MM-dd"
+    private String hora;      // Formato "HH:mm"
+    private Long gerenciaId;
+    private Long usuarioId;
+    private String expediente; 
+    private String detalles;
 }

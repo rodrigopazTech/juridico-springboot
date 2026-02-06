@@ -62,9 +62,9 @@
                  class="flex items-center">
                 <span class="bg-gob-guinda text-white text-xs font-bold px-4 py-2 rounded-full shadow-sm flex items-center">
                     <i class="fas fa-lock mr-2 text-gob-oro"></i> 
-                    VISTA: <span class="ml-1 italic" th:text="${usuario.gerencia.nombre}">Gerencia Actual</span>
+                    VISTA: <span class="ml-1 italic" th:text="${usuario.gerencia?.nombre} ?: 'Sin Gerencia'">Gerencia Actual</span>
                 </span>
-                <input type="hidden" id="filtroGerencia" th:value="${usuario.gerencia.id}">
+                <input type="hidden" id="filtroGerencia" th:value="${usuario.gerencia?.id}">
             </div>
         </div>
     </div>
