@@ -1,0 +1,619 @@
+nohup: no se tendrá en cuenta la entrada
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------< com.juridico:sistema-juridico >--------------------
+[INFO] Building sistema-juridico 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.4.12:run (default-cli) > test-compile @ sistema-juridico >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ sistema-juridico ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 63 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ sistema-juridico ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ sistema-juridico ---
+[INFO] skip non existing resourceDirectory /home/jose/Documentos/juridico-springboot/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ sistema-juridico ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] <<< spring-boot:3.4.12:run (default-cli) < test-compile @ sistema-juridico <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.4.12:run (default-cli) @ sistema-juridico ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.4.12)
+
+2026-02-09T14:37:59.115-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] c.j.s.SistemaJuridicoApplication         : Starting SistemaJuridicoApplication using Java 21.0.10 with PID 1028092 (/home/jose/Documentos/juridico-springboot/target/classes started by jose in /home/jose/Documentos/juridico-springboot)
+2026-02-09T14:37:59.117-06:00 DEBUG 1028092 --- [sistema-juridico] [  restartedMain] c.j.s.SistemaJuridicoApplication         : Running with Spring Boot v3.4.12, Spring v6.2.14
+2026-02-09T14:37:59.118-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] c.j.s.SistemaJuridicoApplication         : No active profile set, falling back to 1 default profile: "default"
+2026-02-09T14:37:59.395-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-02-09T14:37:59.396-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-02-09T14:38:00.232-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-02-09T14:38:00.354-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 112 ms. Found 21 JPA repository interfaces.
+2026-02-09T14:38:01.053-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-02-09T14:38:01.069-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-02-09T14:38:01.069-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.49]
+2026-02-09T14:38:01.107-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-02-09T14:38:01.108-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1710 ms
+2026-02-09T14:38:01.266-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-02-09T14:38:01.312-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.36.Final
+2026-02-09T14:38:01.358-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-02-09T14:38:01.612-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-02-09T14:38:01.641-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-02-09T14:38:01.804-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@76ef606c
+2026-02-09T14:38:01.806-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-02-09T14:38:01.835-06:00  WARN 1028092 --- [sistema-juridico] [  restartedMain] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-02-09T14:38:01.855-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 15.15
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-02-09T14:38:03.588-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-02-09T14:38:03.997-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-02-09T14:38:04.382-06:00 DEBUG 1028092 --- [sistema-juridico] [  restartedMain] c.j.s.security.JwtAuthenticationFilter   : Filter 'jwtAuthenticationFilter' configured for use
+2026-02-09T14:38:04.595-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-02-09T14:38:07.198-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-02-09T14:38:07.199-06:00  WARN 1028092 --- [sistema-juridico] [  restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2026-02-09T14:38:07.261-06:00  WARN 1028092 --- [sistema-juridico] [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-02-09T14:38:07.642-06:00 DEBUG 1028092 --- [sistema-juridico] [  restartedMain] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, LogoutFilter, UsernamePasswordAuthenticationFilter, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, ExceptionTranslationFilter, AuthorizationFilter
+2026-02-09T14:38:07.998-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2026-02-09T14:38:08.029-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2026-02-09T14:38:08.041-06:00  INFO 1028092 --- [sistema-juridico] [  restartedMain] c.j.s.SistemaJuridicoApplication         : Started SistemaJuridicoApplication in 9.399 seconds (process running for 9.929)
+Hibernate: 
+    select
+        g1_0.id,
+        g1_0.activo,
+        g1_0.created_at,
+        g1_0.descripcion,
+        g1_0.nombre,
+        g1_0.updated_at 
+    from
+        gerencias g1_0 
+    where
+        g1_0.nombre=?
+Hibernate: 
+    select
+        m1_0.id,
+        m1_0.activo,
+        m1_0.created_at,
+        m1_0.descripcion,
+        m1_0.gerencia_id,
+        m1_0.nombre,
+        m1_0.updated_at 
+    from
+        materias m1_0 
+    left join
+        gerencias g1_0 
+            on g1_0.id=m1_0.gerencia_id 
+    where
+        m1_0.nombre=? 
+        and g1_0.id=?
+Hibernate: 
+    select
+        m1_0.id,
+        m1_0.activo,
+        m1_0.created_at,
+        m1_0.descripcion,
+        m1_0.gerencia_id,
+        m1_0.nombre,
+        m1_0.updated_at 
+    from
+        materias m1_0 
+    left join
+        gerencias g1_0 
+            on g1_0.id=m1_0.gerencia_id 
+    where
+        m1_0.nombre=? 
+        and g1_0.id=?
+Hibernate: 
+    select
+        m1_0.id,
+        m1_0.activo,
+        m1_0.created_at,
+        m1_0.descripcion,
+        m1_0.gerencia_id,
+        m1_0.nombre,
+        m1_0.updated_at 
+    from
+        materias m1_0 
+    left join
+        gerencias g1_0 
+            on g1_0.id=m1_0.gerencia_id 
+    where
+        m1_0.nombre=? 
+        and g1_0.id=?
+Hibernate: 
+    select
+        m1_0.id,
+        m1_0.activo,
+        m1_0.created_at,
+        m1_0.descripcion,
+        m1_0.gerencia_id,
+        m1_0.nombre,
+        m1_0.updated_at 
+    from
+        materias m1_0 
+    left join
+        gerencias g1_0 
+            on g1_0.id=m1_0.gerencia_id 
+    where
+        m1_0.nombre=? 
+        and g1_0.id=?
+Hibernate: 
+    select
+        g1_0.id,
+        g1_0.activo,
+        g1_0.created_at,
+        g1_0.descripcion,
+        g1_0.nombre,
+        g1_0.updated_at 
+    from
+        gerencias g1_0 
+    where
+        g1_0.nombre=?
+Hibernate: 
+    select
+        m1_0.id,
+        m1_0.activo,
+        m1_0.created_at,
+        m1_0.descripcion,
+        m1_0.gerencia_id,
+        m1_0.nombre,
+        m1_0.updated_at 
+    from
+        materias m1_0 
+    left join
+        gerencias g1_0 
+            on g1_0.id=m1_0.gerencia_id 
+    where
+        m1_0.nombre=? 
+        and g1_0.id=?
+Hibernate: 
+    select
+        m1_0.id,
+        m1_0.activo,
+        m1_0.created_at,
+        m1_0.descripcion,
+        m1_0.gerencia_id,
+        m1_0.nombre,
+        m1_0.updated_at 
+    from
+        materias m1_0 
+    left join
+        gerencias g1_0 
+            on g1_0.id=m1_0.gerencia_id 
+    where
+        m1_0.nombre=? 
+        and g1_0.id=?
+Hibernate: 
+    select
+        g1_0.id,
+        g1_0.activo,
+        g1_0.created_at,
+        g1_0.descripcion,
+        g1_0.nombre,
+        g1_0.updated_at 
+    from
+        gerencias g1_0 
+    where
+        g1_0.nombre=?
+Hibernate: 
+    select
+        m1_0.id,
+        m1_0.activo,
+        m1_0.created_at,
+        m1_0.descripcion,
+        m1_0.gerencia_id,
+        m1_0.nombre,
+        m1_0.updated_at 
+    from
+        materias m1_0 
+    left join
+        gerencias g1_0 
+            on g1_0.id=m1_0.gerencia_id 
+    where
+        m1_0.nombre=? 
+        and g1_0.id=?
+Hibernate: 
+    select
+        m1_0.id,
+        m1_0.activo,
+        m1_0.created_at,
+        m1_0.descripcion,
+        m1_0.gerencia_id,
+        m1_0.nombre,
+        m1_0.updated_at 
+    from
+        materias m1_0 
+    left join
+        gerencias g1_0 
+            on g1_0.id=m1_0.gerencia_id 
+    where
+        m1_0.nombre=? 
+        and g1_0.id=?
+✅ Gerencias y Materias verificadas/creadas correctamente.
+   - Civil, Mercantil, Fiscal y Administrativo
+   - Laboral y Penal
+   - Transparencia y Amparo
+Hibernate: 
+    select
+        count(*) 
+    from
+        usuarios u1_0
+ℹ️ Usuarios ya existen, omitiendo creación.
+Hibernate: 
+    select
+        count(*) 
+    from
+        tipos_expediente te1_0
+Hibernate: 
+    select
+        count(*) 
+    from
+        organos_jurisdiccionales oj1_0
+Hibernate: 
+    select
+        count(*) 
+    from
+        cat_estados e1_0
+2026-02-09T14:39:16.213-06:00  INFO 1028092 --- [sistema-juridico] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-02-09T14:39:16.213-06:00  INFO 1028092 --- [sistema-juridico] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-02-09T14:39:16.214-06:00  INFO 1028092 --- [sistema-juridico] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-02-09T14:39:16.228-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing GET /calendario
+2026-02-09T14:39:16.235-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-1] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=org.springframework.security.core.userdetails.User [Username=juan.gonzales23@gmail.com, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, CredentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[SUBDIRECCION]], Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=127.0.0.1, SessionId=null], Granted Authorities=[SUBDIRECCION]]]
+2026-02-09T14:39:16.236-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Secured GET /calendario
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.activo,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.gerencia_id,
+        u1_0.nombre_completo,
+        u1_0.password_hash,
+        u1_0.rol,
+        u1_0.ultimo_acceso,
+        u1_0.updated_at 
+    from
+        usuarios u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        m1_0.usuario_id,
+        m1_1.id,
+        m1_1.activo,
+        m1_1.created_at,
+        m1_1.descripcion,
+        m1_1.gerencia_id,
+        m1_1.nombre,
+        m1_1.updated_at 
+    from
+        usuario_materias m1_0 
+    join
+        materias m1_1 
+            on m1_1.id=m1_0.materia_id 
+    where
+        m1_0.usuario_id=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.activo,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.gerencia_id,
+        u1_0.nombre_completo,
+        u1_0.password_hash,
+        u1_0.rol,
+        u1_0.ultimo_acceso,
+        u1_0.updated_at 
+    from
+        usuarios u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        count(n1_0.id) 
+    from
+        notificaciones n1_0 
+    where
+        n1_0.usuario_id=? 
+        and not(n1_0.leida)
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.activo,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.gerencia_id,
+        u1_0.nombre_completo,
+        u1_0.password_hash,
+        u1_0.rol,
+        u1_0.ultimo_acceso,
+        u1_0.updated_at 
+    from
+        usuarios u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        count(n1_0.id) 
+    from
+        notificaciones n1_0 
+    where
+        n1_0.usuario_id=? 
+        and not(n1_0.leida)
+2026-02-09T14:39:16.759-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-2] o.s.security.web.FilterChainProxy        : Securing GET /js/tailwind.config.js
+2026-02-09T14:39:16.759-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Securing GET /css/calendario.css
+2026-02-09T14:39:16.760-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Secured GET /css/calendario.css
+2026-02-09T14:39:16.760-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-2] o.s.security.web.FilterChainProxy        : Secured GET /js/tailwind.config.js
+2026-02-09T14:39:16.769-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-2] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=org.springframework.security.core.userdetails.User [Username=juan.gonzales23@gmail.com, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, CredentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[SUBDIRECCION]], Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=127.0.0.1, SessionId=null], Granted Authorities=[SUBDIRECCION]]]
+2026-02-09T14:39:16.769-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-3] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=org.springframework.security.core.userdetails.User [Username=juan.gonzales23@gmail.com, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, CredentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[SUBDIRECCION]], Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=127.0.0.1, SessionId=null], Granted Authorities=[SUBDIRECCION]]]
+2026-02-09T14:39:17.056-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-4] o.s.security.web.FilterChainProxy        : Securing GET /js/calendario-module.js?v=1.0
+2026-02-09T14:39:17.064-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-4] o.s.security.web.FilterChainProxy        : Secured GET /js/calendario-module.js?v=1.0
+2026-02-09T14:39:17.085-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-4] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=org.springframework.security.core.userdetails.User [Username=juan.gonzales23@gmail.com, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, CredentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[SUBDIRECCION]], Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=127.0.0.1, SessionId=null], Granted Authorities=[SUBDIRECCION]]]
+2026-02-09T14:39:17.090-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Securing GET /favicon.ico
+2026-02-09T14:39:17.091-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-5] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=org.springframework.security.core.userdetails.User [Username=juan.gonzales23@gmail.com, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, CredentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[SUBDIRECCION]], Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=127.0.0.1, SessionId=null], Granted Authorities=[SUBDIRECCION]]]
+2026-02-09T14:39:17.091-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Secured GET /favicon.ico
+2026-02-09T14:39:17.095-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Securing GET /api/calendario/eventos
+2026-02-09T14:39:17.096-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-6] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=org.springframework.security.core.userdetails.User [Username=juan.gonzales23@gmail.com, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, CredentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[SUBDIRECCION]], Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=127.0.0.1, SessionId=null], Granted Authorities=[SUBDIRECCION]]]
+2026-02-09T14:39:17.096-06:00 DEBUG 1028092 --- [sistema-juridico] [nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Secured GET /api/calendario/eventos
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.activo,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.gerencia_id,
+        u1_0.nombre_completo,
+        u1_0.password_hash,
+        u1_0.rol,
+        u1_0.ultimo_acceso,
+        u1_0.updated_at 
+    from
+        usuarios u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        m1_0.usuario_id,
+        m1_1.id,
+        m1_1.activo,
+        m1_1.created_at,
+        m1_1.descripcion,
+        m1_1.gerencia_id,
+        m1_1.nombre,
+        m1_1.updated_at 
+    from
+        usuario_materias m1_0 
+    join
+        materias m1_1 
+            on m1_1.id=m1_0.materia_id 
+    where
+        m1_0.usuario_id=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.activo,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.gerencia_id,
+        u1_0.nombre_completo,
+        u1_0.password_hash,
+        u1_0.rol,
+        u1_0.ultimo_acceso,
+        u1_0.updated_at 
+    from
+        usuarios u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        count(n1_0.id) 
+    from
+        notificaciones n1_0 
+    where
+        n1_0.usuario_id=? 
+        and not(n1_0.leida)
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.activo,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.gerencia_id,
+        u1_0.nombre_completo,
+        u1_0.password_hash,
+        u1_0.rol,
+        u1_0.ultimo_acceso,
+        u1_0.updated_at 
+    from
+        usuarios u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.abogado_comparece_id,
+        a1_0.acta_documento,
+        a1_0.created_at,
+        a1_0.es_virtual,
+        a1_0.estatus_audiencia,
+        a1_0.expediente_id,
+        a1_0.fecha_audiencia,
+        a1_0.fecha_desahogo,
+        a1_0.hora_audiencia,
+        a1_0.observaciones,
+        a1_0.sala_lugar,
+        a1_0.tipo_audiencia_id,
+        a1_0.updated_at,
+        a1_0.url_reunion 
+    from
+        audiencias a1_0
+Hibernate: 
+    select
+        t1_0.id,
+        t1_0.abogado_responsable_id,
+        t1_0.actuacion,
+        t1_0.archivo_word,
+        t1_0.created_at,
+        t1_0.estatus_termino,
+        t1_0.expediente_id,
+        t1_0.fecha_ingreso,
+        t1_0.fecha_presentacion,
+        t1_0.fecha_vencimiento,
+        t1_0.observaciones,
+        t1_0.prioridad,
+        t1_0.updated_at 
+    from
+        terminos t1_0
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.activo,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.gerencia_id,
+        m1_0.usuario_id,
+        m1_1.id,
+        m1_1.activo,
+        m1_1.created_at,
+        m1_1.descripcion,
+        m1_1.gerencia_id,
+        m1_1.nombre,
+        m1_1.updated_at,
+        u1_0.nombre_completo,
+        u1_0.password_hash,
+        u1_0.rol,
+        u1_0.ultimo_acceso,
+        u1_0.updated_at 
+    from
+        usuarios u1_0 
+    left join
+        usuario_materias m1_0 
+            on u1_0.id=m1_0.usuario_id 
+    left join
+        materias m1_1 
+            on m1_1.id=m1_0.materia_id 
+    where
+        u1_0.id=?
+Hibernate: 
+    select
+        e1_0.id,
+        ar1_0.id,
+        ar1_0.activo,
+        ar1_0.created_at,
+        ar1_0.email,
+        ar1_0.gerencia_id,
+        m1_0.usuario_id,
+        m1_1.id,
+        m1_1.activo,
+        m1_1.created_at,
+        m1_1.descripcion,
+        m1_1.gerencia_id,
+        m1_1.nombre,
+        m1_1.updated_at,
+        ar1_0.nombre_completo,
+        ar1_0.password_hash,
+        ar1_0.rol,
+        ar1_0.ultimo_acceso,
+        ar1_0.updated_at,
+        e1_0.abogado_responsable_nombre,
+        e1_0.created_at,
+        e1_0.descripcion,
+        e1_0.etapa_procesal,
+        e1_0.gerencia_id,
+        g3_0.id,
+        g3_0.activo,
+        g3_0.created_at,
+        g3_0.descripcion,
+        g3_0.nombre,
+        g3_0.updated_at,
+        e1_0.materia_id,
+        m2_0.id,
+        m2_0.activo,
+        m2_0.created_at,
+        m2_0.descripcion,
+        m2_0.gerencia_id,
+        m2_0.nombre,
+        m2_0.updated_at,
+        e1_0.numero,
+        oj1_0.id,
+        oj1_0.activo,
+        oj1_0.created_at,
+        oj1_0.nombre,
+        oj1_0.sede,
+        oj1_0.tipo,
+        oj1_0.updated_at,
+        e1_0.organo_jurisdiccional_texto,
+        e1_0.partes,
+        e1_0.prioridad,
+        e1_0.sede,
+        te1_0.id,
+        te1_0.activo,
+        te1_0.created_at,
+        te1_0.descripcion,
+        te1_0.nombre,
+        e1_0.updated_at 
+    from
+        expedientes e1_0 
+    left join
+        usuarios ar1_0 
+            on ar1_0.id=e1_0.abogado_responsable_id 
+    left join
+        usuario_materias m1_0 
+            on ar1_0.id=m1_0.usuario_id 
+    left join
+        materias m1_1 
+            on m1_1.id=m1_0.materia_id 
+    join
+        gerencias g3_0 
+            on g3_0.id=e1_0.gerencia_id 
+    join
+        materias m2_0 
+            on m2_0.id=e1_0.materia_id 
+    left join
+        organos_jurisdiccionales oj1_0 
+            on oj1_0.id=e1_0.organo_jurisdiccional_id 
+    left join
+        tipos_expediente te1_0 
+            on te1_0.id=e1_0.tipo_expediente_id 
+    where
+        e1_0.id=?
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.completado,
+        r1_0.created_at,
+        r1_0.detalles,
+        r1_0.fecha_recordatorio,
+        r1_0.hora_recordatorio,
+        r1_0.prioridad,
+        r1_0.titulo,
+        r1_0.updated_at,
+        r1_0.usuario_id 
+    from
+        recordatorios r1_0 
+    left join
+        usuarios u1_0 
+            on u1_0.id=r1_0.usuario_id 
+    where
+        u1_0.id=? 
+        and not(r1_0.completado)
+2026-02-09T14:39:17.168-06:00  WARN 1028092 --- [sistema-juridico] [nio-8080-exec-5] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource favicon.ico.]

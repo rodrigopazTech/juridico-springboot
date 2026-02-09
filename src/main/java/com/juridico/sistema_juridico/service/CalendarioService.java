@@ -1,17 +1,13 @@
 package com.juridico.sistema_juridico.service;
 
 import com.juridico.sistema_juridico.dto.response.calendario.EventoResponse;
-import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import com.juridico.sistema_juridico.Entity.usuario.Recordatorio;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
-import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
-import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.RecordatorioRepository;
-import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,53 +27,17 @@ public class CalendarioService {
     @Autowired
     private RecordatorioRepository recordatorioRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-
-    @Autowired
-    private GerenciaRepository gerenciaRepository;
-
-    public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo, Long filtroGerenciaId, Long filtroUsuarioId) {
+    public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo) {
         List<EventoResponse> eventos = new ArrayList<>();
         
-        // Para GERENTE: ver solo su gerencia
-        boolean verSoloSuGerencia = usuarioActual != null && 
-            usuarioActual.getRol() == RolUsuario.GERENTE;
-
         // 1. Mapear Audiencias
         List<Audiencia> audiencias = audienciaRepository.findAll();
-        
-        // Filtrar por gerencia si es gerente
-        if (verSoloSuGerencia && usuarioActual.getGerencia() != null && usuarioActual.getGerencia().getId() != null) {
-            final Integer gerenciaIdInteger = usuarioActual.getGerencia().getId();
-            
-            audiencias = audiencias.stream()
-                .filter(a -> a.getExpediente() != null && 
-                            a.getExpediente().getGerencia() != null &&
-                            a.getExpediente().getGerencia().getId() != null &&
-                            a.getExpediente().getGerencia().getId().equals(gerenciaIdInteger))
-                .collect(Collectors.toList());
-        }
-        
         eventos.addAll(audiencias.stream()
                 .<EventoResponse>map(a -> mapToAudienciaResponse(a))
                 .collect(Collectors.toList()));
 
         // 2. Mapear Términos
         List<Termino> terminos = terminoRepository.findAll();
-        
-        // Filtrar por gerencia si es gerente
-        if (verSoloSuGerencia && usuarioActual.getGerencia() != null && usuarioActual.getGerencia().getId() != null) {
-            final Integer gerenciaIdInteger = usuarioActual.getGerencia().getId();
-            
-            terminos = terminos.stream()
-                .filter(t -> t.getExpediente() != null && 
-                             t.getExpediente().getGerencia() != null &&
-                             t.getExpediente().getGerencia().getId() != null &&
-                             t.getExpediente().getGerencia().getId().equals(gerenciaIdInteger))
-                .collect(Collectors.toList());
-        }
-        
         eventos.addAll(terminos.stream()
                 .<EventoResponse>map(t -> mapToTerminoResponse(t))
                 .collect(Collectors.toList()));
@@ -91,36 +51,17 @@ public class CalendarioService {
                     .collect(Collectors.toList()));
         }
 
-        // Aplicar filtros adicionales
-        return aplicarFiltros(eventos, filtroTipo, filtroGerenciaId, filtroUsuarioId, usuarioActual);
+        // Aplicar filtro por tipo
+        return aplicarFiltroTipo(eventos, filtroTipo);
     }
 
-    private List<EventoResponse> aplicarFiltros(List<EventoResponse> eventos, String filtroTipo, 
-            Long filtroGerenciaId, Long filtroUsuarioId, Usuario usuarioActual) {
-        
-        return eventos.stream()
-            .filter(e -> {
-                // Filtro por tipo
-                if (filtroTipo != null && !filtroTipo.isEmpty() && !"todos".equals(filtroTipo)) {
-                    if (!e.getTipo().equals(filtroTipo)) {
-                        return false;
-                    }
-                }
-                // Filtro por gerencia
-                if (filtroGerenciaId != null && filtroGerenciaId > 0) {
-                    if (e.getGerenciaId() == null || !e.getGerenciaId().equals(filtroGerenciaId)) {
-                        return false;
-                    }
-                }
-                // Filtro por usuario
-                if (filtroUsuarioId != null && filtroUsuarioId > 0) {
-                    if (e.getUsuarioId() == null || !e.getUsuarioId().equals(filtroUsuarioId)) {
-                        return false;
-                    }
-                }
-                return true;
-            })
-            .collect(Collectors.toList());
+    private List<EventoResponse> aplicarFiltroTipo(List<EventoResponse> eventos, String filtroTipo) {
+        if (filtroTipo != null && !filtroTipo.isEmpty() && !"todos".equals(filtroTipo)) {
+            return eventos.stream()
+                .filter(e -> e.getTipo().equals(filtroTipo))
+                .collect(Collectors.toList());
+        }
+        return eventos;
     }
 
     private EventoResponse mapToAudienciaResponse(Audiencia a) {
@@ -134,12 +75,10 @@ public class CalendarioService {
                 gerenciaId = a.getExpediente().getGerencia().getId().longValue();
                 gerenciaNombre = a.getExpediente().getGerencia().getNombre();
             }
-            // Obtener abogado responsable del expediente
             if (a.getExpediente().getAbogadoResponsable() != null) {
                 usuarioId = a.getExpediente().getAbogadoResponsable().getId().longValue();
                 usuarioNombre = a.getExpediente().getAbogadoResponsable().getNombreCompleto();
             } else if (a.getExpediente().getAbogadoResponsableNombre() != null) {
-                // Usar el nombre almacenado directamente si no hay relación
                 usuarioNombre = a.getExpediente().getAbogadoResponsableNombre();
             }
         }
@@ -205,22 +144,4 @@ public class CalendarioService {
                 .detalles(r.getDetalles())
                 .build();
     }
-
-    /**
-     * Obtiene todas las gerencias para el filtro
-     */
-    public List<Gerencia> obtenerGerencias() {
-        return gerenciaRepository.findAll();
-    }
-
-    /**
-     * Obtiene usuarios por gerencia (para filtro de gerente)
-     */
-    public List<Usuario> obtenerUsuariosPorGerencia(Long gerenciaId) {
-        if (gerenciaId != null && gerenciaId > 0) {
-            return usuarioRepository.findByGerenciaId(gerenciaId);
-        }
-        return usuarioRepository.findAll();
-    }
 }
-
