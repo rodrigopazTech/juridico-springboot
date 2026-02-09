@@ -16,8 +16,7 @@ import java.util.UUID;
 @Repository
 public interface TerminoRepository extends JpaRepository<Termino, Integer> {
 
-    // 1. CONSULTA PARA EXCEL (Devuelve List)
-    // MODIFICADO: Agregado filtro e.gerencia.id para seguridad
+    // 1. CONSULTA PARA EXCEL
     @Query("SELECT t FROM Termino t " +
            "LEFT JOIN t.expediente e " +
            "LEFT JOIN t.abogadoResponsable a " +
@@ -25,20 +24,22 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "(:keyword IS NULL OR :keyword = '' OR " +
            "LOWER(t.actuacion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "CONCAT(t.id, '') LIKE CONCAT('%', :keyword, '%')) " + 
            "AND (:estatus IS NULL OR :estatus = '' OR t.estatusTermino = :estatus) " +
            "AND (:prioridad IS NULL OR t.prioridad = :prioridad) " +
            "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
-           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId)") // <--- NUEVO FILTRO
+           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
+           "AND (:materiaId IS NULL OR e.materia.id = :materiaId)") 
     List<Termino> listarParaExcel(
             @Param("keyword") String keyword,
             @Param("estatus") String estatus,
             @Param("prioridad") Prioridad prioridad,
             @Param("abogadoId") Integer abogadoId,
-            @Param("gerenciaId") Integer gerenciaId);
+            @Param("gerenciaId") Integer gerenciaId,
+            @Param("materiaId") Integer materiaId); 
 
-    // 2. CONSULTA PARA PAGINACIÓN (La principal)
-    // MODIFICADO: Agregado filtro e.gerencia.id para seguridad
+    // 2. CONSULTA PARA PAGINACIÓN
     @Query("SELECT t FROM Termino t " +
            "LEFT JOIN t.expediente e " +
            "LEFT JOIN t.abogadoResponsable a " +
@@ -46,20 +47,23 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "(:keyword IS NULL OR :keyword = '' OR " +
            "LOWER(t.actuacion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "CONCAT(t.id, '') LIKE CONCAT('%', :keyword, '%')) " + 
            "AND (:estatus IS NULL OR :estatus = '' OR t.estatusTermino = :estatus) " +
            "AND (:prioridad IS NULL OR t.prioridad = :prioridad) " +
            "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
-           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId)")
+           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
+           "AND (:materiaId IS NULL OR e.materia.id = :materiaId)")
     Page<Termino> buscarConFiltros(
             @Param("keyword") String keyword,
             @Param("estatus") String estatus,
             @Param("prioridad") Prioridad prioridad,
             @Param("abogadoId") Integer abogadoId,
             @Param("gerenciaId") Integer gerenciaId,
+            @Param("materiaId") Integer materiaId, 
             Pageable pageable);
 
-    // Métodos auxiliares (Se mantienen igual)
+    // ... Métodos auxiliares (sin cambios) ...
     List<Termino> findByFechaVencimientoBeforeAndEstatusTerminoNot(LocalDate fecha, String estatus);
     List<Termino> findByExpedienteId(UUID expedienteId);
 
@@ -70,9 +74,6 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             Pageable pageable
     );
 
-    // =========================
-    // ✅ NUEVO: CARGA DE TRABAJO POR USUARIO
-    // =========================
     @Query("""
         SELECT u.nombreCompleto, COUNT(t)
         FROM Termino t
@@ -80,5 +81,4 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
         GROUP BY u.nombreCompleto
     """)
     List<Object[]> contarTerminosPorUsuario();
-
 }

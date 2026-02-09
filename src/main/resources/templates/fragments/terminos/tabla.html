@@ -32,14 +32,19 @@
                         </div>
                     </td>
 
-                    <td class="px-4 py-3">
-                        <div class="flex flex-col">
-                            <a th:if="${t.expediente != null}" 
-                            th:href="@{/expedientes/{id}(id=${t.expediente.id})}"
-                            class="font-bold text-gob-guinda hover:underline" 
-                            th:text="${t.expediente.numero}">EXP-001</a>
-                            <span class="text-xs text-gray-400" 
-                                th:text="${t.expediente != null ? t.expediente.partes : 'Sin Partes'}">Partes</span>
+                   <td class="px-4 py-3">
+                        <div class="flex flex-col max-w-[180px]"> <a th:if="${t.expediente != null}" 
+                               th:href="@{/expedientes/{id}(id=${t.expediente.id})}"
+                               class="font-bold text-gob-guinda hover:underline text-sm truncate" 
+                               th:title="'Ver expediente: ' + ${t.expediente.numero}"
+                               th:text="${t.expediente.numero}">EXP-001</a>
+                            
+                            <span class="text-xs text-gray-400 truncate cursor-help" 
+                                  th:if="${t.expediente != null}"
+                                  th:title="${t.expediente.partes}" 
+                                  th:text="${t.expediente.partes}">Partes</span>
+                                  
+                            <span class="text-xs text-gray-300 italic" th:if="${t.expediente == null}">Sin Asignar</span>
                         </div>
                     </td>
 
@@ -86,9 +91,7 @@
                             <i class="fas fa-edit"></i>
                         </button>
 
-                        <button th:data-termino-id="${t.id}" 
-                                onclick="toggleMenu(this.dataset.terminoId)" 
-                                class="text-gray-400 hover:text-gob-guinda px-2">
+                        <button th:onclick="'toggleMenu(' + ${t.id} + ')'" class="text-gray-400 hover:text-gob-guinda px-2">
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
 
@@ -103,8 +106,7 @@
                             <div class="border-t border-gray-100"></div>
 
                             <button th:unless="${t.estatusTermino == 'Liberado' || t.estatusTermino == 'Presentado' || t.estatusTermino == 'Concluido'}"
-                                    th:data-termino-id="${t.id}"
-                                    onclick="activarSubida(this.dataset.terminoId)"
+                                    th:onclick="'activarSubida(' + ${t.id} + ')'" 
                                     class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-oro transition flex items-center border-l-4 border-transparent hover:border-gob-oro">
                                 <i th:class="${t.archivoWord != null ? 'fas fa-sync-alt mr-3 w-4 text-center text-orange-400' : 'fas fa-cloud-upload-alt mr-3 w-4 text-center text-gray-400'}"></i> 
                                 <span th:text="${t.archivoWord != null ? 'Reemplazar Borrador' : 'Subir Borrador'}">Subir Borrador</span>
@@ -118,8 +120,7 @@
                             </a>
 
                             <button th:if="${t.estatusTermino == 'Presentado' and mapaPermisos.get('Presentado').contains(rolActual)}"
-                                    th:data-termino-id="${t.id}"
-                                    onclick="activarSubidaAcuse(this.dataset.terminoId)"
+                                    th:onclick="'activarSubidaAcuse(' + ${t.id} + ')'" 
                                     class="w-full text-left px-4 py-3 text-sm text-purple-700 hover:bg-purple-50 transition flex items-center border-l-4 border-transparent hover:border-purple-500 font-bold bg-purple-50/50">
                                 <i class="fas fa-file-signature mr-3 w-4 text-center text-purple-600"></i> 
                                 Subir Acuse y Concluir
@@ -145,8 +146,7 @@
 
                             <div class="border-t border-gray-100"></div>
 
-                            <button th:data-termino-id="${t.id}"
-                                    onclick="confirmarEliminar(this.dataset.terminoId)"
+                            <button th:onclick="'confirmarEliminar(' + ${t.id} + ')'"
                                     class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition font-medium border-l-4 border-transparent hover:border-red-500">
                                 <i class="fas fa-trash-alt mr-3 w-4 text-center text-red-400"></i> Eliminar
                             </button>

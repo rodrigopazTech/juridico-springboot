@@ -89,7 +89,6 @@ public class NotificacionesController {
         return "redirect:/alertas?tab=recordatorios";
     }
 
-    // Marcar como leída y redirigir al origen
     @GetMapping("/notificaciones/leer/{id}")
     public String leerNotificacion(@PathVariable Integer id) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -100,9 +99,12 @@ public class NotificacionesController {
             notificacion.setLeida(true);
             notificacion.setFechaLeida(LocalDateTime.now());
             notificacionRepository.save(notificacion);
-            
+           
             if ("AUDIENCIA".equals(notificacion.getEntidadTipo()) && notificacion.getEntidadId() != null) {
                 return "redirect:/audiencias?keyword=" + notificacion.getEntidadId();                
+            }            
+            else if ("TERMINO".equals(notificacion.getEntidadTipo()) && notificacion.getEntidadId() != null) {
+                return "redirect:/terminos?keyword=" + notificacion.getEntidadId();
             }
         }
         return "redirect:/alertas";

@@ -45,6 +45,9 @@ import java.io.IOException;
 import java.util.List;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 @Controller
 @RequestMapping("/audiencias")
@@ -131,12 +134,28 @@ public class AudienciasController {
         model.addAttribute("pageTitle", "Gestión de Audiencias");
         model.addAttribute("activePage", "audiencias");
 
-        // 5. DROPDOWN INTELIGENTE
+        // 5. DROPDOWN INTELIGENTE (MODO ANTI-FANTASMA)
         List<Expediente> expedientesParaDropdown;
+        
         if (rol.equals("ABOGADO")) {
-            expedientesParaDropdown = expedienteRepository.findAll().stream()
+            // A) Expedientes donde soy el Dueño
+            List<Expediente> misExpedientes = expedienteRepository.findAll().stream()
                 .filter(e -> e.getAbogadoResponsable() != null && e.getAbogadoResponsable().getId().equals(usuario.getId()))
                 .collect(Collectors.toList());
+
+            // B) Expedientes donde soy Invitado ACTIVO (Audiencia NO Concluida)
+            List<Expediente> expedientesPorAudiencia = audienciaRepository.findAll().stream()
+                .filter(a -> a.getAbogadoComparece() != null && 
+                             a.getAbogadoComparece().getId().equals(usuario.getId()) &&
+                             !"CONCLUIDA".equals(a.getEstatusAudiencia())) // <--- AQUÍ ESTÁ EL CANDADO FANTASMA
+                .map(Audiencia::getExpediente)
+                .collect(Collectors.toList());
+
+            // Unir listas sin duplicados
+            Set<Expediente> conjunto = new HashSet<>(misExpedientes);
+            conjunto.addAll(expedientesPorAudiencia);
+            expedientesParaDropdown = new ArrayList<>(conjunto);
+
         } else if (rol.equals("GERENTE")) {
             expedientesParaDropdown = expedienteRepository.findAll().stream()
                 .filter(e -> e.getGerencia() != null && usuario.getGerencia() != null && 
@@ -156,7 +175,22 @@ public class AudienciasController {
         model.addAttribute("listaTiposAudiencia", tipoAudienciaRepository.findAll());
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
         model.addAttribute("listaMaterias", materiaRepository.findAll());
-        model.addAttribute("abogados", usuarioRepository.findAll()); 
+        
+        // --- FILTRO DE ABOGADOS EN MODAL ---
+        // (Aunque esto no estaba en el requerimiento del fantasma, lo alineamos para que sea coherente)
+        List<Usuario> listaAbogados;
+        if (rol.equals("ABOGADO")) {
+             listaAbogados = Collections.singletonList(usuario);
+        } else if (rol.equals("GERENTE") || rol.equals("JEFE_DEPTO")) {
+             listaAbogados = usuarioRepository.findAll().stream()
+                 .filter(u -> u.getGerencia() != null && usuario.getGerencia() != null && 
+                              u.getGerencia().getId().equals(usuario.getGerencia().getId()))
+                 .collect(Collectors.toList());
+        } else {
+             listaAbogados = usuarioRepository.findAll();
+        }
+        model.addAttribute("abogados", listaAbogados);
+        // ------------------------------------
         
         // Filtros en vista
         model.addAttribute("keyword", keyword); 
@@ -372,8 +406,7 @@ public class AudienciasController {
                 break;
         }
 
-        // 2. LÓGICA DE FECHAS "CENTINELA" (CORRECCIÓN CLAVE)
-        // Por defecto: Rango histórico amplio para evitar NULLs en la BD
+        // 2. LÓGICA DE FECHAS "CENTINELA"
         LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
         LocalDate fechaFin = LocalDate.of(2100, 12, 31);
         
@@ -400,7 +433,6 @@ public class AudienciasController {
         }
 
         // 3. LLAMAR AL REPOSITORIO
-        // Ahora fechaInicio y fechaFin SIEMPRE tienen valor, nunca son null.
         List<Audiencia> listado = audienciaRepository.listarParaExcel(
             keyword, tipo, gerencia, materia, estatus, 
             abogadoId, fechaInicio, fechaFin,
