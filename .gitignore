@@ -41,3 +41,13 @@ uploads/
 
 # Imágenes Docker
 *.tar
+
+# Logs y Temporales
+*.log
+server-log.txt
+server-full-log.txt
+test-documento.txt
+*.png
+temp-frontend*/
+nul
+```,oldString:

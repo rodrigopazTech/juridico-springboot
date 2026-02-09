@@ -1,0 +1,28 @@
+image: maven:3.8.5-openjdk-17
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+cache:
+  paths:
+    - .m2/repository/
+    - target/
+
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  script:
+    - mvn compile -DskipTests
+  artifacts:
+    paths:
+      - target/
+
+test:
+  stage: test
+  script:
+    - mvn test
+  dependencies:
+    - build
