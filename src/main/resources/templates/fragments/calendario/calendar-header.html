@@ -1,0 +1,17 @@
+<div th:fragment="header" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-wrap justify-between items-center gap-4">
+    <div class="flex items-center gap-4">
+        <button id="btnPrev" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <i class="fas fa-chevron-left text-gob-guinda"></i>
+        </button>
+        <h2 id="currentPeriod" class="text-2xl font-bold text-gob-guinda min-w-[200px] text-center">---</h2>
+        <button id="btnNext" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <i class="fas fa-chevron-right text-gob-guinda"></i>
+        </button>
+    </div>
+    
+    <div class="flex bg-gray-100 p-1 rounded-lg">
+        <button data-view="day" class="view-btn px-6 py-2 text-sm font-semibold rounded-md transition-all">Día</button>
+        <button data-view="week" class="view-btn px-6 py-2 text-sm font-semibold rounded-md transition-all">Semana</button>
+        <button data-view="month" class="view-btn px-6 py-2 text-sm font-semibold rounded-md bg-white shadow-sm">Mes</button>
+    </div>
+</div>
