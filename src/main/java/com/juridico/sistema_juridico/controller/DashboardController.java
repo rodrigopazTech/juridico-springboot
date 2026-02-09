@@ -68,9 +68,9 @@ public class DashboardController {
      * Esta función centraliza la lógica de permisos
      */
     private Long validarGerenciaPorRol(Usuario usuario, Long gerenciaIdSolicitada) {
-        // Verifica que los nombres del ENUM coincidan (pueden ser RolUsuario.ROLE_DIRECTOR etc)
-        boolean esDirectivo = usuario.getRol() == RolUsuario.DIRECTOR || 
-                              usuario.getRol() == RolUsuario.SUBDIRECTOR;
+        // Verifica si el usuario tiene rol de Dirección (puede ver todas las gerencias)
+        boolean esDirectivo = usuario.getRol() == RolUsuario.DIRECCION || 
+                              usuario.getRol() == RolUsuario.SUBDIRECCION;
 
         if (esDirectivo) {
             return gerenciaIdSolicitada; // El director puede ver todo (null) o una específica
