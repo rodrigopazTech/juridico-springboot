@@ -50,4 +50,9 @@ test-documento.txt
 *.png
 temp-frontend*/
 nul
+
+# Entorno local
+.env
+.env.local
+
 ```,oldString:
