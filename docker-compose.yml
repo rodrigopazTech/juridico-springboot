@@ -3,11 +3,11 @@ services:
     image: postgres:15
     container_name: postgres-juridico
     environment:
-      POSTGRES_USER: villalobos_admin
-      POSTGRES_PASSWORD: password123
-      POSTGRES_DB: sistema_juridico
+      POSTGRES_USER: ${DB_USER:-villalobos_admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password123}
+      POSTGRES_DB: ${DB_NAME:-sistema_juridico}
     ports:
-      - "5433:5432"
+      - "${DB_PORT_EXT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     deploy:
@@ -20,8 +20,8 @@ services:
     image: dpage/pgadmin4
     container_name: pgadmin-juridico
     environment:
-      PGADMIN_DEFAULT_EMAIL: ricardo@juridico.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-ricardo@juridico.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASS:-admin}
     ports:
       - "5050:80"
     depends_on:
