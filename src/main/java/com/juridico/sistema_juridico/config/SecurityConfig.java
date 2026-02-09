@@ -33,14 +33,14 @@ public class SecurityConfig {
                 .requestMatchers("/", "/login", "/register", "/api/auth/**").permitAll()
 
                 // 2. NIVEL ALTO: Usuarios y Agenda General (Solo Dirección y Subdirección)
-                .requestMatchers("/usuarios/**", "/agenda/**").hasAnyAuthority("DIRECCION", "SUBDIRECCION")
+                .requestMatchers("/usuarios", "/usuarios/**", "/agenda", "/agenda/**").hasAnyAuthority("DIRECCION", "SUBDIRECCION")
 
                 // 3. NIVEL MEDIO: Dashboard (Dirección, Subdirección, Gerentes y Jefes)
                 // Nota: Los Abogados NO entran aquí.
-                .requestMatchers("/dashboard/**").hasAnyAuthority("DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO")
+                .requestMatchers("/dashboard", "/dashboard/**").hasAnyAuthority("DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO")
 
                 // 4. NIVEL OPERATIVO: Expedientes, Términos, Audiencias (TODOS los autenticados)
-                .requestMatchers("/expedientes/**", "/terminos/**", "/audiencias/**").authenticated()
+                .requestMatchers("/expedientes", "/expedientes/**", "/terminos", "/terminos/**", "/audiencias", "/audiencias/**").authenticated()
 
                 // 5. API REST: Gestor Documental (TODOS los autenticados)
                 .requestMatchers("/api/documentos/**", "/api/carpetas/**").authenticated()
