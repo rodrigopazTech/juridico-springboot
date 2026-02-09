@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@NoArgsConstructor // Requerido para evitar errores de inferencia
-@AllArgsConstructor // Requerido por @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class EventoResponse {
     private Long id;
     private String titulo;
@@ -17,6 +17,9 @@ public class EventoResponse {
     private String hora;      
     private Long gerenciaId;
     private Long usuarioId;
+    private String gerenciaNombre;
+    private String usuarioNombre;
     private String expediente; 
     private String detalles;
 }
+

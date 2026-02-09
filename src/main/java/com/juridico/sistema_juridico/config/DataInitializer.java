@@ -38,41 +38,60 @@ public class DataInitializer implements CommandLineRunner {
     @Transactional
     public void run(String... args) throws Exception {
         
-        // 1. GERENCIAS Y MATERIAS (Vinculadas correctamente)
+        // 1. GERENCIAS Y MATERIAS (Estructura Organizacional)
         if (gerenciaRepository.count() == 0) {
             
-            // Crear Gerencia 1
-            Gerencia gLitigio = Gerencia.builder()
-                    .nombre("Gerencia de Litigio y Defensa")
-                    .descripcion("Encargada de atender juicios civiles y mercantiles.")
+            // Gerencia 1: Civil, Mercantil, Fiscal y Administrativo
+            Gerencia gCivil = Gerencia.builder()
+                    .nombre("Civil, Mercantil, Fiscal y Administrativo")
+                    .descripcion("Atención a juicios civiles, mercantiles, fiscales y administrativos.")
                     .activo(true)
                     .build();
-            gLitigio = gerenciaRepository.save(gLitigio); // Guardamos para tener ID
+            gCivil = gerenciaRepository.save(gCivil);
 
-            // Crear Materias para Gerencia 1
-            Materia mCivil = Materia.builder().nombre("Civil").gerencia(gLitigio).activo(true).build();
-            Materia mMercantil = Materia.builder().nombre("Mercantil").gerencia(gLitigio).activo(true).build();
-            materiaRepository.saveAll(List.of(mCivil, mMercantil));
+            // Materias para Gerencia 1
+            Materia mCivil = Materia.builder().nombre("Civil").gerencia(gCivil).activo(true).build();
+            Materia mMercantil = Materia.builder().nombre("Mercantil").gerencia(gCivil).activo(true).build();
+            Materia mFiscal = Materia.builder().nombre("Fiscal").gerencia(gCivil).activo(true).build();
+            Materia mAdministrativo = Materia.builder().nombre("Administrativo").gerencia(gCivil).activo(true).build();
+            materiaRepository.saveAll(List.of(mCivil, mMercantil, mFiscal, mAdministrativo));
 
-            // Crear Gerencia 2
+            // Gerencia 2: Laboral y Penal
             Gerencia gLaboral = Gerencia.builder()
-                    .nombre("Gerencia de Asuntos Laborales")
-                    .descripcion("Atención a demandas de trabajadores y sindicatos.")
+                    .nombre("Laboral y Penal")
+                    .descripcion("Atención a demandas laborales y procesos penales.")
                     .activo(true)
                     .build();
-            gLaboral = gerenciaRepository.save(gLaboral); // Guardamos
+            gLaboral = gerenciaRepository.save(gLaboral);
 
-            // Crear Materias para Gerencia 2
+            // Materias para Gerencia 2
             Materia mLaboral = Materia.builder().nombre("Laboral").gerencia(gLaboral).activo(true).build();
-            Materia mAmparo = Materia.builder().nombre("Amparo").gerencia(gLaboral).activo(true).build();
-            materiaRepository.saveAll(List.of(mLaboral, mAmparo));
+            Materia mPenal = Materia.builder().nombre("Penal").gerencia(gLaboral).activo(true).build();
+            materiaRepository.saveAll(List.of(mLaboral, mPenal));
 
-            System.out.println("✅ Gerencias y Materias inicializadas correctamente.");
+            // Gerencia 3: Transparencia y Amparo
+            Gerencia gTransparencia = Gerencia.builder()
+                    .nombre("Transparencia y Amparo")
+                    .descripcion("Atención a solicitudes de transparencia y juicios de amparo.")
+                    .activo(true)
+                    .build();
+            gTransparencia = gerenciaRepository.save(gTransparencia);
+
+            // Materias para Gerencia 3
+            Materia mTransparencia = Materia.builder().nombre("Transparencia").gerencia(gTransparencia).activo(true).build();
+            Materia mAmparo = Materia.builder().nombre("Amparo").gerencia(gTransparencia).activo(true).build();
+            materiaRepository.saveAll(List.of(mTransparencia, mAmparo));
+
+            System.out.println("✅ Gerencias y Materias inicializadas correctamente:");
+            System.out.println("   - Civil, Mercantil, Fiscal y Administrativo");
+            System.out.println("   - Laboral y Penal");
+            System.out.println("   - Transparencia y Amparo");
         }
 
        // 2. USUARIOS
         if (usuarioRepository.count() == 0) {
-            Gerencia gerenciaDefault = gerenciaRepository.findAll().stream().findFirst().orElse(null);
+            // Obtener todas las gerencias para asignar gerentes
+            List<Gerencia> gerencias = gerenciaRepository.findAll();
 
             // 1. NIVEL ALTO (Ve todo)
             Usuario director = Usuario.builder()
@@ -93,39 +112,61 @@ public class DataInitializer implements CommandLineRunner {
                     .createdAt(LocalDateTime.now())
                     .build();
 
-            // 2. NIVEL MEDIO (Ve Dashboard, pero NO Usuarios ni Agenda General)
-            Usuario gerente = Usuario.builder()
-                    .nombreCompleto("Gerente Civil")
-                    .email("gerente@juridico.com")
+            // 2. NIVEL MEDIO (Gerentes - uno por cada gerencia)
+            Usuario gerenteCivil = Usuario.builder()
+                    .nombreCompleto("Gerente Civil, Mercantil, Fiscal y Administrativo")
+                    .email("gerente.civil@juridico.com")
                     .password(passwordEncoder.encode("12345"))
                     .rol(RolUsuario.GERENTE)
                     .activo(true)
-                    .gerencia(gerenciaDefault)
+                    .gerencia(gerencias.get(0)) // Civil, Mercantil, Fiscal y Administrativo
                     .createdAt(LocalDateTime.now())
                     .build();
             
-            Usuario jefe = Usuario.builder()
-                    .nombreCompleto("Jefe de Depto")
-                    .email("jefe@juridico.com")
+            Usuario gerenteLaboral = Usuario.builder()
+                    .nombreCompleto("Gerente Laboral y Penal")
+                    .email("gerente.laboral@juridico.com")
                     .password(passwordEncoder.encode("12345"))
-                    .rol(RolUsuario.JEFE_DEPTO)
+                    .rol(RolUsuario.GERENTE)
                     .activo(true)
-                    .gerencia(gerenciaDefault)
+                    .gerencia(gerencias.get(1)) // Laboral y Penal
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            
+            Usuario gerenteTransparencia = Usuario.builder()
+                    .nombreCompleto("Gerente Transparencia y Amparo")
+                    .email("gerente.transparencia@juridico.com")
+                    .password(passwordEncoder.encode("12345"))
+                    .rol(RolUsuario.GERENTE)
+                    .activo(true)
+                    .gerencia(gerencias.get(2)) // Transparencia y Amparo
                     .createdAt(LocalDateTime.now())
                     .build();
 
-            // 3. NIVEL OPERATIVO (Solo Expedientes, Términos, Audiencias)
-            Usuario abogado = Usuario.builder()
-                    .nombreCompleto("Abogado Litigante")
-                    .email("abogado@juridico.com")
+            // 3. NIVEL OPERATIVO (Abogados - asignados a gerencias)
+            Usuario abogadoCivil = Usuario.builder()
+                    .nombreCompleto("Abogado Civil")
+                    .email("abogado.civil@juridico.com")
                     .password(passwordEncoder.encode("12345"))
                     .rol(RolUsuario.ABOGADO)
                     .activo(true)
-                    .gerencia(gerenciaDefault)
+                    .gerencia(gerencias.get(0))
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            
+            Usuario abogadoLaboral = Usuario.builder()
+                    .nombreCompleto("Abogado Laboral")
+                    .email("abogado.laboral@juridico.com")
+                    .password(passwordEncoder.encode("12345"))
+                    .rol(RolUsuario.ABOGADO)
+                    .activo(true)
+                    .gerencia(gerencias.get(1))
                     .createdAt(LocalDateTime.now())
                     .build();
 
-            usuarioRepository.saveAll(List.of(director, subdirector, gerente, jefe, abogado));
+            usuarioRepository.saveAll(List.of(director, subdirector, 
+                    gerenteCivil, gerenteLaboral, gerenteTransparencia,
+                    abogadoCivil, abogadoLaboral));
             System.out.println("✅ Usuarios de prueba creados para todos los roles.");
         }
 
@@ -134,8 +175,9 @@ public class DataInitializer implements CommandLineRunner {
             TipoExpediente tJuicio = TipoExpediente.builder().nombre("Juicio Ordinario").build();
             TipoExpediente tEjecutivo = TipoExpediente.builder().nombre("Juicio Ejecutivo Mercantil").build();
             TipoExpediente tAmparo = TipoExpediente.builder().nombre("Amparo Indirecto").build();
+            TipoExpediente tLaboral = TipoExpediente.builder().nombre("Conflicto Laboral").build();
             
-            tipoExpedienteRepository.saveAll(List.of(tJuicio, tEjecutivo, tAmparo));
+            tipoExpedienteRepository.saveAll(List.of(tJuicio, tEjecutivo, tAmparo, tLaboral));
             System.out.println("✅ Tipos de Expediente creados.");
         }
 
@@ -153,7 +195,13 @@ public class DataInitializer implements CommandLineRunner {
                     .sede("CDMX")
                     .build();
             
-            organoRepository.saveAll(List.of(oJuzgado, oTribunal));
+            OrganoJurisdiccional oJLCA = OrganoJurisdiccional.builder()
+                    .nombre("Junta de Conciliación y Arbitraje")
+                    .tipo("Junta")
+                    .sede("CDMX")
+                    .build();
+
+            organoRepository.saveAll(List.of(oJuzgado, oTribunal, oJLCA));
             System.out.println("✅ Órganos creados.");
         }
 
@@ -178,3 +226,4 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 }
+

@@ -1,8 +1,22 @@
 <div th:fragment="weekView" class="flex flex-col h-full min-h-[600px]">
+    <!-- Header de la semana -->
     <div id="weekHeader" class="grid grid-cols-8 border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
-        <div class="py-3 border-r border-gray-200"></div> </div>
-    <div class="overflow-y-auto flex-1 h-[500px]">
+        <div class="py-3 border-r border-gray-200 text-center text-xs font-bold text-gray-500">Hora</div>
+        <div th:each="dia : ${#strings.arraySplit('Lunes,Martes,Miercoles,Jueves,Viernes,Sabado,Domingo', ',')}" 
+             class="py-3 border-r border-gray-200 text-center text-xs font-bold text-gray-500 uppercase"
+             th:text="${dia}"></div>
+    </div>
+    <!-- Cuerpo de la semana -->
+    <div class="overflow-y-auto flex-1 h-[500px]" id="weekContainer">
         <div id="weekBody" class="grid grid-cols-8 relative bg-white">
+            <!-- Columna de horas -->
+            <div id="hoursColumn" class="border-r border-gray-200 bg-gray-50">
+                <!-- Las horas se generarán dinámicamente -->
             </div>
+            <!-- Columnas de días -->
+            <div id="weekDays" class="contents">
+                <!-- Los días se generarán dinámicamente -->
+            </div>
+        </div>
     </div>
 </div>

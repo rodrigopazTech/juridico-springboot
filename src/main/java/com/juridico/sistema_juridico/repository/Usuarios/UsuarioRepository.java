@@ -31,4 +31,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     // 3. Para Notificaciones a Altos Mandos (Dirección/Subdirección)
     List<Usuario> findByRolInAndActivoTrue(List<RolUsuario> roles);
+    
+    // 4. Para filtro de usuarios por gerencia en el calendario
+    List<Usuario> findByGerenciaId(Long gerenciaId);
 }

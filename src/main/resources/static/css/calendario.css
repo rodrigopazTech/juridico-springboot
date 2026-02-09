@@ -229,3 +229,105 @@ body {
   font-family: 'Montserrat', sans-serif;
 }
 
+/* =========================================
+   ESTILOS VISTA SEMANAL
+   ========================================= */
+
+#weekBody {
+  min-height: 680px;
+}
+
+#hoursColumn {
+  width: 60px;
+  flex-shrink: 0;
+}
+
+#weekDays {
+  flex: 1;
+  display: contents;
+}
+
+#weekDays > div {
+  flex: 1;
+  min-width: 0;
+}
+
+/* =========================================
+   ESTILOS VISTA DIARIA
+   ========================================= */
+
+#dayTimeline {
+  min-height: 500px;
+}
+
+#dayEventsContainer {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* =========================================
+   UTILIDADES ADICIONALES
+   ========================================= */
+
+.bg-gob-guinda {
+  background-color: #691228;
+}
+
+.text-gob-guinda {
+  color: #691228;
+}
+
+.border-gob-guinda {
+  border-color: #691228;
+}
+
+.bg-gob-oro {
+  background-color: #B38E5D;
+}
+
+.text-gob-oro {
+  color: #B38E5D;
+}
+
+.border-gob-oro {
+  border-color: #B38E5D;
+}
+
+/* =========================================
+   ESTILOS FILTROS CALENDARIO
+   ========================================= */
+
+#calendarFilters {
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+}
+
+#calendarFilters select {
+  transition: all 0.2s ease;
+}
+
+#calendarFilters select:hover {
+  border-color: #B38E5D;
+}
+
+#calendarFilters select:focus {
+  box-shadow: 0 0 0 3px rgba(179, 142, 93, 0.2);
+}
+
+#btnApplyFilters {
+  transition: all 0.2s ease;
+}
+
+#btnApplyFilters:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+#btnClearFilters {
+  transition: all 0.2s ease;
+}
+
+#btnClearFilters:hover {
+  background-color: #e5e7eb;
+}
+

@@ -1,8 +1,15 @@
 <div th:fragment="dayView" class="flex flex-col h-full min-h-[600px] bg-white">
-    <div id="dayHeader" class="p-4 border-b border-gray-200 text-center font-bold text-lg text-gob-guinda">
+    <!-- Header del día -->
+    <div id="dayHeader" class="p-4 border-b border-gray-200 text-center">
+        <h3 id="dayTitle" class="font-bold text-lg text-gob-guinda">Vista Diaria</h3>
+        <p id="daySubtitle" class="text-sm text-gray-500"></p>
+    </div>
+    
+    <!-- Contenido del día -->
+    <div class="flex-1 overflow-y-auto relative" id="dayTimeline">
+        <!-- Línea de tiempo con eventos -->
+        <div id="dayEventsContainer" class="p-4 space-y-4">
+            <!-- Los eventos se generarán dinámicamente -->
         </div>
-    <div class="flex-1 overflow-y-auto relative h-[500px]">
-        <div id="dayTimeline" class="relative">
-            </div>
     </div>
 </div>
