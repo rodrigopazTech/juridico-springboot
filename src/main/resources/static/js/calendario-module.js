@@ -1,25 +1,29 @@
 /**
  * CalendarioModule.js
- * Gestiona la lógica de visualización y eventos del calendario jurídico.
+ * Gestiona la lógica de visualización, navegación y filtrado.
  */
 export class CalendarioModule {
     constructor() {
         this.currentDate = new Date();
         this.view = 'month'; // 'day', 'week', 'month'
         this.events = [];
-        this.filterTipo = 'todos';
+        this.filteredEvents = [];
         this.names = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
     }
 
     async init() {
-        console.log("Iniciando Calendario Jurídico...");
+        console.log("Iniciando Calendario...");
         this.setupEventListeners();
         await this.loadEvents();
         this.render();
     }
 
     setupEventListeners() {
-        // Selector de vistas (Día, Semana, Mes)
+        // Navegación (Anterior/Siguiente)
+        document.getElementById('btnPrev')?.addEventListener('click', () => this.navigate(-1));
+        document.getElementById('btnNext')?.addEventListener('click', () => this.navigate(1));
+
+        // Selector de Vistas
         document.querySelectorAll('.view-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 this.view = e.target.dataset.view;
@@ -28,37 +32,48 @@ export class CalendarioModule {
             });
         });
 
-        // Botones de navegación (Anterior, Siguiente)
-        document.getElementById('btnPrev')?.addEventListener('click', () => this.navigate(-1));
-        document.getElementById('btnNext')?.addEventListener('click', () => this.navigate(1));
-
-        // Filtros
+        // Botón Aplicar Filtros
         document.getElementById('btnApplyFilters')?.addEventListener('click', () => {
-            this.filterTipo = document.getElementById('filterTipo')?.value || 'todos';
-            this.render();
+            this.applyFilters();
         });
 
+        // Botón Limpiar Filtros
         document.getElementById('btnClearFilters')?.addEventListener('click', () => {
-            document.getElementById('filterTipo') && (document.getElementById('filterTipo').value = 'todos');
-            this.filterTipo = 'todos';
+            document.getElementById('filterTipo').value = 'todos';
+            const filterGerencia = document.getElementById('filterGerencia');
+            if (filterGerencia && !filterGerencia.disabled) {
+                filterGerencia.value = 'todos';
+            }
+            this.filteredEvents = [...this.events];
             this.render();
         });
     }
 
     async loadEvents() {
         try {
-            // Construir URL con filtros
-            let url = '/api/calendario/eventos';
-            if (this.filterTipo && this.filterTipo !== 'todos') {
-                url += `?tipo=${this.filterTipo}`;
-            }
-
-            const response = await fetch(url);
-            if (!response.ok) throw new Error("Error al obtener eventos");
+            const response = await fetch('/api/calendario/eventos');
+            if (!response.ok) throw new Error("Error en la respuesta del servidor");
             this.events = await response.json();
+            this.filteredEvents = [...this.events];
         } catch (error) {
             console.error("Error cargando eventos:", error);
+            this.events = [];
         }
+    }
+
+    applyFilters() {
+        const tipoSelected = document.getElementById('filterTipo').value;
+        const gerenciaSelected = document.getElementById('filterGerencia')?.value || 'todos';
+
+        this.filteredEvents = this.events.filter(event => {
+            const matchTipo = tipoSelected === 'todos' || event.tipo === tipoSelected;
+            // Si el select de gerencia no existe o es 'todos', pasa. Si no, compara strings.
+            const matchGerencia = gerenciaSelected === 'todos' || event.gerenciaNombre === gerenciaSelected;
+            return matchTipo && matchGerencia;
+        });
+
+        console.log(`Filtrado: ${this.filteredEvents.length} eventos encontrados.`);
+        this.render();
     }
 
     updateViewButtons(activeBtn) {
@@ -69,19 +84,15 @@ export class CalendarioModule {
     }
 
     render() {
-        // Ocultar todos los contenedores de vista
+        // Ocultar todas las vistas
         document.querySelectorAll('.calendar-view').forEach(v => v.classList.add('hidden'));
 
-        // Renderizar según la vista activa
         if (this.view === 'month') {
             document.getElementById('calendarMonthView').classList.remove('hidden');
             this.renderMonth();
-        } else if (this.view === 'week') {
-            document.getElementById('calendarWeekView').classList.remove('hidden');
-            this.renderWeek();
-        } else if (this.view === 'day') {
-            document.getElementById('calendarDayView').classList.remove('hidden');
-            this.renderDay();
+        } else {
+            console.warn(`Vista ${this.view} no implementada.`);
+            // Aquí podrías llamar a renderWeek() o renderDay()
         }
     }
 
@@ -96,12 +107,13 @@ export class CalendarioModule {
 
         periodLabel.innerText = `${this.names[month]} ${year}`;
 
-        // Lógica de fechas
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const startingDay = firstDay === 0 ? 6 : firstDay - 1; // Ajuste para que empiece en Lunes
+        
+        // Ajuste para calendario que empieza en Lunes (ISO)
+        const startingDay = firstDay === 0 ? 6 : firstDay - 1;
 
-        // Días del mes anterior (huecos)
+        // Celdas vacías (mes anterior)
         for (let i = 0; i < startingDay; i++) {
             grid.appendChild(this.createDayCell('', false, false));
         }
@@ -109,22 +121,18 @@ export class CalendarioModule {
         // Días del mes actual
         for (let day = 1; day <= daysInMonth; day++) {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const isToday = day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
             
-            const isToday = day === new Date().getDate() && 
-                            month === new Date().getMonth() && 
-                            year === new Date().getFullYear();
-
             const cell = this.createDayCell(day, true, isToday);
-            
-            // Filtrar eventos de este día
-            const dayEvents = this.events.filter(e => e.fecha === dateStr);
             const eventsContainer = cell.querySelector('.events-container');
+
+            // Filtrar eventos de este día específico (de los ya filtrados por el combo)
+            const dayEvents = this.filteredEvents.filter(e => e.fecha === dateStr);
 
             dayEvents.forEach(event => {
                 const eventEl = document.createElement('div');
                 eventEl.className = `event-tag event-${event.tipo}`;
                 eventEl.innerText = event.titulo;
-                eventEl.title = event.titulo;
                 eventEl.onclick = (e) => {
                     e.stopPropagation();
                     this.showEventDetail(event);
@@ -151,51 +159,24 @@ export class CalendarioModule {
         return div;
     }
 
-    showEventDetail(event) {
-        const modal = document.getElementById('modalEventDetail');
-        const content = document.getElementById('modalContent');
-        if (!modal) return;
-
-        document.getElementById('modalTitle').innerText = event.titulo;
-        document.getElementById('modalDate').innerText = event.fecha;
-        document.getElementById('modalTime').innerText = event.hora || '--:--';
-        
-        const typeBadge = document.getElementById('modalType');
-        typeBadge.innerText = event.tipo;
-        typeBadge.className = `px-2 py-1 rounded text-xs font-bold uppercase event-${event.tipo}`;
-
-        // Mostrar información extra según tipo
-        const extraInfo = document.getElementById('modalExtraInfo');
-        extraInfo.innerHTML = event.expediente ? 
-            `<p class="text-sm"><strong>Expediente:</strong> ${event.expediente}</p>` : '';
-
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        setTimeout(() => content.classList.remove('scale-95', 'opacity-0'), 10);
-    }
-
-    closeModal() {
-        const modal = document.getElementById('modalEventDetail');
-        const content = document.getElementById('modalContent');
-        content.classList.add('scale-95', 'opacity-0');
-        setTimeout(() => {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }, 300);
-    }
-
     navigate(direction) {
         if (this.view === 'month') {
             this.currentDate.setMonth(this.currentDate.getMonth() + direction);
-        } else if (this.view === 'week') {
-            this.currentDate.setDate(this.currentDate.getDate() + (direction * 7));
-        } else {
-            this.currentDate.setDate(this.currentDate.getDate() + direction);
         }
         this.render();
     }
 
-    // Placeholders para otras vistas
-    renderWeek() { console.log("Vista semanal no implementada aún."); }
-    renderDay() { console.log("Vista diaria no implementada aún."); }
+    showEventDetail(event) {
+        // Asumiendo que usas el modal de detalle proporcionado anteriormente
+        const modal = document.getElementById('modalEventDetail');
+        if (!modal) return;
+        
+        document.getElementById('modalTitle').innerText = event.titulo;
+        document.getElementById('modalDate').innerText = event.fecha;
+        document.getElementById('modalTime').innerText = event.hora || '--:--';
+        document.getElementById('modalType').innerText = event.tipo.toUpperCase();
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
 }

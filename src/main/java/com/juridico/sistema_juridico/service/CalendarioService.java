@@ -5,6 +5,7 @@ import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import com.juridico.sistema_juridico.Entity.usuario.Recordatorio;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.RecordatorioRepository;
@@ -28,16 +29,50 @@ public class CalendarioService {
     private RecordatorioRepository recordatorioRepository;
 
     public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo) {
+        return obtenerEventosCalendario(usuarioActual, filtroTipo, null);
+    }
+
+    public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo, Long filtroGerenciaId) {
         List<EventoResponse> eventos = new ArrayList<>();
+        
+        // Determinar si el usuario tiene restricción por gerencia
+        boolean tieneRestriccionGerencia = usuarioActual != null && 
+            usuarioActual.getRol() == RolUsuario.GERENTE && 
+            usuarioActual.getGerencia() != null;
+        
+        Integer gerenciaIdRestriccion = tieneRestriccionGerencia ? 
+            usuarioActual.getGerencia().getId() : null;
         
         // 1. Mapear Audiencias
         List<Audiencia> audiencias = audienciaRepository.findAll();
+        
+        // Filtrar por gerencia si el usuario tiene restricción
+        if (gerenciaIdRestriccion != null) {
+            final Integer gid = gerenciaIdRestriccion;
+            audiencias = audiencias.stream()
+                .filter(a -> a.getExpediente() != null && 
+                            a.getExpediente().getGerencia() != null &&
+                            a.getExpediente().getGerencia().getId().equals(gid))
+                .collect(Collectors.toList());
+        }
+        
         eventos.addAll(audiencias.stream()
                 .<EventoResponse>map(a -> mapToAudienciaResponse(a))
                 .collect(Collectors.toList()));
 
         // 2. Mapear Términos
         List<Termino> terminos = terminoRepository.findAll();
+        
+        // Filtrar por gerencia si el usuario tiene restricción
+        if (gerenciaIdRestriccion != null) {
+            final Integer gid = gerenciaIdRestriccion;
+            terminos = terminos.stream()
+                .filter(t -> t.getExpediente() != null && 
+                             t.getExpediente().getGerencia() != null &&
+                             t.getExpediente().getGerencia().getId().equals(gid))
+                .collect(Collectors.toList());
+        }
+        
         eventos.addAll(terminos.stream()
                 .<EventoResponse>map(t -> mapToTerminoResponse(t))
                 .collect(Collectors.toList()));
@@ -51,17 +86,28 @@ public class CalendarioService {
                     .collect(Collectors.toList()));
         }
 
-        // Aplicar filtro por tipo
-        return aplicarFiltroTipo(eventos, filtroTipo);
+        // Aplicar filtros adicionales
+        return aplicarFiltros(eventos, filtroTipo, filtroGerenciaId);
     }
 
-    private List<EventoResponse> aplicarFiltroTipo(List<EventoResponse> eventos, String filtroTipo) {
-        if (filtroTipo != null && !filtroTipo.isEmpty() && !"todos".equals(filtroTipo)) {
-            return eventos.stream()
-                .filter(e -> e.getTipo().equals(filtroTipo))
-                .collect(Collectors.toList());
-        }
-        return eventos;
+    private List<EventoResponse> aplicarFiltros(List<EventoResponse> eventos, String filtroTipo, Long filtroGerenciaId) {
+        return eventos.stream()
+            .filter(e -> {
+                // Filtro por tipo
+                if (filtroTipo != null && !filtroTipo.isEmpty() && !"todos".equals(filtroTipo)) {
+                    if (!e.getTipo().equals(filtroTipo)) {
+                        return false;
+                    }
+                }
+                // Filtro por gerencia (solo si se especifica y no es "todos")
+                if (filtroGerenciaId != null && filtroGerenciaId > 0) {
+                    if (e.getGerenciaId() == null || !e.getGerenciaId().equals(filtroGerenciaId)) {
+                        return false;
+                    }
+                }
+                return true;
+            })
+            .collect(Collectors.toList());
     }
 
     private EventoResponse mapToAudienciaResponse(Audiencia a) {

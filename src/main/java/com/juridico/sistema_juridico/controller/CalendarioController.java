@@ -1,8 +1,8 @@
 package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.service.NotificacionService;
-import com.juridico.sistema_juridico.service.UsuarioService;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -12,12 +12,13 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 @Controller
 @RequestMapping("/calendario")
 public class CalendarioController {
-
-    @Autowired
-    private UsuarioService usuarioService;
 
     @Autowired
     private NotificacionService notificacionService;
@@ -27,28 +28,46 @@ public class CalendarioController {
 
     @GetMapping
     public String index(Model model) {
-        // 1. Definir página activa para que el sidebar resalte el botón de Calendario
         model.addAttribute("activePage", "calendario");
 
-        // 2. Obtener el usuario autenticado del contexto de seguridad
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Usuario usuarioActual = null;
         
+        // Valores por defecto
+        String userRole = "ANONYMOUS";
+        boolean puedeVerFiltroGerencia = false;
+        List<String> listaGerencias = new ArrayList<>();
+
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
-            try {
-                usuarioActual = usuarioService.obtenerPorUsername(auth.getName());
+            Usuario usuarioActual = usuarioRepository.findByEmail(auth.getName()).orElse(null);
+            
+            if (usuarioActual != null) {
                 model.addAttribute("usuarioGlobal", usuarioActual);
+                model.addAttribute("notificacionesNoLeidas", notificacionService.contarNoLeidas(usuarioActual));
                 
-                long noLeidas = notificacionService.contarNoLeidas(usuarioActual);
-                model.addAttribute("notificacionesNoLeidas", noLeidas);
-                
-            } catch (Exception e) {
-                model.addAttribute("notificacionesNoLeidas", 0);
-                System.err.println("Error al cargar datos globales en CalendarioController: " + e.getMessage());
+                userRole = usuarioActual.getRol().name();
+
+                // Lógica de Permisos para Gerencias
+                if (usuarioActual.getRol() == RolUsuario.DIRECCION || usuarioActual.getRol() == RolUsuario.SUBDIRECCION) {
+                    puedeVerFiltroGerencia = true;
+                    listaGerencias = Arrays.asList(
+                        "Gerencia Civil, Mercantil, Fiscal y Administrativo",
+                        "Gerencia Laboral y Penal",
+                        "Gerencia Transparencia y Amparo"
+                    );
+                } else if (usuarioActual.getRol() == RolUsuario.GERENTE) {
+                    puedeVerFiltroGerencia = true;
+                    if (usuarioActual.getGerencia() != null) {
+                        listaGerencias.add(usuarioActual.getGerencia().getNombre());
+                    }
+                }
             }
         }
 
-        // 3. Retorna la vista ubicada en templates/views/calendario/index.html
+        // Pasamos todo al modelo con nombres claros
+        model.addAttribute("userRole", userRole);
+        model.addAttribute("puedeVerFiltroGerencia", puedeVerFiltroGerencia);
+        model.addAttribute("listaGerencias", listaGerencias);
+
         return "views/calendario/index";
     }
 }

@@ -1,6 +1,5 @@
 <div th:fragment="header" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6">
     <div class="flex flex-wrap justify-between items-center gap-4">
-        <!-- Navegación -->
         <div class="flex items-center gap-4">
             <button id="btnPrev" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
                 <i class="fas fa-chevron-left text-gob-guinda"></i>
@@ -11,7 +10,6 @@
             </button>
         </div>
         
-        <!-- Selector de vistas -->
         <div class="flex bg-gray-100 p-1 rounded-lg">
             <button data-view="day" class="view-btn px-6 py-2 text-sm font-semibold rounded-md transition-all">Día</button>
             <button data-view="week" class="view-btn px-6 py-2 text-sm font-semibold rounded-md transition-all">Semana</button>
@@ -19,30 +17,39 @@
         </div>
     </div>
     
-    <!-- Filtro por Tipo -->
     <div class="mt-4 pt-4 border-t border-gray-100">
         <div class="flex flex-wrap gap-4 items-end">
-            <div class="flex-1 min-w-[200px] max-w-[300px]">
+            
+            <div class="flex-1 min-w-[150px] max-w-[200px]">
                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tipo de Evento</label>
-                <select id="filterTipo" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gob-guinda focus:border-transparent">
-                    <option value="todos">Todos los eventos</option>
+                <select id="filterTipo" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gob-guinda outline-none">
+                    <option value="todos">Todos</option>
                     <option value="audiencia">Audiencias</option>
                     <option value="termino">Términos</option>
                     <option value="recordatorio">Recordatorios</option>
                 </select>
             </div>
             
-            <!-- Botón aplicar filtros -->
-            <div class="min-w-[100px]">
-                <button id="btnApplyFilters" class="w-full bg-gob-guinda text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gob-guindaDark transition-colors">
-                    <i class="fas fa-filter mr-2"></i>Filtrar
-                </button>
+            <div th:if="${puedeVerFiltroGerencia}" class="flex-1 min-w-[200px] max-w-[300px]">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Gerencia</label>
+                <select id="filterGerencia" 
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gob-guinda outline-none bg-white disabled:bg-gray-100"
+                        th:disabled="${userRole == 'GERENTE'}">
+                    
+                    <option value="todos" th:if="${userRole != 'GERENTE'}">Todas las gerencias</option>
+                    <option th:each="ger : ${listaGerencias}" 
+                            th:value="${ger}" 
+                            th:text="${ger}"
+                            th:selected="${userRole == 'GERENTE'}"></option>
+                </select>
             </div>
             
-            <!-- Botón limpiar filtros -->
-            <div class="min-w-[100px]">
-                <button id="btnClearFilters" class="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors">
-                    <i class="fas fa-times mr-2"></i>Limpiar
+            <div class="flex gap-2">
+                <button id="btnApplyFilters" class="bg-gob-guinda text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-red-800 transition-all">
+                    <i class="fas fa-filter mr-2"></i>Filtrar
+                </button>
+                <button id="btnClearFilters" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">
+                    Limpiar
                 </button>
             </div>
         </div>

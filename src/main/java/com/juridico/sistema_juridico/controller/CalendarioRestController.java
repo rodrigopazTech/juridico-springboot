@@ -1,7 +1,10 @@
 package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.dto.response.calendario.EventoResponse;
+import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
+import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.service.CalendarioService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +25,13 @@ public class CalendarioRestController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    @Autowired
+    private GerenciaRepository gerenciaRepository;
+
     @GetMapping("/eventos")
     public ResponseEntity<List<EventoResponse>> getEventos(
-            @RequestParam(required = false, defaultValue = "todos") String tipo) {
+            @RequestParam(required = false, defaultValue = "todos") String tipo,
+            @RequestParam(required = false, defaultValue = "todos") String gerencia) {
         
         // Obtener usuario autenticado
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -34,8 +41,47 @@ public class CalendarioRestController {
             usuarioActual = usuarioRepository.findByEmail(auth.getName()).orElse(null);
         }
         
-        List<EventoResponse> eventos = calendarioService.obtenerEventosCalendario(usuarioActual, tipo);
+        // Determinar gerenciaId a filtrar
+        Long gerenciaId = null;
+        if (gerencia != null && !"todos".equals(gerencia)) {
+            try {
+                gerenciaId = Long.parseLong(gerencia);
+            } catch (NumberFormatException e) {
+                // Ignorar si no es un número válido
+            }
+        }
+        
+        List<EventoResponse> eventos = calendarioService.obtenerEventosCalendario(
+                usuarioActual, tipo, gerenciaId);
         
         return ResponseEntity.ok(eventos);
+    }
+
+    @GetMapping("/gerencias")
+    public ResponseEntity<List<Gerencia>> getGerencias() {
+        // Obtener usuario autenticado para verificar permisos
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Usuario usuarioActual = null;
+        
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+            usuarioActual = usuarioRepository.findByEmail(auth.getName()).orElse(null);
+        }
+        
+        // ABOGADO no puede ver el filtro de gerencias
+        if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.ABOGADO) {
+            return ResponseEntity.ok(List.of());
+        }
+        
+        // GERENTE solo ve su propia gerencia
+        if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.GERENTE) {
+            if (usuarioActual.getGerencia() != null) {
+                return ResponseEntity.ok(List.of(usuarioActual.getGerencia()));
+            }
+            return ResponseEntity.ok(List.of());
+        }
+        
+        // DIRECCIÓN y SUBDIRECCIÓN ven todas las gerencias
+        List<Gerencia> gerencias = gerenciaRepository.findAll();
+        return ResponseEntity.ok(gerencias);
     }
 }
