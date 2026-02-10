@@ -66,6 +66,16 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
     // ... Métodos auxiliares (sin cambios) ...
     List<Termino> findByFechaVencimientoBeforeAndEstatusTerminoNot(LocalDate fecha, String estatus);
     List<Termino> findByExpedienteId(UUID expedienteId);
+    
+    // Buscar términos que vencen en una fecha específica trayendo (FETCH) el Expediente y Abogado de inmediato
+    @Query("SELECT t FROM Termino t " +
+           "JOIN FETCH t.expediente " +
+           "LEFT JOIN FETCH t.abogadoResponsable " +
+           "WHERE t.fechaVencimiento = :fecha " +
+           "AND t.estatusTermino NOT IN :estatusExcluidos")
+    List<Termino> findByFechaVencimientoAndEstatusTerminoNotIn(
+            @Param("fecha") LocalDate fecha, 
+            @Param("estatusExcluidos") List<String> estatusExcluidos);
 
     Page<Termino> findByEstatusTerminoInAndFechaPresentacionBetweenOrderByFechaPresentacionDesc(
             List<String> estatus, 

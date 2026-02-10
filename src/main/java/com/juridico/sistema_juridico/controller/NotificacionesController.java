@@ -96,17 +96,29 @@ public class NotificacionesController {
         Notificacion notificacion = notificacionRepository.findById(id).orElse(null);
         
         if (notificacion != null && notificacion.getUsuario().getEmail().equals(email)) {
+            // 1. Marcar como leída
             notificacion.setLeida(true);
             notificacion.setFechaLeida(LocalDateTime.now());
             notificacionRepository.save(notificacion);
-           
-            if ("AUDIENCIA".equals(notificacion.getEntidadTipo()) && notificacion.getEntidadId() != null) {
-                return "redirect:/audiencias?keyword=" + notificacion.getEntidadId();                
-            }            
-            else if ("TERMINO".equals(notificacion.getEntidadTipo()) && notificacion.getEntidadId() != null) {
-                return "redirect:/terminos?keyword=" + notificacion.getEntidadId();
+            
+            // 2. Redirecciones inteligentes
+            if (notificacion.getEntidadId() != null) {
+                
+                // A) AUDIENCIAS (Va a la tabla filtrada)
+                if ("AUDIENCIA".equals(notificacion.getEntidadTipo())) {
+                    return "redirect:/audiencias?keyword=" + notificacion.getEntidadId();                
+                }            
+                // B) TÉRMINOS (Va a la tabla filtrada)
+                else if ("TERMINO".equals(notificacion.getEntidadTipo())) {
+                    return "redirect:/terminos?keyword=" + notificacion.getEntidadId();
+                }
+                // C) EXPEDIENTES (NUEVO: Va directo al detalle del expediente)
+                else if ("EXPEDIENTE".equals(notificacion.getEntidadTipo())) {
+                    return "redirect:/expedientes/" + notificacion.getEntidadId();
+                }
             }
         }
+        // Si no tiene redirección o no es tu notificación, vuelves a alertas
         return "redirect:/alertas";
     }
 

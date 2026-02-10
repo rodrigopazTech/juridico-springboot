@@ -16,8 +16,9 @@ import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.repository.General.ComentarioRepository;
 import com.juridico.sistema_juridico.Entity.general.Comentario;
-import org.springframework.http.ResponseEntity;
+import com.juridico.sistema_juridico.service.NotificacionService;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -32,7 +33,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -41,24 +44,18 @@ import java.util.stream.Collectors;
 @RequestMapping("/expedientes")
 public class ExpedientesController {
 
-    @Autowired
-    private ExpedienteRepository expedienteRepository;
-    @Autowired
-    private GerenciaRepository gerenciaRepository;
-    @Autowired
-    private MateriaRepository materiaRepository;
-    @Autowired
-    private TipoExpedienteRepository tipoExpedienteRepository;
-    @Autowired
-    private OrganoJurisdiccionalRepository organoRepository;
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-    @Autowired
-    private EstadoRepository estadoRepository;
-    @Autowired
-    private AudienciaRepository audienciaRepository;
-    @Autowired
-    private ComentarioRepository comentarioRepository;
+    @Autowired private ExpedienteRepository expedienteRepository;
+    @Autowired private GerenciaRepository gerenciaRepository;
+    @Autowired private MateriaRepository materiaRepository;
+    @Autowired private TipoExpedienteRepository tipoExpedienteRepository;
+    @Autowired private OrganoJurisdiccionalRepository organoRepository;
+    @Autowired private UsuarioRepository usuarioRepository;
+    @Autowired private EstadoRepository estadoRepository;
+    @Autowired private AudienciaRepository audienciaRepository;
+    @Autowired private ComentarioRepository comentarioRepository;
+    
+    // INYECCIÓN DEL SERVICIO DE NOTIFICACIONES
+    @Autowired private NotificacionService notificacionService;
 
     @GetMapping
     public String index(Model model,
@@ -79,6 +76,7 @@ public class ExpedientesController {
         Integer secUsuarioId = usuario.getId();
 
         if (usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+            // Ven todo
         } else if (usuario.getRol() == RolUsuario.GERENTE) {
             if (usuario.getGerencia() != null)
                 secGerenciaId = usuario.getGerencia().getId();
@@ -127,13 +125,19 @@ public class ExpedientesController {
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute Expediente expediente, RedirectAttributes redirectAttrs) {
         try {
-            if (expediente.getId() == null) {
+            boolean esNuevo = (expediente.getId() == null);
+            
+            if (esNuevo) {
                 expediente.setCreatedAt(LocalDateTime.now());
                 expediente.setEtapaProcesal(EtapaProcesal.TRAMITE);
             }
             expediente.setUpdatedAt(LocalDateTime.now());
 
-            expedienteRepository.save(expediente);
+            Expediente guardado = expedienteRepository.save(expediente);
+
+            if (esNuevo) {
+                enviarNotificacionesNuevoExpediente(guardado);
+            }
 
             redirectAttrs.addFlashAttribute("mensaje", "Expediente guardado correctamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
@@ -148,6 +152,62 @@ public class ExpedientesController {
         }
 
         return "redirect:/expedientes";
+    }
+
+   /**
+     * Envía notificaciones al Abogado, Gerente y Jefe de Depto correspondiente.
+     */
+    private void enviarNotificacionesNuevoExpediente(Expediente exp) {
+        // 1. RECUPERAR EL NOMBRE DE LA MATERIA (Parche para el NULL)
+        String nombreMateria = "General";
+        
+        if (exp.getMateria() != null) {
+            // Si el nombre viene nulo (porque Spring solo bindeó el ID), lo buscamos:
+            if (exp.getMateria().getNombre() == null && exp.getMateria().getId() != null) {
+                nombreMateria = materiaRepository.findById(exp.getMateria().getId())
+                        .map(m -> m.getNombre())
+                        .orElse("General");
+            } else {
+                nombreMateria = exp.getMateria().getNombre();
+            }
+        }
+
+        String titulo = "Nuevo Expediente Registrado";
+        // Usamos la variable 'nombreMateria' que ya garantizamos que tiene texto
+        String mensaje = "Se ha creado el expediente " + exp.getNumero() + " (" + nombreMateria + ")";
+        
+        List<Usuario> destinatarios = new ArrayList<>();
+
+        // A) Abogado Responsable (Verificamos que solo traiga ID y buscamos el objeto completo si es necesario, 
+        // aunque para notificar solo necesitamos el objeto usuario, hibernate lo maneja bien si el ID es correcto)
+        if (exp.getAbogadoResponsable() != null) {
+            destinatarios.add(exp.getAbogadoResponsable());
+        }
+
+        // B) Gerente de la Gerencia asignada
+        if (exp.getGerencia() != null) {
+            List<Usuario> gerentes = usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE, exp.getGerencia());
+            destinatarios.addAll(gerentes);
+        }
+
+        // C) Jefe de Depto (Que tenga la Materia asignada)
+        if (exp.getMateria() != null) {
+            List<Usuario> jefes = usuarioRepository.findByRolAndMateriaId(RolUsuario.JEFE_DEPTO, exp.getMateria().getId());
+            destinatarios.addAll(jefes);
+        }
+
+        // Enviar notificaciones
+        // Usamos un Set para evitar duplicados si una persona tuviera doble rol (raro pero posible)
+        for (Usuario u : new HashSet<>(destinatarios)) {
+            notificacionService.crearNotificacion(
+                u,
+                titulo,
+                mensaje,
+                "EXPEDIENTE", 
+                exp.getPrioridad(),
+                exp.getId().toString() 
+            );
+        }
     }
 
     @GetMapping("/{id}")
