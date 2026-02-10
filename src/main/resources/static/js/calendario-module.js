@@ -44,6 +44,10 @@ export class CalendarioModule {
             if (filterGerencia && !filterGerencia.disabled) {
                 filterGerencia.value = 'todos';
             }
+            const filterUsuario = document.getElementById('filterUsuario');
+            if (filterUsuario) {
+                filterUsuario.value = 'todos';
+            }
             this.filteredEvents = [...this.events];
             this.render();
         });
@@ -64,12 +68,17 @@ export class CalendarioModule {
     applyFilters() {
         const tipoSelected = document.getElementById('filterTipo').value;
         const gerenciaSelected = document.getElementById('filterGerencia')?.value || 'todos';
+        const usuarioSelected = document.getElementById('filterUsuario')?.value || 'todos';
 
         this.filteredEvents = this.events.filter(event => {
             const matchTipo = tipoSelected === 'todos' || event.tipo === tipoSelected;
             // Si el select de gerencia no existe o es 'todos', pasa. Si no, compara strings.
             const matchGerencia = gerenciaSelected === 'todos' || event.gerenciaNombre === gerenciaSelected;
-            return matchTipo && matchGerencia;
+            // Filtro por usuario
+            const matchUsuario = usuarioSelected === 'todos' || 
+                (event.usuarioId && event.usuarioId.toString() === usuarioSelected);
+            
+            return matchTipo && matchGerencia && matchUsuario;
         });
 
         console.log(`Filtrado: ${this.filteredEvents.length} eventos encontrados.`);

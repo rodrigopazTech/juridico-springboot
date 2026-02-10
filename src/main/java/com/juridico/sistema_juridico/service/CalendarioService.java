@@ -29,10 +29,14 @@ public class CalendarioService {
     private RecordatorioRepository recordatorioRepository;
 
     public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo) {
-        return obtenerEventosCalendario(usuarioActual, filtroTipo, null);
+        return obtenerEventosCalendario(usuarioActual, filtroTipo, null, null);
     }
 
     public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo, Long filtroGerenciaId) {
+        return obtenerEventosCalendario(usuarioActual, filtroTipo, filtroGerenciaId, null);
+    }
+
+    public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo, Long filtroGerenciaId, Long filtroUsuarioId) {
         List<EventoResponse> eventos = new ArrayList<>();
         
         // Determinar si el usuario tiene restricción por gerencia
@@ -87,10 +91,10 @@ public class CalendarioService {
         }
 
         // Aplicar filtros adicionales
-        return aplicarFiltros(eventos, filtroTipo, filtroGerenciaId);
+        return aplicarFiltros(eventos, filtroTipo, filtroGerenciaId, filtroUsuarioId);
     }
 
-    private List<EventoResponse> aplicarFiltros(List<EventoResponse> eventos, String filtroTipo, Long filtroGerenciaId) {
+    private List<EventoResponse> aplicarFiltros(List<EventoResponse> eventos, String filtroTipo, Long filtroGerenciaId, Long filtroUsuarioId) {
         return eventos.stream()
             .filter(e -> {
                 // Filtro por tipo
@@ -102,6 +106,12 @@ public class CalendarioService {
                 // Filtro por gerencia (solo si se especifica y no es "todos")
                 if (filtroGerenciaId != null && filtroGerenciaId > 0) {
                     if (e.getGerenciaId() == null || !e.getGerenciaId().equals(filtroGerenciaId)) {
+                        return false;
+                    }
+                }
+                // Filtro por usuario (solo si se especifica y no es "todos")
+                if (filtroUsuarioId != null && filtroUsuarioId > 0) {
+                    if (e.getUsuarioId() == null || !e.getUsuarioId().equals(filtroUsuarioId)) {
                         return false;
                     }
                 }

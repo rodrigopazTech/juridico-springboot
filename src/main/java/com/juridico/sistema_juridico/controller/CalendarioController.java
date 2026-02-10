@@ -36,6 +36,8 @@ public class CalendarioController {
         String userRole = "ANONYMOUS";
         boolean puedeVerFiltroGerencia = false;
         List<String> listaGerencias = new ArrayList<>();
+        boolean puedeVerFiltroUsuario = false;
+        List<Usuario> listaUsuarios = new ArrayList<>();
 
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
             Usuario usuarioActual = usuarioRepository.findByEmail(auth.getName()).orElse(null);
@@ -54,11 +56,26 @@ public class CalendarioController {
                         "Gerencia Laboral y Penal",
                         "Gerencia Transparencia y Amparo"
                     );
+                    
+                    // Filtro de usuario visible para DIRECCION y SUBDIRECCION
+                    puedeVerFiltroUsuario = true;
+                    listaUsuarios = usuarioRepository.findAll();
+                    
                 } else if (usuarioActual.getRol() == RolUsuario.GERENTE) {
                     puedeVerFiltroGerencia = true;
                     if (usuarioActual.getGerencia() != null) {
                         listaGerencias.add(usuarioActual.getGerencia().getNombre());
                     }
+                    
+                    // Filtro de usuario visible para GERENTE (solo usuarios de su gerencia)
+                    puedeVerFiltroUsuario = true;
+                    listaUsuarios = usuarioRepository.findByGerenciaId(
+                        usuarioActual.getGerencia().getId().longValue());
+                    
+                } else if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
+                    // ABOGADO no ve el filtro de usuario
+                    puedeVerFiltroUsuario = false;
+                    listaUsuarios = new ArrayList<>();
                 }
             }
         }
@@ -67,6 +84,8 @@ public class CalendarioController {
         model.addAttribute("userRole", userRole);
         model.addAttribute("puedeVerFiltroGerencia", puedeVerFiltroGerencia);
         model.addAttribute("listaGerencias", listaGerencias);
+        model.addAttribute("puedeVerFiltroUsuario", puedeVerFiltroUsuario);
+        model.addAttribute("listaUsuarios", listaUsuarios);
 
         return "views/calendario/index";
     }
