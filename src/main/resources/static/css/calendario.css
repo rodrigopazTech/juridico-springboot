@@ -146,16 +146,35 @@
 }
 
 /* Colores semánticos para eventos */
-.event-audiencia {
-  background-color: #2563eb;
+.event-audiencia,
+.evento-audiencia {
+  background-color: #2563EB;
 }
 
-.event-termino {
-  background-color: #dc2626;
+.event-termino,
+.evento-termino {
+  background-color: #DC2626;
 }
 
-.event-recordatorio {
-  background-color: #f59e0b;
+.event-recordatorio,
+.evento-recordatorio {
+  background-color: #F59E0B;
+}
+
+/* Badge para tipo de evento en modal */
+.badge-audiencia {
+  background-color: #DBEAFE;
+  color: #1D4ED8;
+}
+
+.badge-termino {
+  background-color: #FEE2E2;
+  color: #DC2626;
+}
+
+.badge-recordatorio {
+  background-color: #FEF3C7;
+  color: #B45309;
 }
 
 /* =========================================
