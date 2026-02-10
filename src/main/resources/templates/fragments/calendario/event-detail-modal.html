@@ -1,30 +1,113 @@
 <div th:fragment="detailModal" id="modalEventDetail" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black bg-opacity-50 transition-opacity">
     <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-95 opacity-0 duration-300" id="modalContent">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all" id="modalContent">
             <div id="modalHeader" class="p-4 flex justify-between items-center text-white bg-gob-guinda">
                 <h3 id="modalTitle" class="text-xl font-bold">Detalle del Evento</h3>
-                <button onclick="window.calendarioModule.closeModal()" class="text-white hover:bg-black/10 rounded-full p-2">
+                <button onclick="window.calendarioModule?.closeModal()" class="text-white hover:bg-black/10 rounded-full p-2 transition-colors">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="p-6 space-y-4">
-                <div class="flex items-start gap-3">
-                    <i class="fas fa-clock mt-1 text-gray-400"></i>
-                    <div>
-                        <p id="modalDate" class="font-bold text-gray-800"></p>
-                        <p id="modalTime" class="text-gray-600 text-sm"></p>
+                <!-- Tipo de evento con badge -->
+                <div class="flex items-center justify-between">
+                    <span class="text-xs uppercase text-gray-400 font-bold">Tipo de Evento</span>
+                    <span id="modalType" class="px-3 py-1 rounded-full text-xs font-bold uppercase text-white"></span>
+                </div>
+                
+                <!-- Título del evento -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 id="modalTitulo" class="text-lg font-bold text-gray-800"></h4>
+                </div>
+                
+                <!-- Fecha y Hora -->
+                <div class="flex gap-4">
+                    <div class="flex-1 flex items-start gap-3">
+                        <div class="bg-blue-100 p-2 rounded-lg">
+                            <i class="fas fa-calendar text-blue-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase text-gray-400 font-bold">Fecha</p>
+                            <p id="modalDate" class="font-semibold text-gray-800"></p>
+                        </div>
+                    </div>
+                    <div class="flex-1 flex items-start gap-3">
+                        <div class="bg-green-100 p-2 rounded-lg">
+                            <i class="fas fa-clock text-green-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase text-gray-400 font-bold">Hora</p>
+                            <p id="modalTime" class="font-semibold text-gray-800"></p>
+                        </div>
                     </div>
                 </div>
-                <div class="flex items-start gap-3">
-                    <i class="fas fa-info-circle mt-1 text-gray-400"></i>
+                
+                <!-- Expediente -->
+                <div id="modalExpedienteSection" class="flex items-start gap-3">
+                    <div class="bg-purple-100 p-2 rounded-lg">
+                        <i class="fas fa-folder text-purple-600"></i>
+                    </div>
                     <div>
-                        <p class="text-xs uppercase text-gray-400 font-bold">Tipo</p>
-                        <span id="modalType" class="px-2 py-1 rounded text-xs font-bold uppercase"></span>
+                        <p class="text-xs uppercase text-gray-400 font-bold">Expediente</p>
+                        <p id="modalExpediente" class="font-semibold text-gray-800"></p>
                     </div>
                 </div>
-                <div id="modalExtraInfo" class="space-y-3 pt-2 border-t border-gray-100">
+                
+                <!-- Responsable -->
+                <div id="modalUsuarioSection" class="flex items-start gap-3">
+                    <div class="bg-orange-100 p-2 rounded-lg">
+                        <i class="fas fa-user text-orange-600"></i>
                     </div>
+                    <div>
+                        <p class="text-xs uppercase text-gray-400 font-bold">Responsable</p>
+                        <p id="modalUsuario" class="font-semibold text-gray-800"></p>
+                    </div>
+                </div>
+                
+                <!-- Gerencia -->
+                <div id="modalGerenciaSection" class="flex items-start gap-3">
+                    <div class="bg-teal-100 p-2 rounded-lg">
+                        <i class="fas fa-building text-teal-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase text-gray-400 font-bold">Gerencia</p>
+                        <p id="modalGerencia" class="font-semibold text-gray-800"></p>
+                    </div>
+                </div>
+                
+                <!-- Detalles adicionales -->
+                <div id="modalDetallesSection" class="pt-4 border-t border-gray-100">
+                    <p class="text-xs uppercase text-gray-400 font-bold mb-2">Descripción</p>
+                    <p id="modalDetalles" class="text-gray-600 text-sm bg-gray-50 rounded-lg p-3"></p>
+                </div>
+            </div>
+            
+            <!-- Footer con botón cerrar -->
+            <div class="bg-gray-50 px-6 py-4 flex justify-end">
+                <button onclick="window.calendarioModule?.closeModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-semibold transition-colors">
+                    Cerrar
+                </button>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+// Animación de entrada del modal
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('modalEventDetail');
+    const content = document.getElementById('modalContent');
+    
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.attributeName === 'class' && !modal.classList.contains('hidden')) {
+                // Modal abierto - mostrar animación
+                setTimeout(() => {
+                    content.classList.remove('scale-95', 'opacity-0');
+                }, 10);
+            }
+        });
+    });
+    
+    observer.observe(modal, { attributes: true });
+});
+</script>

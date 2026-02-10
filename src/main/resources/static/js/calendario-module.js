@@ -402,16 +402,104 @@ export class CalendarioModule {
     }
 
     showEventDetail(event) {
-        // Asumiendo que usas el modal de detalle proporcionado anteriormente
         const modal = document.getElementById('modalEventDetail');
         if (!modal) return;
         
-        document.getElementById('modalTitle').innerText = event.titulo;
-        document.getElementById('modalDate').innerText = event.fecha;
-        document.getElementById('modalTime').innerText = event.hora || '--:--';
-        document.getElementById('modalType').innerText = event.tipo.toUpperCase();
+        // Título
+        document.getElementById('modalTitle').innerText = 'Detalle del Evento';
         
+        // Tipo de evento con color
+        const modalType = document.getElementById('modalType');
+        modalType.innerText = event.tipo || 'Sin tipo';
+        modalType.className = `px-3 py-1 rounded-full text-xs font-bold uppercase text-white ${this.getEventBadgeClass(event.tipo)}`;
+        
+        // Título del evento
+        document.getElementById('modalTitulo').innerText = event.titulo || 'Sin título';
+        
+        // Fecha
+        document.getElementById('modalDate').innerText = this.formatDate(event.fecha);
+        
+        // Hora
+        document.getElementById('modalTime').innerText = event.hora || '--:--';
+        
+        // Expediente
+        const expedienteSection = document.getElementById('modalExpedienteSection');
+        const modalExpediente = document.getElementById('modalExpediente');
+        if (event.expediente) {
+            expedienteSection.classList.remove('hidden');
+            modalExpediente.innerText = event.expediente;
+        } else {
+            expedienteSection.classList.add('hidden');
+        }
+        
+        // Responsable
+        const usuarioSection = document.getElementById('modalUsuarioSection');
+        const modalUsuario = document.getElementById('modalUsuario');
+        if (event.usuarioNombre) {
+            usuarioSection.classList.remove('hidden');
+            modalUsuario.innerText = event.usuarioNombre;
+        } else {
+            usuarioSection.classList.add('hidden');
+        }
+        
+        // Gerencia
+        const gerenciaSection = document.getElementById('modalGerenciaSection');
+        const modalGerencia = document.getElementById('modalGerencia');
+        if (event.gerenciaNombre) {
+            gerenciaSection.classList.remove('hidden');
+            modalGerencia.innerText = event.gerenciaNombre;
+        } else {
+            gerenciaSection.classList.add('hidden');
+        }
+        
+        // Detalles
+        const detallesSection = document.getElementById('modalDetallesSection');
+        const modalDetalles = document.getElementById('modalDetalles');
+        if (event.detalles) {
+            detallesSection.classList.remove('hidden');
+            modalDetalles.innerText = event.detalles;
+        } else {
+            detallesSection.classList.add('hidden');
+        }
+        
+        // Mostrar modal
         modal.classList.remove('hidden');
-        modal.classList.add('flex');
+        
+        // Animación de entrada
+        const content = document.getElementById('modalContent');
+        if (content) {
+            content.classList.remove('scale-95', 'opacity-0');
+        }
+    }
+
+    closeModal() {
+        const modal = document.getElementById('modalEventDetail');
+        if (!modal) return;
+        
+        const content = document.getElementById('modalContent');
+        if (content) {
+            content.classList.add('scale-95', 'opacity-0');
+        }
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 200);
+    }
+
+    formatDate(dateStr) {
+        if (!dateStr) return 'Sin fecha';
+        
+        try {
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                const date = new Date(parts[0], parts[1] - 1, parts[2]);
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                return date.toLocaleDateString('es-ES', options);
+            }
+        } catch (e) {
+            return dateStr;
+        }
+        
+        return dateStr;
     }
 }
