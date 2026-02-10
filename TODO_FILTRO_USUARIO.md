@@ -30,6 +30,24 @@ Agregar un filtro llamado "usuario" que filtre por los roles de los usuarios, vi
 - [x] Actualizar método `setupEventListeners()` para limpiar el nuevo filtro
 - [x] Actualizar método `btnClearFilters()` para limpiar el filtro de usuario
 
+### Paso 6: Implementar Vista Semanal
+- [x] Actualizar calendar-week-view.html con estructura de grid y horas
+- [x] Implementar método renderWeek() en calendario-module.js con:
+  - Header con días de la semana (Lunes a Domingo)
+  - Columna de horas (00:00 a 23:00)
+  - Eventos posicionados por hora
+
+### Paso 7: Implementar Vista Diaria
+- [x] Actualizar calendar-day-view.html con línea de tiempo detallada
+- [x] Implementar método renderDay() en calendario-module.js con:
+  - Título del día con nombre y fecha
+  - Timeline con eventos ordenados por hora
+  - Información detallada de cada evento (expediente, responsable, gerencia)
+
+### Paso 8: Actualizar navegación
+- [x] Actualizar método `navigate()` para semana (+/- 7 días) y día (+/- 1 día)
+- [x] Actualizar método `render()` para mostrar vistas week y day
+
 ## Notas
 - El filtro de usuario está oculto para el rol ABOGADO
 - Para GERENTE: solo muestra usuarios de su propia gerencia
@@ -38,6 +56,6 @@ Agregar un filtro llamado "usuario" que filtre por los roles de los usuarios, vi
 
 ## Estado
 - [x] Plan aprobado por el usuario
-- [x] En progreso
-- [x] Completado
+- [x] Implementación de filtro de usuario completada
+- [x] Implementación de vistas semanal y diaria completada
 
