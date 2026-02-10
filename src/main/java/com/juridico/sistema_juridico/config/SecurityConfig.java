@@ -32,9 +32,12 @@ public class SecurityConfig {
                 .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**", "/lib/**").permitAll()
                 .requestMatchers("/", "/login", "/register", "/api/auth/**").permitAll()
 
-                // 2. NIVEL ALTO: Usuarios y Agenda General (Solo Dirección y Subdirección)
-                .requestMatchers("/usuarios", "/usuarios/**", "/agenda", "/agenda/**").hasAnyAuthority("DIRECCION", "SUBDIRECCION")
-
+                // 2. NIVEL ALTO: Agenda General (Solo Dirección y Subdirección)
+                .requestMatchers("/agenda", "/agenda/**").hasAnyAuthority("DIRECCION", "SUBDIRECCION")
+                
+                // 2.1 ADMINISTRACIÓN: Usuarios (Dirección, Subdirección y Gerentes)
+                .requestMatchers("/usuarios", "/usuarios/**").hasAnyAuthority("DIRECCION", "SUBDIRECCION", "GERENTE")
+                
                 // 3. NIVEL MEDIO: Dashboard (Dirección, Subdirección, Gerentes y Jefes)
                 // Nota: Los Abogados NO entran aquí.
                 .requestMatchers("/dashboard", "/dashboard/**").hasAnyAuthority("DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO")

@@ -79,12 +79,11 @@ public class Audiencia {
     @Column(name = "observaciones", columnDefinition = "TEXT")
     private String observaciones; // Resultados o notas de la audiencia
 
-    public String getSemaforoColor() {
-        if ("CONCLUIDA".equals(this.estatusAudiencia)) return "bg-gray-800"; // Concluida (Negro/Gris fuerte)
-        if ("CON_ACTA".equals(this.estatusAudiencia)) return "bg-purple-600"; // Con Acta (Morado)
-        
+   public String getSemaforoColor() {
+        // Calculamos los días restantes
         long dias = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaAudiencia);
         
+        // El color ahora depende 100% del tiempo restante
         if (dias < 0) return "bg-gray-400"; // Pasada (Gris)
         if (dias <= 1) return "bg-red-600 animate-pulse"; // ¡HOY o MAÑANA! (Rojo parpadeante)
         if (dias <= 3) return "bg-yellow-400"; // Próxima (Amarillo)

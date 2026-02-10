@@ -4,7 +4,10 @@ import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.service.UsuarioService;
+import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository; 
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -12,36 +15,51 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import org.springframework.http.ResponseEntity;
 
 import java.util.stream.Collectors; 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays; 
 
 @Controller
 @RequestMapping("/usuarios")
 public class UsuariosController {
 
     @Autowired private UsuarioService usuarioService;
+    @Autowired private UsuarioRepository usuarioRepository; 
 
    @GetMapping
     public String index(Model model,
-                        @RequestParam(defaultValue = "0") int pageUsuarios,   // Página para usuarios
-                        @RequestParam(defaultValue = "0") int pageGerencias) { // Página para gerencias
+                        @RequestParam(defaultValue = "0") int pageUsuarios,   
+                        @RequestParam(defaultValue = "0") int pageGerencias) { 
+        
+        // 1. OBTENER QUIÉN ESTÁ LOGUEADO
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuarioActual = usuarioRepository.findByEmail(email).orElseThrow();
         
         Page<Usuario> usuariosPage = usuarioService.listarUsuariosPaginados(PageRequest.of(pageUsuarios, 10, Sort.by("nombreCompleto").ascending()));
-        
         Page<Gerencia> gerenciasPage = usuarioService.listarGerenciasPaginadas(PageRequest.of(pageGerencias, 10, Sort.by("nombre").ascending()));
 
         model.addAttribute("listaUsuarios", usuariosPage); 
         model.addAttribute("listaGerencias", gerenciasPage);
         
-        // Listas completas (sin paginar) para los Selects de los modales
-        model.addAttribute("allGerencias", usuarioService.listarGerencias()); 
+        // 2. LÓGICA DE RESTRICCIÓN PARA GERENTES EN LOS MODALES
+        if (usuarioActual.getRol() == RolUsuario.GERENTE) {
+            // El gerente solo puede crear usuarios para su propia gerencia
+            model.addAttribute("allGerencias", Arrays.asList(usuarioActual.getGerencia()));
+            // El gerente solo puede crear Abogados o Jefes de Depto
+            model.addAttribute("listaRoles", Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO));
+        } else {
+            // Dirección ve todo
+            model.addAttribute("allGerencias", usuarioService.listarGerencias()); 
+            model.addAttribute("listaRoles", RolUsuario.values());
+        }
+
+        // 3. PASAR EL USUARIO ACTUAL A LA VISTA (Para bloquear botones de tablas)
+        model.addAttribute("usuarioActual", usuarioActual);
         
-        model.addAttribute("listaRoles", RolUsuario.values());
         model.addAttribute("nuevoUsuario", new Usuario());
         model.addAttribute("nuevaGerencia", new Gerencia());
         model.addAttribute("activePage", "usuarios");
@@ -51,7 +69,7 @@ public class UsuariosController {
 
     @PostMapping("/guardar")
     public String guardarUsuario(@ModelAttribute Usuario usuario, 
-                                 @RequestParam(required = false) java.util.List<Integer> materiasIds, // Recibe checkboxes
+                                 @RequestParam(required = false) java.util.List<Integer> materiasIds, 
                                  RedirectAttributes redirectAttrs) {
         try {
             usuarioService.guardarUsuario(usuario, materiasIds);
@@ -91,9 +109,7 @@ public class UsuariosController {
     @GetMapping("/gerencias/{id}/materias")
     public String obtenerMateriasGerencia(@PathVariable Integer id, Model model) {
         Gerencia gerencia = usuarioService.buscarGerenciaPorId(id);
-        // Pasamos la lista de materias al fragmento
         model.addAttribute("materias", gerencia.getMaterias()); 
-        // Retornamos SOLO el fragmento 'lista' dentro del archivo 'modal-materias'
         return "fragments/usuarios/modal-materias :: lista";
     }
 
