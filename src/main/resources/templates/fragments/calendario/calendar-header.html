@@ -56,8 +56,8 @@
                 </select>
             </div>
             
-            <!-- Checkbox Mis Asuntos - Solo visible para ABOGADO -->
-            <div th:if="${esAbogado}" class="flex items-center min-w-[150px]">
+            <!-- Checkbox Mis Asuntos - Visible para todos los usuarios -->
+            <div class="flex items-center min-w-[150px]">
                 <label class="flex items-center cursor-pointer gap-2 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
                     <input type="checkbox" id="chkMisAsuntos" class="w-4 h-4 text-gob-guinda rounded focus:ring-gob-guinda border-gray-300">
                     <span class="text-sm font-semibold text-gray-700">Mis asuntos</span>

@@ -63,7 +63,7 @@ public class CalendarioRestController {
         // Determinar usuarioId a filtrar
         Long usuarioId = null;
         if (misAsuntos && usuarioActual != null) {
-            // Si misAsuntos está activo y es ABOGADO, forzar filtrar por su propio ID
+            // Si misAsuntos está activo, forzar filtrar por el ID del usuario autenticado
             usuarioId = usuarioActual.getId().longValue();
         } else if (usuario != null && !"todos".equals(usuario)) {
             try {

@@ -38,7 +38,6 @@ public class CalendarioController {
         List<String> listaGerencias = new ArrayList<>();
         boolean puedeVerFiltroUsuario = false;
         List<Usuario> listaUsuarios = new ArrayList<>();
-        boolean esAbogado = false;
 
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
             Usuario usuarioActual = usuarioRepository.findByEmail(auth.getName()).orElse(null);
@@ -78,7 +77,6 @@ public class CalendarioController {
                     // ABOGADO no ve el filtro de usuario
                     puedeVerFiltroUsuario = false;
                     listaUsuarios = new ArrayList<>();
-                    esAbogado = true;
                 }
             }
         }
@@ -89,7 +87,6 @@ public class CalendarioController {
         model.addAttribute("listaGerencias", listaGerencias);
         model.addAttribute("puedeVerFiltroUsuario", puedeVerFiltroUsuario);
         model.addAttribute("listaUsuarios", listaUsuarios);
-        model.addAttribute("esAbogado", esAbogado);
 
         return "views/calendario/index";
     }
