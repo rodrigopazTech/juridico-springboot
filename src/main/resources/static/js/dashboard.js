@@ -78,12 +78,20 @@ function updateKPIs(kpis) {
 }
 
 /**
+ * Roles para los cuales se oculta la gráfica de distribución por gerencia
+ */
+const ROLES_SIN_GRAFICA_GERENCIA = ['JEFE_DEPTO', 'GERENTE'];
+
+/**
  * Llama a las funciones de renderizado de cada gráfica
  */
 function renderAllCharts(data) {
     renderEstatus(data.estatusExpedientes);
     renderCargaUsuarios(data.cargaTrabajoUsuarios);
-    renderGerencias(data.distribucionGerencias);
+    // Solo renderizar gráfica de gerencias si el usuario no es JEFE_DEPTO o GERENTE
+    if (!ROLES_SIN_GRAFICA_GERENCIA.includes(window.userRole)) {
+        renderGerencias(data.distribucionGerencias);
+    }
     renderTrabajoMensual(data.trabajoMensual);
 }
 

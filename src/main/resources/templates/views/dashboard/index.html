@@ -113,7 +113,8 @@
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded shadow border-t-2 border-gob-oro">
+        <div class="bg-white p-6 rounded shadow border-t-2 border-gob-oro" 
+             th:unless="${usuario.rol.name() == 'JEFE_DEPTO' || usuario.rol.name() == 'GERENTE'}">
             <h3 class="font-bold mb-4 text-gray-700 uppercase text-sm tracking-wider">
                 <i class="fas fa-landmark mr-2"></i>Distribución por Gerencia
             </h3>
@@ -138,6 +139,7 @@
 <script th:inline="javascript">
     /*<![CDATA[*/
     window.dashboardData = /*[[${dashboardData}]]*/ {};
+    window.userRole = /*[[${usuario.rol.name()}]]*/ '';
     /*]]>*/
 </script>
 
