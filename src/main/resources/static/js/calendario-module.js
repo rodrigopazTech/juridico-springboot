@@ -379,18 +379,18 @@ export class CalendarioModule {
 
     getEventColor(tipo) {
         switch (tipo) {
-            case 'audiencia': return 'bg-red-500';
-            case 'termino': return 'bg-yellow-500';
-            case 'recordatorio': return 'bg-blue-500';
-            default: return 'bg-gray-500';
+            case 'audiencia': return '#691228'; // Gob Guinda
+            case 'termino': return '#13322B';    // Gob Verde
+            case 'recordatorio': return '#D4C19C'; // Gob Oro
+            default: return '#691228';
         }
     }
 
     getEventBadgeClass(tipo) {
         switch (tipo) {
-            case 'audiencia': return 'bg-red-100 text-red-700';
-            case 'termino': return 'bg-yellow-100 text-yellow-700';
-            case 'recordatorio': return 'bg-blue-100 text-blue-700';
+            case 'audiencia': return 'bg-[#691228] text-white';
+            case 'termino': return 'bg-[#13322B] text-white';
+            case 'recordatorio': return 'bg-[#D4C19C] text-[#13322B]';
             default: return 'bg-gray-100 text-gray-700';
         }
     }

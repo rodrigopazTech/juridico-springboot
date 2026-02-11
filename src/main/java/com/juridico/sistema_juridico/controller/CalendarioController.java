@@ -63,7 +63,8 @@ public class CalendarioController {
                     listaUsuarios = usuarioRepository.findAll();
                     
                 } else if (usuarioActual.getRol() == RolUsuario.GERENTE) {
-                    puedeVerFiltroGerencia = true;
+                    // GERENTE no ve el filtro de gerencia (solo ve su propia gerencia)
+                    puedeVerFiltroGerencia = false;
                     if (usuarioActual.getGerencia() != null) {
                         listaGerencias.add(usuarioActual.getGerencia().getNombre());
                     }

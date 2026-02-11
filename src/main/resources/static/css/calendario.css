@@ -148,17 +148,17 @@
 /* Colores semánticos para eventos */
 .event-audiencia,
 .evento-audiencia {
-  background-color: #2563EB;
+  background-color: #691228; /* Gob Guinda */
 }
 
 .event-termino,
 .evento-termino {
-  background-color: #DC2626;
+  background-color: #13322B; /* Gob Verde */
 }
 
 .event-recordatorio,
 .evento-recordatorio {
-  background-color: #F59E0B;
+  background-color: #D4C19C; /* Gob Oro */
 }
 
 /* Badge para tipo de evento en modal */

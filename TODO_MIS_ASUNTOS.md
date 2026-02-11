@@ -40,6 +40,7 @@ Agregar un checkbox "Mis asuntos" visible solo para el rol ABOGADO que permita f
 ### 1. CalendarioController.java
 - Agregada variable `esAbogado` al modelo
 - Configurada en `true` cuando el rol del usuario es ABOGADO
+- Filtro de gerencia oculto para GERENTE (`puedeVerFiltroGerencia = false`)
 
 ### 2. calendar-header.html
 - Agregado checkbox "Mis asuntos" visible solo para ABOGADO
@@ -48,9 +49,23 @@ Agregar un checkbox "Mis asuntos" visible solo para el rol ABOGADO que permita f
 ### 3. CalendarioRestController.java
 - Agregado parámetro `misAsuntos` al endpoint `/eventos`
 - Cuando es true, fuerza el filtrado por el ID del usuario actual
+- GERENTE: forza filtrado por su propia gerencia automáticamente
 
 ### 4. calendario-module.js
 - Actualizado `loadEvents()` para incluir parámetros en la URL
 - Agregado evento change al checkbox "Mis asuntos"
 - El checkbox se desmarca al limpiar filtros
+- **Colores actualizados**: audiencias (#691228), términos (#13322B), recordatorios (#D4C19C)
+
+### 5. tailwind.config.js
+- Actualizados colores de eventos:
+  - evento-audiencia: #691228 (Gob Guinda)
+  - evento-termino: #13322B (Gob Verde)
+  - evento-recordatorio: #D4C19C (Gob Oro)
+
+### 6. calendario.css
+- Actualizados colores de eventos:
+  - .event-audiencia: #691228
+  - .event-termino: #13322B
+  - .event-recordatorio: #D4C19C
 

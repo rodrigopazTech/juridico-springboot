@@ -11,9 +11,9 @@ tailwind.config = {
         'gob-verdeDark': '#0C231E',
         'gob-fondo': '#F5F5F5',
         // Colores para eventos del calendario
-        'evento-audiencia': '#2563EB',  // Azul
-        'evento-termino': '#DC2626',    // Rojo
-        'evento-recordatorio': '#F59E0B' // Amarillo/Naranja
+        'evento-audiencia': '#691228',  // Gob Guinda
+        'evento-termino': '#13322B',    // Gob Verde
+        'evento-recordatorio': '#D4C19C' // Gob Oro
       },
       fontFamily: {
         'headings': ['Montserrat', 'sans-serif'],
