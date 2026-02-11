@@ -58,9 +58,22 @@ public class DashboardService {
     }
 
     private Map<String, Object> obtenerCargaTrabajoUsuarios(Long gerenciaId) {
-        Map<String, Integer> expedientesMap = toMap(expedienteRepository.contarExpedientesPorUsuario());
-        Map<String, Integer> audienciasMap = toMap(audienciaRepository.contarAudienciasPorUsuario());
-        Map<String, Integer> terminosMap = toMap(terminoRepository.contarTerminosPorUsuario());
+        // Si se proporciona un gerenciaId, filtramos por gerencia
+        Map<String, Integer> expedientesMap = toMap(
+            gerenciaId != null 
+                ? expedienteRepository.contarExpedientesPorUsuarioYGerencia(gerenciaId) 
+                : expedienteRepository.contarExpedientesPorUsuario()
+        );
+        Map<String, Integer> audienciasMap = toMap(
+            gerenciaId != null 
+                ? audienciaRepository.contarAudienciasPorUsuarioYGerencia(gerenciaId) 
+                : audienciaRepository.contarAudienciasPorUsuario()
+        );
+        Map<String, Integer> terminosMap = toMap(
+            gerenciaId != null 
+                ? terminoRepository.contarTerminosPorUsuarioYGerencia(gerenciaId) 
+                : terminoRepository.contarTerminosPorUsuario()
+        );
 
         Set<String> usuarios = new LinkedHashSet<>();
         usuarios.addAll(expedientesMap.keySet());

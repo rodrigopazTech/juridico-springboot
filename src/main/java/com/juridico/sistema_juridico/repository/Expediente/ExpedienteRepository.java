@@ -102,6 +102,9 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
     @Query("SELECT e.abogadoResponsable.nombreCompleto, COUNT(e) FROM Expediente e GROUP BY e.abogadoResponsable.nombreCompleto")
     List<Object[]> contarExpedientesPorUsuario();
 
+    @Query("SELECT e.abogadoResponsable.nombreCompleto, COUNT(e) FROM Expediente e WHERE e.gerencia.id = :gerenciaId GROUP BY e.abogadoResponsable.nombreCompleto")
+    List<Object[]> contarExpedientesPorUsuarioYGerencia(@Param("gerenciaId") Long gerenciaId);
+
     @Query("SELECT e.gerencia.nombre, COUNT(e) FROM Expediente e GROUP BY e.gerencia.nombre")
     List<Object[]> contarExpedientesPorGerencia();
 
