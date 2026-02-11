@@ -21,5 +21,7 @@ public class EventoResponse {
     private String usuarioNombre;
     private String expediente; 
     private String detalles;
+    private Integer materiaId;
+    private String materiaNombre;
 }
 

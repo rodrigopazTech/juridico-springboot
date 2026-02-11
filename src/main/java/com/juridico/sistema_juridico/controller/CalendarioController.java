@@ -38,6 +38,11 @@ public class CalendarioController {
         List<String> listaGerencias = new ArrayList<>();
         boolean puedeVerFiltroUsuario = false;
         List<Usuario> listaUsuarios = new ArrayList<>();
+        boolean puedeVerFiltroMateria = false;
+        List<String> listaMaterias = Arrays.asList(
+            "Civil", "Mercantil", "Fiscal", "Administrativo", 
+            "Laboral", "Penal", "Amparo", "Transparencia"
+        );
 
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
             Usuario usuarioActual = usuarioRepository.findByEmail(auth.getName()).orElse(null);
@@ -78,6 +83,20 @@ public class CalendarioController {
                     puedeVerFiltroUsuario = false;
                     listaUsuarios = new ArrayList<>();
                 }
+                
+                // GERENTE, JEFE_DEPTO pueden ver el filtro de materia
+                if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+                    puedeVerFiltroMateria = true;
+                }
+                
+                // GERENTE y JEFE_DEPTO pueden ver el filtro de usuario
+                if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+                    puedeVerFiltroUsuario = true;
+                    // JEFE_DEPTO ve todos los usuarios (o según la lógica de negocio)
+                    if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+                        listaUsuarios = usuarioRepository.findAll();
+                    }
+                }
             }
         }
 
@@ -87,6 +106,8 @@ public class CalendarioController {
         model.addAttribute("listaGerencias", listaGerencias);
         model.addAttribute("puedeVerFiltroUsuario", puedeVerFiltroUsuario);
         model.addAttribute("listaUsuarios", listaUsuarios);
+        model.addAttribute("puedeVerFiltroMateria", puedeVerFiltroMateria);
+        model.addAttribute("listaMaterias", listaMaterias);
 
         return "views/calendario/index";
     }

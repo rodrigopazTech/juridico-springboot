@@ -48,6 +48,10 @@ export class CalendarioModule {
             if (filterUsuario) {
                 filterUsuario.value = 'todos';
             }
+            const filterMateria = document.getElementById('filterMateria');
+            if (filterMateria) {
+                filterMateria.value = 'todos';
+            }
             // Desmarcar checkbox "Mis asuntos" si existe
             const chkMisAsuntos = document.getElementById('chkMisAsuntos');
             if (chkMisAsuntos) {
@@ -72,8 +76,9 @@ export class CalendarioModule {
             const tipoSelected = document.getElementById('filterTipo')?.value || 'todos';
             const gerenciaSelected = document.getElementById('filterGerencia')?.value || 'todos';
             const usuarioSelected = document.getElementById('filterUsuario')?.value || 'todos';
+            const materiaSelected = document.getElementById('filterMateria')?.value || 'todos';
             
-            let url = `/api/calendario/eventos?tipo=${tipoSelected}&gerencia=${gerenciaSelected}&usuario=${usuarioSelected}&misAsuntos=${isMisAsuntos}`;
+            let url = `/api/calendario/eventos?tipo=${tipoSelected}&gerencia=${gerenciaSelected}&usuario=${usuarioSelected}&materia=${materiaSelected}&misAsuntos=${isMisAsuntos}`;
             
             const response = await fetch(url);
             if (!response.ok) throw new Error("Error en la respuesta del servidor");
@@ -89,6 +94,7 @@ export class CalendarioModule {
         const tipoSelected = document.getElementById('filterTipo').value;
         const gerenciaSelected = document.getElementById('filterGerencia')?.value || 'todos';
         const usuarioSelected = document.getElementById('filterUsuario')?.value || 'todos';
+        const materiaSelected = document.getElementById('filterMateria')?.value || 'todos';
 
         this.filteredEvents = this.events.filter(event => {
             const matchTipo = tipoSelected === 'todos' || event.tipo === tipoSelected;
@@ -97,8 +103,11 @@ export class CalendarioModule {
             // Filtro por usuario
             const matchUsuario = usuarioSelected === 'todos' || 
                 (event.usuarioId && event.usuarioId.toString() === usuarioSelected);
+            // Filtro por materia
+            const matchMateria = materiaSelected === 'todos' || 
+                (event.materiaNombre && event.materiaNombre === materiaSelected);
             
-            return matchTipo && matchGerencia && matchUsuario;
+            return matchTipo && matchGerencia && matchUsuario && matchMateria;
         });
 
         console.log(`Filtrado: ${this.filteredEvents.length} eventos encontrados.`);

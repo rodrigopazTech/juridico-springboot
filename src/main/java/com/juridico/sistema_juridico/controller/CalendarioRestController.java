@@ -33,6 +33,7 @@ public class CalendarioRestController {
             @RequestParam(required = false, defaultValue = "todos") String tipo,
             @RequestParam(required = false, defaultValue = "todos") String gerencia,
             @RequestParam(required = false, defaultValue = "todos") String usuario,
+            @RequestParam(required = false, defaultValue = "todos") String materia,
             @RequestParam(required = false, defaultValue = "false") boolean misAsuntos) {
         
         // Obtener usuario autenticado
@@ -74,7 +75,7 @@ public class CalendarioRestController {
         }
         
         List<EventoResponse> eventos = calendarioService.obtenerEventosCalendario(
-                usuarioActual, tipo, gerenciaId, usuarioId);
+                usuarioActual, tipo, gerenciaId, usuarioId, materia);
         
         return ResponseEntity.ok(eventos);
     }

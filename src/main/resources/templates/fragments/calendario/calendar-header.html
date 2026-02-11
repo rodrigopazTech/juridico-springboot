@@ -56,6 +56,18 @@
                 </select>
             </div>
             
+            <div th:if="${puedeVerFiltroMateria}" class="flex-1 min-w-[150px] max-w-[200px]">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Materia</label>
+                <select id="filterMateria" 
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gob-guinda outline-none bg-white">
+                    
+                    <option value="todos">Todas las materias</option>
+                    <option th:each="materia : ${listaMaterias}" 
+                            th:value="${materia}" 
+                            th:text="${materia}"></option>
+                </select>
+            </div>
+            
             <!-- Checkbox Mis Asuntos - Visible para todos los usuarios -->
             <div class="flex items-center min-w-[150px]">
                 <label class="flex items-center cursor-pointer gap-2 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">

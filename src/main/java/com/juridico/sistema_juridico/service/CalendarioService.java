@@ -29,14 +29,18 @@ public class CalendarioService {
     private RecordatorioRepository recordatorioRepository;
 
     public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo) {
-        return obtenerEventosCalendario(usuarioActual, filtroTipo, null, null);
+        return obtenerEventosCalendario(usuarioActual, filtroTipo, null, null, null);
     }
 
     public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo, Long filtroGerenciaId) {
-        return obtenerEventosCalendario(usuarioActual, filtroTipo, filtroGerenciaId, null);
+        return obtenerEventosCalendario(usuarioActual, filtroTipo, filtroGerenciaId, null, null);
     }
 
     public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo, Long filtroGerenciaId, Long filtroUsuarioId) {
+        return obtenerEventosCalendario(usuarioActual, filtroTipo, filtroGerenciaId, filtroUsuarioId, null);
+    }
+
+    public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo, Long filtroGerenciaId, Long filtroUsuarioId, String filtroMateria) {
         List<EventoResponse> eventos = new ArrayList<>();
         
         // Determinar si el usuario tiene restricción por gerencia
@@ -91,10 +95,10 @@ public class CalendarioService {
         }
 
         // Aplicar filtros adicionales
-        return aplicarFiltros(eventos, filtroTipo, filtroGerenciaId, filtroUsuarioId);
+        return aplicarFiltros(eventos, filtroTipo, filtroGerenciaId, filtroUsuarioId, filtroMateria);
     }
 
-    private List<EventoResponse> aplicarFiltros(List<EventoResponse> eventos, String filtroTipo, Long filtroGerenciaId, Long filtroUsuarioId) {
+    private List<EventoResponse> aplicarFiltros(List<EventoResponse> eventos, String filtroTipo, Long filtroGerenciaId, Long filtroUsuarioId, String filtroMateria) {
         return eventos.stream()
             .filter(e -> {
                 // Filtro por tipo
@@ -115,6 +119,12 @@ public class CalendarioService {
                         return false;
                     }
                 }
+                // Filtro por materia (solo si se especifica y no es "todos")
+                if (filtroMateria != null && !filtroMateria.isEmpty() && !"todos".equals(filtroMateria)) {
+                    if (e.getMateriaNombre() == null || !e.getMateriaNombre().equalsIgnoreCase(filtroMateria)) {
+                        return false;
+                    }
+                }
                 return true;
             })
             .collect(Collectors.toList());
@@ -125,11 +135,17 @@ public class CalendarioService {
         String gerenciaNombre = "";
         Long usuarioId = null;
         String usuarioNombre = "";
+        Integer materiaId = null;
+        String materiaNombre = "";
         
         if (a.getExpediente() != null) {
             if (a.getExpediente().getGerencia() != null) {
                 gerenciaId = a.getExpediente().getGerencia().getId().longValue();
                 gerenciaNombre = a.getExpediente().getGerencia().getNombre();
+            }
+            if (a.getExpediente().getMateria() != null) {
+                materiaId = a.getExpediente().getMateria().getId();
+                materiaNombre = a.getExpediente().getMateria().getNombre();
             }
             if (a.getExpediente().getAbogadoResponsable() != null) {
                 usuarioId = a.getExpediente().getAbogadoResponsable().getId().longValue();
@@ -150,6 +166,8 @@ public class CalendarioService {
                 .usuarioId(usuarioId)
                 .usuarioNombre(usuarioNombre)
                 .expediente(a.getExpediente() != null ? a.getExpediente().getNumero() : "")
+                .materiaId(materiaId)
+                .materiaNombre(materiaNombre)
                 .build();
     }
 
@@ -158,11 +176,17 @@ public class CalendarioService {
         String gerenciaNombre = "";
         Long usuarioId = null;
         String usuarioNombre = "";
+        Integer materiaId = null;
+        String materiaNombre = "";
         
         if (t.getExpediente() != null) {
             if (t.getExpediente().getGerencia() != null) {
                 gerenciaId = t.getExpediente().getGerencia().getId().longValue();
                 gerenciaNombre = t.getExpediente().getGerencia().getNombre();
+            }
+            if (t.getExpediente().getMateria() != null) {
+                materiaId = t.getExpediente().getMateria().getId();
+                materiaNombre = t.getExpediente().getMateria().getNombre();
             }
             if (t.getAbogadoResponsable() != null) {
                 usuarioId = t.getAbogadoResponsable().getId().longValue();
@@ -183,6 +207,8 @@ public class CalendarioService {
                 .usuarioId(usuarioId)
                 .usuarioNombre(usuarioNombre)
                 .expediente(t.getExpediente() != null ? t.getExpediente().getNumero() : "N/A")
+                .materiaId(materiaId)
+                .materiaNombre(materiaNombre)
                 .build();
     }
 
