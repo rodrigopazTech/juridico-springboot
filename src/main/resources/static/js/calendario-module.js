@@ -396,7 +396,7 @@ export class CalendarioModule {
         switch (tipo) {
             case 'audiencia': return '#691228'; // Gob Guinda
             case 'termino': return '#13322B';    // Gob Verde
-            case 'recordatorio': return '#D4C19C'; // Gob Oro
+            case 'recordatorio': return '#98774C'; // Color personalizado
             default: return '#691228';
         }
     }
