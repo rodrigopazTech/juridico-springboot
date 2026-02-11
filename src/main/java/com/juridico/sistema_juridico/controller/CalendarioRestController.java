@@ -32,7 +32,8 @@ public class CalendarioRestController {
     public ResponseEntity<List<EventoResponse>> getEventos(
             @RequestParam(required = false, defaultValue = "todos") String tipo,
             @RequestParam(required = false, defaultValue = "todos") String gerencia,
-            @RequestParam(required = false, defaultValue = "todos") String usuario) {
+            @RequestParam(required = false, defaultValue = "todos") String usuario,
+            @RequestParam(required = false, defaultValue = "false") boolean misAsuntos) {
         
         // Obtener usuario autenticado
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -54,7 +55,10 @@ public class CalendarioRestController {
         
         // Determinar usuarioId a filtrar
         Long usuarioId = null;
-        if (usuario != null && !"todos".equals(usuario)) {
+        if (misAsuntos && usuarioActual != null) {
+            // Si misAsuntos está activo y es ABOGADO, forzar filtrar por su propio ID
+            usuarioId = usuarioActual.getId().longValue();
+        } else if (usuario != null && !"todos".equals(usuario)) {
             try {
                 usuarioId = Long.parseLong(usuario);
             } catch (NumberFormatException e) {

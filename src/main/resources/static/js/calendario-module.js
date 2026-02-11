@@ -48,14 +48,34 @@ export class CalendarioModule {
             if (filterUsuario) {
                 filterUsuario.value = 'todos';
             }
+            // Desmarcar checkbox "Mis asuntos" si existe
+            const chkMisAsuntos = document.getElementById('chkMisAsuntos');
+            if (chkMisAsuntos) {
+                chkMisAsuntos.checked = false;
+            }
             this.filteredEvents = [...this.events];
             this.render();
+        });
+
+        // Checkbox "Mis asuntos" (solo visible para ABOGADO)
+        document.getElementById('chkMisAsuntos')?.addEventListener('change', () => {
+            this.loadEvents();
         });
     }
 
     async loadEvents() {
         try {
-            const response = await fetch('/api/calendario/eventos');
+            const chkMisAsuntos = document.getElementById('chkMisAsuntos');
+            const isMisAsuntos = chkMisAsuntos ? chkMisAsuntos.checked : false;
+            
+            // Construir URL con parámetros
+            const tipoSelected = document.getElementById('filterTipo')?.value || 'todos';
+            const gerenciaSelected = document.getElementById('filterGerencia')?.value || 'todos';
+            const usuarioSelected = document.getElementById('filterUsuario')?.value || 'todos';
+            
+            let url = `/api/calendario/eventos?tipo=${tipoSelected}&gerencia=${gerenciaSelected}&usuario=${usuarioSelected}&misAsuntos=${isMisAsuntos}`;
+            
+            const response = await fetch(url);
             if (!response.ok) throw new Error("Error en la respuesta del servidor");
             this.events = await response.json();
             this.filteredEvents = [...this.events];

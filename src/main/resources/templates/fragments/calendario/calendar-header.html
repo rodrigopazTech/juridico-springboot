@@ -56,6 +56,14 @@
                 </select>
             </div>
             
+            <!-- Checkbox Mis Asuntos - Solo visible para ABOGADO -->
+            <div th:if="${esAbogado}" class="flex items-center min-w-[150px]">
+                <label class="flex items-center cursor-pointer gap-2 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                    <input type="checkbox" id="chkMisAsuntos" class="w-4 h-4 text-gob-guinda rounded focus:ring-gob-guinda border-gray-300">
+                    <span class="text-sm font-semibold text-gray-700">Mis asuntos</span>
+                </label>
+            </div>
+            
             <div class="flex gap-2">
                 <button id="btnApplyFilters" class="bg-gob-guinda text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-red-800 transition-all">
                     <i class="fas fa-filter mr-2"></i>Filtrar
