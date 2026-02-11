@@ -198,11 +198,11 @@ export class CalendarioModule {
         
         periodLabel.innerText = `${formatDate(monday)} - ${formatDate(sunday)}`;
 
-        // Generar columna de horas
+        // Generar columna de horas (06:00 a 22:00 - horario laboral)
         const hoursColumn = document.getElementById('hoursColumn');
         if (hoursColumn) {
             hoursColumn.innerHTML = '';
-            for (let hour = 0; hour < 24; hour++) {
+            for (let hour = 6; hour <= 22; hour++) {
                 const hourCell = document.createElement('div');
                 hourCell.className = 'hour-cell border-b border-gray-200 text-xs text-gray-500 text-center py-2';
                 hourCell.innerText = `${String(hour).padStart(2, '0')}:00`;
@@ -239,10 +239,11 @@ export class CalendarioModule {
                 `;
                 dayColumn.appendChild(dayHeader);
 
-                // Container de eventos por hora
+                // Container de eventos por hora (06:00 a 22:00 = 17 horas)
                 const dayContent = document.createElement('div');
                 dayContent.className = 'day-content relative';
-                dayContent.style.height = '1440px'; // 24 * 60px
+                dayContent.style.height = '1020px'; // 17 * 60px (horario laboral)
+                dayContent.style.minHeight = '1020px';
                 
                 // Filtrar eventos de este día
                 const dayEvents = this.filteredEvents.filter(e => e.fecha === dateStr);
@@ -260,8 +261,13 @@ export class CalendarioModule {
                         minute = parseInt(parts[1], 10);
                     }
                     
-                    // Calcular posición
-                    const top = (hour * 60 + minute) * (60 / 60); // 60px por hora
+                    // Calcular posición (solo horas 06:00 a 22:00)
+                    // Si la hora es antes de 06:00 o después de 22:00, no mostrar
+                    if (hour < 6 || hour > 22) {
+                        return; // Omitir eventos fuera del horario laboral
+                    }
+                    
+                    const top = ((hour - 6) * 60 + minute) * (60 / 60); // 60px por hora desde 06:00
                     const height = event.tipo === 'audiencia' ? 60 : 40;
                     
                     eventEl.style.top = `${top}px`;
