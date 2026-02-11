@@ -32,7 +32,7 @@ window.addEventListener('click', function(e) {
     }
 });
 
-// --- SUBIDA DE ARCHIVOS ---
+// --- SUBIDA DE ARCHIVOS (WORD) ---
 function activarSubida(idTermino) {
     // Vincula el ID al input oculto y abre el selector de archivos
     const inputId = document.getElementById('upload-termino-id');
@@ -46,7 +46,6 @@ function activarSubida(idTermino) {
     }
 }
 
-// --- ELIMINAR ---
 function confirmarEliminar(id) {
     Swal.fire({
         title: '¿Eliminar término?',
@@ -64,59 +63,9 @@ function confirmarEliminar(id) {
     })
 }
 
-// --- MODALES (NUEVO / EDITAR) ---
-
-function abrirModalNuevo() {
-    const form = document.getElementById('form-termino');
-    if(form) form.reset();
-    
-    // Limpiamos el ID oculto para que el Controller sepa que es CREAR
-    document.getElementById('input-termino-id').value = ''; 
-    
-    // Cambiamos título
-    document.getElementById('modal-titulo').innerHTML = '<i class="fas fa-plus-circle"></i> Nuevo Término';
-    
-    // Mostramos modal
-    document.getElementById('modal-nuevo-termino').classList.remove('hidden');
-}
-
-function editarTermino(id, actuacion, fecha, expedienteId, abogadoId) {
-    // 1. Rellenar campos del formulario
-    document.getElementById('input-termino-id').value = id;
-    document.getElementById('input-actuacion').value = actuacion;
-    document.getElementById('input-fecha').value = fecha;
-    document.getElementById('input-expediente').value = expedienteId;
-    
-    // Manejo seguro del abogado (puede ser null)
-    if(abogadoId) {
-        document.getElementById('input-abogado').value = abogadoId;
-    } else {
-        document.getElementById('input-abogado').value = "";
-    }
-
-    // 2. Cambiar título a "Editar"
-    document.getElementById('modal-titulo').innerHTML = '<i class="fas fa-edit"></i> Editar Término';
-    
-    // 3. Mostrar modal
-    document.getElementById('modal-nuevo-termino').classList.remove('hidden');
-}
-
+// --- SUBIDA DE ACUSE (MODAL) ---
 function activarSubidaAcuse(idTermino) {
-    // 1. Asignar ID al input oculto
-    const inputId = document.getElementById('acuse-termino-id');
-    const inputFile = document.getElementById('acuse-file-input');
-    
-    if(inputId && inputFile) {
-        inputId.value = idTermino;
-        // 2. Abrir selector de archivos
-        inputFile.click();
-    } else {
-        console.error("No se encontraron los inputs de acuse");
-    }
-}
-
-function activarSubidaAcuse(idTermino) {
-    // 1. Asignar el ID al input oculto dentro del modal nuevo
+    // 1. Asignar el ID al input oculto dentro del modal de acuse
     const inputId = document.getElementById('input-acuse-id');
     
     if(inputId) {
@@ -126,12 +75,104 @@ function activarSubidaAcuse(idTermino) {
         const modal = document.getElementById('modal-subir-acuse');
         if(modal) {
             modal.classList.remove('hidden');
-            modal.style.display = 'flex'; // Asegurar display flex para centrado
-            modal.classList.add('flex');
-            modal.classList.add('items-center');
-            modal.classList.add('justify-center');
+            modal.classList.add('flex'); // Asegurar flex para centrado
         }
     } else {
         console.error("Error: No se encontró el input 'input-acuse-id' en el modal de acuse.");
     }
+}
+
+// ==========================================
+// 🛠️ GESTIÓN DE MODALES (NUEVO / EDITAR)
+// ==========================================
+
+// 1. Abrir Modal NUEVO
+function abrirModalNuevo() {
+    // Referencias a los campos del nuevo HTML
+    const expSelect = document.getElementById('select-expediente-termino');
+    const asuntoInput = document.getElementById('input-asunto');
+    const vencimientoInput = document.getElementById('input-vencimiento');
+    const abogadoSelect = document.getElementById('select-abogado-termino');
+
+    // Limpiar valores
+    if(expSelect) expSelect.value = "";
+    if(asuntoInput) asuntoInput.value = "";
+    if(vencimientoInput) vencimientoInput.value = "";
+    
+    // Resetear el select de abogado (bloqueado por defecto)
+    if(abogadoSelect) {
+        abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
+        abogadoSelect.classList.add('cursor-not-allowed');
+        abogadoSelect.classList.remove('bg-white');
+        abogadoSelect.classList.add('bg-gray-50');
+    }
+
+    // Cambiar título
+    const titulo = document.getElementById('modal-titulo');
+    if(titulo) titulo.innerHTML = '<i class="fas fa-plus-circle"></i> Nuevo Término';
+    
+    // Mostrar modal
+    const modal = document.getElementById('modal-nuevo-termino');
+    if(modal) modal.classList.remove('hidden');
+}
+
+// 2. Abrir Modal EDITAR (Para uso futuro o si ya tienes botones de editar)
+function editarTermino(id, actuacion, fecha, expedienteId, abogadoId) {
+    // NOTA: Asegúrate de que los IDs del HTML coincidan con los que buscas aquí.
+    // Con la actualización reciente, los IDs cambiaron a 'input-asunto', 'select-expediente-termino', etc.
+    // Si vas a usar esta función, actualízala para usar los mismos IDs que abrirModalNuevo.
+    
+    const asuntoInput = document.getElementById('input-asunto');
+    const vencimientoInput = document.getElementById('input-vencimiento');
+    const expSelect = document.getElementById('select-expediente-termino');
+    // ... setear valores ...
+    
+    const titulo = document.getElementById('modal-titulo');
+    if(titulo) titulo.innerHTML = '<i class="fas fa-edit"></i> Editar Término';
+    
+    const modal = document.getElementById('modal-nuevo-termino');
+    if(modal) modal.classList.remove('hidden');
+}
+
+// 3. Función de Vinculación Automática (CORREGIDA Y EN EL SCOPE GLOBAL)
+function vincularAbogadoTermino() {
+    const expSelect = document.getElementById('select-expediente-termino');
+    const abogadoSelect = document.getElementById('select-abogado-termino');
+    
+    if(!expSelect || !abogadoSelect) return;
+    
+    const expId = expSelect.value;
+    if(!expId) return;
+
+    // Feedback visual de carga
+    abogadoSelect.innerHTML = '<option>Cargando responsable...</option>';
+    abogadoSelect.classList.add('animate-pulse');
+
+    // Llamada a la API que creamos en el Controller
+    fetch(`/terminos/api/responsable-expediente/${expId}`)
+        .then(response => {
+            if (!response.ok) throw new Error("Sin responsable");
+            return response.json();
+        })
+        .then(data => {
+            // Limpiamos y dejamos SOLO al responsable
+            abogadoSelect.innerHTML = ''; 
+            
+            const option = document.createElement('option');
+            option.value = data.id;
+            option.text = data.nombre;
+            option.selected = true;
+            
+            abogadoSelect.appendChild(option);
+            
+            // Quitar animación y estilos de bloqueo
+            abogadoSelect.classList.remove('animate-pulse');
+            abogadoSelect.classList.remove('cursor-not-allowed');
+            abogadoSelect.classList.remove('bg-gray-50');
+            abogadoSelect.classList.add('bg-white');
+        })
+        .catch(err => {
+            console.error(err);
+            abogadoSelect.innerHTML = '<option value="">Sin abogado asignado</option>';
+        });
 }

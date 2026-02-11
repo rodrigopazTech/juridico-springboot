@@ -30,6 +30,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 
 import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.util.AudienciaExcelExporter;
 
@@ -37,6 +38,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -48,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/audiencias")
@@ -175,6 +178,7 @@ public class AudienciasController {
         model.addAttribute("listaTiposAudiencia", tipoAudienciaRepository.findAll());
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
         model.addAttribute("listaMaterias", materiaRepository.findAll());
+        model.addAttribute("tipos", tipoAudienciaRepository.findAll());
         
         // --- FILTRO DE ABOGADOS EN MODAL ---
         // (Aunque esto no estaba en el requerimiento del fantasma, lo alineamos para que sea coherente)
@@ -205,60 +209,36 @@ public class AudienciasController {
     }
 
     @PostMapping("/guardar")
-    public String guardar(@ModelAttribute Audiencia audienciaForm, 
-                          @RequestParam("expedienteId") UUID expedienteId,
-                          @RequestParam("tipoAudienciaId") Integer tipoAudienciaId,
-                          RedirectAttributes redirectAttrs) {
+    public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes redirectAttrs) {
         try {
-            Audiencia audienciaFinal;
-
-            if (audienciaForm.getId() != null) {
-                Audiencia existente = audienciaRepository.findById(audienciaForm.getId())
+            // A. EDICIÓN: Recuperar datos anteriores para no perderlos (Estatus, Acta, etc.)
+            if (audiencia.getId() != null) {
+                Audiencia audienciaExistente = audienciaRepository.findById(audiencia.getId())
                         .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
-
-                existente.setFechaAudiencia(audienciaForm.getFechaAudiencia());
-                existente.setHoraAudiencia(audienciaForm.getHoraAudiencia());
-                existente.setSalaLugar(audienciaForm.getSalaLugar());
-                existente.setEsVirtual(audienciaForm.getEsVirtual());
-                existente.setUrlReunion(audienciaForm.getUrlReunion());
-                existente.setAbogadoComparece(audienciaForm.getAbogadoComparece());
                 
-                audienciaFinal = existente;
+                // 1. Respetar el Estatus original
+                audiencia.setEstatusAudiencia(audienciaExistente.getEstatusAudiencia());
+                
+                // 2. Respetar el documento del acta si ya existía
+                audiencia.setActaDocumento(audienciaExistente.getActaDocumento());
+                
+                // 3. Respetar observaciones si ya tenía
+                if (audiencia.getObservaciones() == null) {
+                    audiencia.setObservaciones(audienciaExistente.getObservaciones());
+                }
+
             } else {
-                audienciaFinal = audienciaForm;
-                audienciaFinal.setEstatusAudiencia("PENDIENTE");
-                audienciaFinal.setCreatedAt(LocalDateTime.now());
+                // B. NUEVA: Asignar estatus inicial por defecto
+                audiencia.setEstatusAudiencia("PENDIENTE");
             }
 
-            Expediente exp = expedienteRepository.findById(expedienteId)
-                    .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
-            audienciaFinal.setExpediente(exp);
-
-            TipoAudiencia tipo = tipoAudienciaRepository.findById(tipoAudienciaId)
-                    .orElseThrow(() -> new RuntimeException("Tipo de audiencia no encontrado"));
-            audienciaFinal.setTipoAudiencia(tipo);
-
-            audienciaFinal.setUpdatedAt(LocalDateTime.now());
-
-            Audiencia guardada = audienciaRepository.save(audienciaFinal);
-
-            if (guardada.getAbogadoComparece() != null && 
-                !guardada.getAbogadoComparece().getId().equals(exp.getAbogadoResponsable().getId())) {
-                
-                ColaboradorExpediente colaborador = colaboradorRepository
-                    .findByExpedienteIdAndUsuarioId(exp.getId(), guardada.getAbogadoComparece().getId())
-                    .stream().findFirst().orElse(new ColaboradorExpediente());
-
-                colaborador.setExpediente(exp);
-                colaborador.setUsuario(guardada.getAbogadoComparece());
-                colaborador.setPermisoNivel("LECTURA_TOTAL");
-                colaborador.setMotivo("Comparecencia en Audiencia: " + tipo.getNombre());
-                
-                LocalDateTime fechaBase = LocalDateTime.of(guardada.getFechaAudiencia(), guardada.getHoraAudiencia());
-                colaborador.setFechaExpiracion(fechaBase.plusDays(1).withHour(23).withMinute(59));
-
-                colaboradorRepository.save(colaborador);
+            // --- Lógica de Abogado Comparece (que agregamos antes) ---
+            if (audiencia.getAbogadoComparece() != null && audiencia.getAbogadoComparece().getId() == null) {
+                audiencia.setAbogadoComparece(null);
             }
+
+            // Guardar
+            audienciaRepository.save(audiencia);
 
             redirectAttrs.addFlashAttribute("mensaje", "Audiencia guardada correctamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
@@ -441,5 +421,49 @@ public class AudienciasController {
 
         AudienciaExcelExporter excelExporter = new AudienciaExcelExporter(listado);
         excelExporter.export(response);
+    }
+
+    // --- API: BUSCAR ABOGADOS DISPONIBLES (PARA SUSTITUCIÓN EN AUDIENCIAS) ---
+    @GetMapping("/api/abogados-disponibles/{expedienteId}")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> obtenerAbogadosDisponibles(@PathVariable String expedienteId) {
+        try {
+            // 1. Obtener datos del expediente
+            Expediente exp = expedienteRepository.findById(UUID.fromString(expedienteId))
+                    .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
+            
+            Integer gerenciaId = exp.getGerencia().getId();
+            Integer materiaId = exp.getMateria().getId();
+
+            // 2. Buscar abogados que tengan esa materia (usamos el repo de usuarios)
+            List<Usuario> abogadosConMateria = usuarioRepository.findByRolAndMateriaId(RolUsuario.ABOGADO, materiaId);
+
+            // 3. Filtrar por Gerencia en memoria (para asegurar que sean del mismo equipo)
+            List<Map<String, Object>> resultado = abogadosConMateria.stream()
+                .filter(u -> u.getGerencia() != null && u.getGerencia().getId().equals(gerenciaId))
+                .map(u -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", u.getId());
+                    map.put("nombre", u.getNombreCompleto());
+                    
+                    // Marcamos quién es el titular original para distinguirlo visualmente
+                    boolean esTitular = exp.getAbogadoResponsable() != null && u.getId().equals(exp.getAbogadoResponsable().getId());
+                    map.put("esTitular", esTitular);
+                    
+                    return map;
+                })
+                .sorted((a, b) -> {
+                    // Ordenar: Titular primero, luego alfabéticamente
+                    if ((boolean) a.get("esTitular")) return -1;
+                    if ((boolean) b.get("esTitular")) return 1;
+                    return ((String) a.get("nombre")).compareTo((String) b.get("nombre"));
+                })
+                .collect(Collectors.toList());
+
+            return ResponseEntity.ok(resultado);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

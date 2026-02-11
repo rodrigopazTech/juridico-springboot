@@ -46,12 +46,16 @@
                                   th:text="${a.expediente.gerencia != null ? a.expediente.gerencia.nombre : 'Sin Gerencia'}">Gerencia</span>
                             <span class="text-[10px] text-gray-500"
                                   th:text="${a.expediente.materia != null ? a.expediente.materia.nombre : 'Sin Materia'}">Materia</span>
+                            <div class="mt-1 flex items-center text-[10px] text-gray-400">
+                                <i class="fas fa-user-tie mr-1"></i>
+                                <span th:text="${a.abogadoComparece != null ? a.abogadoComparece.nombreCompleto : 'Sin asignar'}">Abogado</span>
+                            </div>
                         </div>
                     </td>
 
                     <td class="px-4 py-3">
                         <span class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-semibold border border-gray-200"
-                              th:text="${a.tipoAudiencia != null ? a.tipoAudiencia.nombre : 'General'}">Tipo</span>
+                            th:text="${a.tipoAudiencia != null ? a.tipoAudiencia.nombre : 'General'}">Tipo</span>
 
                         <div class="flex items-center gap-1 mt-1 text-xs text-gray-700">
                             <i th:if="${a.esVirtual}" class="fas fa-video text-blue-600"></i>
@@ -60,43 +64,49 @@
                             <span th:text="${a.esVirtual ? 'En Línea' : 'Presencial'}">Ubicación</span>
 
                             <a th:if="${a.estatusAudiencia != 'CONCLUIDA' and a.esVirtual == true and a.urlReunion != null and !#strings.isEmpty(a.urlReunion)}"
-                               th:href="${a.urlReunion}" target="_blank"
-                               class="ml-2 text-blue-600 hover:text-blue-800 hover:scale-110 transition-transform">
+                            th:href="${a.urlReunion}" target="_blank"
+                            class="ml-2 text-blue-600 hover:text-blue-800 hover:scale-110 transition-transform"
+                            title="Unirse a la reunión ahora">
                                 <i class="fas fa-external-link-alt"></i>
                             </a>
                         </div>
                     </td>
-
                     <td class="px-4 py-3">
-                        <span th:if="${a.estatusAudiencia == 'PENDIENTE'}" class="inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-bold px-2.5 py-0.5 rounded border border-yellow-200">
-                            <i class="fas fa-clock mr-1"></i> Pendiente
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold border"
+                            th:classappend="${a.estatusAudiencia == 'CONCLUIDA' ? 'bg-green-100 text-green-800 border-green-200' : 
+                                            (a.estatusAudiencia == 'CON_ACTA' ? 'bg-blue-50 text-blue-800 border-blue-200' : 
+                                            'bg-gray-50 text-gray-600 border-gray-200')}"
+                            th:text="${a.estatusAudiencia != null ? a.estatusAudiencia : 'PENDIENTE'}">
+                            STATUS
                         </span>
-                        <span th:if="${a.estatusAudiencia == 'CON_ACTA'}" class="inline-flex items-center bg-purple-100 text-purple-800 text-xs font-bold px-2.5 py-0.5 rounded border border-purple-200">
-                            <i class="fas fa-file-upload mr-1"></i> Con Acta
-                        </span>
-                        <span th:if="${a.estatusAudiencia == 'CONCLUIDA'}" class="inline-flex items-center bg-gray-800 text-white text-xs font-bold px-2.5 py-0.5 rounded border border-gray-600">
-                            <i class="fas fa-check-double mr-1"></i> Concluida
-                        </span>
+
+                        <div th:if="${a.actaDocumento != null}" class="mt-1">
+                            <a th:href="@{/audiencias/descargar-acta/{id}(id=${a.id})}" 
+                            class="text-[10px] text-gob-oro hover:text-gob-guinda hover:underline flex items-center gap-1">
+                                <i class="fas fa-paperclip"></i> Ver Acta
+                            </a>
+                        </div>
                     </td>
 
                     <td class="px-4 py-3 text-right relative">
 
-                        <button th:if="${a.estatusAudiencia == 'PENDIENTE'}"
-                                type="button"
-                                class="text-gray-400 hover:text-gob-oro mr-2 transition-colors btn-editar"
-                                title="Editar"
-                                th:data-id="${a.id}"
-                                th:data-expediente-id="${a.expediente.id}"
-                                th:data-tipo-id="${a.tipoAudiencia != null ? a.tipoAudiencia.id : ''}"
-                                th:data-fecha="${a.fechaAudiencia}"
-                                th:data-hora="${a.horaAudiencia}"
-                                th:data-virtual="${a.esVirtual}"
-                                th:data-sala="${a.salaLugar != null ? a.salaLugar : ''}"
-                                th:data-url="${a.urlReunion != null ? a.urlReunion : ''}"
-                                th:data-abogado-id="${a.abogadoComparece != null ? a.abogadoComparece.id : ''}"
-                                onclick="prepararEdicion(this)">
-                            <i class="fas fa-edit"></i>
-                        </button>
+                    <button th:if="${a.estatusAudiencia == 'PENDIENTE'}"
+                            type="button"
+                            class="text-gray-400 hover:text-gob-oro mr-2 transition-colors"
+                            title="Editar"
+                            th:onclick="abrirModalEditar(
+                                [[${a.id}]], 
+                                [[${a.expediente.id}]], 
+                                [[${a.tipoAudiencia != null ? a.tipoAudiencia.id : ''}]], 
+                                [[${a.fechaAudiencia}]], 
+                                [[${a.horaAudiencia}]], 
+                                [[${a.esVirtual}]], 
+                                [[${a.salaLugar}]], 
+                                [[${a.urlReunion}]],
+                                [[${a.abogadoComparece != null ? a.abogadoComparece.id : ''}]]
+                            )">
+                        <i class="fas fa-edit"></i>
+                    </button>
 
                         <button th:unless="${a.estatusAudiencia == 'PENDIENTE'}"
                                 class="text-gray-200 cursor-not-allowed mr-2"
@@ -162,6 +172,7 @@
             </tbody>
         </table>
     </div>
+    
     <div class="p-4 border-t border-gray-200 flex justify-between items-center" th:if="${!audiencias.empty}">
         <span class="text-sm text-gray-600">Página <span th:text="${audiencias.number + 1}">1</span> de <span th:text="${audiencias.totalPages}">10</span></span>
         <div class="flex gap-2">

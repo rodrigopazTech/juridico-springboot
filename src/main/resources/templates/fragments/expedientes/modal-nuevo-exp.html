@@ -32,7 +32,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Gerencia*</label>
-                    <select name="gerencia.id" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white" required>
+                    <select name="gerencia.id" id="select-gerencia-exp" onchange="cargarMateriasExpediente()" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white" required>
                         <option value="">Selecciona...</option>
                         <option th:each="g : ${gerencias}" 
                                 th:value="${g.id}" 
@@ -53,11 +53,8 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Materia*</label>
-                    <select name="materia.id" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white" required>
-                        <option value="">Selecciona...</option>
-                        <option th:each="m : ${materias}" 
-                                th:value="${m.id}" 
-                                th:text="${m.nombre}"></option>
+                    <select name="materia.id" id="select-materia-exp" onchange="cargarAbogadosExpediente()" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-gray-50" required disabled>
+                        <option value="">Primero selecciona una gerencia...</option>
                     </select>
                 </div>
                 <div>
@@ -72,12 +69,9 @@
             </div>
 
             <div>
-                <label class="block font-bold text-gray-600 mb-1">Abogado Responsable*</label>
-                <select name="abogadoResponsable.id" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
-                    <option value="">Asignar abogado...</option>
-                    <option th:each="a : ${usuarios}" 
-                            th:value="${a.id}" 
-                            th:text="${a.nombreCompleto}"></option>
+                <label class="block font-bold text-gray-600 mb-1">Abogado Responsable</label>
+                <select name="abogadoResponsable.id" id="select-abogado-exp" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-gray-50" disabled>
+                    <option value="">Primero selecciona una materia...</option>
                 </select>
             </div>
 

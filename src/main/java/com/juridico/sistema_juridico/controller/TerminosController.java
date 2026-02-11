@@ -553,4 +553,29 @@ public class TerminosController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    // --- API: OBTENER ABOGADO DEL EXPEDIENTE (PARA VINCULACIÓN AUTOMÁTICA) ---
+    @GetMapping("/api/responsable-expediente/{id}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> obtenerResponsable(@PathVariable String id) {
+        try {
+            // Buscamos el expediente por su UUID
+            Expediente exp = expedienteRepository.findById(UUID.fromString(id))
+                    .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
+            
+            Usuario responsable = exp.getAbogadoResponsable();
+            
+            Map<String, Object> respuesta = new HashMap<>();
+            if (responsable != null) {
+                respuesta.put("id", responsable.getId());
+                respuesta.put("nombre", responsable.getNombreCompleto());
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+            
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }

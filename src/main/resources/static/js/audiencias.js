@@ -1,10 +1,10 @@
 /**
  * Lógica del Módulo de Audiencias
- * Versión v3.0
+ * Versión v4.0 - Con Asignación Dinámica de Abogados
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("Sistema de Audiencias Cargado - v3.0");
+    console.log("Sistema de Audiencias Cargado");
 });
 
 // --- MENÚS Y NAVEGACIÓN ---
@@ -41,54 +41,61 @@ function abrirModalAudiencia() {
     const titulo = document.getElementById('modal-titulo-audiencia');
     if(titulo) titulo.innerHTML = '<i class="fas fa-gavel"></i> Nueva Audiencia';
 
+    // Resetear selector de abogados
+    const abogadoSelect = document.getElementById('input-abogado');
+    if(abogadoSelect) {
+        abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
+        abogadoSelect.disabled = false;
+    }
+
     toggleUbicacion(false);
+    
+    // Resetear radio buttons
     const radioPresencial = document.querySelector('input[name="esVirtual"][value="false"]');
     if(radioPresencial) radioPresencial.checked = true;
 
     document.getElementById('modal-audiencia').classList.remove('hidden');
 }
 
-// 2. PREPARAR EDICIÓN (Lee los datos seguros del botón)
-function prepararEdicion(btn) {
-    // Leemos los datos de los atributos data-*
-    const id = btn.getAttribute('data-id');
-    const expedienteId = btn.getAttribute('data-expediente-id');
-    const tipoId = btn.getAttribute('data-tipo-id');
-    const fecha = btn.getAttribute('data-fecha');
-    const hora = btn.getAttribute('data-hora');
-    const esVirtual = btn.getAttribute('data-virtual') === 'true';
-    const sala = btn.getAttribute('data-sala');
-    const url = btn.getAttribute('data-url');
-    const abogadoId = btn.getAttribute('data-abogado-id');
+// 2. ABRIR PARA EDITAR (¡CORREGIDO!)
+function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala, link, abogadoId) {
+    
+    // A. Llenar campos básicos
+    setValueIfExists('input-audiencia-id', id);
+    setValueIfExists('input-expediente', expedienteId);
+    setValueIfExists('input-tipo', tipoId);
+    setValueIfExists('input-fecha', fecha);
+    setValueIfExists('input-hora', hora);
 
-    console.log("Editando Audiencia ID:", id);
+    // B. Configurar Modalidad (Virtual/Presencial)
+    // Convertimos a booleano real por si viene como string "true"
+    const esVirtualBool = (String(isVirtual) === 'true');
+    
+    const radio = document.querySelector(`input[name="esVirtual"][value="${esVirtualBool}"]`);
+    if(radio) radio.checked = true;
+    
+    toggleUbicacion(esVirtualBool);
 
-    // Llenamos el formulario
-    document.getElementById('input-audiencia-id').value = id;
-    document.getElementById('modal-titulo-audiencia').innerHTML = '<i class="fas fa-edit"></i> Editar Audiencia';
-
-    setValueIfExists('input-expediente-audiencia', expedienteId);
-    setValueIfExists('input-tipo-audiencia', tipoId);
-    setValueIfExists('input-abogado-audiencia', abogadoId);
-
-    document.getElementById('input-fecha-audiencia').value = fecha;
-    document.getElementById('input-hora-audiencia').value = hora;
-
-    if (esVirtual) {
-        const radioVirtual = document.querySelector('input[name="esVirtual"][value="true"]');
-        if(radioVirtual) radioVirtual.checked = true;
-        document.getElementById('input-url').value = url || '';
-        toggleUbicacion(true);
+    if(esVirtualBool) {
+        setValueIfExists('input-url', link);
     } else {
-        const radioPresencial = document.querySelector('input[name="esVirtual"][value="false"]');
-        if(radioPresencial) radioPresencial.checked = true;
-        document.getElementById('input-sala').value = sala || '';
-        toggleUbicacion(false);
+        setValueIfExists('input-sala', sala);
     }
+
+    // C. CARGAR Y SELECCIONAR ABOGADO (La parte crítica)
+    // Llamamos a la API usando el expediente seleccionado y le pasamos el abogado actual para que lo pre-seleccione
+    if (expedienteId) {
+        cargarAbogadosPosibles(abogadoId);
+    }
+
+    // D. Cambiar Título y Mostrar
+    const titulo = document.getElementById('modal-titulo-audiencia');
+    if(titulo) titulo.innerHTML = '<i class="fas fa-edit"></i> Editar Audiencia';
 
     document.getElementById('modal-audiencia').classList.remove('hidden');
 }
 
+// Helper para evitar errores si el input no existe
 function setValueIfExists(elementId, value) {
     const el = document.getElementById(elementId);
     if(el) el.value = value || '';
@@ -101,7 +108,10 @@ function toggleUbicacion(isVirtual) {
     const inputSala = document.getElementById('input-sala');
     const inputUrl = document.getElementById('input-url');
 
-    if(isVirtual) {
+    // Convertir a booleano por seguridad
+    const showVirtual = (String(isVirtual) === 'true');
+
+    if(showVirtual) {
         if(campoSala) campoSala.classList.add('hidden');
         if(campoUrl) campoUrl.classList.remove('hidden');
         if(inputUrl) inputUrl.setAttribute('required', 'required');
@@ -115,11 +125,91 @@ function toggleUbicacion(isVirtual) {
 }
 
 function activarSubidaActa(id) {
-    document.getElementById('input-acta-id').value = id;
-    document.getElementById('input-acta-file').click();
+    const inputId = document.getElementById('input-acta-id');
+    const inputFile = document.getElementById('input-acta-file');
+    if(inputId && inputFile) {
+        inputId.value = id;
+        inputFile.click();
+    }
 }
 
 function abrirModalConcluir(id) {
-    document.getElementById('concluir-audiencia-id').value = id;
+    const inputId = document.getElementById('concluir-audiencia-id');
+    if(inputId) inputId.value = id;
+    
     document.getElementById('modal-concluir').classList.remove('hidden');
+}
+
+// ==========================================
+// ⚖️ LÓGICA DE ASIGNACIÓN DE ABOGADOS
+// ==========================================
+
+function cargarAbogadosPosibles(idPreseleccionado = null) {
+    const expSelect = document.getElementById('input-expediente');
+    const abogadoSelect = document.getElementById('input-abogado');
+    
+    if (!expSelect || !abogadoSelect) return;
+    
+    const expId = expSelect.value;
+    if (!expId) {
+        abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
+        return;
+    }
+
+    // Feedback de carga
+    abogadoSelect.innerHTML = '<option>Buscando abogados disponibles...</option>';
+    // No lo deshabilitamos totalmente en edición para no bloquear la UI, pero visualmente ayuda
+    // abogadoSelect.disabled = true; 
+
+    fetch(`/audiencias/api/abogados-disponibles/${expId}`)
+        .then(response => response.json())
+        .then(abogados => {
+            abogadoSelect.innerHTML = '';
+            // abogadoSelect.disabled = false;
+
+            if (abogados.length === 0) {
+                abogadoSelect.innerHTML = '<option value="">No hay abogados en esta gerencia/materia</option>';
+                return;
+            }
+
+            // Agregar opción por defecto
+            const defaultOption = document.createElement('option');
+            defaultOption.value = "";
+            defaultOption.text = "-- Seleccione quien asistirá --";
+            abogadoSelect.appendChild(defaultOption);
+
+            let titularEncontrado = false;
+
+            abogados.forEach(a => {
+                const option = document.createElement('option');
+                option.value = a.id;
+                
+                // Distinguir visualmente al titular
+                if (a.esTitular) {
+                    option.text = `⭐ ${a.nombre} (Titular)`;
+                    option.style.fontWeight = 'bold';
+                    // Si NO estamos editando (idPreseleccionado es null), seleccionamos al titular por defecto
+                    if (!idPreseleccionado) option.selected = true;
+                    titularEncontrado = true;
+                } else {
+                    option.text = a.nombre;
+                }
+
+                // LÓGICA DE EDICIÓN: Si el ID coincide con el que ya tenía la audiencia
+                if (idPreseleccionado && String(a.id) === String(idPreseleccionado)) {
+                    option.selected = true;
+                }
+
+                abogadoSelect.appendChild(option);
+            });
+            
+            // Si no hay titular y no estamos editando, queda en "Seleccione..."
+            if (!titularEncontrado && !idPreseleccionado) {
+                abogadoSelect.value = ""; 
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            abogadoSelect.innerHTML = '<option value="">Error al cargar abogados</option>';
+        });
 }

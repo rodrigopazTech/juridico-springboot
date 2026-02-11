@@ -39,6 +39,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.HashMap;
 
 @Controller
 @RequestMapping("/expedientes")
@@ -277,5 +279,30 @@ public class ExpedientesController {
         exp.setUpdatedAt(LocalDateTime.now());
         expedienteRepository.save(exp);
         return ResponseEntity.ok().build();
+    }
+
+    // --- API PARA SELECTORES EN CASCADA (NUEVO EXPEDIENTE) ---
+
+    @GetMapping("/api/abogados")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> obtenerAbogadosPorMateria(
+            @RequestParam Integer gerenciaId, 
+            @RequestParam Integer materiaId) {
+        
+        // 1. Buscamos abogados que tengan esa materia asignada
+        List<Usuario> abogados = usuarioRepository.findByRolAndMateriaId(RolUsuario.ABOGADO, materiaId);
+        
+        // 2. Filtramos para asegurar que pertenezcan a la gerencia correcta y preparamos el JSON
+        List<Map<String, Object>> response = abogados.stream()
+            .filter(u -> u.getGerencia() != null && u.getGerencia().getId().equals(gerenciaId))
+            .map(u -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", u.getId());
+                map.put("nombreCompleto", u.getNombreCompleto());
+                return map;
+            })
+            .collect(Collectors.toList());
+            
+        return ResponseEntity.ok(response);
     }
 }
