@@ -169,20 +169,153 @@ export class CalendarioModule {
 
             // Filtrar eventos de este día específico (de los ya filtrados por el combo)
             const dayEvents = this.filteredEvents.filter(e => e.fecha === dateStr);
+            const MAX_VISIBLE_EVENTS = 3;
 
-            dayEvents.forEach(event => {
-                const eventEl = document.createElement('div');
-                eventEl.className = `event-tag event-${event.tipo}`;
-                eventEl.innerText = event.titulo;
-                eventEl.onclick = (e) => {
+            if (dayEvents.length > MAX_VISIBLE_EVENTS) {
+                // Mostrar solo los primeros 3 eventos
+                dayEvents.slice(0, MAX_VISIBLE_EVENTS).forEach(event => {
+                    const eventEl = document.createElement('div');
+                    eventEl.className = `event-tag event-${event.tipo}`;
+                    eventEl.innerText = event.titulo;
+                    eventEl.onclick = (e) => {
+                        e.stopPropagation();
+                        this.showEventDetail(event);
+                    };
+                    eventsContainer.appendChild(eventEl);
+                });
+
+                // Mostrar indicador de "X más" con dots
+                const moreEvents = dayEvents.length - MAX_VISIBLE_EVENTS;
+                const moreEl = document.createElement('div');
+                moreEl.className = 'more-events flex items-center gap-1 mt-1';
+                moreEl.title = `Hay ${moreEvents} eventos más. Click para ver todos.`;
+                
+                // Crear dots de colores
+                const dotsContainer = document.createElement('div');
+                dotsContainer.className = 'flex gap-0.5';
+                
+                // Mostrar hasta 3 dots con los colores de los eventos restantes
+                const remainingEvents = dayEvents.slice(MAX_VISIBLE_EVENTS);
+                const dotColors = remainingEvents.map(e => this.getEventColor(e.tipo));
+                
+                dotColors.slice(0, 3).forEach(color => {
+                    const dot = document.createElement('span');
+                    dot.className = 'w-1.5 h-1.5 rounded-full';
+                    dot.style.backgroundColor = color;
+                    dotsContainer.appendChild(dot);
+                });
+
+                moreEl.appendChild(dotsContainer);
+                
+                const moreText = document.createElement('span');
+                moreText.className = 'text-[10px] text-gray-500 font-medium';
+                moreText.innerText = `+${moreEvents}`;
+                moreEl.appendChild(moreText);
+
+                // Click para mostrar todos los eventos del día
+                moreEl.onclick = (e) => {
                     e.stopPropagation();
-                    this.showEventDetail(event);
+                    this.showDayEventsModal(dateStr, dayEvents);
                 };
-                eventsContainer.appendChild(eventEl);
-            });
+                moreEl.style.cursor = 'pointer';
+                
+                eventsContainer.appendChild(moreEl);
+            } else {
+                // Mostrar normalmente
+                dayEvents.forEach(event => {
+                    const eventEl = document.createElement('div');
+                    eventEl.className = `event-tag event-${event.tipo}`;
+                    eventEl.innerText = event.titulo;
+                    eventEl.onclick = (e) => {
+                        e.stopPropagation();
+                        this.showEventDetail(event);
+                    };
+                    eventsContainer.appendChild(eventEl);
+                });
+            }
 
             grid.appendChild(cell);
         }
+    }
+
+    /**
+     * Muestra un modal con todos los eventos de un día específico
+     */
+    showDayEventsModal(dateStr, events) {
+        // Crear modal dinámicamente si no existe
+        let modal = document.getElementById('modalDayEvents');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'modalDayEvents';
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 transform transition-all scale-95 opacity-0" id="modalDayEventsContent">
+                    <div class="flex justify-between items-center p-4 border-b">
+                        <h3 class="font-bold text-lg text-gray-800" id="modalDayEventsTitle">Eventos del Día</h3>
+                        <button onclick="this.closest('#modalDayEvents').classList.add('hidden')" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="p-4 max-h-96 overflow-y-auto" id="modalDayEventsList"></div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Animación de entrada
+            setTimeout(() => {
+                document.getElementById('modalDayEventsContent').classList.remove('scale-95', 'opacity-0');
+            }, 10);
+        }
+
+        // Formatear fecha
+        const dateObj = new Date(dateStr);
+        const formattedDate = dateObj.toLocaleDateString('es-ES', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        
+        document.getElementById('modalDayEventsTitle').innerText = `Eventos - ${formattedDate}`;
+        
+        // Lista de eventos
+        const list = document.getElementById('modalDayEventsList');
+        list.innerHTML = '';
+        
+        // Ordenar por hora
+        events.sort((a, b) => {
+            if (!a.hora) return 1;
+            if (!b.hora) return -1;
+            return a.hora.localeCompare(b.hora);
+        });
+        
+        events.forEach(event => {
+            const item = document.createElement('div');
+            item.className = 'bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2 hover:bg-gray-100 cursor-pointer';
+            item.onclick = () => {
+                this.showEventDetail(event);
+            };
+            item.innerHTML = `
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-3 h-3 rounded-full" style="background-color: ${this.getEventColor(event.tipo)}"></span>
+                    <span class="text-xs font-bold uppercase text-gray-600">${event.tipo}</span>
+                    <span class="text-sm font-semibold text-gray-700 ml-auto">${event.hora || '--:--'}</span>
+                </div>
+                <p class="font-medium text-gray-800">${event.titulo}</p>
+                ${event.expediente ? `<p class="text-xs text-gray-500">Exp: ${event.expediente}</p>` : ''}
+            `;
+            list.appendChild(item);
+        });
+
+        // Mostrar modal
+        modal.classList.remove('hidden');
+        
+        // Cerrar al hacer click fuera
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+            }
+        };
     }
 
     renderWeek() {
