@@ -1,74 +1,61 @@
 package com.juridico.sistema_juridico.exception;
 
-import com.juridico.sistema_juridico.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice; // ¡Ojo! ControllerAdvice, no RestControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.view.RedirectView;
 
-import java.time.LocalDateTime;
-
-@RestControllerAdvice
+@ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 400 - Bad Request (Errores de sintaxis o datos manuales)
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage(), request);
-    }
-
-    // 400 - Validation Errors (Atrapa los errores de las anotaciones @Valid)
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex, HttpServletRequest request) {
-        String firstErrorMessage = ex.getBindingResult().getFieldErrors().get(0).getDefaultMessage();
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "Error de validación: " + firstErrorMessage, request);
-    }
-
-    // 401 - Unauthorized (No ha iniciado sesión)
-    @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Unauthorized", ex.getMessage(), request);
-    }
-
-    // 403 - Forbidden (No tiene permisos suficientes)
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenException ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.FORBIDDEN, "Forbidden", ex.getMessage(), request);
-    }
-
-    // 404 - Not Found (Recurso no existe)
+    // 1. ERROR 404: RECURSO NO ENCONTRADO
+    // Ejemplo: Intentan eliminar una audiencia que ya no existe o ponen un ID falso en la URL.
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request);
-    }
-
-    // 409 - Conflict (Ya existe un registro con esos datos, ej: mismo número de expediente)
-    @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.CONFLICT, "Conflict", ex.getMessage(), request);
-    }
-
-    // 500 - Internal Server Error (Errores genéricos o de base de datos)
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", 
-                "Ocurrió un error inesperado en el sistema jurídico.", request);
-    }
-
-    /**
-     * Método privado auxiliar para evitar repetir código al construir la respuesta.
-     */
-    private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String errorLabel, String message, HttpServletRequest request) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(status.value())
-                .error(errorLabel)
-                .message(message)
-                .path(request.getRequestURI())
-                .build();
+    public RedirectView handleResourceNotFound(ResourceNotFoundException ex, RedirectAttributes attrs, HttpServletRequest request) {
+        attrs.addFlashAttribute("mensaje", ex.getMessage());
+        attrs.addFlashAttribute("tipo", "error"); // Rojo en SweetAlert
         
-        return new ResponseEntity<>(error, status);
+        return new RedirectView(getRefererOrHome(request));
+    }
+
+    // 2. ERROR 403/401: PERMISOS Y SEGURIDAD
+    // Ejemplo: Un abogado intenta borrar un expediente de otra gerencia.
+    @ExceptionHandler({ForbiddenException.class, UnauthorizedException.class})
+    public RedirectView handleSecurityErrors(RuntimeException ex, RedirectAttributes attrs, HttpServletRequest request) {
+        attrs.addFlashAttribute("mensaje", "Acceso Denegado: " + ex.getMessage());
+        attrs.addFlashAttribute("tipo", "warning"); // Amarillo en SweetAlert
+        
+        return new RedirectView(getRefererOrHome(request));
+    }
+
+    // 3. ERROR 400/409: LÓGICA DE NEGOCIO
+    // Ejemplo: Intentar crear un usuario con un email repetido.
+    @ExceptionHandler({BadRequestException.class, ConflictException.class})
+    public RedirectView handleLogicErrors(RuntimeException ex, RedirectAttributes attrs, HttpServletRequest request) {
+        attrs.addFlashAttribute("mensaje", ex.getMessage());
+        attrs.addFlashAttribute("tipo", "info"); // Azul en SweetAlert
+        
+        return new RedirectView(getRefererOrHome(request));
+    }
+
+    // 4. ERROR 500: CUALQUIER COSA IMPREVISTA
+    // NullPointer, Base de datos caída, errores de sintaxis Java, etc.
+    @ExceptionHandler(Exception.class)
+    public RedirectView handleGeneralError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
+        // Imprimimos el error en la consola del servidor para que tú (el dev) sepas qué pasó
+        System.err.println("--- ERROR NO CONTROLADO ---");
+        ex.printStackTrace();
+        
+        attrs.addFlashAttribute("mensaje", "Ocurrió un error inesperado en el sistema. Contacte a soporte técnico.");
+        attrs.addFlashAttribute("tipo", "error");
+        
+        return new RedirectView(getRefererOrHome(request));
+    }
+
+    // Método auxiliar para devolver al usuario a la página anterior
+    private String getRefererOrHome(HttpServletRequest request) {
+        String referer = request.getHeader("Referer");
+        return referer != null ? referer : "/";
     }
 }

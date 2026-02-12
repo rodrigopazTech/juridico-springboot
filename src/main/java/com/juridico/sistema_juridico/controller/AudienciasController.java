@@ -2,6 +2,7 @@ package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
@@ -207,39 +208,47 @@ public class AudienciasController {
     
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes redirectAttrs) {
-        try {
-            boolean esNueva = (audiencia.getId() == null);
+        // NOTA: Ya no necesitamos el try-catch envolvente.
+        // Si algo falla, el GlobalExceptionHandler se encarga.
 
-            if (!esNueva) {
-                Audiencia audienciaExistente = audienciaRepository.findById(audiencia.getId())
-                        .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
-                audiencia.setEstatusAudiencia(audienciaExistente.getEstatusAudiencia());
-                audiencia.setActaDocumento(audienciaExistente.getActaDocumento());
-                if (audiencia.getObservaciones() == null) {
-                    audiencia.setObservaciones(audienciaExistente.getObservaciones());
-                }
-            } else {
-                audiencia.setEstatusAudiencia("PENDIENTE");
+        boolean esNueva = (audiencia.getId() == null);
+        
+        if (!esNueva) {
+            // Lógica de EDICIÓN:
+            // Buscamos la audiencia. Si no existe, lanzamos la excepción y el sistema redirige al usuario con la alerta roja.
+            Audiencia audienciaExistente = audienciaRepository.findById(audiencia.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("No se puede editar: La audiencia con ID " + audiencia.getId() + " no existe."));
+
+            // Preservamos los datos que no vienen en el formulario simple
+            audiencia.setEstatusAudiencia(audienciaExistente.getEstatusAudiencia());
+            audiencia.setActaDocumento(audienciaExistente.getActaDocumento());
+            
+            // Preservar observaciones si no se enviaron nuevas
+            if (audiencia.getObservaciones() == null) {
+                audiencia.setObservaciones(audienciaExistente.getObservaciones());
             }
-
-            if (audiencia.getAbogadoComparece() != null && audiencia.getAbogadoComparece().getId() == null) {
-                audiencia.setAbogadoComparece(null);
-            }
-
-            Audiencia guardada = audienciaRepository.save(audiencia);
-
-            if (esNueva) {
-                audienciaService.notificarCreacionAudiencia(guardada);
-            }
-
-            redirectAttrs.addFlashAttribute("mensaje", "Audiencia guardada correctamente.");
-            redirectAttrs.addFlashAttribute("tipo", "success");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            redirectAttrs.addFlashAttribute("mensaje", "Error al guardar: " + e.getMessage());
-            redirectAttrs.addFlashAttribute("tipo", "error");
+        } else {
+            // Lógica de CREACIÓN
+            audiencia.setEstatusAudiencia("PENDIENTE");
         }
+
+        // Corrección para evitar conflictos con Hibernate si el ID del abogado viene vacío
+        if (audiencia.getAbogadoComparece() != null && audiencia.getAbogadoComparece().getId() == null) {
+            audiencia.setAbogadoComparece(null);
+        }
+
+        // GUARDADO (Si falla la BD, se va al ExceptionHandler genérico)
+        Audiencia guardada = audienciaRepository.save(audiencia);
+
+        // Notificación (Solo si es nueva)
+        if (esNueva) {
+            audienciaService.notificarCreacionAudiencia(guardada);
+        }
+
+        // Mensaje de Éxito (Solo definimos el camino feliz)
+        redirectAttrs.addFlashAttribute("mensaje", "Audiencia guardada correctamente.");
+        redirectAttrs.addFlashAttribute("tipo", "success");
+
         return "redirect:/audiencias";
     }
     
@@ -295,16 +304,23 @@ public class AudienciasController {
         return "redirect:/audiencias";
     }
 
+   
     @GetMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
-        try {
-            audienciaRepository.deleteById(id);
-            redirectAttrs.addFlashAttribute("mensaje", "Eliminado correctamente.");
-            redirectAttrs.addFlashAttribute("tipo", "success");
-        } catch (Exception e) {
-            redirectAttrs.addFlashAttribute("mensaje", "Error al eliminar.");
-            redirectAttrs.addFlashAttribute("tipo", "error");
+        
+        // 1. VALIDACIÓN LIMPIA
+        // Si no existe, lanzamos la excepción y el GlobalHandler se encarga del resto.
+        if (!audienciaRepository.existsById(id)) {
+            throw new ResourceNotFoundException("No se puede eliminar: La audiencia con ID " + id + " no existe.");
         }
+
+        // 2. LÓGICA FELIZ (Sin try-catch)
+        // Si hay un error de base de datos aquí (ej. llave foránea), el GlobalHandler (Exception.class) lo atrapará.
+        audienciaRepository.deleteById(id);
+        
+        redirectAttrs.addFlashAttribute("mensaje", "Audiencia eliminada correctamente.");
+        redirectAttrs.addFlashAttribute("tipo", "success");
+        
         return "redirect:/audiencias";
     }
 
