@@ -3,10 +3,12 @@ package com.juridico.sistema_juridico.service.procesal;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.procesal.AudienciaDesahogada;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.expediente.Expediente; 
 import com.juridico.sistema_juridico.Entity.enums.Prioridad; 
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaDesahogadaRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.service.NotificacionService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +34,9 @@ public class AudienciaService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private ExpedienteRepository expedienteRepository;
 
     @Autowired
     private NotificacionService notificacionService;
@@ -69,7 +74,8 @@ public class AudienciaService {
                 .filter(Usuario::getActivo)
                 .collect(Collectors.toList());
 
-            String expediente = audiencia.getExpediente().getNumero();
+            // Aquí usamos el expediente que ya viene cargado porque es una actualización
+            String expediente = (audiencia.getExpediente() != null) ? audiencia.getExpediente().getNumero() : "Desconocido";
             
             String nombreAbogado;
             if (audiencia.getAbogadoComparece() != null) {
@@ -119,5 +125,72 @@ public class AudienciaService {
                 .build();
         
         desahogadaRepository.save(historico);
+    }
+
+    @Transactional 
+    public void notificarCreacionAudiencia(Audiencia audiencia) {
+        try {
+            // 1. Obtener la Audiencia Fresca
+            Audiencia a = audienciaRepository.findById(audiencia.getId())
+                    .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
+            
+            // 2. RECUPERAR DATOS FALTANTES (Corrección del NULL)
+            
+            // A) Expediente: Forzamos la búsqueda del número real
+            String numeroExpediente = "Desconocido";
+            if (a.getExpediente() != null) {
+                numeroExpediente = expedienteRepository.findById(a.getExpediente().getId())
+                        .map(Expediente::getNumero)
+                        .orElse("Desconocido");
+            }
+
+            // B) Usuarios: Recuperación explícita
+            Usuario responsable = null;
+            if (a.getExpediente() != null && a.getExpediente().getAbogadoResponsable() != null) {
+                responsable = usuarioRepository.findById(a.getExpediente().getAbogadoResponsable().getId()).orElse(null);
+            }
+
+            Usuario comparece = null;
+            if (a.getAbogadoComparece() != null) {
+                comparece = usuarioRepository.findById(a.getAbogadoComparece().getId()).orElse(null);
+            }
+
+            // 3. Preparar datos de la notificación
+            String emailCreador = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+            String tituloBase = "Nueva Audiencia: " + numeroExpediente; // ¡Aquí usamos el número corregido!
+            String mensajeBase = "Programada para el " + a.getFechaAudiencia() + " a las " + a.getHoraAudiencia();
+            String entidadId = a.getId().toString(); 
+
+            // 4. NOTIFICAR AL RESPONSABLE (Dueño del expediente)
+            if (responsable != null && !responsable.getEmail().equalsIgnoreCase(emailCreador)) {
+                notificacionService.crearNotificacion(
+                    responsable, 
+                    tituloBase, 
+                    mensajeBase, 
+                    "AUDIENCIA", 
+                    Prioridad.MEDIA, 
+                    entidadId
+                );
+            }
+
+            // 5. NOTIFICAR AL QUE COMPARECE (El asignado)
+            if (comparece != null && !comparece.getEmail().equalsIgnoreCase(emailCreador)) {
+                
+                if (responsable == null || !comparece.getId().equals(responsable.getId())) {
+                    notificacionService.crearNotificacion(
+                        comparece, 
+                        "Asignación de Comparecencia", 
+                        "Has sido asignado para asistir a la audiencia del expediente " + numeroExpediente, // ¡Aquí también!
+                        "AUDIENCIA", 
+                        Prioridad.ALTA, 
+                        entidadId
+                    );
+                }
+            }
+            
+        } catch (Exception e) {
+            System.err.println("CRÍTICO - Error al notificar creación: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

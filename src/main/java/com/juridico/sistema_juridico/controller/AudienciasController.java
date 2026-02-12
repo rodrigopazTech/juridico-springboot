@@ -207,38 +207,33 @@ public class AudienciasController {
         
         return "views/audiencias/index";
     }
-
+    
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes redirectAttrs) {
         try {
-            // A. EDICIÓN: Recuperar datos anteriores para no perderlos (Estatus, Acta, etc.)
-            if (audiencia.getId() != null) {
+            boolean esNueva = (audiencia.getId() == null);
+
+            if (!esNueva) {
                 Audiencia audienciaExistente = audienciaRepository.findById(audiencia.getId())
                         .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
-                
-                // 1. Respetar el Estatus original
                 audiencia.setEstatusAudiencia(audienciaExistente.getEstatusAudiencia());
-                
-                // 2. Respetar el documento del acta si ya existía
                 audiencia.setActaDocumento(audienciaExistente.getActaDocumento());
-                
-                // 3. Respetar observaciones si ya tenía
                 if (audiencia.getObservaciones() == null) {
                     audiencia.setObservaciones(audienciaExistente.getObservaciones());
                 }
-
             } else {
-                // B. NUEVA: Asignar estatus inicial por defecto
                 audiencia.setEstatusAudiencia("PENDIENTE");
             }
 
-            // --- Lógica de Abogado Comparece (que agregamos antes) ---
             if (audiencia.getAbogadoComparece() != null && audiencia.getAbogadoComparece().getId() == null) {
                 audiencia.setAbogadoComparece(null);
             }
 
-            // Guardar
-            audienciaRepository.save(audiencia);
+            Audiencia guardada = audienciaRepository.save(audiencia);
+
+            if (esNueva) {
+                audienciaService.notificarCreacionAudiencia(guardada);
+            }
 
             redirectAttrs.addFlashAttribute("mensaje", "Audiencia guardada correctamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
