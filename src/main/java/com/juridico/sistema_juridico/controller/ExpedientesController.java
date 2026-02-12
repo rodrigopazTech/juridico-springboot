@@ -17,7 +17,7 @@ import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.repository.General.ComentarioRepository;
 import com.juridico.sistema_juridico.Entity.general.Comentario;
 import com.juridico.sistema_juridico.service.NotificacionService;
-
+import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -127,12 +127,18 @@ public class ExpedientesController {
 
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute Expediente expediente, RedirectAttributes redirectAttrs) {
+        // Mantenemos este try-catch SOLO para la duplicidad, que es un error muy específico de negocio
         try {
             boolean esNuevo = (expediente.getId() == null);
             
             if (esNuevo) {
                 expediente.setCreatedAt(LocalDateTime.now());
                 expediente.setEtapaProcesal(EtapaProcesal.TRAMITE);
+            } else {
+                // Verificar que existe antes de guardar (opcional, save lo maneja, pero es bueno validar)
+                if (!expedienteRepository.existsById(expediente.getId())) {
+                    throw new ResourceNotFoundException("El expediente a editar no existe.");
+                }
             }
             expediente.setUpdatedAt(LocalDateTime.now());
 
@@ -146,13 +152,11 @@ public class ExpedientesController {
             redirectAttrs.addFlashAttribute("tipo", "success");
 
         } catch (DataIntegrityViolationException e) {
+            // Este catch específico es útil para dar feedback exacto
             redirectAttrs.addFlashAttribute("mensaje", "Error: El número de expediente '" + expediente.getNumero() + "' ya existe.");
             redirectAttrs.addFlashAttribute("tipo", "error");
-        } catch (Exception e) {
-            e.printStackTrace();
-            redirectAttrs.addFlashAttribute("mensaje", "Ocurrió un error inesperado al guardar.");
-            redirectAttrs.addFlashAttribute("tipo", "error");
-        }
+        } 
+        // Eliminamos el 'catch (Exception e)' general. El GlobalHandler lo hará.
 
         return "redirect:/expedientes";
     }

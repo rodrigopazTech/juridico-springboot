@@ -5,6 +5,7 @@ import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.service.UsuarioService;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository; 
+import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,85 +32,128 @@ public class UsuariosController {
     @Autowired private UsuarioService usuarioService;
     @Autowired private UsuarioRepository usuarioRepository; 
 
- @GetMapping
+    @GetMapping
     public String index(Model model,
                         @RequestParam(defaultValue = "0") int pageUsuarios,   
                         @RequestParam(defaultValue = "0") int pageGerencias) { 
         
-        // 1. OBTENER QUIÉN ESTÁ LOGUEADO
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario usuarioActual = usuarioRepository.findByEmail(email).orElseThrow();
+        // Usamos orElseThrow con la excepción personalizada para activar la alerta roja si pasa algo raro
+        Usuario usuarioActual = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario actual no encontrado en la base de datos."));
         
-        // 2. LOGICA DE FILTRADO DE USUARIOS (SEGURIDAD)
         Page<Usuario> usuariosPage;
         Pageable pageRequest = PageRequest.of(pageUsuarios, 10, Sort.by("nombreCompleto").ascending());
 
         if (usuarioActual.getRol() == RolUsuario.GERENTE && usuarioActual.getGerencia() != null) {
-            // CASO A: Es Gerente -> Solo ve a su gente (usamos el nuevo método del repositorio)
             usuariosPage = usuarioRepository.findByGerencia(usuarioActual.getGerencia(), pageRequest);
         } else {
-            // CASO B: Dirección/Subdirección -> Ven a todos (usamos el servicio existente)
             usuariosPage = usuarioService.listarUsuariosPaginados(pageRequest);
         }
         
-        // Carga de Gerencias (Esto se mantiene igual)
         Page<Gerencia> gerenciasPage = usuarioService.listarGerenciasPaginadas(PageRequest.of(pageGerencias, 10, Sort.by("nombre").ascending()));
 
         model.addAttribute("listaUsuarios", usuariosPage); 
         model.addAttribute("listaGerencias", gerenciasPage);
         
-        // 3. RESTRICCIÓN EN LOS MODALES DE CREACIÓN
         if (usuarioActual.getRol() == RolUsuario.GERENTE) {
-            // El gerente solo puede asignar su propia gerencia
             model.addAttribute("allGerencias", Arrays.asList(usuarioActual.getGerencia()));
-            // El gerente solo puede crear roles operativos
             model.addAttribute("listaRoles", Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO));
         } else {
-            // Dirección ve y asigna todo
             model.addAttribute("allGerencias", usuarioService.listarGerencias()); 
             model.addAttribute("listaRoles", RolUsuario.values());
         }
 
-        // 4. PASAR EL USUARIO ACTUAL A LA VISTA
         model.addAttribute("usuarioActual", usuarioActual);
-        
         model.addAttribute("nuevoUsuario", new Usuario());
         model.addAttribute("nuevaGerencia", new Gerencia());
         model.addAttribute("activePage", "usuarios");
         
         return "views/usuarios/index";
     }
+
     @PostMapping("/guardar")
     public String guardarUsuario(@ModelAttribute Usuario usuario, 
                                  @RequestParam(required = false) java.util.List<Integer> materiasIds, 
                                  RedirectAttributes redirectAttrs) {
-        try {
-            usuarioService.guardarUsuario(usuario, materiasIds);
-            redirectAttrs.addFlashAttribute("mensaje", "Usuario guardado correctamente.");
-            redirectAttrs.addFlashAttribute("tipo", "success");
-        } catch (Exception e) {
-            redirectAttrs.addFlashAttribute("mensaje", "Error al guardar usuario: " + e.getMessage());
-            redirectAttrs.addFlashAttribute("tipo", "error");
-        }
+        // SIN TRY-CATCH: Si falla (ej. correo duplicado), el GlobalHandler lo atrapa.
+        usuarioService.guardarUsuario(usuario, materiasIds);
+        
+        redirectAttrs.addFlashAttribute("mensaje", "Usuario guardado correctamente.");
+        redirectAttrs.addFlashAttribute("tipo", "success");
         return "redirect:/usuarios";
     }
 
     @PostMapping("/gerencias/guardar")
     public String guardarGerencia(@ModelAttribute Gerencia gerencia, RedirectAttributes redirectAttrs) {
-        try {
-            usuarioService.guardarGerencia(gerencia);
-            redirectAttrs.addFlashAttribute("mensaje", "Gerencia creada correctamente.");
-            redirectAttrs.addFlashAttribute("tipo", "success");
-        } catch (Exception e) {
-            redirectAttrs.addFlashAttribute("mensaje", "Error al crear gerencia.");
-            redirectAttrs.addFlashAttribute("tipo", "error");
-        }
+        usuarioService.guardarGerencia(gerencia);
+        
+        redirectAttrs.addFlashAttribute("mensaje", "Gerencia creada correctamente.");
+        redirectAttrs.addFlashAttribute("tipo", "success");
         return "redirect:/usuarios?tab=gerencias";
     }
+
+    // --- ACCIONES DE ESTADO (Ahora lanzan excepciones limpias) ---
+
+    @GetMapping("/toggle/{id}")
+    public String toggleStatusUsuario(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+        Usuario usuario = usuarioService.buscarPorId(id); // Lanza 404 si no existe
+        usuario.setActivo(!usuario.getActivo());
+
+        List<Integer> materiasIds = usuario.getMaterias().stream()
+                .map(Materia::getId)
+                .collect(Collectors.toList());
+
+        usuarioService.guardarUsuario(usuario, materiasIds);
+
+        String estado = usuario.getActivo() ? "activado" : "desactivado";
+        redirectAttrs.addFlashAttribute("mensaje", "Usuario " + estado + " correctamente.");
+        redirectAttrs.addFlashAttribute("tipo", "success");
+        return "redirect:/usuarios";
+    }
+
+    @GetMapping("/gerencias/toggle/{id}")
+    public String toggleStatusGerencia(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+        Gerencia gerencia = usuarioService.buscarGerenciaPorId(id);
+        gerencia.setActivo(!gerencia.getActivo());
+        usuarioService.guardarGerencia(gerencia);
+        
+        redirectAttrs.addFlashAttribute("mensaje", "Estatus de la gerencia actualizado.");
+        redirectAttrs.addFlashAttribute("tipo", "success");
+        return "redirect:/usuarios?tab=gerencias";
+    }
+
+    // --- ELIMINACIÓN (Estandarizada a Redirect para mostrar SweetAlert) ---
+    // Antes eran @DeleteMapping (API), ahora son @GetMapping (Web)
+
+    @GetMapping("/eliminar/{id}")
+    public String eliminarUsuario(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+        // Si tiene expedientes asignados, lanzará DataIntegrityViolationException 
+        // y el GlobalExceptionHandler mostrará la alerta roja automáticamente.
+        usuarioService.eliminarUsuario(id);
+        
+        redirectAttrs.addFlashAttribute("mensaje", "Usuario eliminado correctamente.");
+        redirectAttrs.addFlashAttribute("tipo", "success");
+        return "redirect:/usuarios";
+    }
+
+    @GetMapping("/gerencias/materias/eliminar/{id}")
+    public String eliminarMateria(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+        usuarioService.eliminarMateria(id);
+        
+        redirectAttrs.addFlashAttribute("mensaje", "Materia eliminada correctamente.");
+        redirectAttrs.addFlashAttribute("tipo", "success");
+        // Asumimos que quieres volver a la pestaña de gerencias o donde estabas
+        return "redirect:/usuarios?tab=gerencias";
+    }
+
+    // --- API JSON (Mantenemos estas como API porque las usa el JavaScript de los modales) ---
 
     @GetMapping("/api/materias-por-gerencia/{id}")
     @ResponseBody
     public ResponseEntity<java.util.List<Materia>> getMateriasJson(@PathVariable Integer id) {
+        // Aquí sí usamos try-catch local o dejamos que el Handler devuelva JSON si lo configuramos
+        // Por simplicidad, mantendremos la respuesta directa.
         try {
             Gerencia gerencia = usuarioService.buscarGerenciaPorId(id);
             return ResponseEntity.ok(new ArrayList<>(gerencia.getMaterias()));
@@ -133,66 +177,6 @@ public class UsuariosController {
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al guardar materia");
-        }
-    }
-
-    @GetMapping("/toggle/{id}")
-    public String toggleStatusUsuario(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
-        try {
-            Usuario usuario = usuarioService.buscarPorId(id);
-            usuario.setActivo(!usuario.getActivo());
-
-            List<Integer> materiasIds = usuario.getMaterias().stream()
-                    .map(Materia::getId)
-                    .collect(Collectors.toList());
-
-            usuarioService.guardarUsuario(usuario, materiasIds);
-
-            redirectAttrs.addFlashAttribute("mensaje", "Estatus del usuario actualizado.");
-            redirectAttrs.addFlashAttribute("tipo", "success");
-        } catch (Exception e) {
-            e.printStackTrace();
-            redirectAttrs.addFlashAttribute("mensaje", "Error al actualizar estatus.");
-            redirectAttrs.addFlashAttribute("tipo", "error");
-        }
-        return "redirect:/usuarios";
-    }
-
-    @GetMapping("/gerencias/toggle/{id}")
-    public String toggleStatusGerencia(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
-        try {
-            Gerencia gerencia = usuarioService.buscarGerenciaPorId(id);
-            gerencia.setActivo(!gerencia.getActivo());
-            usuarioService.guardarGerencia(gerencia);
-            
-            redirectAttrs.addFlashAttribute("mensaje", "Estatus de la gerencia actualizado.");
-            redirectAttrs.addFlashAttribute("tipo", "success");
-        } catch (Exception e) {
-            redirectAttrs.addFlashAttribute("mensaje", "Error al actualizar estatus.");
-            redirectAttrs.addFlashAttribute("tipo", "error");
-        }
-        return "redirect:/usuarios?tab=gerencias";
-    }
-
-    @DeleteMapping("/gerencias/materias/eliminar/{id}")
-    @ResponseBody
-    public ResponseEntity<?> eliminarMateria(@PathVariable Integer id) {
-        try {
-            usuarioService.eliminarMateria(id);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("No se puede eliminar la materia (quizás tiene expedientes asignados).");
-        }
-    }
-
-    @DeleteMapping("/eliminar/{id}")
-    @ResponseBody
-    public ResponseEntity<?> eliminarUsuario(@PathVariable Integer id) {
-        try {
-            usuarioService.eliminarUsuario(id);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("No se puede eliminar: El usuario tiene expedientes o historial activo.");
         }
     }
 }

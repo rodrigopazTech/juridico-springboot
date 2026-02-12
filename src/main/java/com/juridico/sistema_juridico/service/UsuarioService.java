@@ -6,16 +6,17 @@ import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
+import com.juridico.sistema_juridico.exception.ResourceNotFoundException; 
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 import java.util.HashSet;
-
 import java.util.List;
 
 @Service
@@ -34,16 +35,12 @@ public class UsuarioService {
 
     public Usuario buscarPorId(Integer id) {
         return usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id));
     }
 
-    /**
-     * Busca al usuario por su identificador de inicio de sesión (email).
-     * Requerido por el DashboardController.
-     */
     public Usuario obtenerPorUsername(String email) {
         return usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con email: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("No existe un usuario con el email: " + email));
     }
 
     public Page<Usuario> listarUsuariosPaginados(Pageable pageable) {
@@ -54,6 +51,7 @@ public class UsuarioService {
         return gerenciaRepository.findAll(pageable);
     }
 
+    @Transactional
     public Usuario guardarUsuario(Usuario usuario, List<Integer> materiasIds) {
         
         Set<Materia> materiasSeleccionadas = new HashSet<>();
@@ -62,12 +60,18 @@ public class UsuarioService {
         }
 
         if (usuario.getId() == null) {
+            // CREACIÓN
+            if (usuarioRepository.existsByEmail(usuario.getEmail())) {
+                // Aquí podrías lanzar ConflictException si quisieras ser estricto
+                throw new RuntimeException("El correo electrónico ya está registrado.");
+            }
             usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
             usuario.setMaterias(materiasSeleccionadas); 
             return usuarioRepository.save(usuario);
         } 
         else {
-            Usuario existente = buscarPorId(usuario.getId());
+            // EDICIÓN
+            Usuario existente = buscarPorId(usuario.getId()); // Ya lanza 404 si no existe
 
             existente.setNombreCompleto(usuario.getNombreCompleto());
             existente.setEmail(usuario.getEmail());
@@ -78,7 +82,6 @@ public class UsuarioService {
                 existente.getMaterias().clear(); 
             } else {
                 existente.setGerencia(usuario.getGerencia());
-                
                 existente.getMaterias().clear();
                 existente.getMaterias().addAll(materiasSeleccionadas);
             }
@@ -93,7 +96,11 @@ public class UsuarioService {
         }
     }
 
+    @Transactional
     public void eliminarUsuario(Integer id) { 
+        if (!usuarioRepository.existsById(id)) {
+            throw new ResourceNotFoundException("No se puede eliminar: El usuario no existe.");
+        }
         usuarioRepository.deleteById(id); 
     }
 
@@ -105,7 +112,7 @@ public class UsuarioService {
 
     public Gerencia buscarGerenciaPorId(Integer id) {
         return gerenciaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Gerencia no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Gerencia no encontrada con ID: " + id));
     }
 
     public Gerencia guardarGerencia(Gerencia gerencia) {
@@ -119,6 +126,9 @@ public class UsuarioService {
     }
     
     public void eliminarMateria(Integer id) {
+        if (!materiaRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Materia no encontrada.");
+        }
         materiaRepository.deleteById(id);
     }
 }

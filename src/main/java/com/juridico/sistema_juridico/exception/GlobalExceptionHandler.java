@@ -58,4 +58,14 @@ public class GlobalExceptionHandler {
         String referer = request.getHeader("Referer");
         return referer != null ? referer : "/";
     }
+
+    // Agregar esto en GlobalExceptionHandler.java
+    
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public RedirectView handleDatabaseError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
+        // Esto pasa si intentas borrar un Usuario que tiene Expedientes, o crear un correo duplicado
+        attrs.addFlashAttribute("mensaje", "No se puede realizar la acción: El registro está vinculado a otros datos o ya existe.");
+        attrs.addFlashAttribute("tipo", "error");
+        return new RedirectView(request.getHeader("Referer") != null ? request.getHeader("Referer") : "/");
+    }
 }
