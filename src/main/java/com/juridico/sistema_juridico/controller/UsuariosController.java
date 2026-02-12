@@ -13,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
@@ -30,7 +31,7 @@ public class UsuariosController {
     @Autowired private UsuarioService usuarioService;
     @Autowired private UsuarioRepository usuarioRepository; 
 
-   @GetMapping
+ @GetMapping
     public String index(Model model,
                         @RequestParam(defaultValue = "0") int pageUsuarios,   
                         @RequestParam(defaultValue = "0") int pageGerencias) { 
@@ -39,25 +40,37 @@ public class UsuariosController {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuarioActual = usuarioRepository.findByEmail(email).orElseThrow();
         
-        Page<Usuario> usuariosPage = usuarioService.listarUsuariosPaginados(PageRequest.of(pageUsuarios, 10, Sort.by("nombreCompleto").ascending()));
+        // 2. LOGICA DE FILTRADO DE USUARIOS (SEGURIDAD)
+        Page<Usuario> usuariosPage;
+        Pageable pageRequest = PageRequest.of(pageUsuarios, 10, Sort.by("nombreCompleto").ascending());
+
+        if (usuarioActual.getRol() == RolUsuario.GERENTE && usuarioActual.getGerencia() != null) {
+            // CASO A: Es Gerente -> Solo ve a su gente (usamos el nuevo método del repositorio)
+            usuariosPage = usuarioRepository.findByGerencia(usuarioActual.getGerencia(), pageRequest);
+        } else {
+            // CASO B: Dirección/Subdirección -> Ven a todos (usamos el servicio existente)
+            usuariosPage = usuarioService.listarUsuariosPaginados(pageRequest);
+        }
+        
+        // Carga de Gerencias (Esto se mantiene igual)
         Page<Gerencia> gerenciasPage = usuarioService.listarGerenciasPaginadas(PageRequest.of(pageGerencias, 10, Sort.by("nombre").ascending()));
 
         model.addAttribute("listaUsuarios", usuariosPage); 
         model.addAttribute("listaGerencias", gerenciasPage);
         
-        // 2. LÓGICA DE RESTRICCIÓN PARA GERENTES EN LOS MODALES
+        // 3. RESTRICCIÓN EN LOS MODALES DE CREACIÓN
         if (usuarioActual.getRol() == RolUsuario.GERENTE) {
-            // El gerente solo puede crear usuarios para su propia gerencia
+            // El gerente solo puede asignar su propia gerencia
             model.addAttribute("allGerencias", Arrays.asList(usuarioActual.getGerencia()));
-            // El gerente solo puede crear Abogados o Jefes de Depto
+            // El gerente solo puede crear roles operativos
             model.addAttribute("listaRoles", Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO));
         } else {
-            // Dirección ve todo
+            // Dirección ve y asigna todo
             model.addAttribute("allGerencias", usuarioService.listarGerencias()); 
             model.addAttribute("listaRoles", RolUsuario.values());
         }
 
-        // 3. PASAR EL USUARIO ACTUAL A LA VISTA (Para bloquear botones de tablas)
+        // 4. PASAR EL USUARIO ACTUAL A LA VISTA
         model.addAttribute("usuarioActual", usuarioActual);
         
         model.addAttribute("nuevoUsuario", new Usuario());
@@ -66,7 +79,6 @@ public class UsuariosController {
         
         return "views/usuarios/index";
     }
-
     @PostMapping("/guardar")
     public String guardarUsuario(@ModelAttribute Usuario usuario, 
                                  @RequestParam(required = false) java.util.List<Integer> materiasIds, 

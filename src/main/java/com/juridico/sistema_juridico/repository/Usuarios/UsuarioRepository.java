@@ -6,11 +6,13 @@ import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+
 
 import java.util.List;
 import java.util.Optional;
-
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
@@ -29,4 +31,5 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
     // 4. NUEVO: Buscar Jefes por Materia (Relación Many-to-Many)
     @Query("SELECT u FROM Usuario u JOIN u.materias m WHERE u.rol = :rol AND m.id = :materiaId AND u.activo = true")
     List<Usuario> findByRolAndMateriaId(@Param("rol") RolUsuario rol, @Param("materiaId") Integer materiaId);
+    Page<Usuario> findByGerencia(Gerencia gerencia, Pageable pageable);
 }
