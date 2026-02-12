@@ -92,6 +92,10 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
     long countByGerenciaId(Long gerenciaId);
     long countByEtapaProcesal(EtapaProcesal etapa);
     long countByEtapaProcesalAndGerenciaId(EtapaProcesal etapa, Long gerenciaId);
+    
+    // Filtro por lista de gerencias (para grupos)
+    long countByGerenciaIdIn(List<Long> gerenciaIds);
+    long countByEtapaProcesalAndGerenciaIdIn(EtapaProcesal etapa, List<Long> gerenciaIds);
 
     @Query("SELECT e.etapaProcesal, COUNT(e) FROM Expediente e GROUP BY e.etapaProcesal")
     List<Object[]> contarExpedientesPorEstatus();
@@ -99,11 +103,17 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
     @Query("SELECT e.etapaProcesal, COUNT(e) FROM Expediente e WHERE e.gerencia.id = :gerenciaId GROUP BY e.etapaProcesal")
     List<Object[]> contarExpedientesPorEstatusYGerencia(@Param("gerenciaId") Long gerenciaId);
 
+    @Query("SELECT e.etapaProcesal, COUNT(e) FROM Expediente e WHERE e.gerencia.id IN :gerenciaIds GROUP BY e.etapaProcesal")
+    List<Object[]> contarExpedientesPorEstatusYGerencias(@Param("gerenciaIds") List<Long> gerenciaIds);
+
     @Query("SELECT e.abogadoResponsable.nombreCompleto, COUNT(e) FROM Expediente e GROUP BY e.abogadoResponsable.nombreCompleto")
     List<Object[]> contarExpedientesPorUsuario();
 
     @Query("SELECT e.abogadoResponsable.nombreCompleto, COUNT(e) FROM Expediente e WHERE e.gerencia.id = :gerenciaId GROUP BY e.abogadoResponsable.nombreCompleto")
     List<Object[]> contarExpedientesPorUsuarioYGerencia(@Param("gerenciaId") Long gerenciaId);
+
+    @Query("SELECT e.abogadoResponsable.nombreCompleto, COUNT(e) FROM Expediente e WHERE e.gerencia.id IN :gerenciaIds GROUP BY e.abogadoResponsable.nombreCompleto")
+    List<Object[]> contarExpedientesPorUsuarioYGerencias(@Param("gerenciaIds") List<Long> gerenciaIds);
 
     @Query("SELECT e.gerencia.nombre, COUNT(e) FROM Expediente e GROUP BY e.gerencia.nombre")
     List<Object[]> contarExpedientesPorGerencia();
@@ -113,4 +123,7 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
 
     @Query(value = "SELECT TO_CHAR(created_at, 'Month'), COUNT(*) FROM expedientes WHERE etapa_procesal = 'FIRME' GROUP BY TO_CHAR(created_at, 'Month')", nativeQuery = true)
     List<Object[]> contarExpedientesCompletadosPorMes();
+
+    @Query(value = "SELECT TO_CHAR(created_at, 'Month'), COUNT(*) FROM expedientes WHERE gerencia_id IN :gerenciaIds AND etapa_procesal = 'FIRME' GROUP BY TO_CHAR(created_at, 'Month')", nativeQuery = true)
+    List<Object[]> contarExpedientesCompletadosPorMesYGerencias(@Param("gerenciaIds") List<Long> gerenciaIds);
 }

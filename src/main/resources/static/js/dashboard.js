@@ -1,6 +1,6 @@
 /**
  * dashboard.js
- * Manejo de gráficas dinámicas y filtros por gerencia
+ * Manejo de gráficas dinámicas y filtros por gerencia y grupos de gerencias
  */
 
 // Paleta de colores basada en tailwind.config.js
@@ -34,21 +34,31 @@ document.addEventListener("DOMContentLoaded", () => {
     // Verificamos si es un SELECT (Directivos) para añadir el evento de cambio
     if (filtroGerencia && filtroGerencia.tagName === 'SELECT') {
         filtroGerencia.addEventListener("change", (e) => {
-            const idGerencia = e.target.value;
-            actualizarDashboard(idGerencia);
+            const value = e.target.value;
+            actualizarDashboard(value);
         });
     }
 });
 
 /**
  * Solicita nuevos datos al servidor y actualiza la vista
- * @param {string} gerenciaId 
+ * @param {string} value - Puede ser gerenciaId individual o grupoGerencia (CIVIL_MERCANTIL, LABORAL_PENAL, TRANSPARENCIA)
  */
-async function actualizarDashboard(gerenciaId) {
+async function actualizarDashboard(value) {
     try {
-        // Mostrar un pequeño indicador de carga (opcional con SweetAlert o CSS)
+        // Determinar si es un grupo de gerencias o una gerencia individual
+        const gruposValidos = ['CIVIL_MERCANTIL', 'LABORAL_PENAL', 'TRANSPARENCIA'];
+        const isGrupo = gruposValidos.includes(value);
         
-        const url = gerenciaId ? `/dashboard/data?gerenciaId=${gerenciaId}` : '/dashboard/data';
+        let url;
+        if (value && isGrupo) {
+            url = `/dashboard/data?grupoGerencia=${value}`;
+        } else if (value) {
+            url = `/dashboard/data?gerenciaId=${value}`;
+        } else {
+            url = '/dashboard/data';
+        }
+        
         const response = await fetch(url);
         
         if (!response.ok) throw new Error("Error en la respuesta del servidor");

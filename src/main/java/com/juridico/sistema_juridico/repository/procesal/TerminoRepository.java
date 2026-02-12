@@ -91,4 +91,13 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
     """)
     List<Object[]> contarTerminosPorUsuarioYGerencia(@Param("gerenciaId") Long gerenciaId);
 
+    @Query("""
+        SELECT u.nombreCompleto, COUNT(t)
+        FROM Termino t
+        JOIN t.expediente e
+        JOIN t.abogadoResponsable u
+        WHERE e.gerencia.id IN :gerenciaIds
+        GROUP BY u.nombreCompleto
+    """)
+    List<Object[]> contarTerminosPorUsuarioYGerencias(@Param("gerenciaIds") List<Long> gerenciaIds);
 }
