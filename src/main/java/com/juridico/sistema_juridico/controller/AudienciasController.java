@@ -7,8 +7,7 @@ import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.service.procesal.AudienciaService;
-import com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository;
-import com.juridico.sistema_juridico.Entity.expediente.ColaboradorExpediente;
+//import com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
@@ -29,7 +28,6 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 
-import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.util.AudienciaExcelExporter;
@@ -41,7 +39,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import java.io.IOException;
 import java.util.List;
@@ -61,7 +58,7 @@ public class AudienciasController {
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private AudienciaService audienciaService;
     
-    @Autowired private ColaboradorExpedienteRepository colaboradorRepository;
+    //@Autowired private ColaboradorExpedienteRepository colaboradorRepository;
     @Autowired private GerenciaRepository gerenciaRepository;
     @Autowired private MateriaRepository materiaRepository;
     @Autowired private TipoAudienciaRepository tipoAudienciaRepository;

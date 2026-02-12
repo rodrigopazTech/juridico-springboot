@@ -115,3 +115,14 @@ function cargarAbogadosExpediente() {
             selectAbogado.innerHTML = '<option value="">Error al cargar abogados</option>';
         });
 }
+
+// AUTO-INICIALIZACIÓN PARA GERENTES
+document.addEventListener('DOMContentLoaded', function() {
+    const gerenciaSelect = document.getElementById('select-gerencia-exp');
+    
+    // Si existe el select y ya tiene un valor (porque Thymeleaf lo pre-seleccionó)
+    if (gerenciaSelect && gerenciaSelect.value) {
+        console.log("Gerencia pre-detectada, cargando materias...");
+        cargarMateriasExpediente();
+    }
+});

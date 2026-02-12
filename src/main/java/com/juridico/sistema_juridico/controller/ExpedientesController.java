@@ -120,6 +120,7 @@ public class ExpedientesController {
         model.addAttribute("usuarios", usuarioRepository.findAll());
         model.addAttribute("prioridades", Prioridad.values());
         model.addAttribute("estados", estadoRepository.findAllByOrderByNombreAsc());
+        model.addAttribute("usuarioActual", usuario);
 
         return "views/expedientes/index";
     }

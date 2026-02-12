@@ -74,14 +74,21 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block font-bold text-gray-600 mb-1">Gerencia*</label>
-                        <select name="gerencia.id"
-                            class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white"
-                            required>
+                        
+                        <select class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white disabled:bg-gray-100"
+                                required
+                                th:disabled="${rolActual.name() == 'GERENTE'}"
+                                th:name="${rolActual.name() == 'GERENTE' ? '' : 'gerencia.id'}">
+                                
                             <option value="">Selecciona...</option>
                             <option th:each="g : ${gerencias}" th:value="${g.id}" th:text="${g.nombre}"
                                 th:selected="${expediente.gerencia != null and expediente.gerencia.id == g.id}">
                             </option>
                         </select>
+
+                        <input type="hidden" name="gerencia.id" 
+                            th:if="${rolActual.name() == 'GERENTE' and expediente.gerencia != null}" 
+                            th:value="${expediente.gerencia.id}">
                     </div>
                     <div>
                         <label class="block font-bold text-gray-600 mb-1">Estado / Sede*</label>
