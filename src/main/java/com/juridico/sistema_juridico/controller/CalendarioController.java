@@ -1,8 +1,10 @@
 package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.service.NotificacionService;
+import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
+import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -26,6 +28,9 @@ public class CalendarioController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    @Autowired
+    private GerenciaRepository gerenciaRepository;
+
     @GetMapping
     public String index(Model model) {
         model.addAttribute("activePage", "calendario");
@@ -35,7 +40,7 @@ public class CalendarioController {
         // Valores por defecto
         String userRole = "ANONYMOUS";
         boolean puedeVerFiltroGerencia = false;
-        List<String> listaGerencias = new ArrayList<>();
+        List<Gerencia> listaGerencias = new ArrayList<>();
         boolean puedeVerFiltroUsuario = false;
         List<Usuario> listaUsuarios = new ArrayList<>();
         boolean puedeVerFiltroMateria = false;
@@ -56,11 +61,8 @@ public class CalendarioController {
                 // Lógica de Permisos para Gerencias
                 if (usuarioActual.getRol() == RolUsuario.DIRECCION || usuarioActual.getRol() == RolUsuario.SUBDIRECCION) {
                     puedeVerFiltroGerencia = true;
-                    listaGerencias = Arrays.asList(
-                        "Gerencia Civil, Mercantil, Fiscal y Administrativo",
-                        "Gerencia Laboral y Penal",
-                        "Gerencia Transparencia y Amparo"
-                    );
+                    // Cargar gerencias desde la base de datos (solo activas)
+                    listaGerencias = gerenciaRepository.findByActivoTrueOrderByNombreAsc();
                     
                     // Filtro de usuario visible para DIRECCION y SUBDIRECCION
                     puedeVerFiltroUsuario = true;
@@ -70,7 +72,7 @@ public class CalendarioController {
                     // GERENTE no ve el filtro de gerencia (solo ve su propia gerencia)
                     puedeVerFiltroGerencia = false;
                     if (usuarioActual.getGerencia() != null) {
-                        listaGerencias.add(usuarioActual.getGerencia().getNombre());
+                        listaGerencias.add(usuarioActual.getGerencia());
                     }
                     
                     // Filtro de usuario visible para GERENTE (solo usuarios de su gerencia)

@@ -38,9 +38,9 @@
                     
                     <option value="todos" th:if="${userRole != 'GERENTE'}">Todas las gerencias</option>
                     <option th:each="ger : ${listaGerencias}" 
-                            th:value="${ger}" 
-                            th:text="${ger}"
-                            th:selected="${userRole == 'GERENTE'}"></option>
+                            th:value="${ger.id}" 
+                            th:text="${ger.nombre}"
+                            th:selected="${userRole == 'GERENTE' && ger.id == usuarioGlobal.gerencia?.id}"></option>
                 </select>
             </div>
             

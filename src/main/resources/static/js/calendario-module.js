@@ -98,8 +98,9 @@ export class CalendarioModule {
 
         this.filteredEvents = this.events.filter(event => {
             const matchTipo = tipoSelected === 'todos' || event.tipo === tipoSelected;
-            // Si el select de gerencia no existe o es 'todos', pasa. Si no, compara strings.
-            const matchGerencia = gerenciaSelected === 'todos' || event.gerenciaNombre === gerenciaSelected;
+            // Si el select de gerencia no existe o es 'todos', pasa. Si no, compara IDs.
+            const matchGerencia = gerenciaSelected === 'todos' || 
+                (event.gerenciaId && event.gerenciaId.toString() === gerenciaSelected);
             // Filtro por usuario
             const matchUsuario = usuarioSelected === 'todos' || 
                 (event.usuarioId && event.usuarioId.toString() === usuarioSelected);
