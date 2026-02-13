@@ -104,9 +104,9 @@ export class CalendarioModule {
             // Filtro por usuario
             const matchUsuario = usuarioSelected === 'todos' || 
                 (event.usuarioId && event.usuarioId.toString() === usuarioSelected);
-            // Filtro por materia
+            // Filtro por materia - comparar por ID
             const matchMateria = materiaSelected === 'todos' || 
-                (event.materiaNombre && event.materiaNombre === materiaSelected);
+                (event.materiaId && event.materiaId.toString() === materiaSelected);
             
             return matchTipo && matchGerencia && matchUsuario && matchMateria;
         });

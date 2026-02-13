@@ -2,9 +2,11 @@ package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.service.NotificacionService;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
+import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -15,7 +17,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Controller
@@ -31,6 +32,9 @@ public class CalendarioController {
     @Autowired
     private GerenciaRepository gerenciaRepository;
 
+    @Autowired
+    private MateriaRepository materiaRepository;
+
     @GetMapping
     public String index(Model model) {
         model.addAttribute("activePage", "calendario");
@@ -44,10 +48,7 @@ public class CalendarioController {
         boolean puedeVerFiltroUsuario = false;
         List<Usuario> listaUsuarios = new ArrayList<>();
         boolean puedeVerFiltroMateria = false;
-        List<String> listaMaterias = Arrays.asList(
-            "Civil", "Mercantil", "Fiscal", "Administrativo", 
-            "Laboral", "Penal", "Amparo", "Transparencia"
-        );
+        List<Materia> listaMaterias = new ArrayList<>();
 
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
             Usuario usuarioActual = usuarioRepository.findByEmail(auth.getName()).orElse(null);
@@ -89,6 +90,16 @@ public class CalendarioController {
                 // GERENTE, JEFE_DEPTO pueden ver el filtro de materia
                 if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
                     puedeVerFiltroMateria = true;
+                    
+                    // Cargar materias desde la base de datos
+                    if (usuarioActual.getRol() == RolUsuario.GERENTE && usuarioActual.getGerencia() != null) {
+                        // GERENTE ve las materias de su gerencia
+                        listaMaterias = materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(
+                            usuarioActual.getGerencia().getId());
+                    } else if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+                        // JEFE_DEPTO ve todas las materias activas
+                        listaMaterias = materiaRepository.findByActivoTrueOrderByNombreAsc();
+                    }
                 }
                 
                 // GERENTE y JEFE_DEPTO pueden ver el filtro de usuario

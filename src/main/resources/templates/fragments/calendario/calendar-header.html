@@ -63,8 +63,8 @@
                     
                     <option value="todos">Todas las materias</option>
                     <option th:each="materia : ${listaMaterias}" 
-                            th:value="${materia}" 
-                            th:text="${materia}"></option>
+                            th:value="${materia.id}" 
+                            th:text="${materia.nombre}"></option>
                 </select>
             </div>
             

@@ -12,6 +12,8 @@ import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 public interface MateriaRepository extends JpaRepository<Materia, Integer> {
     List<Materia> findByGerenciaIdAndActivoTrueOrderByNombreAsc(Integer gerenciaId);
     
+    List<Materia> findByActivoTrueOrderByNombreAsc();
+    
     Optional<Materia> findByNombreAndGerenciaId(String nombre, Integer gerenciaId);
 }
 
