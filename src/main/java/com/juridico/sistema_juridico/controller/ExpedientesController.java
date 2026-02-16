@@ -222,13 +222,13 @@ public class ExpedientesController {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
-
+        
         model.addAttribute("usuario", usuario);
         model.addAttribute("rolActual", usuario.getRol());
 
         Expediente expediente = expedienteRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Expediente no encontrado: " + id));
-
+                .orElseThrow(() -> new ResourceNotFoundException("Expediente no encontrado con ID: " + id));
+        
         model.addAttribute("expediente", expediente);
 
         Audiencia proxima = audienciaRepository.findTopByExpedienteIdAndFechaAudienciaAfterOrderByFechaAudienciaAsc(

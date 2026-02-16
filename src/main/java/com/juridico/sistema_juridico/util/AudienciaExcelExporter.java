@@ -39,9 +39,16 @@ public class AudienciaExcelExporter {
     private void createCell(Row row, int columnCount, Object value, CellStyle style) {
         sheet.autoSizeColumn(columnCount);
         Cell cell = row.createCell(columnCount);
-        if (value instanceof Integer) cell.setCellValue((Integer) value);
-        else if (value instanceof Boolean) cell.setCellValue((Boolean) value);
-        else cell.setCellValue((String) value);
+        
+        if (value == null) {
+            cell.setCellValue(""); // Manejo seguro de nulos
+        } else if (value instanceof Integer) {
+            cell.setCellValue((Integer) value);
+        } else if (value instanceof Boolean) {
+            cell.setCellValue((Boolean) value);
+        } else {
+            cell.setCellValue(value.toString()); // Usamos toString() para evitar ClassCastException
+        }
         cell.setCellStyle(style);
     }
 
@@ -56,26 +63,42 @@ public class AudienciaExcelExporter {
             Row row = sheet.createRow(rowCount++);
             int col = 0;
 
-            createCell(row, col++, a.getFechaAudiencia().toString(), style);
-            createCell(row, col++, a.getHoraAudiencia().toString(), style);
+            // 1. Fecha y Hora (Con protección anti-nulos)
+            String fecha = (a.getFechaAudiencia() != null) ? a.getFechaAudiencia().toString() : "S/F";
+            String hora = (a.getHoraAudiencia() != null) ? a.getHoraAudiencia().toString() : "S/H";
+
+            createCell(row, col++, fecha, style);
+            createCell(row, col++, hora, style);
             
-            // Datos del Expediente
+            // 2. Datos del Expediente
             String expNum = (a.getExpediente() != null) ? a.getExpediente().getNumero() : "N/A";
             String gerencia = (a.getExpediente() != null && a.getExpediente().getGerencia() != null) ? a.getExpediente().getGerencia().getNombre() : "N/A";
             String materia = (a.getExpediente() != null && a.getExpediente().getMateria() != null) ? a.getExpediente().getMateria().getNombre() : "N/A";
             
             createCell(row, col++, expNum, style);
-            createCell(row, col++, gerencia, style); // COLUMNA NUEVA
-            createCell(row, col++, materia, style);  // COLUMNA NUEVA
+            createCell(row, col++, gerencia, style); 
+            createCell(row, col++, materia, style);  
 
+            // 3. Tipo y Ubicación
             String tipo = (a.getTipoAudiencia() != null) ? a.getTipoAudiencia().getNombre() : "General";
             createCell(row, col++, tipo, style);
 
-            String ubicacion = a.getEsVirtual() ? "VIRTUAL: " + a.getUrlReunion() : "SALA: " + a.getSalaLugar();
+            String ubicacion = Boolean.TRUE.equals(a.getEsVirtual()) ? "VIRTUAL: " + a.getUrlReunion() : "SALA: " + a.getSalaLugar();
             createCell(row, col++, ubicacion, style);
 
+            // 4. Estatus
             createCell(row, col++, a.getEstatusAudiencia(), style);
-            createCell(row, col++, a.getAbogadoComparece(), style);
+
+            // 5. CORRECCIÓN CRÍTICA: Obtener el nombre del Abogado (String) en lugar del Objeto
+            String nombreAbogado = "Sin Asignar";
+            if (a.getAbogadoComparece() != null) {
+                nombreAbogado = a.getAbogadoComparece().getNombreCompleto();
+            } else if (a.getExpediente() != null && a.getExpediente().getAbogadoResponsable() != null) {
+                // Si no hay nadie asignado a comparecer, mostramos al titular del expediente
+                nombreAbogado = a.getExpediente().getAbogadoResponsable().getNombreCompleto() + " (Titular)";
+            }
+            
+            createCell(row, col++, nombreAbogado, style);
         }
     }
 

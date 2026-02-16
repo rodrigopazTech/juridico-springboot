@@ -112,7 +112,7 @@ public class AudienciaNotificacionScheduler {
         n.setUsuario(user);
         n.setTitulo(titulo);
         n.setMensaje(mensaje);
-        n.setTipo("SISTEMA"); 
+        n.setTipo(entidadTipo); 
         n.setEntidadTipo(entidadTipo);
         n.setEntidadId(entidadId);
         n.setPrioridad(prioridad);

@@ -43,7 +43,6 @@ public class GlobalExceptionHandler {
     // NullPointer, Base de datos caída, errores de sintaxis Java, etc.
     @ExceptionHandler(Exception.class)
     public RedirectView handleGeneralError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
-        // Imprimimos el error en la consola del servidor para que tú (el dev) sepas qué pasó
         System.err.println("--- ERROR NO CONTROLADO ---");
         ex.printStackTrace();
         
