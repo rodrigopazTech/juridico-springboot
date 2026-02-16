@@ -113,10 +113,15 @@ public class DataInitializer implements CommandLineRunner {
             Gerencia g = Gerencia.builder()
                     .nombre("Civil, Mercantil, Fiscal y Administrativo")
                     .descripcion("Atención a juicios civiles, mercantiles, fiscales y administrativos.")
-                    .activo(true)
+                    .activo(false) // Inactiva - no aparece en filtros
                     .build();
             return gerenciaRepository.save(g);
         });
+        // Si ya existe, actualizamos a inactivo
+        if (optG1.isPresent() && optG1.get().getActivo()) {
+            gCivil.setActivo(false);
+            gerenciaRepository.save(gCivil);
+        }
 
         // Crear materias para Gerencia 1 si no existen
         crearMateriaSiNoExiste("Civil", gCivil);
@@ -130,10 +135,15 @@ public class DataInitializer implements CommandLineRunner {
             Gerencia g = Gerencia.builder()
                     .nombre("Laboral y Penal")
                     .descripcion("Atención a demandas laborales y procesos penales.")
-                    .activo(true)
+                    .activo(false) // Inactiva - no aparece en filtros
                     .build();
             return gerenciaRepository.save(g);
         });
+        // Si ya existe, actualizamos a inactivo
+        if (optG2.isPresent() && optG2.get().getActivo()) {
+            gLaboral.setActivo(false);
+            gerenciaRepository.save(gLaboral);
+        }
 
         // Crear materias para Gerencia 2
         crearMateriaSiNoExiste("Laboral", gLaboral);
@@ -145,10 +155,15 @@ public class DataInitializer implements CommandLineRunner {
             Gerencia g = Gerencia.builder()
                     .nombre("Transparencia y Amparo")
                     .descripcion("Atención a solicitudes de transparencia y juicios de amparo.")
-                    .activo(true)
+                    .activo(false) // Inactiva - no aparece en filtros
                     .build();
             return gerenciaRepository.save(g);
         });
+        // Si ya existe, actualizamos a inactivo
+        if (optG3.isPresent() && optG3.get().getActivo()) {
+            gTransparencia.setActivo(false);
+            gerenciaRepository.save(gTransparencia);
+        }
 
         // Crear materias para Gerencia 3
         crearMateriaSiNoExiste("Transparencia", gTransparencia);

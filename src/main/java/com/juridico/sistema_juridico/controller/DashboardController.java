@@ -45,7 +45,7 @@ public class DashboardController {
         FiltroResult filtro = validarFiltrosPorRol(usuario, gerenciaId, grupoGerencia);
 
         model.addAttribute("usuario", usuario);
-        model.addAttribute("gerencias", gerenciaRepository.findAll());
+        model.addAttribute("gerencias", gerenciaRepository.findByActivoTrueOrderByNombreAsc());
         model.addAttribute("kpis", dashboardService.obtenerKpisPorLista(filtro.gerenciaId(), filtro.gerenciaIds()));
         model.addAttribute("dashboardData", dashboardService.obtenerMetricasPorLista(filtro.gerenciaId(), filtro.gerenciaIds()));
         model.addAttribute("gerenciaSeleccionada", filtro.gerenciaId());
