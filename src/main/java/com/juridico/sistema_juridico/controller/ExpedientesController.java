@@ -129,7 +129,9 @@ public class ExpedientesController {
         try {
             if (expediente.getId() == null) {
                 expediente.setCreatedAt(LocalDateTime.now());
-                expediente.setEtapaProcesal(EtapaProcesal.TRAMITE);
+                if (expediente.getEtapaProcesal() == null) {
+                    expediente.setEtapaProcesal(EtapaProcesal.TRAMITE);
+                }
             }
             expediente.setUpdatedAt(LocalDateTime.now());
 
@@ -139,7 +141,8 @@ public class ExpedientesController {
             redirectAttrs.addFlashAttribute("tipo", "success");
 
         } catch (DataIntegrityViolationException e) {
-            redirectAttrs.addFlashAttribute("mensaje", "Error: El número de expediente '" + expediente.getNumero() + "' ya existe.");
+            redirectAttrs.addFlashAttribute("mensaje",
+                    "Error: El número de expediente '" + expediente.getNumero() + "' ya existe.");
             redirectAttrs.addFlashAttribute("tipo", "error");
         } catch (Exception e) {
             e.printStackTrace();

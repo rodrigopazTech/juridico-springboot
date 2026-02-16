@@ -1,5 +1,6 @@
 package com.juridico.sistema_juridico.repository.procesal;
 
+import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import org.springframework.data.domain.Page;
@@ -32,7 +33,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
                         "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId)") // <--- NUEVO FILTRO
         List<Termino> listarParaExcel(
                         @Param("keyword") String keyword,
-                        @Param("estatus") String estatus,
+                        @Param("estatus") EstatusTermino estatus,
                         @Param("prioridad") Prioridad prioridad,
                         @Param("abogadoId") Integer abogadoId,
                         @Param("gerenciaId") Integer gerenciaId);
@@ -53,19 +54,19 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
                         "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId)")
         Page<Termino> buscarConFiltros(
                         @Param("keyword") String keyword,
-                        @Param("estatus") String estatus,
+                        @Param("estatus") EstatusTermino estatus,
                         @Param("prioridad") Prioridad prioridad,
                         @Param("abogadoId") Integer abogadoId,
                         @Param("gerenciaId") Integer gerenciaId,
                         Pageable pageable);
 
         // Métodos auxiliares (Se mantienen igual)
-        List<Termino> findByFechaVencimientoBeforeAndEstatusTerminoNot(LocalDate fecha, String estatus);
+        List<Termino> findByFechaVencimientoBeforeAndEstatusTerminoNot(LocalDate fecha, EstatusTermino estatus);
 
         List<Termino> findByExpedienteId(UUID expedienteId);
 
         Page<Termino> findByEstatusTerminoInAndFechaPresentacionBetweenOrderByFechaPresentacionDesc(
-                        List<String> estatus,
+                        List<EstatusTermino> estatus,
                         LocalDate inicio,
                         LocalDate fin,
                         Pageable pageable);

@@ -22,8 +22,8 @@
             <tbody class="divide-y divide-gray-200" id="terminos-presentados-body">
 
                 <tr th:if="${terminos.empty}">
-                    <td colspan="7" class="px-6 py-8 text-center text-gray-500"> No hay términos concluidos en este
-                        periodo.
+                    <td colspan="7" class="px-6 py-8 text-center text-gray-500"> No hay términos presentados o
+                        concluidos en este periodo.
                     </td>
                 </tr>
 
@@ -46,8 +46,17 @@
                     </td>
 
                     <td class="px-6 py-4">
-                        <span class="text-gob-guinda font-bold"
-                            th:text="${t.expediente != null ? t.expediente.numero : 'S/N'}">EXP-001</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-gob-guinda font-bold"
+                                th:text="${t.expediente != null ? t.expediente.numero : 'S/N'}">EXP-001</span>
+
+                            <span th:if="${t.expediente != null}"
+                                class="text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-sm border"
+                                th:classappend="${t.expediente.prioridad.name() == 'ALTA' ? 'bg-gob-guinda text-gob-oro border-gob-oro' : 
+                                                  (t.expediente.prioridad.name() == 'BAJA' ? 'bg-gray-100 text-gray-500 border-gray-200' : 
+                                                  'bg-gob-oro text-gob-guinda border-transparent')}"
+                                th:text="${t.expediente.prioridad}">MEDIA</span>
+                        </div>
                     </td>
 
                     <td class="px-6 py-4 max-w-xs truncate" th:text="${t.actuacion}" th:title="${t.actuacion}">
@@ -56,9 +65,9 @@
 
                     <td class="px-6 py-4">
                         <span class="text-xs font-semibold px-2.5 py-0.5 rounded border"
-                            th:classappend="${t.estatusTermino == 'Presentado' ? 'bg-green-100 text-green-800 border-green-200' : 
-                                              (t.estatusTermino == 'Concluido' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-gray-100 text-gray-800')}"
-                            th:text="${t.estatusTermino}">Presentado</span>
+                            th:classappend="${t.estatusTermino.name() == 'PRESENTADO' ? 'bg-green-100 text-green-800 border-green-200' : 
+                                              (t.estatusTermino.name() == 'CONCLUIDO' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-gray-100 text-gray-800')}"
+                            th:text="${t.estatusTermino.nombre}">Presentado</span>
                     </td>
 
                     <td class="px-6 py-4 text-sm"

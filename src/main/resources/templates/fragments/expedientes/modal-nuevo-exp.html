@@ -1,30 +1,31 @@
-<div th:fragment="modal" id="modal-nuevo-exp" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4">
-    
+<div th:fragment="modal" id="modal-nuevo-exp"
+    class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4">
+
     <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl border-t-4 border-gob-guinda transform transition-all">
-        
+
         <div class="flex justify-between items-center p-4 border-b border-gray-100">
             <h3 class="text-xl font-bold text-gob-guinda flex items-center gap-2">
                 <i class="fas fa-plus"></i> Nuevo Expediente
             </h3>
-            <button onclick="document.getElementById('modal-nuevo-exp').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+            <button onclick="document.getElementById('modal-nuevo-exp').classList.add('hidden')"
+                class="text-gray-400 hover:text-gray-600">
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
 
         <form th:action="@{/expedientes/guardar}" method="post" class="p-6 space-y-4 text-sm">
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Número de Expediente*</label>
                     <input type="text" name="numero" placeholder="0000/2025" required
-                           class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none">
+                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none">
                 </div>
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Prioridad*</label>
-                    <select name="prioridad" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
-                        <option th:each="p : ${prioridades}" 
-                                th:value="${p}" 
-                                th:text="${p}"></option>
+                    <select name="prioridad"
+                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
+                        <option th:each="p : ${prioridades}" th:value="${p}" th:text="${p}"></option>
                     </select>
                 </div>
             </div>
@@ -32,75 +33,94 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Gerencia*</label>
-                    <select name="gerencia.id" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white" required>
+                    <select name="gerencia.id"
+                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white"
+                        required>
                         <option value="">Selecciona...</option>
-                        <option th:each="g : ${gerencias}" 
-                                th:value="${g.id}" 
-                                th:text="${g.nombre}"></option>
+                        <option th:each="g : ${gerencias}" th:value="${g.id}" th:text="${g.nombre}"></option>
                     </select>
                 </div>
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Estado / Sede*</label>
-                    <select name="sede" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white" required>
+                    <select name="sede"
+                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white"
+                        required>
                         <option value="">Seleccione estado...</option>
-                        <option th:each="est : ${estados}" 
-                                th:value="${est.nombre}" 
-                                th:text="${est.nombre}"></option>
+                        <option th:each="est : ${estados}" th:value="${est.nombre}" th:text="${est.nombre}"></option>
                     </select>
-                </div>          
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Materia*</label>
-                    <select name="materia.id" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white" required>
+                    <select name="materia.id"
+                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white"
+                        required>
                         <option value="">Selecciona...</option>
-                        <option th:each="m : ${materias}" 
-                                th:value="${m.id}" 
-                                th:text="${m.nombre}"></option>
+                        <option th:each="m : ${materias}" th:value="${m.id}" th:text="${m.nombre}"></option>
                     </select>
                 </div>
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Tipo Expediente*</label>
-                    <select name="tipoExpediente.id" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white" required>
+                    <select name="tipoExpediente.id"
+                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white"
+                        required>
                         <option value="">Selecciona...</option>
-                        <option th:each="t : ${tipos}" 
-                                th:value="${t.id}" 
-                                th:text="${t.nombre}"></option>
+                        <option th:each="t : ${tipos}" th:value="${t.id}" th:text="${t.nombre}"></option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block font-bold text-gray-600 mb-1">Órgano Jurisdiccional</label>
+                    <select name="organoJurisdiccional.id"
+                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
+                        <option value="">Selecciona órgano...</option>
+                        <option th:each="o : ${organos}" th:value="${o.id}" th:text="${o.nombre}"></option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-600 mb-1">Etapa Procesal*</label>
+                    <select name="etapaProcesal"
+                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white"
+                        required>
+                        <option th:each="e : ${listaEtapas}" th:value="${e}" th:text="${e}"></option>
                     </select>
                 </div>
             </div>
 
             <div>
                 <label class="block font-bold text-gray-600 mb-1">Abogado Responsable*</label>
-                <select name="abogadoResponsable.id" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
+                <select name="abogadoResponsable.id"
+                    class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
                     <option value="">Asignar abogado...</option>
-                    <option th:each="a : ${usuarios}" 
-                            th:value="${a.id}" 
-                            th:text="${a.nombreCompleto}"></option>
+                    <option th:each="a : ${usuarios}" th:value="${a.id}" th:text="${a.nombreCompleto}"></option>
                 </select>
             </div>
 
             <div>
                 <label class="block font-bold text-gray-600 mb-1">Partes Procesales</label>
-                <input type="text" name="partes" placeholder="Ej: Juan Pérez vs Inmobiliaria S.A." 
-                       class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none">
+                <input type="text" name="partes" placeholder="Ej: Juan Pérez vs Inmobiliaria S.A."
+                    class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none">
             </div>
 
             <div class="col-span-1 md:col-span-2">
                 <label class="block font-bold text-gray-600 mb-1">Descripción </label>
                 <textarea name="descripcion" rows="4" required
-                          placeholder="Escribe aquí todo el detalle del expediente. Esta información se verá en la vista detallada."
-                          class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none resize-none"></textarea>
+                    placeholder="Escribe aquí todo el detalle del expediente. Esta información se verá en la vista detallada."
+                    class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none resize-none"></textarea>
             </div>
 
 
             <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-4">
-                <button type="button" onclick="document.getElementById('modal-nuevo-exp').classList.add('hidden')" 
-                        class="px-4 py-2 border border-gray-300 text-gray-600 rounded hover:bg-gray-50 font-medium">
+                <button type="button" onclick="document.getElementById('modal-nuevo-exp').classList.add('hidden')"
+                    class="px-4 py-2 border border-gray-300 text-gray-600 rounded hover:bg-gray-50 font-medium">
                     Cancelar
                 </button>
-                <button type="submit" class="px-6 py-2 bg-gob-guinda text-white rounded hover:bg-gob-guinda-claro font-bold shadow flex items-center gap-2">
+                <button type="submit"
+                    class="px-6 py-2 bg-gob-guinda text-white rounded hover:bg-gob-guinda-claro font-bold shadow flex items-center gap-2">
                     <i class="fas fa-save"></i> Guardar
                 </button>
             </div>

@@ -119,6 +119,28 @@
                     </div>
                 </div>
 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-bold text-gray-600 mb-1">Órgano Jurisdiccional</label>
+                        <select name="organoJurisdiccional.id"
+                            class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
+                            <option value="">Selecciona órgano...</option>
+                            <option th:each="o : ${organos}" th:value="${o.id}" th:text="${o.nombre}"
+                                th:selected="${expediente.organoJurisdiccional != null and expediente.organoJurisdiccional.id == o.id}">
+                            </option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-600 mb-1">Etapa Procesal*</label>
+                        <select name="etapaProcesal"
+                            class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white"
+                            required>
+                            <option th:each="e : ${etapas}" th:value="${e}" th:text="${e}"
+                                th:selected="${expediente.etapaProcesal == e}"></option>
+                        </select>
+                    </div>
+                </div>
+
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Abogado Responsable*</label>
                     <select name="abogadoResponsable.id"

@@ -1,5 +1,6 @@
 package com.juridico.sistema_juridico.service.procesal;
 
+import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import com.juridico.sistema_juridico.Entity.procesal.TerminoPresentado;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
@@ -34,7 +35,8 @@ public class TerminoService {
 
     @Transactional
     public TerminoResponse crear(TerminoRequest request) {
-        // Corrección de tipos: Buscamos por UUID que es lo que espera tu ExpedienteRepository
+        // Corrección de tipos: Buscamos por UUID que es lo que espera tu
+        // ExpedienteRepository
         Expediente exp = expedienteRepository.findById(UUID.fromString(request.getAsuntoId().toString()))
                 .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
 
@@ -42,10 +44,10 @@ public class TerminoService {
                 .expediente(exp)
                 .actuacion(request.getAsunto()) // En tu entidad se llama actuacion
                 .fechaVencimiento(request.getFechaVencimiento())
-                .estatusTermino("PROYECTISTA") // En tu entidad se llama estatusTermino
+                .estatusTermino(EstatusTermino.PROYECTISTA) // En tu entidad se llama estatusTermino
                 .fechaIngreso(LocalDate.now())
                 .build();
-        
+
         return mapToResponse(terminoRepository.save(termino));
     }
 
@@ -53,8 +55,8 @@ public class TerminoService {
     public void marcarComoPresentado(Integer id, String observaciones) {
         Termino termino = terminoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Término no encontrado"));
-        
-        termino.setEstatusTermino("PRESENTADO");
+
+        termino.setEstatusTermino(EstatusTermino.PRESENTADO);
         terminoRepository.save(termino);
 
         // Lógica de Histórico: Creamos el registro en la tabla de presentados
@@ -64,22 +66,22 @@ public class TerminoService {
                 .fechaPresentacion(LocalDate.now())
                 .acuseDocumento(observaciones) // Guardamos el comentario como acuse inicial
                 .build();
-        
+
         presentadoRepository.save(historico);
     }
 
     @Transactional
-    public void cambiarEstado(Integer id, String nuevoEstado) { // Cambiado a Integer
+    public void cambiarEstado(Integer id, EstatusTermino nuevoEstado) { // Cambiado a Integer
         Termino termino = terminoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Término no encontrado"));
         termino.setEstatusTermino(nuevoEstado);
         terminoRepository.save(termino);
     }
 
-        // Para el endpoint de próximos a vencer (alertas de 7 días)
+    // Para el endpoint de próximos a vencer (alertas de 7 días)
     public List<TerminoResponse> listarProximosAVencer() {
         LocalDate limite = LocalDate.now().plusDays(7);
-        return terminoRepository.findByFechaVencimientoBeforeAndEstatusTerminoNot(limite, "CONCLUIDO")
+        return terminoRepository.findByFechaVencimientoBeforeAndEstatusTerminoNot(limite, EstatusTermino.CONCLUIDO)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -88,9 +90,9 @@ public class TerminoService {
     private TerminoResponse mapToResponse(Termino entity) {
         TerminoResponse res = new TerminoResponse();
         res.setId(Long.valueOf(entity.getId()));
-        res.setActuación(entity.getActuacion()); 
+        res.setActuación(entity.getActuacion());
         res.setFechaVencimiento(entity.getFechaVencimiento());
-        
+
         if (entity.getExpediente() != null) {
             res.setExpediente(entity.getExpediente().getNumero());
         }
@@ -99,11 +101,12 @@ public class TerminoService {
         if (entity.getAbogadoResponsable() != null) {
             res.setAbogadoResponsable(entity.getAbogadoResponsable().getNombreCompleto());
         }
-        
+
         return res;
     }
-    
-    // 1. Obtener términos por expediente (Requisito: GET /api/terminos/expediente/{expedienteId})
+
+    // 1. Obtener términos por expediente (Requisito: GET
+    // /api/terminos/expediente/{expedienteId})
     public List<TerminoResponse> listarPorExpediente(UUID expedienteId) {
         return terminoRepository.findByExpedienteId(expedienteId)
                 .stream()
@@ -114,7 +117,7 @@ public class TerminoService {
     // 2. Obtener términos vencidos (Requisito: GET /api/terminos/vencidos)
     public List<TerminoResponse> listarVencidos() {
         return terminoRepository.findByFechaVencimientoBeforeAndEstatusTerminoNot(
-                LocalDate.now(), "CONCLUIDO")
+                LocalDate.now(), EstatusTermino.CONCLUIDO)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -123,11 +126,13 @@ public class TerminoService {
     // 3. Lógica de Alertas (Sistema de 7, 3, 1 días)
     public String calcularNivelAlerta(LocalDate fechaVencimiento) {
         long diasRestantes = ChronoUnit.DAYS.between(LocalDate.now(), fechaVencimiento);
-        if (diasRestantes <= 1) return "CRÍTICA (1 día)";
-        if (diasRestantes <= 3) return "ALTA (3 días)";
-        if (diasRestantes <= 7) return "MEDIA (7 días)";
+        if (diasRestantes <= 1)
+            return "CRÍTICA (1 día)";
+        if (diasRestantes <= 3)
+            return "ALTA (3 días)";
+        if (diasRestantes <= 7)
+            return "MEDIA (7 días)";
         return "NORMAL";
     }
 
-    
 }

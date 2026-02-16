@@ -1,27 +1,30 @@
-<div th:fragment="modal" id="modal-nuevo-termino" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4">
-    
+<div th:fragment="modal" id="modal-nuevo-termino"
+    class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4">
+
     <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl border-t-4 border-gob-oro transform transition-all">
-        
+
         <div class="flex justify-between items-center p-4 border-b border-gray-100">
             <h3 id="modal-titulo" class="text-xl font-bold text-gob-guinda flex items-center gap-2">
                 <i class="fas fa-plus-circle"></i> Nuevo Término
             </h3>
-            <button onclick="document.getElementById('modal-nuevo-termino').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+            <button onclick="document.getElementById('modal-nuevo-termino').classList.add('hidden')"
+                class="text-gray-400 hover:text-gray-600">
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
 
         <form id="form-termino" th:action="@{/terminos/guardar}" method="post" class="p-6 space-y-4 text-sm">
-            
+
             <input type="hidden" name="id" id="input-termino-id">
 
             <div>
                 <label class="block font-bold text-gob-guinda mb-1">Vincular a Expediente *</label>
-                <select name="expedienteId" id="input-expediente" class="w-full border border-gray-300 rounded p-2 focus:ring-gob-oro outline-none bg-blue-50" required>
+                <select name="expedienteId" id="input-expediente"
+                    class="w-full border border-gray-300 rounded p-2 focus:ring-gob-oro outline-none bg-blue-50"
+                    required>
                     <option value="">Seleccione un expediente...</option>
-                    <option th:each="exp : ${expedientesList}" 
-                            th:value="${exp.id}" 
-                            th:text="${exp.numero + ' - ' + exp.partes}">
+                    <option th:each="exp : ${expedientesList}" th:value="${exp.id}"
+                        th:text="${exp.numero + ' - ' + exp.partes}">
                     </option>
                 </select>
             </div>
@@ -29,42 +32,34 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Asunto / Actuación *</label>
-                    <input type="text" name="actuacion" id="input-actuacion" placeholder="Ej: Presentar alegatos" required
-                           class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none">
+                    <input type="text" name="actuacion" id="input-actuacion" placeholder="Ej: Presentar alegatos"
+                        required class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none">
                 </div>
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Fecha de Vencimiento *</label>
                     <input type="date" name="fechaVencimiento" id="input-fecha" required
-                           class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none">
+                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none">
                 </div>
             </div>
 
             <div>
                 <label class="block font-bold text-gray-600 mb-1">Abogado Responsable</label>
-                <select name="abogadoResponsable.id" id="input-abogado" class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none">
+                <select name="abogadoResponsable.id" id="input-abogado"
+                    class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none">
                     <option value="">Asignar abogado...</option>
-                    <option th:each="abg : ${abogados}" 
-                            th:value="${abg.id}" 
-                            th:text="${abg.nombreCompleto}">
+                    <option th:each="abg : ${abogados}" th:value="${abg.id}" th:text="${abg.nombreCompleto}">
                     </option>
                 </select>
             </div>
 
-            <div class="bg-yellow-50 border border-yellow-200 rounded p-3 mt-2">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-bell text-gob-oro"></i>
-                    <span class="text-xs font-bold text-gob-guinda uppercase">Notificación</span>
-                </div>
-                <label class="block text-xs text-gray-600 mb-1">Días de anticipación</label>
-                <input type="number" value="3" min="1" class="w-20 border border-gray-300 rounded p-1 text-sm">
-            </div>
 
             <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-4">
-                <button type="button" onclick="document.getElementById('modal-nuevo-termino').classList.add('hidden')" 
-                        class="px-4 py-2 border border-gray-300 text-gray-600 rounded hover:bg-gray-50 font-medium">
+                <button type="button" onclick="document.getElementById('modal-nuevo-termino').classList.add('hidden')"
+                    class="px-4 py-2 border border-gray-300 text-gray-600 rounded hover:bg-gray-50 font-medium">
                     Cancelar
                 </button>
-                <button type="submit" class="px-6 py-2 bg-gob-guinda text-white rounded hover:bg-gob-guinda-claro font-bold shadow flex items-center gap-2">
+                <button type="submit"
+                    class="px-6 py-2 bg-gob-guinda text-white rounded hover:bg-gob-guinda-claro font-bold shadow flex items-center gap-2">
                     <i class="fas fa-save"></i> Guardar Datos
                 </button>
             </div>
