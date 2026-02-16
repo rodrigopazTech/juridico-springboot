@@ -121,6 +121,14 @@ public class CalendarioController {
         model.addAttribute("listaUsuarios", listaUsuarios);
         model.addAttribute("puedeVerFiltroMateria", puedeVerFiltroMateria);
         model.addAttribute("listaMaterias", listaMaterias);
+        
+        // Tipos de eventos dinámicos para el filtro
+        model.addAttribute("listaTiposEvento", List.of(
+            new String[]{"todos", "Todos"},
+            new String[]{"audiencia", "Audiencias"},
+            new String[]{"termino", "Términos"},
+            new String[]{"recordatorio", "Recordatorios"}
+        ));
 
         return "views/calendario/index";
     }
