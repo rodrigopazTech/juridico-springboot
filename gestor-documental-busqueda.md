@@ -1,0 +1,239 @@
+- generic [ref=e1]:
+  - complementary "Sidebar" [ref=e2]:
+    - generic [ref=e3]:
+      - link " Agenda Legal" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: 
+        - generic [ref=e7]: Agenda Legal
+      - list [ref=e8]:
+        - listitem [ref=e9]:
+          - link " Dashboard" [ref=e10] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=e11]: 
+            - generic [ref=e12]: Dashboard
+        - listitem [ref=e13]:
+          - link " Agenda General" [ref=e14] [cursor=pointer]:
+            - /url: /agenda
+            - generic [ref=e15]: 
+            - generic [ref=e16]: Agenda General
+        - listitem [ref=e17]:
+          - link " Centro de Alertas" [ref=e18] [cursor=pointer]:
+            - /url: /alertas
+            - generic [ref=e20]: 
+            - generic [ref=e21]: Centro de Alertas
+        - listitem [ref=e22]:
+          - link " Expedientes" [ref=e23] [cursor=pointer]:
+            - /url: /expedientes
+            - generic [ref=e24]: 
+            - generic [ref=e25]: Expedientes
+        - listitem [ref=e26]:
+          - link " Términos" [ref=e27] [cursor=pointer]:
+            - /url: /terminos
+            - generic [ref=e28]: 
+            - generic [ref=e29]: Términos
+        - listitem [ref=e30]:
+          - link " Audiencias" [ref=e31] [cursor=pointer]:
+            - /url: /audiencias
+            - generic [ref=e32]: 
+            - generic [ref=e33]: Audiencias
+        - listitem [ref=e34]:
+          - link " Usuarios" [ref=e35] [cursor=pointer]:
+            - /url: /usuarios
+            - generic [ref=e36]: 
+            - generic [ref=e37]: Usuarios
+      - generic [ref=e38]:
+        - generic [ref=e39]:
+          - generic [ref=e41]: D
+          - generic [ref=e42]:
+            - paragraph [ref=e43]: Director General
+            - paragraph [ref=e44]: DIRECCION
+        - link " Cerrar Sesión" [ref=e45] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e46]: 
+          - generic [ref=e47]: Cerrar Sesión
+  - generic [ref=e48]:
+    - generic [ref=e49]:
+      - heading " Detalle del Expediente" [level=1] [ref=e50]:
+        - generic [ref=e51]: 
+        - text: Detalle del Expediente
+      - separator [ref=e52]
+    - generic [ref=e53]:
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - generic [ref=e57]:
+            - heading "001" [level=2] [ref=e58]
+            - generic [ref=e59]: TRAMITE
+          - paragraph [ref=e60]: Detalle general del asunto jurídico y seguimiento.
+        - generic [ref=e61]:
+          - link " Volver" [ref=e62] [cursor=pointer]:
+            - /url: /expedientes
+            - generic [ref=e63]: 
+            - text: Volver
+          - button " Observaciones" [ref=e64] [cursor=pointer]:
+            - generic [ref=e65]: 
+            - text: Observaciones
+          - button " Editar" [ref=e66] [cursor=pointer]:
+            - generic [ref=e67]: 
+            - text: Editar
+          - button " Cambiar Etapa" [ref=e68] [cursor=pointer]:
+            - generic [ref=e69]: 
+            - text: Cambiar Etapa
+          - button " Gestor Documental" [ref=e70] [cursor=pointer]:
+            - generic [ref=e71]: 
+            - text: Gestor Documental
+      - generic [ref=e72]:
+        - generic [ref=e74]:
+          - heading " Información General" [level=3] [ref=e75]:
+            - generic [ref=e76]: 
+            - text: Información General
+          - generic [ref=e77]:
+            - generic [ref=e78]:
+              - paragraph [ref=e79]: Gerencia
+              - paragraph [ref=e80]: Gerencia Civil, Mercantil, Fiscal y Administrativo
+            - generic [ref=e81]:
+              - paragraph [ref=e82]: Materia
+              - paragraph [ref=e83]: Mercantil
+            - generic [ref=e84]:
+              - paragraph [ref=e85]: Tipo Expediente
+              - paragraph [ref=e86]: Juicio Ejecutivo
+            - generic [ref=e87]:
+              - paragraph [ref=e88]: Órgano Jurisdiccional
+              - paragraph [ref=e89]: Sin asignar
+            - generic [ref=e90]:
+              - paragraph [ref=e91]: Ubicación
+              - paragraph [ref=e92]:
+                - generic [ref=e93]: 
+                - generic [ref=e94]: Baja California Sur
+            - generic [ref=e95]:
+              - paragraph [ref=e96]: Prioridad
+              - generic [ref=e97]: ALTA
+          - separator [ref=e98]
+          - generic [ref=e99]:
+            - generic [ref=e100]:
+              - heading " Detalle del Asunto" [level=3] [ref=e101]:
+                - generic [ref=e102]: 
+                - text: Detalle del Asunto
+              - generic [ref=e103]:
+                - paragraph [ref=e104]: Partes Procesales
+                - generic [ref=e105]:
+                  - generic [ref=e106]: 
+                  - generic [ref=e107]: Juan vs Perez
+              - generic [ref=e108]:
+                - paragraph [ref=e109]: Descripción de los Hechos
+                - generic [ref=e110]: Ninguna
+            - generic [ref=e111]:
+              - heading " Responsable" [level=3] [ref=e112]:
+                - generic [ref=e113]: 
+                - text: Responsable
+              - generic [ref=e114]:
+                - generic [ref=e115]:
+                  - generic [ref=e117]: 
+                  - generic [ref=e118]:
+                    - paragraph [ref=e119]: Abogado Asignado
+                    - paragraph [ref=e120]: Gerente Civil
+                - paragraph [ref=e122]:
+                  - generic [ref=e123]: 
+                  - generic [ref=e124]: gerente@juridico.com
+        - generic [ref=e126]:
+          - heading " Historial de Cambios" [level=3] [ref=e127]:
+            - generic [ref=e128]: 
+            - text: Historial de Cambios
+          - generic [ref=e129]:
+            - generic [ref=e130]:
+              - paragraph [ref=e132]: Hace 2 horas
+              - paragraph [ref=e133]: Cambio de Etapa
+              - paragraph [ref=e134]: Lic. Juan Pérez cambió a "LAUDO".
+            - generic [ref=e135]:
+              - paragraph [ref=e137]: Ayer, 14:30
+              - paragraph [ref=e138]: Edición de Expediente
+              - paragraph [ref=e139]: Se actualizó la descripción.
+            - generic [ref=e140]:
+              - paragraph [ref=e142]: 15 Ene 2026
+              - paragraph [ref=e143]: Creación
+              - paragraph [ref=e144]: Expediente registrado en el sistema.
+      - generic [ref=e145]:
+        - generic [ref=e146]:
+          - heading " Archivos Recientes" [level=3] [ref=e147]:
+            - generic [ref=e148]: 
+            - text: Archivos Recientes
+          - generic [ref=e149]: Últimos 3 documentos cargados
+        - generic [ref=e150]:
+          - generic [ref=e151] [cursor=pointer]:
+            - generic [ref=e153]: 
+            - generic [ref=e154]:
+              - paragraph [ref=e155]: Sentencia_Final.pdf
+              - paragraph [ref=e156]: 2.4 MB • Hace 2 días
+          - generic [ref=e157] [cursor=pointer]:
+            - generic [ref=e159]: 
+            - generic [ref=e160]:
+              - paragraph [ref=e161]: Demanda_Inicial.docx
+              - paragraph [ref=e162]: 1.1 MB • 15 Ene 2026
+          - generic [ref=e163] [cursor=pointer]:
+            - generic [ref=e165]: 
+            - generic [ref=e166]:
+              - paragraph [ref=e167]: Evidencia_01.jpg
+              - paragraph [ref=e168]: 4.5 MB • 15 Ene 2026
+  - generic:             
+  - generic:
+    - generic [ref=e170]:
+      - generic [ref=e171]:
+        - generic [ref=e172]:
+          - heading " Gestor Documental" [level=2] [ref=e173]:
+            - generic [ref=e174]: 
+            - text: Gestor Documental
+          - paragraph [ref=e175]: EXPEDIENTE DIGITAL
+        - generic [ref=e176]:
+          - generic [ref=e177]:
+            - generic [ref=e178]: 
+            - text: 0.00 MB ocupados
+          - button "" [ref=e179] [cursor=pointer]:
+            - generic [ref=e180]: 
+      - generic [ref=e181]:
+        - generic [ref=e182]:
+          - generic [ref=e183]:
+            - heading "NAVEGACIÓN" [level=3] [ref=e184]
+            - button " Nueva Carpeta" [ref=e185] [cursor=pointer]:
+              - generic [ref=e186]: 
+              - text: Nueva Carpeta
+          - generic [ref=e250]:
+            - generic [ref=e251] [cursor=pointer]:
+              - generic [ref=e252]: 📁
+              - generic [ref=e253]: Raíz
+            - generic [ref=e255]:
+              - generic [ref=e256] [cursor=pointer]:
+                - generic [ref=e258]: 
+                - generic [ref=e259]: 📁
+                - generic [ref=e260]: dafadfadfasdf
+                - text:  
+              - generic [ref=e263] [cursor=pointer]:
+                - generic [ref=e264]: 📂
+                - generic [ref=e265]: Documentos Legales
+                - text:  
+        - generic [ref=e197]:
+          - generic [ref=e198]:
+            - navigation [ref=e200]:
+              - button " Raíz" [ref=e223] [cursor=pointer]:
+                - generic [ref=e224]: 
+                - text: Raíz
+              - generic [ref=e225]: 
+              - button "dafadfadfasdf" [ref=e226] [cursor=pointer]
+            - generic [ref=e202]:
+              - generic [ref=e203]:
+                - generic:
+                  - generic: 
+                - textbox "Buscar archivo en esta carpeta..." [active] [ref=e204]: documento prueba
+              - generic [ref=e205]:
+                - button "" [ref=e206] [cursor=pointer]:
+                  - generic [ref=e207]: 
+                - button "" [ref=e208] [cursor=pointer]:
+                  - generic [ref=e209]: 
+                - button " Subir Documento" [ref=e210] [cursor=pointer]:
+                  - generic [ref=e211]: 
+                  - text: Subir Documento
+          - generic [ref=e212]:
+            - generic [ref=e288]:
+              - generic [ref=e289]: 
+              - paragraph [ref=e290]: No hay documentos en esta carpeta
+              - paragraph [ref=e291]: Sube tu primer documento
+            - text: 
+    - text:   +   
