@@ -3,7 +3,8 @@ package com.juridico.sistema_juridico.service.procesal;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.procesal.AudienciaDesahogada;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
-import com.juridico.sistema_juridico.Entity.enums.Prioridad; 
+import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
+import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaDesahogadaRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
@@ -45,16 +46,17 @@ public class AudienciaService {
         if (!archivo.isEmpty()) {
             String carpeta = "uploads/audiencias/";
             Path ruta = Paths.get(carpeta);
-            if (!Files.exists(ruta)) Files.createDirectories(ruta);
+            if (!Files.exists(ruta))
+                Files.createDirectories(ruta);
 
             String nombreArchivo = id + "_ACTA_" + archivo.getOriginalFilename();
             Files.copy(archivo.getInputStream(), ruta.resolve(nombreArchivo), StandardCopyOption.REPLACE_EXISTING);
-            
+
             audiencia.setActaDocumento(nombreArchivo);
-            
+
             // Lógica de Estatus: Si estaba pendiente, ahora tiene acta
-            if ("PENDIENTE".equals(audiencia.getEstatusAudiencia())) {
-                audiencia.setEstatusAudiencia("CON_ACTA");
+            if (EstatusAudiencia.PENDIENTE.equals(audiencia.getEstatusAudiencia())) {
+                audiencia.setEstatusAudiencia(EstatusAudiencia.CON_ACTA);
                 notificarSubidaActa(audiencia);
             }
             audienciaRepository.save(audiencia);
@@ -65,30 +67,29 @@ public class AudienciaService {
     private void notificarSubidaActa(Audiencia audiencia) {
         try {
             List<Usuario> directivos = usuarioRepository.findAll().stream()
-                .filter(u -> u.getRol().name().equals("DIRECCION") || u.getRol().name().equals("SUBDIRECCION"))
-                .filter(Usuario::getActivo)
-                .collect(Collectors.toList());
+                    .filter(u -> u.getRol().name().equals("DIRECCION") || u.getRol().name().equals("SUBDIRECCION"))
+                    .filter(Usuario::getActivo)
+                    .collect(Collectors.toList());
 
             String expediente = audiencia.getExpediente().getNumero();
-            
+
             String nombreAbogado;
             if (audiencia.getAbogadoComparece() != null) {
                 nombreAbogado = audiencia.getAbogadoComparece().getNombreCompleto();
             } else {
                 nombreAbogado = audiencia.getExpediente().getAbogadoResponsable().getNombreCompleto();
             }
-            
+
             String linkRedireccion = "/audiencias?keyword=" + audiencia.getId();
 
             for (Usuario directivo : directivos) {
                 notificacionService.crearNotificacion(
-                    directivo,
-                    "Acta Disponible: " + expediente,
-                    "El abogado " + nombreAbogado + " ha subido el acta. Requiere validación.", 
-                    "AUDIENCIA", 
-                    Prioridad.ALTA,    
-                    linkRedireccion  
-                );
+                        directivo,
+                        "Acta Disponible: " + expediente,
+                        "El abogado " + nombreAbogado + " ha subido el acta. Requiere validación.",
+                        "AUDIENCIA",
+                        Prioridad.ALTA,
+                        linkRedireccion);
             }
         } catch (Exception e) {
             System.err.println("Error al enviar notificación de acta: " + e.getMessage());
@@ -102,10 +103,10 @@ public class AudienciaService {
         Audiencia audiencia = audienciaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
 
-        audiencia.setEstatusAudiencia("CONCLUIDA");
+        audiencia.setEstatusAudiencia(EstatusAudiencia.CONCLUIDA);
         audiencia.setFechaDesahogo(LocalDate.now());
         audiencia.setObservaciones(observaciones);
-        
+
         audienciaRepository.save(audiencia);
 
         // Crear registro en Histórico
@@ -117,7 +118,7 @@ public class AudienciaService {
                 .fechaDesahogo(LocalDate.now())
                 .sincronizadoAt(LocalDateTime.now())
                 .build();
-        
+
         desahogadaRepository.save(historico);
     }
 }

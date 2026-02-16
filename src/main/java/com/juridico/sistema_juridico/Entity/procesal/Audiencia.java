@@ -10,6 +10,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
+import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 
 import java.time.LocalDateTime;
@@ -20,8 +21,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Entity
 @Table(name = "audiencias", indexes = {
-    @Index(name = "idx_audiencias_expediente", columnList = "expediente_id"),
-    @Index(name = "idx_audiencias_fecha", columnList = "fecha_audiencia")
+        @Index(name = "idx_audiencias_expediente", columnList = "expediente_id"),
+        @Index(name = "idx_audiencias_fecha", columnList = "fecha_audiencia")
 })
 public class Audiencia {
 
@@ -33,11 +34,11 @@ public class Audiencia {
     @JoinColumn(name = "expediente_id", nullable = false)
     private Expediente expediente;
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd") 
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     @Column(name = "fecha_audiencia", nullable = false)
     private LocalDate fechaAudiencia;
 
-    @DateTimeFormat(pattern = "HH:mm") 
+    @DateTimeFormat(pattern = "HH:mm")
     @Column(name = "hora_audiencia", nullable = false)
     private LocalTime horaAudiencia;
 
@@ -55,50 +56,58 @@ public class Audiencia {
     @Column(name = "sala_lugar", columnDefinition = "TEXT")
     private String salaLugar;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "estatus_audiencia", length = 30)
-    private String estatusAudiencia; // PENDIENTE, CON_ACTA, CONCLUIDA (Podría ser Enum)
+    private EstatusAudiencia estatusAudiencia; // PENDIENTE, CON_ACTA, CONCLUIDA
 
     @Column(name = "acta_documento", length = 500)
     private String actaDocumento;
 
     @Column(name = "fecha_desahogo")
     private LocalDate fechaDesahogo;
-    
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-    
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-
-
     @ManyToOne
     @JoinColumn(name = "abogado_comparece_id")
-    private Usuario abogadoComparece; 
+    private Usuario abogadoComparece;
 
     @Column(name = "observaciones", columnDefinition = "TEXT")
     private String observaciones; // Resultados o notas de la audiencia
 
     public String getSemaforoColor() {
-        if ("CONCLUIDA".equals(this.estatusAudiencia)) return "bg-gray-800"; // Concluida (Negro/Gris fuerte)
-        if ("CON_ACTA".equals(this.estatusAudiencia)) return "bg-purple-600"; // Con Acta (Morado)
-        
+        if (EstatusAudiencia.CONCLUIDA.equals(this.estatusAudiencia))
+            return "bg-gray-800"; // Concluida (Negro/Gris fuerte)
+        if (EstatusAudiencia.CON_ACTA.equals(this.estatusAudiencia))
+            return "bg-purple-600"; // Con Acta (Morado)
+
         long dias = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaAudiencia);
-        
-        if (dias < 0) return "bg-gray-400"; // Pasada (Gris)
-        if (dias <= 1) return "bg-red-600 animate-pulse"; // ¡HOY o MAÑANA! (Rojo parpadeante)
-        if (dias <= 3) return "bg-yellow-400"; // Próxima (Amarillo)
+
+        if (dias < 0)
+            return "bg-gray-400"; // Pasada (Gris)
+        if (dias <= 1)
+            return "bg-red-600 animate-pulse"; // ¡HOY o MAÑANA! (Rojo parpadeante)
+        if (dias <= 3)
+            return "bg-yellow-400"; // Próxima (Amarillo)
         return "bg-green-500"; // Lejana (Verde)
     }
 
     public String getTextoDiasRestantes() {
-        if ("CONCLUIDA".equals(this.estatusAudiencia)) return "Concluida";
-        
+        if (EstatusAudiencia.CONCLUIDA.equals(this.estatusAudiencia))
+            return "Concluida";
+
         long dias = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaAudiencia);
-        
-        if (dias == 0) return "¡ES HOY!";
-        if (dias == 1) return "¡MAÑANA!";
-        if (dias < 0) return "Fue hace " + Math.abs(dias) + " días";
+
+        if (dias == 0)
+            return "¡ES HOY!";
+        if (dias == 1)
+            return "¡MAÑANA!";
+        if (dias < 0)
+            return "Fue hace " + Math.abs(dias) + " días";
         return "Faltan " + dias + " días";
     }
 }

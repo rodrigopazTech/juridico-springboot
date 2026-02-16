@@ -11,6 +11,7 @@ import com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpediente
 import com.juridico.sistema_juridico.Entity.expediente.ColaboradorExpediente;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
+import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,26 +51,34 @@ import java.util.ArrayList;
 @RequestMapping("/audiencias")
 public class AudienciasController {
 
-    @Autowired private AudienciaRepository audienciaRepository;
-    @Autowired private ExpedienteRepository expedienteRepository;
-    @Autowired private UsuarioRepository usuarioRepository;
-    @Autowired private AudienciaService audienciaService;
-    
-    @Autowired private ColaboradorExpedienteRepository colaboradorRepository;
-    @Autowired private GerenciaRepository gerenciaRepository;
-    @Autowired private MateriaRepository materiaRepository;
-    @Autowired private TipoAudienciaRepository tipoAudienciaRepository;
+    @Autowired
+    private AudienciaRepository audienciaRepository;
+    @Autowired
+    private ExpedienteRepository expedienteRepository;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+    @Autowired
+    private AudienciaService audienciaService;
 
-  @GetMapping
+    @Autowired
+    private ColaboradorExpedienteRepository colaboradorRepository;
+    @Autowired
+    private GerenciaRepository gerenciaRepository;
+    @Autowired
+    private MateriaRepository materiaRepository;
+    @Autowired
+    private TipoAudienciaRepository tipoAudienciaRepository;
+
+    @GetMapping
     public String index(Model model,
-                        @RequestParam(defaultValue = "0") int page,
-                        @RequestParam(required = false) String keyword,
-                        @RequestParam(required = false) String tipo,
-                        @RequestParam(required = false) String gerencia,
-                        @RequestParam(required = false) String materia,
-                        @RequestParam(required = false) String estatus,
-                        @RequestParam(required = false) Integer abogadoId, 
-                        @RequestParam(required = false) String periodo) {  
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String tipo,
+            @RequestParam(required = false) String gerencia,
+            @RequestParam(required = false) String materia,
+            @RequestParam(required = false) String estatus,
+            @RequestParam(required = false) Integer abogadoId,
+            @RequestParam(required = false) String periodo) {
 
         if (keyword != null && keyword.contains("?keyword=")) {
             // Nos quedamos solo con lo que esté después del último igual (=)
@@ -91,14 +100,15 @@ public class AudienciasController {
                 filtroUsuarioId = usuario.getId();
                 break;
             case "GERENTE":
-                if(usuario.getGerencia() != null) filtroGerenciaId = usuario.getGerencia().getId();
+                if (usuario.getGerencia() != null)
+                    filtroGerenciaId = usuario.getGerencia().getId();
                 break;
             case "JEFE_DEPTO":
-                if(usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
+                if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
                     filtroMateriaIds = usuario.getMaterias().stream().map(Materia::getId).collect(Collectors.toList());
                 } else {
                     filtroMateriaIds = new ArrayList<>();
-                    filtroMateriaIds.add(-1); 
+                    filtroMateriaIds.add(-1);
                 }
                 break;
         }
@@ -106,14 +116,26 @@ public class AudienciasController {
         // 3. FECHAS CENTINELA
         LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
         LocalDate fechaFin = LocalDate.of(2100, 12, 31);
-        
+
         if (periodo != null && !periodo.isEmpty()) {
             LocalDate hoy = LocalDate.now();
             switch (periodo) {
-                case "HOY": fechaInicio = hoy; fechaFin = hoy; break;
-                case "MANANA": fechaInicio = hoy.plusDays(1); fechaFin = hoy.plusDays(1); break;
-                case "SEMANA": fechaInicio = hoy; fechaFin = hoy.plusDays(7); break;
-                case "MES": fechaInicio = hoy.withDayOfMonth(1); fechaFin = hoy.withDayOfMonth(hoy.lengthOfMonth()); break;
+                case "HOY":
+                    fechaInicio = hoy;
+                    fechaFin = hoy;
+                    break;
+                case "MANANA":
+                    fechaInicio = hoy.plusDays(1);
+                    fechaFin = hoy.plusDays(1);
+                    break;
+                case "SEMANA":
+                    fechaInicio = hoy;
+                    fechaFin = hoy.plusDays(7);
+                    break;
+                case "MES":
+                    fechaInicio = hoy.withDayOfMonth(1);
+                    fechaFin = hoy.withDayOfMonth(hoy.lengthOfMonth());
+                    break;
             }
         }
 
@@ -121,11 +143,10 @@ public class AudienciasController {
         Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaAudiencia").ascending());
 
         Page<Audiencia> audiencias = audienciaRepository.buscarConFiltros(
-                keyword, tipo, gerencia, materia, estatus, 
-                abogadoId, fechaInicio, fechaFin, 
+                keyword, tipo, gerencia, materia, estatus,
+                abogadoId, fechaInicio, fechaFin,
                 filtroUsuarioId, filtroGerenciaId, filtroMateriaIds,
-                pageable
-        );
+                pageable);
 
         model.addAttribute("audiencias", audiencias);
         model.addAttribute("pageTitle", "Gestión de Audiencias");
@@ -135,18 +156,19 @@ public class AudienciasController {
         List<Expediente> expedientesParaDropdown;
         if (rol.equals("ABOGADO")) {
             expedientesParaDropdown = expedienteRepository.findAll().stream()
-                .filter(e -> e.getAbogadoResponsable() != null && e.getAbogadoResponsable().getId().equals(usuario.getId()))
-                .collect(Collectors.toList());
+                    .filter(e -> e.getAbogadoResponsable() != null
+                            && e.getAbogadoResponsable().getId().equals(usuario.getId()))
+                    .collect(Collectors.toList());
         } else if (rol.equals("GERENTE")) {
             expedientesParaDropdown = expedienteRepository.findAll().stream()
-                .filter(e -> e.getGerencia() != null && usuario.getGerencia() != null && 
-                             e.getGerencia().getId().equals(usuario.getGerencia().getId()))
-                .collect(Collectors.toList());
+                    .filter(e -> e.getGerencia() != null && usuario.getGerencia() != null &&
+                            e.getGerencia().getId().equals(usuario.getGerencia().getId()))
+                    .collect(Collectors.toList());
         } else if (rol.equals("JEFE_DEPTO")) {
             expedientesParaDropdown = expedienteRepository.findAll().stream()
-                .filter(e -> e.getMateria() != null && usuario.getMaterias().stream()
-                             .anyMatch(m -> m.getId().equals(e.getMateria().getId())))
-                .collect(Collectors.toList());
+                    .filter(e -> e.getMateria() != null && usuario.getMaterias().stream()
+                            .anyMatch(m -> m.getId().equals(e.getMateria().getId())))
+                    .collect(Collectors.toList());
         } else {
             expedientesParaDropdown = expedienteRepository.findAll();
         }
@@ -156,25 +178,25 @@ public class AudienciasController {
         model.addAttribute("listaTiposAudiencia", tipoAudienciaRepository.findAll());
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
         model.addAttribute("listaMaterias", materiaRepository.findAll());
-        model.addAttribute("abogados", usuarioRepository.findAll()); 
-        
+        model.addAttribute("abogados", usuarioRepository.findAll());
+
         // Filtros en vista
-        model.addAttribute("keyword", keyword); 
+        model.addAttribute("keyword", keyword);
         model.addAttribute("paramTipo", tipo);
         model.addAttribute("paramGerencia", gerencia);
         model.addAttribute("paramMateria", materia);
         model.addAttribute("paramEstatus", estatus);
         model.addAttribute("paramAbogadoId", abogadoId);
         model.addAttribute("paramPeriodo", periodo);
-        
+
         return "views/audiencias/index";
     }
 
     @PostMapping("/guardar")
-    public String guardar(@ModelAttribute Audiencia audienciaForm, 
-                          @RequestParam("expedienteId") UUID expedienteId,
-                          @RequestParam("tipoAudienciaId") Integer tipoAudienciaId,
-                          RedirectAttributes redirectAttrs) {
+    public String guardar(@ModelAttribute Audiencia audienciaForm,
+            @RequestParam("expedienteId") UUID expedienteId,
+            @RequestParam("tipoAudienciaId") Integer tipoAudienciaId,
+            RedirectAttributes redirectAttrs) {
         try {
             Audiencia audienciaFinal;
 
@@ -188,11 +210,11 @@ public class AudienciasController {
                 existente.setEsVirtual(audienciaForm.getEsVirtual());
                 existente.setUrlReunion(audienciaForm.getUrlReunion());
                 existente.setAbogadoComparece(audienciaForm.getAbogadoComparece());
-                
+
                 audienciaFinal = existente;
             } else {
                 audienciaFinal = audienciaForm;
-                audienciaFinal.setEstatusAudiencia("PENDIENTE");
+                audienciaFinal.setEstatusAudiencia(EstatusAudiencia.PENDIENTE);
                 audienciaFinal.setCreatedAt(LocalDateTime.now());
             }
 
@@ -208,18 +230,18 @@ public class AudienciasController {
 
             Audiencia guardada = audienciaRepository.save(audienciaFinal);
 
-            if (guardada.getAbogadoComparece() != null && 
-                !guardada.getAbogadoComparece().getId().equals(exp.getAbogadoResponsable().getId())) {
-                
+            if (guardada.getAbogadoComparece() != null &&
+                    !guardada.getAbogadoComparece().getId().equals(exp.getAbogadoResponsable().getId())) {
+
                 ColaboradorExpediente colaborador = colaboradorRepository
-                    .findByExpedienteIdAndUsuarioId(exp.getId(), guardada.getAbogadoComparece().getId())
-                    .stream().findFirst().orElse(new ColaboradorExpediente());
+                        .findByExpedienteIdAndUsuarioId(exp.getId(), guardada.getAbogadoComparece().getId())
+                        .stream().findFirst().orElse(new ColaboradorExpediente());
 
                 colaborador.setExpediente(exp);
                 colaborador.setUsuario(guardada.getAbogadoComparece());
                 colaborador.setPermisoNivel("LECTURA_TOTAL");
                 colaborador.setMotivo("Comparecencia en Audiencia: " + tipo.getNombre());
-                
+
                 LocalDateTime fechaBase = LocalDateTime.of(guardada.getFechaAudiencia(), guardada.getHoraAudiencia());
                 colaborador.setFechaExpiracion(fechaBase.plusDays(1).withHour(23).withMinute(59));
 
@@ -236,7 +258,7 @@ public class AudienciasController {
         }
         return "redirect:/audiencias";
     }
-    
+
     @GetMapping("/obtener/{id}")
     @ResponseBody
     public ResponseEntity<Audiencia> obtenerPorId(@PathVariable Integer id) {
@@ -247,8 +269,8 @@ public class AudienciasController {
 
     @PostMapping("/subir-acta")
     public String subirActa(@RequestParam("id") Integer id,
-                            @RequestParam("archivo") MultipartFile archivo,
-                            RedirectAttributes redirectAttrs) {
+            @RequestParam("archivo") MultipartFile archivo,
+            RedirectAttributes redirectAttrs) {
         try {
             audienciaService.subirActa(id, archivo);
             redirectAttrs.addFlashAttribute("mensaje", "Acta subida correctamente. Estatus actualizado.");
@@ -261,27 +283,28 @@ public class AudienciasController {
     }
 
     @PostMapping("/concluir")
-    public String concluir(@RequestParam("id") Integer id, 
-                           @RequestParam("observaciones") String observaciones, 
-                           RedirectAttributes redirectAttrs) {
+    public String concluir(@RequestParam("id") Integer id,
+            @RequestParam("observaciones") String observaciones,
+            RedirectAttributes redirectAttrs) {
         try {
             // 1. OBTENER USUARIO ACTUAL
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
-            
+
             // 2. VALIDAR PERMISOS (Solo Jefes hacia arriba pueden concluir)
             if (usuario.getRol().name().equals("ABOGADO")) {
-                redirectAttrs.addFlashAttribute("mensaje", "Acceso denegado: Solo Dirección o Gerencia pueden validar y concluir audiencias.");
+                redirectAttrs.addFlashAttribute("mensaje",
+                        "Acceso denegado: Solo Dirección o Gerencia pueden validar y concluir audiencias.");
                 redirectAttrs.addFlashAttribute("tipo", "error");
                 return "redirect:/audiencias";
             }
 
             // 3. EJECUTAR LÓGICA
             audienciaService.concluirAudiencia(id, observaciones);
-            
+
             redirectAttrs.addFlashAttribute("mensaje", "Audiencia validada y concluida exitosamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
-            
+
         } catch (Exception e) {
             redirectAttrs.addFlashAttribute("mensaje", "Error: " + e.getMessage());
             redirectAttrs.addFlashAttribute("tipo", "error");
@@ -306,17 +329,19 @@ public class AudienciasController {
     public ResponseEntity<Resource> descargarActa(@PathVariable Integer id) {
         try {
             Audiencia audiencia = audienciaRepository.findById(id).orElse(null);
-            
+
             if (audiencia == null || audiencia.getActaDocumento() == null) {
                 return ResponseEntity.notFound().build();
             }
 
-            java.nio.file.Path rutaArchivo = java.nio.file.Paths.get("uploads/audiencias").resolve(audiencia.getActaDocumento());
+            java.nio.file.Path rutaArchivo = java.nio.file.Paths.get("uploads/audiencias")
+                    .resolve(audiencia.getActaDocumento());
             Resource recurso = new UrlResource(rutaArchivo.toUri());
 
             if (recurso.exists() || recurso.isReadable()) {
                 return ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + recurso.getFilename() + "\"")
+                        .header(HttpHeaders.CONTENT_DISPOSITION,
+                                "attachment; filename=\"" + recurso.getFilename() + "\"")
                         .body(recurso);
             } else {
                 return ResponseEntity.notFound().build();
@@ -330,14 +355,14 @@ public class AudienciasController {
 
     @GetMapping("/exportar-excel")
     public void exportarExcel(HttpServletResponse response,
-                              @RequestParam(required = false) String keyword,
-                              @RequestParam(required = false) String tipo,
-                              @RequestParam(required = false) String gerencia,
-                              @RequestParam(required = false) String materia,
-                              @RequestParam(required = false) String estatus,
-                              @RequestParam(required = false) Integer abogadoId,
-                              @RequestParam(required = false) String periodo) throws IOException {
-        
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String tipo,
+            @RequestParam(required = false) String gerencia,
+            @RequestParam(required = false) String materia,
+            @RequestParam(required = false) String estatus,
+            @RequestParam(required = false) Integer abogadoId,
+            @RequestParam(required = false) String periodo) throws IOException {
+
         response.setContentType("application/octet-stream");
         DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
         String currentDateTime = dateFormatter.format(new Date());
@@ -360,10 +385,11 @@ public class AudienciasController {
                 filtroUsuarioId = usuario.getId();
                 break;
             case "GERENTE":
-                if(usuario.getGerencia() != null) filtroGerenciaId = usuario.getGerencia().getId();
+                if (usuario.getGerencia() != null)
+                    filtroGerenciaId = usuario.getGerencia().getId();
                 break;
             case "JEFE_DEPTO":
-                if(usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
+                if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
                     filtroMateriaIds = usuario.getMaterias().stream().map(Materia::getId).collect(Collectors.toList());
                 } else {
                     filtroMateriaIds = new ArrayList<>();
@@ -376,7 +402,7 @@ public class AudienciasController {
         // Por defecto: Rango histórico amplio para evitar NULLs en la BD
         LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
         LocalDate fechaFin = LocalDate.of(2100, 12, 31);
-        
+
         if (periodo != null && !periodo.isEmpty()) {
             LocalDate hoy = LocalDate.now();
             switch (periodo) {
@@ -389,8 +415,8 @@ public class AudienciasController {
                     fechaFin = hoy.plusDays(1);
                     break;
                 case "SEMANA":
-                    fechaInicio = hoy; 
-                    fechaFin = hoy.plusDays(7); 
+                    fechaInicio = hoy;
+                    fechaFin = hoy.plusDays(7);
                     break;
                 case "MES":
                     fechaInicio = hoy.withDayOfMonth(1);
@@ -402,10 +428,9 @@ public class AudienciasController {
         // 3. LLAMAR AL REPOSITORIO
         // Ahora fechaInicio y fechaFin SIEMPRE tienen valor, nunca son null.
         List<Audiencia> listado = audienciaRepository.listarParaExcel(
-            keyword, tipo, gerencia, materia, estatus, 
-            abogadoId, fechaInicio, fechaFin,
-            filtroUsuarioId, filtroGerenciaId, filtroMateriaIds
-        );
+                keyword, tipo, gerencia, materia, estatus,
+                abogadoId, fechaInicio, fechaFin,
+                filtroUsuarioId, filtroGerenciaId, filtroMateriaIds);
 
         AudienciaExcelExporter excelExporter = new AudienciaExcelExporter(listado);
         excelExporter.export(response);
