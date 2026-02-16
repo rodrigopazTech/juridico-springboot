@@ -51,9 +51,9 @@
                 </label>
                 <select id="filtroGerencia" class="border-gray-300 rounded text-sm p-1 focus:ring-gob-guinda focus:border-gob-guinda outline-none min-w-[280px]">
                     <option value="">Todas las Gerencias</option>
-                    <option value="GERENCIA CIVIL_MERCANTIL" th:selected="${grupoGerenciaSeleccionado == 'CIVIL_MERCANTIL'}">Civil, Mercantil, Fiscal y Administrativo</option>
-                    <option value="GERENCIA LABORAL_PENAL" th:selected="${grupoGerenciaSeleccionado == 'LABORAL_PENAL'}">Laboral y Penal</option>
-                    <option value="TRANSPARENCIA" th:selected="${grupoGerenciaSeleccionado == 'TRANSPARENCIA'}"> Transparencia y Amparo</option>
+                    <th:block th:each="gerencia : ${gerencias}">
+                        <option th:value="${gerencia.id}" th:text="${gerencia.nombre}" th:selected="${gerenciaSeleccionada == gerencia.id}">Gerencia</option>
+                    </th:block>
                 </select>
             </div>
 

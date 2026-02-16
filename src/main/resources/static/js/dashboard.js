@@ -42,18 +42,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /**
  * Solicita nuevos datos al servidor y actualiza la vista
- * @param {string} value - Puede ser gerenciaId individual o grupoGerencia (CIVIL_MERCANTIL, LABORAL_PENAL, TRANSPARENCIA)
+ * @param {string} value - ID de la gerencia individual (o vacío para todas)
  */
 async function actualizarDashboard(value) {
     try {
-        // Determinar si es un grupo de gerencias o una gerencia individual
-        const gruposValidos = ['CIVIL_MERCANTIL', 'LABORAL_PENAL', 'TRANSPARENCIA'];
-        const isGrupo = gruposValidos.includes(value);
-        
         let url;
-        if (value && isGrupo) {
-            url = `/dashboard/data?grupoGerencia=${value}`;
-        } else if (value) {
+        if (value) {
             url = `/dashboard/data?gerenciaId=${value}`;
         } else {
             url = '/dashboard/data';
