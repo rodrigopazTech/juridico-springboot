@@ -92,22 +92,20 @@ public class CalendarioController {
                     puedeVerFiltroMateria = true;
                     
                     // Cargar materias desde la base de datos
-                    if (usuarioActual.getRol() == RolUsuario.GERENTE && usuarioActual.getGerencia() != null) {
-                        // GERENTE ve las materias de su gerencia
+                    if (usuarioActual.getGerencia() != null) {
+                        // GERENTE y JEFE_DEPTO ven las materias de su gerencia
                         listaMaterias = materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(
                             usuarioActual.getGerencia().getId());
-                    } else if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
-                        // JEFE_DEPTO ve todas las materias activas
-                        listaMaterias = materiaRepository.findByActivoTrueOrderByNombreAsc();
                     }
                 }
                 
                 // GERENTE y JEFE_DEPTO pueden ver el filtro de usuario
                 if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
                     puedeVerFiltroUsuario = true;
-                    // JEFE_DEPTO ve todos los usuarios (o según la lógica de negocio)
-                    if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
-                        listaUsuarios = usuarioRepository.findAll();
+                    // JEFE_DEPTO ve los usuarios de su gerencia
+                    if (usuarioActual.getGerencia() != null) {
+                        listaUsuarios = usuarioRepository.findByGerenciaId(
+                            usuarioActual.getGerencia().getId().longValue());
                     }
                 }
             }
