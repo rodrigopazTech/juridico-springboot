@@ -35,7 +35,7 @@
     <div th:replace="~{fragments/terminos/modal-nuevo-termino :: modal}"></div>
     <div th:replace="~{fragments/terminos/modal-subir-acuse :: modal}"></div>
 
-    <form id="form-upload" th:action="@{/terminos/subir-archivo}" method="post" enctype="multipart/form-data" class="hidden">
+   <form id="form-upload" th:action="@{/terminos/subir-archivo}" method="post" enctype="multipart/form-data" class="hidden">
         <input type="hidden" name="id" id="upload-termino-id">
         <input type="file" name="archivo" id="upload-file-input" onchange="document.getElementById('form-upload').submit()">
     </form>
@@ -43,14 +43,15 @@
     <script th:if="${mensaje != null}">
         document.addEventListener("DOMContentLoaded", function () {
             Swal.fire({
-                title: "[[${tipo == 'success' ? '¡Éxito!' : 'Error'}]]",
+                title: "[[${tipo == 'success' ? '¡Éxito!' : 'Aviso'}]]",
                 text: "[[${mensaje}]]",
                 icon: "[[${tipo}]]",
-                confirmButtonColor: "#bc955c",
+                confirmButtonColor: "#621132"
             });
         });
     </script>
 
-    <script th:src="@{/js/terminos.js}"></script>
-</body>
+    <script th:src="@{/js/terminos.js(v=2)}"></script>
+
+    </body>
 </html>

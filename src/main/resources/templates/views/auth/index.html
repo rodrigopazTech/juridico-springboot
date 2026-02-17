@@ -3,39 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Sistema Jurídico</title>
+    <title>Acceso | Sistema de Gestión Jurídica</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Noto+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'gob-guinda': '#691228',      /* Tu color exacto */
+                        'gob-guindaDark': '#4e0c1d',  /* Tu color exacto */
+                        'gob-oro': '#D4C19C',         /* Tu color exacto */
+                        'gob-gris': '#545454',
+                        'gob-plata': '#98989A',
+                        'gob-verde': '#13322B',
+                        'gob-fondo': '#F5F5F5'
+                    },
+                    fontFamily: {
+                        'headings': ['Montserrat', 'sans-serif'], /* Tu fuente de títulos */
+                        'sans': ['Noto Sans', 'ui-sans-serif', 'system-ui'], /* Tu fuente de texto */
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen font-sans">
+<body class="bg-gob-fondo h-screen w-full flex overflow-hidden font-sans">
 
-    <div class="bg-white p-10 rounded-lg shadow-xl w-full max-w-md border-t-4 border-[#621132]">
+    <div class="w-full lg:w-1/2 flex flex-col justify-center items-center px-8 sm:px-12 lg:px-24 bg-white relative z-10 shadow-2xl lg:shadow-none">
         
-        <div class="text-center mb-8">
-            <i class="fas fa-balance-scale text-[#621132] text-5xl mb-4"></i>
-            <h2 class="text-3xl font-bold text-gray-800">Sistema Jurídico</h2>
-        </div>
-
-        <div th:if="${param.error}" class="mb-4 p-3 bg-red-100 text-red-700 rounded text-sm text-center">
-            Credenciales incorrectas.
-        </div>
-        <div th:if="${param.logout}" class="mb-4 p-3 bg-green-100 text-green-700 rounded text-sm text-center">
-            Sesión cerrada correctamente.
-        </div>
-
-        <form th:action="@{/perform_login}" method="POST" class="space-y-6">
-            <div>
-                <label class="block text-gray-700 font-bold mb-2">Usuario</label>
-                <input type="text" name="username" required class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-[#621132]" placeholder="admin@juridico.com">
+        <div class="w-full max-w-sm space-y-8">
+            <div class="text-center">
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gob-guinda/10 mb-6">
+                    <i class="fas fa-balance-scale text-4xl text-gob-guinda"></i>
+                </div>
+                <h1 class="text-3xl font-headings font-bold text-gob-guindaDark tracking-tight">Bienvenido</h1>
+                <p class="mt-2 text-sm text-gob-gris">Sistema de Gestión Jurídica</p>
             </div>
-            <div>
-                <label class="block text-gray-700 font-bold mb-2">Contraseña</label>
-                <input type="password" name="password" required class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-[#621132]" placeholder="••••••••">
+
+            <div th:if="${param.error}" class="flex items-center p-4 mb-4 text-sm text-red-800 border-l-4 border-red-800 bg-red-50 rounded shadow-sm animate-pulse" role="alert">
+                <i class="fas fa-exclamation-circle mr-3"></i>
+                <div>
+                    <span class="font-bold font-headings">Error de acceso.</span> Verifique credenciales.
+                </div>
             </div>
-            <button type="submit" class="w-full bg-[#621132] text-white font-bold py-3 rounded hover:bg-[#4a0d26] transition">
-                Ingresar
-            </button>
-        </form>
+            
+            <div th:if="${param.logout}" class="flex items-center p-4 mb-4 text-sm text-gob-verde border-l-4 border-gob-verde bg-green-50 rounded shadow-sm" role="alert">
+                <i class="fas fa-check-circle mr-3"></i>
+                <span>Sesión cerrada correctamente.</span>
+            </div>
+
+            <form th:action="@{/perform_login}" method="POST" class="mt-8 space-y-6">
+                <div class="space-y-5">
+                    <div class="relative group">
+                        <label for="username" class="block text-xs font-bold text-gob-plata uppercase tracking-wider mb-1 font-headings">Correo Institucional</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gob-plata group-focus-within:text-gob-guinda transition-colors">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <input id="username" name="username" type="text" required 
+                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gob-guinda focus:border-transparent transition-all shadow-sm sm:text-sm bg-gray-50 focus:bg-white" 
+                                   placeholder="usuario@dominio.com">
+                        </div>
+                    </div>
+
+                    <div class="relative group">
+                        <label for="password" class="block text-xs font-bold text-gob-plata uppercase tracking-wider mb-1 font-headings">Contraseña</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gob-plata group-focus-within:text-gob-guinda transition-colors">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <input id="password" name="password" type="password" required 
+                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gob-guinda focus:border-transparent transition-all shadow-sm sm:text-sm bg-gray-50 focus:bg-white" 
+                                   placeholder="••••••••">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white bg-gob-guinda hover:bg-gob-guindaDark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gob-guinda shadow-lg transform transition hover:-translate-y-0.5 font-headings tracking-wide">
+                        <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                            <i class="fas fa-sign-in-alt text-white/70 group-hover:text-white transition-colors"></i>
+                        </span>
+                        INICIAR SESIÓN
+                    </button>
+                </div>
+            </form>
+
+            <div class="text-center mt-6 border-t border-gray-100 pt-6">
+                <p class="text-xs text-gob-plata">
+                    &copy; 2026 Departamento Jurídico.<br>
+                    <span class="text-gob-oro font-bold">Soporte Técnico Ext. 5050</span>
+                </p>
+            </div>
+        </div>
     </div>
+
+    <div class="hidden lg:block relative w-1/2 bg-gob-guindaDark">
+        <img class="absolute inset-0 h-full w-full object-cover opacity-50 mix-blend-overlay" 
+             alt="Fondo Legal">
+        
+        <div class="absolute inset-0 bg-gradient-to-br from-gob-guinda via-gob-guindaDark to-black opacity-90"></div>
+        
+        <div class="absolute inset-0 flex flex-col justify-center items-center text-white px-12 text-center">
+            <div class="mb-8 border-b-2 border-gob-oro pb-8">
+                <i class="fas fa-gavel text-7xl text-gob-oro mb-6 block drop-shadow-lg"></i>
+                <h2 class="text-5xl font-headings font-bold tracking-wide drop-shadow-md">Gestión Procesal</h2>
+            </div>
+            <p class="text-xl font-light text-gray-200 max-w-md leading-relaxed font-sans">
+                Administración integral de expedientes, audiencias y términos legales.
+            </p>
+        </div>
+    </div>
+
 </body>
 </html>

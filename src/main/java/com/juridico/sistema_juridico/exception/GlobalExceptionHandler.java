@@ -1,7 +1,8 @@
 package com.juridico.sistema_juridico.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.web.bind.annotation.ControllerAdvice; // ¡Ojo! ControllerAdvice, no RestControllerAdvice
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.web.bind.annotation.ControllerAdvice; // <--- OJO: No @RestControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
@@ -9,62 +10,53 @@ import org.springframework.web.servlet.view.RedirectView;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 1. ERROR 404: RECURSO NO ENCONTRADO
-    // Ejemplo: Intentan eliminar una audiencia que ya no existe o ponen un ID falso en la URL.
+    // 1. RECURSO NO ENCONTRADO (404)
     @ExceptionHandler(ResourceNotFoundException.class)
     public RedirectView handleResourceNotFound(ResourceNotFoundException ex, RedirectAttributes attrs, HttpServletRequest request) {
         attrs.addFlashAttribute("mensaje", ex.getMessage());
-        attrs.addFlashAttribute("tipo", "error"); // Rojo en SweetAlert
-        
+        attrs.addFlashAttribute("tipo", "error"); // Alerta Roja
         return new RedirectView(getRefererOrHome(request));
     }
 
-    // 2. ERROR 403/401: PERMISOS Y SEGURIDAD
-    // Ejemplo: Un abogado intenta borrar un expediente de otra gerencia.
+    // 2. PERMISOS (403)
     @ExceptionHandler({ForbiddenException.class, UnauthorizedException.class})
     public RedirectView handleSecurityErrors(RuntimeException ex, RedirectAttributes attrs, HttpServletRequest request) {
         attrs.addFlashAttribute("mensaje", "Acceso Denegado: " + ex.getMessage());
-        attrs.addFlashAttribute("tipo", "warning"); // Amarillo en SweetAlert
-        
+        attrs.addFlashAttribute("tipo", "warning"); // Alerta Amarilla
         return new RedirectView(getRefererOrHome(request));
     }
 
-    // 3. ERROR 400/409: LÓGICA DE NEGOCIO
-    // Ejemplo: Intentar crear un usuario con un email repetido.
+    // 3. ERRORES DE LÓGICA (400)
     @ExceptionHandler({BadRequestException.class, ConflictException.class})
     public RedirectView handleLogicErrors(RuntimeException ex, RedirectAttributes attrs, HttpServletRequest request) {
         attrs.addFlashAttribute("mensaje", ex.getMessage());
-        attrs.addFlashAttribute("tipo", "info"); // Azul en SweetAlert
-        
+        attrs.addFlashAttribute("tipo", "info"); // Alerta Azul
         return new RedirectView(getRefererOrHome(request));
     }
 
-    // 4. ERROR 500: CUALQUIER COSA IMPREVISTA
-    // NullPointer, Base de datos caída, errores de sintaxis Java, etc.
+    // 4. ERROR DE BASE DE DATOS (Integridad / FK)
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public RedirectView handleDatabaseError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
+        attrs.addFlashAttribute("mensaje", "No se puede realizar la acción: El registro está vinculado a otros datos o ya existe.");
+        attrs.addFlashAttribute("tipo", "error");
+        return new RedirectView(getRefererOrHome(request));
+    }
+
+    // 5. ERROR GENERAL (Cualquier otra cosa)
     @ExceptionHandler(Exception.class)
     public RedirectView handleGeneralError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
-        System.err.println("--- ERROR NO CONTROLADO ---");
+        // Imprimimos el error real en la consola para que tú (desarrollador) sepas qué pasó
+        System.err.println("--- ERROR CAPTURADO POR GLOBAL HANDLER ---");
         ex.printStackTrace();
         
-        attrs.addFlashAttribute("mensaje", "Ocurrió un error inesperado en el sistema. Contacte a soporte técnico.");
+        attrs.addFlashAttribute("mensaje", "Ocurrió un error inesperado en el sistema.");
         attrs.addFlashAttribute("tipo", "error");
         
         return new RedirectView(getRefererOrHome(request));
     }
 
-    // Método auxiliar para devolver al usuario a la página anterior
     private String getRefererOrHome(HttpServletRequest request) {
         String referer = request.getHeader("Referer");
         return referer != null ? referer : "/";
-    }
-
-    // Agregar esto en GlobalExceptionHandler.java
-    
-    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
-    public RedirectView handleDatabaseError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
-        // Esto pasa si intentas borrar un Usuario que tiene Expedientes, o crear un correo duplicado
-        attrs.addFlashAttribute("mensaje", "No se puede realizar la acción: El registro está vinculado a otros datos o ya existe.");
-        attrs.addFlashAttribute("tipo", "error");
-        return new RedirectView(request.getHeader("Referer") != null ? request.getHeader("Referer") : "/");
     }
 }

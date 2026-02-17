@@ -73,6 +73,17 @@ public class TerminosController {
         PERMISOS_ETAPAS.put("Presentado",  Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION, RolUsuario.ABOGADO, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO));
     }
 
+    private static final Map<String, Integer> ORDEN_ETAPAS = new HashMap<>();
+    static {
+        ORDEN_ETAPAS.put("Proyectista", 1);
+        ORDEN_ETAPAS.put("Revisión", 2);
+        ORDEN_ETAPAS.put("Gerencia", 3);
+        ORDEN_ETAPAS.put("Dirección", 4);
+        ORDEN_ETAPAS.put("Liberado", 5);
+        ORDEN_ETAPAS.put("Presentado", 6);
+        ORDEN_ETAPAS.put("Concluido", 7);
+    }
+    
    @GetMapping
     public String index(Model model,
                         @RequestParam(defaultValue = "0") int page,
@@ -148,7 +159,7 @@ public class TerminosController {
             List<Expediente> expedientesPorAudiencia = audienciaRepository.findAll().stream()
                 .filter(a -> a.getAbogadoComparece() != null && 
                              a.getAbogadoComparece().getId().equals(usuarioActual.getId()) &&
-                             !a.getEstatusAudiencia().equals("CONCLUIDA")) // <--- AQUÍ ESTÁ EL CANDADO ANTI-FANTASMA
+                             !a.getEstatusAudiencia().equals("CONCLUIDA")) 
                 .map(Audiencia::getExpediente)
                 .collect(Collectors.toList());
 
@@ -174,7 +185,7 @@ public class TerminosController {
 
         model.addAttribute("rolActual", usuarioActual.getRol());
         model.addAttribute("mapaPermisos", PERMISOS_ETAPAS);
-        
+        model.addAttribute("ordenEtapas", ORDEN_ETAPAS);
         // Mantener valores
         model.addAttribute("keyword", keyword);
         model.addAttribute("paramEstatus", estatus);
@@ -191,28 +202,47 @@ public class TerminosController {
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute Termino terminoForm,
                           @RequestParam(value = "expedienteId", required = false) UUID expedienteId,
+                          @RequestParam(value = "abogadoId", required = false) Integer abogadoId, 
                           RedirectAttributes redirectAttrs) {
         
-        // SIN TRY-CATCH: Si falla, el GlobalHandler lo atrapa.
         Usuario actor = getUsuarioActual();
         Termino terminoGuardar;
         boolean esNuevo = false;
 
+        // 1. VINCULAR EXPEDIENTE (Si viene el ID)
+        if (expedienteId != null) {
+             Expediente exp = expedienteRepository.findById(expedienteId)
+                 .orElseThrow(() -> new ResourceNotFoundException("El expediente asociado no existe."));
+             terminoForm.setExpediente(exp);
+        }
+
+        // 2. VINCULAR ABOGADO (Si viene el ID)
+        if (abogadoId != null) {
+            Usuario abogado = usuarioRepository.findById(abogadoId)
+                .orElseThrow(() -> new ResourceNotFoundException("El abogado asignado no existe."));
+            terminoForm.setAbogadoResponsable(abogado);
+        }
+
         if (terminoForm.getId() != null) {
-            // EDICIÓN: Buscamos o lanzamos 404
+            // EDICIÓN
             Termino existente = terminoRepository.findById(terminoForm.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("El término que intentas editar no existe."));
             
+            // Actualizamos solo los campos editables
             existente.setActuacion(terminoForm.getActuacion());
             existente.setFechaVencimiento(terminoForm.getFechaVencimiento());
-            existente.setAbogadoResponsable(terminoForm.getAbogadoResponsable());
-            existente.setUpdatedAt(LocalDateTime.now());
             
-            if (expedienteId != null) {
-                 Expediente exp = expedienteRepository.findById(expedienteId)
-                     .orElseThrow(() -> new ResourceNotFoundException("El expediente asociado no existe."));
-                 existente.setExpediente(exp);
+            if (terminoForm.getAbogadoResponsable() != null) {
+                existente.setAbogadoResponsable(terminoForm.getAbogadoResponsable());
             }
+            if (terminoForm.getExpediente() != null) {
+                existente.setExpediente(terminoForm.getExpediente());
+            }
+            if (terminoForm.getPrioridad() != null) {
+                existente.setPrioridad(terminoForm.getPrioridad());
+            }
+
+            existente.setUpdatedAt(LocalDateTime.now());
             terminoGuardar = existente;
         } else {
             // CREACIÓN
@@ -222,20 +252,20 @@ public class TerminosController {
             terminoGuardar.setEstatusTermino("Proyectista");
             terminoGuardar.setCreatedAt(LocalDateTime.now());
             terminoGuardar.setUpdatedAt(LocalDateTime.now());
-
-            if (expedienteId != null) {
-                Expediente exp = expedienteRepository.findById(expedienteId)
-                    .orElseThrow(() -> new ResourceNotFoundException("El expediente asociado no existe."));
-                
-                terminoGuardar.setExpediente(exp);
-                
-                if (terminoGuardar.getPrioridad() == null) terminoGuardar.setPrioridad(exp.getPrioridad());
-                if (terminoGuardar.getAbogadoResponsable() == null) terminoGuardar.setAbogadoResponsable(exp.getAbogadoResponsable());
+            
+            // Si no se seleccionó abogado explícito, usar el del expediente
+            if (terminoGuardar.getAbogadoResponsable() == null && terminoGuardar.getExpediente() != null) {
+                 terminoGuardar.setAbogadoResponsable(terminoGuardar.getExpediente().getAbogadoResponsable());
+            }
+            // Si no se seleccionó prioridad, usar la del expediente
+            if (terminoGuardar.getPrioridad() == null && terminoGuardar.getExpediente() != null) {
+                 terminoGuardar.setPrioridad(terminoGuardar.getExpediente().getPrioridad());
             }
         }
 
         Termino terminoGuardado = terminoRepository.save(terminoGuardar);
 
+        // Notificación
         if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
             notificacionService.crearNotificacion(
                 terminoGuardado.getAbogadoResponsable(),
