@@ -30,6 +30,7 @@ public class Audiencia {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "expediente_id", nullable = false)
     private Expediente expediente;
@@ -85,6 +86,10 @@ public class Audiencia {
         if (EstatusAudiencia.CON_ACTA.equals(this.estatusAudiencia))
             return "bg-purple-600"; // Con Acta (Morado)
 
+        // Seguridad ante nulidad inesperada
+        if (this.fechaAudiencia == null)
+            return "bg-gray-200";
+
         long dias = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaAudiencia);
 
         if (dias < 0)
@@ -99,6 +104,10 @@ public class Audiencia {
     public String getTextoDiasRestantes() {
         if (EstatusAudiencia.CONCLUIDA.equals(this.estatusAudiencia))
             return "Concluida";
+
+        // Seguridad ante nulidad inesperada
+        if (this.fechaAudiencia == null)
+            return "Fecha no especificada";
 
         long dias = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaAudiencia);
 

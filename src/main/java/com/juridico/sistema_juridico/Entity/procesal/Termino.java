@@ -26,6 +26,7 @@ public class Termino {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "expediente_id", nullable = false)
     private Expediente expediente;
@@ -71,6 +72,9 @@ public class Termino {
             return "bg-gray-400";
         }
 
+        if (this.fechaVencimiento == null)
+            return "bg-gray-200";
+
         long diasRestantes = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaVencimiento);
 
         if (diasRestantes < 0)
@@ -85,6 +89,9 @@ public class Termino {
     public String getDiasRestantesTexto() {
         if (EstatusTermino.CONCLUIDO == this.estatusTermino)
             return "Término Concluido";
+
+        if (this.fechaVencimiento == null)
+            return "Sin fecha de vencimiento";
 
         long dias = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaVencimiento);
 
