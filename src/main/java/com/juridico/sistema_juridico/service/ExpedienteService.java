@@ -18,9 +18,15 @@ public class ExpedienteService {
         this.expedienteRepository = expedienteRepository;
     }
 
-    // Corregido: Coincide con los 7 parámetros y tipos Integer del Repository
-    public Page<Expediente> buscarExpedientes(String folio, Integer gerenciaId, Integer materiaId, Integer tipoId, Prioridad prioridad, Integer abogadoId, Pageable pageable) {
-        return expedienteRepository.buscarExpedientes(folio, gerenciaId, materiaId, tipoId, prioridad, abogadoId, pageable);
+    // Corregido: Incluye parámetros de seguridad para RBAC
+    public Page<Expediente> buscarExpedientes(
+            String keyword, Integer gerenciaId, Integer materiaId, Integer tipoId,
+            Prioridad prioridad, Integer abogadoId,
+            Integer secGerenciaId, List<Integer> secMateriaIds, Integer secUsuarioId,
+            Pageable pageable) {
+        return expedienteRepository.buscarConSeguridad(
+                keyword, gerenciaId, materiaId, tipoId, prioridad, null, abogadoId,
+                secGerenciaId, secMateriaIds, secUsuarioId, pageable);
     }
 
     // Corregido: count() es el método estándar de JpaRepository

@@ -16,7 +16,7 @@ import org.springframework.data.domain.Sort;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import org.springframework.http.ResponseEntity;
 
-import java.util.stream.Collectors; 
+import java.util.stream.Collectors;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -24,35 +24,32 @@ import java.util.ArrayList;
 @RequestMapping("/usuarios")
 public class UsuariosController {
 
-    @Autowired private UsuarioService usuarioService;
+    @Autowired
+    private UsuarioService usuarioService;
 
-   @GetMapping
+    @GetMapping
     public String index(Model model,
-                        @RequestParam(defaultValue = "0") int pageUsuarios,   // Página para usuarios
-                        @RequestParam(defaultValue = "0") int pageGerencias) { // Página para gerencias
-        
-        Page<Usuario> usuariosPage = usuarioService.listarUsuariosPaginados(PageRequest.of(pageUsuarios, 10, Sort.by("nombreCompleto").ascending()));
-        
-        Page<Gerencia> gerenciasPage = usuarioService.listarGerenciasPaginadas(PageRequest.of(pageGerencias, 10, Sort.by("nombre").ascending()));
+            @RequestParam(defaultValue = "0") int pageUsuarios) {
 
-        model.addAttribute("listaUsuarios", usuariosPage); 
-        model.addAttribute("listaGerencias", gerenciasPage);
-        
-        // Listas completas (sin paginar) para los Selects de los modales
-        model.addAttribute("allGerencias", usuarioService.listarGerencias()); 
-        
+        Page<Usuario> usuariosPage = usuarioService
+                .listarUsuariosPaginados(PageRequest.of(pageUsuarios, 10, Sort.by("nombreCompleto").ascending()));
+
+        model.addAttribute("listaUsuarios", usuariosPage);
+
+        // Listas completas para los Selects de asignación
+        model.addAttribute("allGerencias", usuarioService.listarGerencias());
+
         model.addAttribute("listaRoles", RolUsuario.values());
         model.addAttribute("nuevoUsuario", new Usuario());
-        model.addAttribute("nuevaGerencia", new Gerencia());
         model.addAttribute("activePage", "usuarios");
-        
+
         return "views/usuarios/index";
     }
 
     @PostMapping("/guardar")
-    public String guardarUsuario(@ModelAttribute Usuario usuario, 
-                                 @RequestParam(required = false) java.util.List<Integer> materiasIds, // Recibe checkboxes
-                                 RedirectAttributes redirectAttrs) {
+    public String guardarUsuario(@ModelAttribute Usuario usuario,
+            @RequestParam(required = false) java.util.List<Integer> materiasIds, // Recibe checkboxes
+            RedirectAttributes redirectAttrs) {
         try {
             usuarioService.guardarUsuario(usuario, materiasIds);
             redirectAttrs.addFlashAttribute("mensaje", "Usuario guardado correctamente.");
@@ -62,19 +59,6 @@ public class UsuariosController {
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
         return "redirect:/usuarios";
-    }
-
-    @PostMapping("/gerencias/guardar")
-    public String guardarGerencia(@ModelAttribute Gerencia gerencia, RedirectAttributes redirectAttrs) {
-        try {
-            usuarioService.guardarGerencia(gerencia);
-            redirectAttrs.addFlashAttribute("mensaje", "Gerencia creada correctamente.");
-            redirectAttrs.addFlashAttribute("tipo", "success");
-        } catch (Exception e) {
-            redirectAttrs.addFlashAttribute("mensaje", "Error al crear gerencia.");
-            redirectAttrs.addFlashAttribute("tipo", "error");
-        }
-        return "redirect:/usuarios?tab=gerencias";
     }
 
     @GetMapping("/api/materias-por-gerencia/{id}")
@@ -92,20 +76,9 @@ public class UsuariosController {
     public String obtenerMateriasGerencia(@PathVariable Integer id, Model model) {
         Gerencia gerencia = usuarioService.buscarGerenciaPorId(id);
         // Pasamos la lista de materias al fragmento
-        model.addAttribute("materias", gerencia.getMaterias()); 
+        model.addAttribute("materias", gerencia.getMaterias());
         // Retornamos SOLO el fragmento 'lista' dentro del archivo 'modal-materias'
         return "fragments/usuarios/modal-materias :: lista";
-    }
-
-    @PostMapping("/gerencias/materias/guardar")
-    @ResponseBody 
-    public ResponseEntity<?> guardarMateria(@RequestBody Materia materia) {
-        try {
-            usuarioService.guardarMateria(materia);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al guardar materia");
-        }
     }
 
     @GetMapping("/toggle/{id}")
@@ -130,33 +103,6 @@ public class UsuariosController {
         return "redirect:/usuarios";
     }
 
-    @GetMapping("/gerencias/toggle/{id}")
-    public String toggleStatusGerencia(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
-        try {
-            Gerencia gerencia = usuarioService.buscarGerenciaPorId(id);
-            gerencia.setActivo(!gerencia.getActivo());
-            usuarioService.guardarGerencia(gerencia);
-            
-            redirectAttrs.addFlashAttribute("mensaje", "Estatus de la gerencia actualizado.");
-            redirectAttrs.addFlashAttribute("tipo", "success");
-        } catch (Exception e) {
-            redirectAttrs.addFlashAttribute("mensaje", "Error al actualizar estatus.");
-            redirectAttrs.addFlashAttribute("tipo", "error");
-        }
-        return "redirect:/usuarios?tab=gerencias";
-    }
-
-    @DeleteMapping("/gerencias/materias/eliminar/{id}")
-    @ResponseBody
-    public ResponseEntity<?> eliminarMateria(@PathVariable Integer id) {
-        try {
-            usuarioService.eliminarMateria(id);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("No se puede eliminar la materia (quizás tiene expedientes asignados).");
-        }
-    }
-
     @DeleteMapping("/eliminar/{id}")
     @ResponseBody
     public ResponseEntity<?> eliminarUsuario(@PathVariable Integer id) {
@@ -164,7 +110,8 @@ public class UsuariosController {
             usuarioService.eliminarUsuario(id);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("No se puede eliminar: El usuario tiene expedientes o historial activo.");
+            return ResponseEntity.badRequest()
+                    .body("No se puede eliminar: El usuario tiene expedientes o historial activo.");
         }
     }
 }

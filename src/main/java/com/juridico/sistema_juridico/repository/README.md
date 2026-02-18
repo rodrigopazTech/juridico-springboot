@@ -50,9 +50,6 @@ Los repositorios están organizados en las siguientes categorías:
 - **Entidad**: `ColaboradorExpediente`
 - **Propósito**: Gestiona los colaboradores asignados a expedientes
 
-### DocumentoExpedienteRepository
-- **Entidad**: `DocumentoExpediente`
-- **Propósito**: Gestiona los documentos asociados a expedientes
 
 ## General
 

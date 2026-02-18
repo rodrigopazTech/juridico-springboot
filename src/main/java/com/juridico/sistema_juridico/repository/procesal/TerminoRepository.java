@@ -63,12 +63,39 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
         // Métodos auxiliares (Se mantienen igual)
         List<Termino> findByFechaVencimientoBeforeAndEstatusTerminoNot(LocalDate fecha, EstatusTermino estatus);
 
+        // Para Scheduler de Notificaciones (ROD-14)
+        List<Termino> findByFechaVencimientoAndEstatusTerminoNot(LocalDate fecha, EstatusTermino estatus);
+
         List<Termino> findByExpedienteId(UUID expedienteId);
 
         Page<Termino> findByEstatusTerminoInAndFechaPresentacionBetweenOrderByFechaPresentacionDesc(
                         List<EstatusTermino> estatus,
                         LocalDate inicio,
                         LocalDate fin,
+                        Pageable pageable);
+
+        // Filtro por Gerencia
+        Page<Termino> findByEstatusTerminoInAndFechaPresentacionBetweenAndExpediente_Gerencia_IdOrderByFechaPresentacionDesc(
+                        List<EstatusTermino> estatus,
+                        LocalDate inicio,
+                        LocalDate fin,
+                        Integer gerenciaId,
+                        Pageable pageable);
+
+        // Filtro por Materia (Lista de IDs)
+        Page<Termino> findByEstatusTerminoInAndFechaPresentacionBetweenAndExpediente_Materia_IdInOrderByFechaPresentacionDesc(
+                        List<EstatusTermino> estatus,
+                        LocalDate inicio,
+                        LocalDate fin,
+                        List<Integer> materiaIds,
+                        Pageable pageable);
+
+        // Filtro por Abogado Responsable (ROD-45)
+        Page<Termino> findByEstatusTerminoInAndFechaPresentacionBetweenAndAbogadoResponsable_IdOrderByFechaPresentacionDesc(
+                        List<EstatusTermino> estatus,
+                        LocalDate inicio,
+                        LocalDate fin,
+                        Integer abogadoId,
                         Pageable pageable);
 
         // =========================
@@ -81,5 +108,8 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
                             GROUP BY u.nombreCompleto
                         """)
         List<Object[]> contarTerminosPorUsuario();
+
+        // 👤 ROD-12
+        long countByAbogadoResponsableId(Integer id);
 
 }

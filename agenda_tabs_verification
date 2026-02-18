@@ -1,0 +1,124 @@
+- generic [active] [ref=e1]:
+  - complementary "Sidebar" [ref=e2]:
+    - generic [ref=e3]:
+      - link " Agenda Legal" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: 
+        - generic [ref=e7]: Agenda Legal
+      - list [ref=e8]:
+        - listitem [ref=e9]:
+          - link " Dashboard" [ref=e10] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=e11]: 
+            - generic [ref=e12]: Dashboard
+        - listitem [ref=e13]:
+          - link " Agenda General" [ref=e14] [cursor=pointer]:
+            - /url: /agenda
+            - generic [ref=e15]: 
+            - generic [ref=e16]: Agenda General
+        - listitem [ref=e17]:
+          - link " Centro de Notificaciones" [ref=e18] [cursor=pointer]:
+            - /url: /alertas
+            - generic [ref=e20]: 
+            - generic [ref=e21]: Centro de Notificaciones
+        - listitem [ref=e22]:
+          - link " Expedientes" [ref=e23] [cursor=pointer]:
+            - /url: /expedientes
+            - generic [ref=e24]: 
+            - generic [ref=e25]: Expedientes
+        - listitem [ref=e26]:
+          - link " Términos" [ref=e27] [cursor=pointer]:
+            - /url: /terminos
+            - generic [ref=e28]: 
+            - generic [ref=e29]: Términos
+        - listitem [ref=e30]:
+          - link " Audiencias" [ref=e31] [cursor=pointer]:
+            - /url: /audiencias
+            - generic [ref=e32]: 
+            - generic [ref=e33]: Audiencias
+        - listitem [ref=e34]:
+          - link " Usuarios" [ref=e35] [cursor=pointer]:
+            - /url: /usuarios
+            - generic [ref=e36]: 
+            - generic [ref=e37]: Usuarios
+        - listitem [ref=e38]:
+          - link " Configuración" [ref=e39] [cursor=pointer]:
+            - /url: /configuracion
+            - generic [ref=e40]: 
+            - generic [ref=e41]: Configuración
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e45]: D
+          - generic [ref=e46]:
+            - paragraph [ref=e47]: Director General
+            - paragraph [ref=e48]: DIRECCION
+        - link " Cerrar Sesión" [ref=e49] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e50]: 
+          - generic [ref=e51]: Cerrar Sesión
+  - generic [ref=e52]:
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - heading " Agenda General" [level=1] [ref=e55]:
+          - generic [ref=e56]: 
+          - text: Agenda General
+        - paragraph [ref=e57]: Histórico y seguimiento de actividades desahogadas y términos presentados.
+      - generic [ref=e58]:
+        - button " Audiencias Concluidas" [ref=e59] [cursor=pointer]:
+          - generic [ref=e60]: 
+          - generic [ref=e61]: Audiencias Concluidas
+        - button " Términos Concluidos" [ref=e62] [cursor=pointer]:
+          - generic [ref=e63]: 
+          - generic [ref=e64]: Términos Concluidos
+    - generic [ref=e65]:
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - generic [ref=e68]:
+            - generic:
+              - generic: 
+            - textbox "Buscar en audiencias..." [ref=e69]
+          - generic [ref=e70]:
+            - link "Hoy" [ref=e71] [cursor=pointer]:
+              - /url: /agenda?filtro=hoy&tab=audiencias&anio=2026
+            - link "Semana" [ref=e72] [cursor=pointer]:
+              - /url: /agenda?filtro=semana&tab=audiencias&anio=2026
+            - generic [ref=e73]:
+              - generic [ref=e74]: 
+              - combobox [ref=e75] [cursor=pointer]:
+                - option "Mes" [disabled] [selected]
+                - option "Ene"
+                - option "Feb"
+                - option "Mar"
+                - option "Abr"
+                - option "May"
+                - option "Jun"
+                - option "Jul"
+                - option "Ago"
+                - option "Sep"
+                - option "Oct"
+                - option "Nov"
+                - option "Dic"
+              - combobox [ref=e76] [cursor=pointer]:
+                - option "2026" [selected]
+                - option "2025"
+                - option "2024"
+                - option "2023"
+                - option "2022"
+                - option "2021"
+        - generic [ref=e77]:
+          - heading " Audiencias Concluidas" [level=3] [ref=e79]:
+            - generic [ref=e80]: 
+            - text: Audiencias Concluidas
+          - table [ref=e82]:
+            - rowgroup [ref=e83]:
+              - row "Fecha Desahogo Expediente Tipo Audiencia Partes Acciones" [ref=e84]:
+                - columnheader "Fecha Desahogo" [ref=e85]
+                - columnheader "Expediente" [ref=e86]
+                - columnheader "Tipo Audiencia" [ref=e87]
+                - columnheader "Partes" [ref=e88]
+                - columnheader "Acciones" [ref=e89]
+            - rowgroup [ref=e90]:
+              - row "No hay audiencias concluidas en este periodo." [ref=e91]:
+                - cell "No hay audiencias concluidas en este periodo." [ref=e92]
+      - text:   
+  - text: 

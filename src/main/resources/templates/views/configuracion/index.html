@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Configuración - Sistema Jurídico</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script th:src="@{/js/tailwind.config.js}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Noto+Sans:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="p-4 sm:ml-64">
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 border-b pb-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gob-guinda font-headings uppercase tracking-tight">
+                    <i class="fas fa-cogs text-gob-oro mr-2"></i>
+                    Configuración
+                </h1>
+                <p class="text-sm text-gray-500 font-sans">Administración de catálogos y parámetros generales.</p>
+                <hr class="h-1 w-20 bg-gob-oro border-0 mt-2" />
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Gerencias -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-gob-guinda hover:shadow-md transition-all">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-building text-3xl text-gob-guinda"></i>
+                    </div>
+                    <h5 class="text-xl font-bold mb-2 font-headings text-gray-700">Gerencias</h5>
+                    <p class="text-gray-500 mb-5 text-sm font-sans">Áreas organizacionales</p>
+                    <a th:href="@{/configuracion/catalogos/gerencias}"
+                        class="inline-block bg-gob-guinda text-white px-6 py-2.5 rounded hover:bg-gob-guindaDark transition-all text-xs font-bold uppercase tracking-widest shadow-sm">
+                        Gestionar
+                    </a>
+                </div>
+            </div>
+
+            <!-- Materias -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-gob-oro hover:shadow-md transition-all">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-book text-3xl text-gob-oro"></i>
+                    </div>
+                    <h5 class="text-xl font-bold mb-2 font-headings text-gray-700">Materias</h5>
+                    <p class="text-gray-500 mb-5 text-sm font-sans">Especialidades jurídicas</p>
+                    <a th:href="@{/configuracion/catalogos/materias}"
+                        class="inline-block bg-gob-guinda text-white px-6 py-2.5 rounded hover:bg-gob-guindaDark transition-all text-xs font-bold uppercase tracking-widest shadow-sm">
+                        Gestionar
+                    </a>
+                </div>
+            </div>
+
+            <!-- Órganos Jurisdiccionales -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-gob-verde hover:shadow-md transition-all">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-balance-scale text-3xl text-gob-verde"></i>
+                    </div>
+                    <h5 class="text-xl font-bold mb-2 font-headings text-gray-700 uppercase tracking-tighter">
+                        Jurisdicciones</h5>
+                    <p class="text-gray-500 mb-5 text-sm font-sans">Juzgados y tribunales</p>
+                    <a th:href="@{/configuracion/catalogos/organos}"
+                        class="inline-block bg-gob-guinda text-white px-6 py-2.5 rounded hover:bg-gob-guindaDark transition-all text-xs font-bold uppercase tracking-widest shadow-sm">
+                        Gestionar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

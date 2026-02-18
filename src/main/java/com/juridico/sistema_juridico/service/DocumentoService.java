@@ -4,19 +4,16 @@ import com.juridico.sistema_juridico.Entity.documento.Carpeta;
 import com.juridico.sistema_juridico.Entity.documento.Documento;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
-import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.documento.CarpetaRepository;
 import com.juridico.sistema_juridico.repository.documento.DocumentoRepository;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
-import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,48 +30,25 @@ public class DocumentoService {
     private ExpedienteRepository expedienteRepository;
 
     @Autowired
-    private AudienciaRepository audienciaRepository;
+    private FileStorageService fileStorageService;
 
     @Autowired
-    private FileStorageService fileStorageService;
+    private SecurityService securityService;
 
     /**
      * Verifica si un usuario tiene permiso para acceder a documentos de un
      * expediente
      */
     public boolean tienePermiso(Usuario usuario, UUID expedienteId) {
-        RolUsuario rol = usuario.getRol();
-
-        // DIRECCION y SUBDIRECCION tienen acceso total
-        if (rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
-            return true;
-        }
+        if (usuario == null || expedienteId == null)
+            return false;
 
         Expediente expediente = expedienteRepository.findById(expedienteId).orElse(null);
-        if (expediente == null) {
+        if (expediente == null)
             return false;
-        }
 
-        // Abogado responsable tiene acceso
-        if (expediente.getAbogadoResponsable() != null &&
-                expediente.getAbogadoResponsable().getId().equals(usuario.getId())) {
-            return true;
-        }
-
-        // Abogado compareciente: verificar si tiene audiencia activa HOY
-        if (rol == RolUsuario.ABOGADO) {
-            List<Audiencia> audienciasHoy = audienciaRepository
-                    .findByExpedienteIdAndFechaAudiencia(expedienteId, LocalDate.now());
-
-            for (Audiencia audiencia : audienciasHoy) {
-                if (audiencia.getAbogadoComparece() != null &&
-                        audiencia.getAbogadoComparece().getId().equals(usuario.getId())) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        // Delegar a SecurityService para centralizar la lógica de lectura (ACL/RBAC)
+        return securityService.tieneAccesoLectura(usuario, expediente);
     }
 
     /**

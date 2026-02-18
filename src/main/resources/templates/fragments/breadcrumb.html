@@ -1,0 +1,49 @@
+<nav th:fragment="breadcrumb(vengoDe, numero)" class="flex mb-4 text-xs font-medium text-gray-500"
+    aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+            <a th:href="@{/dashboard}" class="inline-flex items-center hover:text-gob-guinda">
+                <i class="fas fa-home mr-2 text-[10px]"></i> Dashboard
+            </a>
+        </li>
+
+        <!-- Dinámico basado en vengoDe -->
+        <li th:if="${vengoDe == 'expedientes' || vengoDe == null}">
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right mx-2 text-[8px] text-gray-400"></i>
+                <a th:href="@{/expedientes}" class="hover:text-gob-guinda">Expedientes</a>
+            </div>
+        </li>
+        <li th:if="${vengoDe == 'terminos'}">
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right mx-2 text-[8px] text-gray-400"></i>
+                <a th:href="@{/terminos}" class="hover:text-gob-guinda">Términos</a>
+            </div>
+        </li>
+        <li th:if="${vengoDe == 'audiencias'}">
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right mx-2 text-[8px] text-gray-400"></i>
+                <a th:href="@{/audiencias}" class="hover:text-gob-guinda">Audiencias</a>
+            </div>
+        </li>
+        <li th:if="${vengoDe == 'agenda'}">
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right mx-2 text-[8px] text-gray-400"></i>
+                <a th:href="@{/agenda}" class="hover:text-gob-guinda">Agenda</a>
+            </div>
+        </li>
+        <li th:if="${vengoDe == 'alertas'}">
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right mx-2 text-[8px] text-gray-400"></i>
+                <a th:href="@{/alertas}" class="hover:text-gob-guinda">Notificaciones</a>
+            </div>
+        </li>
+
+        <li aria-current="page">
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right mx-2 text-[8px] text-gray-400"></i>
+                <span class="text-gob-guinda font-bold" th:text="${numero}">EXP-0000</span>
+            </div>
+        </li>
+    </ol>
+</nav>

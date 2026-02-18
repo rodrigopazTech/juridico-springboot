@@ -12,8 +12,10 @@ import com.juridico.sistema_juridico.Entity.expediente.ColaboradorExpediente;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
 
+import com.juridico.sistema_juridico.service.SecurityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -62,6 +64,8 @@ public class AudienciasController {
 
     @Autowired
     private ColaboradorExpedienteRepository colaboradorRepository;
+    @Autowired
+    private SecurityService securityService;
     @Autowired
     private GerenciaRepository gerenciaRepository;
     @Autowired
@@ -114,30 +118,22 @@ public class AudienciasController {
         }
 
         // 3. FECHAS CENTINELA
-        LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
-        LocalDate fechaFin = LocalDate.of(2100, 12, 31);
+        // 3. FECHAS CENTINELA
+        // Refactor ROD-22: Usar PeriodoFiltro
+        com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro periodoEnum = com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro.TODOS;
 
         if (periodo != null && !periodo.isEmpty()) {
-            LocalDate hoy = LocalDate.now();
-            switch (periodo) {
-                case "HOY":
-                    fechaInicio = hoy;
-                    fechaFin = hoy;
-                    break;
-                case "MANANA":
-                    fechaInicio = hoy.plusDays(1);
-                    fechaFin = hoy.plusDays(1);
-                    break;
-                case "SEMANA":
-                    fechaInicio = hoy;
-                    fechaFin = hoy.plusDays(7);
-                    break;
-                case "MES":
-                    fechaInicio = hoy.withDayOfMonth(1);
-                    fechaFin = hoy.withDayOfMonth(hoy.lengthOfMonth());
-                    break;
+            try {
+                periodoEnum = com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro.valueOf(periodo.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Si el parametro no coincide, ignoramos y usamos TODOS
             }
         }
+
+        LocalDate[] rango = com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro.calcularRango(periodoEnum, null,
+                null);
+        LocalDate fechaInicio = rango[0];
+        LocalDate fechaFin = rango[1];
 
         // 4. CONSULTA
         Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaAudiencia").ascending());
@@ -178,7 +174,20 @@ public class AudienciasController {
         model.addAttribute("listaTiposAudiencia", tipoAudienciaRepository.findAll());
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
         model.addAttribute("listaMaterias", materiaRepository.findAll());
-        model.addAttribute("abogados", usuarioRepository.findAll());
+
+        // ROD-16: Filtrar Abogados por Gerencia
+        List<Usuario> listaAbogados;
+        if (rol.equals("DIRECCION") || rol.equals("SUBDIRECCION")) {
+            listaAbogados = usuarioRepository.findAll(); // O findByActivoTrue() si se prefiere
+        } else {
+            // Gerentes, Jefes y Abogados solo ven gente de su gerencia
+            if (usuario.getGerencia() != null) {
+                listaAbogados = usuarioRepository.findByGerenciaAndActivoTrue(usuario.getGerencia());
+            } else {
+                listaAbogados = new ArrayList<>(); // Caso borde: usuario sin gerencia asignada
+            }
+        }
+        model.addAttribute("abogados", listaAbogados);
 
         // Filtros en vista
         model.addAttribute("keyword", keyword);
@@ -220,6 +229,17 @@ public class AudienciasController {
 
             Expediente exp = expedienteRepository.findById(expedienteId)
                     .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
+
+            // VALIDACIÓN ROD-19
+            Usuario actor = usuarioRepository
+                    .findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow();
+            if (!securityService.tieneAccesoEscritura(actor, exp)) {
+                redirectAttrs.addFlashAttribute("mensaje",
+                        "Acceso denegado: No tiene permisos de escritura para este expediente.");
+                redirectAttrs.addFlashAttribute("tipo", "error");
+                return "redirect:/audiencias";
+            }
+
             audienciaFinal.setExpediente(exp);
 
             TipoAudiencia tipo = tipoAudienciaRepository.findById(tipoAudienciaId)
@@ -239,7 +259,8 @@ public class AudienciasController {
 
                 colaborador.setExpediente(exp);
                 colaborador.setUsuario(guardada.getAbogadoComparece());
-                colaborador.setPermisoNivel("LECTURA_TOTAL");
+                colaborador
+                        .setPermisoNivel(com.juridico.sistema_juridico.Entity.enums.PermisoColaborador.LECTURA_TOTAL);
                 colaborador.setMotivo("Comparecencia en Audiencia: " + tipo.getNombre());
 
                 LocalDateTime fechaBase = LocalDateTime.of(guardada.getFechaAudiencia(), guardada.getHoraAudiencia());
@@ -262,24 +283,40 @@ public class AudienciasController {
     @GetMapping("/obtener/{id}")
     @ResponseBody
     public ResponseEntity<Audiencia> obtenerPorId(@PathVariable Integer id) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+
         return audienciaRepository.findById(id)
-                .map(ResponseEntity::ok)
+                .map(audiencia -> {
+                    if (usuario != null && securityService.tieneAccesoLectura(usuario, audiencia.getExpediente())) {
+                        return ResponseEntity.ok(audiencia);
+                    } else {
+                        return ResponseEntity.status(403).<Audiencia>build();
+                    }
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping("/subir-acta")
-    public String subirActa(@RequestParam("id") Integer id,
-            @RequestParam("archivo") MultipartFile archivo,
-            RedirectAttributes redirectAttrs) {
+    @ResponseBody
+    public ResponseEntity<?> subirActa(@RequestParam("id") Integer id,
+            @RequestParam("archivo") MultipartFile archivo) {
         try {
+            Audiencia audiencia = audienciaRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
+
+            // SECURITY ROD-39: Validar permiso de escritura
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario actor = usuarioRepository.findByEmail(email).orElseThrow();
+            if (!securityService.tieneAccesoEscritura(actor, audiencia.getExpediente())) {
+                return ResponseEntity.status(403).body("Acceso denegado");
+            }
+
             audienciaService.subirActa(id, archivo);
-            redirectAttrs.addFlashAttribute("mensaje", "Acta subida correctamente. Estatus actualizado.");
-            redirectAttrs.addFlashAttribute("tipo", "success");
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
-            redirectAttrs.addFlashAttribute("mensaje", "Error al subir acta: " + e.getMessage());
-            redirectAttrs.addFlashAttribute("tipo", "error");
+            return ResponseEntity.status(500).body("Error: " + e.getMessage());
         }
-        return "redirect:/audiencias";
     }
 
     @PostMapping("/concluir")
@@ -291,10 +328,21 @@ public class AudienciasController {
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
-            // 2. VALIDAR PERMISOS (Solo Jefes hacia arriba pueden concluir)
-            if (usuario.getRol().name().equals("ABOGADO")) {
+            // 2. VALIDAR PERMISOS (ROD-8: Solo Dirección puede concluir)
+            Audiencia audiencia = audienciaRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
+
+            if (usuario.getRol() != RolUsuario.DIRECCION) {
                 redirectAttrs.addFlashAttribute("mensaje",
-                        "Acceso denegado: Solo Dirección o Gerencia pueden validar y concluir audiencias.");
+                        "Acceso denegado: Solo la Dirección puede validar y concluir audiencias.");
+                redirectAttrs.addFlashAttribute("tipo", "error");
+                return "redirect:/audiencias";
+            }
+
+            // ROD-39: Validar también acceso de escritura al expediente
+            if (!securityService.tieneAccesoEscritura(usuario, audiencia.getExpediente())) {
+                redirectAttrs.addFlashAttribute("mensaje",
+                        "Acceso denegado: No tiene permisos de escritura sobre este expediente.");
                 redirectAttrs.addFlashAttribute("tipo", "error");
                 return "redirect:/audiencias";
             }
@@ -312,9 +360,22 @@ public class AudienciasController {
         return "redirect:/audiencias";
     }
 
-    @GetMapping("/eliminar/{id}")
-    public String eliminar(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+    @PostMapping("/eliminar")
+    public String eliminar(@RequestParam("id") Integer id, RedirectAttributes redirectAttrs) {
         try {
+            Audiencia audiencia = audienciaRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
+
+            // SECURITY ROD-13: Validar permiso de escritura
+            Usuario actor = usuarioRepository
+                    .findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow();
+            if (!securityService.tieneAccesoEscritura(actor, audiencia.getExpediente())) {
+                redirectAttrs.addFlashAttribute("mensaje",
+                        "Acceso denegado: No tiene permisos para eliminar esta audiencia.");
+                redirectAttrs.addFlashAttribute("tipo", "error");
+                return "redirect:/audiencias";
+            }
+
             audienciaRepository.deleteById(id);
             redirectAttrs.addFlashAttribute("mensaje", "Eliminado correctamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
@@ -398,32 +459,21 @@ public class AudienciasController {
                 break;
         }
 
-        // 2. LÓGICA DE FECHAS "CENTINELA" (CORRECCIÓN CLAVE)
-        // Por defecto: Rango histórico amplio para evitar NULLs en la BD
-        LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
-        LocalDate fechaFin = LocalDate.of(2100, 12, 31);
+        // 2. LÓGICA DE FECHAS "CENTINELA" (REFACTOR ROD-52: Usar PeriodoFiltro)
+        com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro periodoEnum = com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro.TODOS;
 
         if (periodo != null && !periodo.isEmpty()) {
-            LocalDate hoy = LocalDate.now();
-            switch (periodo) {
-                case "HOY":
-                    fechaInicio = hoy;
-                    fechaFin = hoy;
-                    break;
-                case "MANANA":
-                    fechaInicio = hoy.plusDays(1);
-                    fechaFin = hoy.plusDays(1);
-                    break;
-                case "SEMANA":
-                    fechaInicio = hoy;
-                    fechaFin = hoy.plusDays(7);
-                    break;
-                case "MES":
-                    fechaInicio = hoy.withDayOfMonth(1);
-                    fechaFin = hoy.withDayOfMonth(hoy.lengthOfMonth());
-                    break;
+            try {
+                periodoEnum = com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro.valueOf(periodo.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Si no coincide, usamos TODOS
             }
         }
+
+        LocalDate[] rango = com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro.calcularRango(periodoEnum, null,
+                null);
+        LocalDate fechaInicio = rango[0];
+        LocalDate fechaFin = rango[1];
 
         // 3. LLAMAR AL REPOSITORIO
         // Ahora fechaInicio y fechaFin SIEMPRE tienen valor, nunca son null.

@@ -21,9 +21,9 @@ public class DashboardController {
     private final GerenciaRepository gerenciaRepository;
     private final UsuarioService usuarioService;
 
-    public DashboardController(DashboardService dashboardService, 
-                               GerenciaRepository gerenciaRepository, 
-                               UsuarioService usuarioService) {
+    public DashboardController(DashboardService dashboardService,
+            GerenciaRepository gerenciaRepository,
+            UsuarioService usuarioService) {
         this.dashboardService = dashboardService;
         this.gerenciaRepository = gerenciaRepository;
         this.usuarioService = usuarioService;
@@ -34,11 +34,21 @@ public class DashboardController {
         // Obtenemos el nombre del usuario logueado
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
-        
+
         // Buscamos el objeto Usuario completo
         Usuario usuario = usuarioService.obtenerPorUsername(username);
-        
-        // Aplicamos la lógica de restricción
+
+        // ROD-12 Dashboard Personal para Abogados
+        if (usuario.getRol() == RolUsuario.ABOGADO) {
+            model.addAttribute("usuario", usuario);
+            model.addAttribute("kpis", dashboardService.obtenerKpisPersonales(usuario.getId()));
+            model.addAttribute("dashboardData", dashboardService.obtenerMetricasPersonales(usuario.getId()));
+            model.addAttribute("gerenciaSeleccionada", null);
+            model.addAttribute("esPersonal", true);
+            return "views/dashboard/index";
+        }
+
+        // Aplicamos la lógica de restricción para otros roles
         Long idAFiltrar = validarGerenciaPorRol(usuario, gerenciaId);
 
         model.addAttribute("usuario", usuario);
@@ -46,6 +56,7 @@ public class DashboardController {
         model.addAttribute("kpis", dashboardService.obtenerKpis(idAFiltrar));
         model.addAttribute("dashboardData", dashboardService.obtenerMetricas(idAFiltrar));
         model.addAttribute("gerenciaSeleccionada", idAFiltrar);
+        model.addAttribute("esPersonal", false);
 
         return "views/dashboard/index";
     }
@@ -55,13 +66,18 @@ public class DashboardController {
     public Map<String, Object> obtenerDatosFiltrados(@RequestParam(required = false) Long gerenciaId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Usuario usuario = usuarioService.obtenerPorUsername(auth.getName());
-        
+
+        if (usuario.getRol() == RolUsuario.ABOGADO) {
+            return Map.of(
+                    "kpis", dashboardService.obtenerKpisPersonales(usuario.getId()),
+                    "dashboardData", dashboardService.obtenerMetricasPersonales(usuario.getId()));
+        }
+
         Long idAFiltrar = validarGerenciaPorRol(usuario, gerenciaId);
 
         return Map.of(
-            "kpis", dashboardService.obtenerKpis(idAFiltrar),
-            "dashboardData", dashboardService.obtenerMetricas(idAFiltrar)
-        );
+                "kpis", dashboardService.obtenerKpis(idAFiltrar),
+                "dashboardData", dashboardService.obtenerMetricas(idAFiltrar));
     }
 
     /**
@@ -69,8 +85,8 @@ public class DashboardController {
      */
     private Long validarGerenciaPorRol(Usuario usuario, Long gerenciaIdSolicitada) {
         // Verifica si el usuario tiene rol de Dirección (puede ver todas las gerencias)
-        boolean esDirectivo = usuario.getRol() == RolUsuario.DIRECCION || 
-                              usuario.getRol() == RolUsuario.SUBDIRECCION;
+        boolean esDirectivo = usuario.getRol() == RolUsuario.DIRECCION ||
+                usuario.getRol() == RolUsuario.SUBDIRECCION;
 
         if (esDirectivo) {
             return gerenciaIdSolicitada; // El director puede ver todo (null) o una específica

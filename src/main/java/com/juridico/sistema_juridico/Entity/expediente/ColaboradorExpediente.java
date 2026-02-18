@@ -29,7 +29,8 @@ public class ColaboradorExpediente {
     private LocalDateTime fechaExpiracion;
 
     @Column(name = "permiso_nivel")
-    private String permisoNivel; // "LECTURA_TOTAL"
+    @Enumerated(EnumType.STRING)
+    private com.juridico.sistema_juridico.Entity.enums.PermisoColaborador permisoNivel;
 
     @Column(columnDefinition = "TEXT")
     private String motivo;

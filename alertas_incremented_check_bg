@@ -1,0 +1,123 @@
+- generic [ref=e1]:
+  - complementary [ref=e2]:
+    - generic [ref=e3]:
+      - link [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: 
+        - generic [ref=e7]: Agenda Legal
+      - list [ref=e8]:
+        - listitem [ref=e9]:
+          - link [ref=e10] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=e11]: 
+            - generic [ref=e12]: Dashboard
+        - listitem [ref=e13]:
+          - link [ref=e14] [cursor=pointer]:
+            - /url: /agenda
+            - generic [ref=e15]: 
+            - generic [ref=e16]: Agenda General
+        - listitem [ref=e17]:
+          - link [ref=e18] [cursor=pointer]:
+            - /url: /alertas
+            - generic [ref=e19]:
+              - generic [ref=e20]: 
+              - generic [ref=e22]: "1"
+            - generic [ref=e23]: Centro de Notificaciones
+            - generic [ref=e24]: Nuevas
+        - listitem [ref=e25]:
+          - link [ref=e26] [cursor=pointer]:
+            - /url: /expedientes
+            - generic [ref=e27]: 
+            - generic [ref=e28]: Expedientes
+        - listitem [ref=e29]:
+          - link [ref=e30] [cursor=pointer]:
+            - /url: /terminos
+            - generic [ref=e31]: 
+            - generic [ref=e32]: Términos
+        - listitem [ref=e33]:
+          - link [ref=e34] [cursor=pointer]:
+            - /url: /audiencias
+            - generic [ref=e35]: 
+            - generic [ref=e36]: Audiencias
+        - listitem [ref=e37]:
+          - link [ref=e38] [cursor=pointer]:
+            - /url: /usuarios
+            - generic [ref=e39]: 
+            - generic [ref=e40]: Usuarios
+        - listitem [ref=e41]:
+          - link [ref=e42] [cursor=pointer]:
+            - /url: /configuracion
+            - generic [ref=e43]: 
+            - generic [ref=e44]: Configuración
+      - generic [ref=e45]:
+        - generic [ref=e46]:
+          - generic [ref=e48]: D
+          - generic [ref=e49]:
+            - paragraph [ref=e50]: Director General
+            - paragraph [ref=e51]: DIRECCION
+        - link [ref=e52] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e53]: 
+          - generic [ref=e54]: Cerrar Sesión
+  - generic [ref=e55]:
+    - generic [ref=e56]:
+      - generic [ref=e57]:
+        - generic [ref=e58]:
+          - heading [level=1] [ref=e59]:
+            - generic [ref=e60]: 
+            - text: Centro de Notificaciones
+          - paragraph [ref=e61]: Gestiona tus notificaciones del sistema y recordatorios personales.
+        - button [ref=e63] [cursor=pointer]:
+          - generic [ref=e64]: 
+          - text: Nuevo Recordatorio
+      - generic [ref=e65]:
+        - button [ref=e66] [cursor=pointer]:
+          - generic [ref=e67]: 
+          - text: Notificaciones
+          - generic [ref=e68]: "3"
+        - button [ref=e69] [cursor=pointer]:
+          - generic [ref=e70]: 
+          - text: Mis Recordatorios
+          - generic [ref=e71]: "2"
+    - text:      
+    - generic [ref=e74]:
+      - generic [ref=e75]:
+        - link [ref=e76] [cursor=pointer]:
+          - /url: /alertas/recordatorios/eliminar/9
+          - generic [ref=e77]: 
+        - generic [ref=e78]:
+          - generic [ref=e80]: 
+          - generic [ref=e81]:
+            - heading [level=4] [ref=e82]: Verificación Badge ROD-50
+            - paragraph [ref=e83]: Esta es una notificación de prueba para el agente 3A.
+            - generic [ref=e84]:
+              - generic [ref=e85]:
+                - generic [ref=e86]: 
+                - generic [ref=e87]: 17 feb 9:00
+              - link [ref=e88] [cursor=pointer]:
+                - /url: /alertas/recordatorios/completar/9
+                - generic [ref=e89]: 
+                - text: Completar
+      - generic [ref=e90]:
+        - link [ref=e91] [cursor=pointer]:
+          - /url: /alertas/recordatorios/eliminar/5
+          - generic [ref=e92]: 
+        - generic [ref=e93]:
+          - generic [ref=e95]: 
+          - generic [ref=e96]:
+            - heading [level=4] [ref=e97]: Firmar alegatos de cierre
+            - paragraph [ref=e98]: Los alegatos del juicio ordinario civil están en etapa de Dirección. Revisar y aprobar para liberación.
+            - generic [ref=e99]:
+              - generic [ref=e100]:
+                - generic [ref=e101]: 
+                - generic [ref=e102]: 18 feb 14:00
+              - link [ref=e103] [cursor=pointer]:
+                - /url: /alertas/recordatorios/completar/5
+                - generic [ref=e104]: 
+                - text: Completar
+  - text:       
+  - dialog "¡Éxito!" [ref=e106]:
+    - heading "¡Éxito!" [level=2] [ref=e114]
+    - generic [ref=e115]: Recordatorio programado exitosamente.
+    - text: "!"
+    - button "OK" [active] [ref=e117] [cursor=pointer]

@@ -27,7 +27,11 @@
                     <td class="px-6 py-4 font-bold text-gray-700"
                         th:text="${#temporals.format(a.fechaDesahogo, 'dd/MM/yyyy')}">01/01/2026</td>
 
-                    <td class="px-6 py-4 text-gob-guinda font-bold" th:text="${a.expedienteNumero}">EXP-001</td>
+                    <td class="px-6 py-4">
+                        <a th:href="@{/expedientes/{id}(id=${a.audiencia.expediente.id}, from='agenda')}"
+                            class="text-gob-guinda font-bold hover:underline"
+                            th:text="${a.expedienteNumero}">EXP-001</a>
+                    </td>
 
                     <td class="px-6 py-4">
                         <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded"

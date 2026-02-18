@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title th:text="${titulo}">Formulario</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script th:src="@{/js/tailwind.config.js}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Noto+Sans:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="p-4 sm:ml-64">
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 border-b pb-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gob-guinda font-headings uppercase tracking-tight"
+                    th:text="${titulo}">Formulario</h1>
+                <hr class="h-1 w-20 bg-gob-oro border-0 mt-2 mb-2" />
+            </div>
+            <div class="mt-4 md:mt-0">
+                <a th:href="@{'/configuracion/catalogos/' + ${tipo}}"
+                    class="text-gob-oro hover:text-gob-guinda font-medium transition-colors">
+                    <i class="fas fa-times mr-1"></i> Cancelar
+                </a>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl">
+            <form th:action="@{'/configuracion/catalogos/' + ${tipo} + '/guardar'}" th:object="${entidad}" method="post"
+                class="space-y-6">
+
+                <input type="hidden" th:field="*{id}" />
+
+                <!-- Nombre (Común) -->
+                <div>
+                    <label for="nombre"
+                        class="block text-sm font-bold text-gob-guinda mb-1 font-headings">Nombre</label>
+                    <input type="text" id="nombre" th:field="*{nombre}" required
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-gob-guinda focus:ring-gob-guinda px-4 py-2 border bg-gray-50 focus:bg-white transition-colors">
+                </div>
+
+                <!-- Descripción (Gerencia, Materia) -->
+                <div th:if="${tipo == 'gerencias' or tipo == 'materias'}">
+                    <label for="descripcion"
+                        class="block text-sm font-bold text-gob-guinda mb-1 font-headings">Descripción</label>
+                    <textarea id="descripcion" th:field="*{descripcion}" rows="3"
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-gob-guinda focus:ring-gob-guinda px-4 py-2 border bg-gray-50 focus:bg-white transition-colors"></textarea>
+                </div>
+
+                <!-- Select Gerencia (Sólo Materias) -->
+                <div th:if="${tipo == 'materias'}">
+                    <label for="gerencia"
+                        class="block text-sm font-bold text-gob-guinda mb-1 font-headings">Gerencia</label>
+                    <select id="gerencia" th:field="*{gerencia}" required
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-gob-guinda focus:ring-gob-guinda px-4 py-2 border bg-gray-50 focus:bg-white transition-colors">
+                        <option value="" disabled selected>Seleccione una opción...</option>
+                        <option th:each="g : ${gerencias}" th:value="${g.id}" th:text="${g.nombre}"></option>
+                    </select>
+                </div>
+
+                <!-- Campos Órganos -->
+                <div th:if="${tipo == 'organos'}">
+                    <label for="tipoOrgano"
+                        class="block text-sm font-bold text-gob-guinda mb-1 font-headings">Tipo</label>
+                    <input type="text" id="tipoOrgano" th:field="*{tipo}"
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-gob-guinda focus:ring-gob-guinda px-4 py-2 border bg-gray-50 focus:bg-white transition-colors">
+                </div>
+                <div th:if="${tipo == 'organos'}">
+                    <label for="sede" class="block text-sm font-bold text-gob-guinda mb-1 font-headings">Sede</label>
+                    <input type="text" id="sede" th:field="*{sede}"
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-gob-guinda focus:ring-gob-guinda px-4 py-2 border bg-gray-50 focus:bg-white transition-colors">
+                </div>
+
+                <!-- Activo Checkbox -->
+                <div class="flex items-center">
+                    <input type="checkbox" id="activo" th:field="*{activo}"
+                        class="h-4 w-4 text-gob-guinda focus:ring-gob-guinda border-gray-300 rounded accent-gob-guinda">
+                    <label for="activo" class="ml-2 block text-sm text-gray-700 font-medium">Activo</label>
+                </div>
+
+                <div class="pt-4 border-t border-gray-200 flex justify-end">
+                    <button type="submit"
+                        class="bg-gob-guinda text-white px-6 py-2.5 rounded hover:bg-gob-guindaDark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gob-guinda font-bold shadow-md uppercase tracking-wider text-sm transition-colors">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+
+</html>

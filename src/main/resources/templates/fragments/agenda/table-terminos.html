@@ -47,8 +47,9 @@
 
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-2">
-                            <span class="text-gob-guinda font-bold"
-                                th:text="${t.expediente != null ? t.expediente.numero : 'S/N'}">EXP-001</span>
+                            <a th:href="@{/expedientes/{id}(id=${t.expediente.id}, from='agenda')}"
+                                class="text-gob-guinda font-bold hover:underline"
+                                th:text="${t.expediente != null ? t.expediente.numero : 'S/N'}">EXP-001</a>
 
                             <span th:if="${t.expediente != null}"
                                 class="text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-sm border"

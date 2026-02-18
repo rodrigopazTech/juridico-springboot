@@ -1,50 +1,45 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8" />
     <title>Gestión de Usuarios - Sistema Legal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-    <link rel="stylesheet" th:href="@{/css/agenda-general.css}"> </head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" th:href="@{/css/agenda-general.css}">
+</head>
+
 <body class="bg-gray-100 text-gray-800 font-sans">
 
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
 
     <div class="p-4 sm:ml-64">
-        
+
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
             <div class="p-6 border-b border-gray-200 flex justify-between items-center">
                 <div>
                     <h1 class="text-3xl font-bold text-gob-gris font-headings">
-                        <i class="fas fa-users-cog text-gob-oro mr-2"></i> Administración
+                        <i class="fas fa-users-cog text-gob-oro mr-2"></i> Administración de Usuarios
                     </h1>
-                    <p class="text-sm text-gray-500 mt-1">Gestión de usuarios, roles y gerencias.</p>
+                    <p class="text-sm text-gray-500 mt-1">Gestión de cuentas de acceso y asignación de roles.</p>
                 </div>
             </div>
-            
+
             <div class="flex overflow-x-auto px-6">
-                <button onclick="cambiarTab('usuarios')" id="btn-tab-usuarios" class="tab-btn active flex items-center gap-2 py-3 px-4 border-b-2 border-gob-guinda text-gob-guinda font-bold">
-                    <i class="fas fa-user"></i> Usuarios
-                </button>
-                <button onclick="cambiarTab('gerencias')" id="btn-tab-gerencias" class="tab-btn flex items-center gap-2 py-3 px-4 border-b-2 border-transparent text-gray-500 hover:text-gob-gris">
-                    <i class="fas fa-building"></i> Gerencias
-                </button>
+                <div class="flex items-center gap-2 py-3 px-4 border-b-2 border-gob-guinda text-gob-guinda font-bold">
+                    <i class="fas fa-user"></i> Listado de Usuarios
+                </div>
             </div>
         </div>
 
         <div id="tab-usuarios" class="tab-content block">
             <div th:replace="~{fragments/usuarios/tabla-usuarios :: tabla}"></div>
         </div>
-
-        <div id="tab-gerencias" class="tab-content hidden">
-            <div th:replace="~{fragments/usuarios/tabla-gerencias :: tabla}"></div>
-        </div>
     </div>
 
     <div th:replace="~{fragments/usuarios/modal-usuario :: modal}"></div>
-    <div th:replace="~{fragments/usuarios/modal-gerencia :: modal}"></div>
     <div th:replace="~{fragments/usuarios/modal-materias :: modal}"></div>
     <script th:src="@{/js/usuarios.js}"></script>
 
@@ -59,6 +54,8 @@
         });
     </script>
 </body>
+
 </html>
 </body>
+
 </html>

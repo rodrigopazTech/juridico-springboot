@@ -16,14 +16,8 @@
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
     <div class="p-4 sm:ml-64">
 
-        <div class="mb-6 container mx-auto">
-            <h1 class="text-3xl font-bold text-gob-guinda font-headings">
-                <i class="fas fa-folder-open text-gob-oro mr-2"></i> Detalle del Expediente
-            </h1>
-            <hr class="h-1 w-20 bg-gob-oro border-0 mt-2 mb-4" />
-        </div>
-
-        <div class="container mx-auto px-4">
+        <div class="container mx-auto px-4 mt-4">
+            <div th:replace="~{fragments/breadcrumb :: breadcrumb(${vengoDe}, ${expediente.numero})}"></div>
             <div th:replace="~{fragments/expedientes/encabezado-detalle :: encabezado(${expediente})}"></div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -79,8 +73,10 @@
                                 </span>
                             </div>
                         </div>
-                        <div th:if="${proximaAudiencia != null}" class="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4 relative overflow-hidden">
-                            <div class="absolute top-0 right-0 w-16 h-16 bg-orange-100 rounded-bl-full -mr-8 -mt-8 z-0"></div>
+                        <div th:if="${proximaAudiencia != null}"
+                            class="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4 relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-16 h-16 bg-orange-100 rounded-bl-full -mr-8 -mt-8 z-0">
+                            </div>
 
                             <div class="relative z-10 flex items-start gap-4">
                                 <div class="bg-white p-2 rounded-lg shadow-sm text-center min-w-[60px]">
@@ -95,10 +91,13 @@
                                         <i class="fas fa-gavel"></i> Próxima Audiencia
                                     </h4>
                                     <p class="text-sm font-medium text-gray-800"
-                                       th:text="${proximaAudiencia.tipoAudiencia != null ? proximaAudiencia.tipoAudiencia.nombre : 'Audiencia'}">Audiencia</p>
+                                        th:text="${proximaAudiencia.tipoAudiencia != null ? proximaAudiencia.tipoAudiencia.nombre : 'Audiencia'}">
+                                        Audiencia</p>
                                     <p class="text-xs text-gray-500 mt-1">
                                         <i class="far fa-clock mr-1"></i>
-                                        <span th:text="${proximaAudiencia.fechaAudiencia != null ? #temporals.format(proximaAudiencia.fechaAudiencia, 'HH:mm') : '--:--'}">10:00</span> hrs
+                                        <span
+                                            th:text="${proximaAudiencia.fechaAudiencia != null ? #temporals.format(proximaAudiencia.fechaAudiencia, 'HH:mm') : '--:--'}">10:00</span>
+                                        hrs
                                     </p>
                                 </div>
 
@@ -108,25 +107,28 @@
                                     <div class="flex items-center justify-end gap-2">
 
                                         <span th:if="${proximaAudiencia.abogadoComparece == null}"
-                                              class="text-xs text-red-400 italic font-bold">
+                                            class="text-xs text-red-400 italic font-bold">
                                             Por definir
                                         </span>
 
-                                        <span th:if="${proximaAudiencia.abogadoComparece != null
+                                        <span
+                                            th:if="${proximaAudiencia.abogadoComparece != null
                                                        and expediente.abogadoResponsable != null
                                                        and proximaAudiencia.abogadoComparece.id == expediente.abogadoResponsable.id}"
-                                              class="text-xs font-bold text-gray-600 bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
+                                            class="text-xs font-bold text-gray-600 bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
                                             Titular
                                         </span>
 
                                         <div th:if="${proximaAudiencia.abogadoComparece != null
                                                        and (expediente.abogadoResponsable == null
                                                            or proximaAudiencia.abogadoComparece.id != expediente.abogadoResponsable.id)}"
-                                             class="flex items-center gap-2 bg-white px-2 py-1 rounded border border-gob-oro shadow-sm">
-                                            <div class="w-5 h-5 rounded-full bg-gob-oro text-white flex items-center justify-center text-[10px]">
+                                            class="flex items-center gap-2 bg-white px-2 py-1 rounded border border-gob-oro shadow-sm">
+                                            <div
+                                                class="w-5 h-5 rounded-full bg-gob-oro text-white flex items-center justify-center text-[10px]">
                                                 <i class="fas fa-user-shield"></i>
                                             </div>
-                                            <span class="text-xs font-bold text-gob-guinda" th:text="${proximaAudiencia.abogadoComparece.nombreCompleto}">
+                                            <span class="text-xs font-bold text-gob-guinda"
+                                                th:text="${proximaAudiencia.abogadoComparece.nombreCompleto}">
                                                 Lic. Sustituto
                                             </span>
                                         </div>

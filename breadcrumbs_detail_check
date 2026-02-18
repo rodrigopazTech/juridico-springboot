@@ -1,0 +1,555 @@
+- generic [active] [ref=e1]:
+  - complementary "Sidebar" [ref=e2]:
+    - generic [ref=e3]:
+      - link " Agenda Legal" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: 
+        - generic [ref=e7]: Agenda Legal
+      - list [ref=e8]:
+        - listitem [ref=e9]:
+          - link " Dashboard" [ref=e10] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=e11]: 
+            - generic [ref=e12]: Dashboard
+        - listitem [ref=e13]:
+          - link " Agenda General" [ref=e14] [cursor=pointer]:
+            - /url: /agenda
+            - generic [ref=e15]: 
+            - generic [ref=e16]: Agenda General
+        - listitem [ref=e17]:
+          - link " Centro de Notificaciones" [ref=e18] [cursor=pointer]:
+            - /url: /alertas
+            - generic [ref=e20]: 
+            - generic [ref=e21]: Centro de Notificaciones
+        - listitem [ref=e22]:
+          - link " Expedientes" [ref=e23] [cursor=pointer]:
+            - /url: /expedientes
+            - generic [ref=e24]: 
+            - generic [ref=e25]: Expedientes
+        - listitem [ref=e26]:
+          - link " Términos" [ref=e27] [cursor=pointer]:
+            - /url: /terminos
+            - generic [ref=e28]: 
+            - generic [ref=e29]: Términos
+        - listitem [ref=e30]:
+          - link " Audiencias" [ref=e31] [cursor=pointer]:
+            - /url: /audiencias
+            - generic [ref=e32]: 
+            - generic [ref=e33]: Audiencias
+        - listitem [ref=e34]:
+          - link " Usuarios" [ref=e35] [cursor=pointer]:
+            - /url: /usuarios
+            - generic [ref=e36]: 
+            - generic [ref=e37]: Usuarios
+        - listitem [ref=e38]:
+          - link " Configuración" [ref=e39] [cursor=pointer]:
+            - /url: /configuracion
+            - generic [ref=e40]: 
+            - generic [ref=e41]: Configuración
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e45]: D
+          - generic [ref=e46]:
+            - paragraph [ref=e47]: Director General
+            - paragraph [ref=e48]: DIRECCION
+        - link " Cerrar Sesión" [ref=e49] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e50]: 
+          - generic [ref=e51]: Cerrar Sesión
+  - generic [ref=e52]:
+    - generic [ref=e53]:
+      - heading " Gestión de Términos" [level=1] [ref=e54]:
+        - generic [ref=e55]: 
+        - text: Gestión de Términos
+      - separator [ref=e56]
+    - generic [ref=e57]:
+      - generic [ref=e58]:
+        - generic:
+          - generic: 
+        - textbox "Buscar por Asunto, Expediente, Partes..." [ref=e59]
+      - generic [ref=e60]:
+        - link " Exportar" [ref=e61] [cursor=pointer]:
+          - /url: /terminos/exportar-excel?keyword=&estatus=&prioridad=&abogadoId=
+          - generic [ref=e62]: 
+          - text: Exportar
+        - button "+ Nuevo Término" [ref=e63] [cursor=pointer]:
+          - generic [ref=e64]: +
+          - text: Nuevo Término
+    - generic [ref=e66]:
+      - generic [ref=e67]:
+        - heading " Filtros de Términos" [level=3] [ref=e68]:
+          - generic [ref=e69]: 
+          - text: Filtros de Términos
+        - generic [ref=e70]:
+          - link "Limpiar" [ref=e71] [cursor=pointer]:
+            - /url: /terminos
+          - button "Filtrar" [ref=e72] [cursor=pointer]
+      - generic [ref=e73]:
+        - combobox [ref=e74]:
+          - 'option "Estatus: Todos" [selected]'
+          - option "PROYECTISTA"
+          - option "REVISION"
+          - option "GERENCIA"
+          - option "DIRECCION"
+          - option "LIBERADO"
+          - option "PRESENTADO"
+          - option "CONCLUIDO"
+        - combobox [ref=e75]:
+          - 'option "Prioridad: Todas" [selected]'
+          - option "ALTA"
+          - option "MEDIA"
+          - option "BAJA"
+        - combobox [ref=e76]:
+          - 'option "Abogado: Todos" [selected]'
+          - option "Director General"
+          - option "Subdirector Jurídico"
+          - option "Gerente Civil"
+          - option "Jefe de Depto"
+          - option "Rodrigo Cristobal"
+          - option "Abogado Litigante"
+    - generic [ref=e77]:
+      - table [ref=e79]:
+        - rowgroup [ref=e80]:
+          - row "Vencimiento Expediente Actuación Abogado Estatus Acciones" [ref=e81]:
+            - columnheader "Vencimiento" [ref=e82]
+            - columnheader "Expediente" [ref=e83]
+            - columnheader "Actuación" [ref=e84]
+            - columnheader "Abogado" [ref=e85]
+            - columnheader "Estatus" [ref=e86]
+            - columnheader "Acciones" [ref=e87]
+        - rowgroup [ref=e88]:
+          - row "05/02/2026 001 ALTA Juan vs Perez Informe justificado - Amparo directo Abogado Litigante Concluido  " [ref=e89]:
+            - cell "05/02/2026" [ref=e90]:
+              - generic "Término Concluido" [ref=e91]:
+                - generic [ref=e93]: 05/02/2026
+            - cell "001 ALTA Juan vs Perez" [ref=e94]:
+              - generic [ref=e95]:
+                - generic [ref=e96]:
+                  - link "001" [ref=e97] [cursor=pointer]:
+                    - /url: /expedientes/b78d6de1-ad7e-4cc8-a913-1f536f466d50?from=terminos
+                  - generic [ref=e98]: ALTA
+                - generic [ref=e99]: Juan vs Perez
+            - cell "Informe justificado - Amparo directo" [ref=e100]
+            - cell "Abogado Litigante" [ref=e101]
+            - cell "Concluido" [ref=e102]
+            - cell " " [ref=e103]:
+              - button "" [ref=e104]:
+                - generic [ref=e105]: 
+              - button "" [ref=e106] [cursor=pointer]:
+                - generic [ref=e107]: 
+              - text:    
+          - row " Proyectista  Revisión  Gerencia  Dirección  Liberado  Presentado  Concluido" [ref=e108]:
+            - cell " Proyectista  Revisión  Gerencia  Dirección  Liberado  Presentado  Concluido" [ref=e109]:
+              - generic [ref=e110]:
+                - generic [ref=e111]:
+                  - generic [ref=e113]: 
+                  - generic [ref=e114]: Proyectista
+                - generic [ref=e116]:
+                  - generic [ref=e118]: 
+                  - generic [ref=e119]: Revisión
+                - generic [ref=e121]:
+                  - generic [ref=e123]: 
+                  - generic [ref=e124]: Gerencia
+                - generic [ref=e126]:
+                  - generic [ref=e128]: 
+                  - generic [ref=e129]: Dirección
+                - generic [ref=e131]:
+                  - generic [ref=e133]: 
+                  - generic [ref=e134]: Liberado
+                - generic [ref=e136]:
+                  - generic [ref=e138]: 
+                  - generic [ref=e139]: Presentado
+                - generic [ref=e141]:
+                  - generic [ref=e143]: 
+                  - generic [ref=e144]: Concluido
+          - row "10/02/2026 001 ALTA Juan vs Perez Presentación de amparo indirecto Abogado Litigante Presentado  " [ref=e145]:
+            - cell "10/02/2026" [ref=e146]:
+              - generic "Vencido hace 7 días" [ref=e147]:
+                - generic [ref=e149]: 10/02/2026
+            - cell "001 ALTA Juan vs Perez" [ref=e150]:
+              - generic [ref=e151]:
+                - generic [ref=e152]:
+                  - link "001" [ref=e153] [cursor=pointer]:
+                    - /url: /expedientes/b78d6de1-ad7e-4cc8-a913-1f536f466d50?from=terminos
+                  - generic [ref=e154]: ALTA
+                - generic [ref=e155]: Juan vs Perez
+            - cell "Presentación de amparo indirecto" [ref=e156]
+            - cell "Abogado Litigante" [ref=e157]
+            - cell "Presentado" [ref=e158]
+            - cell " " [ref=e159]:
+              - button "" [ref=e160]:
+                - generic [ref=e161]: 
+              - button "" [ref=e162] [cursor=pointer]:
+                - generic [ref=e163]: 
+              - text:   
+          - row " Proyectista  Revisión  Gerencia  Dirección  Liberado 6 Presentado  Concluido" [ref=e164]:
+            - cell " Proyectista  Revisión  Gerencia  Dirección  Liberado 6 Presentado  Concluido" [ref=e165]:
+              - generic [ref=e166]:
+                - generic [ref=e167]:
+                  - generic [ref=e169]: 
+                  - generic [ref=e170]: Proyectista
+                - generic [ref=e172]:
+                  - generic [ref=e174]: 
+                  - generic [ref=e175]: Revisión
+                - generic [ref=e177]:
+                  - generic [ref=e179]: 
+                  - generic [ref=e180]: Gerencia
+                - generic [ref=e182]:
+                  - generic [ref=e184]: 
+                  - generic [ref=e185]: Dirección
+                - generic [ref=e187]:
+                  - generic [ref=e189]: 
+                  - generic [ref=e190]: Liberado
+                - generic [ref=e192]:
+                  - generic [ref=e194]: "6"
+                  - generic [ref=e195]: Presentado
+                - generic [ref=e197]:
+                  - generic [ref=e199]: 
+                  - generic [ref=e200]: Concluido
+          - row "10/02/2026 EXP-006 ALTA Escrito de Defensa - Penal Abogado Litigante Concluido  " [ref=e201]:
+            - cell "10/02/2026" [ref=e202]:
+              - generic "Término Concluido" [ref=e203]:
+                - generic [ref=e205]: 10/02/2026
+            - cell "EXP-006 ALTA" [ref=e206]:
+              - generic [ref=e208]:
+                - link "EXP-006" [ref=e209] [cursor=pointer]:
+                  - /url: /expedientes/09e54d8c-4d92-436d-9e2a-90706209ed46?from=terminos
+                - generic [ref=e210]: ALTA
+            - cell "Escrito de Defensa - Penal" [ref=e211]
+            - cell "Abogado Litigante" [ref=e212]
+            - cell "Concluido" [ref=e213]
+            - cell " " [ref=e214]:
+              - button "" [ref=e215]:
+                - generic [ref=e216]: 
+              - button "" [ref=e217] [cursor=pointer]:
+                - generic [ref=e218]: 
+              - text:    
+          - row " Proyectista  Revisión  Gerencia  Dirección  Liberado  Presentado  Concluido" [ref=e219]:
+            - cell " Proyectista  Revisión  Gerencia  Dirección  Liberado  Presentado  Concluido" [ref=e220]:
+              - generic [ref=e221]:
+                - generic [ref=e222]:
+                  - generic [ref=e224]: 
+                  - generic [ref=e225]: Proyectista
+                - generic [ref=e227]:
+                  - generic [ref=e229]: 
+                  - generic [ref=e230]: Revisión
+                - generic [ref=e232]:
+                  - generic [ref=e234]: 
+                  - generic [ref=e235]: Gerencia
+                - generic [ref=e237]:
+                  - generic [ref=e239]: 
+                  - generic [ref=e240]: Dirección
+                - generic [ref=e242]:
+                  - generic [ref=e244]: 
+                  - generic [ref=e245]: Liberado
+                - generic [ref=e247]:
+                  - generic [ref=e249]: 
+                  - generic [ref=e250]: Presentado
+                - generic [ref=e252]:
+                  - generic [ref=e254]: 
+                  - generic [ref=e255]: Concluido
+          - row "12/02/2026 EXP-003 MEDIA Recurso de Revocación - Mercantil Abogado Litigante Concluido  " [ref=e256]:
+            - cell "12/02/2026" [ref=e257]:
+              - generic "Término Concluido" [ref=e258]:
+                - generic [ref=e260]: 12/02/2026
+            - cell "EXP-003 MEDIA" [ref=e261]:
+              - generic [ref=e263]:
+                - link "EXP-003" [ref=e264] [cursor=pointer]:
+                  - /url: /expedientes/48129805-146b-4334-bd87-66523de6ad9c?from=terminos
+                - generic [ref=e265]: MEDIA
+            - cell "Recurso de Revocación - Mercantil" [ref=e266]
+            - cell "Abogado Litigante" [ref=e267]
+            - cell "Concluido" [ref=e268]
+            - cell " " [ref=e269]:
+              - button "" [ref=e270]:
+                - generic [ref=e271]: 
+              - button "" [ref=e272] [cursor=pointer]:
+                - generic [ref=e273]: 
+              - text:    
+          - row " Proyectista  Revisión  Gerencia  Dirección  Liberado  Presentado  Concluido" [ref=e274]:
+            - cell " Proyectista  Revisión  Gerencia  Dirección  Liberado  Presentado  Concluido" [ref=e275]:
+              - generic [ref=e276]:
+                - generic [ref=e277]:
+                  - generic [ref=e279]: 
+                  - generic [ref=e280]: Proyectista
+                - generic [ref=e282]:
+                  - generic [ref=e284]: 
+                  - generic [ref=e285]: Revisión
+                - generic [ref=e287]:
+                  - generic [ref=e289]: 
+                  - generic [ref=e290]: Gerencia
+                - generic [ref=e292]:
+                  - generic [ref=e294]: 
+                  - generic [ref=e295]: Dirección
+                - generic [ref=e297]:
+                  - generic [ref=e299]: 
+                  - generic [ref=e300]: Liberado
+                - generic [ref=e302]:
+                  - generic [ref=e304]: 
+                  - generic [ref=e305]: Presentado
+                - generic [ref=e307]:
+                  - generic [ref=e309]: 
+                  - generic [ref=e310]: Concluido
+          - row "13/02/2026 EXP-004 ALTA Demanda de Amparo Indirecto Abogado Litigante Presentado  " [ref=e311]:
+            - cell "13/02/2026" [ref=e312]:
+              - generic "Vencido hace 4 días" [ref=e313]:
+                - generic [ref=e315]: 13/02/2026
+            - cell "EXP-004 ALTA" [ref=e316]:
+              - generic [ref=e318]:
+                - link "EXP-004" [ref=e319] [cursor=pointer]:
+                  - /url: /expedientes/68aa5d6e-d480-4057-b4fc-8ff4ff2ffe4c?from=terminos
+                - generic [ref=e320]: ALTA
+            - cell "Demanda de Amparo Indirecto" [ref=e321]
+            - cell "Abogado Litigante" [ref=e322]
+            - cell "Presentado" [ref=e323]
+            - cell " " [ref=e324]:
+              - button "" [ref=e325]:
+                - generic [ref=e326]: 
+              - button "" [ref=e327] [cursor=pointer]:
+                - generic [ref=e328]: 
+              - text:   
+          - row " Proyectista  Revisión  Gerencia  Dirección  Liberado 6 Presentado  Concluido" [ref=e329]:
+            - cell " Proyectista  Revisión  Gerencia  Dirección  Liberado 6 Presentado  Concluido" [ref=e330]:
+              - generic [ref=e331]:
+                - generic [ref=e332]:
+                  - generic [ref=e334]: 
+                  - generic [ref=e335]: Proyectista
+                - generic [ref=e337]:
+                  - generic [ref=e339]: 
+                  - generic [ref=e340]: Revisión
+                - generic [ref=e342]:
+                  - generic [ref=e344]: 
+                  - generic [ref=e345]: Gerencia
+                - generic [ref=e347]:
+                  - generic [ref=e349]: 
+                  - generic [ref=e350]: Dirección
+                - generic [ref=e352]:
+                  - generic [ref=e354]: 
+                  - generic [ref=e355]: Liberado
+                - generic [ref=e357]:
+                  - generic [ref=e359]: "6"
+                  - generic [ref=e360]: Presentado
+                - generic [ref=e362]:
+                  - generic [ref=e364]: 
+                  - generic [ref=e365]: Concluido
+          - row "13/02/2026 EXP-005 BAJA Diligencia de Arrendamiento Abogado Litigante Proyectista  " [ref=e366]:
+            - cell "13/02/2026" [ref=e367]:
+              - generic "Vencido hace 4 días" [ref=e368]:
+                - generic [ref=e370]: 13/02/2026
+            - cell "EXP-005 BAJA" [ref=e371]:
+              - generic [ref=e373]:
+                - link "EXP-005" [ref=e374] [cursor=pointer]:
+                  - /url: /expedientes/e6a28b02-ddd1-492b-abde-ef461fba62ca?from=terminos
+                - generic [ref=e375]: BAJA
+            - cell "Diligencia de Arrendamiento" [ref=e376]
+            - cell "Abogado Litigante" [ref=e377]
+            - cell "Proyectista" [ref=e378]
+            - cell " " [ref=e379]:
+              - button "" [ref=e380] [cursor=pointer]:
+                - generic [ref=e381]: 
+              - button "" [ref=e382] [cursor=pointer]:
+                - generic [ref=e383]: 
+              - text:     
+          - row "1 Proyectista 2 Revisión 3 Gerencia 4 Dirección 5 Liberado 6 Presentado  Concluido" [ref=e384]:
+            - cell "1 Proyectista 2 Revisión 3 Gerencia 4 Dirección 5 Liberado 6 Presentado  Concluido" [ref=e385]:
+              - generic [ref=e386]:
+                - generic [ref=e387]:
+                  - generic [ref=e389]: "1"
+                  - generic [ref=e390]: Proyectista
+                - generic [ref=e392]:
+                  - generic [ref=e394]: "2"
+                  - generic [ref=e395]: Revisión
+                - generic [ref=e397]:
+                  - generic [ref=e399]: "3"
+                  - generic [ref=e400]: Gerencia
+                - generic [ref=e402]:
+                  - generic [ref=e404]: "4"
+                  - generic [ref=e405]: Dirección
+                - generic [ref=e407]:
+                  - generic [ref=e409]: "5"
+                  - generic [ref=e410]: Liberado
+                - generic [ref=e412]:
+                  - generic [ref=e414]: "6"
+                  - generic [ref=e415]: Presentado
+                - generic [ref=e417]:
+                  - generic [ref=e419]: 
+                  - generic [ref=e420]: Concluido
+          - row "13/02/2026 EXP-006 ALTA Solicitud de Copias Certificadas Abogado Litigante Dirección  " [ref=e421]:
+            - cell "13/02/2026" [ref=e422]:
+              - generic "Vencido hace 4 días" [ref=e423]:
+                - generic [ref=e425]: 13/02/2026
+            - cell "EXP-006 ALTA" [ref=e426]:
+              - generic [ref=e428]:
+                - link "EXP-006" [ref=e429] [cursor=pointer]:
+                  - /url: /expedientes/09e54d8c-4d92-436d-9e2a-90706209ed46?from=terminos
+                - generic [ref=e430]: ALTA
+            - cell "Solicitud de Copias Certificadas" [ref=e431]
+            - cell "Abogado Litigante" [ref=e432]
+            - cell "Dirección" [ref=e433]
+            - cell " " [ref=e434]:
+              - button "" [ref=e435] [cursor=pointer]:
+                - generic [ref=e436]: 
+              - button "" [ref=e437] [cursor=pointer]:
+                - generic [ref=e438]: 
+              - text:   
+          - row " Proyectista  Revisión  Gerencia 4 Dirección 5 Liberado 6 Presentado  Concluido" [ref=e439]:
+            - cell " Proyectista  Revisión  Gerencia 4 Dirección 5 Liberado 6 Presentado  Concluido" [ref=e440]:
+              - generic [ref=e441]:
+                - generic [ref=e442]:
+                  - generic [ref=e444]: 
+                  - generic [ref=e445]: Proyectista
+                - generic [ref=e447]:
+                  - generic [ref=e449]: 
+                  - generic [ref=e450]: Revisión
+                - generic [ref=e452]:
+                  - generic [ref=e454]: 
+                  - generic [ref=e455]: Gerencia
+                - generic [ref=e457]:
+                  - generic [ref=e459]: "4"
+                  - generic [ref=e460]: Dirección
+                - generic [ref=e462]:
+                  - generic [ref=e464]: "5"
+                  - generic [ref=e465]: Liberado
+                - generic [ref=e467]:
+                  - generic [ref=e469]: "6"
+                  - generic [ref=e470]: Presentado
+                - generic [ref=e472]:
+                  - generic [ref=e474]: 
+                  - generic [ref=e475]: Concluido
+          - row "14/02/2026 001 ALTA Juan vs Perez Recurso de queja ante Tribunal Colegiado Abogado Litigante Proyectista  " [ref=e476]:
+            - cell "14/02/2026" [ref=e477]:
+              - generic "Vencido hace 3 días" [ref=e478]:
+                - generic [ref=e480]: 14/02/2026
+            - cell "001 ALTA Juan vs Perez" [ref=e481]:
+              - generic [ref=e482]:
+                - generic [ref=e483]:
+                  - link "001" [ref=e484] [cursor=pointer]:
+                    - /url: /expedientes/b78d6de1-ad7e-4cc8-a913-1f536f466d50?from=terminos
+                  - generic [ref=e485]: ALTA
+                - generic [ref=e486]: Juan vs Perez
+            - cell "Recurso de queja ante Tribunal Colegiado" [ref=e487]
+            - cell "Abogado Litigante" [ref=e488]
+            - cell "Proyectista" [ref=e489]
+            - cell " " [ref=e490]:
+              - button "" [ref=e491] [cursor=pointer]:
+                - generic [ref=e492]: 
+              - button "" [ref=e493] [cursor=pointer]:
+                - generic [ref=e494]: 
+              - text:   
+          - row "1 Proyectista 2 Revisión 3 Gerencia 4 Dirección 5 Liberado 6 Presentado  Concluido" [ref=e495]:
+            - cell "1 Proyectista 2 Revisión 3 Gerencia 4 Dirección 5 Liberado 6 Presentado  Concluido" [ref=e496]:
+              - generic [ref=e497]:
+                - generic [ref=e498]:
+                  - generic [ref=e500]: "1"
+                  - generic [ref=e501]: Proyectista
+                - generic [ref=e503]:
+                  - generic [ref=e505]: "2"
+                  - generic [ref=e506]: Revisión
+                - generic [ref=e508]:
+                  - generic [ref=e510]: "3"
+                  - generic [ref=e511]: Gerencia
+                - generic [ref=e513]:
+                  - generic [ref=e515]: "4"
+                  - generic [ref=e516]: Dirección
+                - generic [ref=e518]:
+                  - generic [ref=e520]: "5"
+                  - generic [ref=e521]: Liberado
+                - generic [ref=e523]:
+                  - generic [ref=e525]: "6"
+                  - generic [ref=e526]: Presentado
+                - generic [ref=e528]:
+                  - generic [ref=e530]: 
+                  - generic [ref=e531]: Concluido
+          - row "14/02/2026 EXP-005 BAJA Borrador de Convenio Abogado Litigante Liberado  " [ref=e532]:
+            - cell "14/02/2026" [ref=e533]:
+              - generic "Vencido hace 3 días" [ref=e534]:
+                - generic [ref=e536]: 14/02/2026
+            - cell "EXP-005 BAJA" [ref=e537]:
+              - generic [ref=e539]:
+                - link "EXP-005" [ref=e540] [cursor=pointer]:
+                  - /url: /expedientes/e6a28b02-ddd1-492b-abde-ef461fba62ca?from=terminos
+                - generic [ref=e541]: BAJA
+            - cell "Borrador de Convenio" [ref=e542]
+            - cell "Abogado Litigante" [ref=e543]
+            - cell "Liberado" [ref=e544]
+            - cell " " [ref=e545]:
+              - button "" [ref=e546]:
+                - generic [ref=e547]: 
+              - button "" [ref=e548] [cursor=pointer]:
+                - generic [ref=e549]: 
+              - text:  
+          - row " Proyectista  Revisión  Gerencia  Dirección 5 Liberado 6 Presentado  Concluido" [ref=e550]:
+            - cell " Proyectista  Revisión  Gerencia  Dirección 5 Liberado 6 Presentado  Concluido" [ref=e551]:
+              - generic [ref=e552]:
+                - generic [ref=e553]:
+                  - generic [ref=e555]: 
+                  - generic [ref=e556]: Proyectista
+                - generic [ref=e558]:
+                  - generic [ref=e560]: 
+                  - generic [ref=e561]: Revisión
+                - generic [ref=e563]:
+                  - generic [ref=e565]: 
+                  - generic [ref=e566]: Gerencia
+                - generic [ref=e568]:
+                  - generic [ref=e570]: 
+                  - generic [ref=e571]: Dirección
+                - generic [ref=e573]:
+                  - generic [ref=e575]: "5"
+                  - generic [ref=e576]: Liberado
+                - generic [ref=e578]:
+                  - generic [ref=e580]: "6"
+                  - generic [ref=e581]: Presentado
+                - generic [ref=e583]:
+                  - generic [ref=e585]: 
+                  - generic [ref=e586]: Concluido
+          - row "15/02/2026 001 ALTA Juan vs Perez Contestación de demanda laboral - Expediente 001 Abogado Litigante Proyectista  " [ref=e587]:
+            - cell "15/02/2026" [ref=e588]:
+              - generic "Vencido hace 2 días" [ref=e589]:
+                - generic [ref=e591]: 15/02/2026
+            - cell "001 ALTA Juan vs Perez" [ref=e592]:
+              - generic [ref=e593]:
+                - generic [ref=e594]:
+                  - link "001" [ref=e595] [cursor=pointer]:
+                    - /url: /expedientes/b78d6de1-ad7e-4cc8-a913-1f536f466d50?from=terminos
+                  - generic [ref=e596]: ALTA
+                - generic [ref=e597]: Juan vs Perez
+            - cell "Contestación de demanda laboral - Expediente 001" [ref=e598]
+            - cell "Abogado Litigante" [ref=e599]
+            - cell "Proyectista" [ref=e600]
+            - cell " " [ref=e601]:
+              - button "" [ref=e602] [cursor=pointer]:
+                - generic [ref=e603]: 
+              - button "" [ref=e604] [cursor=pointer]:
+                - generic [ref=e605]: 
+              - text:   
+          - row "1 Proyectista 2 Revisión 3 Gerencia 4 Dirección 5 Liberado 6 Presentado  Concluido" [ref=e606]:
+            - cell "1 Proyectista 2 Revisión 3 Gerencia 4 Dirección 5 Liberado 6 Presentado  Concluido" [ref=e607]:
+              - generic [ref=e608]:
+                - generic [ref=e609]:
+                  - generic [ref=e611]: "1"
+                  - generic [ref=e612]: Proyectista
+                - generic [ref=e614]:
+                  - generic [ref=e616]: "2"
+                  - generic [ref=e617]: Revisión
+                - generic [ref=e619]:
+                  - generic [ref=e621]: "3"
+                  - generic [ref=e622]: Gerencia
+                - generic [ref=e624]:
+                  - generic [ref=e626]: "4"
+                  - generic [ref=e627]: Dirección
+                - generic [ref=e629]:
+                  - generic [ref=e631]: "5"
+                  - generic [ref=e632]: Liberado
+                - generic [ref=e634]:
+                  - generic [ref=e636]: "6"
+                  - generic [ref=e637]: Presentado
+                - generic [ref=e639]:
+                  - generic [ref=e641]: 
+                  - generic [ref=e642]: Concluido
+      - generic [ref=e643]:
+        - generic [ref=e644]: Mostrando página 1 de 2
+        - link "Siguiente " [ref=e646] [cursor=pointer]:
+          - /url: /terminos?page=1&keyword=&estatus=&prioridad=&abogadoId=
+          - text: Siguiente
+          - generic [ref=e647]: 
+  - text:      

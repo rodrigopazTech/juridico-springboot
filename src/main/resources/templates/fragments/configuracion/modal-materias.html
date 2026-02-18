@@ -1,0 +1,64 @@
+<div th:fragment="modal" id="modal-materias"
+    class="modal fixed inset-0 bg-gray-900/50 z-50 hidden items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 animate-fade-in-down">
+
+        <div class="flex justify-between items-center p-4 border-b bg-gob-guinda text-white rounded-t-lg shadow-sm">
+            <div>
+                <h3 class="font-bold text-lg font-headings tracking-wide"><i
+                        class="fas fa-list-ul mr-2 text-gob-oro"></i> Gestionar Materias</h3>
+                <p class="text-xs text-amber-100 font-sans" id="subtitulo-gerencia">Cargando...</p>
+            </div>
+            <button onclick="cerrarModalMaterias()" class="hover:text-gob-oro transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <div class="p-6">
+            <!-- Formulario de rápida adición -->
+            <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-inner">
+                <label class="block text-xs font-bold text-gob-guinda uppercase mb-2 tracking-wider">Nueva
+                    Materia</label>
+                <div class="flex gap-2">
+                    <input type="text" id="nueva-materia-nombre" placeholder="Nombre de la especialidad..."
+                        class="flex-1 rounded border-gray-300 text-sm focus:ring-gob-guinda focus:border-gob-guinda px-3 py-2 shadow-sm border bg-white">
+                    <button onclick="agregarMateria()"
+                        class="bg-gob-guinda text-white px-4 py-2 rounded text-sm font-bold hover:bg-gob-guindaDark transition-colors shadow-md shadow-gray-300">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <input type="hidden" id="modal-gerencia-id">
+                </div>
+                <p id="materia-feedback" class="mt-2 text-xs hidden"></p>
+            </div>
+
+            <div id="contenedor-lista-materias">
+                <div class="text-center text-gray-400 py-4">
+                    <i class="fas fa-spinner fa-spin mr-2"></i> Cargando materias...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:fragment="lista">
+    <ul class="space-y-2 max-h-60 overflow-y-auto pr-1" th:if="${!materias.empty}">
+        <li th:each="m : ${materias}"
+            class="flex justify-between items-center bg-white p-3 rounded border border-gray-200 hover:bg-amber-50 hover:border-gob-oro transition-colors group shadow-sm">
+
+            <div class="flex items-center gap-2">
+                <i class="fas fa-book text-gob-oro text-xs"></i>
+                <span class="text-gray-700 font-medium text-sm font-sans" th:text="${m.nombre}">Civil</span>
+            </div>
+
+            <button th:onclick="'confirmarEliminarMateria(' + ${m.id} + ')'"
+                class="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </li>
+    </ul>
+
+    <div th:if="${materias.empty}"
+        class="text-center text-gray-400 py-6 italic text-sm border-2 border-dashed border-gray-100 rounded-lg bg-gray-50">
+        <i class="fas fa-folder-open mb-2 block text-gray-300 text-xl"></i>
+        Esta gerencia no tiene materias asignadas aún.
+    </div>
+</div>

@@ -1,0 +1,102 @@
+- generic [active] [ref=e1]:
+  - complementary "Sidebar" [ref=e2]:
+    - generic [ref=e3]:
+      - link " Agenda Legal" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: 
+        - generic [ref=e7]: Agenda Legal
+      - list [ref=e8]:
+        - listitem [ref=e9]:
+          - link " Dashboard" [ref=e10] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=e11]: 
+            - generic [ref=e12]: Dashboard
+        - listitem [ref=e13]:
+          - link " Agenda General" [ref=e14] [cursor=pointer]:
+            - /url: /agenda
+            - generic [ref=e15]: 
+            - generic [ref=e16]: Agenda General
+        - listitem [ref=e17]:
+          - link " Centro de Notificaciones" [ref=e18] [cursor=pointer]:
+            - /url: /alertas
+            - generic [ref=e20]: 
+            - generic [ref=e21]: Centro de Notificaciones
+        - listitem [ref=e22]:
+          - link " Expedientes" [ref=e23] [cursor=pointer]:
+            - /url: /expedientes
+            - generic [ref=e24]: 
+            - generic [ref=e25]: Expedientes
+        - listitem [ref=e26]:
+          - link " Términos" [ref=e27] [cursor=pointer]:
+            - /url: /terminos
+            - generic [ref=e28]: 
+            - generic [ref=e29]: Términos
+        - listitem [ref=e30]:
+          - link " Audiencias" [ref=e31] [cursor=pointer]:
+            - /url: /audiencias
+            - generic [ref=e32]: 
+            - generic [ref=e33]: Audiencias
+        - listitem [ref=e34]:
+          - link " Usuarios" [ref=e35] [cursor=pointer]:
+            - /url: /usuarios
+            - generic [ref=e36]: 
+            - generic [ref=e37]: Usuarios
+        - listitem [ref=e38]:
+          - link " Configuración" [ref=e39] [cursor=pointer]:
+            - /url: /configuracion
+            - generic [ref=e40]: 
+            - generic [ref=e41]: Configuración
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e45]: D
+          - generic [ref=e46]:
+            - paragraph [ref=e47]: Director General
+            - paragraph [ref=e48]: DIRECCION
+        - link " Cerrar Sesión" [ref=e49] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e50]: 
+          - generic [ref=e51]: Cerrar Sesión
+  - generic [ref=e52]:
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - heading " Dashboard" [level=1] [ref=e55]:
+          - generic [ref=e56]: 
+          - text: Dashboard
+        - paragraph [ref=e57]: Resumen general del sistema
+        - separator [ref=e58]
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - generic [ref=e62]: 
+          - text: "Filtrar Gerencia:"
+        - combobox " Filtrar Gerencia:" [ref=e63]:
+          - option "Todas las Gerencias" [selected]
+          - option "Gerencia Civil, Mercantil, Fiscal y Administrativo"
+          - option "GDSA"
+          - option "Gerencia Laboral y Penal"
+          - option "Gerencia Transparencia y Amparo"
+    - generic [ref=e64]:
+      - generic [ref=e65]:
+        - paragraph [ref=e66]: Total Expedientes
+        - heading "8" [level=3] [ref=e67]
+      - generic [ref=e68]:
+        - paragraph [ref=e69]: En Trámite
+        - heading "8" [level=3] [ref=e70]
+      - generic [ref=e71]:
+        - paragraph [ref=e72]: Audiencias
+        - heading "18" [level=3] [ref=e73]
+      - generic [ref=e74]:
+        - paragraph [ref=e75]: Términos
+        - heading "19" [level=3] [ref=e76]
+    - generic [ref=e77]:
+      - heading " Estatus de Expedientes" [level=3] [ref=e79]:
+        - generic [ref=e80]: 
+        - text: Estatus de Expedientes
+      - heading " Carga de Trabajo por Usuario" [level=3] [ref=e84]:
+        - generic [ref=e85]: 
+        - text: Carga de Trabajo por Usuario
+      - heading " Distribución por Gerencia" [level=3] [ref=e89]:
+        - generic [ref=e90]: 
+        - text: Distribución por Gerencia
+      - heading " Trabajo Completado (Mensual)" [level=3] [ref=e94]:
+        - generic [ref=e95]: 
+        - text: Trabajo Completado (Mensual)

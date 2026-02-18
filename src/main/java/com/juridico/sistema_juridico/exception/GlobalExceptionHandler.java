@@ -21,9 +21,11 @@ public class GlobalExceptionHandler {
 
     // 400 - Validation Errors (Atrapa los errores de las anotaciones @Valid)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
         String firstErrorMessage = ex.getBindingResult().getFieldErrors().get(0).getDefaultMessage();
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "Error de validación: " + firstErrorMessage, request);
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "Error de validación: " + firstErrorMessage,
+                request);
     }
 
     // 401 - Unauthorized (No ha iniciado sesión)
@@ -40,11 +42,13 @@ public class GlobalExceptionHandler {
 
     // 404 - Not Found (Recurso no existe)
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex,
+            HttpServletRequest request) {
         return buildErrorResponse(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request);
     }
 
-    // 409 - Conflict (Ya existe un registro con esos datos, ej: mismo número de expediente)
+    // 409 - Conflict (Ya existe un registro con esos datos, ej: mismo número de
+    // expediente)
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex, HttpServletRequest request) {
         return buildErrorResponse(HttpStatus.CONFLICT, "Conflict", ex.getMessage(), request);
@@ -53,14 +57,15 @@ public class GlobalExceptionHandler {
     // 500 - Internal Server Error (Errores genéricos o de base de datos)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", 
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
                 "Ocurrió un error inesperado en el sistema jurídico.", request);
     }
 
     /**
      * Método privado auxiliar para evitar repetir código al construir la respuesta.
      */
-    private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String errorLabel, String message, HttpServletRequest request) {
+    private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String errorLabel, String message,
+            HttpServletRequest request) {
         ErrorResponse error = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(status.value())
@@ -68,7 +73,7 @@ public class GlobalExceptionHandler {
                 .message(message)
                 .path(request.getRequestURI())
                 .build();
-        
+
         return new ResponseEntity<>(error, status);
     }
 }

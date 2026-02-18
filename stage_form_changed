@@ -1,0 +1,206 @@
+- generic [active] [ref=e1]:
+  - complementary "Sidebar" [ref=e2]:
+    - generic [ref=e3]:
+      - link " Agenda Legal" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: 
+        - generic [ref=e7]: Agenda Legal
+      - list [ref=e8]:
+        - listitem [ref=e9]:
+          - link " Dashboard" [ref=e10] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=e11]: 
+            - generic [ref=e12]: Dashboard
+        - listitem [ref=e13]:
+          - link " Agenda General" [ref=e14] [cursor=pointer]:
+            - /url: /agenda
+            - generic [ref=e15]: 
+            - generic [ref=e16]: Agenda General
+        - listitem [ref=e17]:
+          - link " Centro de Notificaciones" [ref=e18] [cursor=pointer]:
+            - /url: /alertas
+            - generic [ref=e20]: 
+            - generic [ref=e21]: Centro de Notificaciones
+        - listitem [ref=e22]:
+          - link " Expedientes" [ref=e23] [cursor=pointer]:
+            - /url: /expedientes
+            - generic [ref=e24]: 
+            - generic [ref=e25]: Expedientes
+        - listitem [ref=e26]:
+          - link " Términos" [ref=e27] [cursor=pointer]:
+            - /url: /terminos
+            - generic [ref=e28]: 
+            - generic [ref=e29]: Términos
+        - listitem [ref=e30]:
+          - link " Audiencias" [ref=e31] [cursor=pointer]:
+            - /url: /audiencias
+            - generic [ref=e32]: 
+            - generic [ref=e33]: Audiencias
+        - listitem [ref=e34]:
+          - link " Usuarios" [ref=e35] [cursor=pointer]:
+            - /url: /usuarios
+            - generic [ref=e36]: 
+            - generic [ref=e37]: Usuarios
+        - listitem [ref=e38]:
+          - link " Configuración" [ref=e39] [cursor=pointer]:
+            - /url: /configuracion
+            - generic [ref=e40]: 
+            - generic [ref=e41]: Configuración
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e45]: D
+          - generic [ref=e46]:
+            - paragraph [ref=e47]: Director General
+            - paragraph [ref=e48]: DIRECCION
+        - link " Cerrar Sesión" [ref=e49] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e50]: 
+          - generic [ref=e51]: Cerrar Sesión
+  - generic [ref=e53]:
+    - navigation "Breadcrumb" [ref=e54]:
+      - list [ref=e55]:
+        - listitem [ref=e56]:
+          - link " Dashboard" [ref=e57] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=e58]: 
+            - text: Dashboard
+        - listitem [ref=e59]:
+          - generic [ref=e60]:
+            - generic [ref=e61]: 
+            - link "Expedientes" [ref=e62] [cursor=pointer]:
+              - /url: /expedientes
+        - listitem [ref=e63]:
+          - generic [ref=e64]:
+            - generic [ref=e65]: 
+            - generic [ref=e66]: EXP-003
+    - generic [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - heading "EXP-003" [level=2] [ref=e71]
+          - generic [ref=e72]: TRAMITE
+        - paragraph [ref=e73]: Detalle general del asunto jurídico y seguimiento.
+      - generic [ref=e74]:
+        - link " Volver" [ref=e75] [cursor=pointer]:
+          - /url: /expedientes
+          - generic [ref=e76]: 
+          - text: Volver
+        - button " Observaciones" [ref=e77] [cursor=pointer]:
+          - generic [ref=e78]: 
+          - text: Observaciones
+        - button " Editar" [ref=e79] [cursor=pointer]:
+          - generic [ref=e80]: 
+          - text: Editar
+        - button " Cambiar Etapa" [ref=e81] [cursor=pointer]:
+          - generic [ref=e82]: 
+          - text: Cambiar Etapa
+        - button " Gestor Documental" [ref=e83] [cursor=pointer]:
+          - generic [ref=e84]: 
+          - text: Gestor Documental
+    - generic [ref=e85]:
+      - generic [ref=e87]:
+        - heading " Información General" [level=3] [ref=e88]:
+          - generic [ref=e89]: 
+          - text: Información General
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - paragraph [ref=e92]: Gerencia
+            - paragraph [ref=e93]: Gerencia Civil, Mercantil, Fiscal y Administrativo
+          - generic [ref=e94]:
+            - paragraph [ref=e95]: Materia
+            - paragraph [ref=e96]: Mercantil
+          - generic [ref=e97]:
+            - paragraph [ref=e98]: Tipo Expediente
+            - paragraph [ref=e99]: Juicio Ejecutivo
+          - generic [ref=e100]:
+            - paragraph [ref=e101]: Órgano Jurisdiccional
+            - paragraph [ref=e102]: Juzgado 34 de lo Civil CDMX
+          - generic [ref=e103]:
+            - paragraph [ref=e104]: Ubicación
+            - paragraph [ref=e105]:
+              - generic [ref=e106]: 
+          - generic [ref=e107]:
+            - paragraph [ref=e108]: Prioridad
+            - generic [ref=e109]: MEDIA
+        - generic [ref=e112]:
+          - generic [ref=e113]:
+            - generic [ref=e114]: feb
+            - generic [ref=e115]: "20"
+          - generic [ref=e116]:
+            - heading " Próxima Audiencia" [level=4] [ref=e117]:
+              - generic [ref=e118]: 
+              - text: Próxima Audiencia
+            - paragraph [ref=e119]: Audiencia de Pruebas
+            - paragraph [ref=e120]:
+              - generic [ref=e121]: 
+              - text: 00:00 hrs
+          - generic [ref=e122]:
+            - paragraph [ref=e123]: Comparece
+            - generic [ref=e125]: Titular
+        - separator [ref=e126]
+        - generic [ref=e127]:
+          - generic [ref=e128]:
+            - heading " Detalle del Asunto" [level=3] [ref=e129]:
+              - generic [ref=e130]: 
+              - text: Detalle del Asunto
+            - generic [ref=e131]:
+              - paragraph [ref=e132]: Partes Procesales
+              - generic [ref=e133]:
+                - generic [ref=e134]: 
+                - generic [ref=e135]: Sin partes registradas
+            - generic [ref=e136]:
+              - paragraph [ref=e137]: Descripción de los Hechos
+              - generic [ref=e138]: Cobro de pagaré mercantil
+          - generic [ref=e139]:
+            - heading " Responsable" [level=3] [ref=e140]:
+              - generic [ref=e141]: 
+              - text: Responsable
+            - generic [ref=e142]:
+              - generic [ref=e143]:
+                - generic [ref=e145]: 
+                - generic [ref=e146]:
+                  - paragraph [ref=e147]: Abogado Asignado
+                  - paragraph [ref=e148]: Abogado Litigante
+              - paragraph [ref=e150]:
+                - generic [ref=e151]: 
+                - generic [ref=e152]: abogado@juridico.com
+      - generic [ref=e154]:
+        - heading " Historial de Cambios" [level=3] [ref=e155]:
+          - generic [ref=e156]: 
+          - text: Historial de Cambios
+        - generic [ref=e157]:
+          - generic [ref=e158]:
+            - paragraph [ref=e160]: Hace 2 horas
+            - paragraph [ref=e161]: Cambio de Etapa
+            - paragraph [ref=e162]: Lic. Juan Pérez cambió a "LAUDO".
+          - generic [ref=e163]:
+            - paragraph [ref=e165]: Ayer, 14:30
+            - paragraph [ref=e166]: Edición de Expediente
+            - paragraph [ref=e167]: Se actualizó la descripción.
+          - generic [ref=e168]:
+            - paragraph [ref=e170]: 15 Ene 2026
+            - paragraph [ref=e171]: Creación
+            - paragraph [ref=e172]: Expediente registrado en el sistema.
+    - generic [ref=e173]:
+      - generic [ref=e174]:
+        - heading " Archivos Recientes" [level=3] [ref=e175]:
+          - generic [ref=e176]: 
+          - text: Archivos Recientes
+        - generic [ref=e177]: Últimos 3 documentos cargados
+      - generic [ref=e178]:
+        - generic [ref=e179] [cursor=pointer]:
+          - generic [ref=e181]: 
+          - generic [ref=e182]:
+            - paragraph [ref=e183]: Sentencia_Final.pdf
+            - paragraph [ref=e184]: 2.4 MB • Hace 2 días
+        - generic [ref=e185] [cursor=pointer]:
+          - generic [ref=e187]: 
+          - generic [ref=e188]:
+            - paragraph [ref=e189]: Demanda_Inicial.docx
+            - paragraph [ref=e190]: 1.1 MB • 15 Ene 2026
+        - generic [ref=e191] [cursor=pointer]:
+          - generic [ref=e193]: 
+          - generic [ref=e194]:
+            - paragraph [ref=e195]: Evidencia_01.jpg
+            - paragraph [ref=e196]: 4.5 MB • 15 Ene 2026
+  - generic:             
+  - generic:               +        

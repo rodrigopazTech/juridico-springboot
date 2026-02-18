@@ -1,0 +1,269 @@
+- generic [active] [ref=e1]:
+  - complementary "Sidebar" [ref=e2]:
+    - generic [ref=e3]:
+      - link " Agenda Legal" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: 
+        - generic [ref=e7]: Agenda Legal
+      - list [ref=e8]:
+        - listitem [ref=e9]:
+          - link " Dashboard" [ref=e10] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=e11]: 
+            - generic [ref=e12]: Dashboard
+        - listitem [ref=e13]:
+          - link " Agenda General" [ref=e14] [cursor=pointer]:
+            - /url: /agenda
+            - generic [ref=e15]: 
+            - generic [ref=e16]: Agenda General
+        - listitem [ref=e17]:
+          - link " Centro de Notificaciones" [ref=e18] [cursor=pointer]:
+            - /url: /alertas
+            - generic [ref=e20]: 
+            - generic [ref=e21]: Centro de Notificaciones
+        - listitem [ref=e22]:
+          - link " Expedientes" [ref=e23] [cursor=pointer]:
+            - /url: /expedientes
+            - generic [ref=e24]: 
+            - generic [ref=e25]: Expedientes
+        - listitem [ref=e26]:
+          - link " Términos" [ref=e27] [cursor=pointer]:
+            - /url: /terminos
+            - generic [ref=e28]: 
+            - generic [ref=e29]: Términos
+        - listitem [ref=e30]:
+          - link " Audiencias" [ref=e31] [cursor=pointer]:
+            - /url: /audiencias
+            - generic [ref=e32]: 
+            - generic [ref=e33]: Audiencias
+        - listitem [ref=e34]:
+          - link " Usuarios" [ref=e35] [cursor=pointer]:
+            - /url: /usuarios
+            - generic [ref=e36]: 
+            - generic [ref=e37]: Usuarios
+        - listitem [ref=e38]:
+          - link " Configuración" [ref=e39] [cursor=pointer]:
+            - /url: /configuracion
+            - generic [ref=e40]: 
+            - generic [ref=e41]: Configuración
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e45]: D
+          - generic [ref=e46]:
+            - paragraph [ref=e47]: Director General
+            - paragraph [ref=e48]: DIRECCION
+        - link " Cerrar Sesión" [ref=e49] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e50]: 
+          - generic [ref=e51]: Cerrar Sesión
+  - generic [ref=e52]:
+    - generic [ref=e53]:
+      - heading " Gestión de Expedientes" [level=1] [ref=e54]:
+        - generic [ref=e55]: 
+        - text: Gestión de Expedientes
+      - separator [ref=e56]
+    - main [ref=e57]:
+      - generic [ref=e58]:
+        - generic [ref=e59]:
+          - generic [ref=e61]: 
+          - textbox "Buscar por Expediente, Partes, Materia, Abogado, Órgano..." [ref=e62]
+        - button "+ Nuevo Expediente" [ref=e63] [cursor=pointer]:
+          - generic [ref=e64]: +
+          - text: Nuevo Expediente
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - heading " Filtros Disponibles" [level=3] [ref=e68]:
+            - generic [ref=e69]: 
+            - text: Filtros Disponibles
+          - generic [ref=e70]:
+            - link "Limpiar" [ref=e71] [cursor=pointer]:
+              - /url: /expedientes
+            - button "Aplicar" [ref=e72] [cursor=pointer]
+        - generic [ref=e73]:
+          - combobox [ref=e75]:
+            - 'option "Gerencia: Todas" [selected]'
+            - option "Gerencia Civil, Mercantil, Fiscal y Administrativo"
+            - option "GDSA"
+            - option "Gerencia Laboral y Penal"
+            - option "Gerencia Transparencia y Amparo"
+          - combobox [ref=e77]:
+            - 'option "Materia: Todas" [selected]'
+            - option "Civil"
+            - option "Mercantil"
+            - option "Fiscal"
+            - option "Administrativo"
+            - option "Laboral"
+            - option "Penal"
+            - option "Amparo"
+            - option "Transparencia"
+          - combobox [ref=e79]:
+            - 'option "Abogado: Todos" [selected]'
+            - option "Director General"
+            - option "Subdirector Jurídico"
+            - option "Gerente Civil"
+            - option "Jefe de Depto"
+            - option "Rodrigo Cristobal"
+            - option "Abogado Litigante"
+          - combobox [ref=e81]:
+            - 'option "Etapa: Todas" [selected]'
+            - option "TRAMITE"
+            - option "LAUDO"
+            - option "FIRME"
+            - option "CONCLUIDO"
+          - combobox [ref=e83]:
+            - 'option "Prioridad: Todas" [selected]'
+            - option "ALTA"
+            - option "MEDIA"
+            - option "BAJA"
+          - combobox [ref=e85]:
+            - 'option "Tipo: Todos" [selected]'
+            - option "Juicio Ordinario"
+            - option "Juicio Ejecutivo"
+            - option "Amparo Indirecto"
+      - generic [ref=e86]:
+        - link "001 Mercantil TRAMITE ALTA Juan vs Perez  Gerente Civil  Sin Órgano" [ref=e87] [cursor=pointer]:
+          - /url: /expedientes/b78d6de1-ad7e-4cc8-a913-1f536f466d50?from=expedientes
+          - generic [ref=e88]:
+            - generic [ref=e89]:
+              - generic [ref=e90]:
+                - heading "001" [level=4] [ref=e91]
+                - text: Mercantil
+              - generic [ref=e92]:
+                - generic [ref=e93]: TRAMITE
+                - generic [ref=e94]: ALTA
+            - paragraph [ref=e95]: Juan vs Perez
+            - generic [ref=e96]:
+              - generic [ref=e97]:
+                - generic [ref=e98]: 
+                - generic [ref=e99]: Gerente Civil
+              - generic [ref=e100]:
+                - generic [ref=e101]: 
+                - generic [ref=e102]: Sin Órgano
+        - link "ROD-40-TEST-001 Civil TRAMITE MEDIA Verificación ROD-40 vs Test  Director General  Primer Tribunal Colegiado" [ref=e103] [cursor=pointer]:
+          - /url: /expedientes/6f0e12de-2503-4f69-8111-9a7b4e46d9a3?from=expedientes
+          - generic [ref=e104]:
+            - generic [ref=e105]:
+              - generic [ref=e106]:
+                - heading "ROD-40-TEST-001" [level=4] [ref=e107]
+                - text: Civil
+              - generic [ref=e108]:
+                - generic [ref=e109]: TRAMITE
+                - generic [ref=e110]: MEDIA
+            - paragraph [ref=e111]: Verificación ROD-40 vs Test
+            - generic [ref=e112]:
+              - generic [ref=e113]:
+                - generic [ref=e114]: 
+                - generic [ref=e115]: Director General
+              - generic [ref=e116]:
+                - generic [ref=e117]: 
+                - generic [ref=e118]: Primer Tribunal Colegiado
+        - link "TEST-LABORAL-001 Fiscal TRAMITE MEDIA Testing IDOR  Director General  Juzgado 34 de lo Civil CDMX" [ref=e119] [cursor=pointer]:
+          - /url: /expedientes/a41bc228-8a10-42fe-a466-467dedb9a940?from=expedientes
+          - generic [ref=e120]:
+            - generic [ref=e121]:
+              - generic [ref=e122]:
+                - heading "TEST-LABORAL-001" [level=4] [ref=e123]
+                - text: Fiscal
+              - generic [ref=e124]:
+                - generic [ref=e125]: TRAMITE
+                - generic [ref=e126]: MEDIA
+            - paragraph [ref=e127]: Testing IDOR
+            - generic [ref=e128]:
+              - generic [ref=e129]:
+                - generic [ref=e130]: 
+                - generic [ref=e131]: Director General
+              - generic [ref=e132]:
+                - generic [ref=e133]: 
+                - generic [ref=e134]: Juzgado 34 de lo Civil CDMX
+        - link "EXP-006 Penal TRAMITE ALTA Defensa en proceso penal federal  Abogado Litigante  Primer Tribunal Colegiado" [ref=e135] [cursor=pointer]:
+          - /url: /expedientes/09e54d8c-4d92-436d-9e2a-90706209ed46?from=expedientes
+          - generic [ref=e136]:
+            - generic [ref=e137]:
+              - generic [ref=e138]:
+                - heading "EXP-006" [level=4] [ref=e139]
+                - text: Penal
+              - generic [ref=e140]:
+                - generic [ref=e141]: TRAMITE
+                - generic [ref=e142]: ALTA
+            - paragraph [ref=e143]: Defensa en proceso penal federal
+            - generic [ref=e144]:
+              - generic [ref=e145]:
+                - generic [ref=e146]: 
+                - generic [ref=e147]: Abogado Litigante
+              - generic [ref=e148]:
+                - generic [ref=e149]: 
+                - generic [ref=e150]: Primer Tribunal Colegiado
+        - link "EXP-002 Laboral TRAMITE ALTA Conflicto laboral por despido injustificado  Abogado Litigante  Juzgado 34 de lo Civil CDMX" [ref=e151] [cursor=pointer]:
+          - /url: /expedientes/0dbfe1c9-8bf6-46e9-9801-d80120e65630?from=expedientes
+          - generic [ref=e152]:
+            - generic [ref=e153]:
+              - generic [ref=e154]:
+                - heading "EXP-002" [level=4] [ref=e155]
+                - text: Laboral
+              - generic [ref=e156]:
+                - generic [ref=e157]: TRAMITE
+                - generic [ref=e158]: ALTA
+            - paragraph [ref=e159]: Conflicto laboral por despido injustificado
+            - generic [ref=e160]:
+              - generic [ref=e161]:
+                - generic [ref=e162]: 
+                - generic [ref=e163]: Abogado Litigante
+              - generic [ref=e164]:
+                - generic [ref=e165]: 
+                - generic [ref=e166]: Juzgado 34 de lo Civil CDMX
+        - link "EXP-003 Mercantil TRAMITE MEDIA Cobro de pagaré mercantil  Abogado Litigante  Juzgado 34 de lo Civil CDMX" [ref=e167] [cursor=pointer]:
+          - /url: /expedientes/48129805-146b-4334-bd87-66523de6ad9c?from=expedientes
+          - generic [ref=e168]:
+            - generic [ref=e169]:
+              - generic [ref=e170]:
+                - heading "EXP-003" [level=4] [ref=e171]
+                - text: Mercantil
+              - generic [ref=e172]:
+                - generic [ref=e173]: TRAMITE
+                - generic [ref=e174]: MEDIA
+            - paragraph [ref=e175]: Cobro de pagaré mercantil
+            - generic [ref=e176]:
+              - generic [ref=e177]:
+                - generic [ref=e178]: 
+                - generic [ref=e179]: Abogado Litigante
+              - generic [ref=e180]:
+                - generic [ref=e181]: 
+                - generic [ref=e182]: Juzgado 34 de lo Civil CDMX
+        - link "EXP-004 Amparo TRAMITE ALTA Recurso de amparo contra acto de autoridad  Abogado Litigante  Primer Tribunal Colegiado" [ref=e183] [cursor=pointer]:
+          - /url: /expedientes/68aa5d6e-d480-4057-b4fc-8ff4ff2ffe4c?from=expedientes
+          - generic [ref=e184]:
+            - generic [ref=e185]:
+              - generic [ref=e186]:
+                - heading "EXP-004" [level=4] [ref=e187]
+                - text: Amparo
+              - generic [ref=e188]:
+                - generic [ref=e189]: TRAMITE
+                - generic [ref=e190]: ALTA
+            - paragraph [ref=e191]: Recurso de amparo contra acto de autoridad
+            - generic [ref=e192]:
+              - generic [ref=e193]:
+                - generic [ref=e194]: 
+                - generic [ref=e195]: Abogado Litigante
+              - generic [ref=e196]:
+                - generic [ref=e197]: 
+                - generic [ref=e198]: Primer Tribunal Colegiado
+        - link "EXP-005 Civil TRAMITE BAJA  Abogado Litigante  Juzgado 34 de lo Civil CDMX" [ref=e199] [cursor=pointer]:
+          - /url: /expedientes/e6a28b02-ddd1-492b-abde-ef461fba62ca?from=expedientes
+          - generic [ref=e200]:
+            - generic [ref=e201]:
+              - generic [ref=e202]:
+                - heading "EXP-005" [level=4] [ref=e203]
+                - text: Civil
+              - generic [ref=e204]:
+                - generic [ref=e205]: TRAMITE
+                - generic [ref=e206]: BAJA
+            - paragraph [ref=e207]
+            - generic [ref=e208]:
+              - generic [ref=e209]:
+                - generic [ref=e210]: 
+                - generic [ref=e211]: Abogado Litigante
+              - generic [ref=e212]:
+                - generic [ref=e213]: 
+                - generic [ref=e214]: Juzgado 34 de lo Civil CDMX
+      - generic [ref=e216]: Página 1 de 1
+    - text: +  

@@ -1,0 +1,12 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]: 
+    - heading "Sistema Jurídico" [level=2] [ref=e5]
+  - generic [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e8]: Usuario
+      - textbox "admin@juridico.com" [ref=e9]: director@juridico.com
+    - generic [ref=e10]:
+      - generic [ref=e11]: Contraseña
+      - textbox "••••••••" [ref=e12]: "12345"
+    - button "Ingresar" [ref=e13] [cursor=pointer]

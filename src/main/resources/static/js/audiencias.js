@@ -3,7 +3,7 @@
  * Versión v3.0
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log("Sistema de Audiencias Cargado - v3.0");
 });
 
@@ -22,7 +22,7 @@ function toggleMenu(id) {
 }
 
 // Cerrar menús al hacer clic fuera
-window.addEventListener('click', function(e) {
+window.addEventListener('click', function (e) {
     if (!e.target.closest('td.relative')) {
         document.querySelectorAll('[id^="menu-"]').forEach(m => m.classList.add('hidden'));
     }
@@ -33,17 +33,17 @@ window.addEventListener('click', function(e) {
 // 1. ABRIR PARA CREAR
 function abrirModalAudiencia() {
     const form = document.getElementById('form-audiencia');
-    if(form) form.reset();
+    if (form) form.reset();
 
     const inputId = document.getElementById('input-audiencia-id');
-    if(inputId) inputId.value = '';
+    if (inputId) inputId.value = '';
 
     const titulo = document.getElementById('modal-titulo-audiencia');
-    if(titulo) titulo.innerHTML = '<i class="fas fa-gavel"></i> Nueva Audiencia';
+    if (titulo) titulo.innerHTML = '<i class="fas fa-gavel"></i> Nueva Audiencia';
 
     toggleUbicacion(false);
     const radioPresencial = document.querySelector('input[name="esVirtual"][value="false"]');
-    if(radioPresencial) radioPresencial.checked = true;
+    if (radioPresencial) radioPresencial.checked = true;
 
     document.getElementById('modal-audiencia').classList.remove('hidden');
 }
@@ -76,12 +76,12 @@ function prepararEdicion(btn) {
 
     if (esVirtual) {
         const radioVirtual = document.querySelector('input[name="esVirtual"][value="true"]');
-        if(radioVirtual) radioVirtual.checked = true;
+        if (radioVirtual) radioVirtual.checked = true;
         document.getElementById('input-url').value = url || '';
         toggleUbicacion(true);
     } else {
         const radioPresencial = document.querySelector('input[name="esVirtual"][value="false"]');
-        if(radioPresencial) radioPresencial.checked = true;
+        if (radioPresencial) radioPresencial.checked = true;
         document.getElementById('input-sala').value = sala || '';
         toggleUbicacion(false);
     }
@@ -91,7 +91,7 @@ function prepararEdicion(btn) {
 
 function setValueIfExists(elementId, value) {
     const el = document.getElementById(elementId);
-    if(el) el.value = value || '';
+    if (el) el.value = value || '';
 }
 
 // --- UTILIDADES ---
@@ -101,16 +101,16 @@ function toggleUbicacion(isVirtual) {
     const inputSala = document.getElementById('input-sala');
     const inputUrl = document.getElementById('input-url');
 
-    if(isVirtual) {
-        if(campoSala) campoSala.classList.add('hidden');
-        if(campoUrl) campoUrl.classList.remove('hidden');
-        if(inputUrl) inputUrl.setAttribute('required', 'required');
-        if(inputSala) inputSala.removeAttribute('required');
+    if (isVirtual) {
+        if (campoSala) campoSala.classList.add('hidden');
+        if (campoUrl) campoUrl.classList.remove('hidden');
+        if (inputUrl) inputUrl.setAttribute('required', 'required');
+        if (inputSala) inputSala.removeAttribute('required');
     } else {
-        if(campoSala) campoSala.classList.remove('hidden');
-        if(campoUrl) campoUrl.classList.add('hidden');
-        if(inputSala) inputSala.setAttribute('required', 'required');
-        if(inputUrl) inputUrl.removeAttribute('required');
+        if (campoSala) campoSala.classList.remove('hidden');
+        if (campoUrl) campoUrl.classList.add('hidden');
+        if (inputSala) inputSala.setAttribute('required', 'required');
+        if (inputUrl) inputUrl.removeAttribute('required');
     }
 }
 
@@ -122,4 +122,27 @@ function activarSubidaActa(id) {
 function abrirModalConcluir(id) {
     document.getElementById('concluir-audiencia-id').value = id;
     document.getElementById('modal-concluir').classList.remove('hidden');
+}
+
+// --- ELIMINAR ROD-13 ---
+function confirmarEliminar(id) {
+    Swal.fire({
+        title: '¿Eliminar audiencia?',
+        text: "Esta acción no se puede deshacer",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const inputId = document.getElementById('eliminar-audiencia-id');
+            const form = document.getElementById('form-eliminar-audiencia');
+            if (inputId && form) {
+                inputId.value = id;
+                form.submit();
+            }
+        }
+    })
 }

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,14 +8,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body class="bg-gray-100 flex items-center justify-center h-screen font-sans">
 
     <div class="bg-white p-10 rounded-lg shadow-xl w-full max-w-md border-t-4 border-[#621132]">
-        
+
         <div class="text-center mb-8">
             <i class="fas fa-balance-scale text-[#621132] text-5xl mb-4"></i>
             <h2 class="text-3xl font-bold text-gray-800">Sistema Jurídico</h2>
         </div>
+
+
 
         <div th:if="${param.error}" class="mb-4 p-3 bg-red-100 text-red-700 rounded text-sm text-center">
             Credenciales incorrectas.
@@ -26,16 +30,22 @@
         <form th:action="@{/perform_login}" method="POST" class="space-y-6">
             <div>
                 <label class="block text-gray-700 font-bold mb-2">Usuario</label>
-                <input type="text" name="username" required class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-[#621132]" placeholder="admin@juridico.com">
+                <input type="text" name="username" required
+                    class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-[#621132]"
+                    placeholder="admin@juridico.com">
             </div>
             <div>
                 <label class="block text-gray-700 font-bold mb-2">Contraseña</label>
-                <input type="password" name="password" required class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-[#621132]" placeholder="••••••••">
+                <input type="password" name="password" required
+                    class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-[#621132]"
+                    placeholder="••••••••">
             </div>
-            <button type="submit" class="w-full bg-[#621132] text-white font-bold py-3 rounded hover:bg-[#4a0d26] transition">
+            <button type="submit"
+                class="w-full bg-[#621132] text-white font-bold py-3 rounded hover:bg-[#4a0d26] transition">
                 Ingresar
             </button>
         </form>
     </div>
 </body>
+
 </html>

@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 2. Escuchar cambios en el filtro de gerencia
     const filtroGerencia = document.getElementById("filtroGerencia");
-    
+
     // Verificamos si es un SELECT (Directivos) para añadir el evento de cambio
     if (filtroGerencia && filtroGerencia.tagName === 'SELECT') {
         filtroGerencia.addEventListener("change", (e) => {
@@ -47,12 +47,12 @@ document.addEventListener("DOMContentLoaded", () => {
 async function actualizarDashboard(gerenciaId) {
     try {
         // Mostrar un pequeño indicador de carga (opcional con SweetAlert o CSS)
-        
+
         const url = gerenciaId ? `/dashboard/data?gerenciaId=${gerenciaId}` : '/dashboard/data';
         const response = await fetch(url);
-        
+
         if (!response.ok) throw new Error("Error en la respuesta del servidor");
-        
+
         const data = await response.json();
 
         // 3. Actualizar los números (KPIs) en la parte superior
@@ -103,9 +103,12 @@ function destroyExistingChart(id) {
 function renderEstatus(d) {
     if (!d) return;
     const canvasId = "chartEstatusExpedientes";
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
     destroyExistingChart(canvasId);
 
-    chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+    chartInstances[canvasId] = new Chart(canvas, {
         type: "doughnut",
         data: {
             labels: d.labels,
@@ -126,9 +129,12 @@ function renderEstatus(d) {
 function renderCargaUsuarios(d) {
     if (!d) return;
     const canvasId = "chartCargaTrabajoUsuarios";
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
     destroyExistingChart(canvasId);
 
-    chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+    chartInstances[canvasId] = new Chart(canvas, {
         type: "bar",
         data: {
             labels: d.labels,
@@ -149,9 +155,12 @@ function renderCargaUsuarios(d) {
 function renderGerencias(d) {
     if (!d) return;
     const canvasId = "chartDistribucionGerencias";
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
     destroyExistingChart(canvasId);
 
-    chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+    chartInstances[canvasId] = new Chart(canvas, {
         type: "pie",
         data: {
             labels: d.labels,
@@ -171,13 +180,16 @@ function renderGerencias(d) {
 function renderTrabajoMensual(d) {
     if (!d) return;
     const canvasId = "chartTrabajoCompletado";
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
     destroyExistingChart(canvasId);
 
     const baseColor = colorPalette[0];
     const rgbaColor = baseColor.replace('#', '').match(/.{2}/g).map(x => parseInt(x, 16)).join(', ');
     const backgroundColor = `rgba(${rgbaColor}, 0.1)`;
 
-    chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+    chartInstances[canvasId] = new Chart(canvas, {
         type: "line",
         data: {
             labels: d.labels,

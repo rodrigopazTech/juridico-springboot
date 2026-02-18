@@ -22,14 +22,11 @@ import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(
-    name = "expedientes",
-    indexes = {
+@Table(name = "expedientes", indexes = {
         @Index(name = "idx_expedientes_numero", columnList = "numero"),
         @Index(name = "idx_expedientes_etapa", columnList = "etapa_procesal"),
         @Index(name = "idx_expedientes_abogado", columnList = "abogado_responsable_id")
-    }
-)
+})
 public class Expediente {
 
     @Id
@@ -83,9 +80,11 @@ public class Expediente {
     // =========================
     // RELACIONES
     // =========================
+    @ToString.Exclude
     @OneToMany(mappedBy = "expediente", cascade = CascadeType.ALL)
     private List<Audiencia> audiencias;
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "expediente", cascade = CascadeType.ALL)
     private List<Termino> terminos;
 

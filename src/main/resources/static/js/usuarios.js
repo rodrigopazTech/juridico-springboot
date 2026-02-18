@@ -4,16 +4,13 @@
 let materiasUsuarioActual = [];
 
 function cambiarTab(tabName) {
-    // A. Ocultar contenidos
-    document.querySelectorAll('.tab-content').forEach(el => {
-        el.classList.add('hidden');
-        el.classList.remove('block');
-        el.style.display = 'none';
-    });
+    // Solo permitimos 'usuarios' ahora, o redirigimos si es necesario.
+    // Aunque ya quitamos el botón de Gerencias del HTML.
+    if (tabName !== 'usuarios') return;
 
     // Mostrar contenido seleccionado
     const content = document.getElementById('tab-' + tabName);
-    if(content) {
+    if (content) {
         content.classList.remove('hidden');
         content.classList.add('block');
         content.style.display = 'block';
@@ -24,18 +21,18 @@ function cambiarTab(tabName) {
         // Quitamos estilos de Tailwind
         btn.classList.remove('border-gob-guinda', 'text-gob-guinda', 'font-bold');
         btn.classList.add('border-transparent', 'text-gray-500');
-        
+
         // --- CORRECCIÓN CRÍTICA: Quitamos también la clase CSS 'active' ---
-        btn.classList.remove('active'); 
+        btn.classList.remove('active');
     });
 
     // Activar botón actual
     const btn = document.getElementById('btn-tab-' + tabName);
-    if(btn) {
+    if (btn) {
         // Ponemos estilos Tailwind
         btn.classList.remove('border-transparent', 'text-gray-500');
         btn.classList.add('border-gob-guinda', 'text-gob-guinda', 'font-bold');
-        
+
         // --- CORRECCIÓN CRÍTICA: Agregamos la clase CSS 'active' ---
         btn.classList.add('active');
     }
@@ -43,20 +40,20 @@ function cambiarTab(tabName) {
 
 function abrirModalUsuario() {
     document.getElementById('titulo-modal-usuario').innerHTML = '<i class="fas fa-user-plus mr-2"></i> Nuevo Usuario';
-    
+
     document.getElementById('input-usuario-id').value = '';
     document.getElementById('input-usuario-nombre').value = '';
     document.getElementById('input-usuario-email').value = '';
     document.getElementById('input-usuario-password').value = '';
-    document.getElementById('input-usuario-password').required = true; 
+    document.getElementById('input-usuario-password').required = true;
     document.getElementById('input-usuario-password').placeholder = "";
-    
+
     document.getElementById('select-usuario-rol').value = "";
     document.getElementById('select-usuario-gerencia').value = "";
     document.getElementById('check-usuario-activo').checked = true;
 
-    materiasUsuarioActual = []; 
-    
+    materiasUsuarioActual = [];
+
     document.getElementById('contenedor-materias').classList.add('hidden');
     document.getElementById('lista-materias-checkboxes').innerHTML = '';
 
@@ -124,18 +121,18 @@ function editarUsuario(id, nombre, email, rol, gerenciaId, activo, materiasIdsAr
     document.getElementById('input-usuario-email').value = email;
     document.getElementById('select-usuario-rol').value = rol;
     document.getElementById('check-usuario-activo').checked = activo;
-    
+
     const inputPass = document.getElementById('input-usuario-password');
     inputPass.value = ''; inputPass.required = false; inputPass.placeholder = "Dejar en blanco para mantener";
 
-    materiasUsuarioActual = materiasIdsArray || []; 
+    materiasUsuarioActual = materiasIdsArray || [];
     const selectGerencia = document.getElementById('select-usuario-gerencia');
-    
-    actualizarFormularioPorRol(); 
-    
+
+    actualizarFormularioPorRol();
+
     if (gerenciaId) {
         selectGerencia.value = gerenciaId;
-        cargarMateriasDeGerencia(); 
+        cargarMateriasDeGerencia();
     } else {
         selectGerencia.value = "";
         document.getElementById('contenedor-materias').classList.add('hidden');
@@ -143,35 +140,12 @@ function editarUsuario(id, nombre, email, rol, gerenciaId, activo, materiasIdsAr
 
     const btnEliminar = document.getElementById('btn-eliminar-usuario');
     btnEliminar.classList.remove('hidden');
-    document.getElementById('input-usuario-id').value = id; 
+    document.getElementById('input-usuario-id').value = id;
 
     const modal = document.getElementById('modal-usuario');
     modal.classList.remove('hidden'); modal.classList.add('flex');
 }
 
-function abrirModalGerencia() {
-    document.getElementById('titulo-modal-gerencia').innerHTML = '<i class="fas fa-building mr-2"></i> Nueva Gerencia';
-    document.getElementById('input-gerencia-id').value = '';
-    document.getElementById('input-gerencia-nombre').value = '';
-    document.getElementById('input-gerencia-desc').value = '';
-    document.getElementById('input-gerencia-activo').checked = true;
-
-    const modal = document.getElementById('modal-gerencia');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-function editarGerencia(id, nombre, descripcion, activo) {
-    document.getElementById('titulo-modal-gerencia').innerHTML = '<i class="fas fa-edit mr-2"></i> Editar Gerencia';
-    document.getElementById('input-gerencia-id').value = id;
-    document.getElementById('input-gerencia-nombre').value = nombre;
-    document.getElementById('input-gerencia-desc').value = descripcion;
-    document.getElementById('input-gerencia-activo').checked = activo;
-
-    const modal = document.getElementById('modal-gerencia');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
 
 // --- 3. LÓGICA "PRO" MATERIAS (AJAX) ---
 
@@ -180,7 +154,7 @@ function verMaterias(gerenciaId, nombreGerencia) {
     // 1. Configurar Modal
     document.getElementById('hidden-gerencia-id').value = gerenciaId;
     document.getElementById('subtitulo-gerencia').textContent = 'Gerencia: ' + nombreGerencia;
-    
+
     // 2. Mostrar Modal
     const modal = document.getElementById('modal-materias');
     modal.classList.remove('hidden');
@@ -206,41 +180,6 @@ function cargarListaMaterias(gerenciaId) {
         });
 }
 
-function guardarMateriaJS() {
-    const gerenciaId = document.getElementById('hidden-gerencia-id').value;
-    const nombreMateria = document.getElementById('input-nueva-materia').value;
-
-    if(!nombreMateria.trim()) {
-        alert("Escribe un nombre para la materia");
-        return;
-    }
-
-    // Datos a enviar
-    const data = {
-        nombre: nombreMateria,
-        gerencia: { id: gerenciaId }, // Solo mandamos el ID de la relación
-        activo: true
-    };
-
-    fetch('/usuarios/gerencias/materias/guardar', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            // Si usas CSRF, aquí iría el token
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => {
-        if(response.ok) {
-            // Limpiar input y recargar lista
-            document.getElementById('input-nueva-materia').value = '';
-            cargarListaMaterias(gerenciaId); 
-        } else {
-            alert("Error al guardar la materia");
-        }
-    })
-    .catch(error => console.error("Error:", error));
-}
 
 function cerrarModalMaterias() {
     const modal = document.getElementById('modal-materias');
@@ -254,7 +193,7 @@ function filtrarTabla(inputId, tbodyId) {
     const input = document.getElementById(inputId);
     const filter = input.value.toLowerCase();
     const tbody = document.getElementById(tbodyId);
-    if(!tbody) return;
+    if (!tbody) return;
 
     const rows = tbody.getElementsByTagName('tr');
 
@@ -269,26 +208,22 @@ function filtrarTabla(inputId, tbodyId) {
 }
 
 // Inicializar Listeners
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Buscador Usuarios
     const searchUser = document.getElementById('input-search-usuarios');
-    if(searchUser) {
+    if (searchUser) {
         searchUser.addEventListener('keyup', () => filtrarTabla('input-search-usuarios', 'tabla-usuarios-body'));
-    }
-
-    // Buscador Gerencias
-    const searchGerencia = document.getElementById('input-search-gerencias');
-    if(searchGerencia) {
-        searchGerencia.addEventListener('keyup', () => filtrarTabla('input-search-gerencias', 'tabla-gerencias-body'));
     }
 });
 
 // --- 5. CAMBIO DE ESTATUS (Eliminado Lógico) ---
 
 function confirmarCambioEstatus(id, tipo) {
-    let titulo = tipo === 'usuario' ? '¿Cambiar acceso del usuario?' : '¿Cambiar estatus de gerencia?';
+    if (tipo !== 'usuario') return;
+
+    let titulo = '¿Cambiar acceso del usuario?';
     let texto = "El registro cambiará de Activo a Inactivo (o viceversa).";
-    let url = tipo === 'usuario' ? `/usuarios/toggle/${id}` : `/usuarios/gerencias/toggle/${id}`;
+    let url = `/usuarios/toggle/${id}`;
 
     Swal.fire({
         title: titulo,
@@ -306,28 +241,11 @@ function confirmarCambioEstatus(id, tipo) {
     });
 }
 
-function eliminarMateriaJS(materiaId, gerenciaId) {
-    if(!confirm("¿Seguro que deseas eliminar esta materia?")) return;
-
-    fetch(`/usuarios/gerencias/materias/eliminar/${materiaId}`, {
-        method: 'DELETE',
-        // headers: { 'X-CSRF-TOKEN': ... } // Si activas CSRF en el futuro
-    })
-    .then(response => {
-        if(response.ok) {
-            // Recargamos la lista para ver que desapareció
-            cargarListaMaterias(gerenciaId);
-        } else {
-            alert("No se pudo eliminar. Verifica que no tenga expedientes vinculados.");
-        }
-    })
-    .catch(error => console.error("Error:", error));
-}
 
 function eliminarUsuarioDesdeModal() {
     const id = document.getElementById('input-usuario-id').value;
-    
-    if(!id) return; // Seguridad
+
+    if (!id) return; // Seguridad
 
     Swal.fire({
         title: '¿Eliminar usuario definitivamente?',
@@ -343,25 +261,25 @@ function eliminarUsuarioDesdeModal() {
             fetch(`/usuarios/eliminar/${id}`, {
                 method: 'DELETE'
             })
-            .then(async response => {
-                if (response.ok) {
-                    await Swal.fire('¡Eliminado!', 'El usuario ha sido borrado.', 'success');
-                    window.location.reload(); // Recargar para actualizar tabla
-                } else {
-                    const msg = await response.text();
-                    Swal.fire('Error', msg || 'No se pudo eliminar el usuario.', 'error');
-                }
-            })
-            .catch(error => {
-                console.error(error);
-                Swal.fire('Error', 'Ocurrió un error inesperado.', 'error');
-            });
+                .then(async response => {
+                    if (response.ok) {
+                        await Swal.fire('¡Eliminado!', 'El usuario ha sido borrado.', 'success');
+                        window.location.reload(); // Recargar para actualizar tabla
+                    } else {
+                        const msg = await response.text();
+                        Swal.fire('Error', msg || 'No se pudo eliminar el usuario.', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    Swal.fire('Error', 'Ocurrió un error inesperado.', 'error');
+                });
         }
     });
 }
 // Detectar tab en URL para abrirlo automáticamente
-    const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get('tab');
-    if(tabParam) {
-        cambiarTab(tabParam);
-    }
+const params = new URLSearchParams(window.location.search);
+const tabParam = params.get('tab');
+if (tabParam) {
+    cambiarTab(tabParam);
+}

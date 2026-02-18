@@ -111,4 +111,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                 GROUP BY u.nombreCompleto
             """)
     List<Object[]> contarAudienciasPorUsuario();
+
+    // 👤 ROD-12
+    long countByAbogadoCompareceId(Integer id);
 }

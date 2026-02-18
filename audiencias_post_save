@@ -1,0 +1,377 @@
+- generic [ref=e1]:
+  - complementary [ref=e2]:
+    - generic [ref=e3]:
+      - link [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: 
+        - generic [ref=e7]: Agenda Legal
+      - list [ref=e8]:
+        - listitem [ref=e9]:
+          - link [ref=e10] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=e11]: 
+            - generic [ref=e12]: Dashboard
+        - listitem [ref=e13]:
+          - link [ref=e14] [cursor=pointer]:
+            - /url: /agenda
+            - generic [ref=e15]: 
+            - generic [ref=e16]: Agenda General
+        - listitem [ref=e17]:
+          - link [ref=e18] [cursor=pointer]:
+            - /url: /alertas
+            - generic [ref=e20]: 
+            - generic [ref=e21]: Centro de Notificaciones
+        - listitem [ref=e22]:
+          - link [ref=e23] [cursor=pointer]:
+            - /url: /expedientes
+            - generic [ref=e24]: 
+            - generic [ref=e25]: Expedientes
+        - listitem [ref=e26]:
+          - link [ref=e27] [cursor=pointer]:
+            - /url: /terminos
+            - generic [ref=e28]: 
+            - generic [ref=e29]: Términos
+        - listitem [ref=e30]:
+          - link [ref=e31] [cursor=pointer]:
+            - /url: /audiencias
+            - generic [ref=e32]: 
+            - generic [ref=e33]: Audiencias
+        - listitem [ref=e34]:
+          - link [ref=e35] [cursor=pointer]:
+            - /url: /usuarios
+            - generic [ref=e36]: 
+            - generic [ref=e37]: Usuarios
+        - listitem [ref=e38]:
+          - link [ref=e39] [cursor=pointer]:
+            - /url: /configuracion
+            - generic [ref=e40]: 
+            - generic [ref=e41]: Configuración
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e45]: D
+          - generic [ref=e46]:
+            - paragraph [ref=e47]: Director General
+            - paragraph [ref=e48]: DIRECCION
+        - link [ref=e49] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e50]: 
+          - generic [ref=e51]: Cerrar Sesión
+  - generic [ref=e52]:
+    - generic [ref=e53]:
+      - heading [level=1] [ref=e54]:
+        - generic [ref=e55]: 
+        - text: Gestión de Audiencias
+      - separator [ref=e56]
+    - generic [ref=e57]:
+      - generic [ref=e58]:
+        - generic:
+          - generic: 
+        - textbox [ref=e59]:
+          - /placeholder: Buscar audiencia, expediente, sala...
+      - generic [ref=e60]:
+        - link [ref=e61] [cursor=pointer]:
+          - /url: /audiencias/exportar-excel?keyword=&tipo=&gerencia=&materia=&estatus=&periodo=&abogadoId=
+          - generic [ref=e62]: 
+          - text: Exportar
+        - button [ref=e63] [cursor=pointer]:
+          - generic [ref=e64]: +
+          - text: Nueva Audiencia
+    - generic [ref=e66]:
+      - generic [ref=e67]:
+        - heading [level=3] [ref=e68]:
+          - generic [ref=e69]: 
+          - text: Filtros Inteligentes
+        - generic [ref=e70]:
+          - link [ref=e71] [cursor=pointer]:
+            - /url: /audiencias
+            - text: Limpiar
+          - button [ref=e72] [cursor=pointer]: Aplicar Filtros
+      - generic [ref=e73]:
+        - combobox [ref=e74]
+        - combobox [ref=e75]
+        - combobox [ref=e77]
+        - combobox [ref=e79]
+        - combobox [ref=e81]
+    - generic [ref=e82]:
+      - table [ref=e84]:
+        - rowgroup [ref=e85]:
+          - row [ref=e86]:
+            - columnheader [ref=e87]: Fecha / Hora
+            - columnheader [ref=e88]: Expediente
+            - columnheader [ref=e89]: Gerencia / Materia
+            - columnheader [ref=e90]: Tipo / Ubicación
+            - columnheader [ref=e91]: Estatus
+            - columnheader [ref=e92]: Acciones
+        - rowgroup [ref=e93]:
+          - row [ref=e94]:
+            - cell [ref=e95]:
+              - generic [ref=e98]:
+                - generic [ref=e99]: 28/01/2026
+                - generic [ref=e100]: 11:00
+            - cell [ref=e101]:
+              - generic [ref=e102]:
+                - link [ref=e103] [cursor=pointer]:
+                  - /url: /expedientes/b78d6de1-ad7e-4cc8-a913-1f536f466d50?from=audiencias
+                  - text: "001"
+                - generic [ref=e104]: Juan vs Perez
+            - cell [ref=e105]:
+              - generic [ref=e106]:
+                - generic [ref=e107]: Gerencia Civil, Mercantil, Fiscal y Administrativo
+                - generic [ref=e108]: Mercantil
+            - cell [ref=e109]:
+              - text: Audiencia Inicial
+              - generic [ref=e110]:
+                - generic [ref=e111]: 
+                - generic [ref=e112]: Presencial
+            - cell [ref=e113]
+            - cell [ref=e114]:
+              - button [ref=e115]:
+                - generic [ref=e116]: 
+              - button [ref=e117] [cursor=pointer]:
+                - generic [ref=e118]: 
+              - text:   
+          - row [ref=e119]:
+            - cell [ref=e120]:
+              - generic [ref=e123]:
+                - generic [ref=e124]: 05/02/2026
+                - generic [ref=e125]: 09:30
+            - cell [ref=e126]:
+              - generic [ref=e127]:
+                - link [ref=e128] [cursor=pointer]:
+                  - /url: /expedientes/b78d6de1-ad7e-4cc8-a913-1f536f466d50?from=audiencias
+                  - text: "001"
+                - generic [ref=e129]: Juan vs Perez
+            - cell [ref=e130]:
+              - generic [ref=e131]:
+                - generic [ref=e132]: Gerencia Civil, Mercantil, Fiscal y Administrativo
+                - generic [ref=e133]: Mercantil
+            - cell [ref=e134]:
+              - text: Audiencia Incidental
+              - generic [ref=e135]:
+                - generic [ref=e136]: 
+                - generic [ref=e137]: Presencial
+            - cell [ref=e138]
+            - cell [ref=e139]:
+              - button [ref=e140]:
+                - generic [ref=e141]: 
+              - button [ref=e142] [cursor=pointer]:
+                - generic [ref=e143]: 
+              - text:   
+          - row [ref=e144]:
+            - cell [ref=e145]:
+              - generic [ref=e148]:
+                - generic [ref=e149]: 10/02/2026
+                - generic [ref=e150]: 09:00
+            - cell [ref=e151]:
+              - link [ref=e153] [cursor=pointer]:
+                - /url: /expedientes/09e54d8c-4d92-436d-9e2a-90706209ed46?from=audiencias
+                - text: EXP-006
+            - cell [ref=e154]:
+              - generic [ref=e155]:
+                - generic [ref=e156]: Gerencia Laboral y Penal
+                - generic [ref=e157]: Penal
+            - cell [ref=e158]:
+              - text: Audiencia Inicial
+              - generic [ref=e159]:
+                - generic [ref=e160]: 
+                - generic [ref=e161]: Presencial
+            - cell [ref=e162]
+            - cell [ref=e163]:
+              - button [ref=e164]:
+                - generic [ref=e165]: 
+              - button [ref=e166] [cursor=pointer]:
+                - generic [ref=e167]: 
+              - text:   
+          - row [ref=e168]:
+            - cell [ref=e169]:
+              - generic [ref=e172]:
+                - generic [ref=e173]: 11/02/2026
+                - generic [ref=e174]: 13:00
+            - cell [ref=e175]:
+              - link [ref=e177] [cursor=pointer]:
+                - /url: /expedientes/68aa5d6e-d480-4057-b4fc-8ff4ff2ffe4c?from=audiencias
+                - text: EXP-004
+            - cell [ref=e178]:
+              - generic [ref=e179]:
+                - generic [ref=e180]: Gerencia Transparencia y Amparo
+                - generic [ref=e181]: Amparo
+            - cell [ref=e182]:
+              - text: Audiencia Constitucional
+              - generic [ref=e183]:
+                - generic [ref=e184]: 
+                - generic [ref=e185]: En Línea
+            - cell [ref=e186]
+            - cell [ref=e187]:
+              - button [ref=e188]:
+                - generic [ref=e189]: 
+              - button [ref=e190] [cursor=pointer]:
+                - generic [ref=e191]: 
+              - text:   
+          - row [ref=e192]:
+            - cell [ref=e193]:
+              - generic [ref=e196]:
+                - generic [ref=e197]: 12/02/2026
+                - generic [ref=e198]: 10:00
+            - cell [ref=e199]:
+              - link [ref=e201] [cursor=pointer]:
+                - /url: /expedientes/0dbfe1c9-8bf6-46e9-9801-d80120e65630?from=audiencias
+                - text: EXP-002
+            - cell [ref=e202]:
+              - generic [ref=e203]:
+                - generic [ref=e204]: Gerencia Laboral y Penal
+                - generic [ref=e205]: Laboral
+            - cell [ref=e206]:
+              - text: Audiencia Inicial
+              - generic [ref=e207]:
+                - generic [ref=e208]: 
+                - generic [ref=e209]: Presencial
+            - cell [ref=e210]
+            - cell [ref=e211]:
+              - button [ref=e212]:
+                - generic [ref=e213]: 
+              - button [ref=e214] [cursor=pointer]:
+                - generic [ref=e215]: 
+              - text:   
+          - row [ref=e216]:
+            - cell [ref=e217]:
+              - generic [ref=e220]:
+                - generic [ref=e221]: 13/02/2026
+                - generic [ref=e222]: 11:00
+            - cell [ref=e223]:
+              - link [ref=e225] [cursor=pointer]:
+                - /url: /expedientes/48129805-146b-4334-bd87-66523de6ad9c?from=audiencias
+                - text: EXP-003
+            - cell [ref=e226]:
+              - generic [ref=e227]:
+                - generic [ref=e228]: Gerencia Civil, Mercantil, Fiscal y Administrativo
+                - generic [ref=e229]: Mercantil
+            - cell [ref=e230]:
+              - text: Audiencia Inicial
+              - generic [ref=e231]:
+                - generic [ref=e232]: 
+                - generic [ref=e233]: Presencial
+            - cell [ref=e234]
+            - cell [ref=e235]:
+              - button [ref=e236]:
+                - generic [ref=e237]: 
+              - button [ref=e238] [cursor=pointer]:
+                - generic [ref=e239]: 
+              - text:   
+          - row [ref=e240]:
+            - cell [ref=e241]:
+              - generic [ref=e244]:
+                - generic [ref=e245]: 13/02/2026
+                - generic [ref=e246]: 14:00
+            - cell [ref=e247]:
+              - link [ref=e249] [cursor=pointer]:
+                - /url: /expedientes/e6a28b02-ddd1-492b-abde-ef461fba62ca?from=audiencias
+                - text: EXP-005
+            - cell [ref=e250]:
+              - generic [ref=e251]:
+                - generic [ref=e252]: Gerencia Civil, Mercantil, Fiscal y Administrativo
+                - generic [ref=e253]: Civil
+            - cell [ref=e254]:
+              - text: Audiencia Inicial
+              - generic [ref=e255]:
+                - generic [ref=e256]: 
+                - generic [ref=e257]: Presencial
+            - cell [ref=e258]
+            - cell [ref=e259]:
+              - button [ref=e260]:
+                - generic [ref=e261]: 
+              - button [ref=e262] [cursor=pointer]:
+                - generic [ref=e263]: 
+              - text:   
+          - row [ref=e264]:
+            - cell [ref=e265]:
+              - generic [ref=e268]:
+                - generic [ref=e269]: 14/02/2026
+                - generic [ref=e270]: 10:00
+            - cell [ref=e271]:
+              - generic [ref=e272]:
+                - link [ref=e273] [cursor=pointer]:
+                  - /url: /expedientes/b78d6de1-ad7e-4cc8-a913-1f536f466d50?from=audiencias
+                  - text: "001"
+                - generic [ref=e274]: Juan vs Perez
+            - cell [ref=e275]:
+              - generic [ref=e276]:
+                - generic [ref=e277]: Gerencia Civil, Mercantil, Fiscal y Administrativo
+                - generic [ref=e278]: Mercantil
+            - cell [ref=e279]:
+              - text: Audiencia Inicial
+              - generic [ref=e280]:
+                - generic [ref=e281]: 
+                - generic [ref=e282]: Presencial
+            - cell [ref=e283]
+            - cell [ref=e284]:
+              - button [ref=e285]:
+                - generic [ref=e286]: 
+              - button [ref=e287] [cursor=pointer]:
+                - generic [ref=e288]: 
+              - text:   
+          - row [ref=e289]:
+            - cell [ref=e290]:
+              - generic [ref=e293]:
+                - generic [ref=e294]: 14/02/2026
+                - generic [ref=e295]: 09:00
+            - cell [ref=e296]:
+              - link [ref=e298] [cursor=pointer]:
+                - /url: /expedientes/0dbfe1c9-8bf6-46e9-9801-d80120e65630?from=audiencias
+                - text: EXP-002
+            - cell [ref=e299]:
+              - generic [ref=e300]:
+                - generic [ref=e301]: Gerencia Laboral y Penal
+                - generic [ref=e302]: Laboral
+            - cell [ref=e303]:
+              - text: Audiencia de Conciliación
+              - generic [ref=e304]:
+                - generic [ref=e305]: 
+                - generic [ref=e306]: En Línea
+            - cell [ref=e307]
+            - cell [ref=e308]:
+              - button [ref=e309]:
+                - generic [ref=e310]: 
+              - button [ref=e311] [cursor=pointer]:
+                - generic [ref=e312]: 
+              - text:   
+          - row [ref=e313]:
+            - cell [ref=e314]:
+              - generic [ref=e317]:
+                - generic [ref=e318]: 16/02/2026
+                - generic [ref=e319]: 11:30
+            - cell [ref=e320]:
+              - generic [ref=e321]:
+                - link [ref=e322] [cursor=pointer]:
+                  - /url: /expedientes/b78d6de1-ad7e-4cc8-a913-1f536f466d50?from=audiencias
+                  - text: "001"
+                - generic [ref=e323]: Juan vs Perez
+            - cell [ref=e324]:
+              - generic [ref=e325]:
+                - generic [ref=e326]: Gerencia Civil, Mercantil, Fiscal y Administrativo
+                - generic [ref=e327]: Mercantil
+            - cell [ref=e328]:
+              - text: Audiencia de Pruebas
+              - generic [ref=e329]:
+                - generic [ref=e330]: 
+                - generic [ref=e331]: En Línea
+                - link [ref=e332] [cursor=pointer]:
+                  - /url: https://meet.google.com/abc-defg-hij
+                  - generic [ref=e333]: 
+            - cell [ref=e334]
+            - cell [ref=e335]:
+              - button [ref=e336]:
+                - generic [ref=e337]: 
+              - button [ref=e338] [cursor=pointer]:
+                - generic [ref=e339]: 
+              - text:   
+      - generic [ref=e340]:
+        - generic [ref=e341]: Página 1 de 2
+        - link [ref=e343] [cursor=pointer]:
+          - /url: /audiencias?page=1&keyword=
+          - text: Siguiente
+  - text:               
+  - dialog "¡Éxito!" [ref=e345]:
+    - heading "¡Éxito!" [level=2] [ref=e353]
+    - generic [ref=e354]: Audiencia guardada correctamente.
+    - text: "!"
+    - button "OK" [active] [ref=e356] [cursor=pointer]

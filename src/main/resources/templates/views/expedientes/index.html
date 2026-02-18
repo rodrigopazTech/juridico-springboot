@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title th:text="${pageTitle}">Sistema Jurídico</title>
@@ -9,11 +10,12 @@
     <script th:src="@{/lib/chart.umd.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body class="bg-gray-100 text-gray-800 font-sans pb-10">
 
-    <div th:replace="~{fragments/sidebar :: sidebar}"></div> 
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
     <div class="p-4 sm:ml-64">
-       
+
         <div class="mb-6">
             <h1 class="text-3xl font-bold text-gob-guinda font-headings">
                 <i class="fas fa-folder-open text-gob-oro mr-2"></i> Gestión de Expedientes
@@ -22,86 +24,94 @@
         </div>
 
         <main class="container mx-auto px-4 py-8">
-            
-            <div th:if="${success}" class="mb-4 p-4 bg-green-100 text-green-700 rounded border border-green-200" th:text="${success}"></div>
-            <div th:if="${error}" class="mb-4 p-4 bg-red-100 text-red-700 rounded border border-red-200" th:text="${error}"></div>
+
+            <div th:if="${success}" class="mb-4 p-4 bg-green-100 text-green-700 rounded border border-green-200"
+                th:text="${success}"></div>
+            <div th:if="${error}" class="mb-4 p-4 bg-red-100 text-red-700 rounded border border-red-200"
+                th:text="${error}"></div>
 
             <div th:replace="~{fragments/expedientes/barra-busqueda-exp :: barra}"></div>
             <div th:replace="~{fragments/expedientes/filtros-expedientes :: filtros}"></div>
 
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                
-                <a th:each="exp : ${expedientes.content}" 
-                th:href="@{/expedientes/{id}(id=${exp.id})}" 
-                class="block group">
-                
+
+                <a th:each="exp : ${expedientes.content}"
+                    th:href="@{/expedientes/{id}(id=${exp.id}, from='expedientes')}" class="block group">
+
                     <div class="bg-white rounded-lg shadow group-hover:shadow-lg transition duration-300 border-l-4 p-5 relative cursor-pointer h-full"
                         th:classappend="${exp.prioridad.name() == 'ALTA' ? 'border-red-600' : (exp.prioridad.name() == 'MEDIA' ? 'border-yellow-500' : 'border-green-500')}">
-                        
+
                         <div class="flex justify-between items-start mb-2">
                             <div>
-                                <h4 class="text-lg font-bold text-gob-guinda group-hover:underline" th:text="${exp.numero}">EXP-0000</h4>
-                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide" 
+                                <h4 class="text-lg font-bold text-gob-guinda group-hover:underline"
+                                    th:text="${exp.numero}">EXP-0000</h4>
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide"
                                     th:text="${exp.materia != null ? exp.materia.nombre : 'S/N'}">MATERIA</span>
                             </div>
-                            
+
                             <div class="flex flex-col items-end gap-1">
-                                <span class="text-[10px] border border-blue-500 text-blue-600 px-2 py-0.5 rounded font-bold" 
+                                <span
+                                    class="text-[10px] border border-blue-500 text-blue-600 px-2 py-0.5 rounded font-bold"
                                     th:text="${exp.etapaProcesal}">TRAMITE</span>
-                                
-                                    <span class="text-[10px] px-2 py-0.5 rounded font-bold border"
-                                    th:text="${exp.prioridad}"
-                                    th:classappend="${exp.prioridad.name() == 'ALTA' ? 'bg-red-100 text-red-700 border-red-200' : 
+
+                                <span class="text-[10px] px-2 py-0.5 rounded font-bold border"
+                                    th:text="${exp.prioridad}" th:classappend="${exp.prioridad.name() == 'ALTA' ? 'bg-red-100 text-red-700 border-red-200' : 
                                                     (exp.prioridad.name() == 'MEDIA' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 
                                                     'bg-green-100 text-green-700 border-green-200')}">
                                     PRIORIDAD
                                 </span>
                             </div>
                         </div>
-                        
-                        <p class="text-gray-600 text-sm mb-4 line-clamp-2 h-10 font-medium" 
-                        th:text="${exp.partes != null ? exp.partes : exp.descripcion}">
+
+                        <p class="text-gray-600 text-sm mb-4 line-clamp-2 h-10 font-medium"
+                            th:text="${exp.partes != null ? exp.partes : exp.descripcion}">
                             Descripción...
                         </p>
-                        
-                        <div class="border-t border-gray-100 pt-3 flex justify-between items-center text-xs text-gray-500">
+
+                        <div
+                            class="border-t border-gray-100 pt-3 flex justify-between items-center text-xs text-gray-500">
                             <div class="flex items-center gap-1">
-                                <i class="fas fa-user-tie"></i> 
-                                <span th:text="${exp.abogadoResponsable != null ? exp.abogadoResponsable.nombreCompleto : 'Sin Asignar'}">Lic. Nombre</span>
+                                <i class="fas fa-user-tie"></i>
+                                <span
+                                    th:text="${exp.abogadoResponsable != null ? exp.abogadoResponsable.nombreCompleto : 'Sin Asignar'}">Lic.
+                                    Nombre</span>
                             </div>
                             <div class="flex items-center gap-1">
                                 <i class="fas fa-university"></i>
-                                <span th:text="${exp.organoJurisdiccional != null ? exp.organoJurisdiccional.nombre : 'Sin Órgano'}" class="truncate max-w-[100px]">Órgano</span>
+                                <span
+                                    th:text="${exp.organoJurisdiccional != null ? exp.organoJurisdiccional.nombre : 'Sin Órgano'}"
+                                    class="truncate max-w-[100px]">Órgano</span>
                             </div>
                         </div>
                     </div>
                 </a>
-                
+
                 <div th:if="${expedientes.totalElements == 0}" class="col-span-3 text-center py-10 text-gray-400">
                     <i class="fas fa-folder-open text-4xl mb-2"></i>
                     <p class="mt-2 text-sm">No se encontraron expedientes con esa búsqueda.</p>
                 </div>
-            </div> 
+            </div>
 
             <div class="mt-8 flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border-t border-gray-100"
                 th:if="${expedientes.totalPages > 0}">
-                
+
                 <span class="text-xs text-gray-500 font-medium">
-                    Página <span th:text="${expedientes.number + 1}">1</span> de <span th:text="${expedientes.totalPages}">1</span>
+                    Página <span th:text="${expedientes.number + 1}">1</span> de <span
+                        th:text="${expedientes.totalPages}">1</span>
                 </span>
 
                 <div class="flex gap-2">
                     <a th:if="${expedientes.hasPrevious()}"
-                    th:href="@{/expedientes(page=${expedientes.number - 1}, keyword=${keyword})}"
-                    class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 text-sm font-medium transition">
-                    <i class="fas fa-chevron-left mr-1"></i> Anterior
+                        th:href="@{/expedientes(page=${expedientes.number - 1}, keyword=${keyword})}"
+                        class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 text-sm font-medium transition">
+                        <i class="fas fa-chevron-left mr-1"></i> Anterior
                     </a>
 
                     <a th:if="${expedientes.hasNext()}"
-                    th:href="@{/expedientes(page=${expedientes.number + 1}, keyword=${keyword})}"
-                    class="px-3 py-1.5 bg-gob-guinda text-white rounded hover:bg-gob-guinda-claro text-sm font-medium transition shadow-sm">
-                    Siguiente <i class="fas fa-chevron-right ml-1"></i>
+                        th:href="@{/expedientes(page=${expedientes.number + 1}, keyword=${keyword})}"
+                        class="px-3 py-1.5 bg-gob-guinda text-white rounded hover:bg-gob-guinda-claro text-sm font-medium transition shadow-sm">
+                        Siguiente <i class="fas fa-chevron-right ml-1"></i>
                     </a>
                 </div>
             </div>
@@ -111,15 +121,15 @@
         <div th:replace="~{fragments/expedientes/modal-nuevo-exp :: modal}"></div>
     </div>
     <script>
-        document.onkeydown = function(evt) {
+        document.onkeydown = function (evt) {
             evt = evt || window.event;
-            if (evt.keyCode == 27) { 
+            if (evt.keyCode == 27) {
                 document.getElementById('modal-nuevo-exp').classList.add('hidden');
             }
         };
     </script>
     <script th:if="${mensaje != null}">
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Obtenemos los valores enviados desde el Controller
             const mensaje = "[[${mensaje}]]";
             const tipo = "[[${tipo}]]"; // 'success' o 'error'
@@ -127,7 +137,7 @@
             // Configuramos el título y el icono según el tipo
             let titulo = "¡Éxito!";
             let icono = "success";
-            
+
             if (tipo === 'error') {
                 titulo = "Atención";
                 icono = "error";
@@ -148,4 +158,5 @@
         });
     </script>
 </body>
+
 </html>

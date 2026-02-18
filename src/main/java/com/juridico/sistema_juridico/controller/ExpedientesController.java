@@ -16,6 +16,7 @@ import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.repository.General.ComentarioRepository;
 import com.juridico.sistema_juridico.Entity.general.Comentario;
+import com.juridico.sistema_juridico.service.SecurityService;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,9 @@ public class ExpedientesController {
     private AudienciaRepository audienciaRepository;
     @Autowired
     private ComentarioRepository comentarioRepository;
+
+    @Autowired
+    private SecurityService securityService;
 
     @GetMapping
     public String index(Model model,
@@ -127,15 +131,62 @@ public class ExpedientesController {
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute Expediente expediente, RedirectAttributes redirectAttrs) {
         try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario actor = usuarioRepository.findByEmail(email).orElseThrow();
+
+            // RBAC ROD-5: Restringir creación a Dirección/Subdirección
             if (expediente.getId() == null) {
+                if (actor.getRol() != RolUsuario.DIRECCION && actor.getRol() != RolUsuario.SUBDIRECCION) {
+                    redirectAttrs.addFlashAttribute("mensaje",
+                            "Acceso denegado: Solo la Dirección o Subdirección pueden crear expedientes.");
+                    redirectAttrs.addFlashAttribute("tipo", "error");
+                    return "redirect:/expedientes";
+                }
+
                 expediente.setCreatedAt(LocalDateTime.now());
                 if (expediente.getEtapaProcesal() == null) {
                     expediente.setEtapaProcesal(EtapaProcesal.TRAMITE);
                 }
-            }
-            expediente.setUpdatedAt(LocalDateTime.now());
+                expediente.setUpdatedAt(LocalDateTime.now());
+                expedienteRepository.save(expediente);
+            } else {
+                // ROD-33: Validar acceso de escritura para actualizaciones (IDOR)
+                Expediente existente = expedienteRepository.findById(expediente.getId())
+                        .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
 
-            expedienteRepository.save(expediente);
+                if (!securityService.tieneAccesoEscritura(actor, existente)) {
+                    redirectAttrs.addFlashAttribute("mensaje",
+                            "Acceso denegado: No tiene permisos para modificar este expediente.");
+                    redirectAttrs.addFlashAttribute("tipo", "error");
+                    return "redirect:/expedientes";
+                }
+
+                // Actualizar solo los campos del formulario resolver asociaciones
+                existente.setNumero(expediente.getNumero());
+                existente.setPrioridad(expediente.getPrioridad());
+                existente.setSede(expediente.getSede());
+                existente.setEtapaProcesal(expediente.getEtapaProcesal());
+
+                if (expediente.getGerencia() != null && expediente.getGerencia().getId() != null) {
+                    existente.setGerencia(gerenciaRepository.findById(expediente.getGerencia().getId()).orElse(null));
+                }
+                if (expediente.getMateria() != null && expediente.getMateria().getId() != null) {
+                    existente.setMateria(materiaRepository.findById(expediente.getMateria().getId()).orElse(null));
+                }
+                if (expediente.getTipoExpediente() != null && expediente.getTipoExpediente().getId() != null) {
+                    existente.setTipoExpediente(
+                            tipoExpedienteRepository.findById(expediente.getTipoExpediente().getId()).orElse(null));
+                }
+                if (expediente.getOrganoJurisdiccional() != null
+                        && expediente.getOrganoJurisdiccional().getId() != null) {
+                    existente.setOrganoJurisdiccional(
+                            organoRepository.findById(expediente.getOrganoJurisdiccional().getId()).orElse(null));
+                }
+
+                existente.setUpdatedAt(LocalDateTime.now());
+
+                expedienteRepository.save(existente);
+            }
 
             redirectAttrs.addFlashAttribute("mensaje", "Expediente guardado correctamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
@@ -146,7 +197,7 @@ public class ExpedientesController {
             redirectAttrs.addFlashAttribute("tipo", "error");
         } catch (Exception e) {
             e.printStackTrace();
-            redirectAttrs.addFlashAttribute("mensaje", "Ocurrió un error inesperado al guardar.");
+            redirectAttrs.addFlashAttribute("mensaje", "Error inesperado: " + e.getMessage());
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
 
@@ -154,17 +205,25 @@ public class ExpedientesController {
     }
 
     @GetMapping("/{id}")
-    public String verDetalle(@PathVariable UUID id, Model model) {
+    public String verDetalle(@PathVariable UUID id, @RequestParam(required = false) String from, Model model,
+            RedirectAttributes redirectAttrs) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
-        model.addAttribute("usuario", usuario);
-        model.addAttribute("rolActual", usuario.getRol());
-
         Expediente expediente = expedienteRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Expediente no encontrado: " + id));
 
+        // ACL VALIDATION ROD-6
+        if (!securityService.tieneAccesoLectura(usuario, expediente)) {
+            redirectAttrs.addFlashAttribute("mensaje", "Acceso denegado: No tiene permisos para ver este expediente.");
+            redirectAttrs.addFlashAttribute("tipo", "error");
+            return "redirect:/expedientes";
+        }
+
+        model.addAttribute("usuario", usuario);
+        model.addAttribute("rolActual", usuario.getRol());
+        model.addAttribute("vengoDe", from);
         model.addAttribute("expediente", expediente);
 
         Audiencia proxima = audienciaRepository.findTopByExpedienteIdAndFechaAudienciaAfterOrderByFechaAudienciaAsc(
@@ -191,6 +250,16 @@ public class ExpedientesController {
     @GetMapping("/{id}/comentarios")
     @ResponseBody
     public List<Comentario> getComentarios(@PathVariable String id) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+
+        Expediente expediente = expedienteRepository.findById(UUID.fromString(id))
+                .orElseThrow(() -> new IllegalArgumentException("Expediente no encontrado: " + id));
+
+        if (!securityService.tieneAccesoLectura(usuario, expediente)) {
+            return Collections.emptyList();
+        }
+
         return comentarioRepository.findByEntidadTipoAndEntidadIdOrderByCreatedAtDesc("EXPEDIENTE", id);
     }
 
@@ -199,6 +268,13 @@ public class ExpedientesController {
     public ResponseEntity<?> addComentario(@PathVariable String id, @RequestBody Comentario nuevo) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+
+        Expediente expediente = expedienteRepository.findById(UUID.fromString(id))
+                .orElseThrow(() -> new IllegalArgumentException("Expediente no encontrado: " + id));
+
+        if (usuario == null || !securityService.tieneAccesoEscritura(usuario, expediente)) {
+            return ResponseEntity.status(403).body("Acceso denegado");
+        }
 
         nuevo.setEntidadTipo("EXPEDIENTE");
         nuevo.setEntidadId(id);
@@ -215,6 +291,14 @@ public class ExpedientesController {
     @PostMapping("/{id}/cambiar-etapa")
     @ResponseBody
     public ResponseEntity<?> cambiarEtapa(@PathVariable UUID id, @RequestParam EtapaProcesal etapa) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+
+        // REGLA: Solo DIRECCION puede cambiar etapas
+        if (usuario.getRol() != RolUsuario.DIRECCION) {
+            return ResponseEntity.status(403).body("Acceso denegado: Solo la Dirección puede cambiar la etapa.");
+        }
+
         Expediente exp = expedienteRepository.findById(id).orElseThrow();
         exp.setEtapaProcesal(etapa);
         exp.setUpdatedAt(LocalDateTime.now());

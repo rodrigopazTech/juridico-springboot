@@ -17,148 +17,264 @@
                     <td colspan="7" class="px-4 py-6 text-center text-gray-400">No hay términos registrados.</td>
                 </tr>
 
-                <tr th:each="t : ${terminos}" class="border-b hover:bg-gray-50 transition relative">
-
-                    <td class="px-4 py-3 font-bold text-gray-800">
-                        <div class="flex items-center gap-2" th:title="${t.diasRestantesTexto}">
-                            <div class="w-3 h-3 rounded-full shadow-sm border border-gray-200"
-                                th:classappend="${t.semaforoColor}">
+                <th:block th:each="t : ${terminos}">
+                    <tr class="border-b hover:bg-gray-50 transition relative">
+                        <!-- Celdas existentes -->
+                        <td class="px-4 py-3 font-bold text-gray-800">
+                            <div class="flex items-center gap-2" th:title="${t.diasRestantesTexto}">
+                                <div class="w-3 h-3 rounded-full shadow-sm border border-gray-200"
+                                    th:classappend="${t.semaforoColor}">
+                                </div>
+                                <span th:text="${#temporals.format(t.fechaVencimiento, 'dd/MM/yyyy')}"
+                                    th:classappend="${t.semaforoColor == 'bg-red-800' || t.semaforoColor == 'bg-red-500' ? 'text-red-600' : ''}">
+                                    01/01/2026
+                                </span>
                             </div>
-                            <span th:text="${#temporals.format(t.fechaVencimiento, 'dd/MM/yyyy')}"
-                                th:classappend="${t.semaforoColor == 'bg-red-800' || t.semaforoColor == 'bg-red-500' ? 'text-red-600' : ''}">
-                                01/01/2026
+                        </td>
+
+                        <td class="px-4 py-3">
+                            <div class="flex flex-col gap-1">
+                                <div class="flex items-center gap-2">
+                                    <a th:if="${t.expediente != null}"
+                                        th:href="@{/expedientes/{id}(id=${t.expediente.id}, from='terminos')}"
+                                        class="font-bold text-gob-guinda hover:underline"
+                                        th:text="${t.expediente.numero}">EXP-001</a>
+
+                                    <span th:if="${t.expediente != null}"
+                                        class="text-[9px] px-1 py-0.5 rounded-full font-bold uppercase tracking-tight shadow-sm border"
+                                        th:classappend="${t.expediente.prioridad.name() == 'ALTA' ? 'bg-gob-guinda text-gob-oro border-gob-oro' : 
+                                                          (t.expediente.prioridad.name() == 'BAJA' ? 'bg-gray-100 text-gray-500 border-gray-200' : 
+                                                          'bg-gob-oro text-gob-guinda border-transparent')}"
+                                        th:text="${t.expediente.prioridad}">MEDIA</span>
+                                </div>
+                                <span class="text-xs text-gray-400 truncate max-w-[150px]"
+                                    th:text="${t.expediente != null ? t.expediente.partes : 'Sin Partes'}">Partes</span>
+                            </div>
+                        </td>
+
+
+                        <td class="px-4 py-3 max-w-xs truncate" th:text="${t.actuacion}" th:title="${t.actuacion}">
+                            Actuación
+                        </td>
+
+                        <td class="px-4 py-3"
+                            th:text="${t.abogadoResponsable != null ? t.abogadoResponsable.nombreCompleto : 'Sin Asignar'}">
+                        </td>
+
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-1 rounded text-xs font-bold border"
+                                th:text="${t.estatusTermino.nombre}"
+                                th:classappend="${t.estatusTermino.name() == 'CONCLUIDO' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-blue-50 text-blue-800 border-blue-200'}">
+                                Proyectista
                             </span>
-                        </div>
-                    </td>
+                        </td>
 
-                    <td class="px-4 py-3">
-                        <div class="flex flex-col gap-1">
-                            <div class="flex items-center gap-2">
-                                <a th:if="${t.expediente != null}" th:href="@{/expedientes/{id}(id=${t.expediente.id})}"
-                                    class="font-bold text-gob-guinda hover:underline"
-                                    th:text="${t.expediente.numero}">EXP-001</a>
-
-                                <span th:if="${t.expediente != null}"
-                                    class="text-[9px] px-1 py-0.5 rounded-full font-bold uppercase tracking-tight shadow-sm border"
-                                    th:classappend="${t.expediente.prioridad.name() == 'ALTA' ? 'bg-gob-guinda text-gob-oro border-gob-oro' : 
-                                                      (t.expediente.prioridad.name() == 'BAJA' ? 'bg-gray-100 text-gray-500 border-gray-200' : 
-                                                      'bg-gob-oro text-gob-guinda border-transparent')}"
-                                    th:text="${t.expediente.prioridad}">MEDIA</span>
-                            </div>
-                            <span class="text-xs text-gray-400 truncate max-w-[150px]"
-                                th:text="${t.expediente != null ? t.expediente.partes : 'Sin Partes'}">Partes</span>
-                        </div>
-                    </td>
-
-
-                    <td class="px-4 py-3 max-w-xs truncate" th:text="${t.actuacion}" th:title="${t.actuacion}">Actuación
-                    </td>
-
-                    <td class="px-4 py-3"
-                        th:text="${t.abogadoResponsable != null ? t.abogadoResponsable.nombreCompleto : 'Sin Asignar'}">
-                    </td>
-
-                    <td class="px-4 py-3">
-                        <span class="px-2 py-1 rounded text-xs font-bold border" th:text="${t.estatusTermino.nombre}"
-                            th:classappend="${t.estatusTermino.name() == 'CONCLUIDO' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-blue-50 text-blue-800 border-blue-200'}">
-                            Proyectista
-                        </span>
-                    </td>
-
-                    <td class="px-4 py-3 text-right relative">
-                        <button
-                            th:if="${t.estatusTermino.name() == 'LIBERADO' || t.estatusTermino.name() == 'PRESENTADO' || t.estatusTermino.name() == 'CONCLUIDO'}"
-                            class="text-gray-300 cursor-not-allowed mr-2" title="Edición Bloqueada">
-                            <i class="fas fa-edit"></i>
-                        </button>
-
-                        <button
-                            th:unless="${t.estatusTermino.name() == 'LIBERADO' || t.estatusTermino.name() == 'PRESENTADO' || t.estatusTermino.name() == 'CONCLUIDO'}"
-                            th:onclick="editarTermino(
-                                    [[${t.id}]], 
-                                    [[${t.actuacion}]], 
-                                    [[${t.fechaVencimiento}]], 
-                                    [[${t.expediente != null ? t.expediente.id : ''}]], 
-                                    [[${t.abogadoResponsable != null ? t.abogadoResponsable.id : ''}]]
-                                )" class="text-gray-400 hover:text-gob-oro mr-2" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </button>
-
-                        <button th:data-termino-id="${t.id}" onclick="toggleMenu(this.dataset.terminoId)"
-                            class="text-gray-400 hover:text-gob-guinda px-2">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-
-                        <div th:id="'menu-' + ${t.id}"
-                            class="hidden absolute right-0 mt-2 w-64 bg-white rounded-md shadow-xl z-50 border border-gray-100 text-left overflow-hidden ring-1 ring-black ring-opacity-5">
-
-                            <a th:if="${t.expediente != null}" th:href="@{/expedientes/{id}(id=${t.expediente.id})}"
-                                class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-guinda transition border-l-4 border-transparent hover:border-gob-guinda">
-                                <i class="fas fa-folder-open mr-3 w-4 text-center text-gray-400"></i> Ver Expediente
-                            </a>
-
-                            <div class="border-t border-gray-100"></div>
+                        <td class="px-4 py-3 text-right relative">
+                            <button
+                                th:if="${t.estatusTermino.name() == 'LIBERADO' || t.estatusTermino.name() == 'PRESENTADO' || t.estatusTermino.name() == 'CONCLUIDO'}"
+                                class="text-gray-300 cursor-not-allowed mr-2" title="Edición Bloqueada">
+                                <i class="fas fa-edit"></i>
+                            </button>
 
                             <button
                                 th:unless="${t.estatusTermino.name() == 'LIBERADO' || t.estatusTermino.name() == 'PRESENTADO' || t.estatusTermino.name() == 'CONCLUIDO'}"
-                                th:data-termino-id="${t.id}" onclick="activarSubida(this.dataset.terminoId)"
-                                class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-oro transition flex items-center border-l-4 border-transparent hover:border-gob-oro">
-                                <i
-                                    th:class="${t.archivoWord != null ? 'fas fa-sync-alt mr-3 w-4 text-center text-orange-400' : 'fas fa-cloud-upload-alt mr-3 w-4 text-center text-gray-400'}"></i>
-                                <span
-                                    th:text="${t.archivoWord != null ? 'Reemplazar Borrador' : 'Subir Borrador'}">Subir
-                                    Borrador</span>
+                                th:onclick="editarTermino(
+                                        [[${t.id}]], 
+                                        [[${t.actuacion}]], 
+                                        [[${t.fechaVencimiento}]], 
+                                        [[${t.expediente != null ? t.expediente.id : ''}]], 
+                                        [[${t.abogadoResponsable != null ? t.abogadoResponsable.id : ''}]]
+                                    )" class="text-gray-400 hover:text-gob-oro mr-2" title="Editar">
+                                <i class="fas fa-edit"></i>
                             </button>
 
-                            <a th:if="${t.archivoWord != null}" th:href="@{/terminos/descargar/{id}(id=${t.id})}"
-                                class="block w-full text-left px-4 py-3 text-sm text-blue-600 hover:bg-blue-50 transition flex items-center border-l-4 border-transparent hover:border-blue-500">
-                                <i class="fas fa-file-word mr-3 w-4 text-center"></i>
-                                <span class="truncate font-medium" th:text="${t.archivoWord}">Archivo.docx</span>
-                            </a>
-
-                            <button
-                                th:if="${t.estatusTermino.name() == 'PRESENTADO' and mapaPermisos.get(t.estatusTermino).contains(rolActual)}"
-                                th:data-termino-id="${t.id}" onclick="activarSubidaAcuse(this.dataset.terminoId)"
-                                class="w-full text-left px-4 py-3 text-sm text-purple-700 hover:bg-purple-50 transition flex items-center border-l-4 border-transparent hover:border-purple-500 font-bold bg-purple-50/50">
-                                <i class="fas fa-file-signature mr-3 w-4 text-center text-purple-600"></i>
-                                Subir Acuse y Concluir
+                            <button th:data-termino-id="${t.id}" onclick="toggleMenu(this.dataset.terminoId)"
+                                class="text-gray-400 hover:text-gob-guinda px-2">
+                                <i class="fas fa-ellipsis-v"></i>
                             </button>
 
-                            <div class="border-t border-gray-100"></div>
+                            <div th:id="'menu-' + ${t.id}"
+                                class="hidden absolute right-0 mt-2 w-64 bg-white rounded-md shadow-xl z-50 border border-gray-100 text-left overflow-hidden ring-1 ring-black ring-opacity-5">
 
-                            <a th:if="${t.estatusTermino.name() != 'PRESENTADO' and t.estatusTermino.name() != 'CONCLUIDO' and t.archivoWord != null and mapaPermisos.containsKey(t.estatusTermino) and mapaPermisos.get(t.estatusTermino).contains(rolActual)}"
-                                th:href="@{/terminos/avanzar/{id}(id=${t.id})}"
-                                class="block px-4 py-3 text-sm text-green-700 hover:bg-green-50 transition border-l-4 border-transparent hover:border-green-500">
-                                <i class="fas fa-arrow-right mr-3 w-4 text-center text-green-500"></i> Avanzar Etapa
-                            </a>
-
-                            <div th:if="${t.estatusTermino.name() == 'CONCLUIDO'}"
-                                class="bg-gray-50 border-l-4 border-gray-400">
-                                <span class="block px-4 py-2 text-xs text-gray-500 italic">
-                                    <i class="fas fa-check-double mr-1 text-green-500"></i> Proceso Finalizado
-                                </span>
-                                <a th:href="@{/terminos/descargar-acuse/{id}(id=${t.id})}"
-                                    class="block w-full text-left px-4 py-2 text-sm text-purple-700 hover:bg-purple-100 transition flex items-center font-bold">
-                                    <i class="fas fa-file-download mr-3 w-4 text-center"></i> Descargar Acuse
+                                <a th:if="${t.expediente != null}" th:href="@{/expedientes/{id}(id=${t.expediente.id})}"
+                                    class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-guinda transition border-l-4 border-transparent hover:border-gob-guinda">
+                                    <i class="fas fa-folder-open mr-3 w-4 text-center text-gray-400"></i> Ver Expediente
                                 </a>
+
+                                <div class="border-t border-gray-100"></div>
+
+                                <button
+                                    th:unless="${t.estatusTermino.name() == 'LIBERADO' || t.estatusTermino.name() == 'PRESENTADO' || t.estatusTermino.name() == 'CONCLUIDO'}"
+                                    th:data-termino-id="${t.id}" onclick="activarSubida(this.dataset.terminoId)"
+                                    class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-oro transition flex items-center border-l-4 border-transparent hover:border-gob-oro">
+                                    <i
+                                        th:class="${t.archivoWord != null ? 'fas fa-sync-alt mr-3 w-4 text-center text-orange-400' : 'fas fa-cloud-upload-alt mr-3 w-4 text-center text-gray-400'}"></i>
+                                    <span
+                                        th:text="${t.archivoWord != null ? 'Reemplazar Borrador' : 'Subir Borrador'}">Subir
+                                        Borrador</span>
+                                </button>
+
+                                <a th:if="${t.archivoWord != null}" th:href="@{/terminos/descargar/{id}(id=${t.id})}"
+                                    class="block w-full text-left px-4 py-3 text-sm text-blue-600 hover:bg-blue-50 transition flex items-center border-l-4 border-transparent hover:border-blue-500">
+                                    <i class="fas fa-file-word mr-3 w-4 text-center"></i>
+                                    <span class="truncate font-medium" th:text="${t.archivoWord}">Archivo.docx</span>
+                                </a>
+
+                                <button
+                                    th:if="${t.estatusTermino.name() == 'PRESENTADO' and mapaPermisos.get(t.estatusTermino).contains(rolActual)}"
+                                    th:data-termino-id="${t.id}" onclick="activarSubidaAcuse(this.dataset.terminoId)"
+                                    class="w-full text-left px-4 py-3 text-sm text-purple-700 hover:bg-purple-50 transition flex items-center border-l-4 border-transparent hover:border-purple-500 font-bold bg-purple-50/50">
+                                    <i class="fas fa-file-signature mr-3 w-4 text-center text-purple-600"></i>
+                                    Subir Acuse y Concluir
+                                </button>
+
+                                <div class="border-t border-gray-100"></div>
+
+                                <a th:if="${t.estatusTermino.name() != 'PRESENTADO' and t.estatusTermino.name() != 'CONCLUIDO' and t.archivoWord != null and mapaPermisos.containsKey(t.estatusTermino) and mapaPermisos.get(t.estatusTermino).contains(rolActual)}"
+                                    th:href="@{/terminos/avanzar/{id}(id=${t.id})}"
+                                    class="block px-4 py-3 text-sm text-green-700 hover:bg-green-50 transition border-l-4 border-transparent hover:border-green-500">
+                                    <i class="fas fa-arrow-right mr-3 w-4 text-center text-green-500"></i> Avanzar Etapa
+                                </a>
+
+                                <div th:if="${t.estatusTermino.name() == 'CONCLUIDO'}"
+                                    class="bg-gray-50 border-l-4 border-gray-400">
+                                    <span class="block px-4 py-2 text-xs text-gray-500 italic">
+                                        <i class="fas fa-check-double mr-1 text-green-500"></i> Proceso Finalizado
+                                    </span>
+                                    <a th:href="@{/terminos/descargar-acuse/{id}(id=${t.id})}"
+                                        class="block w-full text-left px-4 py-2 text-sm text-purple-700 hover:bg-purple-100 transition flex items-center font-bold">
+                                        <i class="fas fa-file-download mr-3 w-4 text-center"></i> Descargar Acuse
+                                    </a>
+                                </div>
+
+                                <div class="border-t border-gray-100"></div>
+
+                                <button th:data-termino-id="${t.id}" onclick="confirmarEliminar(this.dataset.terminoId)"
+                                    class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition font-medium border-l-4 border-transparent hover:border-red-500">
+                                    <i class="fas fa-trash-alt mr-3 w-4 text-center text-red-400"></i> Eliminar
+                                </button>
                             </div>
 
-                            <div class="border-t border-gray-100"></div>
+                        </td>
+                    </tr>
+                    <!-- Fila de Progreso ROD-10 -->
+                    <tr class="bg-gray-50/30">
+                        <td colspan="6" class="px-4 py-2 pb-4">
+                            <div class="flex items-center w-full max-w-4xl mx-auto px-4">
+                                <!-- Etapa 1: Proyectista -->
+                                <div class="relative flex flex-col items-center flex-1">
+                                    <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] z-10 transition-colors duration-300"
+                                        th:classappend="${t.estatusTermino.ordinal() >= 0 ? 'bg-gob-guinda text-white' : 'bg-gray-200 text-gray-500'}">
+                                        <i th:if="${t.estatusTermino.ordinal() > 0}" class="fas fa-check"></i>
+                                        <span th:if="${t.estatusTermino.ordinal() == 0}">1</span>
+                                    </div>
+                                    <span
+                                        class="mt-2 text-[9px] uppercase font-bold tracking-tight text-center whitespace-nowrap"
+                                        th:classappend="${t.estatusTermino.name() == 'PROYECTISTA' ? 'text-gob-guinda' : 'text-gray-400'}">Proyectista</span>
+                                </div>
+                                <div class="flex-auto border-t-2 mb-4 transition-colors duration-300"
+                                    th:classappend="${t.estatusTermino.ordinal() > 0 ? 'border-gob-guinda' : 'border-gray-200'}">
+                                </div>
 
-                            <button th:data-termino-id="${t.id}" onclick="confirmarEliminar(this.dataset.terminoId)"
-                                class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition font-medium border-l-4 border-transparent hover:border-red-500">
-                                <i class="fas fa-trash-alt mr-3 w-4 text-center text-red-400"></i> Eliminar
-                            </button>
-                        </div>
+                                <!-- Etapa 2: Revisión -->
+                                <div class="relative flex flex-col items-center flex-1">
+                                    <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] z-10 transition-colors duration-300"
+                                        th:classappend="${t.estatusTermino.ordinal() >= 1 ? 'bg-gob-guinda text-white' : 'bg-gray-200 text-gray-500'}">
+                                        <i th:if="${t.estatusTermino.ordinal() > 1}" class="fas fa-check"></i>
+                                        <span th:if="${t.estatusTermino.ordinal() <= 1}">2</span>
+                                    </div>
+                                    <span
+                                        class="mt-2 text-[9px] uppercase font-bold tracking-tight text-center whitespace-nowrap"
+                                        th:classappend="${t.estatusTermino.name() == 'REVISION' ? 'text-gob-guinda' : 'text-gray-400'}">Revisión</span>
+                                </div>
+                                <div class="flex-auto border-t-2 mb-4 transition-colors duration-300"
+                                    th:classappend="${t.estatusTermino.ordinal() > 1 ? 'border-gob-guinda' : 'border-gray-200'}">
+                                </div>
 
-                    </td>
-                </tr>
+                                <!-- Etapa 3: Gerencia -->
+                                <div class="relative flex flex-col items-center flex-1">
+                                    <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] z-10 transition-colors duration-300"
+                                        th:classappend="${t.estatusTermino.ordinal() >= 2 ? 'bg-gob-guinda text-white' : 'bg-gray-200 text-gray-500'}">
+                                        <i th:if="${t.estatusTermino.ordinal() > 2}" class="fas fa-check"></i>
+                                        <span th:if="${t.estatusTermino.ordinal() <= 2}">3</span>
+                                    </div>
+                                    <span
+                                        class="mt-2 text-[9px] uppercase font-bold tracking-tight text-center whitespace-nowrap"
+                                        th:classappend="${t.estatusTermino.name() == 'GERENCIA' ? 'text-gob-guinda' : 'text-gray-400'}">Gerencia</span>
+                                </div>
+                                <div class="flex-auto border-t-2 mb-4 transition-colors duration-300"
+                                    th:classappend="${t.estatusTermino.ordinal() > 2 ? 'border-gob-guinda' : 'border-gray-200'}">
+                                </div>
+
+                                <!-- Etapa 4: Dirección -->
+                                <div class="relative flex flex-col items-center flex-1">
+                                    <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] z-10 transition-colors duration-300"
+                                        th:classappend="${t.estatusTermino.ordinal() >= 3 ? 'bg-gob-guinda text-white' : 'bg-gray-200 text-gray-500'}">
+                                        <i th:if="${t.estatusTermino.ordinal() > 3}" class="fas fa-check"></i>
+                                        <span th:if="${t.estatusTermino.ordinal() <= 3}">4</span>
+                                    </div>
+                                    <span
+                                        class="mt-2 text-[9px] uppercase font-bold tracking-tight text-center whitespace-nowrap"
+                                        th:classappend="${t.estatusTermino.name() == 'DIRECCION' ? 'text-gob-guinda' : 'text-gray-400'}">Dirección</span>
+                                </div>
+                                <div class="flex-auto border-t-2 mb-4 transition-colors duration-300"
+                                    th:classappend="${t.estatusTermino.ordinal() > 3 ? 'border-gob-guinda' : 'border-gray-200'}">
+                                </div>
+
+                                <!-- Etapa 5: Liberado -->
+                                <div class="relative flex flex-col items-center flex-1">
+                                    <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] z-10 transition-colors duration-300"
+                                        th:classappend="${t.estatusTermino.ordinal() >= 4 ? 'bg-gob-guinda text-white' : 'bg-gray-200 text-gray-500'}">
+                                        <i th:if="${t.estatusTermino.ordinal() > 4}" class="fas fa-check"></i>
+                                        <span th:if="${t.estatusTermino.ordinal() <= 4}">5</span>
+                                    </div>
+                                    <span
+                                        class="mt-2 text-[9px] uppercase font-bold tracking-tight text-center whitespace-nowrap"
+                                        th:classappend="${t.estatusTermino.name() == 'LIBERADO' ? 'text-gob-guinda' : 'text-gray-400'}">Liberado</span>
+                                </div>
+                                <div class="flex-auto border-t-2 mb-4 transition-colors duration-300"
+                                    th:classappend="${t.estatusTermino.ordinal() > 4 ? 'border-gob-guinda' : 'border-gray-200'}">
+                                </div>
+
+                                <!-- Etapa 6: Presentado -->
+                                <div class="relative flex flex-col items-center flex-1">
+                                    <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] z-10 transition-colors duration-300"
+                                        th:classappend="${t.estatusTermino.ordinal() >= 5 ? 'bg-gob-guinda text-white' : 'bg-gray-200 text-gray-500'}">
+                                        <i th:if="${t.estatusTermino.ordinal() > 5}" class="fas fa-check"></i>
+                                        <span th:if="${t.estatusTermino.ordinal() <= 5}">6</span>
+                                    </div>
+                                    <span
+                                        class="mt-2 text-[9px] uppercase font-bold tracking-tight text-center whitespace-nowrap"
+                                        th:classappend="${t.estatusTermino.name() == 'PRESENTADO' ? 'text-gob-guinda' : 'text-gray-400'}">Presentado</span>
+                                </div>
+                                <div class="flex-auto border-t-2 mb-4 transition-colors duration-300"
+                                    th:classappend="${t.estatusTermino.ordinal() > 5 ? 'border-gob-guinda' : 'border-gray-200'}">
+                                </div>
+
+                                <!-- Etapa 7: Concluido -->
+                                <div class="relative flex flex-col items-center flex-none">
+                                    <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] z-10 transition-colors duration-300"
+                                        th:classappend="${t.estatusTermino.ordinal() >= 6 ? 'bg-green-600 text-white shadow-sm' : 'bg-gray-200 text-gray-500'}">
+                                        <i class="fas fa-flag-checkered"></i>
+                                    </div>
+                                    <span
+                                        class="mt-2 text-[9px] uppercase font-bold tracking-tight text-center whitespace-nowrap"
+                                        th:classappend="${t.estatusTermino.name() == 'CONCLUIDO' ? 'text-green-600' : 'text-gray-400'}">Concluido</span>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </th:block>
             </tbody>
         </table>
     </div>
 
     <div class="mt-4 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500"
         th:if="${!terminos.empty}">
+        <!-- Formulario oculto para eliminar ROD-13 -->
+        <form id="form-eliminar-termino" th:action="@{/terminos/eliminar}" method="POST" style="display: none;">
+            <input type="hidden" name="id" id="eliminar-termino-id">
+        </form>
         <span class="mb-2 sm:mb-0">
             Mostrando página <span th:text="${terminos.number + 1}" class="font-bold text-gray-700"></span> de <span
                 th:text="${terminos.totalPages}" class="font-bold text-gray-700"></span>

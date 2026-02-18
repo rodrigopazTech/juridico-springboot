@@ -1,0 +1,169 @@
+- generic [ref=e1]:
+  - complementary "Sidebar" [ref=e2]:
+    - generic [ref=e3]:
+      - link " Agenda Legal" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: 
+        - generic [ref=e7]: Agenda Legal
+      - list [ref=e8]:
+        - listitem [ref=e9]:
+          - link " Dashboard" [ref=e10] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=e11]: 
+            - generic [ref=e12]: Dashboard
+        - listitem [ref=e13]:
+          - link " Agenda General" [ref=e14] [cursor=pointer]:
+            - /url: /agenda
+            - generic [ref=e15]: 
+            - generic [ref=e16]: Agenda General
+        - listitem [ref=e17]:
+          - link " Centro de Notificaciones" [ref=e18] [cursor=pointer]:
+            - /url: /alertas
+            - generic [ref=e20]: 
+            - generic [ref=e21]: Centro de Notificaciones
+        - listitem [ref=e22]:
+          - link " Expedientes" [ref=e23] [cursor=pointer]:
+            - /url: /expedientes
+            - generic [ref=e24]: 
+            - generic [ref=e25]: Expedientes
+        - listitem [ref=e26]:
+          - link " Términos" [ref=e27] [cursor=pointer]:
+            - /url: /terminos
+            - generic [ref=e28]: 
+            - generic [ref=e29]: Términos
+        - listitem [ref=e30]:
+          - link " Audiencias" [ref=e31] [cursor=pointer]:
+            - /url: /audiencias
+            - generic [ref=e32]: 
+            - generic [ref=e33]: Audiencias
+        - listitem [ref=e34]:
+          - link " Usuarios" [ref=e35] [cursor=pointer]:
+            - /url: /usuarios
+            - generic [ref=e36]: 
+            - generic [ref=e37]: Usuarios
+        - listitem [ref=e38]:
+          - link " Configuración" [ref=e39] [cursor=pointer]:
+            - /url: /configuracion
+            - generic [ref=e40]: 
+            - generic [ref=e41]: Configuración
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e45]: D
+          - generic [ref=e46]:
+            - paragraph [ref=e47]: Director General
+            - paragraph [ref=e48]: DIRECCION
+        - link " Cerrar Sesión" [ref=e49] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e50]: 
+          - generic [ref=e51]: Cerrar Sesión
+  - generic [ref=e52]:
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - heading " Centro de Notificaciones" [level=1] [ref=e56]:
+            - generic [ref=e57]: 
+            - text: Centro de Notificaciones
+          - paragraph [ref=e58]: Gestiona tus notificaciones del sistema y recordatorios personales.
+        - button " Nuevo Recordatorio" [active] [ref=e60] [cursor=pointer]:
+          - generic [ref=e61]: 
+          - text: Nuevo Recordatorio
+      - generic [ref=e62]:
+        - button " Notificaciones 2" [ref=e63] [cursor=pointer]:
+          - generic [ref=e64]: 
+          - text: Notificaciones
+          - generic [ref=e65]: "2"
+        - button " Mis Recordatorios 1" [ref=e66] [cursor=pointer]:
+          - generic [ref=e67]: 
+          - text: Mis Recordatorios
+          - generic [ref=e68]: "1"
+    - table [ref=e72]:
+      - rowgroup [ref=e73]:
+        - row "Fecha Tipo Mensaje / Detalle Acción" [ref=e74]:
+          - columnheader "Fecha" [ref=e75]
+          - columnheader "Tipo" [ref=e76]
+          - columnheader "Mensaje / Detalle" [ref=e77]
+          - columnheader "Acción" [ref=e78]
+      - rowgroup [ref=e79]:
+        - 'row "13 feb 08:00  SISTEMA Alerta: Término Próximo a Vencer El término Contestación de demanda laboral vence el 15/Feb/2026 (en 2 días). Expediente 001. " [ref=e80]':
+          - cell "13 feb 08:00" [ref=e81]:
+            - generic [ref=e82]: 13 feb
+            - generic [ref=e83]: 08:00
+          - cell " SISTEMA" [ref=e84]:
+            - generic [ref=e85]:
+              - generic [ref=e86]: 
+              - generic [ref=e87]: SISTEMA
+          - 'cell "Alerta: Término Próximo a Vencer El término Contestación de demanda laboral vence el 15/Feb/2026 (en 2 días). Expediente 001." [ref=e88] [cursor=pointer]':
+            - 'link "Alerta: Término Próximo a Vencer El término Contestación de demanda laboral vence el 15/Feb/2026 (en 2 días). Expediente 001." [ref=e89]':
+              - /url: /alertas/notificaciones/leer/8
+              - generic [ref=e90]: "Alerta: Término Próximo a Vencer"
+              - generic [ref=e91]: El término Contestación de demanda laboral vence el 15/Feb/2026 (en 2 días). Expediente 001.
+          - cell "" [ref=e92]:
+            - link "" [ref=e93] [cursor=pointer]:
+              - /url: /alertas/notificaciones/eliminar/8
+              - generic [ref=e94]: 
+        - row "10 feb 11:00  TERMINO Término en Dirección Movimiento de Gerencia a Dirección por Gerente Civil en Alegatos de cierre - Juicio ordinario civil " [ref=e95]:
+          - cell "10 feb 11:00" [ref=e96]:
+            - generic [ref=e97]: 10 feb
+            - generic [ref=e98]: 11:00
+          - cell " TERMINO" [ref=e99]:
+            - generic [ref=e100]:
+              - generic [ref=e101]: 
+              - generic [ref=e102]: TERMINO
+          - cell "Término en Dirección Movimiento de Gerencia a Dirección por Gerente Civil en Alegatos de cierre - Juicio ordinario civil" [ref=e103] [cursor=pointer]:
+            - link "Término en Dirección Movimiento de Gerencia a Dirección por Gerente Civil en Alegatos de cierre - Juicio ordinario civil" [ref=e104]:
+              - /url: /alertas/notificaciones/leer/6
+              - generic [ref=e105]: Término en Dirección
+              - generic [ref=e106]: Movimiento de Gerencia a Dirección por Gerente Civil en Alegatos de cierre - Juicio ordinario civil
+          - cell "" [ref=e107]:
+            - link "" [ref=e108] [cursor=pointer]:
+              - /url: /alertas/notificaciones/eliminar/6
+              - generic [ref=e109]: 
+    - text:    
+  - dialog [ref=e110]:
+    - generic [ref=e114]:
+      - generic [ref=e115]:
+        - heading " Nuevo Recordatorio" [level=3] [ref=e116]:
+          - generic [ref=e117]: 
+          - text: Nuevo Recordatorio
+        - button "Cerrar" [ref=e118] [cursor=pointer]:
+          - generic [ref=e119]: Cerrar
+          - img [ref=e120]
+      - generic [ref=e123]:
+        - generic [ref=e124]:
+          - generic [ref=e125]: Título *
+          - generic [ref=e126]:
+            - 'textbox "Ej: Llamar al cliente..." [ref=e127]'
+            - generic:
+              - generic: 
+        - generic [ref=e128]:
+          - generic [ref=e129]:
+            - generic [ref=e130]: Fecha *
+            - generic [ref=e131]:
+              - textbox [ref=e132]: 2026-02-17
+              - generic:
+                - generic: 
+          - generic [ref=e133]:
+            - generic [ref=e134]: Hora *
+            - generic [ref=e135]:
+              - textbox [ref=e136]: 09:00
+              - generic:
+                - generic: 
+        - generic [ref=e137]:
+          - generic [ref=e138]: Prioridad
+          - generic [ref=e139]:
+            - combobox [ref=e140]:
+              - option "Normal" [selected]
+              - option "Alta (Urgente)"
+              - option "Baja"
+            - generic:
+              - generic: 
+            - generic:
+              - generic: 
+        - generic [ref=e141]:
+          - generic [ref=e142]: Detalles
+          - textbox "Notas adicionales..." [ref=e143]
+      - generic [ref=e144]:
+        - button "Cancelar" [ref=e145] [cursor=pointer]
+        - button " Guardar Recordatorio" [ref=e146] [cursor=pointer]:
+          - generic [ref=e147]: 
+          - text: Guardar Recordatorio

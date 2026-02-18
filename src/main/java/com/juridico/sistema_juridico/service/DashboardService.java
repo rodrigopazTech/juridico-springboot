@@ -3,7 +3,7 @@ package com.juridico.sistema_juridico.service;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
-import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal; 
+import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import org.springframework.stereotype.Service;
 import java.util.*;
 
@@ -15,8 +15,8 @@ public class DashboardService {
     private final TerminoRepository terminoRepository;
 
     public DashboardService(ExpedienteRepository expedienteRepository,
-                            AudienciaRepository audienciaRepository,
-                            TerminoRepository terminoRepository) {
+            AudienciaRepository audienciaRepository,
+            TerminoRepository terminoRepository) {
         this.expedienteRepository = expedienteRepository;
         this.audienciaRepository = audienciaRepository;
         this.terminoRepository = terminoRepository;
@@ -24,10 +24,23 @@ public class DashboardService {
 
     public Map<String, Long> obtenerKpis(Long gerenciaId) {
         Map<String, Long> kpis = new HashMap<>();
-        kpis.put("totalExpedientes", gerenciaId == null ? expedienteRepository.count() : expedienteRepository.countByGerenciaId(gerenciaId));
-        kpis.put("expedientesActivos", gerenciaId == null ? expedienteRepository.countByEtapaProcesal(EtapaProcesal.TRAMITE) : expedienteRepository.countByEtapaProcesalAndGerenciaId(EtapaProcesal.TRAMITE, gerenciaId));
+        kpis.put("totalExpedientes",
+                gerenciaId == null ? expedienteRepository.count() : expedienteRepository.countByGerenciaId(gerenciaId));
+        kpis.put("expedientesActivos",
+                gerenciaId == null ? expedienteRepository.countByEtapaProcesal(EtapaProcesal.TRAMITE)
+                        : expedienteRepository.countByEtapaProcesalAndGerenciaId(EtapaProcesal.TRAMITE, gerenciaId));
         kpis.put("audienciasProgramadas", audienciaRepository.count());
         kpis.put("terminosActivos", terminoRepository.count());
+        return kpis;
+    }
+
+    public Map<String, Long> obtenerKpisPersonales(Integer usuarioId) {
+        Map<String, Long> kpis = new HashMap<>();
+        kpis.put("totalExpedientes", expedienteRepository.countByAbogadoResponsableId(usuarioId));
+        kpis.put("expedientesActivos",
+                expedienteRepository.countByEtapaProcesalAndAbogadoResponsableId(EtapaProcesal.TRAMITE, usuarioId));
+        kpis.put("audienciasProgramadas", audienciaRepository.countByAbogadoCompareceId(usuarioId));
+        kpis.put("terminosActivos", terminoRepository.countByAbogadoResponsableId(usuarioId));
         return kpis;
     }
 
@@ -40,8 +53,16 @@ public class DashboardService {
         return data;
     }
 
+    public Map<String, Object> obtenerMetricasPersonales(Integer usuarioId) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("estatusExpedientes", obtenerEstatusExpedientesPersonales(usuarioId));
+        data.put("trabajoMensual", obtenerTrabajoMensualPersonal(usuarioId));
+        return data;
+    }
+
     private Map<String, Object> obtenerEstatusExpedientes(Long gerenciaId) {
-        List<Object[]> rows = (gerenciaId == null) ? expedienteRepository.contarExpedientesPorEstatus() : expedienteRepository.contarExpedientesPorEstatusYGerencia(gerenciaId);
+        List<Object[]> rows = (gerenciaId == null) ? expedienteRepository.contarExpedientesPorEstatus()
+                : expedienteRepository.contarExpedientesPorEstatusYGerencia(gerenciaId);
         Map<EtapaProcesal, Long> statusMap = new HashMap<>();
         for (Object[] row : rows) {
             EtapaProcesal etapa = (EtapaProcesal) row[0];
@@ -50,7 +71,7 @@ public class DashboardService {
         }
         List<String> labels = new ArrayList<>();
         List<Long> values = new ArrayList<>();
-        for (EtapaProcesal etapa : Arrays.asList(EtapaProcesal.TRAMITE, EtapaProcesal.LAUDO, EtapaProcesal.FIRME)) {
+        for (EtapaProcesal etapa : EtapaProcesal.values()) {
             labels.add(etapa.name());
             values.add(statusMap.getOrDefault(etapa, 0L));
         }
@@ -86,7 +107,10 @@ public class DashboardService {
     }
 
     private Map<String, Object> obtenerTrabajoMensual(Long gerenciaId) {
-        return processRows(expedienteRepository.contarExpedientesCompletadosPorMes());
+        List<Object[]> rows = (gerenciaId != null)
+                ? expedienteRepository.contarExpedientesPorEtapaYGerencia(EtapaProcesal.FIRME.name(), gerenciaId)
+                : expedienteRepository.contarExpedientesPorEtapa(EtapaProcesal.FIRME.name());
+        return processRows(rows);
     }
 
     private Map<String, Object> processRows(List<Object[]> rows) {
@@ -102,8 +126,37 @@ public class DashboardService {
     private Map<String, Integer> toMap(List<Object[]> rows) {
         Map<String, Integer> map = new HashMap<>();
         for (Object[] row : rows) {
-            if (row[0] != null) map.put(row[0].toString(), ((Number) row[1]).intValue());
+            if (row[0] != null)
+                map.put(row[0].toString(), ((Number) row[1]).intValue());
         }
         return map;
+    }
+
+    // 👤 ROD-12 Dashboard Personal (Abogados)
+
+    private Map<String, Object> obtenerEstatusExpedientesPersonales(Integer usuarioId) {
+        List<Object[]> rows = expedienteRepository.contarExpedientesPorEstatusYAbogado(usuarioId);
+        return processStatusRows(rows);
+    }
+
+    private Map<String, Object> processStatusRows(List<Object[]> rows) {
+        Map<EtapaProcesal, Long> statusMap = new HashMap<>();
+        for (Object[] row : rows) {
+            EtapaProcesal etapa = (EtapaProcesal) row[0];
+            Long count = ((Number) row[1]).longValue();
+            statusMap.put(etapa, count);
+        }
+        List<String> labels = new ArrayList<>();
+        List<Long> values = new ArrayList<>();
+        for (EtapaProcesal etapa : EtapaProcesal.values()) {
+            labels.add(etapa.name());
+            values.add(statusMap.getOrDefault(etapa, 0L));
+        }
+        return Map.of("labels", labels, "values", values);
+    }
+
+    private Map<String, Object> obtenerTrabajoMensualPersonal(Integer usuarioId) {
+        return processRows(
+                expedienteRepository.contarExpedientesPorEtapaYAbogado(EtapaProcesal.FIRME.name(), usuarioId));
     }
 }
