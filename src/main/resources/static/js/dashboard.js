@@ -1,6 +1,6 @@
 /**
  * dashboard.js
- * Manejo de gráficas dinámicas y filtros por gerencia
+ * Manejo de gráficas dinámicas y filtros por gerencia y grupos de gerencias
  */
 
 // Paleta de colores basada en tailwind.config.js
@@ -34,21 +34,25 @@ document.addEventListener("DOMContentLoaded", () => {
     // Verificamos si es un SELECT (Directivos) para añadir el evento de cambio
     if (filtroGerencia && filtroGerencia.tagName === 'SELECT') {
         filtroGerencia.addEventListener("change", (e) => {
-            const idGerencia = e.target.value;
-            actualizarDashboard(idGerencia);
+            const value = e.target.value;
+            actualizarDashboard(value);
         });
     }
 });
 
 /**
  * Solicita nuevos datos al servidor y actualiza la vista
- * @param {string} gerenciaId 
+ * @param {string} value - ID de la gerencia individual (o vacío para todas)
  */
-async function actualizarDashboard(gerenciaId) {
+async function actualizarDashboard(value) {
     try {
-        // Mostrar un pequeño indicador de carga (opcional con SweetAlert o CSS)
+        let url;
+        if (value) {
+            url = `/dashboard/data?gerenciaId=${value}`;
+        } else {
+            url = '/dashboard/data';
+        }
         
-        const url = gerenciaId ? `/dashboard/data?gerenciaId=${gerenciaId}` : '/dashboard/data';
         const response = await fetch(url);
         
         if (!response.ok) throw new Error("Error en la respuesta del servidor");
@@ -78,12 +82,20 @@ function updateKPIs(kpis) {
 }
 
 /**
+ * Roles para los cuales se oculta la gráfica de distribución por gerencia
+ */
+const ROLES_SIN_GRAFICA_GERENCIA = ['JEFE_DEPTO', 'GERENTE'];
+
+/**
  * Llama a las funciones de renderizado de cada gráfica
  */
 function renderAllCharts(data) {
     renderEstatus(data.estatusExpedientes);
     renderCargaUsuarios(data.cargaTrabajoUsuarios);
-    renderGerencias(data.distribucionGerencias);
+    // Solo renderizar gráfica de gerencias si el usuario no es JEFE_DEPTO o GERENTE
+    if (!ROLES_SIN_GRAFICA_GERENCIA.includes(window.userRole)) {
+        renderGerencias(data.distribucionGerencias);
+    }
     renderTrabajoMensual(data.trabajoMensual);
 }
 

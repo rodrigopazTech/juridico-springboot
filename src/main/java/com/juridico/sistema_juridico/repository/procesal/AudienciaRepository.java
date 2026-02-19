@@ -108,4 +108,24 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
         GROUP BY u.nombreCompleto
     """)
     List<Object[]> contarAudienciasPorUsuario();
+
+    @Query("""
+        SELECT u.nombreCompleto, COUNT(a)
+        FROM Audiencia a
+        JOIN a.expediente e
+        JOIN e.abogadoResponsable u
+        WHERE e.gerencia.id = :gerenciaId
+        GROUP BY u.nombreCompleto
+    """)
+    List<Object[]> contarAudienciasPorUsuarioYGerencia(@Param("gerenciaId") Long gerenciaId);
+
+    @Query("""
+        SELECT u.nombreCompleto, COUNT(a)
+        FROM Audiencia a
+        JOIN a.expediente e
+        JOIN e.abogadoResponsable u
+        WHERE e.gerencia.id IN :gerenciaIds
+        GROUP BY u.nombreCompleto
+    """)
+    List<Object[]> contarAudienciasPorUsuarioYGerencias(@Param("gerenciaIds") List<Long> gerenciaIds);
 }
