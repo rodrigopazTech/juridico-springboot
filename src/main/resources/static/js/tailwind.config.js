@@ -9,7 +9,11 @@ tailwind.config = {
         'gob-plata': '#98989A',
         'gob-verde': '#13322B',
         'gob-verdeDark': '#0C231E',
-        'gob-fondo': '#F5F5F5'
+        'gob-fondo': '#F5F5F5',
+        // Colores para eventos del calendario
+        'evento-audiencia': '#691228',  // Gob Guinda
+        'evento-termino': '#13322B',    // Gob Verde
+        'evento-recordatorio': '#98774C' // Color personalizado
       },
       fontFamily: {
         'headings': ['Montserrat', 'sans-serif'],
