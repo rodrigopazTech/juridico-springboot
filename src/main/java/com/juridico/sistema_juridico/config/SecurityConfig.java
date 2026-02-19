@@ -31,16 +31,16 @@ public class SecurityConfig {
                 // 1. Recursos Públicos
                 .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**", "/lib/**").permitAll()
                 .requestMatchers("/", "/login", "/register", "/api/auth/**").permitAll()
-
                 // 2. NIVEL ALTO: Agenda General (Solo Dirección y Subdirección)
-                .requestMatchers("/agenda", "/agenda/**").hasAnyAuthority("DIRECCION", "SUBDIRECCION")
-                
+                .requestMatchers("/agenda", "/agenda/**").hasAnyAuthority("ADMIN","DIRECCION", "SUBDIRECCION")
+                .requestMatchers("/admin/**").hasAuthority("ADMIN")
+
                 // 2.1 ADMINISTRACIÓN: Usuarios (Dirección, Subdirección y Gerentes)
-                .requestMatchers("/usuarios", "/usuarios/**").hasAnyAuthority("DIRECCION", "SUBDIRECCION", "GERENTE")
+                .requestMatchers("/usuarios", "/usuarios/**").hasAnyAuthority("ADMIN","DIRECCION", "SUBDIRECCION", "GERENTE")
                 
                 // 3. NIVEL MEDIO: Dashboard (Dirección, Subdirección, Gerentes y Jefes)
                 // Nota: Los Abogados NO entran aquí.
-                .requestMatchers("/dashboard", "/dashboard/**").hasAnyAuthority("DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO")
+                .requestMatchers("/dashboard", "/dashboard/**").hasAnyAuthority("ADMIN","DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO")
 
                 // 4. NIVEL OPERATIVO: Expedientes, Términos, Audiencias (TODOS los autenticados)
                 .requestMatchers("/expedientes", "/expedientes/**", "/terminos", "/terminos/**", "/audiencias", "/audiencias/**").authenticated()

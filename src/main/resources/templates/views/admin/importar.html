@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Importar Datos - SIAJ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script th:src="@{/js/tailwind.config.js}"></script>
+    <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link rel="stylesheet" th:href="@{/css/output.css}">
+</head>
+<body class="bg-gray-50 font-sans text-gray-900">
+
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <main class="p-4 sm:ml-64 min-h-screen">
+        <div class="p-4 mt-14">
+            
+            <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-200 pb-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gob-verde font-headings">Migración de Datos</h1>
+                    <p class="text-gray-600 mt-1">Carga masiva de audiencias y expedientes vía Excel (.xlsx)</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <span class="inline-flex items-center bg-gob-oro/10 text-gob-oro px-3 py-1 rounded-full text-sm font-bold border border-gob-oro/20">
+                        <i class="fas fa-shield-alt me-2"></i> Solo Administradores
+                    </span>
+                </div>
+            </div>
+
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                    
+                    <div class="bg-gob-verde px-6 py-4 flex items-center">
+                        <i class="fas fa-file-excel text-gob-oro text-xl me-3"></i>
+                        <h2 class="text-white font-bold text-lg">Cargar Archivo de Audiencias</h2>
+                    </div>
+
+                    <div class="p-8">
+                        <div class="mb-8 p-4 bg-amber-50 rounded-lg border-l-4 border-gob-oro flex items-start">
+                            <i class="fas fa-info-circle text-gob-oro mt-1 me-3"></i>
+                            <div class="text-sm text-amber-900">
+                                <p class="font-bold mb-1">Antes de importar:</p>
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li>Asegúrese de que el archivo tenga la extensión <strong>.xlsx</strong>.</li>
+                                    <li>La primera fila debe contener los encabezados de las columnas.</li>
+                                    <li>El formato de fecha debe ser <strong>YYYY-MM-DD</strong>.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                       <form th:action="@{/admin/importar}" method="POST" enctype="multipart/form-data" id="importForm">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <div class="flex flex-col items-center justify-center w-full">
+                                <label for="dropzone-file" 
+                                       class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-all duration-300 group">
+                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <div class="w-16 h-16 bg-gob-verde/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                            <i class="fas fa-cloud-upload-alt text-3xl text-gob-verde"></i>
+                                        </div>
+                                        <p class="mb-2 text-sm text-gray-700"><span class="font-bold">Haga clic para cargar</span> o arrastre y suelte</p>
+                                        <p class="text-xs text-gray-500">Excel (XLSX, XLS)</p>
+                                        <p id="file-name" class="mt-4 text-sm font-bold text-gob-guinda"></p>
+                                    </div>
+                                    <input id="dropzone-file" name="file" type="file" class="hidden" accept=".xlsx, .xls" required />
+                                </label>
+                            </div>
+
+                            <div class="mt-8 flex justify-end space-x-4">
+                                <button type="reset" class="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                    Limpiar
+                                </button>
+                                <button type="submit" class="px-6 py-2.5 text-sm font-bold text-white bg-gob-verde rounded-lg hover:bg-gob-verde/90 shadow-lg shadow-gob-verde/20 transition-all active:scale-95">
+                                    <i class="fas fa-upload me-2"></i> Procesar Importación
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div id="progressContainer" class="hidden px-8 pb-8">
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="progressBar" class="bg-gob-oro h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <p class="text-center text-xs text-gray-500 mt-2">Procesando datos, por favor no cierre la ventana...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Mostrar nombre del archivo al seleccionar
+        const fileInput = document.getElementById('dropzone-file');
+        const fileNameDisplay = document.getElementById('file-name');
+        const form = document.getElementById('importForm');
+
+        fileInput.addEventListener('change', (e) => {
+            const name = e.target.files[0]?.name;
+            fileNameDisplay.textContent = name ? `Seleccionado: ${name}` : '';
+        });
+
+        // Feedback visual al enviar
+        form.addEventListener('submit', () => {
+            document.getElementById('progressContainer').classList.remove('hidden');
+            let bar = document.getElementById('progressBar');
+            let width = 0;
+            setInterval(() => {
+                if (width < 95) {
+                    width += 5;
+                    bar.style.width = width + '%';
+                }
+            }, 300);
+        });
+    </script>
+</body>
+</html>

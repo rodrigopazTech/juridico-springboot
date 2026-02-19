@@ -229,5 +229,18 @@ public class DataInitializer implements CommandLineRunner {
             tipoAudienciaRepository.saveAll(tipos);
             System.out.println("✅ Tipos de Audiencia cargados automáticamente.");
         }
+                if (usuarioRepository.findByEmail("admin@sistema.com").isEmpty()) {
+            Usuario admin = Usuario.builder()
+                    .nombreCompleto("Administrador del Sistema")
+                    .email("admin@sistema.com")
+                    // Usamos el passwordEncoder que ya tienes inyectado en la clase
+                    .password(passwordEncoder.encode("admin123")) 
+                    .rol(RolUsuario.ADMIN)
+                    .activo(true)
+                    .build();
+            
+            usuarioRepository.save(admin);
+            System.out.println("✅ Usuario ADMIN creado por defecto (admin@sistema.com / admin123).");
+        }
     }
 }
