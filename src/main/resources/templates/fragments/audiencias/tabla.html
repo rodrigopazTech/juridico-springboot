@@ -31,20 +31,24 @@
 
                     <td class="px-4 py-3">
                         <div class="flex flex-col">
-                            <a th:href="@{/expedientes/{id}(id=${a.expediente.id}, from='audiencias')}"
+                            <a th:if="${a.expediente != null}"
+                                th:href="@{/expedientes/{id}(id=${a.expediente.id}, from='audiencias')}"
                                 class="text-sm font-bold text-gob-guinda hover:underline"
                                 th:text="${a.expediente.numero}">EXP-001</a>
+                            <span th:if="${a.expediente == null}" class="text-xs font-bold text-gray-400 italic">S/N
+                                Expediente</span>
+
                             <span class="text-[10px] text-gray-500 truncate max-w-[150px]"
-                                th:text="${a.expediente.partes}">Partes</span>
+                                th:text="${a.expediente != null ? a.expediente.partes : 'Sin Partes'}">Partes</span>
                         </div>
                     </td>
 
                     <td class="px-4 py-3">
                         <div class="flex flex-col">
                             <span class="text-xs font-bold text-gray-700"
-                                th:text="${a.expediente.gerencia != null ? a.expediente.gerencia.nombre : 'Sin Gerencia'}">Gerencia</span>
+                                th:text="${a.expediente != null and a.expediente.gerencia != null ? a.expediente.gerencia.nombre : 'Sin Gerencia'}">Gerencia</span>
                             <span class="text-[10px] text-gray-500"
-                                th:text="${a.expediente.materia != null ? a.expediente.materia.nombre : 'Sin Materia'}">Materia</span>
+                                th:text="${a.expediente != null and a.expediente.materia != null ? a.expediente.materia.nombre : 'Sin Materia'}">Materia</span>
                         </div>
                     </td>
 
@@ -86,7 +90,7 @@
 
                         <button th:if="${a.estatusAudiencia == 'PENDIENTE'}" type="button"
                             class="text-gray-400 hover:text-gob-oro mr-2 transition-colors btn-editar" title="Editar"
-                            th:data-id="${a.id}" th:data-expediente-id="${a.expediente.id}"
+                            th:data-id="${a.id}" th:data-expediente-id="${a.expediente != null ? a.expediente.id : ''}"
                             th:data-tipo-id="${a.tipoAudiencia != null ? a.tipoAudiencia.id : ''}"
                             th:data-fecha="${a.fechaAudiencia}" th:data-hora="${a.horaAudiencia}"
                             th:data-virtual="${a.esVirtual}" th:data-sala="${a.salaLugar != null ? a.salaLugar : ''}"
@@ -143,7 +147,8 @@
 
                             <div th:if="${a.estatusAudiencia == 'CON_ACTA'}" class="border-t border-gray-100"></div>
 
-                            <a th:href="@{/expedientes/{id}(id=${a.expediente.id}, from='audiencias')}"
+                            <a th:if="${a.expediente != null}"
+                                th:href="@{/expedientes/{id}(id=${a.expediente.id}, from='audiencias')}"
                                 class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-guinda transition border-l-4 border-transparent hover:border-gob-guinda">
                                 <i class="fas fa-folder-open mr-3 w-4 text-center text-gray-400"></i> Ver Expediente
                             </a>

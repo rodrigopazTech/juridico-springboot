@@ -47,14 +47,16 @@
 
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-2">
-                            <a th:href="@{/expedientes/{id}(id=${t.expediente.id}, from='agenda')}"
+                            <a th:if="${t.expediente != null}"
+                                th:href="@{/expedientes/{id}(id=${t.expediente.id}, from='agenda')}"
                                 class="text-gob-guinda font-bold hover:underline"
-                                th:text="${t.expediente != null ? t.expediente.numero : 'S/N'}">EXP-001</a>
+                                th:text="${t.expediente.numero}">EXP-001</a>
+                            <span th:if="${t.expediente == null}" class="text-gray-400 italic">S/N</span>
 
                             <span th:if="${t.expediente != null}"
                                 class="text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-sm border"
-                                th:classappend="${t.expediente.prioridad.name() == 'ALTA' ? 'bg-gob-guinda text-gob-oro border-gob-oro' : 
-                                                  (t.expediente.prioridad.name() == 'BAJA' ? 'bg-gray-100 text-gray-500 border-gray-200' : 
+                                th:classappend="${t.expediente.prioridad.name() == 'ALTA' ? 'bg-gob-guinda text-gob-oro border-gob-oro' :
+                                                  (t.expediente.prioridad.name() == 'BAJA' ? 'bg-gray-100 text-gray-500 border-gray-200' :
                                                   'bg-gob-oro text-gob-guinda border-transparent')}"
                                 th:text="${t.expediente.prioridad}">MEDIA</span>
                         </div>
@@ -66,13 +68,13 @@
 
                     <td class="px-6 py-4">
                         <span class="text-xs font-semibold px-2.5 py-0.5 rounded border"
-                            th:classappend="${t.estatusTermino.name() == 'PRESENTADO' ? 'bg-green-100 text-green-800 border-green-200' : 
+                            th:classappend="${t.estatusTermino.name() == 'PRESENTADO' ? 'bg-green-100 text-green-800 border-green-200' :
                                               (t.estatusTermino.name() == 'CONCLUIDO' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-gray-100 text-gray-800')}"
                             th:text="${t.estatusTermino.nombre}">Presentado</span>
                     </td>
 
                     <td class="px-6 py-4 text-sm"
-                        th:text="${t.abogadoResponsable != null ? t.abogadoResponsable.nombreCompleto : 'Sin Asignar'}">
+                        th:text="${t.abogadoResponsable != null ? t.abogadoResponsable.nombreCompleto : (t.abogadoNombreMigrado != null ? t.abogadoNombreMigrado : 'Sin Asignar')}">
                         Lic. Pérez
                     </td>
 

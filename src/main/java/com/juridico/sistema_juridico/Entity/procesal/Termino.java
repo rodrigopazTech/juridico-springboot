@@ -55,6 +55,9 @@ public class Termino {
     @JoinColumn(name = "abogado_responsable_id")
     private Usuario abogadoResponsable;
 
+    @Column(name = "abogado_nombre_migrado", length = 200)
+    private String abogadoNombreMigrado;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

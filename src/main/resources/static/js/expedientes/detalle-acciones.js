@@ -102,6 +102,7 @@ async function guardarNota() {
         if (response.ok) {
             textarea.value = '';
             await loadObservaciones();
+            await loadHistorial(); // Refrescar historial lateral
             if (typeof Swal !== 'undefined') {
                 const Toast = Swal.mixin({
                     toast: true,
@@ -150,6 +151,50 @@ async function updateEtapa(nuevaEtapa) {
         if (typeof Swal !== 'undefined') {
             Swal.fire('Error', 'No se pudo actualizar la etapa', 'error');
         }
+    }
+}
+
+// --- MÓDULO DE HISTORIAL ---
+
+async function loadHistorial() {
+    const container = document.getElementById('historial-container');
+    if (!container) return;
+
+    try {
+        const response = await fetch(`/expedientes/${EXPEDIENTE_ID}/historial`);
+        const historial = await response.json();
+
+        container.innerHTML = '';
+
+        if (historial.length === 0) {
+            container.innerHTML = `
+                <div class="ml-4 py-4 text-center text-gray-400 text-xs italic">
+                    Sin actividad registrada aún.
+                </div>`;
+            return;
+        }
+
+        historial.forEach((item, index) => {
+            const date = new Date(item.createdAt);
+            const fechaStr = date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' +
+                date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+            const colorClass = index === 0 ? 'bg-gob-guinda' : 'bg-gray-300';
+
+            const div = document.createElement('div');
+            div.className = 'ml-4 relative';
+            div.innerHTML = `
+                <div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full border-2 border-white ${colorClass}"></div>
+                <p class="text-xs text-gray-400">${fechaStr}</p>
+                <p class="text-sm font-medium text-gray-800">${item.accion}</p>
+                <p class="text-xs text-gray-500">${item.detalle}</p>
+                <p class="text-[10px] text-gray-400 italic">Realizado por <span>${item.usuario ? item.usuario.nombreCompleto : 'Sistema'}</span></p>
+            `;
+            container.appendChild(div);
+        });
+
+    } catch (error) {
+        console.error('Error al cargar historial:', error);
     }
 }
 

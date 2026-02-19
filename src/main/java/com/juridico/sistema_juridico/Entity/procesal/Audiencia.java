@@ -77,6 +77,9 @@ public class Audiencia {
     @JoinColumn(name = "abogado_comparece_id")
     private Usuario abogadoComparece;
 
+    @Column(name = "abogado_nombre_migrado", length = 200)
+    private String abogadoNombreMigrado;
+
     @Column(name = "observaciones", columnDefinition = "TEXT")
     private String observaciones; // Resultados o notas de la audiencia
 

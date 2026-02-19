@@ -14,9 +14,9 @@ import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoPresentadoRepository;
 import com.juridico.sistema_juridico.service.NotificacionService;
 import com.juridico.sistema_juridico.util.TerminoExcelExporter;
+import com.juridico.sistema_juridico.service.SecurityService;
 
 import jakarta.servlet.http.HttpServletResponse;
-import com.juridico.sistema_juridico.service.SecurityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +26,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.core.io.Resource;
@@ -83,7 +85,7 @@ public class TerminosController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) EstatusTermino estatus,
             @RequestParam(required = false) Prioridad prioridad,
-            @RequestParam(required = false) Integer abogadoId) { // Filtro del usuario (opcional)
+            @RequestParam(required = false) Integer abogadoId) {
 
         Usuario usuarioActual = getUsuarioActual();
         Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaVencimiento").ascending());
@@ -107,7 +109,6 @@ public class TerminosController {
                 pageable);
 
         model.addAttribute("terminos", paginaTerminos);
-
         model.addAttribute("abogados", usuarioRepository.findByRolAndActivoTrue(RolUsuario.ABOGADO));
         model.addAttribute("listaAbogados", usuarioRepository.findAll());
         model.addAttribute("listaPrioridades", Prioridad.values());
@@ -136,9 +137,8 @@ public class TerminosController {
             boolean esNuevo = false;
 
             if (terminoForm.getId() != null) {
-                Termino existente = terminoRepository.findById(terminoForm.getId()).orElse(null);
-                if (existente == null)
-                    return "redirect:/terminos";
+                Termino existente = terminoRepository.findById(terminoForm.getId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
 
                 // SEGURIDAD ROD-39: Validar acceso de escritura al expediente actual del
                 // término
@@ -154,9 +154,10 @@ public class TerminosController {
                 existente.setUpdatedAt(LocalDateTime.now());
 
                 if (expedienteId != null) {
-                    Expediente exp = expedienteRepository.findById(expedienteId).orElse(null);
-                    if (exp != null)
-                        existente.setExpediente(exp);
+                    Expediente exp = expedienteRepository.findById(expedienteId)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                    "Expediente no encontrado"));
+                    existente.setExpediente(exp);
                 }
                 terminoGuardar = existente;
             } else {
@@ -168,24 +169,25 @@ public class TerminosController {
                 terminoGuardar.setUpdatedAt(LocalDateTime.now());
 
                 if (expedienteId != null) {
-                    Expediente exp = expedienteRepository.findById(expedienteId).orElse(null);
-                    if (exp != null) {
-                        // VALIDACIÓN ROD-19
-                        if (!securityService.tieneAccesoEscritura(actor, exp)) {
-                            redirectAttrs.addFlashAttribute("mensaje",
-                                    "Acceso denegado: No tiene permisos de escritura para este expediente.");
-                            redirectAttrs.addFlashAttribute("tipo", "error");
-                            return "redirect:/terminos";
-                        }
-                        terminoGuardar.setExpediente(exp);
+                    Expediente exp = expedienteRepository.findById(expedienteId)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                    "Expediente no encontrado"));
 
-                        if (terminoGuardar.getPrioridad() == null) {
-                            terminoGuardar.setPrioridad(exp.getPrioridad());
-                        }
+                    // VALIDACIÓN ROD-19
+                    if (!securityService.tieneAccesoEscritura(actor, exp)) {
+                        redirectAttrs.addFlashAttribute("mensaje",
+                                "Acceso denegado: No tiene permisos de escritura para este expediente.");
+                        redirectAttrs.addFlashAttribute("tipo", "error");
+                        return "redirect:/terminos";
+                    }
+                    terminoGuardar.setExpediente(exp);
 
-                        if (terminoGuardar.getAbogadoResponsable() == null) {
-                            terminoGuardar.setAbogadoResponsable(exp.getAbogadoResponsable());
-                        }
+                    if (terminoGuardar.getPrioridad() == null) {
+                        terminoGuardar.setPrioridad(exp.getPrioridad());
+                    }
+
+                    if (terminoGuardar.getAbogadoResponsable() == null) {
+                        terminoGuardar.setAbogadoResponsable(exp.getAbogadoResponsable());
                     }
                 }
             }
@@ -216,8 +218,10 @@ public class TerminosController {
 
     @GetMapping("/avanzar/{id}")
     public String avanzarEstado(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
-        Termino termino = terminoRepository.findById(id).orElse(null);
-        if (termino != null) {
+        try {
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
+
             Usuario actor = getUsuarioActual();
 
             // SEGURIDAD ROD-39: Validar acceso de escritura
@@ -253,6 +257,10 @@ public class TerminosController {
 
             redirectAttrs.addFlashAttribute("mensaje", "Avanzó a: " + siguienteEtapa.getNombre());
             redirectAttrs.addFlashAttribute("tipo", "success");
+        } catch (Exception e) {
+            e.printStackTrace();
+            redirectAttrs.addFlashAttribute("mensaje", "Error: " + e.getMessage());
+            redirectAttrs.addFlashAttribute("tipo", "error");
         }
         return "redirect:/terminos";
     }
@@ -262,6 +270,9 @@ public class TerminosController {
         String titulo = "Término en " + nuevaEtapa.getNombre();
         String mensajeBase = String.format("Movimiento de '%s' a '%s' por %s", etapaAnterior.getNombre(),
                 nuevaEtapa.getNombre(), actor.getNombreCompleto());
+
+        if (termino.getExpediente() == null)
+            return;
 
         List<Usuario> destinatarios = new ArrayList<>();
         Gerencia g = termino.getExpediente().getGerencia();
@@ -291,7 +302,7 @@ public class TerminosController {
 
         Set<Usuario> unicos = new HashSet<>(destinatarios);
         for (Usuario u : unicos) {
-            if (!u.getId().equals(actor.getId())) {
+            if (u != null && !u.getId().equals(actor.getId())) {
                 notificacionService.crearNotificacion(u, titulo, mensajeBase, "TERMINO", Prioridad.ALTA,
                         termino.getId().toString());
             }
@@ -310,47 +321,39 @@ public class TerminosController {
         }
 
         try {
-            Termino termino = terminoRepository.findById(id).orElse(null);
-            if (termino != null) {
-                Usuario actor = getUsuarioActual();
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
 
-                // SEGURIDAD ROD-39: Validar acceso de escritura
-                if (!securityService.tieneAccesoEscritura(actor, termino.getExpediente())) {
-                    redirectAttrs.addFlashAttribute("mensaje",
-                            "Acceso denegado: No tiene permisos para subir archivos.");
-                    redirectAttrs.addFlashAttribute("tipo", "error");
-                    return "redirect:/terminos";
-                }
+            Usuario actor = getUsuarioActual();
 
-                // Validación: No permitir cambiar archivo si ya está en etapas finales
-                EstatusTermino st = termino.getEstatusTermino();
-                if (EstatusTermino.LIBERADO == st || EstatusTermino.PRESENTADO == st
-                        || EstatusTermino.CONCLUIDO == st) {
-                    redirectAttrs.addFlashAttribute("mensaje", "El documento está bloqueado en esta etapa.");
-                    redirectAttrs.addFlashAttribute("tipo", "error");
-                    return "redirect:/terminos";
-                }
-
-                // 1. Crear directorio si no existe
-                String carpetaDestino = "uploads/terminos/";
-                Path rutaCarpeta = Paths.get(carpetaDestino);
-                if (!Files.exists(rutaCarpeta))
-                    Files.createDirectories(rutaCarpeta);
-
-                // 2. Guardar archivo con nombre único (ID_NombreOriginal)
-                String nombreFinal = id + "_" + archivo.getOriginalFilename();
-                Files.copy(archivo.getInputStream(), rutaCarpeta.resolve(nombreFinal),
-                        StandardCopyOption.REPLACE_EXISTING);
-
-                // 3. Actualizar base de datos
-                termino.setArchivoWord(nombreFinal);
-                termino.setUpdatedAt(LocalDateTime.now());
-                terminoRepository.save(termino);
-
-                redirectAttrs.addFlashAttribute("mensaje", "Borrador actualizado correctamente.");
-                redirectAttrs.addFlashAttribute("tipo", "success");
+            if (!securityService.tieneAccesoEscritura(actor, termino.getExpediente())) {
+                redirectAttrs.addFlashAttribute("mensaje", "Acceso denegado: No tiene permisos para subir archivos.");
+                redirectAttrs.addFlashAttribute("tipo", "error");
+                return "redirect:/terminos";
             }
-        } catch (IOException e) {
+
+            EstatusTermino st = termino.getEstatusTermino();
+            if (EstatusTermino.LIBERADO == st || EstatusTermino.PRESENTADO == st || EstatusTermino.CONCLUIDO == st) {
+                redirectAttrs.addFlashAttribute("mensaje", "El documento está bloqueado en esta etapa.");
+                redirectAttrs.addFlashAttribute("tipo", "error");
+                return "redirect:/terminos";
+            }
+
+            String carpetaDestino = "uploads/terminos/";
+            Path rutaCarpeta = Paths.get(carpetaDestino);
+            if (!Files.exists(rutaCarpeta))
+                Files.createDirectories(rutaCarpeta);
+
+            String nombreFinal = id + "_" + archivo.getOriginalFilename();
+            Files.copy(archivo.getInputStream(), rutaCarpeta.resolve(nombreFinal), StandardCopyOption.REPLACE_EXISTING);
+
+            termino.setArchivoWord(nombreFinal);
+            termino.setUpdatedAt(LocalDateTime.now());
+            terminoRepository.save(termino);
+
+            redirectAttrs.addFlashAttribute("mensaje", "Borrador actualizado correctamente.");
+            redirectAttrs.addFlashAttribute("tipo", "success");
+        } catch (Exception e) {
             e.printStackTrace();
             redirectAttrs.addFlashAttribute("mensaje", "Error al guardar el archivo: " + e.getMessage());
             redirectAttrs.addFlashAttribute("tipo", "error");
@@ -358,64 +361,60 @@ public class TerminosController {
         return "redirect:/terminos";
     }
 
-    // 4. SUBIR ACUSE (CON SEGURIDAD RBAC)
     @PostMapping("/subir-acuse")
     public String subirAcuse(@RequestParam("id") Integer id,
             @RequestParam("archivoAcuse") MultipartFile archivo,
             @RequestParam(value = "observaciones", required = false) String observaciones,
             RedirectAttributes redirectAttrs) {
 
-        Usuario actor = getUsuarioActual();
-
-        // --- VALIDACIÓN DE PERMISOS (Para concluir) ---
-        // Usamos la regla de 'Presentado' porque es la etapa actual
-        if (!tienePermiso(EstatusTermino.PRESENTADO, actor.getRol())) {
-            redirectAttrs.addFlashAttribute("mensaje", "⛔ No tienes permiso para concluir términos.");
-            redirectAttrs.addFlashAttribute("tipo", "error");
-            return "redirect:/terminos";
-        }
-
-        // SEGURIDAD ROD-39: Validar acceso de escritura
         try {
-            Termino termino = terminoRepository.findById(id).orElse(null);
-            if (termino != null) {
-                if (!securityService.tieneAccesoEscritura(actor, termino.getExpediente())) {
-                    redirectAttrs.addFlashAttribute("mensaje", "Acceso denegado: No tiene acceso a este expediente.");
-                    redirectAttrs.addFlashAttribute("tipo", "error");
-                    return "redirect:/terminos";
-                }
+            Usuario actor = getUsuarioActual();
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
 
-                if (EstatusTermino.PRESENTADO == termino.getEstatusTermino()) {
-                    String carpeta = "uploads/acuses/";
-                    Path ruta = Paths.get(carpeta);
-                    if (!Files.exists(ruta))
-                        Files.createDirectories(ruta);
-                    String nombreAcuse = "ACUSE_" + id + "_" + archivo.getOriginalFilename();
-                    Files.copy(archivo.getInputStream(), ruta.resolve(nombreAcuse),
-                            StandardCopyOption.REPLACE_EXISTING);
+            if (!tienePermiso(EstatusTermino.PRESENTADO, actor.getRol())) {
+                redirectAttrs.addFlashAttribute("mensaje", "⛔ No tienes permiso para concluir términos.");
+                redirectAttrs.addFlashAttribute("tipo", "error");
+                return "redirect:/terminos";
+            }
 
-                    TerminoPresentado presentado = TerminoPresentado.builder()
-                            .termino(termino)
-                            .expedienteNumero(termino.getExpediente().getNumero())
-                            .fechaPresentacion(LocalDate.now())
-                            .acuseDocumento(nombreAcuse)
-                            .sincronizadoAt(LocalDateTime.now()).build();
-                    terminoPresentadoRepository.save(presentado);
+            if (!securityService.tieneAccesoEscritura(actor, termino.getExpediente())) {
+                redirectAttrs.addFlashAttribute("mensaje", "Acceso denegado: No tiene acceso a este expediente.");
+                redirectAttrs.addFlashAttribute("tipo", "error");
+                return "redirect:/terminos";
+            }
 
-                    termino.setEstatusTermino(EstatusTermino.CONCLUIDO);
-                    termino.setObservaciones(observaciones);
-                    if (termino.getFechaPresentacion() == null)
-                        termino.setFechaPresentacion(LocalDate.now());
-                    terminoRepository.save(termino);
+            if (EstatusTermino.PRESENTADO == termino.getEstatusTermino()) {
+                String carpeta = "uploads/acuses/";
+                Path ruta = Paths.get(carpeta);
+                if (!Files.exists(ruta))
+                    Files.createDirectories(ruta);
 
-                    redirectAttrs.addFlashAttribute("mensaje", "¡Término Concluido!");
-                    redirectAttrs.addFlashAttribute("tipo", "success");
-                }
+                String nombreAcuse = "ACUSE_" + id + "_" + archivo.getOriginalFilename();
+                Files.copy(archivo.getInputStream(), ruta.resolve(nombreAcuse), StandardCopyOption.REPLACE_EXISTING);
+
+                TerminoPresentado presentado = TerminoPresentado.builder()
+                        .termino(termino)
+                        .expedienteNumero(termino.getExpediente().getNumero())
+                        .fechaPresentacion(LocalDate.now())
+                        .acuseDocumento(nombreAcuse)
+                        .sincronizadoAt(LocalDateTime.now()).build();
+                terminoPresentadoRepository.save(presentado);
+
+                termino.setEstatusTermino(EstatusTermino.CONCLUIDO);
+                termino.setObservaciones(observaciones);
+                if (termino.getFechaPresentacion() == null)
+                    termino.setFechaPresentacion(LocalDate.now());
+                terminoRepository.save(termino);
+
+                redirectAttrs.addFlashAttribute("mensaje", "¡Término Concluido!");
+                redirectAttrs.addFlashAttribute("tipo", "success");
             }
         } catch (Exception e) {
             e.printStackTrace();
+            redirectAttrs.addFlashAttribute("mensaje", "Error: " + e.getMessage());
+            redirectAttrs.addFlashAttribute("tipo", "error");
         }
-
         return "redirect:/terminos";
     }
 
@@ -453,25 +452,21 @@ public class TerminosController {
     @GetMapping("/descargar/{id}")
     public ResponseEntity<Resource> descargarArchivo(@PathVariable Integer id) {
         try {
-            Termino termino = terminoRepository.findById(id).orElse(null);
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
 
-            // Validamos que exista el término y tenga archivo
-            if (termino == null || termino.getArchivoWord() == null) {
+            if (termino.getArchivoWord() == null)
                 return ResponseEntity.notFound().build();
-            }
 
-            // SEGURIDAD: Validar acceso al expediente
             Usuario usuarioActual = getUsuarioActual();
             if (!securityService.tieneAccesoLectura(usuarioActual, termino.getExpediente())) {
                 return ResponseEntity.status(403).build();
             }
 
-            // Buscamos el archivo en la carpeta "uploads/terminos"
             Path rutaArchivo = Paths.get("uploads/terminos").resolve(termino.getArchivoWord());
             Resource recurso = new UrlResource(rutaArchivo.toUri());
 
             if (recurso.exists() || recurso.isReadable()) {
-                // Preparamos la respuesta para forzar la descarga
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION,
                                 "attachment; filename=\"" + recurso.getFilename() + "\"")
@@ -479,8 +474,7 @@ public class TerminosController {
             } else {
                 return ResponseEntity.notFound().build();
             }
-
-        } catch (MalformedURLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
@@ -501,27 +495,19 @@ public class TerminosController {
         String headerValue = "attachment; filename=Terminos_" + currentDateTime + ".xlsx";
         response.setHeader(headerKey, headerValue);
 
-        // --- LÓGICA DE SEGURIDAD PARA EXCEL (Igual que en index) ---
         Usuario usuarioActual = getUsuarioActual();
-        Integer filtroAbogado = abogadoId; // Por defecto usa el filtro del usuario
-        Integer filtroGerencia = null; // Por defecto ve todo
+        Integer filtroAbogado = abogadoId;
+        Integer filtroGerencia = null;
 
-        // 1. Si es Abogado, SOLO exporta lo suyo
         if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
             filtroAbogado = usuarioActual.getId();
-        }
-        // 2. Si es Gerente/Jefe, SOLO exporta su Gerencia
-        else if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
-            if (usuarioActual.getGerencia() != null) {
+        } else if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+            if (usuarioActual.getGerencia() != null)
                 filtroGerencia = usuarioActual.getGerencia().getId();
-            }
         }
-        // -----------------------------------------------------------
 
-        // Ahora sí, las variables keyword, estatus y prioridad ya existen
-        List<Termino> listaTerminos = terminoRepository.listarParaExcel(
-                keyword, estatus, prioridad, filtroAbogado, filtroGerencia);
-
+        List<Termino> listaTerminos = terminoRepository.listarParaExcel(keyword, estatus, prioridad, filtroAbogado,
+                filtroGerencia);
         TerminoExcelExporter excelExporter = new TerminoExcelExporter(listaTerminos);
         excelExporter.export(response);
     }
@@ -530,11 +516,9 @@ public class TerminosController {
     public String eliminar(@RequestParam("id") Integer id, RedirectAttributes redirectAttrs) {
         try {
             Usuario actor = getUsuarioActual();
-
             Termino termino = terminoRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Término no encontrado"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
 
-            // SECURITY ROD-13: Validar permiso de escritura en el expediente asociado
             if (!securityService.tieneAccesoEscritura(actor, termino.getExpediente())) {
                 redirectAttrs.addFlashAttribute("mensaje",
                         "Acceso denegado: No tiene permisos para eliminar este término.");
@@ -542,7 +526,6 @@ public class TerminosController {
                 return "redirect:/terminos";
             }
 
-            // CORRECCIÓN 3: Si eres ABOGADO, NO puedes borrar. Todos los demás SÍ.
             if (actor.getRol() == RolUsuario.ABOGADO) {
                 redirectAttrs.addFlashAttribute("mensaje", "⛔ Los abogados no pueden eliminar términos.");
                 redirectAttrs.addFlashAttribute("tipo", "error");
@@ -562,22 +545,19 @@ public class TerminosController {
     @GetMapping("/descargar-acuse/{id}")
     public ResponseEntity<Resource> descargarAcuse(@PathVariable Integer id) {
         try {
-            // Buscamos el registro histórico del acuse
-            // Nota: Aquí asumimos que buscamos el ÚLTIMO acuse subido para este término
-            List<TerminoPresentado> presentados = terminoPresentadoRepository.findByTerminoExpedienteId(
-                    terminoRepository.findById(id).get().getExpediente().getId());
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
 
-            // Filtramos para encontrar el que corresponde a este término específico (ID)
+            List<TerminoPresentado> presentados = terminoPresentadoRepository
+                    .findByTerminoExpedienteId(termino.getExpediente().getId());
             TerminoPresentado acuse = presentados.stream()
                     .filter(p -> p.getTermino().getId().equals(id))
                     .findFirst()
                     .orElse(null);
 
-            if (acuse == null || acuse.getAcuseDocumento() == null) {
+            if (acuse == null || acuse.getAcuseDocumento() == null)
                 return ResponseEntity.notFound().build();
-            }
 
-            // SEGURIDAD: Validar acceso al expediente
             Usuario usuarioActual = getUsuarioActual();
             if (!securityService.tieneAccesoLectura(usuarioActual, acuse.getTermino().getExpediente())) {
                 return ResponseEntity.status(403).build();

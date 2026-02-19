@@ -26,6 +26,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -85,16 +87,14 @@ public class AudienciasController {
             @RequestParam(required = false) String periodo) {
 
         if (keyword != null && keyword.contains("?keyword=")) {
-            // Nos quedamos solo con lo que esté después del último igual (=)
             keyword = keyword.substring(keyword.lastIndexOf("=") + 1);
         }
 
-        // 1. OBTENER USUARIO ACTUAL
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
         String rol = usuario.getRol().name();
 
-        // 2. CONFIGURAR FILTROS DE SEGURIDAD
         Integer filtroUsuarioId = null;
         Integer filtroGerenciaId = null;
         List<Integer> filtroMateriaIds = null;
@@ -117,16 +117,11 @@ public class AudienciasController {
                 break;
         }
 
-        // 3. FECHAS CENTINELA
-        // 3. FECHAS CENTINELA
-        // Refactor ROD-22: Usar PeriodoFiltro
         com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro periodoEnum = com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro.TODOS;
-
         if (periodo != null && !periodo.isEmpty()) {
             try {
                 periodoEnum = com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro.valueOf(periodo.toUpperCase());
             } catch (IllegalArgumentException e) {
-                // Si el parametro no coincide, ignoramos y usamos TODOS
             }
         }
 
@@ -135,7 +130,6 @@ public class AudienciasController {
         LocalDate fechaInicio = rango[0];
         LocalDate fechaFin = rango[1];
 
-        // 4. CONSULTA
         Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaAudiencia").ascending());
 
         Page<Audiencia> audiencias = audienciaRepository.buscarConFiltros(
@@ -148,7 +142,6 @@ public class AudienciasController {
         model.addAttribute("pageTitle", "Gestión de Audiencias");
         model.addAttribute("activePage", "audiencias");
 
-        // 5. DROPDOWN INTELIGENTE
         List<Expediente> expedientesParaDropdown;
         if (rol.equals("ABOGADO")) {
             expedientesParaDropdown = expedienteRepository.findAll().stream()
@@ -170,26 +163,22 @@ public class AudienciasController {
         }
         model.addAttribute("expedientesList", expedientesParaDropdown);
 
-        // Listas generales
         model.addAttribute("listaTiposAudiencia", tipoAudienciaRepository.findAll());
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
         model.addAttribute("listaMaterias", materiaRepository.findAll());
 
-        // ROD-16: Filtrar Abogados por Gerencia
         List<Usuario> listaAbogados;
         if (rol.equals("DIRECCION") || rol.equals("SUBDIRECCION")) {
-            listaAbogados = usuarioRepository.findAll(); // O findByActivoTrue() si se prefiere
+            listaAbogados = usuarioRepository.findAll();
         } else {
-            // Gerentes, Jefes y Abogados solo ven gente de su gerencia
             if (usuario.getGerencia() != null) {
                 listaAbogados = usuarioRepository.findByGerenciaAndActivoTrue(usuario.getGerencia());
             } else {
-                listaAbogados = new ArrayList<>(); // Caso borde: usuario sin gerencia asignada
+                listaAbogados = new ArrayList<>();
             }
         }
         model.addAttribute("abogados", listaAbogados);
 
-        // Filtros en vista
         model.addAttribute("keyword", keyword);
         model.addAttribute("paramTipo", tipo);
         model.addAttribute("paramGerencia", gerencia);
@@ -211,7 +200,8 @@ public class AudienciasController {
 
             if (audienciaForm.getId() != null) {
                 Audiencia existente = audienciaRepository.findById(audienciaForm.getId())
-                        .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
+                        .orElseThrow(
+                                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Audiencia no encontrada"));
 
                 existente.setFechaAudiencia(audienciaForm.getFechaAudiencia());
                 existente.setHoraAudiencia(audienciaForm.getHoraAudiencia());
@@ -228,11 +218,12 @@ public class AudienciasController {
             }
 
             Expediente exp = expedienteRepository.findById(expedienteId)
-                    .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expediente no encontrado"));
 
-            // VALIDACIÓN ROD-19
             Usuario actor = usuarioRepository
-                    .findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow();
+                    .findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
             if (!securityService.tieneAccesoEscritura(actor, exp)) {
                 redirectAttrs.addFlashAttribute("mensaje",
                         "Acceso denegado: No tiene permisos de escritura para este expediente.");
@@ -243,11 +234,11 @@ public class AudienciasController {
             audienciaFinal.setExpediente(exp);
 
             TipoAudiencia tipo = tipoAudienciaRepository.findById(tipoAudienciaId)
-                    .orElseThrow(() -> new RuntimeException("Tipo de audiencia no encontrado"));
+                    .orElseThrow(
+                            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tipo de audiencia no encontrado"));
             audienciaFinal.setTipoAudiencia(tipo);
 
             audienciaFinal.setUpdatedAt(LocalDateTime.now());
-
             Audiencia guardada = audienciaRepository.save(audienciaFinal);
 
             if (guardada.getAbogadoComparece() != null &&
@@ -303,11 +294,12 @@ public class AudienciasController {
             @RequestParam("archivo") MultipartFile archivo) {
         try {
             Audiencia audiencia = audienciaRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Audiencia no encontrada"));
 
-            // SECURITY ROD-39: Validar permiso de escritura
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
-            Usuario actor = usuarioRepository.findByEmail(email).orElseThrow();
+            Usuario actor = usuarioRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
             if (!securityService.tieneAccesoEscritura(actor, audiencia.getExpediente())) {
                 return ResponseEntity.status(403).body("Acceso denegado");
             }
@@ -324,13 +316,12 @@ public class AudienciasController {
             @RequestParam("observaciones") String observaciones,
             RedirectAttributes redirectAttrs) {
         try {
-            // 1. OBTENER USUARIO ACTUAL
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
-            Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+            Usuario usuario = usuarioRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-            // 2. VALIDAR PERMISOS (ROD-8: Solo Dirección puede concluir)
             Audiencia audiencia = audienciaRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Audiencia no encontrada"));
 
             if (usuario.getRol() != RolUsuario.DIRECCION) {
                 redirectAttrs.addFlashAttribute("mensaje",
@@ -339,7 +330,6 @@ public class AudienciasController {
                 return "redirect:/audiencias";
             }
 
-            // ROD-39: Validar también acceso de escritura al expediente
             if (!securityService.tieneAccesoEscritura(usuario, audiencia.getExpediente())) {
                 redirectAttrs.addFlashAttribute("mensaje",
                         "Acceso denegado: No tiene permisos de escritura sobre este expediente.");
@@ -347,9 +337,7 @@ public class AudienciasController {
                 return "redirect:/audiencias";
             }
 
-            // 3. EJECUTAR LÓGICA
             audienciaService.concluirAudiencia(id, observaciones);
-
             redirectAttrs.addFlashAttribute("mensaje", "Audiencia validada y concluida exitosamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
 
@@ -364,11 +352,12 @@ public class AudienciasController {
     public String eliminar(@RequestParam("id") Integer id, RedirectAttributes redirectAttrs) {
         try {
             Audiencia audiencia = audienciaRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Audiencia no encontrada"));
 
-            // SECURITY ROD-13: Validar permiso de escritura
             Usuario actor = usuarioRepository
-                    .findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow();
+                    .findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
             if (!securityService.tieneAccesoEscritura(actor, audiencia.getExpediente())) {
                 redirectAttrs.addFlashAttribute("mensaje",
                         "Acceso denegado: No tiene permisos para eliminar esta audiencia.");
@@ -389,11 +378,11 @@ public class AudienciasController {
     @GetMapping("/descargar-acta/{id}")
     public ResponseEntity<Resource> descargarActa(@PathVariable Integer id) {
         try {
-            Audiencia audiencia = audienciaRepository.findById(id).orElse(null);
+            Audiencia audiencia = audienciaRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Audiencia no encontrada"));
 
-            if (audiencia == null || audiencia.getActaDocumento() == null) {
+            if (audiencia.getActaDocumento() == null)
                 return ResponseEntity.notFound().build();
-            }
 
             java.nio.file.Path rutaArchivo = java.nio.file.Paths.get("uploads/audiencias")
                     .resolve(audiencia.getActaDocumento());
@@ -407,8 +396,7 @@ public class AudienciasController {
             } else {
                 return ResponseEntity.notFound().build();
             }
-
-        } catch (MalformedURLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
@@ -432,9 +420,9 @@ public class AudienciasController {
         String headerValue = "attachment; filename=Audiencias_" + currentDateTime + ".xlsx";
         response.setHeader(headerKey, headerValue);
 
-        // 1. SEGURIDAD DE ROLES
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
         String rol = usuario.getRol().name();
 
         Integer filtroUsuarioId = null;
@@ -459,14 +447,11 @@ public class AudienciasController {
                 break;
         }
 
-        // 2. LÓGICA DE FECHAS "CENTINELA" (REFACTOR ROD-52: Usar PeriodoFiltro)
         com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro periodoEnum = com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro.TODOS;
-
         if (periodo != null && !periodo.isEmpty()) {
             try {
                 periodoEnum = com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro.valueOf(periodo.toUpperCase());
             } catch (IllegalArgumentException e) {
-                // Si no coincide, usamos TODOS
             }
         }
 
@@ -475,13 +460,8 @@ public class AudienciasController {
         LocalDate fechaInicio = rango[0];
         LocalDate fechaFin = rango[1];
 
-        // 3. LLAMAR AL REPOSITORIO
-        // Ahora fechaInicio y fechaFin SIEMPRE tienen valor, nunca son null.
-        List<Audiencia> listado = audienciaRepository.listarParaExcel(
-                keyword, tipo, gerencia, materia, estatus,
-                abogadoId, fechaInicio, fechaFin,
-                filtroUsuarioId, filtroGerenciaId, filtroMateriaIds);
-
+        List<Audiencia> listado = audienciaRepository.listarParaExcel(keyword, tipo, gerencia, materia, estatus,
+                abogadoId, fechaInicio, fechaFin, filtroUsuarioId, filtroGerenciaId, filtroMateriaIds);
         AudienciaExcelExporter excelExporter = new AudienciaExcelExporter(listado);
         excelExporter.export(response);
     }

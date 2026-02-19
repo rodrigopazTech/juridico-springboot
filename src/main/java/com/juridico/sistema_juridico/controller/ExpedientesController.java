@@ -3,6 +3,7 @@ package com.juridico.sistema_juridico.controller;
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
+import com.juridico.sistema_juridico.Entity.expediente.AuditoriaExpediente;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
@@ -16,9 +17,10 @@ import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.repository.General.ComentarioRepository;
 import com.juridico.sistema_juridico.Entity.general.Comentario;
+import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.SecurityService;
-import org.springframework.http.ResponseEntity;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -29,6 +31,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
@@ -64,6 +68,9 @@ public class ExpedientesController {
     @Autowired
     private SecurityService securityService;
 
+    @Autowired
+    private AuditoriaService auditoriaService;
+
     @GetMapping
     public String index(Model model,
             @RequestParam(defaultValue = "0") int page,
@@ -76,7 +83,8 @@ public class ExpedientesController {
             @RequestParam(required = false) Integer abogadoId) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
         Integer secGerenciaId = null;
         List<Integer> secMateriaIds = null;
@@ -132,9 +140,9 @@ public class ExpedientesController {
     public String guardar(@ModelAttribute Expediente expediente, RedirectAttributes redirectAttrs) {
         try {
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
-            Usuario actor = usuarioRepository.findByEmail(email).orElseThrow();
+            Usuario actor = usuarioRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-            // RBAC ROD-5: Restringir creación a Dirección/Subdirección
             if (expediente.getId() == null) {
                 if (actor.getRol() != RolUsuario.DIRECCION && actor.getRol() != RolUsuario.SUBDIRECCION) {
                     redirectAttrs.addFlashAttribute("mensaje",
@@ -149,10 +157,11 @@ public class ExpedientesController {
                 }
                 expediente.setUpdatedAt(LocalDateTime.now());
                 expedienteRepository.save(expediente);
+                auditoriaService.registrarAccion(expediente, actor, "CREACIÓN", "Expediente registrado en el sistema.");
             } else {
-                // ROD-33: Validar acceso de escritura para actualizaciones (IDOR)
                 Expediente existente = expedienteRepository.findById(expediente.getId())
-                        .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
+                        .orElseThrow(
+                                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expediente no encontrado"));
 
                 if (!securityService.tieneAccesoEscritura(actor, existente)) {
                     redirectAttrs.addFlashAttribute("mensaje",
@@ -161,31 +170,35 @@ public class ExpedientesController {
                     return "redirect:/expedientes";
                 }
 
-                // Actualizar solo los campos del formulario resolver asociaciones
                 existente.setNumero(expediente.getNumero());
                 existente.setPrioridad(expediente.getPrioridad());
                 existente.setSede(expediente.getSede());
                 existente.setEtapaProcesal(expediente.getEtapaProcesal());
 
                 if (expediente.getGerencia() != null && expediente.getGerencia().getId() != null) {
-                    existente.setGerencia(gerenciaRepository.findById(expediente.getGerencia().getId()).orElse(null));
+                    gerenciaRepository.findById(expediente.getGerencia().getId()).ifPresent(existente::setGerencia);
                 }
                 if (expediente.getMateria() != null && expediente.getMateria().getId() != null) {
-                    existente.setMateria(materiaRepository.findById(expediente.getMateria().getId()).orElse(null));
+                    materiaRepository.findById(expediente.getMateria().getId()).ifPresent(existente::setMateria);
                 }
                 if (expediente.getTipoExpediente() != null && expediente.getTipoExpediente().getId() != null) {
                     existente.setTipoExpediente(
-                            tipoExpedienteRepository.findById(expediente.getTipoExpediente().getId()).orElse(null));
+                            tipoExpedienteRepository.findById(expediente.getTipoExpediente().getId())
+                                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                            "Tipo de expediente no encontrado")));
                 }
                 if (expediente.getOrganoJurisdiccional() != null
                         && expediente.getOrganoJurisdiccional().getId() != null) {
                     existente.setOrganoJurisdiccional(
-                            organoRepository.findById(expediente.getOrganoJurisdiccional().getId()).orElse(null));
+                            organoRepository.findById(expediente.getOrganoJurisdiccional().getId())
+                                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                            "Órgano Jurisdiccional no encontrado")));
                 }
 
                 existente.setUpdatedAt(LocalDateTime.now());
-
                 expedienteRepository.save(existente);
+                auditoriaService.registrarAccion(existente, actor, "EDICIÓN",
+                        "Se actualizaron los datos generales del expediente.");
             }
 
             redirectAttrs.addFlashAttribute("mensaje", "Expediente guardado correctamente.");
@@ -209,12 +222,13 @@ public class ExpedientesController {
             RedirectAttributes redirectAttrs) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
         Expediente expediente = expedienteRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Expediente no encontrado: " + id));
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expediente no encontrado: " + id));
 
-        // ACL VALIDATION ROD-6
         if (!securityService.tieneAccesoLectura(usuario, expediente)) {
             redirectAttrs.addFlashAttribute("mensaje", "Acceso denegado: No tiene permisos para ver este expediente.");
             redirectAttrs.addFlashAttribute("tipo", "error");
@@ -240,21 +254,22 @@ public class ExpedientesController {
         model.addAttribute("estados", estadoRepository.findAll());
         model.addAttribute("etapas", EtapaProcesal.values());
 
+        model.addAttribute("historial", auditoriaService.obtenerHistorial(id));
         model.addAttribute("activePage", "expedientes");
 
         return "views/expedientes/detalle";
     }
 
-    // --- ENDPOINTS PARA COMENTARIOS (NOTAS) ---
-
     @GetMapping("/{id}/comentarios")
     @ResponseBody
     public List<Comentario> getComentarios(@PathVariable String id) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
         Expediente expediente = expedienteRepository.findById(UUID.fromString(id))
-                .orElseThrow(() -> new IllegalArgumentException("Expediente no encontrado: " + id));
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expediente no encontrado: " + id));
 
         if (!securityService.tieneAccesoLectura(usuario, expediente)) {
             return Collections.emptyList();
@@ -270,7 +285,8 @@ public class ExpedientesController {
         Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
 
         Expediente expediente = expedienteRepository.findById(UUID.fromString(id))
-                .orElseThrow(() -> new IllegalArgumentException("Expediente no encontrado: " + id));
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expediente no encontrado: " + id));
 
         if (usuario == null || !securityService.tieneAccesoEscritura(usuario, expediente)) {
             return ResponseEntity.status(403).body("Acceso denegado");
@@ -283,26 +299,34 @@ public class ExpedientesController {
         nuevo.setUsuarioNombre(usuario != null ? usuario.getNombreCompleto() : "Sistema");
 
         comentarioRepository.save(nuevo);
+        auditoriaService.registrarAccion(expediente, usuario, "NOTA AGREGADA",
+                "Se agregó una nueva observación interna.");
         return ResponseEntity.ok(nuevo);
     }
-
-    // --- ACTUALIZACIÓN DE ESTADO (ETAPA) ---
 
     @PostMapping("/{id}/cambiar-etapa")
     @ResponseBody
     public ResponseEntity<?> cambiarEtapa(@PathVariable UUID id, @RequestParam EtapaProcesal etapa) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-        // REGLA: Solo DIRECCION puede cambiar etapas
         if (usuario.getRol() != RolUsuario.DIRECCION) {
             return ResponseEntity.status(403).body("Acceso denegado: Solo la Dirección puede cambiar la etapa.");
         }
 
-        Expediente exp = expedienteRepository.findById(id).orElseThrow();
+        Expediente exp = expedienteRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expediente no encontrado"));
         exp.setEtapaProcesal(etapa);
         exp.setUpdatedAt(LocalDateTime.now());
         expedienteRepository.save(exp);
+        auditoriaService.registrarAccion(exp, usuario, "CAMBIO DE ETAPA", "El expediente cambió a la etapa: " + etapa);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/historial")
+    @ResponseBody
+    public List<AuditoriaExpediente> getHistorial(@PathVariable UUID id) {
+        return auditoriaService.obtenerHistorial(id);
     }
 }
