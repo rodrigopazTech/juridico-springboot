@@ -3,11 +3,13 @@ package com.juridico.sistema_juridico.service.procesal;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.procesal.AudienciaDesahogada;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.dto.request.audiencias.AudienciaRequest;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente; 
 import com.juridico.sistema_juridico.Entity.enums.Prioridad; 
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaDesahogadaRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.service.NotificacionService;
 
@@ -22,6 +24,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.UUID;
+import java.time.LocalTime; //
 
 @Service
 public class AudienciaService {
@@ -40,6 +44,9 @@ public class AudienciaService {
 
     @Autowired
     private NotificacionService notificacionService;
+
+    @Autowired
+    private TipoAudienciaRepository tipoAudienciaRepository;
 
     // 1. PASO INTERMEDIO: SUBIR ACTA (Cambia a CON_ACTA)
     @Transactional
@@ -193,4 +200,34 @@ public class AudienciaService {
             e.printStackTrace();
         }
     }
+
+   @Transactional
+    public Audiencia guardarAudiencia(AudienciaRequest request) {
+        // 1. Conversión de ID a UUID
+        Expediente exp = expedienteRepository.findById(UUID.fromString(request.getAsuntoId().toString()))
+                .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
+
+        // 2. Buscar el objeto TipoAudiencia del catálogo
+        com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia tipo = tipoAudienciaRepository.findAll().stream()
+                .filter(t -> t.getNombre().equalsIgnoreCase(request.getTipoAudiencia()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Tipo de audiencia no válido"));
+
+        // 3. Conversión de String a LocalTime para la hora
+        LocalTime horaFormateada = (request.getHora() != null) ? LocalTime.parse(request.getHora()) : null;
+
+        Audiencia audiencia = Audiencia.builder()
+                .expediente(exp)
+                .tipoAudiencia(tipo)
+                .fechaAudiencia(request.getFecha())
+                .horaAudiencia(horaFormateada) 
+                .salaLugar(request.getSala()) // CAMBIADO: .sala() por .salaLugar()
+                .estatusAudiencia("PENDIENTE")
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        return audienciaRepository.save(audiencia);
+    }
 }
+

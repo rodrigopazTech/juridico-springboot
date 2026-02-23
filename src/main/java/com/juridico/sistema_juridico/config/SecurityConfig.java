@@ -48,6 +48,8 @@ public class SecurityConfig {
                 // 5. API REST: Gestor Documental (TODOS los autenticados)
                 .requestMatchers("/api/documentos/**", "/api/carpetas/**").authenticated()
 
+                .requestMatchers("/api/migration/**").hasAuthority("ADMIN")
+
                 // 6. Resto bloqueado
                 .anyRequest().authenticated()
             )

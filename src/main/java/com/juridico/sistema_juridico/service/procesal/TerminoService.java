@@ -50,6 +50,11 @@ public class TerminoService {
     }
 
     @Transactional
+    public TerminoResponse guardarTermino(TerminoRequest request) {
+        return crear(request); // Llama al método que ya escribiste
+    }
+
+    @Transactional
     public void marcarComoPresentado(Integer id, String observaciones) {
         Termino termino = terminoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Término no encontrado"));
