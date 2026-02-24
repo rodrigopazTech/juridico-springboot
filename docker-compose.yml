@@ -28,7 +28,6 @@ services:
       - db-juridico
     deploy:
       resources:
-        limits:
           memory: 1G   
           cpus: '0.50' 
 

@@ -2,25 +2,27 @@
     <h3 class="font-bold text-gray-700 mb-4 border-b pb-2 flex items-center gap-2">
         <i class="fas fa-history text-gob-oro"></i> Historial de Cambios
     </h3>
-    
-    <div class="space-y-4 relative border-l-2 border-gray-100 ml-2">
-        <div class="ml-4 relative">
-            <div class="absolute -left-[21px] top-1 w-3 h-3 bg-gob-guinda rounded-full border-2 border-white"></div>
-            <p class="text-xs text-gray-400">Hace 2 horas</p>
-            <p class="text-sm font-medium text-gray-800">Cambio de Etapa</p>
-            <p class="text-xs text-gray-500">Lic. Juan Pérez cambió a "LAUDO".</p>
+
+    <div class="max-h-[600px] overflow-y-auto pr-2 custom-scrollbar space-y-4 relative border-l-2 border-gray-100 ml-2"
+        th:if="${not #lists.isEmpty(actividades)}">
+        <div class="ml-4 relative" th:each="act : ${actividades}">
+            <!-- Círculo del Timeline -->
+            <div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full border-2 border-white"
+                th:classappend="${act.tipoIcono == 'EDIT' ? 'bg-blue-400' : (act.tipoIcono == 'PLUS' ? 'bg-gob-guinda' : 'bg-gray-300')}">
+            </div>
+
+            <p class="text-[10px] text-gray-400" th:text="${#temporals.format(act.fechaRegistro, 'dd/MM/yyyy HH:mm')}">
+                Fecha</p>
+            <p class="text-xs font-bold text-gray-800" th:text="${act.titulo}">Título</p>
+            <p class="text-[11px] text-gray-500 leading-tight mt-0.5 whitespace-pre-wrap" th:text="${act.descripcion}">
+                Descripción</p>
+            <p class="text-[10px] text-gray-400 italic mt-1" th:if="${act.usuario != null}">
+                <i class="fas fa-user-edit text-[9px]"></i> <span th:text="${act.usuario.nombreCompleto}">Usuario</span>
+            </p>
         </div>
-        <div class="ml-4 relative">
-            <div class="absolute -left-[21px] top-1 w-3 h-3 bg-gray-300 rounded-full border-2 border-white"></div>
-            <p class="text-xs text-gray-400">Ayer, 14:30</p>
-            <p class="text-sm font-medium text-gray-800">Edición de Expediente</p>
-            <p class="text-xs text-gray-500">Se actualizó la descripción.</p>
-        </div>
-        <div class="ml-4 relative">
-            <div class="absolute -left-[21px] top-1 w-3 h-3 bg-gray-300 rounded-full border-2 border-white"></div>
-            <p class="text-xs text-gray-400">15 Ene 2026</p>
-            <p class="text-sm font-medium text-gray-800">Creación</p>
-            <p class="text-xs text-gray-500">Expediente registrado en el sistema.</p>
-        </div>
+    </div>
+
+    <div class="text-center py-4 text-gray-400 italic text-sm" th:if="${#lists.isEmpty(actividades)}">
+        No hay actividad registrada aún.
     </div>
 </div>

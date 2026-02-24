@@ -1,0 +1,47 @@
+/* =========================================
+   SISTEMA DE COLORES SEMÁNTICOS (Badges)
+   ========================================= */
+
+/* Etapas Procesales */
+.badge-tramite {
+    background-color: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border-color: #bfdbfe !important;
+}
+
+.badge-laudo {
+    background-color: #fffaf0 !important;
+    color: #c2410c !important;
+    border-color: #fed7aa !important;
+}
+
+.badge-firme {
+    background-color: #fef2f2 !important;
+    color: #691228 !important;
+    border-color: #fecaca !important;
+}
+
+.badge-concluido {
+    background-color: #f0fdf4 !important;
+    color: #15803d !important;
+    border-color: #bbf7d0 !important;
+}
+
+/* Prioridades */
+.badge-alta {
+    background-color: #fef2f2 !important;
+    color: #b91c1c !important;
+    border-color: #fecaca !important;
+}
+
+.badge-media {
+    background-color: #fffbeb !important;
+    color: #854d0e !important;
+    border-color: #fde68a !important;
+}
+
+.badge-baja {
+    background-color: #ecfdf5 !important;
+    color: #047857 !important;
+    border-color: #a7f3d0 !important;
+}
