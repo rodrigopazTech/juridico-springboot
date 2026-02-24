@@ -3,113 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Importar Datos - SIAJ</title>
+    <title>Importar Datos - Agenda Legal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-    <link rel="stylesheet" th:href="@{/css/output.css}">
+    <style>
+        /* Estilos para el radio button personalizado */
+        .radio-card:checked + div {
+            border-color: #1a3c34; /* gob-verde */
+            background-color: #f0fdf4;
+            box-shadow: 0 0 0 2px #1a3c3410;
+        }
+        .radio-card:checked + div .icon-check {
+            opacity: 1;
+            transform: scale(1);
+        }
+    </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-900">
 
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    
     <main class="p-4 sm:ml-64 min-h-screen">
         <div class="p-4 mt-14">
             
             <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-200 pb-4">
                 <div>
                     <h1 class="text-3xl font-bold text-gob-verde font-headings">Migración de Datos</h1>
-                    <p class="text-gray-600 mt-1">Carga masiva de audiencias y expedientes vía Excel (.xlsx)</p>
+                    <p class="text-gray-600 mt-1">Carga masiva de información al sistema vía Excel (.xlsx)</p>
                 </div>
-                <div class="mt-4 md:mt-0">
-                    <span class="inline-flex items-center bg-gob-oro/10 text-gob-oro px-3 py-1 rounded-full text-sm font-bold border border-gob-oro/20">
+                <div class="mt-4 md:mt-0 flex gap-2">
+                    <span class="inline-flex items-center bg-gob-guinda/10 text-gob-guinda px-3 py-1 rounded-full text-sm font-bold border border-gob-guinda/20">
                         <i class="fas fa-shield-alt me-2"></i> Solo Administradores
                     </span>
                 </div>
             </div>
 
             <div class="max-w-4xl mx-auto">
-                <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     
-                    <div class="bg-gob-verde px-6 py-4 flex items-center">
-                        <i class="fas fa-file-excel text-gob-oro text-xl me-3"></i>
-                        <h2 class="text-white font-bold text-lg">Cargar Archivo de Audiencias</h2>
+                    <div class="bg-gob-verde px-6 py-4 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-database text-gob-oro text-xl me-3"></i>
+                            <h2 class="text-white font-bold text-lg">Asistente de Importación</h2>
+                        </div>
                     </div>
 
-                    <div class="p-8">
-                        <div class="mb-8 p-4 bg-amber-50 rounded-lg border-l-4 border-gob-oro flex items-start">
-                            <i class="fas fa-info-circle text-gob-oro mt-1 me-3"></i>
-                            <div class="text-sm text-amber-900">
-                                <p class="font-bold mb-1">Antes de importar:</p>
-                                <ul class="list-disc list-inside space-y-1">
-                                    <li>Asegúrese de que el archivo tenga la extensión <strong>.xlsx</strong>.</li>
-                                    <li>La primera fila debe contener los encabezados de las columnas.</li>
-                                    <li>El formato de fecha debe ser <strong>YYYY-MM-DD</strong>.</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                       <form th:action="@{/admin/importar}" method="POST" enctype="multipart/form-data" id="importForm">
-                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                            <div class="flex flex-col items-center justify-center w-full">
-                                <label for="dropzone-file" 
-                                       class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-all duration-300 group">
-                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                                        <div class="w-16 h-16 bg-gob-verde/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                            <i class="fas fa-cloud-upload-alt text-3xl text-gob-verde"></i>
+                    <form th:action="@{/admin/importar}" method="POST" enctype="multipart/form-data" id="importForm" class="p-8">
+                        
+                        <div class="mb-8">
+                            <label class="block text-sm font-bold text-gray-800 mb-3">1. ¿Qué tipo de información deseas cargar?</label>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <label class="cursor-pointer relative">
+                                    <input type="radio" name="tipoDato" value="EXPEDIENTES" class="radio-card sr-only" required>
+                                    <div class="h-full border-2 border-gray-200 rounded-lg p-4 transition-all hover:bg-gray-50 flex flex-col relative">
+                                        <div class="icon-check absolute top-3 right-3 text-gob-verde opacity-0 transform scale-50 transition-all duration-200">
+                                            <i class="fas fa-check-circle text-lg"></i>
                                         </div>
-                                        <p class="mb-2 text-sm text-gray-700"><span class="font-bold">Haga clic para cargar</span> o arrastre y suelte</p>
-                                        <p class="text-xs text-gray-500">Excel (XLSX, XLS)</p>
-                                        <p id="file-name" class="mt-4 text-sm font-bold text-gob-guinda"></p>
+                                        <i class="fas fa-folder-open text-gob-oro text-2xl mb-2"></i>
+                                        <span class="font-bold text-gray-900">Expedientes</span>
+                                        <span class="text-xs text-gray-500 mt-1 leading-tight">Actores, demandados, materia y juzgado.</span>
                                     </div>
-                                    <input id="dropzone-file" name="file" type="file" class="hidden" accept=".xlsx, .xls" required />
+                                </label>
+
+                                <label class="cursor-pointer relative">
+                                    <input type="radio" name="tipoDato" value="TERMINOS" class="radio-card sr-only" required>
+                                    <div class="h-full border-2 border-gray-200 rounded-lg p-4 transition-all hover:bg-gray-50 flex flex-col relative">
+                                        <div class="icon-check absolute top-3 right-3 text-gob-verde opacity-0 transform scale-50 transition-all duration-200">
+                                            <i class="fas fa-check-circle text-lg"></i>
+                                        </div>
+                                        <i class="fas fa-hourglass-half text-gob-oro text-2xl mb-2"></i>
+                                        <span class="font-bold text-gray-900">Términos</span>
+                                        <span class="text-xs text-gray-500 mt-1 leading-tight">Vencimientos, prioridades y actuaciones.</span>
+                                    </div>
+                                </label>
+
+                                <label class="cursor-pointer relative">
+                                    <input type="radio" name="tipoDato" value="AUDIENCIAS" class="radio-card sr-only" required>
+                                    <div class="h-full border-2 border-gray-200 rounded-lg p-4 transition-all hover:bg-gray-50 flex flex-col relative">
+                                        <div class="icon-check absolute top-3 right-3 text-gob-verde opacity-0 transform scale-50 transition-all duration-200">
+                                            <i class="fas fa-check-circle text-lg"></i>
+                                        </div>
+                                        <i class="fas fa-gavel text-gob-oro text-2xl mb-2"></i>
+                                        <span class="font-bold text-gray-900">Audiencias</span>
+                                        <span class="text-xs text-gray-500 mt-1 leading-tight">Fechas, tipo de audiencia y modalides.</span>
+                                    </div>
                                 </label>
                             </div>
-
-                            <div class="mt-8 flex justify-end space-x-4">
-                                <button type="reset" class="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                                    Limpiar
-                                </button>
-                                <button type="submit" class="px-6 py-2.5 text-sm font-bold text-white bg-gob-verde rounded-lg hover:bg-gob-verde/90 shadow-lg shadow-gob-verde/20 transition-all active:scale-95">
-                                    <i class="fas fa-upload me-2"></i> Procesar Importación
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <div id="progressContainer" class="hidden px-8 pb-8">
-                        <div class="w-full bg-gray-200 rounded-full h-2.5">
-                            <div id="progressBar" class="bg-gob-oro h-2.5 rounded-full" style="width: 0%"></div>
                         </div>
-                        <p class="text-center text-xs text-gray-500 mt-2">Procesando datos, por favor no cierre la ventana...</p>
-                    </div>
+
+                        <div class="mb-6">
+                            <label class="block text-sm font-bold text-gray-800 mb-3">2. Selecciona el archivo Excel (.xlsx)</label>
+                            <label for="dropzone-file" 
+                                   class="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-all duration-300 group">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <div class="w-16 h-16 bg-gob-verde/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                        <i class="fas fa-file-excel text-3xl text-gob-verde"></i>
+                                    </div>
+                                    <p class="mb-1 text-sm text-gray-700"><span class="font-bold">Haz clic para buscar</span> o arrastra el archivo aquí</p>
+                                    <p class="text-xs text-gray-500">Solo archivos XLSX o XLS</p>
+                                    <p id="file-name" class="mt-3 text-sm font-bold text-gob-guinda"></p>
+                                </div>
+                                <input id="dropzone-file" name="file" type="file" class="hidden" accept=".xlsx, .xls" required />
+                            </label>
+                        </div>
+
+                        <div class="mb-8 p-4 bg-amber-50 rounded-lg border border-amber-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-info-circle text-amber-600 mt-0.5 me-3"></i>
+                                <div class="text-sm text-amber-900">
+                                    <span class="font-bold">¿No tienes el formato correcto?</span> Descarga la plantilla vacía con las columnas requeridas para evitar errores de lectura.
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <a th:href="@{/admin/plantilla/expedientes}" class="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded hover:bg-amber-100 transition font-bold" title="Plantilla Expedientes"><i class="fas fa-folder-open"></i></a>
+                                <a th:href="@{/admin/plantilla/terminos}" class="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded hover:bg-amber-100 transition font-bold" title="Plantilla Términos"><i class="fas fa-hourglass-half"></i></a>
+                                <a th:href="@{/admin/plantilla/audiencias}" class="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded hover:bg-amber-100 transition font-bold" title="Plantilla Audiencias"><i class="fas fa-gavel"></i></a>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-4 border-t border-gray-100 pt-6">
+                            <button type="reset" onclick="document.getElementById('file-name').textContent=''" class="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                Limpiar
+                            </button>
+                            <button type="submit" id="btn-submit" class="px-6 py-2.5 text-sm font-bold text-white bg-gob-verde rounded-lg hover:bg-[#132c26] shadow-md transition-all">
+                                <i class="fas fa-cogs me-2"></i> Procesar Archivo
+                            </button>
+                        </div>
+
+                        <div id="progressContainer" class="hidden mt-6">
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="progressBar" class="bg-gob-oro h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <p class="text-center text-xs text-gray-500 mt-2 font-bold animate-pulse">Procesando filas, no cierres esta ventana...</p>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </main>
 
-    <script>
-        // Mostrar nombre del archivo al seleccionar
+    <script th:inline="javascript">
+        // Manejo visual del archivo seleccionado
         const fileInput = document.getElementById('dropzone-file');
         const fileNameDisplay = document.getElementById('file-name');
         const form = document.getElementById('importForm');
+        const btnSubmit = document.getElementById('btn-submit');
 
         fileInput.addEventListener('change', (e) => {
             const name = e.target.files[0]?.name;
-            fileNameDisplay.textContent = name ? `Seleccionado: ${name}` : '';
+            fileNameDisplay.textContent = name ? `📄 Archivo listo: ${name}` : '';
         });
 
-        // Feedback visual al enviar
-        form.addEventListener('submit', () => {
+        // Simulación de carga y bloqueo de botón
+        form.addEventListener('submit', (e) => {
+            // Validar que seleccionaron un tipo
+            if(!document.querySelector('input[name="tipoDato"]:checked')) {
+                e.preventDefault();
+                Swal.fire('Atención', 'Selecciona si vas a subir Expedientes, Términos o Audiencias.', 'warning');
+                return;
+            }
+
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Cargando...';
             document.getElementById('progressContainer').classList.remove('hidden');
+            
             let bar = document.getElementById('progressBar');
             let width = 0;
-            setInterval(() => {
-                if (width < 95) {
+            let interval = setInterval(() => {
+                if (width >= 90) {
+                    clearInterval(interval);
+                } else {
                     width += 5;
                     bar.style.width = width + '%';
                 }
-            }, 300);
+            }, 500);
+        });
+
+        // Manejo de alertas desde el backend
+        document.addEventListener("DOMContentLoaded", function () {
+            var msj = /*[[${mensaje}]]*/ null;
+            var err = /*[[${error}]]*/ null;
+            
+            if (msj) {
+                Swal.fire("¡Importación Exitosa!", msj, "success");
+            }
+            if (err) {
+                Swal.fire("Error en la carga", err, "error");
+            }
         });
     </script>
 </body>
