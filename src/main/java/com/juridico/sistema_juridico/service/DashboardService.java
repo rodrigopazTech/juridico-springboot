@@ -54,18 +54,21 @@ public class DashboardService {
             // Filtro por gerencia individual
             kpis.put("totalExpedientes", expedienteRepository.countByGerenciaId(gerenciaId));
             kpis.put("expedientesActivos", expedienteRepository.countByEtapaProcesalAndGerenciaId(EtapaProcesal.TRAMITE, gerenciaId));
+            kpis.put("audienciasProgramadas", audienciaRepository.countByExpedienteGerenciaIdAndEstatusPendiente(gerenciaId));
+            kpis.put("terminosActivos", terminoRepository.countByExpedienteGerenciaIdAndActivo(gerenciaId));
         } else if (hayFiltro) {
             // Filtro por lista de gerencias (grupo)
             kpis.put("totalExpedientes", expedienteRepository.countByGerenciaIdIn(gerenciaIds));
             kpis.put("expedientesActivos", expedienteRepository.countByEtapaProcesalAndGerenciaIdIn(EtapaProcesal.TRAMITE, gerenciaIds));
+            kpis.put("audienciasProgramadas", audienciaRepository.countByExpedienteGerenciaIdInAndEstatusPendiente(gerenciaIds));
+            kpis.put("terminosActivos", terminoRepository.countByExpedienteGerenciaIdInAndActivo(gerenciaIds));
         } else {
             // Sin filtro - todos los datos
             kpis.put("totalExpedientes", expedienteRepository.count());
             kpis.put("expedientesActivos", expedienteRepository.countByEtapaProcesal(EtapaProcesal.TRAMITE));
+            kpis.put("audienciasProgramadas", audienciaRepository.countByEstatusPendiente());
+            kpis.put("terminosActivos", terminoRepository.countByActivo());
         }
-        
-        kpis.put("audienciasProgramadas", audienciaRepository.count());
-        kpis.put("terminosActivos", terminoRepository.count());
         return kpis;
     }
 

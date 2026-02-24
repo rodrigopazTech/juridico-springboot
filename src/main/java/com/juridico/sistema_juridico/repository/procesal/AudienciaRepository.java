@@ -128,4 +128,17 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
         GROUP BY u.nombreCompleto
     """)
     List<Object[]> contarAudienciasPorUsuarioYGerencias(@Param("gerenciaIds") List<Long> gerenciaIds);
+
+    // --- 5. CONTEO PARA DASHBOARD KPIs ---
+    // Conteo por gerencia individual (solo audiencias pendientes)
+    @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.gerencia.id = :gerenciaId AND a.estatusAudiencia = 'PENDIENTE'")
+    long countByExpedienteGerenciaIdAndEstatusPendiente(@Param("gerenciaId") Long gerenciaId);
+
+    // Conteo por lista de gerencias (solo audiencias pendientes)
+    @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.gerencia.id IN :gerenciaIds AND a.estatusAudiencia = 'PENDIENTE'")
+    long countByExpedienteGerenciaIdInAndEstatusPendiente(@Param("gerenciaIds") List<Long> gerenciaIds);
+
+    // Conteo total audiencias pendientes (sin filtro)
+    @Query("SELECT COUNT(a) FROM Audiencia a WHERE a.estatusAudiencia = 'PENDIENTE'")
+    long countByEstatusPendiente();
 }
