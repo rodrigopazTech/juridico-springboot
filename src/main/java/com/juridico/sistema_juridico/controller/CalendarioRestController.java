@@ -61,6 +61,13 @@ public class CalendarioRestController {
             }
         }
         
+        // JEFE_DEPTO: forzar filtrar por su propia gerencia (el filtro está oculto)
+        if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+            if (usuarioActual.getGerencia() != null) {
+                gerenciaId = usuarioActual.getGerencia().getId().longValue();
+            }
+        }
+        
         // Determinar usuarioId a filtrar
         Long usuarioId = null;
         if (misAsuntos && usuarioActual != null) {
@@ -103,6 +110,14 @@ public class CalendarioRestController {
             return ResponseEntity.ok(List.of());
         }
         
+        // JEFE_DEPTO solo ve su propia gerencia
+        if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+            if (usuarioActual.getGerencia() != null) {
+                return ResponseEntity.ok(List.of(usuarioActual.getGerencia()));
+            }
+            return ResponseEntity.ok(List.of());
+        }
+        
         // DIRECCIÓN y SUBDIRECCIÓN ven todas las gerencias
         List<Gerencia> gerencias = gerenciaRepository.findAll();
         return ResponseEntity.ok(gerencias);
@@ -125,6 +140,16 @@ public class CalendarioRestController {
         
         // GERENTE solo ve usuarios de su propia gerencia
         if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.GERENTE) {
+            if (usuarioActual.getGerencia() != null) {
+                List<Usuario> usuarios = usuarioRepository.findByGerenciaId(
+                    usuarioActual.getGerencia().getId().longValue());
+                return ResponseEntity.ok(usuarios);
+            }
+            return ResponseEntity.ok(List.of());
+        }
+        
+        // JEFE_DEPTO solo ve usuarios de su propia gerencia
+        if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
             if (usuarioActual.getGerencia() != null) {
                 List<Usuario> usuarios = usuarioRepository.findByGerenciaId(
                     usuarioActual.getGerencia().getId().longValue());
