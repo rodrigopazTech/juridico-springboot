@@ -34,6 +34,7 @@
 
     <div th:replace="~{fragments/terminos/modal-nuevo-termino :: modal}"></div>
     <div th:replace="~{fragments/terminos/modal-subir-acuse :: modal}"></div>
+    <div th:replace="~{fragments/terminos/modal-concluir-final :: modal}"></div>
 
    <form id="form-upload" th:action="@{/terminos/subir-archivo}" method="post" enctype="multipart/form-data" class="hidden">
         <input type="hidden" name="id" id="upload-termino-id">
@@ -51,7 +52,6 @@
         });
     </script>
 
-    <script th:src="@{/js/terminos.js(v=2)}"></script>
-
+    <script th:src="@{/js/terminos.js}"></script>
     </body>
 </html>

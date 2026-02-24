@@ -3,6 +3,9 @@
  * Autor: Ricardo Villalobos
  */
 
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Sistema de Terminos Cargado");
+});
 // --- MENÚS DESPLEGABLES ---
 function toggleMenu(id) {
     document.querySelectorAll('[id^="menu-"]').forEach(menu => {
@@ -86,7 +89,6 @@ function activarSubidaAcuse(idTermino) {
     }
 }
 
-// --- GESTIÓN DE MODALES ---
 
 // 1. ABRIR MODAL NUEVO (Limpio)
 function abrirModalNuevo() {
@@ -173,4 +175,14 @@ function vincularAbogadoTermino() {
             console.error(err);
             abogadoSelect.innerHTML = '<option value="">Sin abogado asignado</option>';
         });
+}
+// ABRIR MODAL PARA CONCLUIR TÉRMINO
+function abrirModalConcluir(idTermino) {
+    const inputId = document.getElementById('input-concluir-id');
+    const modal = document.getElementById('modal-concluir-final');
+    
+    if(inputId && modal) {
+        inputId.value = idTermino;
+        modal.classList.remove('hidden');
+    }
 }

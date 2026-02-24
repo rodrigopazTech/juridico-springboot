@@ -56,7 +56,7 @@ public class TerminosController {
     @Autowired private ExpedienteRepository expedienteRepository;
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private TerminoPresentadoRepository terminoPresentadoRepository;
-    @Autowired private AudienciaRepository audienciaRepository; // NUEVA INYECCIÓN
+    @Autowired private AudienciaRepository audienciaRepository; 
     @Autowired private NotificacionService notificacionService;
     
     @Autowired private GerenciaRepository gerenciaRepository;
@@ -397,44 +397,89 @@ public class TerminosController {
     @PostMapping("/subir-acuse")
     public String subirAcuse(@RequestParam("id") Integer id,
                              @RequestParam("archivoAcuse") MultipartFile archivo,
-                             @RequestParam(value = "observaciones", required = false) String observaciones,
-                             RedirectAttributes redirectAttrs) {
+                            RedirectAttributes redirectAttrs) {
         
-        Usuario actor = getUsuarioActual();
+        Usuario actor = getUsuarioActual(); // Obtiene el usuario en sesión
         
-        if (!tienePermiso("Presentado", actor.getRol())) {
-             redirectAttrs.addFlashAttribute("mensaje", "No tienes permiso para concluir términos.");
-             redirectAttrs.addFlashAttribute("tipo", "error");
-             return "redirect:/terminos";
+        // 1. Validar que el usuario tenga permiso para actuar sobre el estado 'Liberado'
+        // El flujo anterior validaba 'Presentado', ahora validamos 'Liberado'
+        if (!tienePermiso("Liberado", actor.getRol())) {
+            redirectAttrs.addFlashAttribute("mensaje", "No tienes permiso para cargar acuses.");
+            redirectAttrs.addFlashAttribute("tipo", "error");
+            return "redirect:/terminos";
         }
 
-         try {
+        try {
             Termino termino = terminoRepository.findById(id).orElse(null);
-            if (termino != null && "Presentado".equals(termino.getEstatusTermino())) {
+            
+            // 2. Verificar que el término exista y esté efectivamente en estado 'Liberado'
+            if (termino != null && "Liberado".equals(termino.getEstatusTermino())) {
+                
+                // 3. Gestión del archivo físico
                 String carpeta = "uploads/acuses/";
                 Path ruta = Paths.get(carpeta);
                 if (!Files.exists(ruta)) Files.createDirectories(ruta);
+                
                 String nombreAcuse = "ACUSE_" + id + "_" + archivo.getOriginalFilename();
                 Files.copy(archivo.getInputStream(), ruta.resolve(nombreAcuse), StandardCopyOption.REPLACE_EXISTING);
 
+                // 4. Registrar en la tabla histórica de presentados
                 TerminoPresentado presentado = TerminoPresentado.builder()
-                        .termino(termino)
-                        .expedienteNumero(termino.getExpediente().getNumero())
-                        .fechaPresentacion(LocalDate.now())
-                        .acuseDocumento(nombreAcuse)
-                        .sincronizadoAt(LocalDateTime.now()).build();
+                    .termino(termino)
+                    .expedienteNumero(termino.getExpediente().getNumero())
+                    .fechaPresentacion(LocalDate.now())
+                    .acuseDocumento(nombreAcuse)
+                    .sincronizadoAt(LocalDateTime.now()).build();
                 terminoPresentadoRepository.save(presentado);
 
-                termino.setEstatusTermino("Concluido");
-                termino.setObservaciones(observaciones);
-                if (termino.getFechaPresentacion() == null) termino.setFechaPresentacion(LocalDate.now());
+                termino.setEstatusTermino("Presentado");
+                termino.setFechaPresentacion(LocalDate.now());
+                termino.setUpdatedAt(LocalDateTime.now());
                 terminoRepository.save(termino);
 
-                redirectAttrs.addFlashAttribute("mensaje", "¡Término Concluido!");
+                redirectAttrs.addFlashAttribute("mensaje", "Acuse cargado. El término ahora está 'Presentado'.");
+                redirectAttrs.addFlashAttribute("tipo", "success");
+            }
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("mensaje", "Error: " + e.getMessage());
+            redirectAttrs.addFlashAttribute("tipo", "error");
+        }
+        return "redirect:/terminos";
+    }
+
+    @PostMapping("/concluir")
+    public String concluir(@RequestParam("id") Integer id, 
+                        @RequestParam(value = "observaciones", required = false) String observaciones,
+                        RedirectAttributes redirectAttrs) {
+        
+        Usuario actor = getUsuarioActual();
+        
+        // Solo roles altos (Dirección/Gerencia) deberían poder concluir
+        if (!tienePermiso("Presentado", actor.getRol())) {
+            redirectAttrs.addFlashAttribute("mensaje", "No tienes permiso para finalizar este término.");
+            redirectAttrs.addFlashAttribute("tipo", "error");
+            return "redirect:/terminos";
+        }
+
+        try {
+            Termino termino = terminoRepository.findById(id).orElse(null);
+            
+            // Solo se puede concluir si ya fue "Presentado" (ya tiene acuse)
+            if (termino != null && "Presentado".equals(termino.getEstatusTermino())) {
+                termino.setEstatusTermino("Concluido");
+                if (observaciones != null) {
+                    termino.setObservaciones(observaciones);
+                }
+                termino.setUpdatedAt(LocalDateTime.now());
+                terminoRepository.save(termino);
+
+                redirectAttrs.addFlashAttribute("mensaje", "¡Término finalizado y archivado correctamente!");
                 redirectAttrs.addFlashAttribute("tipo", "success");
             }
         } catch (Exception e) {
             e.printStackTrace();
+            redirectAttrs.addFlashAttribute("mensaje", "Error al concluir el término.");
+            redirectAttrs.addFlashAttribute("tipo", "error");
         }
 
         return "redirect:/terminos";
@@ -581,7 +626,7 @@ public class TerminosController {
         }
     }
 
-    // --- API: OBTENER ABOGADO DEL EXPEDIENTE (PARA VINCULACIÓN AUTOMÁTICA) ---
+    // OBTENER ABOGADO DEL EXPEDIENTE (PARA VINCULACIÓN AUTOMÁTICA)
     @GetMapping("/api/responsable-expediente/{id}")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> obtenerResponsable(@PathVariable String id) {

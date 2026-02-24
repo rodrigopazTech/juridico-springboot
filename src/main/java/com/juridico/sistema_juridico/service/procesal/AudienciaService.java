@@ -221,7 +221,7 @@ public class AudienciaService {
                 .tipoAudiencia(tipo)
                 .fechaAudiencia(request.getFecha())
                 .horaAudiencia(horaFormateada) 
-                .salaLugar(request.getSala()) // CAMBIADO: .sala() por .salaLugar()
+                .salaLugar(request.getSala()) 
                 .estatusAudiencia("PENDIENTE")
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
