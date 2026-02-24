@@ -9,9 +9,8 @@
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     <style>
-        /* Estilos para el radio button personalizado */
         .radio-card:checked + div {
-            border-color: #1a3c34; /* gob-verde */
+            border-color: #1a3c34; 
             background-color: #f0fdf4;
             box-shadow: 0 0 0 2px #1a3c3410;
         }
@@ -53,20 +52,9 @@
                     <form th:action="@{/admin/importar}" method="POST" enctype="multipart/form-data" id="importForm" class="p-8">
                         
                         <div class="mb-8">
-                            <label class="block text-sm font-bold text-gray-800 mb-3">1. ¿Qué tipo de información deseas cargar?</label>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <label class="cursor-pointer relative">
-                                    <input type="radio" name="tipoDato" value="EXPEDIENTES" class="radio-card sr-only" required>
-                                    <div class="h-full border-2 border-gray-200 rounded-lg p-4 transition-all hover:bg-gray-50 flex flex-col relative">
-                                        <div class="icon-check absolute top-3 right-3 text-gob-verde opacity-0 transform scale-50 transition-all duration-200">
-                                            <i class="fas fa-check-circle text-lg"></i>
-                                        </div>
-                                        <i class="fas fa-folder-open text-gob-oro text-2xl mb-2"></i>
-                                        <span class="font-bold text-gray-900">Expedientes</span>
-                                        <span class="text-xs text-gray-500 mt-1 leading-tight">Actores, demandados, materia y juzgado.</span>
-                                    </div>
-                                </label>
-
+                            <label class="block text-sm font-bold text-gray-800 mb-3">1. ¿Qué reporte deseas cargar?</label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                
                                 <label class="cursor-pointer relative">
                                     <input type="radio" name="tipoDato" value="TERMINOS" class="radio-card sr-only" required>
                                     <div class="h-full border-2 border-gray-200 rounded-lg p-4 transition-all hover:bg-gray-50 flex flex-col relative">
@@ -74,8 +62,8 @@
                                             <i class="fas fa-check-circle text-lg"></i>
                                         </div>
                                         <i class="fas fa-hourglass-half text-gob-oro text-2xl mb-2"></i>
-                                        <span class="font-bold text-gray-900">Términos</span>
-                                        <span class="text-xs text-gray-500 mt-1 leading-tight">Vencimientos, prioridades y actuaciones.</span>
+                                        <span class="font-bold text-gray-900">Reporte de Términos</span>
+                                        <span class="text-xs text-gray-500 mt-1 leading-tight">Si el expediente no existe, el sistema lo creará automáticamente.</span>
                                     </div>
                                 </label>
 
@@ -86,10 +74,11 @@
                                             <i class="fas fa-check-circle text-lg"></i>
                                         </div>
                                         <i class="fas fa-gavel text-gob-oro text-2xl mb-2"></i>
-                                        <span class="font-bold text-gray-900">Audiencias</span>
-                                        <span class="text-xs text-gray-500 mt-1 leading-tight">Fechas, tipo de audiencia y modalides.</span>
+                                        <span class="font-bold text-gray-900">Reporte de Audiencias</span>
+                                        <span class="text-xs text-gray-500 mt-1 leading-tight">Si el expediente no existe, el sistema lo creará automáticamente.</span>
                                     </div>
                                 </label>
+
                             </div>
                         </div>
 
@@ -117,9 +106,8 @@
                                 </div>
                             </div>
                             <div class="flex gap-2">
-                                <a th:href="@{/admin/plantilla/expedientes}" class="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded hover:bg-amber-100 transition font-bold" title="Plantilla Expedientes"><i class="fas fa-folder-open"></i></a>
-                                <a th:href="@{/admin/plantilla/terminos}" class="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded hover:bg-amber-100 transition font-bold" title="Plantilla Términos"><i class="fas fa-hourglass-half"></i></a>
-                                <a th:href="@{/admin/plantilla/audiencias}" class="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded hover:bg-amber-100 transition font-bold" title="Plantilla Audiencias"><i class="fas fa-gavel"></i></a>
+                                <a th:href="@{/admin/plantilla/terminos}" class="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded hover:bg-amber-100 transition font-bold" title="Plantilla Términos"><i class="fas fa-hourglass-half mr-1"></i> Términos</a>
+                                <a th:href="@{/admin/plantilla/audiencias}" class="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded hover:bg-amber-100 transition font-bold" title="Plantilla Audiencias"><i class="fas fa-gavel mr-1"></i> Audiencias</a>
                             </div>
                         </div>
 
@@ -145,7 +133,6 @@
     </main>
 
     <script th:inline="javascript">
-        // Manejo visual del archivo seleccionado
         const fileInput = document.getElementById('dropzone-file');
         const fileNameDisplay = document.getElementById('file-name');
         const form = document.getElementById('importForm');
@@ -156,15 +143,12 @@
             fileNameDisplay.textContent = name ? `📄 Archivo listo: ${name}` : '';
         });
 
-        // Simulación de carga y bloqueo de botón
         form.addEventListener('submit', (e) => {
-            // Validar que seleccionaron un tipo
             if(!document.querySelector('input[name="tipoDato"]:checked')) {
                 e.preventDefault();
-                Swal.fire('Atención', 'Selecciona si vas a subir Expedientes, Términos o Audiencias.', 'warning');
+                Swal.fire('Atención', 'Selecciona si vas a subir Términos o Audiencias.', 'warning');
                 return;
             }
-
             btnSubmit.disabled = true;
             btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Cargando...';
             document.getElementById('progressContainer').classList.remove('hidden');
@@ -172,26 +156,16 @@
             let bar = document.getElementById('progressBar');
             let width = 0;
             let interval = setInterval(() => {
-                if (width >= 90) {
-                    clearInterval(interval);
-                } else {
-                    width += 5;
-                    bar.style.width = width + '%';
-                }
+                if (width >= 90) clearInterval(interval);
+                else { width += 5; bar.style.width = width + '%'; }
             }, 500);
         });
 
-        // Manejo de alertas desde el backend
         document.addEventListener("DOMContentLoaded", function () {
             var msj = /*[[${mensaje}]]*/ null;
             var err = /*[[${error}]]*/ null;
-            
-            if (msj) {
-                Swal.fire("¡Importación Exitosa!", msj, "success");
-            }
-            if (err) {
-                Swal.fire("Error en la carga", err, "error");
-            }
+            if (msj) Swal.fire("¡Importación Exitosa!", msj, "success");
+            if (err) Swal.fire("Error en la carga", err, "error");
         });
     </script>
 </body>

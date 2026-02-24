@@ -7,13 +7,23 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.ui.Model;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.juridico.sistema_juridico.service.procesal.TerminoImportService;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
+import com.juridico.sistema_juridico.service.procesal.TerminoImportService; // IMPORTAR EL SERVICIO
+import org.springframework.stereotype.Controller;
+
 @Controller
 public class AdminImportController {
+
+    @Autowired
+    private TerminoImportService terminoImportService;
 
     @GetMapping("/admin/importar")
     public String mostrarPaginaImportar(Model model) {
@@ -24,33 +34,25 @@ public class AdminImportController {
     @PostMapping("/admin/importar")
     public String procesarImportacion(
             @RequestParam("file") MultipartFile file, 
-            @RequestParam("tipoDato") String tipoDato, // <-- Recibimos qué estamos importando
+            @RequestParam("tipoDato") String tipoDato, 
             RedirectAttributes redirectAttributes) {
         
         try {
-            if (file.isEmpty()) {
-                throw new Exception("El archivo está vacío.");
-            }
+            if (file.isEmpty()) throw new Exception("El archivo está vacío.");
 
-            // Aquí conectaremos la lógica real de lectura de Excel dependiendo del tipo
+            // 2. Conectamos el Switch con el servicio
             switch (tipoDato) {
-                case "EXPEDIENTES":
-                    // expedienteImportService.importar(file);
-                    System.out.println("Procesando Excel de Expedientes...");
-                    break;
                 case "TERMINOS":
-                    // terminoImportService.importar(file);
-                    System.out.println("Procesando Excel de Términos...");
+                    terminoImportService.importar(file); // MAGIA ACTIVADA
                     break;
                 case "AUDIENCIAS":
-                    // audienciaImportService.importar(file);
-                    System.out.println("Procesando Excel de Audiencias...");
+                    // audienciaImportService.importar(file); (Próximamente)
                     break;
                 default:
                     throw new Exception("Tipo de dato no válido.");
             }
             
-            redirectAttributes.addFlashAttribute("mensaje", "Se han importado los datos de " + tipoDato + " correctamente.");
+            redirectAttributes.addFlashAttribute("mensaje", "Se han importado los datos de " + tipoDato + " correctamente. Los expedientes nuevos fueron creados.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al cargar: " + e.getMessage());
         }
@@ -59,25 +61,23 @@ public class AdminImportController {
     }
 
     // ==========================================================
-    // RUTAS PARA DESCARGAR LAS PLANTILLAS DE EXCEL (PROVISIONAL)
+    // RUTAS PARA DESCARGAR LAS PLANTILLAS DE EXCEL (ENRIQUECIDAS)
     // ==========================================================
-    
-    @GetMapping("/admin/plantilla/expedientes")
-    public ResponseEntity<ByteArrayResource> descargarPlantillaExpedientes() {
-        return generarPlantilla("plantilla_expedientes.xlsx", "Numero,Materia,Juzgado,Abogado");
-    }
 
     @GetMapping("/admin/plantilla/terminos")
     public ResponseEntity<ByteArrayResource> descargarPlantillaTerminos() {
-        return generarPlantilla("plantilla_terminos.xlsx", "Expediente,Actuacion,FechaVencimiento,Prioridad");
+        // Se agregaron las columnas maestras: Materia, OrganoJurisdiccional, EmailAbogadoResponsable
+        String encabezados = "NumeroExpediente,Materia,OrganoJurisdiccional,EmailAbogadoResponsable,Actuacion,FechaVencimiento,Prioridad";
+        return generarPlantilla("plantilla_terminos.xlsx", encabezados);
     }
 
     @GetMapping("/admin/plantilla/audiencias")
     public ResponseEntity<ByteArrayResource> descargarPlantillaAudiencias() {
-        return generarPlantilla("plantilla_audiencias.xlsx", "Expediente,TipoAudiencia,Fecha,Hora,Sala");
+        // Se agregaron las columnas maestras
+        String encabezados = "NumeroExpediente,Materia,OrganoJurisdiccional,EmailAbogadoResponsable,TipoAudiencia,Fecha,Hora,Sala,EsEnLinea,EnlaceReunion";
+        return generarPlantilla("plantilla_audiencias.xlsx", encabezados);
     }
 
-    // Método auxiliar para no romper la vista (Se reemplazará con Apache POI para hacer Excels reales)
     private ResponseEntity<ByteArrayResource> generarPlantilla(String nombreArchivo, String contenidoSimulado) {
         ByteArrayResource resource = new ByteArrayResource(contenidoSimulado.getBytes());
         return ResponseEntity.ok()
