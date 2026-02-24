@@ -34,23 +34,29 @@
 
     <div th:replace="~{fragments/terminos/modal-nuevo-termino :: modal}"></div>
     <div th:replace="~{fragments/terminos/modal-subir-acuse :: modal}"></div>
-    <div th:replace="~{fragments/terminos/modal-concluir-final :: modal}"></div>
-
+    <div th:replace="~{fragments/terminos/modal-concluir :: modal}"></div>
+    
    <form id="form-upload" th:action="@{/terminos/subir-archivo}" method="post" enctype="multipart/form-data" class="hidden">
         <input type="hidden" name="id" id="upload-termino-id">
         <input type="file" name="archivo" id="upload-file-input" onchange="document.getElementById('form-upload').submit()">
     </form>
     <script th:src="@{/js/terminos.js(v=4)}"></script>
 
-    <script th:if="${mensaje != null}">
+    <script th:if="${mensaje != null}" th:inline="javascript">
         document.addEventListener("DOMContentLoaded", function () {
+            // Al usar inlining, Thymeleaf maneja las comillas automáticamente
+            var mensajeAlerta = /*[[${mensaje}]]*/ 'Mensaje por defecto';
+            var tipoAlerta = /*[[${tipo}]]*/ 'info';
+            var tituloAlerta = tipoAlerta === 'success' ? '¡Éxito!' : 'Aviso';
+
             Swal.fire({
-                title: "[[${tipo == 'success' ? '¡Éxito!' : 'Aviso'}]]",
-                text: "[[${mensaje}]]",
-                icon: "[[${tipo}]]",
+                title: tituloAlerta,
+                text: mensajeAlerta,
+                icon: tipoAlerta,
                 confirmButtonColor: "#621132"
             });
         });
     </script>
+
     </body>
 </html>

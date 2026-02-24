@@ -70,7 +70,7 @@ public class TerminosController {
         PERMISOS_ETAPAS.put("Gerencia",    Arrays.asList(RolUsuario.GERENTE, RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
         PERMISOS_ETAPAS.put("Dirección",   Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
         PERMISOS_ETAPAS.put("Liberado",    Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE, RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
-        PERMISOS_ETAPAS.put("Presentado",  Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION, RolUsuario.ABOGADO, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO));
+        PERMISOS_ETAPAS.put("Presentado",  Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
     }
 
     private static final Map<String, Integer> ORDEN_ETAPAS = new HashMap<>();

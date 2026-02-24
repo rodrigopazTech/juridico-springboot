@@ -33,13 +33,13 @@
 
     <script th:src="@{/js/audiencias.js(v=4)}"></script>
 
-    <script th:if="${mensaje != null}">
+     <script th:if="${mensaje != null}">
         document.addEventListener("DOMContentLoaded", function () {
             Swal.fire({
-                title: "[[${tipo == 'success' ? '¡Éxito!' : 'Error'}]]",
+                title: "[[${tipo == 'success' ? '¡Éxito!' : 'Aviso'}]]",
                 text: "[[${mensaje}]]",
                 icon: "[[${tipo}]]",
-                confirmButtonColor: "#bc955c",
+                confirmButtonColor: "#621132"
             });
         });
     </script>
