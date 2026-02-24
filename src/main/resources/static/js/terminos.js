@@ -6,6 +6,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Sistema de Terminos Cargado");
 });
+
 // --- MENÚS DESPLEGABLES ---
 function toggleMenu(id) {
     document.querySelectorAll('[id^="menu-"]').forEach(menu => {

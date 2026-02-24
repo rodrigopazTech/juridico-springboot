@@ -40,6 +40,7 @@
         <input type="hidden" name="id" id="upload-termino-id">
         <input type="file" name="archivo" id="upload-file-input" onchange="document.getElementById('form-upload').submit()">
     </form>
+    <script th:src="@{/js/terminos.js(v=4)}"></script>
 
     <script th:if="${mensaje != null}">
         document.addEventListener("DOMContentLoaded", function () {
@@ -51,7 +52,5 @@
             });
         });
     </script>
-
-    <script th:src="@{/js/terminos.js}"></script>
     </body>
 </html>
