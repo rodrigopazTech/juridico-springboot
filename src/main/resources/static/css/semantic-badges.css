@@ -61,43 +61,6 @@
     border-color: rgba(21, 128, 61, 0.2);
 }
 
-/* CSS-only fallback values for stability */
-.badge-stage-tramite {
-    background-color: #dbeafe;
-    color: #1d4ed8;
-    border-color: #bfdbfe;
-}
-
-.badge-stage-laudo {
-    background-color: #ffedd5;
-    color: #c2410c;
-    border-color: #fed7aa;
-}
-
-.badge-stage-firme {
-    background-color: #fee2e2;
-    color: #991b1b;
-    border-color: #fecaca;
-}
-
-.badge-priority-alta {
-    background-color: #fee2e2;
-    color: #b91c1c;
-    border-color: #fecaca;
-}
-
-.badge-priority-media {
-    background-color: #fef9c3;
-    color: #854d0e;
-    border-color: #fef08a;
-}
-
-.badge-priority-baja {
-    background-color: #f0fdf4;
-    color: #15803d;
-    border-color: #dcfce7;
-}
-
 /* Status (Estatus Audiencia/Termino) */
 .badge-status-pendiente {
     @apply bg-gray-100 text-gray-700 border-gray-200;
@@ -111,6 +74,7 @@
 
 .badge-status-concluida {
     @apply bg-green-100 text-green-800 border-green-200;
+    background: linear-gradient(to bottom right, #f0fdf4, #dcfce7);
 }
 
 .badge-status-vencido {
