@@ -69,17 +69,6 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block font-bold text-gray-600 mb-1">Órgano Jurisdiccional*</label>
-                    <select name="organoJurisdiccional.id" required
-                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
-                        <option value="">Selecciona órgano...</option>
-                        <option th:each="org : ${organos}" th:value="${org.id}" th:text="${org.nombre}"></option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
                     <label class="block font-bold text-gray-600 mb-1">Tipo Expediente*</label>
                     <select name="tipoExpediente.id"
                         class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white"
@@ -88,42 +77,42 @@
                         <option th:each="t : ${tipos}" th:value="${t.id}" th:text="${t.nombre}"></option>
                     </select>
                 </div>
-                <div>
-                    <label class="block font-bold text-gray-600 mb-1">Abogado Responsable</label>
-                    <select name="abogadoResponsable.id" id="select-abogado-exp"
-                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-gray-50"
-                        disabled>
-                        <option value="">Primero selecciona una materia...</option>
-                    </select>
-                </div>
             </div>
+
+            <div>
+                <label class="block font-bold text-gray-600 mb-1">Abogado Responsable</label>
+                <select name="abogadoResponsable.id" id="select-abogado-exp"
+                    class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-gray-50"
+                    disabled>
+                    <option value="">Primero selecciona una materia...</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block font-bold text-gray-600 mb-1">Partes Procesales</label>
+                <input type="text" name="partes" placeholder="Ej: Juan Pérez vs Inmobiliaria S.A."
+                    class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none">
+            </div>
+
+            <div class="col-span-1 md:col-span-2">
+                <label class="block font-bold text-gray-600 mb-1">Descripción </label>
+                <textarea name="descripcion" rows="4" required
+                    placeholder="Escribe aquí todo el detalle del expediente. Esta información se verá en la vista detallada."
+                    class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none resize-none"></textarea>
+            </div>
+
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-4">
+                <button type="button" onclick="document.getElementById('modal-nuevo-exp').classList.add('hidden')"
+                    class="px-4 py-2 border border-gray-300 text-gray-600 rounded hover:bg-gray-50 font-medium">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="px-6 py-2 bg-gob-guinda text-white rounded hover:bg-gob-guinda-claro font-bold shadow flex items-center gap-2">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+            </div>
+
+        </form>
     </div>
-
-    <div>
-        <label class="block font-bold text-gray-600 mb-1">Partes Procesales</label>
-        <input type="text" name="partes" placeholder="Ej: Juan Pérez vs Inmobiliaria S.A."
-            class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none">
-    </div>
-
-    <div class="col-span-1 md:col-span-2">
-        <label class="block font-bold text-gray-600 mb-1">Descripción </label>
-        <textarea name="descripcion" rows="4" required
-            placeholder="Escribe aquí todo el detalle del expediente. Esta información se verá en la vista detallada."
-            class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none resize-none"></textarea>
-    </div>
-
-
-    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-4">
-        <button type="button" onclick="document.getElementById('modal-nuevo-exp').classList.add('hidden')"
-            class="px-4 py-2 border border-gray-300 text-gray-600 rounded hover:bg-gray-50 font-medium">
-            Cancelar
-        </button>
-        <button type="submit"
-            class="px-6 py-2 bg-gob-guinda text-white rounded hover:bg-gob-guinda-claro font-bold shadow flex items-center gap-2">
-            <i class="fas fa-save"></i> Guardar
-        </button>
-    </div>
-
-    </form>
-</div>
 </div>
