@@ -46,18 +46,28 @@ import java.util.HashMap;
 @RequestMapping("/expedientes")
 public class ExpedientesController {
 
-    @Autowired private ExpedienteRepository expedienteRepository;
-    @Autowired private GerenciaRepository gerenciaRepository;
-    @Autowired private MateriaRepository materiaRepository;
-    @Autowired private TipoExpedienteRepository tipoExpedienteRepository;
-    @Autowired private OrganoJurisdiccionalRepository organoRepository;
-    @Autowired private UsuarioRepository usuarioRepository;
-    @Autowired private EstadoRepository estadoRepository;
-    @Autowired private AudienciaRepository audienciaRepository;
-    @Autowired private ComentarioRepository comentarioRepository;
-    
+    @Autowired
+    private ExpedienteRepository expedienteRepository;
+    @Autowired
+    private GerenciaRepository gerenciaRepository;
+    @Autowired
+    private MateriaRepository materiaRepository;
+    @Autowired
+    private TipoExpedienteRepository tipoExpedienteRepository;
+    @Autowired
+    private OrganoJurisdiccionalRepository organoRepository;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+    @Autowired
+    private EstadoRepository estadoRepository;
+    @Autowired
+    private AudienciaRepository audienciaRepository;
+    @Autowired
+    private ComentarioRepository comentarioRepository;
+
     // INYECCIÓN DEL SERVICIO DE NOTIFICACIONES
-    @Autowired private NotificacionService notificacionService;
+    @Autowired
+    private NotificacionService notificacionService;
 
     @GetMapping
     public String index(Model model,
@@ -77,7 +87,8 @@ public class ExpedientesController {
         List<Integer> secMateriaIds = null;
         Integer secUsuarioId = usuario.getId();
 
-        if (usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECCION
+                || usuario.getRol() == RolUsuario.SUBDIRECCION) {
             // Ven todo
         } else if (usuario.getRol() == RolUsuario.GERENTE) {
             if (usuario.getGerencia() != null)
@@ -127,15 +138,17 @@ public class ExpedientesController {
 
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute Expediente expediente, RedirectAttributes redirectAttrs) {
-        // Mantenemos este try-catch SOLO para la duplicidad, que es un error muy específico de negocio
+        // Mantenemos este try-catch SOLO para la duplicidad, que es un error muy
+        // específico de negocio
         try {
             boolean esNuevo = (expediente.getId() == null);
-            
+
             if (esNuevo) {
                 expediente.setCreatedAt(LocalDateTime.now());
                 expediente.setEtapaProcesal(EtapaProcesal.TRAMITE);
             } else {
-                // Verificar que existe antes de guardar (opcional, save lo maneja, pero es bueno validar)
+                // Verificar que existe antes de guardar (opcional, save lo maneja, pero es
+                // bueno validar)
                 if (!expedienteRepository.existsById(expediente.getId())) {
                     throw new ResourceNotFoundException("El expediente a editar no existe.");
                 }
@@ -153,21 +166,22 @@ public class ExpedientesController {
 
         } catch (DataIntegrityViolationException e) {
             // Este catch específico es útil para dar feedback exacto
-            redirectAttrs.addFlashAttribute("mensaje", "Error: El número de expediente '" + expediente.getNumero() + "' ya existe.");
+            redirectAttrs.addFlashAttribute("mensaje",
+                    "Error: El número de expediente '" + expediente.getNumero() + "' ya existe.");
             redirectAttrs.addFlashAttribute("tipo", "error");
-        } 
+        }
         // Eliminamos el 'catch (Exception e)' general. El GlobalHandler lo hará.
 
         return "redirect:/expedientes";
     }
 
-   /**
+    /**
      * Envía notificaciones al Abogado, Gerente y Jefe de Depto correspondiente.
      */
     private void enviarNotificacionesNuevoExpediente(Expediente exp) {
         // 1. RECUPERAR EL NOMBRE DE LA MATERIA (Parche para el NULL)
         String nombreMateria = "General";
-        
+
         if (exp.getMateria() != null) {
             // Si el nombre viene nulo (porque Spring solo bindeó el ID), lo buscamos:
             if (exp.getMateria().getNombre() == null && exp.getMateria().getId() != null) {
@@ -182,38 +196,42 @@ public class ExpedientesController {
         String titulo = "Nuevo Expediente Registrado";
         // Usamos la variable 'nombreMateria' que ya garantizamos que tiene texto
         String mensaje = "Se ha creado el expediente " + exp.getNumero() + " (" + nombreMateria + ")";
-        
+
         List<Usuario> destinatarios = new ArrayList<>();
 
-        // A) Abogado Responsable (Verificamos que solo traiga ID y buscamos el objeto completo si es necesario, 
-        // aunque para notificar solo necesitamos el objeto usuario, hibernate lo maneja bien si el ID es correcto)
+        // A) Abogado Responsable (Verificamos que solo traiga ID y buscamos el objeto
+        // completo si es necesario,
+        // aunque para notificar solo necesitamos el objeto usuario, hibernate lo maneja
+        // bien si el ID es correcto)
         if (exp.getAbogadoResponsable() != null) {
             destinatarios.add(exp.getAbogadoResponsable());
         }
 
         // B) Gerente de la Gerencia asignada
         if (exp.getGerencia() != null) {
-            List<Usuario> gerentes = usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE, exp.getGerencia());
+            List<Usuario> gerentes = usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE,
+                    exp.getGerencia());
             destinatarios.addAll(gerentes);
         }
 
         // C) Jefe de Depto (Que tenga la Materia asignada)
         if (exp.getMateria() != null) {
-            List<Usuario> jefes = usuarioRepository.findByRolAndMateriaId(RolUsuario.JEFE_DEPTO, exp.getMateria().getId());
+            List<Usuario> jefes = usuarioRepository.findByRolAndMateriaId(RolUsuario.JEFE_DEPTO,
+                    exp.getMateria().getId());
             destinatarios.addAll(jefes);
         }
 
         // Enviar notificaciones
-        // Usamos un Set para evitar duplicados si una persona tuviera doble rol (raro pero posible)
+        // Usamos un Set para evitar duplicados si una persona tuviera doble rol (raro
+        // pero posible)
         for (Usuario u : new HashSet<>(destinatarios)) {
             notificacionService.crearNotificacion(
-                u,
-                titulo,
-                mensaje,
-                "EXPEDIENTE", 
-                exp.getPrioridad(),
-                exp.getId().toString() 
-            );
+                    u,
+                    titulo,
+                    mensaje,
+                    "EXPEDIENTE",
+                    exp.getPrioridad(),
+                    exp.getId().toString());
         }
     }
 
@@ -222,13 +240,13 @@ public class ExpedientesController {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
-        
+
         model.addAttribute("usuario", usuario);
         model.addAttribute("rolActual", usuario.getRol());
 
         Expediente expediente = expedienteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Expediente no encontrado con ID: " + id));
-        
+
         model.addAttribute("expediente", expediente);
 
         Audiencia proxima = audienciaRepository.findTopByExpedienteIdAndFechaAudienciaAfterOrderByFechaAudienciaAsc(
@@ -291,23 +309,24 @@ public class ExpedientesController {
     @GetMapping("/api/abogados")
     @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> obtenerAbogadosPorMateria(
-            @RequestParam Integer gerenciaId, 
+            @RequestParam Integer gerenciaId,
             @RequestParam Integer materiaId) {
-        
+
         // 1. Buscamos abogados que tengan esa materia asignada
         List<Usuario> abogados = usuarioRepository.findByRolAndMateriaId(RolUsuario.ABOGADO, materiaId);
-        
-        // 2. Filtramos para asegurar que pertenezcan a la gerencia correcta y preparamos el JSON
+
+        // 2. Filtramos para asegurar que pertenezcan a la gerencia correcta y
+        // preparamos el JSON
         List<Map<String, Object>> response = abogados.stream()
-            .filter(u -> u.getGerencia() != null && u.getGerencia().getId().equals(gerenciaId))
-            .map(u -> {
-                Map<String, Object> map = new HashMap<>();
-                map.put("id", u.getId());
-                map.put("nombreCompleto", u.getNombreCompleto());
-                return map;
-            })
-            .collect(Collectors.toList());
-            
+                .filter(u -> u.getGerencia() != null && u.getGerencia().getId().equals(gerenciaId))
+                .map(u -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", u.getId());
+                    map.put("nombreCompleto", u.getNombreCompleto());
+                    return map;
+                })
+                .collect(Collectors.toList());
+
         return ResponseEntity.ok(response);
     }
 }
