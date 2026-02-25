@@ -161,7 +161,9 @@ function cargarAbogadosPosibles(idPreseleccionado = null) {
     // No lo deshabilitamos totalmente en edición para no bloquear la UI, pero visualmente ayuda
     // abogadoSelect.disabled = true; 
 
-    const currentUserId = document.getElementById('current-user-id') ? document.getElementById('current-user-id').value : null;
+    // Obtener ID del usuario actual de un campo oculto en el modal
+    const currentUserIdEl = document.getElementById('current-user-id');
+    const currentUserId = currentUserIdEl ? currentUserIdEl.value : null;
 
     fetch(`/audiencias/api/abogados-disponibles/${expId}`)
         .then(response => response.json())
@@ -209,8 +211,9 @@ function cargarAbogadosPosibles(idPreseleccionado = null) {
                 abogadoSelect.appendChild(option);
             });
 
-            // Si no hay titular y no estamos editando, queda en "Seleccione..."
-            if (!titularEncontrado && !idPreseleccionado) {
+            // Si no se auto-seleccionó nada (porque no es el titular o estamos editando otro), 
+            // y no teníamos un idPreseleccionado, queda en "Seleccione..."
+            if (!idPreseleccionado && !abogadoSelect.value) {
                 abogadoSelect.value = "";
             }
         })

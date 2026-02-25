@@ -4,6 +4,7 @@ import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
+import com.juridico.sistema_juridico.Entity.expediente.ActividadExpediente;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Catalogo.EstadoRepository;
@@ -14,13 +15,14 @@ import com.juridico.sistema_juridico.repository.Catalogo.TipoExpedienteRepositor
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+import com.juridico.sistema_juridico.repository.Expediente.ActividadExpedienteRepository;
 import com.juridico.sistema_juridico.repository.General.ComentarioRepository;
 import com.juridico.sistema_juridico.Entity.general.Comentario;
+import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.NotificacionService;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
-import com.juridico.sistema_juridico.repository.Expediente.ActividadExpedienteRepository;
-import com.juridico.sistema_juridico.Entity.expediente.ActividadExpediente;
-import com.juridico.sistema_juridico.service.AuditoriaService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -67,14 +69,15 @@ public class ExpedientesController {
     private AudienciaRepository audienciaRepository;
     @Autowired
     private ComentarioRepository comentarioRepository;
-
-    // INYECCIÓN DEL SERVICIO DE NOTIFICACIONES
+    @Autowired
+    private ActividadExpedienteRepository actividadRepository;
     @Autowired
     private NotificacionService notificacionService;
     @Autowired
     private AuditoriaService auditoriaService;
-    @Autowired
-    private ActividadExpedienteRepository actividadRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @GetMapping
     public String index(Model model,
@@ -116,6 +119,21 @@ public class ExpedientesController {
                 secGerenciaId, secMateriaIds, secUsuarioId,
                 pageable);
 
+        // Conteos para resumen (Respetando seguridad)
+        long totalAlta = expedienteRepository.buscarConSeguridad(
+                null, null, null, null, Prioridad.ALTA, null, null,
+                secGerenciaId, secMateriaIds, secUsuarioId,
+                PageRequest.of(0, 1)).getTotalElements();
+
+        long totalTramite = expedienteRepository.buscarConSeguridad(
+                null, null, null, null, null, EtapaProcesal.TRAMITE, null,
+                secGerenciaId, secMateriaIds, secUsuarioId,
+                PageRequest.of(0, 1)).getTotalElements();
+
+        model.addAttribute("totalAlta", totalAlta);
+        model.addAttribute("totalTramite", totalTramite);
+        model.addAttribute("totalNuevos", paginaExpedientes.getTotalElements()); // Placeholder for "New"
+
         model.addAttribute("expedientes", paginaExpedientes);
         model.addAttribute("keyword", keyword);
         model.addAttribute("pageTitle", "Gestión de Expedientes");
@@ -147,14 +165,24 @@ public class ExpedientesController {
         // Mantenemos este try-catch SOLO para la duplicidad, que es un error muy
         // específico de negocio
         try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+
             boolean esNuevo = (expediente.getId() == null);
+            Expediente anterior = null;
+            if (!esNuevo) {
+                // Capturar estado anterior para la bitácora
+                anterior = expedienteRepository.findById(expediente.getId()).orElse(null);
+                if (anterior != null) {
+                    entityManager.detach(anterior);
+                }
+            }
 
             if (esNuevo) {
                 expediente.setCreatedAt(LocalDateTime.now());
                 expediente.setEtapaProcesal(EtapaProcesal.TRAMITE);
             } else {
-                // Verificar que existe antes de guardar (opcional, save lo maneja, pero es
-                // bueno validar)
+                // Verificar que existe antes de guardar
                 if (!expedienteRepository.existsById(expediente.getId())) {
                     throw new ResourceNotFoundException("El expediente a editar no existe.");
                 }
@@ -165,18 +193,22 @@ public class ExpedientesController {
 
             if (esNuevo) {
                 enviarNotificacionesNuevoExpediente(guardado);
+                auditoriaService.registrar(guardado, "Expediente Creado",
+                        "Se ha registrado un nuevo expediente: " + guardado.getNumero(), "PLUS", usuario);
+            } else {
+                // Registrar cambios en la bitácora estructurada
+                auditoriaService.registrarCambiosEstructurados(guardado, anterior, usuario);
             }
 
             redirectAttrs.addFlashAttribute("mensaje", "Expediente guardado correctamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
 
         } catch (DataIntegrityViolationException e) {
-            // Este catch específico es útil para dar feedback exacto
+            // Feedback específico para duplicidad de número
             redirectAttrs.addFlashAttribute("mensaje",
                     "Error: El número de expediente '" + expediente.getNumero() + "' ya existe.");
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
-        // Eliminamos el 'catch (Exception e)' general. El GlobalHandler lo hará.
 
         return "redirect:/expedientes";
     }
@@ -272,7 +304,7 @@ public class ExpedientesController {
 
         model.addAttribute("activePage", "expedientes");
 
-        // 5. Cargar Actividades (Bitácora)
+        // CARGAR HISTORIAL DE ACTIVIDADES (Bitácora)
         List<ActividadExpediente> actividades = actividadRepository.findByExpedienteIdOrderByFechaRegistroDesc(id);
         model.addAttribute("actividades", actividades);
 
@@ -300,6 +332,21 @@ public class ExpedientesController {
         nuevo.setUsuarioNombre(usuario != null ? usuario.getNombreCompleto() : "Sistema");
 
         comentarioRepository.save(nuevo);
+
+        // Registro de Auditoría
+        try {
+            UUID expId = UUID.fromString(id);
+            expedienteRepository.findById(expId).ifPresent(exp -> {
+                auditoriaService.registrar(exp, "Nueva Observación",
+                        "Se agregó una nota: "
+                                + (nuevo.getComentario().length() > 50 ? nuevo.getComentario().substring(0, 47) + "..."
+                                        : nuevo.getComentario()),
+                        "EDIT", usuario);
+            });
+        } catch (Exception e) {
+            // Ignorar si el ID no es de expediente
+        }
+
         return ResponseEntity.ok(nuevo);
     }
 
@@ -332,13 +379,25 @@ public class ExpedientesController {
             @RequestParam Integer gerenciaId,
             @RequestParam Integer materiaId) {
 
-        // 1. Buscamos abogados que tengan esa materia asignada
-        List<Usuario> abogados = usuarioRepository.findByRolAndMateriaId(RolUsuario.ABOGADO, materiaId);
+        // Buscamos todos los usuarios activos de la gerencia que tengan la materia
+        // asignada
+        // o que sean Gerentes (que ven todo)
+        List<Usuario> usuariosGerencia = usuarioRepository.findAll().stream()
+                .filter(u -> u.getActivo() != null && u.getActivo()
+                        && u.getGerencia() != null && u.getGerencia().getId().equals(gerenciaId))
+                .filter(u -> {
+                    RolUsuario rol = u.getRol();
+                    if (rol == RolUsuario.GERENTE) {
+                        return true; // Gerentes ven todas las materias
+                    }
+                    if (rol == RolUsuario.ABOGADO || rol == RolUsuario.JEFE_DEPTO) {
+                        return u.tieneMateria(materiaId); // Abogados y Jefes filtrados por materia
+                    }
+                    return false;
+                })
+                .collect(Collectors.toList());
 
-        // 2. Filtramos para asegurar que pertenezcan a la gerencia correcta y
-        // preparamos el JSON
-        List<Map<String, Object>> response = abogados.stream()
-                .filter(u -> u.getGerencia() != null && u.getGerencia().getId().equals(gerenciaId))
+        List<Map<String, Object>> response = usuariosGerencia.stream()
                 .map(u -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("id", u.getId());

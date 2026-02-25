@@ -39,10 +39,25 @@ document.onkeydown = function (evt) {
 };
 
 // LÓGICA DE SELECTORES EN CASCADA (REUTILIZABLE)
-function cargarMateriasExpediente(suffix = '') {
-    const gerenciaId = document.getElementById('select-gerencia-exp' + suffix).value;
-    const selectMateria = document.getElementById('select-materia-exp' + suffix);
-    const selectAbogado = document.getElementById('select-abogado-exp' + suffix);
+function cargarMateriasExpediente(arg1 = '', arg2 = '', arg3 = '') {
+    let gerId, matId, abogId;
+
+    if (arg2 === '' && arg3 === '') {
+        // arg1 es un sufijo (ej: '', '-edit')
+        const suffix = arg1;
+        gerId = 'select-gerencia-exp' + suffix;
+        matId = 'select-materia-exp' + suffix;
+        abogId = 'select-abogado-exp' + suffix;
+    } else {
+        // IDs proporcionados explícitamente
+        gerId = arg1;
+        matId = arg2;
+        abogId = arg3;
+    }
+
+    const gerenciaId = document.getElementById(gerId).value;
+    const selectMateria = document.getElementById(matId);
+    const selectAbogado = document.getElementById(abogId);
 
     if (!selectMateria) return;
 
@@ -71,6 +86,7 @@ function cargarMateriasExpediente(suffix = '') {
                 selectMateria.innerHTML += `<option value="${m.id}">${m.nombre}</option>`;
             });
 
+            // Desbloquear selector
             selectMateria.disabled = false;
             selectMateria.classList.remove('bg-gray-50');
         })
@@ -80,10 +96,23 @@ function cargarMateriasExpediente(suffix = '') {
         });
 }
 
-function cargarAbogadosExpediente(suffix = '') {
-    const gerenciaId = document.getElementById('select-gerencia-exp' + suffix).value;
-    const materiaId = document.getElementById('select-materia-exp' + suffix).value;
-    const selectAbogado = document.getElementById('select-abogado-exp' + suffix);
+function cargarAbogadosExpediente(arg1 = '', arg2 = '', arg3 = '') {
+    let gerId, matId, abogId;
+
+    if (arg2 === '' && arg3 === '') {
+        const suffix = arg1;
+        gerId = 'select-gerencia-exp' + suffix;
+        matId = 'select-materia-exp' + suffix;
+        abogId = 'select-abogado-exp' + suffix;
+    } else {
+        gerId = arg1;
+        matId = arg2;
+        abogId = arg3;
+    }
+
+    const gerenciaId = document.getElementById(gerId) ? document.getElementById(gerId).value : null;
+    const materiaId = document.getElementById(matId) ? document.getElementById(matId).value : null;
+    const selectAbogado = document.getElementById(abogId);
 
     if (!selectAbogado) return;
 
@@ -97,7 +126,7 @@ function cargarAbogadosExpediente(suffix = '') {
         return;
     }
 
-    // 2. Traer abogados filtrados
+    // 2. Traer abogados filtrados (Backend ahora incluye Gerentes, Abogados y Jefes con lógica de materia)
     fetch(`/expedientes/api/abogados?gerenciaId=${gerenciaId}&materiaId=${materiaId}`)
         .then(res => res.json())
         .then(abogados => {
@@ -119,11 +148,13 @@ function cargarAbogadosExpediente(suffix = '') {
         });
 }
 
-// AUTO-INICIALIZACIÓN
+// AUTO-INICIALIZACIÓN PARA GERENTES
 document.addEventListener('DOMContentLoaded', function () {
-    // Para Nuevo Expediente
     const gerenciaSelect = document.getElementById('select-gerencia-exp');
+
+    // Si existe el select y ya tiene un valor (porque Thymeleaf lo pre-seleccionó)
     if (gerenciaSelect && gerenciaSelect.value && !document.getElementById('select-materia-exp').value) {
+        console.log("Gerencia pre-detectada, cargando materias...");
         cargarMateriasExpediente();
     }
 });

@@ -95,48 +95,44 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         LocalTime horaFin,
                         String estatusExcluido);
 
-        Optional<Audiencia> findTopByExpedienteIdAndFechaAudienciaAfterOrderByFechaAudienciaAsc(
-                        UUID expedienteId,
-                        LocalDate fechaActual);
-
         @Query("SELECT a FROM Audiencia a " +
                         "WHERE a.expediente.id = :expedienteId " +
                         "AND a.fechaAudiencia >= :fechaActual " +
-                        "AND a.estatusAudiencia NOT IN ('CONCLUIDA', 'CONCLUIDO', 'CON_ACTA', 'CON ACTA') " +
-                        "ORDER BY a.fechaAudiencia ASC, a.horaAudiencia ASC")
-        List<Audiencia> findProximaAudiencia(
+                        "AND (a.estatusAudiencia IS NULL OR a.estatusAudiencia NOT IN ('CONCLUIDA', 'CON_ACTA')) " +
+                        "ORDER BY a.fechaAudiencia ASC, a.horaAudiencia ASC LIMIT 1")
+        Optional<Audiencia> findProximaAudiencia(
                         @Param("expedienteId") UUID expedienteId,
                         @Param("fechaActual") LocalDate fechaActual);
 
         List<Audiencia> findByExpedienteIdAndFechaAudiencia(UUID expedienteId, LocalDate fecha);
 
-        // --- 4. CARGA DE TRABAJO POR USUARIO (from aurora5) ---
+        // --- 4. CARGA DE TRABAJO POR USUARIO ---
         @Query("""
-                            SELECT u.nombreCompleto, COUNT(a)
-                            FROM Audiencia a
-                            JOIN a.expediente e
-                            JOIN e.abogadoResponsable u
-                            GROUP BY u.nombreCompleto
+                        SELECT u.nombreCompleto, COUNT(a)
+                        FROM Audiencia a
+                        JOIN a.expediente e
+                        JOIN e.abogadoResponsable u
+                        GROUP BY u.nombreCompleto
                         """)
         List<Object[]> contarAudienciasPorUsuario();
 
         @Query("""
-                            SELECT u.nombreCompleto, COUNT(a)
-                            FROM Audiencia a
-                            JOIN a.expediente e
-                            JOIN e.abogadoResponsable u
-                            WHERE e.gerencia.id = :gerenciaId
-                            GROUP BY u.nombreCompleto
+                        SELECT u.nombreCompleto, COUNT(a)
+                        FROM Audiencia a
+                        JOIN a.expediente e
+                        JOIN e.abogadoResponsable u
+                        WHERE e.gerencia.id = :gerenciaId
+                        GROUP BY u.nombreCompleto
                         """)
         List<Object[]> contarAudienciasPorUsuarioYGerencia(@Param("gerenciaId") Long gerenciaId);
 
         @Query("""
-                            SELECT u.nombreCompleto, COUNT(a)
-                            FROM Audiencia a
-                            JOIN a.expediente e
-                            JOIN e.abogadoResponsable u
-                            WHERE e.gerencia.id IN :gerenciaIds
-                            GROUP BY u.nombreCompleto
+                        SELECT u.nombreCompleto, COUNT(a)
+                        FROM Audiencia a
+                        JOIN a.expediente e
+                        JOIN e.abogadoResponsable u
+                        WHERE e.gerencia.id IN :gerenciaIds
+                        GROUP BY u.nombreCompleto
                         """)
         List<Object[]> contarAudienciasPorUsuarioYGerencias(@Param("gerenciaIds") List<Long> gerenciaIds);
 }

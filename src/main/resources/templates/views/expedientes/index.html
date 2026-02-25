@@ -15,25 +15,38 @@
 <body class="bg-gray-100 text-gray-800 font-sans pb-10">
 
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
-    <div class="p-4 sm:ml-64">
+    <div class="p-4 sm:ml-64 bg-slate-50 min-h-screen">
 
-        <div class="mb-6">
-            <h1 class="text-3xl font-bold text-gob-guinda font-headings">
-                <i class="fas fa-folder-open text-gob-oro mr-2"></i> Gestión de Expedientes
-            </h1>
-            <hr class="h-1 w-20 bg-gob-oro border-0 mt-2 mb-4" />
+        <div class="mb-8 flex justify-between items-end">
+            <div>
+                <h1 class="text-3xl font-black text-gob-guinda font-headings tracking-tight">
+                    Expedientes <span class="text-gob-oro font-light">| Workstation</span>
+                </h1>
+                <p class="text-gray-500 text-sm mt-1 font-medium">Gestión integral de asuntos jurídicos y seguimiento
+                    procesal.</p>
+            </div>
+            <button onclick="document.getElementById('modal-nuevo-exp').classList.remove('hidden')"
+                class="px-4 py-2 bg-gob-guinda text-white rounded-lg hover:bg-gob-guinda-claro text-sm font-bold transition shadow-md flex items-center gap-2">
+                <i class="fas fa-plus"></i> Nuevo Expediente
+            </button>
         </div>
 
-        <main class="container mx-auto px-4 py-8">
+        <main class="container mx-auto px-0 py-4">
 
-            <div th:if="${success}" class="mb-4 p-4 bg-green-100 text-green-700 rounded border border-green-200"
-                th:text="${success}"></div>
-            <div th:if="${error}" class="mb-4 p-4 bg-red-100 text-red-700 rounded border border-red-200"
-                th:text="${error}"></div>
+            <div th:if="${success}"
+                class="mb-6 p-4 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100 flex items-center gap-3 animate-fade-in-down">
+                <i class="fas fa-check-circle"></i>
+                <span class="font-bold text-sm" th:text="${success}"></span>
+            </div>
 
-            <div th:replace="~{fragments/expedientes/barra-busqueda-exp :: barra}"></div>
-            <div th:replace="~{fragments/expedientes/filtros-expedientes :: filtros}"></div>
+            <!-- Dashboard de Resumen -->
+            <div th:replace="~{fragments/expedientes/summary-cards :: cards}"></div>
 
+            <!-- Filtros y Búsqueda Modernizados -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
+                <div th:replace="~{fragments/expedientes/barra-busqueda-exp :: barra}"></div>
+                <div th:replace="~{fragments/expedientes/filtros-expedientes :: filtros}"></div>
+            </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
@@ -88,15 +101,20 @@
                     </div>
                 </a>
 
-                <div th:if="${expedientes.totalElements == 0}" class="col-span-3 text-center py-10 text-gray-400">
-                    <i class="fas fa-folder-open text-4xl mb-2"></i>
-                    <p class="mt-2 text-sm">No se encontraron expedientes con esa búsqueda.</p>
+                <div th:if="${expedientes.totalElements == 0}"
+                    class="col-span-1 md:col-span-2 lg:col-span-3 text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
+                    <div
+                        class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
+                        <i class="fas fa-search text-3xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-600">No se encontraron resultados</h3>
+                    <p class="text-gray-400 text-sm">Intenta ajustar los filtros o el término de búsqueda.</p>
                 </div>
             </div>
 
+            <!-- Pagina -->
             <div class="mt-8 flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border-t border-gray-100"
                 th:if="${expedientes.totalPages > 0}">
-
                 <span class="text-xs text-gray-500 font-medium">
                     Página <span th:text="${expedientes.number + 1}">1</span> de <span
                         th:text="${expedientes.totalPages}">1</span>

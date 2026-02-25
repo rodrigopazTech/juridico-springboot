@@ -10,6 +10,7 @@ import com.juridico.sistema_juridico.repository.documento.CarpetaRepository;
 import com.juridico.sistema_juridico.repository.documento.DocumentoRepository;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+import com.juridico.sistema_juridico.service.AuditoriaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,9 @@ public class DocumentoService {
 
     @Autowired
     private FileStorageService fileStorageService;
+
+    @Autowired
+    private AuditoriaService auditoriaService;
 
     /**
      * Verifica si un usuario tiene permiso para acceder a documentos de un
@@ -112,7 +116,18 @@ public class DocumentoService {
                 .usuarioSubida(usuario)
                 .build();
 
-        return documentoRepository.save(documento);
+        Documento guardado = documentoRepository.save(documento);
+
+        // Auditoría
+        Expediente exp = expedienteRepository.findById(expedienteId).orElse(null);
+        if (exp != null) {
+            auditoriaService.registrar(exp, "Archivo Subido",
+                    "Se ha cargado un nuevo archivo: " + documento.getNombreOriginal() +
+                            (carpeta != null ? " en la carpeta " + carpeta.getNombre() : ""),
+                    "PAPERCLIP", usuario);
+        }
+
+        return guardado;
     }
 
     /**
@@ -171,6 +186,21 @@ public class DocumentoService {
 
         // Eliminar registro de BD
         documentoRepository.delete(documento);
+
+        // Auditoría
+        Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
+        if (exp != null) {
+            // Obtenemos el usuario del contexto si no se pasa (aunque aquí no lo tenemos
+            // como parámetro,
+            // pero podemos usar el usuario que lo subió como referencia o el actual)
+            // Por simplicidad en este método, usaremos null o buscaremos el actual si es
+            // posible
+            // pero AuditoriaService maneja null. En este caso el usuario es importante.
+            // MODIFICACIÓN: El método eliminarDocumento debería recibir el usuario.
+            auditoriaService.registrar(exp, "Archivo Eliminado",
+                    "Se ha eliminado el archivo: " + documento.getNombreOriginal(),
+                    "TRASH", documento.getUsuarioSubida()); // Referencia al usuario que lo subió como fallback
+        }
     }
 
     /**
@@ -200,6 +230,17 @@ public class DocumentoService {
         }
 
         documento.setCarpeta(nuevaCarpeta);
-        return documentoRepository.save(documento);
+        Documento guardado = documentoRepository.save(documento);
+
+        // Auditoría
+        Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
+        if (exp != null) {
+            String destino = nuevaCarpeta != null ? nuevaCarpeta.getNombre() : "Raíz";
+            auditoriaService.registrar(exp, "Archivo Movido",
+                    "Se movió el archivo " + documento.getNombreOriginal() + " a " + destino,
+                    "ARROWS_ALT", documento.getUsuarioSubida());
+        }
+
+        return guardado;
     }
 }

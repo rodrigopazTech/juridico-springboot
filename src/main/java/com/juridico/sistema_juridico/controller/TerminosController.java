@@ -16,11 +16,11 @@ import com.juridico.sistema_juridico.repository.procesal.TerminoPresentadoReposi
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.service.NotificacionService;
+import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.util.TerminoExcelExporter;
 import com.juridico.sistema_juridico.exception.BadRequestException;
 import com.juridico.sistema_juridico.exception.ForbiddenException;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
-import com.juridico.sistema_juridico.service.AuditoriaService;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -332,9 +332,7 @@ public class TerminosController {
         if ("Presentado".equals(siguienteEtapa))
             termino.setFechaPresentacion(LocalDate.now());
 
-        terminoRepository.save(termino);
-
-        // Auditoría
+        // Registro en historial
         if (termino.getExpediente() != null) {
             auditoriaService.registrar(termino.getExpediente(), "Cambio de Estado (Término)",
                     "El término \"" + termino.getActuacion() + "\" avanzó de "

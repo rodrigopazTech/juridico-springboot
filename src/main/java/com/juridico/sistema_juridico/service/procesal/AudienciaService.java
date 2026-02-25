@@ -9,10 +9,11 @@ import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaDesahogadaRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
-import com.juridico.sistema_juridico.service.NotificacionService;
 import com.juridico.sistema_juridico.service.AuditoriaService;
+import com.juridico.sistema_juridico.service.NotificacionService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -63,6 +64,9 @@ public class AudienciaService {
 
             audiencia.setActaDocumento(nombreArchivo);
 
+            String tipoActa = (audiencia.getTipoAudiencia() != null) ? audiencia.getTipoAudiencia().getNombre()
+                    : "Desconocida";
+
             // Lógica de Estatus: Si estaba pendiente, ahora tiene acta
             if ("PENDIENTE".equals(audiencia.getEstatusAudiencia())) {
                 audiencia.setEstatusAudiencia("CON_ACTA");
@@ -71,9 +75,7 @@ public class AudienciaService {
             audienciaRepository.save(audiencia);
 
             registrarActividad(audiencia.getExpediente(), "Acta de Audiencia Cargada",
-                    "Se ha subido el acta para la audiencia de tipo: " +
-                            ((audiencia.getTipoAudiencia() != null) ? audiencia.getTipoAudiencia().getNombre()
-                                    : "Desconocida"),
+                    "Se ha subido el acta para la audiencia de tipo: " + tipoActa,
                     "EDIT");
         }
     }
@@ -138,9 +140,11 @@ public class AudienciaService {
                 .build();
 
         desahogadaRepository.save(historico);
+        String tipoConcluida = (audiencia.getTipoAudiencia() != null) ? audiencia.getTipoAudiencia().getNombre()
+                : "Desconocida";
 
         registrarActividad(audiencia.getExpediente(), "Audiencia Concluida",
-                "La audiencia ha sido finalizada y movida al histórico.", "CHECK");
+                "La audiencia ha sido marcada como concluida: " + tipoConcluida, "CHECK");
     }
 
     @Transactional

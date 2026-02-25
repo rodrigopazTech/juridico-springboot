@@ -469,14 +469,19 @@ public class AudienciasController {
                     .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
 
             Integer gerenciaId = exp.getGerencia().getId();
-            Integer materiaId = exp.getMateria().getId();
+            // materiaId no se requiere para filtrar abogados en audiencias según ROD-146
 
-            // 2. Buscar abogados que tengan esa materia (usamos el repo de usuarios)
-            List<Usuario> abogadosConMateria = usuarioRepository.findByRolAndMateriaId(RolUsuario.ABOGADO, materiaId);
+            // 2. Buscamos todos los usuarios activos de la gerencia (sin filtrar por
+            // materia para audiencias)
+            List<Usuario> abogadosGerencia = usuarioRepository.findAll().stream()
+                    .filter(u -> u.getActivo() != null && u.getActivo()
+                            && u.getGerencia() != null && u.getGerencia().getId().equals(gerenciaId))
+                    .filter(u -> u.getRol() == RolUsuario.ABOGADO || u.getRol() == RolUsuario.GERENTE
+                            || u.getRol() == RolUsuario.JEFE_DEPTO)
+                    .collect(Collectors.toList());
 
-            // 3. Filtrar por Gerencia en memoria (para asegurar que sean del mismo equipo)
-            List<Map<String, Object>> resultado = abogadosConMateria.stream()
-                    .filter(u -> u.getGerencia() != null && u.getGerencia().getId().equals(gerenciaId))
+            // 3. Preparamos el JSON
+            List<Map<String, Object>> resultado = abogadosGerencia.stream()
                     .map(u -> {
                         Map<String, Object> map = new HashMap<>();
                         map.put("id", u.getId());

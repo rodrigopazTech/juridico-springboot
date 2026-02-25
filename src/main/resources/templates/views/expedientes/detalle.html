@@ -89,7 +89,7 @@
                             <div class="relative z-10 flex items-start gap-4">
                                 <div class="bg-white p-2 rounded-lg shadow-sm text-center min-w-[60px]">
                                     <span class="block text-xs text-gray-500 uppercase font-bold"
-                                        th:text="${proximaAudiencia.fechaAudiencia != null ? #temporals.format(proximaAudiencia.fechaAudiencia, 'MMM') : '-'}">ENE</span>
+                                        th:text="${proximaAudiencia.fechaAudiencia != null ? #strings.toUpperCase(#temporals.format(proximaAudiencia.fechaAudiencia, 'MMM')) : '-'}">ENE</span>
                                     <span class="block text-xl font-bold text-gob-guinda"
                                         th:text="${proximaAudiencia.fechaAudiencia != null ? #temporals.format(proximaAudiencia.fechaAudiencia, 'dd') : '-'}">15</span>
                                 </div>
@@ -226,7 +226,7 @@
 
             </div>
 
-            <!-- Se elimina sección de Archivos Recientes por petición de limpieza UI -->
+            <!-- Se eliminó sección de Archivos Recientes por requerimiento de limpieza UI (ROD-134) -->
 
         </div>
     </div>
@@ -243,6 +243,7 @@
     <script th:src="@{/js/main-EXP.js}"></script>
     <script th:src="@{/js/expedientes/detalle-acciones.js}"></script>
     <script th:src="@{/js/expedientes/gestor-documental.js}"></script>
+    <script th:src="@{/js/main-EXP.js}"></script>
 </body>
 
 </html>

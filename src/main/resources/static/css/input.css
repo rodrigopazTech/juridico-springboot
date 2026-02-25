@@ -4,6 +4,52 @@
 
 @layer components {
   /* =========================================
+     MODERN PROFESSIONAL UI (GLASS & SHADOWS)
+     ========================================= */
+
+  .glass-panel {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl;
+  }
+
+  .glass-sidebar {
+    @apply bg-gob-verde/95 backdrop-blur-lg border-r border-gob-oro/30 shadow-2xl;
+  }
+
+  .card-stat {
+    @apply bg-white rounded-xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-all duration-300;
+  }
+
+  .table-container {
+    @apply overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm;
+  }
+
+  /* Status Dots */
+  .status-dot {
+    @apply w-2 h-2 rounded-full inline-block mr-2;
+  }
+
+  .dot-online {
+    @apply bg-emerald-500 shadow-[0_0_8px_rgba(16, 185, 129, 0.5)];
+  }
+
+  .dot-away {
+    @apply bg-amber-500 shadow-[0_0_8px_rgba(245, 158, 11, 0.5)];
+  }
+
+  .dot-busy {
+    @apply bg-red-500 shadow-[0_0_8px_rgba(239, 68, 68, 0.5)];
+  }
+
+  /* Buttons Refined */
+  .btn-primary-modern {
+    @apply px-4 py-2 bg-gob-guinda text-white rounded-lg font-bold hover:bg-gob-guindaDark transition-all active:scale-95 shadow-sm hover:shadow-md flex items-center gap-2;
+  }
+
+  .btn-secondary-modern {
+    @apply px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg font-bold hover:bg-gray-50 transition-all active:scale-95 shadow-sm flex items-center gap-2;
+  }
+
+  /* =========================================
      ESTILOS COMPARTIDOS / UI GENERAL
      ========================================= */
 
@@ -106,6 +152,10 @@
 
   .type-termino {
     @apply bg-green-100 text-green-700 border-green-200;
+  }
+
+  .type-recordatorio {
+    @apply bg-amber-100 text-amber-700 border-amber-200;
   }
 
   .type-recordatorio {
