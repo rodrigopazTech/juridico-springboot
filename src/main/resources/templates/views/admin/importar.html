@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,33 +8,38 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" th:href="@{/css/output.css}">
     <style>
-        .radio-card:checked + div {
-            border-color: #1a3c34; 
+        .radio-card:checked+div {
+            border-color: #1a3c34;
             background-color: #f0fdf4;
             box-shadow: 0 0 0 2px #1a3c3410;
         }
-        .radio-card:checked + div .icon-check {
+
+        .radio-card:checked+div .icon-check {
             opacity: 1;
             transform: scale(1);
         }
     </style>
 </head>
+
 <body class="bg-gray-50 font-sans text-gray-900">
 
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
-    
+
     <main class="p-4 sm:ml-64 min-h-screen">
         <div class="p-4 mt-14">
-            
-            <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-200 pb-4">
+
+            <div
+                class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-200 pb-4">
                 <div>
                     <h1 class="text-3xl font-bold text-gob-verde font-headings">Migración de Datos</h1>
                     <p class="text-gray-600 mt-1">Carga masiva de información al sistema vía Excel (.xlsx)</p>
                 </div>
                 <div class="mt-4 md:mt-0 flex gap-2">
-                    <span class="inline-flex items-center bg-gob-guinda/10 text-gob-guinda px-3 py-1 rounded-full text-sm font-bold border border-gob-guinda/20">
+                    <span
+                        class="inline-flex items-center bg-gob-guinda/10 text-gob-guinda px-3 py-1 rounded-full text-sm font-bold border border-gob-guinda/20">
                         <i class="fas fa-shield-alt me-2"></i> Solo Administradores
                     </span>
                 </div>
@@ -41,7 +47,7 @@
 
             <div class="max-w-4xl mx-auto">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    
+
                     <div class="bg-gob-verde px-6 py-4 flex items-center justify-between">
                         <div class="flex items-center">
                             <i class="fas fa-database text-gob-oro text-xl me-3"></i>
@@ -49,33 +55,43 @@
                         </div>
                     </div>
 
-                    <form th:action="@{/admin/importar}" method="POST" enctype="multipart/form-data" id="importForm" class="p-8">
-                        
+                    <form th:action="@{/admin/importar}" method="POST" enctype="multipart/form-data" id="importForm"
+                        class="p-8">
+
                         <div class="mb-8">
-                            <label class="block text-sm font-bold text-gray-800 mb-3">1. ¿Qué reporte deseas cargar?</label>
+                            <label class="block text-sm font-bold text-gray-800 mb-3">1. ¿Qué reporte deseas
+                                cargar?</label>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                
+
                                 <label class="cursor-pointer relative">
-                                    <input type="radio" name="tipoDato" value="TERMINOS" class="radio-card sr-only" required>
-                                    <div class="h-full border-2 border-gray-200 rounded-lg p-4 transition-all hover:bg-gray-50 flex flex-col relative">
-                                        <div class="icon-check absolute top-3 right-3 text-gob-verde opacity-0 transform scale-50 transition-all duration-200">
+                                    <input type="radio" name="tipoDato" value="TERMINOS" class="radio-card sr-only"
+                                        required>
+                                    <div
+                                        class="h-full border-2 border-gray-200 rounded-lg p-4 transition-all hover:bg-gray-50 flex flex-col relative">
+                                        <div
+                                            class="icon-check absolute top-3 right-3 text-gob-verde opacity-0 transform scale-50 transition-all duration-200">
                                             <i class="fas fa-check-circle text-lg"></i>
                                         </div>
                                         <i class="fas fa-hourglass-half text-gob-oro text-2xl mb-2"></i>
                                         <span class="font-bold text-gray-900">Reporte de Términos</span>
-                                        <span class="text-xs text-gray-500 mt-1 leading-tight">Si el expediente no existe, el sistema lo creará automáticamente.</span>
+                                        <span class="text-xs text-gray-500 mt-1 leading-tight">Si el expediente no
+                                            existe, el sistema lo creará automáticamente.</span>
                                     </div>
                                 </label>
 
                                 <label class="cursor-pointer relative">
-                                    <input type="radio" name="tipoDato" value="AUDIENCIAS" class="radio-card sr-only" required>
-                                    <div class="h-full border-2 border-gray-200 rounded-lg p-4 transition-all hover:bg-gray-50 flex flex-col relative">
-                                        <div class="icon-check absolute top-3 right-3 text-gob-verde opacity-0 transform scale-50 transition-all duration-200">
+                                    <input type="radio" name="tipoDato" value="AUDIENCIAS" class="radio-card sr-only"
+                                        required>
+                                    <div
+                                        class="h-full border-2 border-gray-200 rounded-lg p-4 transition-all hover:bg-gray-50 flex flex-col relative">
+                                        <div
+                                            class="icon-check absolute top-3 right-3 text-gob-verde opacity-0 transform scale-50 transition-all duration-200">
                                             <i class="fas fa-check-circle text-lg"></i>
                                         </div>
                                         <i class="fas fa-gavel text-gob-oro text-2xl mb-2"></i>
                                         <span class="font-bold text-gray-900">Reporte de Audiencias</span>
-                                        <span class="text-xs text-gray-500 mt-1 leading-tight">Si el expediente no existe, el sistema lo creará automáticamente.</span>
+                                        <span class="text-xs text-gray-500 mt-1 leading-tight">Si el expediente no
+                                            existe, el sistema lo creará automáticamente.</span>
                                     </div>
                                 </label>
 
@@ -83,48 +99,62 @@
                         </div>
 
                         <div class="mb-6">
-                            <label class="block text-sm font-bold text-gray-800 mb-3">2. Selecciona el archivo Excel (.xlsx)</label>
-                            <label for="dropzone-file" 
-                                   class="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-all duration-300 group">
+                            <label class="block text-sm font-bold text-gray-800 mb-3">2. Selecciona el archivo Excel
+                                (.xlsx)</label>
+                            <label for="dropzone-file"
+                                class="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-all duration-300 group">
                                 <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <div class="w-16 h-16 bg-gob-verde/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <div
+                                        class="w-16 h-16 bg-gob-verde/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                                         <i class="fas fa-file-excel text-3xl text-gob-verde"></i>
                                     </div>
-                                    <p class="mb-1 text-sm text-gray-700"><span class="font-bold">Haz clic para buscar</span> o arrastra el archivo aquí</p>
+                                    <p class="mb-1 text-sm text-gray-700"><span class="font-bold">Haz clic para
+                                            buscar</span> o arrastra el archivo aquí</p>
                                     <p class="text-xs text-gray-500">Solo archivos XLSX o XLS</p>
                                     <p id="file-name" class="mt-3 text-sm font-bold text-gob-guinda"></p>
                                 </div>
-                                <input id="dropzone-file" name="file" type="file" class="hidden" accept=".xlsx, .xls" required />
+                                <input id="dropzone-file" name="file" type="file" class="hidden" accept=".xlsx, .xls"
+                                    required />
                             </label>
                         </div>
 
-                        <div class="mb-8 p-4 bg-amber-50 rounded-lg border border-amber-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <div
+                            class="mb-8 p-4 bg-amber-50 rounded-lg border border-amber-200 flex flex-col sm:flex-row justify-between items-center gap-4">
                             <div class="flex items-start">
                                 <i class="fas fa-info-circle text-amber-600 mt-0.5 me-3"></i>
                                 <div class="text-sm text-amber-900">
-                                    <span class="font-bold">¿No tienes el formato correcto?</span> Descarga la plantilla vacía con las columnas requeridas para evitar errores de lectura.
+                                    <span class="font-bold">¿No tienes el formato correcto?</span> Descarga la plantilla
+                                    vacía con las columnas requeridas para evitar errores de lectura.
                                 </div>
                             </div>
                             <div class="flex gap-2">
-                                <a th:href="@{/admin/plantilla/terminos}" class="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded hover:bg-amber-100 transition font-bold" title="Plantilla Términos"><i class="fas fa-hourglass-half mr-1"></i> Términos</a>
-                                <a th:href="@{/admin/plantilla/audiencias}" class="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded hover:bg-amber-100 transition font-bold" title="Plantilla Audiencias"><i class="fas fa-gavel mr-1"></i> Audiencias</a>
+                                <a th:href="@{/admin/plantilla/terminos}"
+                                    class="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded hover:bg-amber-100 transition font-bold"
+                                    title="Plantilla Términos"><i class="fas fa-hourglass-half mr-1"></i> Términos</a>
+                                <a th:href="@{/admin/plantilla/audiencias}"
+                                    class="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded hover:bg-amber-100 transition font-bold"
+                                    title="Plantilla Audiencias"><i class="fas fa-gavel mr-1"></i> Audiencias</a>
                             </div>
                         </div>
 
                         <div class="flex justify-end space-x-4 border-t border-gray-100 pt-6">
-                            <button type="reset" onclick="document.getElementById('file-name').textContent=''" class="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            <button type="reset" onclick="document.getElementById('file-name').textContent=''"
+                                class="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                                 Limpiar
                             </button>
-                            <button type="submit" id="btn-submit" class="px-6 py-2.5 text-sm font-bold text-white bg-gob-verde rounded-lg hover:bg-[#132c26] shadow-md transition-all">
+                            <button type="submit" id="btn-submit"
+                                class="px-6 py-2.5 text-sm font-bold text-white bg-gob-verde rounded-lg hover:bg-[#132c26] shadow-md transition-all">
                                 <i class="fas fa-cogs me-2"></i> Procesar Archivo
                             </button>
                         </div>
 
                         <div id="progressContainer" class="hidden mt-6">
                             <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                <div id="progressBar" class="bg-gob-oro h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                <div id="progressBar" class="bg-gob-oro h-2.5 rounded-full transition-all duration-300"
+                                    style="width: 0%"></div>
                             </div>
-                            <p class="text-center text-xs text-gray-500 mt-2 font-bold animate-pulse">Procesando filas, no cierres esta ventana...</p>
+                            <p class="text-center text-xs text-gray-500 mt-2 font-bold animate-pulse">Procesando filas,
+                                no cierres esta ventana...</p>
                         </div>
                     </form>
                 </div>
@@ -144,7 +174,7 @@
         });
 
         form.addEventListener('submit', (e) => {
-            if(!document.querySelector('input[name="tipoDato"]:checked')) {
+            if (!document.querySelector('input[name="tipoDato"]:checked')) {
                 e.preventDefault();
                 Swal.fire('Atención', 'Selecciona si vas a subir Términos o Audiencias.', 'warning');
                 return;
@@ -152,7 +182,7 @@
             btnSubmit.disabled = true;
             btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Cargando...';
             document.getElementById('progressContainer').classList.remove('hidden');
-            
+
             let bar = document.getElementById('progressBar');
             let width = 0;
             let interval = setInterval(() => {
@@ -169,4 +199,12 @@
         });
     </script>
 </body>
+
+</html>
+if (msj) Swal.fire("¡Importación Exitosa!", msj, "success");
+if (err) Swal.fire("Error en la carga", err, "error");
+});
+</script>
+</body>
+
 </html>

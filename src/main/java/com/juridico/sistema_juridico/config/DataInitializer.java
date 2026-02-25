@@ -10,22 +10,26 @@ import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
+import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Catalogo.EstadoRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
-import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,6 +52,8 @@ public class DataInitializer implements CommandLineRunner {
         private EstadoRepository estadoRepository;
         @Autowired
         private TipoAudienciaRepository tipoAudienciaRepository;
+        @Autowired
+        private AudienciaRepository audienciaRepository;
         @Autowired
         private ExpedienteRepository expedienteRepository;
 
@@ -320,7 +326,71 @@ public class DataInitializer implements CommandLineRunner {
                                                 .build();
 
                                 expedienteRepository.saveAll(List.of(exp1, exp2));
-                                System.out.println("✅ Expedientes de prueba creados.");
+                        }
+
+                        // 7b. EXPEDIENTE DE PRUEBA 022/2024 (PARA VERIFICACIÓN)
+                        if (expedienteRepository.findByNumeroIgnoreCase("022/2024").isEmpty()) {
+                                Materia materia = materiaRepository.findAll().stream()
+                                                .filter(m -> m.getNombre().equals("Civil"))
+                                                .findFirst().orElse(null);
+                                if (materia != null) {
+                                        Gerencia gerencia = materia.getGerencia();
+                                        Usuario expAbogado = usuarioRepository.findByEmail("abogado@juridico.com")
+                                                        .orElse(null);
+                                        TipoExpediente tipoE = tipoExpedienteRepository.findAll().get(0);
+                                        OrganoJurisdiccional expOrgano = organoRepository.findAll().get(0);
+                                        TipoAudiencia tipoA = tipoAudienciaRepository.findAll().get(0);
+
+                                        Expediente exp022 = Expediente.builder()
+                                                        .numero("022/2024")
+                                                        .partes("Juan vs Pedro (Parte Actora vs Parte Demandada)")
+                                                        .descripcion("Expediente de prueba para validación de widgets y audiencias.")
+                                                        .gerencia(gerencia)
+                                                        .materia(materia)
+                                                        .tipoExpediente(tipoE)
+                                                        .organoJurisdiccional(expOrgano)
+                                                        .sede("CDMX")
+                                                        .abogadoResponsable(expAbogado)
+                                                        .etapaProcesal(EtapaProcesal.TRAMITE)
+                                                        .prioridad(Prioridad.ALTA)
+                                                        .createdAt(LocalDateTime.now())
+                                                        .build();
+
+                                        exp022 = expedienteRepository.save(exp022);
+
+                                        // Audiencia 1: CONCLUIDA (Debería ignorarse en el widget)
+                                        Audiencia a1 = Audiencia.builder()
+                                                        .expediente(exp022)
+                                                        .tipoAudiencia(tipoA)
+                                                        .fechaAudiencia(LocalDate.now().minusDays(1))
+                                                        .horaAudiencia(LocalTime.of(10, 0))
+                                                        .estatusAudiencia("CONCLUIDA")
+                                                        .abogadoComparece(expAbogado)
+                                                        .build();
+
+                                        // Audiencia 2: FUTURA (Debería aparecer en el widget)
+                                        Audiencia a2 = Audiencia.builder()
+                                                        .expediente(exp022)
+                                                        .tipoAudiencia(tipoAudienciaRepository.findAll().get(1))
+                                                        .fechaAudiencia(LocalDate.now().plusDays(10))
+                                                        .horaAudiencia(LocalTime.of(11, 30))
+                                                        .estatusAudiencia("PROGRAMADA")
+                                                        .abogadoComparece(expAbogado)
+                                                        .build();
+
+                                        // Audiencia 3: PENDIENTE (Debe aparecer en el widget)
+                                        Audiencia a3 = Audiencia.builder()
+                                                        .expediente(exp022)
+                                                        .fechaAudiencia(LocalDate.now().plusDays(5))
+                                                        .horaAudiencia(LocalTime.of(12, 30))
+                                                        .tipoAudiencia(tipoA)
+                                                        .estatusAudiencia("PENDIENTE")
+                                                        .abogadoComparece(expAbogado)
+                                                        .build();
+
+                                        audienciaRepository.saveAll(List.of(a1, a2, a3));
+                                        System.out.println("✅ Expedientes de prueba y Audiencias creados.");
+                                }
                         }
                 }
         }

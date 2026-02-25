@@ -54,26 +54,33 @@ import java.util.Map;
 @RequestMapping("/audiencias")
 public class AudienciasController {
 
-    @Autowired private AudienciaRepository audienciaRepository;
-    @Autowired private ExpedienteRepository expedienteRepository;
-    @Autowired private UsuarioRepository usuarioRepository;
-    @Autowired private AudienciaService audienciaService;
-    
-    //@Autowired private ColaboradorExpedienteRepository colaboradorRepository;
-    @Autowired private GerenciaRepository gerenciaRepository;
-    @Autowired private MateriaRepository materiaRepository;
-    @Autowired private TipoAudienciaRepository tipoAudienciaRepository;
+    @Autowired
+    private AudienciaRepository audienciaRepository;
+    @Autowired
+    private ExpedienteRepository expedienteRepository;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+    @Autowired
+    private AudienciaService audienciaService;
 
-  @GetMapping
+    // @Autowired private ColaboradorExpedienteRepository colaboradorRepository;
+    @Autowired
+    private GerenciaRepository gerenciaRepository;
+    @Autowired
+    private MateriaRepository materiaRepository;
+    @Autowired
+    private TipoAudienciaRepository tipoAudienciaRepository;
+
+    @GetMapping
     public String index(Model model,
-                        @RequestParam(defaultValue = "0") int page,
-                        @RequestParam(required = false) String keyword,
-                        @RequestParam(required = false) String tipo,
-                        @RequestParam(required = false) String gerencia,
-                        @RequestParam(required = false) String materia,
-                        @RequestParam(required = false) String estatus,
-                        @RequestParam(required = false) Integer abogadoId, 
-                        @RequestParam(required = false) String periodo) {  
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String tipo,
+            @RequestParam(required = false) String gerencia,
+            @RequestParam(required = false) String materia,
+            @RequestParam(required = false) String estatus,
+            @RequestParam(required = false) Integer abogadoId,
+            @RequestParam(required = false) String periodo) {
 
         if (keyword != null && keyword.contains("?keyword=")) {
             // Nos quedamos solo con lo que esté después del último igual (=)
@@ -95,14 +102,15 @@ public class AudienciasController {
                 filtroUsuarioId = usuario.getId();
                 break;
             case "GERENTE":
-                if(usuario.getGerencia() != null) filtroGerenciaId = usuario.getGerencia().getId();
+                if (usuario.getGerencia() != null)
+                    filtroGerenciaId = usuario.getGerencia().getId();
                 break;
             case "JEFE_DEPTO":
-                if(usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
+                if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
                     filtroMateriaIds = usuario.getMaterias().stream().map(Materia::getId).collect(Collectors.toList());
                 } else {
                     filtroMateriaIds = new ArrayList<>();
-                    filtroMateriaIds.add(-1); 
+                    filtroMateriaIds.add(-1);
                 }
                 break;
         }
@@ -110,14 +118,26 @@ public class AudienciasController {
         // 3. FECHAS CENTINELA
         LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
         LocalDate fechaFin = LocalDate.of(2100, 12, 31);
-        
+
         if (periodo != null && !periodo.isEmpty()) {
             LocalDate hoy = LocalDate.now();
             switch (periodo) {
-                case "HOY": fechaInicio = hoy; fechaFin = hoy; break;
-                case "MANANA": fechaInicio = hoy.plusDays(1); fechaFin = hoy.plusDays(1); break;
-                case "SEMANA": fechaInicio = hoy; fechaFin = hoy.plusDays(7); break;
-                case "MES": fechaInicio = hoy.withDayOfMonth(1); fechaFin = hoy.withDayOfMonth(hoy.lengthOfMonth()); break;
+                case "HOY":
+                    fechaInicio = hoy;
+                    fechaFin = hoy;
+                    break;
+                case "MANANA":
+                    fechaInicio = hoy.plusDays(1);
+                    fechaFin = hoy.plusDays(1);
+                    break;
+                case "SEMANA":
+                    fechaInicio = hoy;
+                    fechaFin = hoy.plusDays(7);
+                    break;
+                case "MES":
+                    fechaInicio = hoy.withDayOfMonth(1);
+                    fechaFin = hoy.withDayOfMonth(hoy.lengthOfMonth());
+                    break;
             }
         }
 
@@ -125,11 +145,10 @@ public class AudienciasController {
         Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaAudiencia").ascending());
 
         Page<Audiencia> audiencias = audienciaRepository.buscarConFiltros(
-                keyword, tipo, gerencia, materia, estatus, 
-                abogadoId, fechaInicio, fechaFin, 
+                keyword, tipo, gerencia, materia, estatus,
+                abogadoId, fechaInicio, fechaFin,
                 filtroUsuarioId, filtroGerenciaId, filtroMateriaIds,
-                pageable
-        );
+                pageable);
 
         model.addAttribute("audiencias", audiencias);
         model.addAttribute("pageTitle", "Gestión de Audiencias");
@@ -137,20 +156,21 @@ public class AudienciasController {
 
         // 5. DROPDOWN INTELIGENTE (MODO ANTI-FANTASMA)
         List<Expediente> expedientesParaDropdown;
-        
+
         if (rol.equals("ABOGADO")) {
             // A) Expedientes donde soy el Dueño
             List<Expediente> misExpedientes = expedienteRepository.findAll().stream()
-                .filter(e -> e.getAbogadoResponsable() != null && e.getAbogadoResponsable().getId().equals(usuario.getId()))
-                .collect(Collectors.toList());
+                    .filter(e -> e.getAbogadoResponsable() != null
+                            && e.getAbogadoResponsable().getId().equals(usuario.getId()))
+                    .collect(Collectors.toList());
 
             // B) Expedientes donde soy Invitado ACTIVO (Audiencia NO Concluida)
             List<Expediente> expedientesPorAudiencia = audienciaRepository.findAll().stream()
-                .filter(a -> a.getAbogadoComparece() != null && 
-                             a.getAbogadoComparece().getId().equals(usuario.getId()) &&
-                             !"CONCLUIDA".equals(a.getEstatusAudiencia())) // <--- AQUÍ ESTÁ EL CANDADO FANTASMA
-                .map(Audiencia::getExpediente)
-                .collect(Collectors.toList());
+                    .filter(a -> a.getAbogadoComparece() != null &&
+                            a.getAbogadoComparece().getId().equals(usuario.getId()) &&
+                            !"CONCLUIDA".equals(a.getEstatusAudiencia())) // <--- AQUÍ ESTÁ EL CANDADO FANTASMA
+                    .map(Audiencia::getExpediente)
+                    .collect(Collectors.toList());
 
             // Unir listas sin duplicados
             Set<Expediente> conjunto = new HashSet<>(misExpedientes);
@@ -159,14 +179,14 @@ public class AudienciasController {
 
         } else if (rol.equals("GERENTE")) {
             expedientesParaDropdown = expedienteRepository.findAll().stream()
-                .filter(e -> e.getGerencia() != null && usuario.getGerencia() != null && 
-                             e.getGerencia().getId().equals(usuario.getGerencia().getId()))
-                .collect(Collectors.toList());
+                    .filter(e -> e.getGerencia() != null && usuario.getGerencia() != null &&
+                            e.getGerencia().getId().equals(usuario.getGerencia().getId()))
+                    .collect(Collectors.toList());
         } else if (rol.equals("JEFE_DEPTO")) {
             expedientesParaDropdown = expedienteRepository.findAll().stream()
-                .filter(e -> e.getMateria() != null && usuario.getMaterias().stream()
-                             .anyMatch(m -> m.getId().equals(e.getMateria().getId())))
-                .collect(Collectors.toList());
+                    .filter(e -> e.getMateria() != null && usuario.getMaterias().stream()
+                            .anyMatch(m -> m.getId().equals(e.getMateria().getId())))
+                    .collect(Collectors.toList());
         } else {
             expedientesParaDropdown = expedienteRepository.findAll();
         }
@@ -177,52 +197,56 @@ public class AudienciasController {
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
         model.addAttribute("listaMaterias", materiaRepository.findAll());
         model.addAttribute("tipos", tipoAudienciaRepository.findAll());
-        
+
         // --- FILTRO DE ABOGADOS EN MODAL ---
-        // (Aunque esto no estaba en el requerimiento del fantasma, lo alineamos para que sea coherente)
+        // (Aunque esto no estaba en el requerimiento del fantasma, lo alineamos para
+        // que sea coherente)
         List<Usuario> listaAbogados;
         if (rol.equals("ABOGADO")) {
-             listaAbogados = Collections.singletonList(usuario);
+            listaAbogados = Collections.singletonList(usuario);
         } else if (rol.equals("GERENTE") || rol.equals("JEFE_DEPTO")) {
-             listaAbogados = usuarioRepository.findAll().stream()
-                 .filter(u -> u.getGerencia() != null && usuario.getGerencia() != null && 
-                              u.getGerencia().getId().equals(usuario.getGerencia().getId()))
-                 .collect(Collectors.toList());
+            listaAbogados = usuarioRepository.findAll().stream()
+                    .filter(u -> u.getGerencia() != null && usuario.getGerencia() != null &&
+                            u.getGerencia().getId().equals(usuario.getGerencia().getId()))
+                    .collect(Collectors.toList());
         } else {
-             listaAbogados = usuarioRepository.findAll();
+            listaAbogados = usuarioRepository.findAll();
         }
         model.addAttribute("abogados", listaAbogados);
         // ------------------------------------
-        
+
         // Filtros en vista
-        model.addAttribute("keyword", keyword); 
+        model.addAttribute("keyword", keyword);
         model.addAttribute("paramTipo", tipo);
         model.addAttribute("paramGerencia", gerencia);
         model.addAttribute("paramMateria", materia);
         model.addAttribute("paramEstatus", estatus);
         model.addAttribute("paramAbogadoId", abogadoId);
         model.addAttribute("paramPeriodo", periodo);
-        
+        model.addAttribute("usuarioActual", usuario);
+
         return "views/audiencias/index";
     }
-    
+
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes redirectAttrs) {
         // NOTA: Ya no necesitamos el try-catch envolvente.
         // Si algo falla, el GlobalExceptionHandler se encarga.
 
         boolean esNueva = (audiencia.getId() == null);
-        
+
         if (!esNueva) {
             // Lógica de EDICIÓN:
-            // Buscamos la audiencia. Si no existe, lanzamos la excepción y el sistema redirige al usuario con la alerta roja.
+            // Buscamos la audiencia. Si no existe, lanzamos la excepción y el sistema
+            // redirige al usuario con la alerta roja.
             Audiencia audienciaExistente = audienciaRepository.findById(audiencia.getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("No se puede editar: La audiencia con ID " + audiencia.getId() + " no existe."));
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "No se puede editar: La audiencia con ID " + audiencia.getId() + " no existe."));
 
             // Preservamos los datos que no vienen en el formulario simple
             audiencia.setEstatusAudiencia(audienciaExistente.getEstatusAudiencia());
             audiencia.setActaDocumento(audienciaExistente.getActaDocumento());
-            
+
             // Preservar observaciones si no se enviaron nuevas
             if (audiencia.getObservaciones() == null) {
                 audiencia.setObservaciones(audienciaExistente.getObservaciones());
@@ -232,7 +256,8 @@ public class AudienciasController {
             audiencia.setEstatusAudiencia("PENDIENTE");
         }
 
-        // Corrección para evitar conflictos con Hibernate si el ID del abogado viene vacío
+        // Corrección para evitar conflictos con Hibernate si el ID del abogado viene
+        // vacío
         if (audiencia.getAbogadoComparece() != null && audiencia.getAbogadoComparece().getId() == null) {
             audiencia.setAbogadoComparece(null);
         }
@@ -251,7 +276,7 @@ public class AudienciasController {
 
         return "redirect:/audiencias";
     }
-    
+
     @GetMapping("/obtener/{id}")
     @ResponseBody
     public ResponseEntity<Audiencia> obtenerPorId(@PathVariable Integer id) {
@@ -262,8 +287,8 @@ public class AudienciasController {
 
     @PostMapping("/subir-acta")
     public String subirActa(@RequestParam("id") Integer id,
-                            @RequestParam("archivo") MultipartFile archivo,
-                            RedirectAttributes redirectAttrs) {
+            @RequestParam("archivo") MultipartFile archivo,
+            RedirectAttributes redirectAttrs) {
         try {
             audienciaService.subirActa(id, archivo);
             redirectAttrs.addFlashAttribute("mensaje", "Acta subida correctamente. Estatus actualizado.");
@@ -276,27 +301,28 @@ public class AudienciasController {
     }
 
     @PostMapping("/concluir")
-    public String concluir(@RequestParam("id") Integer id, 
-                           @RequestParam("observaciones") String observaciones, 
-                           RedirectAttributes redirectAttrs) {
+    public String concluir(@RequestParam("id") Integer id,
+            @RequestParam("observaciones") String observaciones,
+            RedirectAttributes redirectAttrs) {
         try {
             // 1. OBTENER USUARIO ACTUAL
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
-            
+
             // 2. VALIDAR PERMISOS (Solo Jefes hacia arriba pueden concluir)
             if (usuario.getRol().name().equals("ABOGADO")) {
-                redirectAttrs.addFlashAttribute("mensaje", "Acceso denegado: Solo Dirección o Gerencia pueden validar y concluir audiencias.");
+                redirectAttrs.addFlashAttribute("mensaje",
+                        "Acceso denegado: Solo Dirección o Gerencia pueden validar y concluir audiencias.");
                 redirectAttrs.addFlashAttribute("tipo", "error");
                 return "redirect:/audiencias";
             }
 
             // 3. EJECUTAR LÓGICA
             audienciaService.concluirAudiencia(id, observaciones);
-            
+
             redirectAttrs.addFlashAttribute("mensaje", "Audiencia validada y concluida exitosamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
-            
+
         } catch (Exception e) {
             redirectAttrs.addFlashAttribute("mensaje", "Error: " + e.getMessage());
             redirectAttrs.addFlashAttribute("tipo", "error");
@@ -304,10 +330,9 @@ public class AudienciasController {
         return "redirect:/audiencias";
     }
 
-   
     @GetMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
-        
+
         // 1. VALIDACIÓN LIMPIA
         // Si no existe, lanzamos la excepción y el GlobalHandler se encarga del resto.
         if (!audienciaRepository.existsById(id)) {
@@ -315,12 +340,13 @@ public class AudienciasController {
         }
 
         // 2. LÓGICA FELIZ (Sin try-catch)
-        // Si hay un error de base de datos aquí (ej. llave foránea), el GlobalHandler (Exception.class) lo atrapará.
+        // Si hay un error de base de datos aquí (ej. llave foránea), el GlobalHandler
+        // (Exception.class) lo atrapará.
         audienciaRepository.deleteById(id);
-        
+
         redirectAttrs.addFlashAttribute("mensaje", "Audiencia eliminada correctamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
-        
+
         return "redirect:/audiencias";
     }
 
@@ -328,17 +354,19 @@ public class AudienciasController {
     public ResponseEntity<Resource> descargarActa(@PathVariable Integer id) {
         try {
             Audiencia audiencia = audienciaRepository.findById(id).orElse(null);
-            
+
             if (audiencia == null || audiencia.getActaDocumento() == null) {
                 return ResponseEntity.notFound().build();
             }
 
-            java.nio.file.Path rutaArchivo = java.nio.file.Paths.get("uploads/audiencias").resolve(audiencia.getActaDocumento());
+            java.nio.file.Path rutaArchivo = java.nio.file.Paths.get("uploads/audiencias")
+                    .resolve(audiencia.getActaDocumento());
             Resource recurso = new UrlResource(rutaArchivo.toUri());
 
             if (recurso.exists() || recurso.isReadable()) {
                 return ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + recurso.getFilename() + "\"")
+                        .header(HttpHeaders.CONTENT_DISPOSITION,
+                                "attachment; filename=\"" + recurso.getFilename() + "\"")
                         .body(recurso);
             } else {
                 return ResponseEntity.notFound().build();
@@ -352,14 +380,14 @@ public class AudienciasController {
 
     @GetMapping("/exportar-excel")
     public void exportarExcel(HttpServletResponse response,
-                              @RequestParam(required = false) String keyword,
-                              @RequestParam(required = false) String tipo,
-                              @RequestParam(required = false) String gerencia,
-                              @RequestParam(required = false) String materia,
-                              @RequestParam(required = false) String estatus,
-                              @RequestParam(required = false) Integer abogadoId,
-                              @RequestParam(required = false) String periodo) throws IOException {
-        
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String tipo,
+            @RequestParam(required = false) String gerencia,
+            @RequestParam(required = false) String materia,
+            @RequestParam(required = false) String estatus,
+            @RequestParam(required = false) Integer abogadoId,
+            @RequestParam(required = false) String periodo) throws IOException {
+
         response.setContentType("application/octet-stream");
         DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
         String currentDateTime = dateFormatter.format(new Date());
@@ -382,10 +410,11 @@ public class AudienciasController {
                 filtroUsuarioId = usuario.getId();
                 break;
             case "GERENTE":
-                if(usuario.getGerencia() != null) filtroGerenciaId = usuario.getGerencia().getId();
+                if (usuario.getGerencia() != null)
+                    filtroGerenciaId = usuario.getGerencia().getId();
                 break;
             case "JEFE_DEPTO":
-                if(usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
+                if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
                     filtroMateriaIds = usuario.getMaterias().stream().map(Materia::getId).collect(Collectors.toList());
                 } else {
                     filtroMateriaIds = new ArrayList<>();
@@ -397,7 +426,7 @@ public class AudienciasController {
         // 2. LÓGICA DE FECHAS "CENTINELA"
         LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
         LocalDate fechaFin = LocalDate.of(2100, 12, 31);
-        
+
         if (periodo != null && !periodo.isEmpty()) {
             LocalDate hoy = LocalDate.now();
             switch (periodo) {
@@ -410,8 +439,8 @@ public class AudienciasController {
                     fechaFin = hoy.plusDays(1);
                     break;
                 case "SEMANA":
-                    fechaInicio = hoy; 
-                    fechaFin = hoy.plusDays(7); 
+                    fechaInicio = hoy;
+                    fechaFin = hoy.plusDays(7);
                     break;
                 case "MES":
                     fechaInicio = hoy.withDayOfMonth(1);
@@ -422,10 +451,9 @@ public class AudienciasController {
 
         // 3. LLAMAR AL REPOSITORIO
         List<Audiencia> listado = audienciaRepository.listarParaExcel(
-            keyword, tipo, gerencia, materia, estatus, 
-            abogadoId, fechaInicio, fechaFin,
-            filtroUsuarioId, filtroGerenciaId, filtroMateriaIds
-        );
+                keyword, tipo, gerencia, materia, estatus,
+                abogadoId, fechaInicio, fechaFin,
+                filtroUsuarioId, filtroGerenciaId, filtroMateriaIds);
 
         AudienciaExcelExporter excelExporter = new AudienciaExcelExporter(listado);
         excelExporter.export(response);
@@ -439,34 +467,42 @@ public class AudienciasController {
             // 1. Obtener datos del expediente
             Expediente exp = expedienteRepository.findById(UUID.fromString(expedienteId))
                     .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
-            
+
             Integer gerenciaId = exp.getGerencia().getId();
-            Integer materiaId = exp.getMateria().getId();
+            // materiaId no se requiere para filtrar abogados en audiencias según ROD-146
 
-            // 2. Buscar abogados que tengan esa materia (usamos el repo de usuarios)
-            List<Usuario> abogadosConMateria = usuarioRepository.findByRolAndMateriaId(RolUsuario.ABOGADO, materiaId);
+            // 2. Buscamos todos los usuarios activos de la gerencia (sin filtrar por
+            // materia para audiencias)
+            List<Usuario> abogadosGerencia = usuarioRepository.findAll().stream()
+                    .filter(u -> u.getActivo() != null && u.getActivo()
+                            && u.getGerencia() != null && u.getGerencia().getId().equals(gerenciaId))
+                    .filter(u -> u.getRol() == RolUsuario.ABOGADO || u.getRol() == RolUsuario.GERENTE
+                            || u.getRol() == RolUsuario.JEFE_DEPTO)
+                    .collect(Collectors.toList());
 
-            // 3. Filtrar por Gerencia en memoria (para asegurar que sean del mismo equipo)
-            List<Map<String, Object>> resultado = abogadosConMateria.stream()
-                .filter(u -> u.getGerencia() != null && u.getGerencia().getId().equals(gerenciaId))
-                .map(u -> {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("id", u.getId());
-                    map.put("nombre", u.getNombreCompleto());
-                    
-                    // Marcamos quién es el titular original para distinguirlo visualmente
-                    boolean esTitular = exp.getAbogadoResponsable() != null && u.getId().equals(exp.getAbogadoResponsable().getId());
-                    map.put("esTitular", esTitular);
-                    
-                    return map;
-                })
-                .sorted((a, b) -> {
-                    // Ordenar: Titular primero, luego alfabéticamente
-                    if ((boolean) a.get("esTitular")) return -1;
-                    if ((boolean) b.get("esTitular")) return 1;
-                    return ((String) a.get("nombre")).compareTo((String) b.get("nombre"));
-                })
-                .collect(Collectors.toList());
+            // 3. Preparamos el JSON
+            List<Map<String, Object>> resultado = abogadosGerencia.stream()
+                    .map(u -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("id", u.getId());
+                        map.put("nombre", u.getNombreCompleto());
+
+                        // Marcamos quién es el titular original para distinguirlo visualmente
+                        boolean esTitular = exp.getAbogadoResponsable() != null
+                                && u.getId().equals(exp.getAbogadoResponsable().getId());
+                        map.put("esTitular", esTitular);
+
+                        return map;
+                    })
+                    .sorted((a, b) -> {
+                        // Ordenar: Titular primero, luego alfabéticamente
+                        if ((boolean) a.get("esTitular"))
+                            return -1;
+                        if ((boolean) b.get("esTitular"))
+                            return 1;
+                        return ((String) a.get("nombre")).compareTo((String) b.get("nombre"));
+                    })
+                    .collect(Collectors.toList());
 
             return ResponseEntity.ok(resultado);
 

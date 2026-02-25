@@ -3,7 +3,7 @@
  * Versión v4.0 - Con Asignación Dinámica de Abogados
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log("Sistema de Audiencias Cargado");
 });
 
@@ -22,7 +22,7 @@ function toggleMenu(id) {
 }
 
 // Cerrar menús al hacer clic fuera
-window.addEventListener('click', function(e) {
+window.addEventListener('click', function (e) {
     if (!e.target.closest('td.relative')) {
         document.querySelectorAll('[id^="menu-"]').forEach(m => m.classList.add('hidden'));
     }
@@ -33,33 +33,33 @@ window.addEventListener('click', function(e) {
 // 1. ABRIR PARA CREAR
 function abrirModalAudiencia() {
     const form = document.getElementById('form-audiencia');
-    if(form) form.reset();
+    if (form) form.reset();
 
     const inputId = document.getElementById('input-audiencia-id');
-    if(inputId) inputId.value = '';
+    if (inputId) inputId.value = '';
 
     const titulo = document.getElementById('modal-titulo-audiencia');
-    if(titulo) titulo.innerHTML = '<i class="fas fa-gavel"></i> Nueva Audiencia';
+    if (titulo) titulo.innerHTML = '<i class="fas fa-gavel"></i> Nueva Audiencia';
 
     // Resetear selector de abogados
     const abogadoSelect = document.getElementById('input-abogado');
-    if(abogadoSelect) {
+    if (abogadoSelect) {
         abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
         abogadoSelect.disabled = false;
     }
 
     toggleUbicacion(false);
-    
+
     // Resetear radio buttons
     const radioPresencial = document.querySelector('input[name="esVirtual"][value="false"]');
-    if(radioPresencial) radioPresencial.checked = true;
+    if (radioPresencial) radioPresencial.checked = true;
 
     document.getElementById('modal-audiencia').classList.remove('hidden');
 }
 
 // 2. ABRIR PARA EDITAR (¡CORREGIDO!)
 function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala, link, abogadoId) {
-    
+
     // A. Llenar campos básicos
     setValueIfExists('input-audiencia-id', id);
     setValueIfExists('input-expediente', expedienteId);
@@ -70,13 +70,13 @@ function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala
     // B. Configurar Modalidad (Virtual/Presencial)
     // Convertimos a booleano real por si viene como string "true"
     const esVirtualBool = (String(isVirtual) === 'true');
-    
+
     const radio = document.querySelector(`input[name="esVirtual"][value="${esVirtualBool}"]`);
-    if(radio) radio.checked = true;
-    
+    if (radio) radio.checked = true;
+
     toggleUbicacion(esVirtualBool);
 
-    if(esVirtualBool) {
+    if (esVirtualBool) {
         setValueIfExists('input-url', link);
     } else {
         setValueIfExists('input-sala', sala);
@@ -90,7 +90,7 @@ function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala
 
     // D. Cambiar Título y Mostrar
     const titulo = document.getElementById('modal-titulo-audiencia');
-    if(titulo) titulo.innerHTML = '<i class="fas fa-edit"></i> Editar Audiencia';
+    if (titulo) titulo.innerHTML = '<i class="fas fa-edit"></i> Editar Audiencia';
 
     document.getElementById('modal-audiencia').classList.remove('hidden');
 }
@@ -98,7 +98,7 @@ function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala
 // Helper para evitar errores si el input no existe
 function setValueIfExists(elementId, value) {
     const el = document.getElementById(elementId);
-    if(el) el.value = value || '';
+    if (el) el.value = value || '';
 }
 
 // --- UTILIDADES ---
@@ -111,23 +111,23 @@ function toggleUbicacion(isVirtual) {
     // Convertir a booleano por seguridad
     const showVirtual = (String(isVirtual) === 'true');
 
-    if(showVirtual) {
-        if(campoSala) campoSala.classList.add('hidden');
-        if(campoUrl) campoUrl.classList.remove('hidden');
-        if(inputUrl) inputUrl.setAttribute('required', 'required');
-        if(inputSala) inputSala.removeAttribute('required');
+    if (showVirtual) {
+        if (campoSala) campoSala.classList.add('hidden');
+        if (campoUrl) campoUrl.classList.remove('hidden');
+        if (inputUrl) inputUrl.setAttribute('required', 'required');
+        if (inputSala) inputSala.removeAttribute('required');
     } else {
-        if(campoSala) campoSala.classList.remove('hidden');
-        if(campoUrl) campoUrl.classList.add('hidden');
-        if(inputSala) inputSala.setAttribute('required', 'required');
-        if(inputUrl) inputUrl.removeAttribute('required');
+        if (campoSala) campoSala.classList.remove('hidden');
+        if (campoUrl) campoUrl.classList.add('hidden');
+        if (inputSala) inputSala.setAttribute('required', 'required');
+        if (inputUrl) inputUrl.removeAttribute('required');
     }
 }
 
 function activarSubidaActa(id) {
     const inputId = document.getElementById('input-acta-id');
     const inputFile = document.getElementById('input-acta-file');
-    if(inputId && inputFile) {
+    if (inputId && inputFile) {
         inputId.value = id;
         inputFile.click();
     }
@@ -135,8 +135,8 @@ function activarSubidaActa(id) {
 
 function abrirModalConcluir(id) {
     const inputId = document.getElementById('concluir-audiencia-id');
-    if(inputId) inputId.value = id;
-    
+    if (inputId) inputId.value = id;
+
     document.getElementById('modal-concluir').classList.remove('hidden');
 }
 
@@ -147,9 +147,9 @@ function abrirModalConcluir(id) {
 function cargarAbogadosPosibles(idPreseleccionado = null) {
     const expSelect = document.getElementById('input-expediente');
     const abogadoSelect = document.getElementById('input-abogado');
-    
+
     if (!expSelect || !abogadoSelect) return;
-    
+
     const expId = expSelect.value;
     if (!expId) {
         abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
@@ -161,21 +161,24 @@ function cargarAbogadosPosibles(idPreseleccionado = null) {
     // No lo deshabilitamos totalmente en edición para no bloquear la UI, pero visualmente ayuda
     // abogadoSelect.disabled = true; 
 
+    // Obtener ID del usuario actual de un campo oculto en el modal
+    const currentUserIdEl = document.getElementById('current-user-id');
+    const currentUserId = currentUserIdEl ? currentUserIdEl.value : null;
+
     fetch(`/audiencias/api/abogados-disponibles/${expId}`)
         .then(response => response.json())
         .then(abogados => {
             abogadoSelect.innerHTML = '';
-            // abogadoSelect.disabled = false;
 
             if (abogados.length === 0) {
-                abogadoSelect.innerHTML = '<option value="">No hay abogados en esta gerencia/materia</option>';
+                abogadoSelect.innerHTML = '<option value="">No hay abogados en esta gerencia</option>';
                 return;
             }
 
-            // Agregar opción por defecto
+            // Agregar opción por defecto (Opcional)
             const defaultOption = document.createElement('option');
             defaultOption.value = "";
-            defaultOption.text = "-- Seleccione quien asistirá --";
+            defaultOption.text = "-- Seleccione quien asistirá (Opcional) --";
             abogadoSelect.appendChild(defaultOption);
 
             let titularEncontrado = false;
@@ -183,13 +186,18 @@ function cargarAbogadosPosibles(idPreseleccionado = null) {
             abogados.forEach(a => {
                 const option = document.createElement('option');
                 option.value = a.id;
-                
+
                 // Distinguir visualmente al titular
                 if (a.esTitular) {
                     option.text = `⭐ ${a.nombre} (Titular)`;
                     option.style.fontWeight = 'bold';
-                    // Si NO estamos editando (idPreseleccionado es null), seleccionamos al titular por defecto
-                    if (!idPreseleccionado) option.selected = true;
+
+                    // LÓGICA DE AUTO-SELECCIÓN (ROD-146):
+                    // Si NO estamos editando (idPreseleccionado es null)
+                    // Y el usuario que está creando es el propio Titular
+                    if (!idPreseleccionado && String(a.id) === String(currentUserId)) {
+                        option.selected = true;
+                    }
                     titularEncontrado = true;
                 } else {
                     option.text = a.nombre;
@@ -202,10 +210,11 @@ function cargarAbogadosPosibles(idPreseleccionado = null) {
 
                 abogadoSelect.appendChild(option);
             });
-            
-            // Si no hay titular y no estamos editando, queda en "Seleccione..."
-            if (!titularEncontrado && !idPreseleccionado) {
-                abogadoSelect.value = ""; 
+
+            // Si no se auto-seleccionó nada (porque no es el titular o estamos editando otro), 
+            // y no teníamos un idPreseleccionado, queda en "Seleccione..."
+            if (!idPreseleccionado && !abogadoSelect.value) {
+                abogadoSelect.value = "";
             }
         })
         .catch(err => {
