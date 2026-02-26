@@ -112,4 +112,17 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
                 GROUP BY u.nombreCompleto
             """)
     List<Object[]> contarTerminosPorUsuarioYGerencias(@Param("gerenciaIds") List<Long> gerenciaIds);
+
+    // --- 4. CONTEO PARA DASHBOARD KPIs ---
+    // Conteo por gerencia individual (solo términos activos - excluidos concluidos/presentados)
+    @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.gerencia.id = :gerenciaId AND t.estatusTermino NOT IN ('Concluido', 'Presentado')")
+    long countByExpedienteGerenciaIdAndActivo(@Param("gerenciaId") Long gerenciaId);
+
+    // Conteo por lista de gerencias (solo términos activos)
+    @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.gerencia.id IN :gerenciaIds AND t.estatusTermino NOT IN ('Concluido', 'Presentado')")
+    long countByExpedienteGerenciaIdInAndActivo(@Param("gerenciaIds") List<Long> gerenciaIds);
+
+    // Conteo total términos activos (sin filtro)
+    @Query("SELECT COUNT(t) FROM Termino t WHERE t.estatusTermino NOT IN ('Concluido', 'Presentado')")
+    long countByActivo();
 }

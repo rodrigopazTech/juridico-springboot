@@ -17,122 +17,135 @@ import java.util.UUID;
 @Repository
 public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
 
-        // --- 1. BUSQUEDA PAGINADA (INDEX) ---
-        @Query("SELECT a FROM Audiencia a " +
-                        "LEFT JOIN a.expediente e " +
-                        "WHERE " +
-                        "(:keyword IS NULL OR :keyword = '' OR " +
-                        "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-                        "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-                        "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-                        "CONCAT(a.id, '') LIKE CONCAT('%', :keyword, '%')) " +
-                        "AND (:tipo IS NULL OR :tipo = '' OR a.tipoAudiencia.nombre = :tipo) " +
-                        "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
-                        "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
-                        "AND (:estatus IS NULL OR :estatus = '' OR a.estatusAudiencia = :estatus) " +
-                        "AND (a.fechaAudiencia >= :fechaInicio) " +
-                        "AND (a.fechaAudiencia <= :fechaFin) " +
-                        "AND (:targetAbogadoId IS NULL OR (e.abogadoResponsable.id = :targetAbogadoId OR a.abogadoComparece.id = :targetAbogadoId)) "
-                        +
-                        "AND (:filtroUsuarioId IS NULL OR (e.abogadoResponsable.id = :filtroUsuarioId OR a.abogadoComparece.id = :filtroUsuarioId)) "
-                        +
-                        "AND (:filtroGerenciaId IS NULL OR e.gerencia.id = :filtroGerenciaId) " +
-                        "AND ((:filtroMateriaIds) IS NULL OR e.materia.id IN (:filtroMateriaIds))")
-        Page<Audiencia> buscarConFiltros(
-                        @Param("keyword") String keyword,
-                        @Param("tipo") String tipo,
-                        @Param("gerencia") String gerencia,
-                        @Param("materia") String materia,
-                        @Param("estatus") String estatus,
-                        @Param("targetAbogadoId") Integer targetAbogadoId,
-                        @Param("fechaInicio") LocalDate fechaInicio,
-                        @Param("fechaFin") LocalDate fechaFin,
-                        @Param("filtroUsuarioId") Integer filtroUsuarioId,
-                        @Param("filtroGerenciaId") Integer filtroGerenciaId,
-                        @Param("filtroMateriaIds") List<Integer> filtroMateriaIds,
-                        Pageable pageable);
+    // --- 1. BUSQUEDA PAGINADA (INDEX) ---
+    @Query("SELECT a FROM Audiencia a " +
+            "LEFT JOIN a.expediente e " +
+            "WHERE " +
+            "(:keyword IS NULL OR :keyword = '' OR " +
+            "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "CONCAT(a.id, '') LIKE CONCAT('%', :keyword, '%')) " +
+            "AND (:tipo IS NULL OR :tipo = '' OR a.tipoAudiencia.nombre = :tipo) " +
+            "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
+            "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
+            "AND (:estatus IS NULL OR :estatus = '' OR a.estatusAudiencia = :estatus) " +
+            "AND (a.fechaAudiencia >= :fechaInicio) " +
+            "AND (a.fechaAudiencia <= :fechaFin) " +
+            "AND (:targetAbogadoId IS NULL OR (e.abogadoResponsable.id = :targetAbogadoId OR a.abogadoComparece.id = :targetAbogadoId)) "
+            +
+            "AND (:filtroUsuarioId IS NULL OR (e.abogadoResponsable.id = :filtroUsuarioId OR a.abogadoComparece.id = :filtroUsuarioId)) "
+            +
+            "AND (:filtroGerenciaId IS NULL OR e.gerencia.id = :filtroGerenciaId) " +
+            "AND ((:filtroMateriaIds) IS NULL OR e.materia.id IN (:filtroMateriaIds))")
+    Page<Audiencia> buscarConFiltros(
+            @Param("keyword") String keyword,
+            @Param("tipo") String tipo,
+            @Param("gerencia") String gerencia,
+            @Param("materia") String materia,
+            @Param("estatus") String estatus,
+            @Param("targetAbogadoId") Integer targetAbogadoId,
+            @Param("fechaInicio") LocalDate fechaInicio,
+            @Param("fechaFin") LocalDate fechaFin,
+            @Param("filtroUsuarioId") Integer filtroUsuarioId,
+            @Param("filtroGerenciaId") Integer filtroGerenciaId,
+            @Param("filtroMateriaIds") List<Integer> filtroMateriaIds,
+            Pageable pageable);
 
-        // --- 2. LISTADO PARA EXCEL (Sin paginación) ---
-        @Query("SELECT a FROM Audiencia a " +
-                        "LEFT JOIN a.expediente e " +
-                        "WHERE " +
-                        "(:keyword IS NULL OR :keyword = '' OR " +
-                        "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-                        "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-                        "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-                        "CONCAT(a.id, '') LIKE CONCAT('%', :keyword, '%')) " +
-                        "AND (:tipo IS NULL OR :tipo = '' OR a.tipoAudiencia.nombre = :tipo) " +
-                        "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
-                        "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
-                        "AND (:estatus IS NULL OR :estatus = '' OR a.estatusAudiencia = :estatus) " +
-                        "AND (a.fechaAudiencia >= :fechaInicio) " +
-                        "AND (a.fechaAudiencia <= :fechaFin) " +
-                        "AND (:targetAbogadoId IS NULL OR (e.abogadoResponsable.id = :targetAbogadoId OR a.abogadoComparece.id = :targetAbogadoId)) "
-                        +
-                        "AND (:filtroUsuarioId IS NULL OR (e.abogadoResponsable.id = :filtroUsuarioId OR a.abogadoComparece.id = :filtroUsuarioId)) "
-                        +
-                        "AND (:filtroGerenciaId IS NULL OR e.gerencia.id = :filtroGerenciaId) " +
-                        "AND ((:filtroMateriaIds) IS NULL OR e.materia.id IN (:filtroMateriaIds))")
-        List<Audiencia> listarParaExcel(
-                        @Param("keyword") String keyword,
-                        @Param("tipo") String tipo,
-                        @Param("gerencia") String gerencia,
-                        @Param("materia") String materia,
-                        @Param("estatus") String estatus,
-                        @Param("targetAbogadoId") Integer targetAbogadoId,
-                        @Param("fechaInicio") LocalDate fechaInicio,
-                        @Param("fechaFin") LocalDate fechaFin,
-                        @Param("filtroUsuarioId") Integer filtroUsuarioId,
-                        @Param("filtroGerenciaId") Integer filtroGerenciaId,
-                        @Param("filtroMateriaIds") List<Integer> filtroMateriaIds);
+    // --- 2. LISTADO PARA EXCEL (Sin paginación) ---
+    @Query("SELECT a FROM Audiencia a " +
+            "LEFT JOIN a.expediente e " +
+            "WHERE " +
+            "(:keyword IS NULL OR :keyword = '' OR " +
+            "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "CONCAT(a.id, '') LIKE CONCAT('%', :keyword, '%')) " +
+            "AND (:tipo IS NULL OR :tipo = '' OR a.tipoAudiencia.nombre = :tipo) " +
+            "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
+            "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
+            "AND (:estatus IS NULL OR :estatus = '' OR a.estatusAudiencia = :estatus) " +
+            "AND (a.fechaAudiencia >= :fechaInicio) " +
+            "AND (a.fechaAudiencia <= :fechaFin) " +
+            "AND (:targetAbogadoId IS NULL OR (e.abogadoResponsable.id = :targetAbogadoId OR a.abogadoComparece.id = :targetAbogadoId)) "
+            +
+            "AND (:filtroUsuarioId IS NULL OR (e.abogadoResponsable.id = :filtroUsuarioId OR a.abogadoComparece.id = :filtroUsuarioId)) "
+            +
+            "AND (:filtroGerenciaId IS NULL OR e.gerencia.id = :filtroGerenciaId) " +
+            "AND ((:filtroMateriaIds) IS NULL OR e.materia.id IN (:filtroMateriaIds))")
+    List<Audiencia> listarParaExcel(
+            @Param("keyword") String keyword,
+            @Param("tipo") String tipo,
+            @Param("gerencia") String gerencia,
+            @Param("materia") String materia,
+            @Param("estatus") String estatus,
+            @Param("targetAbogadoId") Integer targetAbogadoId,
+            @Param("fechaInicio") LocalDate fechaInicio,
+            @Param("fechaFin") LocalDate fechaFin,
+            @Param("filtroUsuarioId") Integer filtroUsuarioId,
+            @Param("filtroGerenciaId") Integer filtroGerenciaId,
+            @Param("filtroMateriaIds") List<Integer> filtroMateriaIds);
 
-        // --- 3. MÉTODOS AUXILIARES ---
-        List<Audiencia> findByFechaAudienciaAndEstatusAudienciaNot(LocalDate fecha, String estatusExcluido);
+    // --- 3. MÉTODOS AUXILIARES ---
+    List<Audiencia> findByFechaAudienciaAndEstatusAudienciaNot(LocalDate fecha, String estatusExcluido);
 
-        List<Audiencia> findByFechaAudienciaAndHoraAudienciaBetweenAndEstatusAudienciaNot(
-                        LocalDate fecha,
-                        LocalTime horaInicio,
-                        LocalTime horaFin,
-                        String estatusExcluido);
+    List<Audiencia> findByFechaAudienciaAndHoraAudienciaBetweenAndEstatusAudienciaNot(
+            LocalDate fecha,
+            LocalTime horaInicio,
+            LocalTime horaFin,
+            String estatusExcluido);
 
-        @Query("SELECT a FROM Audiencia a " +
-                        "WHERE a.expediente.id = :expedienteId " +
-                        "AND a.fechaAudiencia >= :fechaActual " +
-                        "AND (a.estatusAudiencia IS NULL OR a.estatusAudiencia NOT IN ('CONCLUIDA', 'CON_ACTA')) " +
-                        "ORDER BY a.fechaAudiencia ASC, a.horaAudiencia ASC LIMIT 1")
-        Optional<Audiencia> findProximaAudiencia(
-                        @Param("expedienteId") UUID expedienteId,
-                        @Param("fechaActual") LocalDate fechaActual);
+    @Query("SELECT a FROM Audiencia a " +
+            "WHERE a.expediente.id = :expedienteId " +
+            "AND a.fechaAudiencia >= :fechaActual " +
+            "AND (a.estatusAudiencia IS NULL OR a.estatusAudiencia NOT IN ('CONCLUIDA', 'CON_ACTA')) " +
+            "ORDER BY a.fechaAudiencia ASC, a.horaAudiencia ASC LIMIT 1")
+    Optional<Audiencia> findProximaAudiencia(
+            @Param("expedienteId") UUID expedienteId,
+            @Param("fechaActual") LocalDate fechaActual);
 
-        List<Audiencia> findByExpedienteIdAndFechaAudiencia(UUID expedienteId, LocalDate fecha);
+    List<Audiencia> findByExpedienteIdAndFechaAudiencia(UUID expedienteId, LocalDate fecha);
 
-        // --- 4. CARGA DE TRABAJO POR USUARIO ---
-        @Query("""
-                        SELECT u.nombreCompleto, COUNT(a)
-                        FROM Audiencia a
-                        JOIN a.expediente e
-                        JOIN e.abogadoResponsable u
-                        GROUP BY u.nombreCompleto
-                        """)
-        List<Object[]> contarAudienciasPorUsuario();
+    // --- 4. CARGA DE TRABAJO POR USUARIO ---
+    @Query("""
+            SELECT u.nombreCompleto, COUNT(a)
+            FROM Audiencia a
+            JOIN a.expediente e
+            JOIN e.abogadoResponsable u
+            GROUP BY u.nombreCompleto
+            """)
+    List<Object[]> contarAudienciasPorUsuario();
 
-        @Query("""
-                        SELECT u.nombreCompleto, COUNT(a)
-                        FROM Audiencia a
-                        JOIN a.expediente e
-                        JOIN e.abogadoResponsable u
-                        WHERE e.gerencia.id = :gerenciaId
-                        GROUP BY u.nombreCompleto
-                        """)
-        List<Object[]> contarAudienciasPorUsuarioYGerencia(@Param("gerenciaId") Long gerenciaId);
+    @Query("""
+            SELECT u.nombreCompleto, COUNT(a)
+            FROM Audiencia a
+            JOIN a.expediente e
+            JOIN e.abogadoResponsable u
+            WHERE e.gerencia.id = :gerenciaId
+            GROUP BY u.nombreCompleto
+            """)
+    List<Object[]> contarAudienciasPorUsuarioYGerencia(@Param("gerenciaId") Long gerenciaId);
 
-        @Query("""
-                        SELECT u.nombreCompleto, COUNT(a)
-                        FROM Audiencia a
-                        JOIN a.expediente e
-                        JOIN e.abogadoResponsable u
-                        WHERE e.gerencia.id IN :gerenciaIds
-                        GROUP BY u.nombreCompleto
-                        """)
-        List<Object[]> contarAudienciasPorUsuarioYGerencias(@Param("gerenciaIds") List<Long> gerenciaIds);
+    @Query("""
+            SELECT u.nombreCompleto, COUNT(a)
+            FROM Audiencia a
+            JOIN a.expediente e
+            JOIN e.abogadoResponsable u
+            WHERE e.gerencia.id IN :gerenciaIds
+            GROUP BY u.nombreCompleto
+            """)
+    List<Object[]> contarAudienciasPorUsuarioYGerencias(@Param("gerenciaIds") List<Long> gerenciaIds);
+
+    // --- 5. CONTEO PARA DASHBOARD KPIs ---
+    // Conteo por gerencia individual (solo audiencias pendientes)
+    @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.gerencia.id = :gerenciaId AND a.estatusAudiencia = 'PENDIENTE'")
+    long countByExpedienteGerenciaIdAndEstatusPendiente(@Param("gerenciaId") Long gerenciaId);
+
+    // Conteo por lista de gerencias (solo audiencias pendientes)
+    @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.gerencia.id IN :gerenciaIds AND a.estatusAudiencia = 'PENDIENTE'")
+    long countByExpedienteGerenciaIdInAndEstatusPendiente(@Param("gerenciaIds") List<Long> gerenciaIds);
+
+    // Conteo total audiencias pendientes (sin filtro)
+    @Query("SELECT COUNT(a) FROM Audiencia a WHERE a.estatusAudiencia = 'PENDIENTE'")
+    long countByEstatusPendiente();
 }
