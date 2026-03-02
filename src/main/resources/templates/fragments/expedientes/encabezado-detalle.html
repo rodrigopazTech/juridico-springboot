@@ -1,7 +1,7 @@
 <div th:fragment="encabezado(expediente)" class="bg-white border-b border-gray-200 shadow-sm p-6 mb-6">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
 
-        <div>
+        <div class="flex-1">
             <div class="flex items-center gap-3">
                 <h2 class="text-2xl font-bold text-gob-guinda" th:text="${expediente.numero}">EXP-0000/2026</h2>
                 <span th:text="${expediente.etapaProcesal}" th:class="${expediente.etapaProcesal.name() == 'FIRME' ? 'badge-stage-firme' : 
@@ -11,7 +11,22 @@
                     ETAPA
                 </span>
             </div>
-            <p class="text-gray-500 text-sm mt-1">Detalle general del asunto jurídico y seguimiento.</p>
+
+            <div th:if="${proximaAudiencia != null}" class="flex items-center gap-4 mt-2">
+                <div
+                    class="flex items-center gap-2 text-orange-700 bg-orange-50 px-3 py-1 rounded-full border border-orange-100 shadow-sm animate-pulse">
+                    <i class="fas fa-gavel text-xs"></i>
+                    <span class="text-[11px] font-black uppercase tracking-wider">Próxima Audiencia:</span>
+                    <span class="text-xs font-bold"
+                        th:text="${#temporals.format(proximaAudiencia.fechaAudiencia, 'dd/MM/yyyy')}">01/01/2024</span>
+                    <span class="text-xs font-bold border-l border-orange-200 pl-2"
+                        th:text="${#temporals.format(proximaAudiencia.horaAudiencia, 'HH:mm')}">10:00</span>
+                    <span class="text-[10px] bg-orange-200 text-orange-800 px-2 py-0.5 rounded font-bold ml-1"
+                        th:text="${proximaAudiencia.tipoAudiencia.nombre}">TIPO</span>
+                </div>
+            </div>
+            <p th:unless="${proximaAudiencia != null}" class="text-gray-500 text-sm mt-1">Detalle general del asunto
+                jurídico y seguimiento.</p>
         </div>
 
         <div class="flex flex-wrap gap-2">
