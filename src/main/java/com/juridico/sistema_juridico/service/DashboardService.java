@@ -3,7 +3,7 @@ package com.juridico.sistema_juridico.service;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
-import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal; 
+import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import org.springframework.stereotype.Service;
 import java.util.*;
 
@@ -15,13 +15,14 @@ public class DashboardService {
     private final TerminoRepository terminoRepository;
 
     // Constantes para grupos de gerencias
-    public static final List<Long> GRUPO_CIVIL_MERCANTIL = Arrays.asList(1L, 2L, 3L, 4L); // Civil, Mercantil, Fiscal, Administrativo
+    public static final List<Long> GRUPO_CIVIL_MERCANTIL = Arrays.asList(1L, 2L, 3L, 4L); // Civil, Mercantil, Fiscal,
+                                                                                          // Administrativo
     public static final List<Long> GRUPO_LABORAL_PENAL = Arrays.asList(5L, 6L); // Laboral, Penal
     public static final List<Long> GRUPO_TRANSPARENCIA = Arrays.asList(7L, 8L); // Transparencia, Amparo
 
     public DashboardService(ExpedienteRepository expedienteRepository,
-                            AudienciaRepository audienciaRepository,
-                            TerminoRepository terminoRepository) {
+            AudienciaRepository audienciaRepository,
+            TerminoRepository terminoRepository) {
         this.expedienteRepository = expedienteRepository;
         this.audienciaRepository = audienciaRepository;
         this.terminoRepository = terminoRepository;
@@ -31,7 +32,8 @@ public class DashboardService {
      * Convierte un grupo de gerencia a lista de IDs
      */
     public List<Long> obtenerListaGerencias(String grupoGerencia) {
-        if (grupoGerencia == null) return null;
+        if (grupoGerencia == null)
+            return null;
         return switch (grupoGerencia) {
             case "CIVIL_MERCANTIL" -> GRUPO_CIVIL_MERCANTIL;
             case "LABORAL_PENAL" -> GRUPO_LABORAL_PENAL;
@@ -46,21 +48,25 @@ public class DashboardService {
 
     public Map<String, Long> obtenerKpisPorLista(Long gerenciaId, List<Long> gerenciaIds) {
         Map<String, Long> kpis = new HashMap<>();
-        
+
         // Si hay lista de gerencias, usar esa; si hay gerenciaId individual, usar esa
         boolean hayFiltro = gerenciaIds != null && !gerenciaIds.isEmpty();
-        
+
         if (gerenciaId != null) {
             // Filtro por gerencia individual
             kpis.put("totalExpedientes", expedienteRepository.countByGerenciaId(gerenciaId));
-            kpis.put("expedientesActivos", expedienteRepository.countByEtapaProcesalAndGerenciaId(EtapaProcesal.TRAMITE, gerenciaId));
-            kpis.put("audienciasProgramadas", audienciaRepository.countByExpedienteGerenciaIdAndEstatusPendiente(gerenciaId));
+            kpis.put("expedientesActivos",
+                    expedienteRepository.countByEtapaProcesalAndGerenciaId(EtapaProcesal.TRAMITE, gerenciaId));
+            kpis.put("audienciasProgramadas",
+                    audienciaRepository.countByExpedienteGerenciaIdAndEstatusPendiente(gerenciaId));
             kpis.put("terminosActivos", terminoRepository.countByExpedienteGerenciaIdAndActivo(gerenciaId));
         } else if (hayFiltro) {
             // Filtro por lista de gerencias (grupo)
             kpis.put("totalExpedientes", expedienteRepository.countByGerenciaIdIn(gerenciaIds));
-            kpis.put("expedientesActivos", expedienteRepository.countByEtapaProcesalAndGerenciaIdIn(EtapaProcesal.TRAMITE, gerenciaIds));
-            kpis.put("audienciasProgramadas", audienciaRepository.countByExpedienteGerenciaIdInAndEstatusPendiente(gerenciaIds));
+            kpis.put("expedientesActivos",
+                    expedienteRepository.countByEtapaProcesalAndGerenciaIdIn(EtapaProcesal.TRAMITE, gerenciaIds));
+            kpis.put("audienciasProgramadas",
+                    audienciaRepository.countByExpedienteGerenciaIdInAndEstatusPendiente(gerenciaIds));
             kpis.put("terminosActivos", terminoRepository.countByExpedienteGerenciaIdInAndActivo(gerenciaIds));
         } else {
             // Sin filtro - todos los datos
@@ -87,7 +93,7 @@ public class DashboardService {
 
     private Map<String, Object> obtenerEstatusExpedientes(Long gerenciaId, List<Long> gerenciaIds) {
         List<Object[]> rows;
-        
+
         if (gerenciaId != null) {
             rows = expedienteRepository.contarExpedientesPorEstatusYGerencia(gerenciaId);
         } else if (gerenciaIds != null && !gerenciaIds.isEmpty()) {
@@ -95,7 +101,7 @@ public class DashboardService {
         } else {
             rows = expedienteRepository.contarExpedientesPorEstatus();
         }
-        
+
         Map<EtapaProcesal, Long> statusMap = new HashMap<>();
         for (Object[] row : rows) {
             EtapaProcesal etapa = (EtapaProcesal) row[0];
@@ -104,7 +110,7 @@ public class DashboardService {
         }
         List<String> labels = new ArrayList<>();
         List<Long> values = new ArrayList<>();
-        for (EtapaProcesal etapa : Arrays.asList(EtapaProcesal.TRAMITE, EtapaProcesal.LAUDO, EtapaProcesal.FIRME)) {
+        for (EtapaProcesal etapa : EtapaProcesal.values()) {
             labels.add(etapa.name());
             values.add(statusMap.getOrDefault(etapa, 0L));
         }
@@ -179,7 +185,8 @@ public class DashboardService {
     private Map<String, Integer> toMap(List<Object[]> rows) {
         Map<String, Integer> map = new HashMap<>();
         for (Object[] row : rows) {
-            if (row[0] != null) map.put(row[0].toString(), ((Number) row[1]).intValue());
+            if (row[0] != null)
+                map.put(row[0].toString(), ((Number) row[1]).intValue());
         }
         return map;
     }

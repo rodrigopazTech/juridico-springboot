@@ -85,7 +85,6 @@ public class ExpedientesController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer gerenciaId,
             @RequestParam(required = false) Integer materiaId,
-            @RequestParam(required = false) Integer tipoId,
             @RequestParam(required = false) Prioridad prioridad,
             @RequestParam(required = false) EtapaProcesal etapa,
             @RequestParam(required = false) Integer abogadoId) {
@@ -116,18 +115,18 @@ public class ExpedientesController {
         Pageable pageable = PageRequest.of(page, 20, Sort.by("createdAt").descending());
 
         Page<Expediente> paginaExpedientes = expedienteRepository.buscarConSeguridad(
-                keyword, gerenciaId, materiaId, tipoId, prioridad, etapa, abogadoId,
+                keyword, gerenciaId, materiaId, prioridad, etapa, abogadoId,
                 secGerenciaId, secMateriaIds, secUsuarioId,
                 pageable);
 
         // Conteos para resumen (Respetando seguridad)
         long totalAlta = expedienteRepository.buscarConSeguridad(
-                null, null, null, null, Prioridad.ALTA, null, null,
+                null, null, null, Prioridad.ALTA, null, null,
                 secGerenciaId, secMateriaIds, secUsuarioId,
                 PageRequest.of(0, 1)).getTotalElements();
 
         long totalTramite = expedienteRepository.buscarConSeguridad(
-                null, null, null, null, null, EtapaProcesal.TRAMITE, null,
+                null, null, null, null, EtapaProcesal.TRAMITE, null,
                 secGerenciaId, secMateriaIds, secUsuarioId,
                 PageRequest.of(0, 1)).getTotalElements();
 

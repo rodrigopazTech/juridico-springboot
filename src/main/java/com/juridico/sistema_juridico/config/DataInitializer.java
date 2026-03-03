@@ -344,6 +344,45 @@ public class DataInitializer implements CommandLineRunner {
 
                                         exp022 = expedienteRepository.save(exp022);
 
+                                        // Expediente en LAUDO
+                                        Expediente expLaudo = Expediente.builder()
+                                                        .numero("023/2024")
+                                                        .partes("Empresa A vs Empresa B")
+                                                        .descripcion("Expediente en etapa de LAUDO/SENTENCIA.")
+                                                        .gerencia(gerencia).materia(materia)
+                                                        .organoJurisdiccional(expOrgano)
+                                                        .abogadoResponsable(expAbogado)
+                                                        .etapaProcesal(EtapaProcesal.LAUDO)
+                                                        .prioridad(Prioridad.MEDIA).createdAt(LocalDateTime.now())
+                                                        .build();
+                                        expedienteRepository.save(expLaudo);
+
+                                        // Expediente en FIRME
+                                        Expediente expFirme = Expediente.builder()
+                                                        .numero("024/2024")
+                                                        .partes("Sindicato vs Patronal")
+                                                        .descripcion("Expediente con resolución FIRME.")
+                                                        .gerencia(gerencia).materia(materia)
+                                                        .organoJurisdiccional(expOrgano)
+                                                        .abogadoResponsable(expAbogado)
+                                                        .etapaProcesal(EtapaProcesal.FIRME)
+                                                        .prioridad(Prioridad.BAJA).createdAt(LocalDateTime.now())
+                                                        .build();
+                                        expedienteRepository.save(expFirme);
+
+                                        // Expediente CONCLUIDO
+                                        Expediente expConcluido = Expediente.builder()
+                                                        .numero("025/2023")
+                                                        .partes("Estado vs Particular")
+                                                        .descripcion("Expediente totalmente CONCLUIDO.")
+                                                        .gerencia(gerencia).materia(materia)
+                                                        .organoJurisdiccional(expOrgano)
+                                                        .abogadoResponsable(expAbogado)
+                                                        .etapaProcesal(EtapaProcesal.CONCLUIDO)
+                                                        .prioridad(Prioridad.MEDIA)
+                                                        .createdAt(LocalDateTime.now().minusMonths(1)).build();
+                                        expedienteRepository.save(expConcluido);
+
                                         // Audiencia 1: CONCLUIDA (Debería ignorarse en el widget)
                                         Audiencia a1 = Audiencia.builder()
                                                         .expediente(exp022)

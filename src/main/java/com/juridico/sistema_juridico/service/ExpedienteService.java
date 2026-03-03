@@ -24,9 +24,9 @@ public class ExpedienteService {
     private final MateriaRepository materiaRepository;
     private final GerenciaRepository gerenciaRepository;
 
-  public ExpedienteService(ExpedienteRepository expedienteRepository, 
-                            MateriaRepository materiaRepository, 
-                            GerenciaRepository gerenciaRepository) {
+    public ExpedienteService(ExpedienteRepository expedienteRepository,
+            MateriaRepository materiaRepository,
+            GerenciaRepository gerenciaRepository) {
         this.expedienteRepository = expedienteRepository;
         this.materiaRepository = materiaRepository;
         this.gerenciaRepository = gerenciaRepository;
@@ -53,8 +53,9 @@ public class ExpedienteService {
     }
 
     // Corregido: Coincide con los 7 parámetros y tipos Integer del Repository
-    public Page<Expediente> buscarExpedientes(String folio, Integer gerenciaId, Integer materiaId, Integer tipoId, Prioridad prioridad, Integer abogadoId, Pageable pageable) {
-        return expedienteRepository.buscarExpedientes(folio, gerenciaId, materiaId, tipoId, prioridad, abogadoId, pageable);
+    public Page<Expediente> buscarExpedientes(String folio, Integer gerenciaId, Integer materiaId, Prioridad prioridad,
+            Integer abogadoId, Pageable pageable) {
+        return expedienteRepository.buscarExpedientes(folio, gerenciaId, materiaId, prioridad, abogadoId, pageable);
     }
 
     // Corregido: count() es el método estándar de JpaRepository
