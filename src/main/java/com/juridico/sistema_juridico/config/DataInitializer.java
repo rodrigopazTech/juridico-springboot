@@ -5,7 +5,7 @@ import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional;
 import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
-import com.juridico.sistema_juridico.Entity.catalogo.TipoExpediente;
+
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
@@ -18,7 +18,7 @@ import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
-import com.juridico.sistema_juridico.repository.Catalogo.TipoExpedienteRepository;
+
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,8 +44,7 @@ public class DataInitializer implements CommandLineRunner {
         private UsuarioRepository usuarioRepository;
         @Autowired
         private PasswordEncoder passwordEncoder;
-        @Autowired
-        private TipoExpedienteRepository tipoExpedienteRepository;
+
         @Autowired
         private OrganoJurisdiccionalRepository organoRepository;
         @Autowired
@@ -171,19 +170,6 @@ public class DataInitializer implements CommandLineRunner {
 
                         usuarioRepository.saveAll(List.of(director, subdirector, gerente, abogado, jefe));
                         System.out.println("✅ Usuarios de prueba creados.");
-                }
-
-                // 3. TIPOS DE EXPEDIENTE
-                if (tipoExpedienteRepository.count() == 0) {
-                        tipoExpedienteRepository.saveAll(List.of(
-                                        TipoExpediente.builder().nombre("Juicio Ordinario Civil").build(),
-                                        TipoExpediente.builder().nombre("Juicio Ejecutivo Mercantil").build(),
-                                        TipoExpediente.builder().nombre("Juicio Oral Mercantil").build(),
-                                        TipoExpediente.builder().nombre("Amparo Indirecto").build(),
-                                        TipoExpediente.builder().nombre("Amparo Directo").build(),
-                                        TipoExpediente.builder().nombre("Procedimiento Laboral").build(),
-                                        TipoExpediente.builder().nombre("Carpeta de Investigación").build()));
-                        System.out.println("✅ Tipos de Expediente creados.");
                 }
 
                 // 4. ÓRGANOS JURISDICCIONALES (¡LISTA AMPLIADA!)
@@ -337,7 +323,7 @@ public class DataInitializer implements CommandLineRunner {
                                         Gerencia gerencia = materia.getGerencia();
                                         Usuario expAbogado = usuarioRepository.findByEmail("abogado@juridico.com")
                                                         .orElse(null);
-                                        TipoExpediente tipoE = tipoExpedienteRepository.findAll().get(0);
+
                                         OrganoJurisdiccional expOrgano = organoRepository.findAll().get(0);
                                         TipoAudiencia tipoA = tipoAudienciaRepository.findAll().get(0);
 
@@ -347,7 +333,7 @@ public class DataInitializer implements CommandLineRunner {
                                                         .descripcion("Expediente de prueba para validación de widgets y audiencias.")
                                                         .gerencia(gerencia)
                                                         .materia(materia)
-                                                        .tipoExpediente(tipoE)
+
                                                         .organoJurisdiccional(expOrgano)
                                                         .sede("CDMX")
                                                         .abogadoResponsable(expAbogado)

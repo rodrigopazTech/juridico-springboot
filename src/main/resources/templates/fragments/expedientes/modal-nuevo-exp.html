@@ -68,15 +68,7 @@
                         <option value="">Primero selecciona una gerencia...</option>
                     </select>
                 </div>
-                <div>
-                    <label class="block font-bold text-gray-600 mb-1">Tipo Expediente*</label>
-                    <select name="tipoExpediente.id"
-                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white"
-                        required>
-                        <option value="">Selecciona...</option>
-                        <option th:each="t : ${tipos}" th:value="${t.id}" th:text="${t.nombre}"></option>
-                    </select>
-                </div>
+
             </div>
 
             <div>

@@ -11,7 +11,7 @@ import com.juridico.sistema_juridico.repository.Catalogo.EstadoRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRepository;
-import com.juridico.sistema_juridico.repository.Catalogo.TipoExpedienteRepository;
+
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
@@ -57,8 +57,7 @@ public class ExpedientesController {
     private GerenciaRepository gerenciaRepository;
     @Autowired
     private MateriaRepository materiaRepository;
-    @Autowired
-    private TipoExpedienteRepository tipoExpedienteRepository;
+
     @Autowired
     private OrganoJurisdiccionalRepository organoRepository;
     @Autowired
@@ -145,14 +144,14 @@ public class ExpedientesController {
 
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
         model.addAttribute("listaMaterias", materiaRepository.findAll());
-        model.addAttribute("listaTipos", tipoExpedienteRepository.findAll());
+
         model.addAttribute("listaPrioridades", Prioridad.values());
         model.addAttribute("listaEtapas", EtapaProcesal.values());
         model.addAttribute("listaAbogados", usuarioRepository.findAll());
 
         model.addAttribute("gerencias", gerenciaRepository.findAll());
         model.addAttribute("materias", materiaRepository.findAll());
-        model.addAttribute("tipos", tipoExpedienteRepository.findAll());
+
         model.addAttribute("organos", organoRepository.findAll());
         model.addAttribute("usuarios", usuarioRepository.findAll());
         model.addAttribute("prioridades", Prioridad.values());
@@ -298,7 +297,7 @@ public class ExpedientesController {
 
         model.addAttribute("gerencias", gerenciaRepository.findAll());
         model.addAttribute("materias", materiaRepository.findAll());
-        model.addAttribute("tipos", tipoExpedienteRepository.findAll());
+
         model.addAttribute("organos", organoRepository.findAll());
         model.addAttribute("usuarios", usuarioRepository.findAll());
         model.addAttribute("prioridades", Prioridad.values());

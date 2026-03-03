@@ -10,7 +10,7 @@ import java.util.UUID;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional;
-import com.juridico.sistema_juridico.Entity.catalogo.TipoExpediente;
+
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
@@ -22,14 +22,11 @@ import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(
-    name = "expedientes",
-    indexes = {
+@Table(name = "expedientes", indexes = {
         @Index(name = "idx_expedientes_numero", columnList = "numero"),
         @Index(name = "idx_expedientes_etapa", columnList = "etapa_procesal"),
         @Index(name = "idx_expedientes_abogado", columnList = "abogado_responsable_id")
-    }
-)
+})
 public class Expediente {
 
     @Id
@@ -97,10 +94,6 @@ public class Expediente {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    @ManyToOne
-    @JoinColumn(name = "tipo_expediente_id")
-    private TipoExpediente tipoExpediente;
 
     // =========================
     // CALLBACKS JPA

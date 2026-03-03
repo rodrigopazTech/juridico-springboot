@@ -82,9 +82,6 @@ public class AuditoriaService {
                                 actual.getAbogadoResponsable() != null
                                                 ? actual.getAbogadoResponsable().getNombreCompleto()
                                                 : "N/A");
-                compararYAgregar(cambios, actual, anterior, "Tipo de Expediente",
-                                anterior.getTipoExpediente() != null ? anterior.getTipoExpediente().getNombre() : "N/A",
-                                actual.getTipoExpediente() != null ? actual.getTipoExpediente().getNombre() : "N/A");
 
                 if (!cambios.isEmpty()) {
                         for (BitacoraDato cambio : cambios) {
