@@ -3,10 +3,14 @@ package com.juridico.sistema_juridico.service;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
+import com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional;
+import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
-import com.juridico.sistema_juridico.exception.ResourceNotFoundException; 
+import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
+import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,14 +22,23 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Service
 public class UsuarioService {
 
-    @Autowired private UsuarioRepository usuarioRepository;
-    @Autowired private GerenciaRepository gerenciaRepository;
-    @Autowired private MateriaRepository materiaRepository;
-    @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+    @Autowired
+    private GerenciaRepository gerenciaRepository;
+    @Autowired
+    private MateriaRepository materiaRepository;
+    @Autowired
+    private OrganoJurisdiccionalRepository organoRepository;
+    @Autowired
+    private TipoAudienciaRepository tipoAudienciaRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     // --- USUARIOS ---
 
@@ -51,9 +64,17 @@ public class UsuarioService {
         return gerenciaRepository.findAll(pageable);
     }
 
+    public Page<OrganoJurisdiccional> listarOrganosPaginados(Pageable pageable) {
+        return organoRepository.findAll(pageable);
+    }
+
+    public Page<TipoAudiencia> listarTiposAudienciaPaginados(Pageable pageable) {
+        return tipoAudienciaRepository.findAll(pageable);
+    }
+
     @Transactional
     public Usuario guardarUsuario(Usuario usuario, List<Integer> materiasIds) {
-        
+
         Set<Materia> materiasSeleccionadas = new HashSet<>();
         if (materiasIds != null && !materiasIds.isEmpty()) {
             materiasSeleccionadas.addAll(materiaRepository.findAllById(materiasIds));
@@ -66,26 +87,25 @@ public class UsuarioService {
                 throw new RuntimeException("El correo electrónico ya está registrado.");
             }
             usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
-            usuario.setMaterias(materiasSeleccionadas); 
+            usuario.setMaterias(materiasSeleccionadas);
             return usuarioRepository.save(usuario);
-        } 
-        else {
+        } else {
             // EDICIÓN
             Usuario existente = buscarPorId(usuario.getId()); // Ya lanza 404 si no existe
 
             existente.setNombreCompleto(usuario.getNombreCompleto());
             existente.setEmail(usuario.getEmail());
             existente.setRol(usuario.getRol());
-            
+
             if (usuario.getRol().name().equals("DIRECCION") || usuario.getRol().name().equals("SUBDIRECCION")) {
                 existente.setGerencia(null);
-                existente.getMaterias().clear(); 
+                existente.getMaterias().clear();
             } else {
                 existente.setGerencia(usuario.getGerencia());
                 existente.getMaterias().clear();
                 existente.getMaterias().addAll(materiasSeleccionadas);
             }
-            
+
             existente.setActivo(usuario.getActivo());
 
             if (usuario.getPassword() != null && !usuario.getPassword().isBlank()) {
@@ -97,11 +117,11 @@ public class UsuarioService {
     }
 
     @Transactional
-    public void eliminarUsuario(Integer id) { 
+    public void eliminarUsuario(Integer id) {
         if (!usuarioRepository.existsById(id)) {
             throw new ResourceNotFoundException("No se puede eliminar: El usuario no existe.");
         }
-        usuarioRepository.deleteById(id); 
+        usuarioRepository.deleteById(id);
     }
 
     // --- GERENCIAS ---
@@ -124,11 +144,68 @@ public class UsuarioService {
     public Materia guardarMateria(Materia materia) {
         return materiaRepository.save(materia);
     }
-    
+
     public void eliminarMateria(Integer id) {
         if (!materiaRepository.existsById(id)) {
             throw new ResourceNotFoundException("Materia no encontrada.");
         }
         materiaRepository.deleteById(id);
+    }
+
+    // --- ÓRGANOS JURISDICCIONALES ---
+
+    public OrganoJurisdiccional buscarOrganoPorId(Integer id) {
+        return organoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Órgano Jurisdiccional no encontrado con ID: " + id));
+    }
+
+    @Transactional
+    public OrganoJurisdiccional guardarOrgano(OrganoJurisdiccional organo) {
+        if (organo.getId() != null) {
+            OrganoJurisdiccional existente = buscarOrganoPorId(organo.getId());
+            existente.setNombre(organo.getNombre());
+            existente.setTipo(organo.getTipo());
+            existente.setSede(organo.getSede());
+            existente.setActivo(organo.getActivo());
+            existente.setUpdatedAt(LocalDateTime.now());
+            return organoRepository.save(existente);
+        }
+        organo.setCreatedAt(LocalDateTime.now());
+        organo.setUpdatedAt(LocalDateTime.now());
+        return organoRepository.save(organo);
+    }
+
+    @Transactional
+    public void eliminarOrgano(Integer id) {
+        if (!organoRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Órgano Jurisdiccional no encontrado.");
+        }
+        organoRepository.deleteById(id);
+    }
+
+    // --- TIPOS DE AUDIENCIA ---
+
+    public TipoAudiencia buscarTipoAudienciaPorId(Integer id) {
+        return tipoAudienciaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tipo de Audiencia no encontrado con ID: " + id));
+    }
+
+    @Transactional
+    public TipoAudiencia guardarTipoAudiencia(TipoAudiencia tipo) {
+        if (tipo.getId() != null) {
+            TipoAudiencia existente = buscarTipoAudienciaPorId(tipo.getId());
+            existente.setNombre(tipo.getNombre());
+            existente.setActivo(tipo.getActivo());
+            return tipoAudienciaRepository.save(existente);
+        }
+        return tipoAudienciaRepository.save(tipo);
+    }
+
+    @Transactional
+    public void eliminarTipoAudiencia(Integer id) {
+        if (!tipoAudienciaRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Tipo de Audiencia no encontrado.");
+        }
+        tipoAudienciaRepository.deleteById(id);
     }
 }
