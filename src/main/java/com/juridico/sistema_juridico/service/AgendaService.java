@@ -3,6 +3,7 @@ package com.juridico.sistema_juridico.service;
 import com.juridico.sistema_juridico.Entity.procesal.AudienciaDesahogada;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaDesahogadaRepository;
+import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page; 
@@ -30,7 +31,7 @@ public class AgendaService {
 
     public Page<Termino> getTerminosPorFiltro(String filtro, String mes, Integer anio, int page) {
         LocalDate[] rango = calcularRango(filtro, mes, anio);
-        List<String> estatusFinales = Arrays.asList("Presentado", "Concluido");
+        List<EstatusTermino> estatusFinales = Arrays.asList(EstatusTermino.PRESENTADO, EstatusTermino.CONCLUIDO);
         Pageable pageable = PageRequest.of(page, 10); // 10 registros por página
         return terminoRepository.findByEstatusTerminoInAndFechaPresentacionBetweenOrderByFechaPresentacionDesc(
                 estatusFinales, 

@@ -6,6 +6,7 @@ import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import com.juridico.sistema_juridico.Entity.procesal.TerminoPresentado;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
+import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
@@ -73,37 +74,37 @@ public class TerminosController {
     private AuditoriaService auditoriaService;
 
     // --- MATRIZ DE PERMISOS ---
-    private static final Map<String, List<RolUsuario>> PERMISOS_ETAPAS = new HashMap<>();
+    private static final Map<EstatusTermino, List<RolUsuario>> PERMISOS_ETAPAS = new HashMap<>();
     static {
-        PERMISOS_ETAPAS.put("Proyectista", Arrays.asList(RolUsuario.ABOGADO, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO,
+        PERMISOS_ETAPAS.put(EstatusTermino.PROYECTISTA, Arrays.asList(RolUsuario.ABOGADO, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO,
                 RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
-        PERMISOS_ETAPAS.put("Revisión", Arrays.asList(RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE, RolUsuario.DIRECCION,
+        PERMISOS_ETAPAS.put(EstatusTermino.REVISION, Arrays.asList(RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE, RolUsuario.DIRECCION,
                 RolUsuario.SUBDIRECCION));
-        PERMISOS_ETAPAS.put("Gerencia",
+        PERMISOS_ETAPAS.put(EstatusTermino.GERENCIA,
                 Arrays.asList(RolUsuario.GERENTE, RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
-        PERMISOS_ETAPAS.put("Dirección", Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
-        PERMISOS_ETAPAS.put("Liberado", Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE,
+        PERMISOS_ETAPAS.put(EstatusTermino.DIRECCION, Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
+        PERMISOS_ETAPAS.put(EstatusTermino.LIBERADO, Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE,
                 RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
-        PERMISOS_ETAPAS.put("Presentado", Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION,
+        PERMISOS_ETAPAS.put(EstatusTermino.PRESENTADO, Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION,
                 RolUsuario.ABOGADO, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO));
     }
 
-    private static final Map<String, Integer> ORDEN_ETAPAS = new HashMap<>();
+    private static final Map<EstatusTermino, Integer> ORDEN_ETAPAS = new HashMap<>();
     static {
-        ORDEN_ETAPAS.put("Proyectista", 1);
-        ORDEN_ETAPAS.put("Revisión", 2);
-        ORDEN_ETAPAS.put("Gerencia", 3);
-        ORDEN_ETAPAS.put("Dirección", 4);
-        ORDEN_ETAPAS.put("Liberado", 5);
-        ORDEN_ETAPAS.put("Presentado", 6);
-        ORDEN_ETAPAS.put("Concluido", 7);
+        ORDEN_ETAPAS.put(EstatusTermino.PROYECTISTA, 1);
+        ORDEN_ETAPAS.put(EstatusTermino.REVISION, 2);
+        ORDEN_ETAPAS.put(EstatusTermino.GERENCIA, 3);
+        ORDEN_ETAPAS.put(EstatusTermino.DIRECCION, 4);
+        ORDEN_ETAPAS.put(EstatusTermino.LIBERADO, 5);
+        ORDEN_ETAPAS.put(EstatusTermino.PRESENTADO, 6);
+        ORDEN_ETAPAS.put(EstatusTermino.CONCLUIDO, 7);
     }
 
     @GetMapping
     public String index(Model model,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String estatus,
+            @RequestParam(required = false) EstatusTermino estatus,
             @RequestParam(required = false) Prioridad prioridad,
             @RequestParam(required = false) Integer abogadoId,
             @RequestParam(required = false) Integer gerenciaId,
@@ -157,8 +158,7 @@ public class TerminosController {
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
         model.addAttribute("listaMaterias", materiaRepository.findAll());
         model.addAttribute("listaPrioridades", Prioridad.values());
-        model.addAttribute("listaEstatus", new String[] { "Proyectista", "Revisión", "Gerencia", "Dirección",
-                "Liberado", "Presentado", "Concluido" });
+        model.addAttribute("listaEstatus", EstatusTermino.values());
 
         // --- 5. LOGICA ANTI-FANTASMAS (EXPEDIENTES DISPONIBLES) ---
         List<Expediente> expedientesParaDropdown;
@@ -264,7 +264,7 @@ public class TerminosController {
             esNuevo = true;
             terminoGuardar = terminoForm;
             terminoGuardar.setFechaIngreso(LocalDate.now());
-            terminoGuardar.setEstatusTermino("Proyectista");
+            terminoGuardar.setEstatusTermino(EstatusTermino.PROYECTISTA);
             terminoGuardar.setCreatedAt(LocalDateTime.now());
             terminoGuardar.setUpdatedAt(LocalDateTime.now());
 
@@ -313,7 +313,7 @@ public class TerminosController {
                 .orElseThrow(() -> new ResourceNotFoundException("Término no encontrado."));
 
         Usuario actor = getUsuarioActual();
-        String etapaAnterior = termino.getEstatusTermino();
+        EstatusTermino etapaAnterior = termino.getEstatusTermino();
 
         // 2. VALIDAR PERMISOS (O LANZAR ERROR 403)
         if (!tienePermiso(etapaAnterior, actor.getRol())) {
@@ -321,14 +321,14 @@ public class TerminosController {
         }
 
         // 3. VALIDAR REGLAS DE NEGOCIO (O LANZAR ERROR 400)
-        if ("Proyectista".equals(etapaAnterior) && termino.getArchivoWord() == null) {
+        if (etapaAnterior == EstatusTermino.PROYECTISTA && termino.getArchivoWord() == null) {
             throw new BadRequestException("Debes subir el archivo Word antes de enviar a Revisión.");
         }
 
         // 4. LÓGICA FELIZ
-        String siguienteEtapa = calcularSiguienteEstado(etapaAnterior);
+        EstatusTermino siguienteEtapa = calcularSiguienteEstado(etapaAnterior);
         termino.setEstatusTermino(siguienteEtapa);
-        if ("Presentado".equals(siguienteEtapa))
+        if (siguienteEtapa == EstatusTermino.PRESENTADO)
             termino.setFechaPresentacion(LocalDate.now());
 
         // Registro en historial
@@ -341,37 +341,37 @@ public class TerminosController {
 
         notificarCambioDeEtapa(termino, etapaAnterior, siguienteEtapa, actor);
 
-        redirectAttrs.addFlashAttribute("mensaje", "Avanzó a: " + siguienteEtapa);
+        redirectAttrs.addFlashAttribute("mensaje", "Avanzó a: " + siguienteEtapa.getDescripcion());
         redirectAttrs.addFlashAttribute("tipo", "success");
 
         return "redirect:/terminos";
     }
 
-    private void notificarCambioDeEtapa(Termino termino, String etapaAnterior, String nuevaEtapa, Usuario actor) {
-        String titulo = "Término en " + nuevaEtapa;
-        String mensajeBase = String.format("Movimiento de '%s' a '%s' por %s", etapaAnterior, nuevaEtapa,
+    private void notificarCambioDeEtapa(Termino termino, EstatusTermino etapaAnterior, EstatusTermino nuevaEtapa, Usuario actor) {
+        String titulo = "Término en " + nuevaEtapa.getDescripcion();
+        String mensajeBase = String.format("Movimiento de '%s' a '%s' por %s", etapaAnterior.getDescripcion(), nuevaEtapa.getDescripcion(),
                 actor.getNombreCompleto());
 
         List<Usuario> destinatarios = new ArrayList<>();
         Gerencia g = termino.getExpediente().getGerencia();
 
         switch (nuevaEtapa) {
-            case "Revisión":
+            case REVISION:
                 destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, g));
                 break;
-            case "Gerencia":
+            case GERENCIA:
                 destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE, g));
                 break;
-            case "Dirección":
+            case DIRECCION:
                 destinatarios.addAll(usuarioRepository
                         .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
                 break;
-            case "Liberado":
+            case LIBERADO:
                 if (termino.getAbogadoResponsable() != null)
                     destinatarios.add(termino.getAbogadoResponsable());
                 destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, g));
                 break;
-            case "Presentado":
+            case PRESENTADO:
                 destinatarios.addAll(usuarioRepository.findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION)));
                 break;
         }
@@ -410,8 +410,8 @@ public class TerminosController {
                 }
 
                 // --- CANDADO 2: ETAPAS FINALES BLOQUEADAS ---
-                String st = termino.getEstatusTermino();
-                if ("Liberado".equals(st) || "Presentado".equals(st) || "Concluido".equals(st)) {
+                EstatusTermino st = termino.getEstatusTermino();
+                if (st == EstatusTermino.LIBERADO || st == EstatusTermino.PRESENTADO || st == EstatusTermino.CONCLUIDO) {
                     redirectAttrs.addFlashAttribute("mensaje", "El documento está bloqueado en esta etapa.");
                     redirectAttrs.addFlashAttribute("tipo", "error");
                     return "redirect:/terminos";
@@ -449,7 +449,7 @@ public class TerminosController {
 
         Usuario actor = getUsuarioActual();
 
-        if (!tienePermiso("Liberado", actor.getRol())) {
+        if (!tienePermiso(EstatusTermino.LIBERADO, actor.getRol())) {
             redirectAttrs.addFlashAttribute("mensaje", "No tienes permiso para cargar acuses.");
             redirectAttrs.addFlashAttribute("tipo", "error");
             return "redirect:/terminos";
@@ -459,7 +459,7 @@ public class TerminosController {
             Termino termino = terminoRepository.findById(id).orElse(null);
 
             // 2. Verificar que el término exista y esté efectivamente en estado 'Liberado'
-            if (termino != null && "Liberado".equals(termino.getEstatusTermino())) {
+            if (termino != null && termino.getEstatusTermino() == EstatusTermino.LIBERADO) {
 
                 // 3. Gestión del archivo físico
                 String carpeta = "uploads/acuses/";
@@ -478,7 +478,7 @@ public class TerminosController {
                         .sincronizadoAt(LocalDateTime.now()).build();
                 terminoPresentadoRepository.save(presentado);
 
-                termino.setEstatusTermino("Presentado");
+                termino.setEstatusTermino(EstatusTermino.PRESENTADO);
                 termino.setFechaPresentacion(LocalDate.now());
                 if (observaciones != null) {
                     termino.setObservaciones(observaciones);
@@ -504,7 +504,7 @@ public class TerminosController {
         Usuario actor = getUsuarioActual();
 
         // Solo roles altos (Dirección/Gerencia) deberían poder concluir
-        if (!tienePermiso("Presentado", actor.getRol())) {
+        if (!tienePermiso(EstatusTermino.PRESENTADO, actor.getRol())) {
             redirectAttrs.addFlashAttribute("mensaje", "No tienes permiso para finalizar este término.");
             redirectAttrs.addFlashAttribute("tipo", "error");
             return "redirect:/terminos";
@@ -514,8 +514,8 @@ public class TerminosController {
             Termino termino = terminoRepository.findById(id).orElse(null);
 
             // Solo se puede concluir si ya fue "Presentado" (ya tiene acuse)
-            if (termino != null && "Presentado".equals(termino.getEstatusTermino())) {
-                termino.setEstatusTermino("Concluido");
+            if (termino != null && termino.getEstatusTermino() == EstatusTermino.PRESENTADO) {
+                termino.setEstatusTermino(EstatusTermino.CONCLUIDO);
                 if (observaciones != null) {
                     termino.setObservaciones(observaciones);
                 }
@@ -534,27 +534,27 @@ public class TerminosController {
         return "redirect:/terminos";
     }
 
-    private boolean tienePermiso(String etapaActual, RolUsuario rolUsuario) {
+    private boolean tienePermiso(EstatusTermino etapaActual, RolUsuario rolUsuario) {
         if (etapaActual == null)
             return false;
         List<RolUsuario> permitidos = PERMISOS_ETAPAS.get(etapaActual);
         return permitidos != null && permitidos.contains(rolUsuario);
     }
 
-    private String calcularSiguienteEstado(String actual) {
+    private EstatusTermino calcularSiguienteEstado(EstatusTermino actual) {
         if (actual == null)
-            return "Proyectista";
+            return EstatusTermino.PROYECTISTA;
         switch (actual) {
-            case "Proyectista":
-                return "Revisión";
-            case "Revisión":
-                return "Gerencia";
-            case "Gerencia":
-                return "Dirección";
-            case "Dirección":
-                return "Liberado";
-            case "Liberado":
-                return "Presentado";
+            case PROYECTISTA:
+                return EstatusTermino.REVISION;
+            case REVISION:
+                return EstatusTermino.GERENCIA;
+            case GERENCIA:
+                return EstatusTermino.DIRECCION;
+            case DIRECCION:
+                return EstatusTermino.LIBERADO;
+            case LIBERADO:
+                return EstatusTermino.PRESENTADO;
             default:
                 return actual;
         }
@@ -595,7 +595,7 @@ public class TerminosController {
     @GetMapping("/exportar-excel")
     public void exportarExcel(HttpServletResponse response,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String estatus,
+            @RequestParam(required = false) EstatusTermino estatus,
             @RequestParam(required = false) Prioridad prioridad,
             @RequestParam(required = false) Integer abogadoId,
             @RequestParam(required = false) Integer gerenciaId,
