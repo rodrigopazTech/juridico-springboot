@@ -177,11 +177,9 @@ public class LoteMigracionService {
     // ETAPA 2: LÓGICA DE EXPEDIENTES
     // =========================================================
 
-    public java.util.List<java.util.Map<String, Object>> obtenerResumenExpedientes(Long loteId) {
-        // Traemos todos los registros del lote
+   public java.util.List<java.util.Map<String, Object>> obtenerResumenExpedientes(Long loteId) {
         List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
         
-        // Agrupamos por Número de Expediente
         java.util.Map<String, List<RegistroMigracion>> agrupados = registros.stream()
             .collect(java.util.stream.Collectors.groupingBy(
                 r -> r.getNumeroExpedienteExtraido() != null ? r.getNumeroExpedienteExtraido() : "SIN_NUMERO"
@@ -191,19 +189,37 @@ public class LoteMigracionService {
         
         for (java.util.Map.Entry<String, List<RegistroMigracion>> entry : agrupados.entrySet()) {
             java.util.Map<String, Object> map = new java.util.HashMap<>();
-            map.put("numeroExpediente", entry.getKey());
+            String numExp = entry.getKey();
+            map.put("numeroExpediente", numExp);
             
-            // Contamos cuántos términos y audiencias trae cada expediente
             long totalTerminos = entry.getValue().stream().filter(r -> "TERMINO".equals(r.getTipoDato())).count();
             long totalAudiencias = entry.getValue().stream().filter(r -> "AUDIENCIA".equals(r.getTipoDato())).count();
             
             map.put("totalTerminos", totalTerminos);
             map.put("totalAudiencias", totalAudiencias);
             map.put("totalRegistros", entry.getValue().size());
+
+            // --- LÓGICA DE SEMÁFORO (VALIDACIÓN) ---
+            List<String> camposFaltantes = new java.util.ArrayList<>();
+            boolean critico = false;
+
+            // Validamos sobre el primer registro que encontremos del expediente (donde usualmente vienen los datos generales)
+            try {
+                JsonNode json = objectMapper.readTree(entry.getValue().get(0).getPayloadJson());
+                
+                if (numExp.equals("SIN_NUMERO")) { camposFaltantes.add("Número de Expediente"); critico = true; }
+                if (!json.has("materia") || json.get("materia").asText().trim().isEmpty()) { camposFaltantes.add("Materia"); critico = true; }
+                if (!json.has("gerencia") || json.get("gerencia").asText().trim().isEmpty()) { camposFaltantes.add("Gerencia"); critico = true; }
+                if (!json.has("descripcion") || json.get("descripcion").asText().trim().isEmpty()) { camposFaltantes.add("Descripción"); }
+                if (!json.has("abogadoResponsable") || json.get("abogadoResponsable").asText().trim().isEmpty()) { camposFaltantes.add("Abogado"); }
+            } catch (Exception e) { critico = true; }
+
+            map.put("faltantes", camposFaltantes);
+            map.put("esCritico", critico);
+            map.put("estaListo", camposFaltantes.isEmpty());
             
             resumen.add(map);
         }
-        
         return resumen;
     }
 
@@ -267,6 +283,10 @@ public class LoteMigracionService {
     public void inyectarLoteOficial(Long loteId) {
         LoteMigracion lote = loteRepository.findById(loteId).orElseThrow();
         
+
+        List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
+        
+        String textoProvisional = "Migrado desde sistema histórico - Pendiente de completar por el abogado responsable.";
         // Aquí conectaremos el servicio de creación real (ExpedienteService, etc.)
         // Por ahora, simulamos que los datos se inyectan correctamente y cerramos el lote.
         
@@ -275,7 +295,7 @@ public class LoteMigracionService {
         loteRepository.save(lote);
         
         // Marcamos los registros crudos como procesados para que queden en el historial
-        List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
+        
         for(RegistroMigracion reg : registros) {
             reg.setEstatus("PROCESADO");
             reg.setProcessedAt(java.time.LocalDateTime.now());
