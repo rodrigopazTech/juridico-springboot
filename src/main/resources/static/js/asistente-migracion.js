@@ -2,54 +2,51 @@ function inicializarAsistente() {
     // ==========================================
     // LÓGICA DE PESTAÑAS (TABS) PARA LA ETAPA 1
     // ==========================================
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const tabPanels = document.querySelectorAll('.tab-panel');
+    const tabBtns = document.querySelectorAll(".tab-btn");
+    const tabPanels = document.querySelectorAll(".tab-panel");
 
     console.log("Cargando Asistente de Migración... Pestañas detectadas:", tabBtns.length);
 
-    // Encender el primer panel disponible
-    if (tabPanels.length > 0 && tabBtns.length > 0) {
-        tabPanels[0].classList.remove('hidden');
-        
-        // Limpiamos estilos de todos y activamos el primero
-        tabBtns.forEach(b => {
-            b.classList.remove('border-gob-oro', 'text-gob-oro', 'font-bold');
-            b.classList.add('border-transparent', 'text-gray-500');
-        });
-        tabBtns[0].classList.add('border-gob-oro', 'text-gob-oro', 'font-bold');
-        tabBtns[0].classList.remove('border-transparent', 'text-gray-500');
+    if (tabBtns.length === 0 || tabPanels.length === 0) return;
+
+    // 1. Esconder todos los paneles por seguridad
+    tabPanels.forEach(p => p.classList.add("hidden"));
+    
+    // 2. Encender dinámicamente el panel que corresponda al PRIMER botón que exista
+    const firstBtn = tabBtns[0];
+    const targetId = firstBtn.getAttribute("data-target");
+    const firstPanel = document.getElementById(targetId);
+
+    if(firstPanel) {
+        firstPanel.classList.remove("hidden");
+        firstBtn.classList.add("border-gob-oro", "text-gob-oro", "font-bold");
+        firstBtn.classList.remove("border-transparent", "text-gray-500");
     }
 
+    // 3. Asignar los eventos de clic
     tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const targetId = btn.getAttribute('data-target');
-            const targetPanel = document.getElementById(targetId);
+        btn.addEventListener("click", function() {
+            const tId = this.getAttribute("data-target");
+            const tPanel = document.getElementById(tId);
 
-            // Protección anticaídas: Si el HTML tiene mal el nombre, te avisa en consola pero no se rompe
-            if(!targetPanel) {
-                console.error("¡Cuidado! No se encontró el panel con el ID:", targetId);
-                return; 
-            }
+            if(!tPanel) return; // Si no existe el panel, no hace nada y no se rompe
 
-            // 1. Resetear botones
+            // Resetear botones y paneles
             tabBtns.forEach(b => {
-                b.classList.remove('border-gob-oro', 'text-gob-oro', 'font-bold');
-                b.classList.add('border-transparent', 'text-gray-500');
+                b.classList.remove("border-gob-oro", "text-gob-oro", "font-bold");
+                b.classList.add("border-transparent", "text-gray-500");
             });
-            // 2. Ocultar todos los paneles
-            tabPanels.forEach(p => p.classList.add('hidden'));
+            tabPanels.forEach(p => p.classList.add("hidden"));
 
-            // 3. Activar el botón clickeado
-            btn.classList.add('border-gob-oro', 'text-gob-oro', 'font-bold');
-            btn.classList.remove('border-transparent', 'text-gray-500');
-            
-            // 4. Mostrar el panel correspondiente
-            targetPanel.classList.remove('hidden');
+            // Activar el seleccionado
+            this.classList.add("border-gob-oro", "text-gob-oro", "font-bold");
+            this.classList.remove("border-transparent", "text-gray-500");
+            tPanel.classList.remove("hidden");
         });
     });
 }
 
-// Asegurar ejecución del JS sin importar cómo cargue el navegador
+// Forzar ejecución inmediata de las pestañas al cargar la página
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', inicializarAsistente);
 } else {
@@ -57,7 +54,7 @@ if (document.readyState === 'loading') {
 }
 
 // ==========================================
-// SWEET ALERT PARA LA ETAPA FINAL
+// SWEET ALERT PARA LA ETAPA FINAL (Inyección)
 // ==========================================
 function confirmarInyeccion() {
     Swal.fire({
