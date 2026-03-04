@@ -1,0 +1,169 @@
+<div th:fragment="contenido" xmlns:th="http://www.thymeleaf.org">
+  <div th:if="${pasoActual == 1}">
+    <h2 class="text-2xl font-bold text-gob-guinda mb-2">
+      <i class="fas fa-spell-check mr-2"></i> Etapa 1: Homologación de Catálogos y Usuarios
+    </h2>
+    <p class="text-gray-600 mb-6">
+      Empareja los textos detectados con los catálogos y cuentas oficiales del sistema.
+    </p>
+
+    <div
+      th:if="${#maps.isEmpty(catalogosAgrupados)}"
+      class="text-center p-8 bg-green-50 rounded-xl border border-green-200"
+    >
+      <i class="fas fa-check-circle text-4xl text-gob-verde mb-3"></i>
+      <h3 class="font-bold text-lg text-green-800">
+        No se detectaron catálogos sucios.
+      </h3>
+      <p class="text-sm text-green-700 mt-1">
+        Puedes avanzar a la siguiente etapa.
+      </p>
+    </div>
+
+    <form
+      th:action="@{/admin/importar/mapear-catalogos}"
+      method="post"
+      th:if="${not #maps.isEmpty(catalogosAgrupados)}"
+    >
+      <input type="hidden" name="loteId" th:value="${lote.id}" />
+
+      <div class="border-b border-gray-200 mb-6">
+        <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="tab-lista">
+          <li class="mr-2" th:if="${catalogosAgrupados.containsKey('GERENCIA')}">
+            <button type="button" class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300" data-target="tab-gerencia">
+              <i class="fas fa-building mr-2"></i> Gerencias (<span th:text="${#lists.size(catalogosAgrupados['GERENCIA'])}"></span>)
+            </button>
+          </li>
+          <li class="mr-2" th:if="${catalogosAgrupados.containsKey('MATERIA')}">
+            <button type="button" class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300" data-target="tab-materia">
+              <i class="fas fa-balance-scale mr-2"></i> Materias (<span th:text="${#lists.size(catalogosAgrupados['MATERIA'])}"></span>)
+            </button>
+          </li>
+          <li class="mr-2" th:if="${catalogosAgrupados.containsKey('ORGANO')}">
+            <button type="button" class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300" data-target="tab-organo">
+              <i class="fas fa-landmark mr-2"></i> Órganos Jurisd. (<span th:text="${#lists.size(catalogosAgrupados['ORGANO'])}"></span>)
+            </button>
+          </li>
+          <li class="mr-2" th:if="${catalogosAgrupados.containsKey('TIPO_AUDIENCIA')}">
+            <button type="button" class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300" data-target="tab-tipo_audiencia">
+              <i class="fas fa-gavel mr-2"></i> Tipos de Audiencia (<span th:text="${#lists.size(catalogosAgrupados['TIPO_AUDIENCIA'])}"></span>)
+            </button>
+          </li>
+          <li class="mr-2" th:if="${catalogosAgrupados.containsKey('USUARIO')}">
+            <button type="button" class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300" data-target="tab-usuario">
+              <i class="fas fa-users mr-2"></i> Usuarios/Abogados (<span th:text="${#lists.size(catalogosAgrupados['USUARIO'])}"></span>)
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <div id="tab-contenedores" class="min-h-[300px]">
+        <th:block th:each="grupo : ${catalogosAgrupados}">
+          <div
+            th:id="'tab-' + ${#strings.toLowerCase(grupo.key)}"
+            class="tab-panel hidden p-4 bg-gray-50 rounded-lg border border-gray-100"
+          >
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div
+                th:each="cat : ${grupo.value}"
+                class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm"
+              >
+                <span class="text-[11px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Texto Recibido:</span>
+                <p class="font-bold text-gob-guinda text-md leading-tight mb-3" th:text="${cat.valorOriginal}"></p>
+
+                <select th:name="'cat_' + ${cat.id}" class="w-full border-gray-300 rounded-md shadow-sm focus:border-gob-oro focus:ring-gob-oro text-sm py-2" required>
+                  <option value="" disabled selected>-- Mapear al Sistema --</option>
+                  
+                  <option th:value="'NEW_' + ${cat.valorOriginal}" class="font-bold text-gob-verde" th:if="${grupo.key != 'USUARIO'}">
+                    [+] CREAR COMO NUEVO
+                  </option>
+                  <option th:value="'NEW_' + ${cat.valorOriginal}" class="font-bold text-gob-verde" th:if="${grupo.key == 'USUARIO'}">
+                    [+] CREAR NUEVO USUARIO EN SISTEMA
+                  </option>
+
+                  <option disabled>───────────</option>
+
+                  <th:block th:if="${grupo.key == 'GERENCIA'}">
+                    <option th:each="bd : ${gerenciasDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                  </th:block>
+                  <th:block th:if="${grupo.key == 'MATERIA'}">
+                    <option th:each="bd : ${materiasDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                  </th:block>
+                  <th:block th:if="${grupo.key == 'ORGANO'}">
+                    <option th:each="bd : ${organosDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                  </th:block>
+                  <th:block th:if="${grupo.key == 'TIPO_AUDIENCIA'}">
+                    <option th:each="bd : ${tiposAudDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                  </th:block>
+                  <th:block th:if="${grupo.key == 'USUARIO'}">
+                    <option th:each="bd : ${usuariosDB}" th:value="${bd.id}" th:text="${bd.nombreCompleto}"></option>
+                  </th:block>
+                </select>
+              </div>
+            </div>
+          </div>
+        </th:block>
+      </div>
+
+      <div class="mt-8 flex justify-end border-t border-gray-200 pt-5">
+        <button type="submit" class="bg-gob-oro text-white px-8 py-3 rounded-xl font-bold shadow hover:bg-[#a37e46] transition">
+          Guardar TODOS los Mapeos y Continuar <i class="fas fa-arrow-right ml-2"></i>
+        </button>
+      </div>
+    </form>
+    
+    <script>
+      (function() {
+        const initTabs = () => {
+            const tabBtns = document.querySelectorAll(".tab-btn");
+            const tabPanels = document.querySelectorAll(".tab-panel");
+
+            if (tabBtns.length === 0 || tabPanels.length === 0) return;
+
+            // 1. Esconder todos los paneles por seguridad
+            tabPanels.forEach(p => p.classList.add("hidden"));
+            
+            // 2. Encender dinámicamente el panel que corresponda al PRIMER botón que exista
+            const firstBtn = tabBtns[0];
+            const targetId = firstBtn.getAttribute("data-target");
+            const firstPanel = document.getElementById(targetId);
+
+            if(firstPanel) {
+                firstPanel.classList.remove("hidden");
+                firstBtn.classList.add("border-gob-oro", "text-gob-oro", "font-bold");
+                firstBtn.classList.remove("border-transparent", "text-gray-500");
+            }
+
+            // 3. Asignar los eventos de clic
+            tabBtns.forEach(btn => {
+                btn.addEventListener("click", function() {
+                    const tId = this.getAttribute("data-target");
+                    const tPanel = document.getElementById(tId);
+
+                    if(!tPanel) return; // Si no existe el panel, no hace nada y no se rompe
+
+                    // Resetear botones y paneles
+                    tabBtns.forEach(b => {
+                        b.classList.remove("border-gob-oro", "text-gob-oro", "font-bold");
+                        b.classList.add("border-transparent", "text-gray-500");
+                    });
+                    tabPanels.forEach(p => p.classList.add("hidden"));
+
+                    // Activar el seleccionado
+                    this.classList.add("border-gob-oro", "text-gob-oro", "font-bold");
+                    this.classList.remove("border-transparent", "text-gray-500");
+                    tPanel.classList.remove("hidden");
+                });
+            });
+        };
+
+        // Forzar ejecución inmediata
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTabs);
+        } else {
+            initTabs();
+        }
+      })();
+    </script>
+  </div>
+</div>

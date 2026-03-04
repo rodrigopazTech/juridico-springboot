@@ -46,7 +46,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // 1. Recursos Públicos
                 .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**", "/lib/**").permitAll()
-                .requestMatchers("/", "/login", "/register", "/api/auth/**").permitAll()
+                .requestMatchers("/", "/login", "/register", "/api/auth/**", "/error").permitAll()
                 
                 // 2. NIVEL ALTO
                 .requestMatchers("/agenda", "/agenda/**").hasAnyAuthority("ADMIN","DIRECCION", "SUBDIRECCION")

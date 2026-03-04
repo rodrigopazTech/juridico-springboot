@@ -173,46 +173,72 @@ public class DataInitializer implements CommandLineRunner {
                 }
 
                 // 4. ÓRGANOS JURISDICCIONALES (¡LISTA AMPLIADA!)
-                if (organoRepository.count() == 0) {
-                        List<OrganoJurisdiccional> organos = List.of(
-                                        // Civiles CDMX
-                                        OrganoJurisdiccional.builder().nombre("Juzgado 34 de lo Civil CDMX")
-                                                        .tipo("Juzgado").sede("CDMX").build(),
-                                        OrganoJurisdiccional.builder().nombre("Juzgado 12 de lo Civil CDMX")
-                                                        .tipo("Juzgado").sede("CDMX").build(),
+                    if (organoRepository.count() == 0) {
+                        List<String> nombresOrganos = List.of(
+                                        "Primera Sala del Tribunal Federal de Conciliación y Arbitraje",
+                                        "Segunda Sala del Tribunal Federal de Conciliación y Arbitraje",
+                                        "Tercera Sala del Tribunal Federal de Conciliación y Arbitraje",
+                                        "Cuarta Sala del Tribunal Federal de Conciliación y Arbitraje",
+                                        "Quinta Sala del Tribunal Federal de Conciliación y Arbitraje",
+                                        "Sexta Sala del Tribunal Federal de Conciliación y Arbitraje",
+                                        "Séptima Sala del Tribunal Federal de Conciliación y Arbitraje",
+                                        "Octava Sala del Tribunal Federal de Conciliación y Arbitraje",
+                                        "Tribunal Federal de Conciliación y Arbitraje",
+                                        "Junta Especial Número Dos de la Federal de Conciliación y Arbitraje",
+                                        "Junta Especial Número Cinco de la Federal de Conciliación y Arbitraje",
+                                        "Junta Especial Número Doce de la Federal de Conciliación y Arbitraje",
+                                        "Junta Especial Número Doce Bis de la Federal de Conciliación y Arbitraje",
+                                        "Junta Especial Número Treinta y Cuatro de la Federal de Conciliación y Arbitraje",
+                                        "Segundo Tribunal Colegiado en Materia de Trabajo del Primer Circuito",
+                                        "Tercer Tribunal Colegiado en Materia de Trabajo del Primer Circuito",
+                                        "Cuarto Tribunal Colegiado en Materia de Trabajo del Primer Circuito",
+                                        "Quinto Tribunal Colegiado en Materia de Trabajo del Primer Circuito",
+                                        "Sexto Tribunal Colegiado en Materia de Trabajo",
+                                        "Séptimo Tribunal Colegiado en Materia de Trabajo",
+                                        "Octavo Tribunal Colegiado en Materia de Trabajo del Primer Circuito",
+                                        "Noveno Tribunal Colegiado en Materia de Trabajo",
+                                        "Décimo Primer Tribunal Colegiado en Materia de Trabajo",
+                                        "Décimo Tercer Tribunal Colegiado en Materia de Trabajo",
+                                        "Décimo Cuarto Tribunal Colegiado en Materia de Trabajo",
+                                        "Décimo Quinto Tribunal Colegiado en Materia de Trabajo",
+                                        "Décimo Sexto Tribunal Colegiado en Materia de Trabajo",
+                                        "Décimo Séptimo Tribunal Federal de Asuntos Individuales",
+                                        "Juzgado Primero de Distrito en Materia de Trabajo",
+                                        "Juzgado Segundo de Distrito en Materia de Trabajo",
+                                        "Juzgado Tercero de Distrito en Materia de Trabajo",
+                                        "Juzgado Séptimo de Distrito en Materia de Trabajo",
+                                        "Juzgado Octavo de Distrito en Materia de Trabajo",
+                                        "Juzgado de Distrito en Materia de Trabajo en la Ciudad de México",
+                                        "Centro de Justicia Penal Federal con residencia en Almoloya de Juárez",
+                                        "Centro de Justicia Penal Federal con sede en Reclusorio Sur",
+                                        "Centro de Justicia Penal Federal en Guanajuato",
+                                        "Centro de Justicia Penal en Colima",
+                                        "Centro de Justicia Penal en Morelia, Michoacán",
+                                        "Dirección de Funcionarios Conciliadores",
+                                        "Unidad de Conciliadores del Tribunal Federal de Conciliación y Arbitraje",
+                                        "Centro de Conciliación Laboral",
+                                        "Órgano Interno de Control en FINABIEN",
+                                        "OIC de FINABIEN",
+                                        "Fiscalía General de la República",
+                                        "Fiscalía Especializada en Delitos de Violencia contra las Mujeres",
+                                        "Tribunal de Juicios adscrito a la Fiscalía en Michoacán",
+                                        "Sala de Audiencia en la Fiscalía de Chihuahua",
+                                        "Juzgado de Control y Tribunal de Enjuiciamiento del Distrito Judicial de Pichucalco",
+                                        "Mecanismo Alternativo de Mediación",
+                                        "Órgano Especializado de Mecanismos Alternativos de Solución de Controversias de la FGR",
+                                        // --- EL COMODÍN PARA LOS PENDIENTES ---
+                                        "POR DEFINIR / EN TURNO"
+                        );
 
-                                        // Familiares CDMX
-                                        OrganoJurisdiccional.builder().nombre("Juzgado 5 de lo Familiar CDMX")
-                                                        .tipo("Juzgado").sede("CDMX").build(),
-
-                                        // Federales (Distrito y Colegiados)
-                                        OrganoJurisdiccional.builder()
-                                                        .nombre("Juzgado Cuarto de Distrito en Materia Civil")
-                                                        .tipo("Juzgado Federal").sede("CDMX").build(),
-                                        OrganoJurisdiccional.builder()
-                                                        .nombre("Juzgado Sexto de Distrito en Materia Administrativa")
-                                                        .tipo("Juzgado Federal").sede("CDMX").build(),
-                                        OrganoJurisdiccional.builder()
-                                                        .nombre("Primer Tribunal Colegiado en Materia Civil")
-                                                        .tipo("Tribunal Colegiado").sede("CDMX").build(),
-                                        OrganoJurisdiccional.builder()
-                                                        .nombre("Tercer Tribunal Colegiado en Materia de Trabajo")
-                                                        .tipo("Tribunal Colegiado").sede("CDMX").build(),
-
-                                        // Laborales
-                                        OrganoJurisdiccional.builder()
-                                                        .nombre("Tribunal Laboral Federal de Asuntos Individuales")
-                                                        .tipo("Tribunal Laboral").sede("CDMX").build(),
-
-                                        // Estado de México (Ejemplos)
-                                        OrganoJurisdiccional.builder().nombre("Juzgado Primero Civil de Tlalnepantla")
-                                                        .tipo("Juzgado").sede("EdoMex").build(),
-                                        OrganoJurisdiccional.builder().nombre("Juzgado de Control de Ecatepec")
-                                                        .tipo("Juzgado Penal").sede("EdoMex").build());
+                        List<OrganoJurisdiccional> organos = new ArrayList<>();
+                        for (String nombre : nombresOrganos) {
+                                organos.add(OrganoJurisdiccional.builder().nombre(nombre).tipo("Órgano Judicial").sede("Varios").build());
+                        }
 
                         organoRepository.saveAll(organos);
-                        System.out.println("✅ Órganos Jurisdiccionales creados (Lista Ampliada).");
+                        System.out.println("✅ Órganos Jurisdiccionales creados (Catálogo Real FINABIEN).");
                 }
+
 
                 // 5. CATÁLOGO DE ESTADOS
                 if (estadoRepository.count() == 0) {

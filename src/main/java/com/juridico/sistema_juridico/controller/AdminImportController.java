@@ -5,6 +5,7 @@ import com.juridico.sistema_juridico.Entity.procesal.CatalogoMigracion;
 import com.juridico.sistema_juridico.service.procesal.LoteMigracionService;
 import com.juridico.sistema_juridico.repository.procesal.CatalogoMigracionRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.*;
+import com.juridico.sistema_juridico.repository.Usuarios.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -30,6 +31,7 @@ public class AdminImportController {
     @Autowired private MateriaRepository materiaRepository;
     @Autowired private OrganoJurisdiccionalRepository organoRepository;
     @Autowired private TipoAudienciaRepository tipoAudienciaRepository;
+    @Autowired private UsuarioRepository usuarioRepository;
 
     @GetMapping
     public String mostrarWizard(Model model) {
@@ -49,33 +51,35 @@ public class AdminImportController {
             // Dependiendo del paso, mandamos información a la vista
             switch (loteActivo.getPasoActual()) {
                case 1:
-                    // 1. Forzamos la extracción de textos del JSON
+                    // Forzamos la extracción
                     loteMigracionService.extraerCatalogosDeLote(loteActivo.getId());
                     
-                    // 2. Traemos la lista de textos extraídos y los agrupamos por tipo (Gerencia, Materia, etc.)
-                    List<CatalogoMigracion> catalogosExtraidos = catalogoMigracionRepository.findByLoteIdAndTipoCatalogo(loteActivo.getId(), "GERENCIA"); // Haremos esto más dinámico pero sirve para agrupar
+                    // Agrupamos
                     List<CatalogoMigracion> todosCatalogos = catalogoMigracionRepository.findAll().stream().filter(c-> c.getLote().getId().equals(loteActivo.getId())).collect(Collectors.toList());
-                    
                     Map<String, List<CatalogoMigracion>> catalogosAgrupados = todosCatalogos.stream()
                         .collect(Collectors.groupingBy(CatalogoMigracion::getTipoCatalogo));
                     
                     model.addAttribute("catalogosAgrupados", catalogosAgrupados);
 
-                    // 3. Pasamos los catálogos oficiales para llenar los "Selects" del usuario
+                    // Catálogos Oficiales para los Selects
                     model.addAttribute("gerenciasDB", gerenciaRepository.findAll());
                     model.addAttribute("materiasDB", materiaRepository.findAll());
                     model.addAttribute("organosDB", organoRepository.findAll());
                     model.addAttribute("tiposAudDB", tipoAudienciaRepository.findAll());
-                    break;
                     
+                    model.addAttribute("usuariosDB", usuarioRepository.findAll()); 
+                    break;
                 case 2:
-                    // TODO: Lógica para listar Expedientes nuevos/existentes
+                    // Obtenemos el resumen de expedientes que detectó el sistema
+                    model.addAttribute("expedientesResumen", loteMigracionService.obtenerResumenExpedientes(loteActivo.getId()));
                     break;
                 case 3:
-                    // TODO: Lógica para validar Audiencias
+                    // Extraemos el resumen de las audiencias
+                    model.addAttribute("audienciasResumen", loteMigracionService.obtenerResumenAudiencias(loteActivo.getId()));
                     break;
                 case 4:
-                    // TODO: Lógica para validar Términos y estatus histórico
+                    // Extraemos el resumen de los términos
+                    model.addAttribute("terminosResumen", loteMigracionService.obtenerResumenTerminos(loteActivo.getId()));
                     break;
             }
         }
@@ -137,6 +141,31 @@ public class AdminImportController {
     public String mapearCatalogos(@RequestParam("loteId") Long loteId, @RequestParam Map<String, String> formData, RedirectAttributes redirectAttributes) {
         loteMigracionService.guardarMapeoCatalogos(loteId, formData);
         redirectAttributes.addFlashAttribute("mensaje", "Catálogos homologados correctamente. Iniciando validación de expedientes.");
+        return "redirect:/admin/importar";
+    }
+
+    // Procesar la confirmación de la Etapa 2
+    @PostMapping("/validar-expedientes")
+    public String validarExpedientes(@RequestParam("loteId") Long loteId, RedirectAttributes redirectAttributes) {
+        // En un futuro aquí podrías excluir expedientes que el usuario no quiera migrar
+        loteMigracionService.avanzarPaso(loteId);
+        redirectAttributes.addFlashAttribute("mensaje", "Expedientes validados correctamente. Pasando a revisión de Audiencias.");
+        return "redirect:/admin/importar";
+    }
+
+    // Procesar la confirmación de la Etapa 3
+    @PostMapping("/validar-audiencias")
+    public String validarAudiencias(@RequestParam("loteId") Long loteId, RedirectAttributes redirectAttributes) {
+        loteMigracionService.avanzarPaso(loteId);
+        redirectAttributes.addFlashAttribute("mensaje", "Audiencias validadas correctamente. Pasando al último paso: Términos.");
+        return "redirect:/admin/importar";
+    }
+
+    // Procesar la Inyección Final a la Base de Datos
+    @PostMapping("/inyectar")
+    public String inyectarLoteFinal(@RequestParam("loteId") Long loteId, RedirectAttributes redirectAttributes) {
+        loteMigracionService.inyectarLoteOficial(loteId);
+        redirectAttributes.addFlashAttribute("mensaje", "¡Inyección Exitosa! Todos los datos del lote han sido migrados a la base de datos oficial.");
         return "redirect:/admin/importar";
     }
 }

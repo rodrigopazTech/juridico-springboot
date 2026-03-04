@@ -24,11 +24,6 @@
                     </h1>
                     <p class="text-gray-600 mt-1">Homologación y validación de datos antes de inyectar a la base oficial.</p>
                 </div>
-                <div class="mt-4 md:mt-0">
-                    <button class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-300">
-                        <i class="fas fa-trash-alt mr-2"></i> Ver Papelera
-                    </button>
-                </div>
             </div>
 
             <div th:if="${modo == 'INICIO'}" class="max-w-4xl mx-auto mt-10">
@@ -38,10 +33,6 @@
                     </div>
                     <h2 class="text-2xl font-bold text-gray-800 mb-2">Esperando Datos Nuevos...</h2>
                     <p class="text-gray-500 mb-8">El sistema está escuchando peticiones de n8n. También puedes iniciar un lote subiendo un Excel manualmente.</p>
-                    
-                    <div class="flex justify-center gap-4">
-                        <a th:href="@{/admin/plantilla/terminos}" class="text-gob-oro hover:underline font-bold text-sm"><i class="fas fa-download mr-1"></i> Bajar Plantilla</a>
-                    </div>
                     
                     <form th:action="@{/admin/importar/iniciar}" method="post" class="mt-8 border-t pt-8">
                         <button type="submit" class="bg-gob-verde text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-[#132c26] transition transform hover:scale-105">
@@ -55,126 +46,35 @@
                 
                 <div class="mb-10 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <ol class="flex items-center w-full text-sm font-medium text-center text-gray-500 sm:text-base">
-                        <li th:classappend="${pasoActual >= 1 ? 'text-gob-verde' : ''}" class="flex md:w-full items-center sm:after:content-[''] after:w-full after:h-1 after:border-b-4 after:border-gray-200 after:border-1 after:hidden sm:after:inline-block after:mx-6 xl:after:mx-10" th:style="${pasoActual > 1 ? 'after:border-gob-verde' : ''}">
-                            <span class="flex items-center after:content-['/'] sm:after:hidden after:mx-2 after:text-gray-200">
-                                <span class="mr-2 flex items-center justify-center w-8 h-8 rounded-full" th:classappend="${pasoActual >= 1 ? 'bg-gob-verde text-white' : 'bg-gray-100'}">1</span>
-                                Catálogos
-                            </span>
+                        <li th:classappend="${pasoActual >= 1 ? 'text-gob-verde' : ''}" class="flex md:w-full items-center sm:after:content-[''] after:w-full after:h-1 after:border-b-4 after:border-gray-200 after:border-1 after:hidden sm:after:inline-block after:mx-6" th:style="${pasoActual > 1 ? 'after:border-gob-verde' : ''}">
+                            <span class="flex items-center"><span class="mr-2 flex items-center justify-center w-8 h-8 rounded-full" th:classappend="${pasoActual >= 1 ? 'bg-gob-verde text-white' : 'bg-gray-100'}">1</span> Catálogos</span>
                         </li>
-                        <li th:classappend="${pasoActual >= 2 ? 'text-gob-verde' : ''}" class="flex md:w-full items-center sm:after:content-[''] after:w-full after:h-1 after:border-b-4 after:border-gray-200 after:border-1 after:hidden sm:after:inline-block after:mx-6 xl:after:mx-10" th:style="${pasoActual > 2 ? 'after:border-gob-verde' : ''}">
-                            <span class="flex items-center after:content-['/'] sm:after:hidden after:mx-2 after:text-gray-200">
-                                <span class="mr-2 flex items-center justify-center w-8 h-8 rounded-full" th:classappend="${pasoActual >= 2 ? 'bg-gob-verde text-white' : 'bg-gray-100'}">2</span>
-                                Expedientes
-                            </span>
+                        <li th:classappend="${pasoActual >= 2 ? 'text-gob-verde' : ''}" class="flex md:w-full items-center sm:after:content-[''] after:w-full after:h-1 after:border-b-4 after:border-gray-200 after:border-1 after:hidden sm:after:inline-block after:mx-6" th:style="${pasoActual > 2 ? 'after:border-gob-verde' : ''}">
+                            <span class="flex items-center"><span class="mr-2 flex items-center justify-center w-8 h-8 rounded-full" th:classappend="${pasoActual >= 2 ? 'bg-gob-verde text-white' : 'bg-gray-100'}">2</span> Expedientes</span>
                         </li>
-                        <li th:classappend="${pasoActual >= 3 ? 'text-gob-verde' : ''}" class="flex md:w-full items-center sm:after:content-[''] after:w-full after:h-1 after:border-b-4 after:border-gray-200 after:border-1 after:hidden sm:after:inline-block after:mx-6 xl:after:mx-10" th:style="${pasoActual > 3 ? 'after:border-gob-verde' : ''}">
-                            <span class="flex items-center after:content-['/'] sm:after:hidden after:mx-2 after:text-gray-200">
-                                <span class="mr-2 flex items-center justify-center w-8 h-8 rounded-full" th:classappend="${pasoActual >= 3 ? 'bg-gob-verde text-white' : 'bg-gray-100'}">3</span>
-                                Audiencias
-                            </span>
+                        <li th:classappend="${pasoActual >= 3 ? 'text-gob-verde' : ''}" class="flex md:w-full items-center sm:after:content-[''] after:w-full after:h-1 after:border-b-4 after:border-gray-200 after:border-1 after:hidden sm:after:inline-block after:mx-6" th:style="${pasoActual > 3 ? 'after:border-gob-verde' : ''}">
+                            <span class="flex items-center"><span class="mr-2 flex items-center justify-center w-8 h-8 rounded-full" th:classappend="${pasoActual >= 3 ? 'bg-gob-verde text-white' : 'bg-gray-100'}">3</span> Audiencias</span>
                         </li>
                         <li th:classappend="${pasoActual >= 4 ? 'text-gob-verde' : ''}" class="flex items-center">
-                            <span class="flex items-center">
-                                <span class="mr-2 flex items-center justify-center w-8 h-8 rounded-full" th:classappend="${pasoActual >= 4 ? 'bg-gob-verde text-white' : 'bg-gray-100'}">4</span>
-                                Términos
-                            </span>
+                            <span class="flex items-center"><span class="mr-2 flex items-center justify-center w-8 h-8 rounded-full" th:classappend="${pasoActual >= 4 ? 'bg-gob-verde text-white' : 'bg-gray-100'}">4</span> Términos</span>
                         </li>
                     </ol>
                 </div>
 
                 <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-8 min-h-[400px]">
                     
-                   <div th:if="${pasoActual == 1}">
-                        <h2 class="text-2xl font-bold text-gob-guinda mb-2"><i class="fas fa-spell-check mr-2"></i> Etapa 1: Homologación de Catálogos</h2>
-                        <p class="text-gray-600 mb-6">El sistema detectó las siguientes áreas y juzgados en los archivos recibidos. Empareja los textos con los catálogos oficiales del sistema.</p>
-                        
-                        <div th:if="${#maps.isEmpty(catalogosAgrupados)}" class="text-center p-8 bg-green-50 rounded-xl border border-green-200">
-                            <i class="fas fa-check-circle text-4xl text-gob-verde mb-3"></i>
-                            <h3 class="font-bold text-lg text-green-800">No se detectaron catálogos sucios.</h3>
-                            <p class="text-sm text-green-700 mt-1">Puedes avanzar a la siguiente etapa.</p>
-                        </div>
-
-                        <form th:action="@{/admin/importar/mapear-catalogos}" method="post" th:if="${not #maps.isEmpty(catalogosAgrupados)}">
-                            <input type="hidden" name="loteId" th:value="${lote.id}">
-                            
-                            <div class="space-y-8">
-                                <div th:each="grupo : ${catalogosAgrupados}" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-                                    <div class="bg-gray-100 px-4 py-3 border-b border-gray-200 font-bold text-gray-700 uppercase tracking-wide text-sm flex items-center">
-                                        <i class="fas fa-database mr-2 text-gob-oro"></i> <span th:text="${grupo.key}"></span>
-                                    </div>
-                                    
-                                    <div class="p-4 space-y-4">
-                                        <div th:each="cat : ${grupo.value}" class="flex flex-col md:flex-row md:items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-lg gap-4">
-                                            
-                                            <div class="md:w-1/2">
-                                                <span class="text-xs text-gray-500 font-bold uppercase">Texto Original (n8n/Excel):</span>
-                                                <p class="font-medium text-gob-guinda text-lg" th:text="${cat.valorOriginal}"></p>
-                                            </div>
-                                            
-                                            <div class="md:w-1/2 flex items-center gap-2">
-                                                <i class="fas fa-arrow-right text-gray-300 hidden md:block"></i>
-                                                <select th:name="'cat_' + ${cat.id}" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-gob-oro focus:ring-gob-oro text-sm" required>
-                                                    <option value="" disabled selected>-- Selecciona el catálogo equivalente --</option>
-                                                    
-                                                    <option th:value="'NEW_' + ${cat.valorOriginal}" class="font-bold text-gob-verde">
-                                                        [+] CREAR COMO NUEVO: "[[${cat.valorOriginal}]]"
-                                                    </option>
-                                                    <option disabled>───────────</option>
-                                                    
-                                                    <th:block th:if="${grupo.key == 'GERENCIA'}">
-                                                        <option th:each="bd : ${gerenciasDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
-                                                    </th:block>
-                                                    <th:block th:if="${grupo.key == 'MATERIA'}">
-                                                        <option th:each="bd : ${materiasDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
-                                                    </th:block>
-                                                    <th:block th:if="${grupo.key == 'ORGANO'}">
-                                                        <option th:each="bd : ${organosDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
-                                                    </th:block>
-                                                    <th:block th:if="${grupo.key == 'TIPO_AUDIENCIA'}">
-                                                        <option th:each="bd : ${tiposAudDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
-                                                    </th:block>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="mt-8 flex justify-end">
-                                <button type="submit" class="bg-gob-oro text-white px-8 py-3 rounded-xl font-bold shadow hover:bg-[#a37e46] transition">
-                                    Guardar Mapeos y Continuar <i class="fas fa-arrow-right ml-2"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <div th:if="${pasoActual == 2}">
-                        <h2 class="text-2xl font-bold text-gob-guinda mb-2"><i class="fas fa-folder-open mr-2"></i> Etapa 2: Validación de Expedientes</h2>
-                        <p class="text-gray-600 mb-8">Aprueba, rechaza o edita los expedientes raíz antes de colgarles audiencias.</p>
-                        </div>
-
-                    <div th:if="${pasoActual == 3}">
-                        <h2 class="text-2xl font-bold text-gob-guinda mb-2"><i class="fas fa-gavel mr-2"></i> Etapa 3: Revisión de Audiencias</h2>
-                        <p class="text-gray-600 mb-8">Verifica las fechas y comparecientes.</p>
-                    </div>
-
-                    <div th:if="${pasoActual == 4}">
-                        <h2 class="text-2xl font-bold text-gob-guinda mb-2"><i class="fas fa-hourglass-half mr-2"></i> Etapa 4: Configuración de Términos (Históricos)</h2>
-                        <p class="text-gray-600 mb-8">Decide en qué estatus (Liberado, Concluido, etc.) entrarán los términos.</p>
-                    </div>
+                    <div th:if="${pasoActual == 1}" th:replace="~{fragments/importar/etapa1_catalogos :: contenido}"></div>
+                    <div th:if="${pasoActual == 2}" th:replace="~{fragments/importar/etapa2_expedientes :: contenido}"></div>
+                    <div th:if="${pasoActual == 3}" th:replace="~{fragments/importar/etapa3_audiencias :: contenido}"></div>
+                    <div th:if="${pasoActual == 4}" th:replace="~{fragments/importar/etapa4_terminos :: contenido}"></div>
 
                 </div>
 
-                <div class="flex justify-between items-center mt-6">
+                <div class="flex justify-start mt-6">
                     <form th:action="@{/admin/importar/cancelar}" method="post" onsubmit="return confirm('¿Estás seguro de cancelar todo el lote y mandarlo a la papelera?');">
                         <input type="hidden" name="loteId" th:value="${lote.id}">
-                        <button type="submit" class="text-red-600 font-bold hover:underline px-4 py-2"><i class="fas fa-times-circle mr-1"></i> Descartar Lote Completo</button>
-                    </form>
-
-                   <form th:action="@{/admin/importar/avanzar}" method="post" th:if="${pasoActual > 1}">
-                        <input type="hidden" name="loteId" th:value="${lote.id}">
-                        <button type="submit" class="bg-gob-oro text-white px-8 py-3 rounded-xl font-bold shadow hover:bg-[#a37e46] transition">
-                            <span th:text="${pasoActual == 4 ? 'Confirmar e Inyectar Final' : 'Siguiente Etapa'}"></span> <i class="fas fa-arrow-right ml-2"></i>
+                        <button type="submit" class="text-red-600 font-bold hover:underline px-4 py-2 hover:bg-red-50 rounded-lg transition">
+                            <i class="fas fa-trash-alt mr-1"></i> Descartar Lote y Cancelar Migración
                         </button>
                     </form>
                 </div>
@@ -182,6 +82,8 @@
             </div>
         </div>
     </main>
+
+    <script th:src="@{/js/asistente-migracion.js(v=2)}"></script>
 
     <script th:inline="javascript">
         document.addEventListener("DOMContentLoaded", function () {

@@ -119,6 +119,12 @@ public class LoteMigracionService {
                 if (json.has("tipoAudiencia") && !json.get("tipoAudiencia").isNull()) {
                     guardarCatalogoUnico(lote, "TIPO_AUDIENCIA", json.get("tipoAudiencia").asText());
                 }
+                if (json.has("abogadoResponsable") && !json.get("abogadoResponsable").isNull()) {
+                    guardarCatalogoUnico(lote, "USUARIO", json.get("abogadoResponsable").asText());
+                }
+                if (json.has("abogadoCompareciente") && !json.get("abogadoCompareciente").isNull()) {
+                    guardarCatalogoUnico(lote, "USUARIO", json.get("abogadoCompareciente").asText());
+                }
             } catch (Exception e) {
                 // Ignorar JSON malformados en esta etapa
             }
@@ -165,5 +171,115 @@ public class LoteMigracionService {
         
         // Al terminar de guardar, avanzamos automáticamente a la Etapa 2
         avanzarPaso(loteId);
+    }
+
+    // =========================================================
+    // ETAPA 2: LÓGICA DE EXPEDIENTES
+    // =========================================================
+
+    public java.util.List<java.util.Map<String, Object>> obtenerResumenExpedientes(Long loteId) {
+        // Traemos todos los registros del lote
+        List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
+        
+        // Agrupamos por Número de Expediente
+        java.util.Map<String, List<RegistroMigracion>> agrupados = registros.stream()
+            .collect(java.util.stream.Collectors.groupingBy(
+                r -> r.getNumeroExpedienteExtraido() != null ? r.getNumeroExpedienteExtraido() : "SIN_NUMERO"
+            ));
+
+        java.util.List<java.util.Map<String, Object>> resumen = new java.util.ArrayList<>();
+        
+        for (java.util.Map.Entry<String, List<RegistroMigracion>> entry : agrupados.entrySet()) {
+            java.util.Map<String, Object> map = new java.util.HashMap<>();
+            map.put("numeroExpediente", entry.getKey());
+            
+            // Contamos cuántos términos y audiencias trae cada expediente
+            long totalTerminos = entry.getValue().stream().filter(r -> "TERMINO".equals(r.getTipoDato())).count();
+            long totalAudiencias = entry.getValue().stream().filter(r -> "AUDIENCIA".equals(r.getTipoDato())).count();
+            
+            map.put("totalTerminos", totalTerminos);
+            map.put("totalAudiencias", totalAudiencias);
+            map.put("totalRegistros", entry.getValue().size());
+            
+            resumen.add(map);
+        }
+        
+        return resumen;
+    }
+
+    // =========================================================
+    // ETAPA 3: LÓGICA DE AUDIENCIAS
+    // =========================================================
+
+    public java.util.List<java.util.Map<String, Object>> obtenerResumenAudiencias(Long loteId) {
+        // Traemos solo los registros que sean de tipo "AUDIENCIA"
+        List<RegistroMigracion> registros = registroRepository.findByLoteIdAndTipoDatoAndEstatusNot(loteId, "AUDIENCIA", "RECHAZADO");
+        
+        java.util.List<java.util.Map<String, Object>> resumen = new java.util.ArrayList<>();
+        
+        for (RegistroMigracion reg : registros) {
+            try {
+                // Leemos el JSON para sacar los detalles específicos
+                JsonNode json = objectMapper.readTree(reg.getPayloadJson());
+                java.util.Map<String, Object> map = new java.util.HashMap<>();
+                
+                map.put("id", reg.getId());
+                map.put("numeroExpediente", reg.getNumeroExpedienteExtraido());
+                map.put("tipoAudiencia", json.has("tipoAudiencia") ? json.get("tipoAudiencia").asText() : "Sin especificar");
+                map.put("fecha", json.has("fechaAudiencia") ? json.get("fechaAudiencia").asText() : "Sin fecha");
+                map.put("hora", json.has("horaAudiencia") ? json.get("horaAudiencia").asText() : "--:--");
+                map.put("compareciente", json.has("abogadoCompareciente") ? json.get("abogadoCompareciente").asText() : "N/A");
+                
+                resumen.add(map);
+            } catch (Exception e) {
+                // Ignorar errores de parseo individuales
+            }
+        }
+        
+        return resumen;
+    }
+
+    // =========================================================
+    // ETAPA 4: LÓGICA DE TÉRMINOS E INYECCIÓN FINAL
+    // =========================================================
+
+    public java.util.List<java.util.Map<String, Object>> obtenerResumenTerminos(Long loteId) {
+        List<RegistroMigracion> registros = registroRepository.findByLoteIdAndTipoDatoAndEstatusNot(loteId, "TERMINO", "RECHAZADO");
+        java.util.List<java.util.Map<String, Object>> resumen = new java.util.ArrayList<>();
+        
+        for (RegistroMigracion reg : registros) {
+            try {
+                JsonNode json = objectMapper.readTree(reg.getPayloadJson());
+                java.util.Map<String, Object> map = new java.util.HashMap<>();
+                
+                map.put("numeroExpediente", reg.getNumeroExpedienteExtraido());
+                map.put("actuacion", json.has("actuacion") ? json.get("actuacion").asText() : "Sin actuación");
+                map.put("fechaVencimiento", json.has("fechaVencimiento") ? json.get("fechaVencimiento").asText() : "Sin fecha");
+                map.put("abogado", json.has("abogadoResponsable") ? json.get("abogadoResponsable").asText() : "N/A");
+                
+                resumen.add(map);
+            } catch (Exception e) { }
+        }
+        return resumen;
+    }
+
+    @Transactional
+    public void inyectarLoteOficial(Long loteId) {
+        LoteMigracion lote = loteRepository.findById(loteId).orElseThrow();
+        
+        // Aquí conectaremos el servicio de creación real (ExpedienteService, etc.)
+        // Por ahora, simulamos que los datos se inyectan correctamente y cerramos el lote.
+        
+        lote.setEstatus("COMPLETADO");
+        lote.setPasoActual(5); // El paso 5 ya no muestra el wizard, vuelve al inicio
+        loteRepository.save(lote);
+        
+        // Marcamos los registros crudos como procesados para que queden en el historial
+        List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
+        for(RegistroMigracion reg : registros) {
+            reg.setEstatus("PROCESADO");
+            reg.setProcessedAt(java.time.LocalDateTime.now());
+        }
+        registroRepository.saveAll(registros);
     }
 }
