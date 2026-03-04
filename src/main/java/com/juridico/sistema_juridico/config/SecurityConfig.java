@@ -73,6 +73,11 @@ public class SecurityConfig {
                 .logoutSuccessUrl("/?logout")
                 .deleteCookies("JSESSIONID")
                 .permitAll()
+            )
+            .sessionManagement(session -> session
+                .invalidSessionUrl("/?timeout=true")
+                .maximumSessions(1)
+                .expiredUrl("/?timeout=true")
             );
 
         return http.build();
