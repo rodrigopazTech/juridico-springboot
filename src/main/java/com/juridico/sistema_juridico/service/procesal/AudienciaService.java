@@ -150,8 +150,12 @@ public class AudienciaService {
         String tipoConcluida = (audiencia.getTipoAudiencia() != null) ? audiencia.getTipoAudiencia().getNombre()
                 : "Desconocida";
 
+        String usuarioActual = SecurityContextHolder.getContext().getAuthentication().getName();
+        String fechaFormat = LocalDate.now().toString();
         registrarActividad(audiencia.getExpediente(), "Audiencia Concluida",
-                "La audiencia ha sido marcada como concluida: " + tipoConcluida, "CHECK");
+                "La audiencia ha sido marcada como concluida: " + tipoConcluida + ". Acción realizada por: "
+                        + usuarioActual + " el " + fechaFormat + ".",
+                "CHECK");
     }
 
     @Transactional
@@ -217,8 +221,12 @@ public class AudienciaService {
             }
 
             String tipoProg = (a.getTipoAudiencia() != null) ? a.getTipoAudiencia().getNombre() : "Desconocida";
-            registrarActividad(a.getExpediente(), "Audiencia Programada",
-                    "Se ha programado una nueva audiencia: " + tipoProg + " para el " + a.getFechaAudiencia(), "PLUS");
+
+            String fechaFormat = LocalDate.now().toString();
+            registrarActividad(a.getExpediente(), "Audiencia Creada",
+                    "Se ha programado una nueva audiencia: " + tipoProg + " para el " + a.getFechaAudiencia()
+                            + ". Acción realizada por: " + emailCreador + " el " + fechaFormat + ".",
+                    "PLUS");
 
         } catch (Exception e) {
             System.err.println("CRÍTICO - Error al notificar creación: " + e.getMessage());

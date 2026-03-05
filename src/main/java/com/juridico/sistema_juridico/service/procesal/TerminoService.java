@@ -54,7 +54,12 @@ public class TerminoService {
                 .build();
 
         Termino guardado = terminoRepository.save(termino);
-        registrarActividad(exp, "Término Programado", "Se ha registrado un nuevo término: " + termino.getActuacion(),
+
+        String usuarioActual = SecurityContextHolder.getContext().getAuthentication().getName();
+        String fechaFormat = LocalDate.now().toString();
+        registrarActividad(exp, "Término Creado",
+                "Se ha registrado un nuevo término: " + termino.getActuacion() + ". Acción realizada por: "
+                        + usuarioActual + " el " + fechaFormat + ".",
                 "PLUS");
 
         return mapToResponse(guardado);
@@ -82,8 +87,13 @@ public class TerminoService {
                 .build();
 
         presentadoRepository.save(historico);
-        registrarActividad(termino.getExpediente(), "Término Concluido", "El término ha sido marcado como presentado.",
-                "EDIT");
+
+        String usuarioActual = SecurityContextHolder.getContext().getAuthentication().getName();
+        String fechaFormat = LocalDate.now().toString();
+        registrarActividad(termino.getExpediente(), "Término Concluido",
+                "El término ha sido marcado como presentado. Acción realizada por: " + usuarioActual + " el "
+                        + fechaFormat + ".",
+                "CHECK");
     }
 
     @Transactional
