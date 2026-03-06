@@ -148,4 +148,11 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
     // Conteo total audiencias pendientes (sin filtro)
     @Query("SELECT COUNT(a) FROM Audiencia a WHERE a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
     long countByEstatusPendiente();
+
+    // --- 6. AGENDA GENERAL ---
+    Page<Audiencia> findByEstatusAudienciaAndFechaDesahogoBetweenOrderByFechaDesahogoDesc(
+            EstatusAudiencia estatus, 
+            LocalDate inicio, 
+            LocalDate fin, 
+            Pageable pageable);
 }

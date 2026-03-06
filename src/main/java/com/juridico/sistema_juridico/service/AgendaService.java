@@ -11,22 +11,31 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
+import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
+import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Arrays;
 import java.util.List;
+
 @Service
 public class AgendaService {
 
-    @Autowired private AudienciaDesahogadaRepository desahogadaRepository;
+    @Autowired private AudienciaRepository audienciaRepository;
     @Autowired private TerminoRepository terminoRepository;
 
     // Aceptamos el número de página (page) y devolvemos Page<>
-    public Page<AudienciaDesahogada> getAudienciasPorFiltro(String filtro, String mes, Integer anio, int page) {
+    public Page<Audiencia> getAudienciasPorFiltro(String filtro, String mes, Integer anio, int page) {
         LocalDate[] rango = calcularRango(filtro, mes, anio);
         Pageable pageable = PageRequest.of(page, 10); // 10 registros por página
-        return desahogadaRepository.findByFechaDesahogoBetweenOrderByFechaDesahogoDesc(rango[0], rango[1], pageable);
+        return audienciaRepository.findByEstatusAudienciaAndFechaDesahogoBetweenOrderByFechaDesahogoDesc(
+                EstatusAudiencia.CONCLUIDA, 
+                rango[0], 
+                rango[1], 
+                pageable);
     }
 
     public Page<Termino> getTerminosPorFiltro(String filtro, String mes, Integer anio, int page) {
