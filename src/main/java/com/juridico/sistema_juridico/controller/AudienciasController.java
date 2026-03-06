@@ -2,6 +2,8 @@ package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.exception.BadRequestException;
+import com.juridico.sistema_juridico.exception.ForbiddenException;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
@@ -103,16 +105,9 @@ public class AudienciasController {
                 filtroUsuarioId = usuario.getId();
                 break;
             case "GERENTE":
+            case "JEFE_DEPTO":
                 if (usuario.getGerencia() != null)
                     filtroGerenciaId = usuario.getGerencia().getId();
-                break;
-            case "JEFE_DEPTO":
-                if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
-                    filtroMateriaIds = usuario.getMaterias().stream().map(Materia::getId).collect(Collectors.toList());
-                } else {
-                    filtroMateriaIds = new ArrayList<>();
-                    filtroMateriaIds.add(-1);
-                }
                 break;
         }
 
@@ -312,10 +307,7 @@ public class AudienciasController {
 
             // 2. VALIDAR PERMISOS (Solo Jefes hacia arriba pueden concluir)
             if (usuario.getRol().name().equals("ABOGADO")) {
-                redirectAttrs.addFlashAttribute("mensaje",
-                        "Acceso denegado: Solo Dirección o Gerencia pueden validar y concluir audiencias.");
-                redirectAttrs.addFlashAttribute("tipo", "error");
-                return "redirect:/audiencias";
+                throw new ForbiddenException("Acceso denegado: Solo Dirección o Jefatura pueden validar y concluir audiencias.");
             }
 
             // 3. EJECUTAR LÓGICA
