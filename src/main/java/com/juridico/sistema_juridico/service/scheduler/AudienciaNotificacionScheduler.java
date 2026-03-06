@@ -1,6 +1,7 @@
 package com.juridico.sistema_juridico.service.scheduler;
 
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Notificacion;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
@@ -29,7 +30,7 @@ public class AudienciaNotificacionScheduler {
         LocalDate fechaObjetivo = LocalDate.now().plusDays(3);
         
         List<Audiencia> audiencias = audienciaRepository.findByFechaAudienciaAndEstatusAudienciaNot(
-            fechaObjetivo, "CONCLUIDA"
+            fechaObjetivo, EstatusAudiencia.CONCLUIDA
         );
 
         for (Audiencia a : audiencias) {
@@ -55,7 +56,7 @@ public class AudienciaNotificacionScheduler {
         LocalDate manana = LocalDate.now().plusDays(1);
         
         List<Audiencia> audiencias = audienciaRepository.findByFechaAudienciaAndEstatusAudienciaNot(
-            manana, "CONCLUIDA"
+            manana, EstatusAudiencia.CONCLUIDA
         );
 
         for (Audiencia a : audiencias) {
@@ -83,7 +84,7 @@ public class AudienciaNotificacionScheduler {
         LocalTime enDosHoras = ahora.plusHours(2);
 
         List<Audiencia> audiencias = audienciaRepository.findByFechaAudienciaAndHoraAudienciaBetweenAndEstatusAudienciaNot(
-            hoy, ahora, enDosHoras, "CONCLUIDA"
+            hoy, ahora, enDosHoras, EstatusAudiencia.CONCLUIDA
         );
 
         for (Audiencia a : audiencias) {

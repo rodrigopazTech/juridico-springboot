@@ -174,8 +174,8 @@ public class TerminosController {
             List<Expediente> expedientesPorAudiencia = audienciaRepository.findAll().stream()
                     .filter(a -> a.getAbogadoComparece() != null &&
                             a.getAbogadoComparece().getId().equals(usuarioActual.getId()) &&
-                            !a.getEstatusAudiencia().equals("CONCLUIDA"))
-                    .map(Audiencia::getExpediente)
+                            com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.CONCLUIDA != a.getEstatusAudiencia())
+                    .map(com.juridico.sistema_juridico.Entity.procesal.Audiencia::getExpediente)
                     .collect(Collectors.toList());
 
             // Unir listas sin duplicados

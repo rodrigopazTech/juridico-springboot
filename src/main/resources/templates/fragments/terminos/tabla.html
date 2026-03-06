@@ -85,9 +85,16 @@
 
                         <td class="px-4 py-3 text-right relative">
                             <button
-                                th:unless="${t.estatusTermino.name() == 'LIBERADO' || t.estatusTermino.name() == 'PRESENTADO' || t.estatusTermino.name() == 'CONCLUIDO'}"
+                                th:if="${t.estatusTermino?.name() != 'LIBERADO' && t.estatusTermino?.name() != 'PRESENTADO' && t.estatusTermino?.name() != 'CONCLUIDO'}"
                                 th:onclick="editarTermino([[${t.id}]], [[${t.actuacion}]], [[${t.fechaVencimiento}]], [[${t.expediente != null ? t.expediente.id : ''}]], [[${t.abogadoResponsable != null ? t.abogadoResponsable.id : ''}]])"
                                 class="text-gray-400 hover:text-gob-oro mr-2" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+
+                            <button
+                                th:unless="${t.estatusTermino?.name() != 'LIBERADO' && t.estatusTermino?.name() != 'PRESENTADO' && t.estatusTermino?.name() != 'CONCLUIDO'}"
+                                class="text-gray-200 cursor-not-allowed mr-2"
+                                title="Edición Bloqueada (El término ya fue liberado, presentado o concluido)">
                                 <i class="fas fa-edit"></i>
                             </button>
 

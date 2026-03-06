@@ -13,6 +13,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 
 @Repository
 public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
@@ -43,7 +44,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
             @Param("tipo") String tipo,
             @Param("gerencia") String gerencia,
             @Param("materia") String materia,
-            @Param("estatus") String estatus,
+            @Param("estatus") EstatusAudiencia estatus,
             @Param("targetAbogadoId") Integer targetAbogadoId,
             @Param("fechaInicio") LocalDate fechaInicio,
             @Param("fechaFin") LocalDate fechaFin,
@@ -78,7 +79,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
             @Param("tipo") String tipo,
             @Param("gerencia") String gerencia,
             @Param("materia") String materia,
-            @Param("estatus") String estatus,
+            @Param("estatus") EstatusAudiencia estatus,
             @Param("targetAbogadoId") Integer targetAbogadoId,
             @Param("fechaInicio") LocalDate fechaInicio,
             @Param("fechaFin") LocalDate fechaFin,
@@ -86,19 +87,18 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
             @Param("filtroGerenciaId") Integer filtroGerenciaId,
             @Param("filtroMateriaIds") List<Integer> filtroMateriaIds);
 
-    // --- 3. MÉTODOS AUXILIARES ---
-    List<Audiencia> findByFechaAudienciaAndEstatusAudienciaNot(LocalDate fecha, String estatusExcluido);
+    List<Audiencia> findByFechaAudienciaAndEstatusAudienciaNot(LocalDate fecha, EstatusAudiencia estatusExcluido);
 
     List<Audiencia> findByFechaAudienciaAndHoraAudienciaBetweenAndEstatusAudienciaNot(
             LocalDate fecha,
             LocalTime horaInicio,
             LocalTime horaFin,
-            String estatusExcluido);
+            EstatusAudiencia estatusExcluido);
 
     @Query("SELECT a FROM Audiencia a " +
             "WHERE a.expediente.id = :expedienteId " +
             "AND a.fechaAudiencia >= :fechaActual " +
-            "AND (a.estatusAudiencia IS NULL OR a.estatusAudiencia NOT IN ('CONCLUIDA', 'CON_ACTA')) " +
+            "AND (a.estatusAudiencia IS NULL OR a.estatusAudiencia NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.CONCLUIDA, com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.CON_ACTA)) " +
             "ORDER BY a.fechaAudiencia ASC, a.horaAudiencia ASC LIMIT 1")
     Optional<Audiencia> findProximaAudiencia(
             @Param("expedienteId") UUID expedienteId,
@@ -138,14 +138,14 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
 
     // --- 5. CONTEO PARA DASHBOARD KPIs ---
     // Conteo por gerencia individual (solo audiencias pendientes)
-    @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.gerencia.id = :gerenciaId AND a.estatusAudiencia = 'PENDIENTE'")
+    @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.gerencia.id = :gerenciaId AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
     long countByExpedienteGerenciaIdAndEstatusPendiente(@Param("gerenciaId") Long gerenciaId);
 
     // Conteo por lista de gerencias (solo audiencias pendientes)
-    @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.gerencia.id IN :gerenciaIds AND a.estatusAudiencia = 'PENDIENTE'")
+    @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.gerencia.id IN :gerenciaIds AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
     long countByExpedienteGerenciaIdInAndEstatusPendiente(@Param("gerenciaIds") List<Long> gerenciaIds);
 
     // Conteo total audiencias pendientes (sin filtro)
-    @Query("SELECT COUNT(a) FROM Audiencia a WHERE a.estatusAudiencia = 'PENDIENTE'")
+    @Query("SELECT COUNT(a) FROM Audiencia a WHERE a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
     long countByEstatusPendiente();
 }
