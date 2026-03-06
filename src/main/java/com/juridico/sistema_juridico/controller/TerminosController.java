@@ -86,7 +86,7 @@ public class TerminosController {
         PERMISOS_ETAPAS.put(EstatusTermino.LIBERADO, Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE,
                 RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
         PERMISOS_ETAPAS.put(EstatusTermino.PRESENTADO, Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION,
-                RolUsuario.ABOGADO, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO));
+                RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO));
     }
 
     private static final Map<EstatusTermino, Integer> ORDEN_ETAPAS = new HashMap<>();
@@ -324,6 +324,10 @@ public class TerminosController {
         if (etapaAnterior == EstatusTermino.PROYECTISTA && termino.getArchivoWord() == null) {
             throw new BadRequestException("Debes subir el archivo Word antes de enviar a Revisión.");
         }
+        
+        if (etapaAnterior == EstatusTermino.LIBERADO && termino.getAcuseNombre() == null) {
+            throw new BadRequestException("Debes subir el acuse antes de marcar como Presentado.");
+        }
 
         // 4. LÓGICA FELIZ
         EstatusTermino siguienteEtapa = calcularSiguienteEstado(etapaAnterior);
@@ -478,15 +482,16 @@ public class TerminosController {
                         .sincronizadoAt(LocalDateTime.now()).build();
                 terminoPresentadoRepository.save(presentado);
 
-                termino.setEstatusTermino(EstatusTermino.PRESENTADO);
-                termino.setFechaPresentacion(LocalDate.now());
+                // No avanzamos la etapa automáticamente, permitimos que el usuario lo haga manualmente
+                // para validar la existencia del campo acuseNombre
+                termino.setAcuseNombre(nombreAcuse);
                 if (observaciones != null) {
                     termino.setObservaciones(observaciones);
                 }
                 termino.setUpdatedAt(LocalDateTime.now());
                 terminoRepository.save(termino);
 
-                redirectAttrs.addFlashAttribute("mensaje", "Acuse cargado. El término ahora está 'Presentado'.");
+                redirectAttrs.addFlashAttribute("mensaje", "Acuse cargado correctamente. Ahora puedes avanzar el término a 'Presentado'.");
                 redirectAttrs.addFlashAttribute("tipo", "success");
             }
         } catch (Exception e) {

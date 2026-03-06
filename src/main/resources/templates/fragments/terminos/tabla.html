@@ -148,7 +148,11 @@
 
                                 <div class="border-t border-gray-100"></div>
 
-                                <a th:if="${t.estatusTermino.name() != 'LIBERADO' and t.estatusTermino.name() != 'PRESENTADO' and t.estatusTermino.name() != 'CONCLUIDO' and t.archivoWord != null and mapaPermisos.containsKey(t.estatusTermino) and mapaPermisos.get(t.estatusTermino).contains(rolActual)}"
+                                <a th:if="${((t.estatusTermino.name() == 'PROYECTISTA' and t.archivoWord != null) or 
+                                             (t.estatusTermino.name() == 'LIBERADO' and t.acuseNombre != null) or 
+                                             (t.estatusTermino.name() != 'PROYECTISTA' and t.estatusTermino.name() != 'LIBERADO' and 
+                                              t.estatusTermino.name() != 'PRESENTADO' and t.estatusTermino.name() != 'CONCLUIDO')) 
+                                            and mapaPermisos.get(t.estatusTermino).contains(rolActual)}"
                                     th:href="@{/terminos/avanzar/{id}(id=${t.id})}"
                                     class="block px-4 py-3 text-sm text-green-700 hover:bg-green-50 transition border-l-4 border-transparent hover:border-green-500">
                                     <i class="fas fa-arrow-right mr-3 w-4 text-center text-green-500"></i> Avanzar Etapa
