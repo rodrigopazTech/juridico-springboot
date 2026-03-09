@@ -91,10 +91,13 @@ public class NotificacionAutomaticaService {
             }
 
             // 3. Enviar las notificaciones
+            String expedienteNum = (t.getExpediente() != null) ? t.getExpediente().getNumero() : "S/N";
+            String tituloNotif = tituloBase + ": " + expedienteNum;
+
             for (Usuario u : destinatarios) {
                 notificacionService.crearNotificacion(
                         u,
-                        tituloBase,
+                        tituloNotif,
                         mensaje,
                         "TERMINO",
                         prioridad,

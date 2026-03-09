@@ -300,9 +300,10 @@ public class TerminosController {
 
         // Notificación
         if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
+            String expedienteNum = (terminoGuardado.getExpediente() != null) ? terminoGuardado.getExpediente().getNumero() : "S/N";
             notificacionService.crearNotificacion(
                     terminoGuardado.getAbogadoResponsable(),
-                    "Nuevo Término Asignado",
+                    "Nuevo Término: " + expedienteNum,
                     "El usuario " + actor.getNombreCompleto() + " te ha asignado: " + terminoGuardado.getActuacion(),
                     "TERMINO",
                     terminoGuardado.getPrioridad(),
@@ -409,9 +410,12 @@ public class TerminosController {
         }
 
         Set<Usuario> unicos = new HashSet<>(destinatarios);
+        String expedienteNum = (termino.getExpediente() != null) ? termino.getExpediente().getNumero() : "S/N";
+        String tituloExp = titulo + ": " + expedienteNum;
+
         for (Usuario u : unicos) {
             if (!u.getId().equals(actor.getId())) {
-                notificacionService.crearNotificacion(u, titulo, mensajeBase, "TERMINO", Prioridad.ALTA,
+                notificacionService.crearNotificacion(u, tituloExp, mensajeBase, "TERMINO", Prioridad.ALTA,
                         termino.getId().toString());
             }
         }
