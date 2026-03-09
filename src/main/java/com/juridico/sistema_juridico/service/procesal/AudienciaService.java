@@ -13,6 +13,7 @@ import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.NotificacionService;
+import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -75,8 +76,8 @@ public class AudienciaService {
                     : "Desconocida";
 
             // Lógica de Estatus: Si estaba pendiente, ahora tiene acta
-            if ("PENDIENTE".equals(audiencia.getEstatusAudiencia())) {
-                audiencia.setEstatusAudiencia("CON_ACTA");
+            if (EstatusAudiencia.PENDIENTE.equals(audiencia.getEstatusAudiencia())) {
+                audiencia.setEstatusAudiencia(EstatusAudiencia.CON_ACTA);
                 notificarSubidaActa(audiencia);
             }
             audienciaRepository.save(audiencia);
@@ -130,7 +131,7 @@ public class AudienciaService {
         Audiencia audiencia = audienciaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
 
-        audiencia.setEstatusAudiencia("CONCLUIDA");
+        audiencia.setEstatusAudiencia(EstatusAudiencia.CONCLUIDA);
         audiencia.setFechaDesahogo(LocalDate.now());
         audiencia.setObservaciones(observaciones);
 
@@ -255,7 +256,7 @@ public class AudienciaService {
                 .fechaAudiencia(request.getFecha())
                 .horaAudiencia(horaFormateada)
                 .salaLugar(request.getSala())
-                .estatusAudiencia("PENDIENTE")
+                .estatusAudiencia(EstatusAudiencia.PENDIENTE)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();

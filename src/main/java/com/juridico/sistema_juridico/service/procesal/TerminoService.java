@@ -1,5 +1,6 @@
 package com.juridico.sistema_juridico.service.procesal;
 
+import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import com.juridico.sistema_juridico.Entity.procesal.TerminoPresentado;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
@@ -49,7 +50,7 @@ public class TerminoService {
                 .expediente(exp)
                 .actuacion(request.getAsunto()) // En tu entidad se llama actuacion
                 .fechaVencimiento(request.getFechaVencimiento())
-                .estatusTermino("PROYECTISTA") // En tu entidad se llama estatusTermino
+                .estatusTermino(EstatusTermino.PROYECTISTA) // En tu entidad se llama estatusTermino
                 .fechaIngreso(LocalDate.now())
                 .build();
 
@@ -76,7 +77,7 @@ public class TerminoService {
         Termino termino = terminoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Término no encontrado"));
 
-        termino.setEstatusTermino("PRESENTADO");
+        termino.setEstatusTermino(EstatusTermino.PRESENTADO);
         terminoRepository.save(termino);
 
         // Lógica de Histórico: Creamos el registro en la tabla de presentados
@@ -98,10 +99,10 @@ public class TerminoService {
     }
 
     @Transactional
-    public void cambiarEstado(Integer id, String nuevoEstado) { // Cambiado a Integer
+    public void cambiarEstado(Integer id, EstatusTermino nuevoEstado) { // Cambiado a Integer
         Termino termino = terminoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Término no encontrado"));
-        String estadoAnterior = termino.getEstatusTermino();
+        EstatusTermino estadoAnterior = termino.getEstatusTermino();
         termino.setEstatusTermino(nuevoEstado);
         terminoRepository.save(termino);
 
@@ -124,7 +125,7 @@ public class TerminoService {
     // Para el endpoint de próximos a vencer (alertas de 7 días)
     public List<TerminoResponse> listarProximosAVencer() {
         LocalDate limite = LocalDate.now().plusDays(7);
-        return terminoRepository.findByFechaVencimientoBeforeAndEstatusTerminoNot(limite, "CONCLUIDO")
+        return terminoRepository.findByFechaVencimientoBeforeAndEstatusTerminoNot(limite, EstatusTermino.CONCLUIDO)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -160,7 +161,7 @@ public class TerminoService {
     // 2. Obtener términos vencidos (Requisito: GET /api/terminos/vencidos)
     public List<TerminoResponse> listarVencidos() {
         return terminoRepository.findByFechaVencimientoBeforeAndEstatusTerminoNot(
-                LocalDate.now(), "CONCLUIDO")
+                LocalDate.now(), EstatusTermino.CONCLUIDO)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());

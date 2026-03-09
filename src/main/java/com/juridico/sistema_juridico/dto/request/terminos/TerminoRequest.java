@@ -3,6 +3,7 @@ package com.juridico.sistema_juridico.dto.request.terminos;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import java.time.LocalDate;
+import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
 
 /**
  * DTO para la creación y actualización de términos procesales.
@@ -21,7 +22,5 @@ public class TerminoRequest {
 
     private LocalDate fechaIngreso;
 
-    @Pattern(regexp = "^(Proyectista|Revisión|Gerencia|Dirección|Liberado|Presentado|Concluido)$", 
-             message = "Estado de flujo no válido")
-    private String estatus;
+    private EstatusTermino estatus;
 }

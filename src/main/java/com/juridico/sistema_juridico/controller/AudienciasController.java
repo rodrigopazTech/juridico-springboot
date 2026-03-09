@@ -2,6 +2,8 @@ package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.exception.BadRequestException;
+import com.juridico.sistema_juridico.exception.ForbiddenException;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
@@ -29,6 +31,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 
+import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.util.AudienciaExcelExporter;
@@ -78,7 +81,7 @@ public class AudienciasController {
             @RequestParam(required = false) String tipo,
             @RequestParam(required = false) String gerencia,
             @RequestParam(required = false) String materia,
-            @RequestParam(required = false) String estatus,
+            @RequestParam(required = false) EstatusAudiencia estatus,
             @RequestParam(required = false) Integer abogadoId,
             @RequestParam(required = false) String periodo) {
 
@@ -102,16 +105,9 @@ public class AudienciasController {
                 filtroUsuarioId = usuario.getId();
                 break;
             case "GERENTE":
+            case "JEFE_DEPTO":
                 if (usuario.getGerencia() != null)
                     filtroGerenciaId = usuario.getGerencia().getId();
-                break;
-            case "JEFE_DEPTO":
-                if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
-                    filtroMateriaIds = usuario.getMaterias().stream().map(Materia::getId).collect(Collectors.toList());
-                } else {
-                    filtroMateriaIds = new ArrayList<>();
-                    filtroMateriaIds.add(-1);
-                }
                 break;
         }
 
@@ -168,7 +164,7 @@ public class AudienciasController {
             List<Expediente> expedientesPorAudiencia = audienciaRepository.findAll().stream()
                     .filter(a -> a.getAbogadoComparece() != null &&
                             a.getAbogadoComparece().getId().equals(usuario.getId()) &&
-                            !"CONCLUIDA".equals(a.getEstatusAudiencia())) // <--- AQUÍ ESTÁ EL CANDADO FANTASMA
+                            EstatusAudiencia.CONCLUIDA != a.getEstatusAudiencia()) // <--- AQUÍ ESTÁ EL CANDADO FANTASMA
                     .map(Audiencia::getExpediente)
                     .collect(Collectors.toList());
 
@@ -220,7 +216,7 @@ public class AudienciasController {
         model.addAttribute("paramTipo", tipo);
         model.addAttribute("paramGerencia", gerencia);
         model.addAttribute("paramMateria", materia);
-        model.addAttribute("paramEstatus", estatus);
+        model.addAttribute("paramEstatus", estatus != null ? estatus.name() : null);
         model.addAttribute("paramAbogadoId", abogadoId);
         model.addAttribute("paramPeriodo", periodo);
         model.addAttribute("usuarioActual", usuario);
@@ -253,7 +249,7 @@ public class AudienciasController {
             }
         } else {
             // Lógica de CREACIÓN
-            audiencia.setEstatusAudiencia("PENDIENTE");
+            audiencia.setEstatusAudiencia(EstatusAudiencia.PENDIENTE);
         }
 
         // Corrección para evitar conflictos con Hibernate si el ID del abogado viene
@@ -311,10 +307,7 @@ public class AudienciasController {
 
             // 2. VALIDAR PERMISOS (Solo Jefes hacia arriba pueden concluir)
             if (usuario.getRol().name().equals("ABOGADO")) {
-                redirectAttrs.addFlashAttribute("mensaje",
-                        "Acceso denegado: Solo Dirección o Gerencia pueden validar y concluir audiencias.");
-                redirectAttrs.addFlashAttribute("tipo", "error");
-                return "redirect:/audiencias";
+                throw new ForbiddenException("Acceso denegado: Solo Dirección o Jefatura pueden validar y concluir audiencias.");
             }
 
             // 3. EJECUTAR LÓGICA
@@ -384,7 +377,7 @@ public class AudienciasController {
             @RequestParam(required = false) String tipo,
             @RequestParam(required = false) String gerencia,
             @RequestParam(required = false) String materia,
-            @RequestParam(required = false) String estatus,
+            @RequestParam(required = false) EstatusAudiencia estatus,
             @RequestParam(required = false) Integer abogadoId,
             @RequestParam(required = false) String periodo) throws IOException {
 

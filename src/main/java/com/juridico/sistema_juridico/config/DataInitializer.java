@@ -9,6 +9,7 @@ import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
+import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
@@ -415,7 +416,7 @@ public class DataInitializer implements CommandLineRunner {
                                                         .tipoAudiencia(tipoA)
                                                         .fechaAudiencia(LocalDate.now().minusDays(1))
                                                         .horaAudiencia(LocalTime.of(10, 0))
-                                                        .estatusAudiencia("CONCLUIDA")
+                                                        .estatusAudiencia(EstatusAudiencia.CONCLUIDA)
                                                         .abogadoComparece(expAbogado)
                                                         .build();
 
@@ -425,7 +426,7 @@ public class DataInitializer implements CommandLineRunner {
                                                         .tipoAudiencia(tipoAudienciaRepository.findAll().get(1))
                                                         .fechaAudiencia(LocalDate.now().plusDays(10))
                                                         .horaAudiencia(LocalTime.of(11, 30))
-                                                        .estatusAudiencia("PROGRAMADA")
+                                                        .estatusAudiencia(EstatusAudiencia.PENDIENTE)
                                                         .abogadoComparece(expAbogado)
                                                         .build();
 
@@ -435,7 +436,7 @@ public class DataInitializer implements CommandLineRunner {
                                                         .fechaAudiencia(LocalDate.now().plusDays(5))
                                                         .horaAudiencia(LocalTime.of(12, 30))
                                                         .tipoAudiencia(tipoA)
-                                                        .estatusAudiencia("PENDIENTE")
+                                                        .estatusAudiencia(EstatusAudiencia.PENDIENTE)
                                                         .abogadoComparece(expAbogado)
                                                         .build();
 
