@@ -121,9 +121,12 @@ public class DocumentoService {
         // Auditoría
         Expediente exp = expedienteRepository.findById(expedienteId).orElse(null);
         if (exp != null) {
+            String fechaFormat = LocalDate.now().toString();
+            String nombreUsr = (usuario != null) ? usuario.getNombreCompleto() : "Desconocido";
             auditoriaService.registrar(exp, "Archivo Subido",
                     "Se ha cargado un nuevo archivo: " + documento.getNombreOriginal() +
-                            (carpeta != null ? " en la carpeta " + carpeta.getNombre() : ""),
+                            (carpeta != null ? " en la carpeta " + carpeta.getNombre() : "")
+                            + ". Acción realizada por: " + nombreUsr + " el " + fechaFormat + ".",
                     "PAPERCLIP", usuario);
         }
 
@@ -177,7 +180,7 @@ public class DocumentoService {
      * Elimina un documento
      */
     @Transactional
-    public void eliminarDocumento(UUID documentoId) throws IOException {
+    public void eliminarDocumento(UUID documentoId, Usuario usuario) throws IOException {
         Documento documento = documentoRepository.findById(documentoId)
                 .orElseThrow(() -> new IllegalArgumentException("Documento no encontrado"));
 
@@ -190,16 +193,12 @@ public class DocumentoService {
         // Auditoría
         Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
         if (exp != null) {
-            // Obtenemos el usuario del contexto si no se pasa (aunque aquí no lo tenemos
-            // como parámetro,
-            // pero podemos usar el usuario que lo subió como referencia o el actual)
-            // Por simplicidad en este método, usaremos null o buscaremos el actual si es
-            // posible
-            // pero AuditoriaService maneja null. En este caso el usuario es importante.
-            // MODIFICACIÓN: El método eliminarDocumento debería recibir el usuario.
+            String fechaFormat = LocalDate.now().toString();
+            String nombreUsr = (usuario != null) ? usuario.getNombreCompleto() : "Desconocido";
             auditoriaService.registrar(exp, "Archivo Eliminado",
-                    "Se ha eliminado el archivo: " + documento.getNombreOriginal(),
-                    "TRASH", documento.getUsuarioSubida()); // Referencia al usuario que lo subió como fallback
+                    "Se ha eliminado el archivo: " + documento.getNombreOriginal() + ". Acción realizada por: "
+                            + nombreUsr + " el " + fechaFormat + ".",
+                    "TRASH", usuario);
         }
     }
 
@@ -215,7 +214,7 @@ public class DocumentoService {
      * Mueve un documento a otra carpeta
      */
     @Transactional
-    public Documento moverDocumento(UUID documentoId, UUID nuevaCarpetaId) {
+    public Documento moverDocumento(UUID documentoId, UUID nuevaCarpetaId, Usuario usuario) {
         Documento documento = obtenerDocumento(documentoId);
 
         Carpeta nuevaCarpeta = null;
@@ -236,9 +235,13 @@ public class DocumentoService {
         Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
         if (exp != null) {
             String destino = nuevaCarpeta != null ? nuevaCarpeta.getNombre() : "Raíz";
+            String fechaFormat = LocalDate.now().toString();
+            String nombreUsr = (usuario != null) ? usuario.getNombreCompleto() : "Desconocido";
+
             auditoriaService.registrar(exp, "Archivo Movido",
-                    "Se movió el archivo " + documento.getNombreOriginal() + " a " + destino,
-                    "ARROWS_ALT", documento.getUsuarioSubida());
+                    "Se movió el archivo " + documento.getNombreOriginal() + " a " + destino
+                            + ". Acción realizada por: " + nombreUsr + " el " + fechaFormat + ".",
+                    "ARROWS_ALT", usuario);
         }
 
         return guardado;
