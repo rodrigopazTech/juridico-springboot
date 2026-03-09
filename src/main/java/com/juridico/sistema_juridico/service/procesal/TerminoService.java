@@ -58,7 +58,8 @@ public class TerminoService {
         String usuarioActual = SecurityContextHolder.getContext().getAuthentication().getName();
         String fechaFormat = LocalDate.now().toString();
         registrarActividad(exp, "Término Creado",
-                "Se ha registrado un nuevo término: " + termino.getActuacion() + ". Acción realizada por: "
+                "Se ha registrado un nuevo término: " + termino.getActuacion() + " (Expediente ID: " + exp.getId()
+                        + "). Acción realizada por: "
                         + usuarioActual + " el " + fechaFormat + ".",
                 "PLUS");
 
@@ -103,8 +104,14 @@ public class TerminoService {
         String estadoAnterior = termino.getEstatusTermino();
         termino.setEstatusTermino(nuevoEstado);
         terminoRepository.save(termino);
+
+        String usuarioActual = SecurityContextHolder.getContext().getAuthentication().getName();
+        String fechaFormat = LocalDate.now().toString();
+
         registrarActividad(termino.getExpediente(), "Cambio de Estado (Término)",
-                "Cambio de etapa: " + estadoAnterior + " -> " + nuevoEstado + " para " + termino.getActuacion(),
+                "Cambio de estatus de Término a " + nuevoEstado.toUpperCase() + " (Expediente ID: "
+                        + termino.getExpediente().getId() + "). Acción realizada por: " + usuarioActual + " el "
+                        + fechaFormat + ".",
                 "EDIT");
     }
 

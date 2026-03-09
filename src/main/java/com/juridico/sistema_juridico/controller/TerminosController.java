@@ -293,10 +293,15 @@ public class TerminosController {
 
         // Auditoría
         if (terminoGuardado.getExpediente() != null) {
+            String fechaFormat = LocalDate.now().toString();
             String logTitulo = esNuevo ? "Término Programado" : "Término Editado";
             String logDesc = esNuevo
-                    ? "Se ha registrado un nuevo término: " + terminoGuardado.getActuacion()
-                    : "Se ha editado el término: " + terminoGuardado.getActuacion();
+                    ? "Se ha registrado un nuevo término: " + terminoGuardado.getActuacion() + " (Expediente ID: "
+                            + terminoGuardado.getExpediente().getId() + ")"
+                    : "Se ha editado el término: " + terminoGuardado.getActuacion() + " (Expediente ID: "
+                            + terminoGuardado.getExpediente().getId() + ")";
+            logDesc += ". Acción realizada por: " + actor.getNombreCompleto() + " el " + fechaFormat + ".";
+
             auditoriaService.registrar(terminoGuardado.getExpediente(), logTitulo, logDesc,
                     esNuevo ? "PLUS" : "EDIT", actor);
         }
@@ -333,10 +338,13 @@ public class TerminosController {
 
         // Registro en historial
         if (termino.getExpediente() != null) {
+            String fechaFormat = LocalDate.now().toString();
+            String desc = "Cambio de estatus de Término a " + siguienteEtapa.toUpperCase() + " (Expediente ID: "
+                    + termino.getExpediente().getId() + "). Acción realizada por: " + actor.getNombreCompleto() + " el "
+                    + fechaFormat + ".";
+
             auditoriaService.registrar(termino.getExpediente(), "Cambio de Estado (Término)",
-                    "El término \"" + termino.getActuacion() + "\" avanzó de "
-                            + etapaAnterior + " a " + siguienteEtapa,
-                    "EDIT", actor);
+                    desc, "EDIT", actor);
         }
 
         notificarCambioDeEtapa(termino, etapaAnterior, siguienteEtapa, actor);
