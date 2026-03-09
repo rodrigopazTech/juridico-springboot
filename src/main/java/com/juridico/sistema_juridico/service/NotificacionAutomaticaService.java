@@ -4,6 +4,7 @@ import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
@@ -34,7 +35,7 @@ public class NotificacionAutomaticaService {
 
     // CORRECCIÓN CLAVE: Ahora SOLO "Concluido" apaga la alarma.
     // Si está en Liberado o Presentado y se acaba el tiempo, ¡la alarma sonará!
-    private final List<String> ESTATUS_FINALES = Arrays.asList("Concluido");
+    private final List<EstatusTermino> ESTATUS_FINALES = Arrays.asList(EstatusTermino.CONCLUIDO);
 
     
     //@Scheduled(fixedRate = 60000) // Cambiar al cron normal cuando termines de probar
@@ -70,17 +71,17 @@ public class NotificacionAutomaticaService {
 
             // 2. Ruteo Dinámico: ¿A quién más le avisamos según la etapa?
             switch (t.getEstatusTermino()) {
-                case "Revisión":
+                case REVISION:
                     destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, g));
                     break;
-                case "Gerencia":
+                case GERENCIA:
                     destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE, g));
                     break;
-                case "Dirección":
+                case DIRECCION:
                     destinatarios.addAll(usuarioRepository.findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
                     break;
-                case "Liberado":
-                case "Presentado":
+                case LIBERADO:
+                case PRESENTADO:
                     // ¡ALERTA GENERAL! Si ya se liberó o presentó pero no se ha subido el acuse (Concluido),
                     // y el tiempo se está acabando, le avisamos a TODA LA CADENA DE MANDO.
                     destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, g));

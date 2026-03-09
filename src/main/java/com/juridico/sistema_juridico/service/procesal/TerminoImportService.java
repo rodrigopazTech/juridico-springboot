@@ -3,6 +3,7 @@ package com.juridico.sistema_juridico.service.procesal;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
@@ -114,7 +115,7 @@ if (expediente == null) {
                 termino.setFechaVencimiento(fechaVencimiento);
                 termino.setAbogadoResponsable(abogado);
                 termino.setFechaIngreso(LocalDate.now());
-                termino.setEstatusTermino("Proyectista"); // Inicia el flujo normal
+                termino.setEstatusTermino(EstatusTermino.PROYECTISTA); // Inicia el flujo normal
                 termino.setCreatedAt(LocalDateTime.now());
 
                 // Manejo seguro de la prioridad

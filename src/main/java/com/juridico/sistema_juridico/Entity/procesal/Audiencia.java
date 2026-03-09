@@ -12,6 +12,7 @@ import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 
+import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import java.time.LocalDateTime;
 
 @Data
@@ -55,8 +56,9 @@ public class Audiencia {
     @Column(name = "sala_lugar", columnDefinition = "TEXT")
     private String salaLugar;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "estatus_audiencia", length = 30)
-    private String estatusAudiencia; // PENDIENTE, CON_ACTA, CONCLUIDA (Podría ser Enum)
+    private EstatusAudiencia estatusAudiencia; // PENDIENTE, CON_ACTA, CONCLUIDA
 
     @Column(name = "acta_documento", length = 500)
     private String actaDocumento;
@@ -91,7 +93,7 @@ public class Audiencia {
     }
 
     public String getTextoDiasRestantes() {
-        if ("CONCLUIDA".equals(this.estatusAudiencia)) return "Concluida";
+        if (EstatusAudiencia.CONCLUIDA.equals(this.estatusAudiencia)) return "Concluida";
         
         long dias = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaAudiencia);
         

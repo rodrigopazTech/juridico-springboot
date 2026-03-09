@@ -13,7 +13,7 @@ function cambiarTab(tabName) {
 
     // Mostrar contenido seleccionado
     const content = document.getElementById('tab-' + tabName);
-    if(content) {
+    if (content) {
         content.classList.remove('hidden');
         content.classList.add('block');
         content.style.display = 'block';
@@ -24,18 +24,18 @@ function cambiarTab(tabName) {
         // Quitamos estilos de Tailwind
         btn.classList.remove('border-gob-guinda', 'text-gob-guinda', 'font-bold');
         btn.classList.add('border-transparent', 'text-gray-500');
-        
+
         // --- CORRECCIÓN CRÍTICA: Quitamos también la clase CSS 'active' ---
-        btn.classList.remove('active'); 
+        btn.classList.remove('active');
     });
 
     // Activar botón actual
     const btn = document.getElementById('btn-tab-' + tabName);
-    if(btn) {
+    if (btn) {
         // Ponemos estilos Tailwind
         btn.classList.remove('border-transparent', 'text-gray-500');
         btn.classList.add('border-gob-guinda', 'text-gob-guinda', 'font-bold');
-        
+
         // --- CORRECCIÓN CRÍTICA: Agregamos la clase CSS 'active' ---
         btn.classList.add('active');
     }
@@ -43,20 +43,20 @@ function cambiarTab(tabName) {
 
 function abrirModalUsuario() {
     document.getElementById('titulo-modal-usuario').innerHTML = '<i class="fas fa-user-plus mr-2"></i> Nuevo Usuario';
-    
+
     document.getElementById('input-usuario-id').value = '';
     document.getElementById('input-usuario-nombre').value = '';
     document.getElementById('input-usuario-email').value = '';
     document.getElementById('input-usuario-password').value = '';
-    document.getElementById('input-usuario-password').required = true; 
+    document.getElementById('input-usuario-password').required = true;
     document.getElementById('input-usuario-password').placeholder = "";
-    
+
     document.getElementById('select-usuario-rol').value = "";
     document.getElementById('select-usuario-gerencia').value = "";
     document.getElementById('check-usuario-activo').checked = true;
 
-    materiasUsuarioActual = []; 
-    
+    materiasUsuarioActual = [];
+
     document.getElementById('contenedor-materias').classList.add('hidden');
     document.getElementById('lista-materias-checkboxes').innerHTML = '';
 
@@ -124,18 +124,18 @@ function editarUsuario(id, nombre, email, rol, gerenciaId, activo, materiasIdsAr
     document.getElementById('input-usuario-email').value = email;
     document.getElementById('select-usuario-rol').value = rol;
     document.getElementById('check-usuario-activo').checked = activo;
-    
+
     const inputPass = document.getElementById('input-usuario-password');
     inputPass.value = ''; inputPass.required = false; inputPass.placeholder = "Dejar en blanco para mantener";
 
-    materiasUsuarioActual = materiasIdsArray || []; 
+    materiasUsuarioActual = materiasIdsArray || [];
     const selectGerencia = document.getElementById('select-usuario-gerencia');
-    
-    actualizarFormularioPorRol(); 
-    
+
+    actualizarFormularioPorRol();
+
     if (gerenciaId) {
         selectGerencia.value = gerenciaId;
-        cargarMateriasDeGerencia(); 
+        cargarMateriasDeGerencia();
     } else {
         selectGerencia.value = "";
         document.getElementById('contenedor-materias').classList.add('hidden');
@@ -143,7 +143,7 @@ function editarUsuario(id, nombre, email, rol, gerenciaId, activo, materiasIdsAr
 
     const btnEliminar = document.getElementById('btn-eliminar-usuario');
     btnEliminar.classList.remove('hidden');
-    document.getElementById('input-usuario-id').value = id; 
+    document.getElementById('input-usuario-id').value = id;
 
     const modal = document.getElementById('modal-usuario');
     modal.classList.remove('hidden'); modal.classList.add('flex');
@@ -173,6 +173,58 @@ function editarGerencia(id, nombre, descripcion, activo) {
     modal.classList.add('flex');
 }
 
+// --- ÓRGANOS JURISDICCIONALES ---
+
+function abrirModalOrgano() {
+    document.getElementById('titulo-modal-organo').innerHTML = '<i class="fas fa-university mr-2"></i> Nuevo Órgano Jurisdiccional';
+    document.getElementById('input-organo-id').value = '';
+    document.getElementById('input-organo-nombre').value = '';
+    document.getElementById('select-organo-tipo').value = 'JUZGADO';
+    document.getElementById('input-organo-sede').value = '';
+    document.getElementById('check-organo-activo').checked = true;
+
+    const modal = document.getElementById('modal-organo');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function editarOrgano(id, nombre, tipo, sede, activo) {
+    document.getElementById('titulo-modal-organo').innerHTML = '<i class="fas fa-edit mr-2"></i> Editar Órgano Jurisdiccional';
+    document.getElementById('input-organo-id').value = id;
+    document.getElementById('input-organo-nombre').value = nombre;
+    document.getElementById('select-organo-tipo').value = tipo;
+    document.getElementById('input-organo-sede').value = sede;
+    document.getElementById('check-organo-activo').checked = (activo === 'true' || activo === true);
+
+    const modal = document.getElementById('modal-organo');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+// --- TIPOS DE AUDIENCIA ---
+
+function abrirModalTipoAudiencia() {
+    document.getElementById('titulo-modal-tipo-audiencia').innerHTML = '<i class="fas fa-calendar-alt mr-2"></i> Nuevo Tipo de Audiencia';
+    document.getElementById('input-tipo-audiencia-id').value = '';
+    document.getElementById('input-tipo-audiencia-nombre').value = '';
+    document.getElementById('check-tipo-audiencia-activo').checked = true;
+
+    const modal = document.getElementById('modal-tipo-audiencia');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function editarTipoAudiencia(id, nombre, activo) {
+    document.getElementById('titulo-modal-tipo-audiencia').innerHTML = '<i class="fas fa-edit mr-2"></i> Editar Tipo de Audiencia';
+    document.getElementById('input-tipo-audiencia-id').value = id;
+    document.getElementById('input-tipo-audiencia-nombre').value = nombre;
+    document.getElementById('check-tipo-audiencia-activo').checked = (activo === 'true' || activo === true);
+
+    const modal = document.getElementById('modal-tipo-audiencia');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
 // --- 3. LÓGICA "PRO" MATERIAS (AJAX) ---
 
 // Abrir el modal y cargar lista
@@ -180,7 +232,7 @@ function verMaterias(gerenciaId, nombreGerencia) {
     // 1. Configurar Modal
     document.getElementById('hidden-gerencia-id').value = gerenciaId;
     document.getElementById('subtitulo-gerencia').textContent = 'Gerencia: ' + nombreGerencia;
-    
+
     // 2. Mostrar Modal
     const modal = document.getElementById('modal-materias');
     modal.classList.remove('hidden');
@@ -210,7 +262,7 @@ function guardarMateriaJS() {
     const gerenciaId = document.getElementById('hidden-gerencia-id').value;
     const nombreMateria = document.getElementById('input-nueva-materia').value;
 
-    if(!nombreMateria.trim()) {
+    if (!nombreMateria.trim()) {
         alert("Escribe un nombre para la materia");
         return;
     }
@@ -230,16 +282,16 @@ function guardarMateriaJS() {
         },
         body: JSON.stringify(data)
     })
-    .then(response => {
-        if(response.ok) {
-            // Limpiar input y recargar lista
-            document.getElementById('input-nueva-materia').value = '';
-            cargarListaMaterias(gerenciaId); 
-        } else {
-            alert("Error al guardar la materia");
-        }
-    })
-    .catch(error => console.error("Error:", error));
+        .then(response => {
+            if (response.ok) {
+                // Limpiar input y recargar lista
+                document.getElementById('input-nueva-materia').value = '';
+                cargarListaMaterias(gerenciaId);
+            } else {
+                alert("Error al guardar la materia");
+            }
+        })
+        .catch(error => console.error("Error:", error));
 }
 
 function cerrarModalMaterias() {
@@ -254,7 +306,7 @@ function filtrarTabla(inputId, tbodyId) {
     const input = document.getElementById(inputId);
     const filter = input.value.toLowerCase();
     const tbody = document.getElementById(tbodyId);
-    if(!tbody) return;
+    if (!tbody) return;
 
     const rows = tbody.getElementsByTagName('tr');
 
@@ -269,17 +321,29 @@ function filtrarTabla(inputId, tbodyId) {
 }
 
 // Inicializar Listeners
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Buscador Usuarios
     const searchUser = document.getElementById('input-search-usuarios');
-    if(searchUser) {
+    if (searchUser) {
         searchUser.addEventListener('keyup', () => filtrarTabla('input-search-usuarios', 'tabla-usuarios-body'));
     }
 
     // Buscador Gerencias
     const searchGerencia = document.getElementById('input-search-gerencias');
-    if(searchGerencia) {
+    if (searchGerencia) {
         searchGerencia.addEventListener('keyup', () => filtrarTabla('input-search-gerencias', 'tabla-gerencias-body'));
+    }
+
+    // Buscador Órganos
+    const searchOrgano = document.getElementById('input-search-organos');
+    if (searchOrgano) {
+        searchOrgano.addEventListener('keyup', () => filtrarTabla('input-search-organos', 'tabla-organos-body'));
+    }
+
+    // Buscador Tipos Audiencia
+    const searchTipoAudiencia = document.getElementById('input-search-tipos-audiencia');
+    if (searchTipoAudiencia) {
+        searchTipoAudiencia.addEventListener('keyup', () => filtrarTabla('input-search-tipos-audiencia', 'tabla-tipos-audiencia-body'));
     }
 });
 
@@ -306,28 +370,56 @@ function confirmarCambioEstatus(id, tipo) {
     });
 }
 
+function confirmarCambioEstatusCatalogo(id, tipo) {
+    let titulo = '';
+    let url = '';
+
+    if (tipo === 'organo') {
+        titulo = '¿Cambiar estatus del Órgano?';
+        url = `/usuarios/organos/toggle/${id}`;
+    } else if (tipo === 'tipo-audiencia') {
+        titulo = '¿Cambiar estatus del Tipo de Audiencia?';
+        url = `/usuarios/tipos-audiencia/toggle/${id}`;
+    }
+
+    Swal.fire({
+        title: titulo,
+        text: "El registro cambiará su disponibilidad en el sistema.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#9D2449',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, cambiar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = url;
+        }
+    });
+}
+
 function eliminarMateriaJS(materiaId, gerenciaId) {
-    if(!confirm("¿Seguro que deseas eliminar esta materia?")) return;
+    if (!confirm("¿Seguro que deseas eliminar esta materia?")) return;
 
     fetch(`/usuarios/gerencias/materias/eliminar/${materiaId}`, {
         method: 'DELETE',
         // headers: { 'X-CSRF-TOKEN': ... } // Si activas CSRF en el futuro
     })
-    .then(response => {
-        if(response.ok) {
-            // Recargamos la lista para ver que desapareció
-            cargarListaMaterias(gerenciaId);
-        } else {
-            alert("No se pudo eliminar. Verifica que no tenga expedientes vinculados.");
-        }
-    })
-    .catch(error => console.error("Error:", error));
+        .then(response => {
+            if (response.ok) {
+                // Recargamos la lista para ver que desapareció
+                cargarListaMaterias(gerenciaId);
+            } else {
+                alert("No se pudo eliminar. Verifica que no tenga expedientes vinculados.");
+            }
+        })
+        .catch(error => console.error("Error:", error));
 }
 
 function eliminarUsuarioDesdeModal() {
     const id = document.getElementById('input-usuario-id').value;
-    
-    if(!id) return; // Seguridad
+
+    if (!id) return; // Seguridad
 
     Swal.fire({
         title: '¿Eliminar usuario definitivamente?',
@@ -343,25 +435,25 @@ function eliminarUsuarioDesdeModal() {
             fetch(`/usuarios/eliminar/${id}`, {
                 method: 'DELETE'
             })
-            .then(async response => {
-                if (response.ok) {
-                    await Swal.fire('¡Eliminado!', 'El usuario ha sido borrado.', 'success');
-                    window.location.reload(); // Recargar para actualizar tabla
-                } else {
-                    const msg = await response.text();
-                    Swal.fire('Error', msg || 'No se pudo eliminar el usuario.', 'error');
-                }
-            })
-            .catch(error => {
-                console.error(error);
-                Swal.fire('Error', 'Ocurrió un error inesperado.', 'error');
-            });
+                .then(async response => {
+                    if (response.ok) {
+                        await Swal.fire('¡Eliminado!', 'El usuario ha sido borrado.', 'success');
+                        window.location.reload(); // Recargar para actualizar tabla
+                    } else {
+                        const msg = await response.text();
+                        Swal.fire('Error', msg || 'No se pudo eliminar el usuario.', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    Swal.fire('Error', 'Ocurrió un error inesperado.', 'error');
+                });
         }
     });
 }
 // Detectar tab en URL para abrirlo automáticamente
-    const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get('tab');
-    if(tabParam) {
-        cambiarTab(tabParam);
-    }
+const params = new URLSearchParams(window.location.search);
+const tabParam = params.get('tab');
+if (tabParam) {
+    cambiarTab(tabParam);
+}

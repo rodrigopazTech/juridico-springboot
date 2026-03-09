@@ -1,50 +1,56 @@
 package com.juridico.sistema_juridico.controller.api;
 
-import com.juridico.sistema_juridico.dto.request.expedientes.ExpedienteRequest;
-import com.juridico.sistema_juridico.dto.request.audiencias.AudienciaRequest;
-import com.juridico.sistema_juridico.dto.request.terminos.TerminoRequest;
-import com.juridico.sistema_juridico.service.ExpedienteService;
-import com.juridico.sistema_juridico.service.procesal.AudienciaService;
-import com.juridico.sistema_juridico.service.procesal.TerminoService;
+import com.juridico.sistema_juridico.service.procesal.LoteMigracionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.transaction.annotation.Transactional;
 
-
-import jakarta.validation.Valid;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/migration")
-@PreAuthorize("hasAuthority('ADMIN')") // Solo el ADMIN (o n8n con token de admin) puede entrar
 public class MigrationApiController {
 
-    @Autowired private ExpedienteService expedienteService;
-    @Autowired private AudienciaService audienciaService;
-    @Autowired private TerminoService terminoService;
+    @Autowired 
+    private LoteMigracionService loteMigracionService;
 
-    // 1. Endpoint para Expedientes
-    @PostMapping("/expedientes")
-    public ResponseEntity<?> importarExpediente(@Valid @RequestBody ExpedienteRequest request) {
-        // Tu ExpedienteRequest pide numero, materiaId, gerenciaId y descripcion
-        expedienteService.guardarExpediente(request);
-        return ResponseEntity.ok("Expediente creado correctamente");
+    private final String API_KEY_SECRETA = "n8nAgendaLegalF1N4813NGDSA6D54";
+
+    private boolean esLlaveInvalida(String apiKey) {
+        return apiKey == null || !apiKey.equals(API_KEY_SECRETA);
     }
 
-    // 2. Endpoint para Audiencias
-    @PostMapping("/audiencias")
-    public ResponseEntity<?> importarAudiencia(@Valid @RequestBody AudienciaRequest request) {
-        // Tu AudienciaRequest pide asuntoId (el ID del expediente)
-        audienciaService.guardarAudiencia(request);
-        return ResponseEntity.ok("Audiencia vinculada correctamente");
-    }
-
-    // 3. Endpoint para Términos
+    // 1. Endpoint para Términos (Recibe JSON crudo)
     @PostMapping("/terminos")
-    public ResponseEntity<?> importarTermino(@Valid @RequestBody TerminoRequest request) {
-        // Tu TerminoRequest pide asuntoId, asunto (descripcion) y fechaVencimiento
-        terminoService.guardarTermino(request);
-        return ResponseEntity.ok("Término legal registrado");
+    public ResponseEntity<?> importarTermino(
+            @RequestHeader(value = "X-API-KEY", required = false) String apiKey, 
+            @RequestBody Map<String, Object> requestJson) {
+        
+        if (esLlaveInvalida(apiKey)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Acceso denegado: API KEY inválida");
+
+        // Extraemos el número de expediente si viene, sino ponemos un valor por defecto
+        String numExp = requestJson.containsKey("numeroExpediente") && requestJson.get("numeroExpediente") != null 
+                ? requestJson.get("numeroExpediente").toString() 
+                : "SIN_NUMERO";
+
+        loteMigracionService.registrarDatoEnLote("TERMINO", requestJson, numExp);
+        return ResponseEntity.ok("Término histórico recibido y enviado al Asistente de Migración (Lote)");
+    }
+
+    // 2. Endpoint para Audiencias (Recibe JSON crudo)
+    @PostMapping("/audiencias")
+    public ResponseEntity<?> importarAudiencia(
+            @RequestHeader(value = "X-API-KEY", required = false) String apiKey, 
+            @RequestBody Map<String, Object> requestJson) {
+        
+        if (esLlaveInvalida(apiKey)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Acceso denegado: API KEY inválida");
+
+        String numExp = requestJson.containsKey("numeroExpediente") && requestJson.get("numeroExpediente") != null 
+                ? requestJson.get("numeroExpediente").toString() 
+                : "SIN_NUMERO";
+
+        loteMigracionService.registrarDatoEnLote("AUDIENCIA", requestJson, numExp);
+        return ResponseEntity.ok("Audiencia histórica recibida y enviada al Asistente de Migración (Lote)");
     }
 }

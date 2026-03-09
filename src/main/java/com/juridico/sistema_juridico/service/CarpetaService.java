@@ -8,6 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.juridico.sistema_juridico.Entity.expediente.Expediente;
+import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
+import java.time.LocalDate;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -19,6 +23,12 @@ public class CarpetaService {
 
     @Autowired
     private DocumentoRepository documentoRepository;
+
+    @Autowired
+    private AuditoriaService auditoriaService;
+
+    @Autowired
+    private ExpedienteRepository expedienteRepository;
 
     private static final int MAX_PROFUNDIDAD = 5;
 
@@ -78,7 +88,22 @@ public class CarpetaService {
                 .esSistema(false)
                 .build();
 
-        return carpetaRepository.save(carpeta);
+        Carpeta guardada = carpetaRepository.save(carpeta);
+
+        // Auditoría
+        Expediente exp = expedienteRepository.findById(expedienteId).orElse(null);
+        if (exp != null) {
+            String fechaFormat = LocalDate.now().toString();
+            String nombreUsr = (usuario != null) ? usuario.getNombreCompleto() : "Desconocido";
+            String tipo = (carpetaPadre != null) ? "Subcarpeta" : "Carpeta";
+
+            auditoriaService.registrar(exp, "Carpeta Creada",
+                    "Se ha creado una nueva " + tipo.toLowerCase() + ": " + guardada.getNombre()
+                            + ". Acción realizada por: " + nombreUsr + " el " + fechaFormat + ".",
+                    "FOLDER_PLUS", usuario);
+        }
+
+        return guardada;
     }
 
     /**
@@ -172,7 +197,7 @@ public class CarpetaService {
      * Eliminar carpeta (solo si está vacía)
      */
     @Transactional
-    public void eliminarCarpeta(UUID carpetaId) {
+    public void eliminarCarpeta(UUID carpetaId, Usuario usuario) {
         Carpeta carpeta = obtenerCarpeta(carpetaId);
 
         if (carpeta.getEsSistema()) {
@@ -191,13 +216,25 @@ public class CarpetaService {
         }
 
         carpetaRepository.delete(carpeta);
+
+        // Auditoría
+        Expediente exp = expedienteRepository.findById(carpeta.getExpedienteId()).orElse(null);
+        if (exp != null) {
+            String fechaFormat = LocalDate.now().toString();
+            String nombreUsr = (usuario != null) ? usuario.getNombreCompleto() : "Desconocido";
+
+            auditoriaService.registrar(exp, "Carpeta Eliminada",
+                    "Se ha eliminado la carpeta: " + carpeta.getNombre() + ". Acción realizada por: " + nombreUsr
+                            + " el " + fechaFormat + ".",
+                    "TRASH", usuario);
+        }
     }
 
     /**
      * Mover carpeta a otra ubicación
      */
     @Transactional
-    public Carpeta moverCarpeta(UUID carpetaId, UUID nuevaCarpetaPadreId) {
+    public Carpeta moverCarpeta(UUID carpetaId, UUID nuevaCarpetaPadreId, Usuario usuario) {
         Carpeta carpeta = obtenerCarpeta(carpetaId);
 
         if (carpeta.getEsSistema()) {
@@ -231,7 +268,22 @@ public class CarpetaService {
             carpeta.setCarpetaPadre(null);
         }
 
-        return carpetaRepository.save(carpeta);
+        Carpeta guardada = carpetaRepository.save(carpeta);
+
+        // Auditoría
+        Expediente exp = expedienteRepository.findById(carpeta.getExpedienteId()).orElse(null);
+        if (exp != null) {
+            String destino = (nuevaCarpetaPadreId != null) ? guardada.getCarpetaPadre().getNombre() : "Raíz";
+            String fechaFormat = LocalDate.now().toString();
+            String nombreUsr = (usuario != null) ? usuario.getNombreCompleto() : "Desconocido";
+
+            auditoriaService.registrar(exp, "Carpeta Movida",
+                    "Se movió la carpeta " + guardada.getNombre() + " a " + destino + ". Acción realizada por: "
+                            + nombreUsr + " el " + fechaFormat + ".",
+                    "ARROWS_ALT", usuario);
+        }
+
+        return guardada;
     }
 
     /**

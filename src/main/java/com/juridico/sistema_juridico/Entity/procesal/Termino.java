@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
+import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
@@ -38,8 +39,9 @@ public class Termino {
     @Column(name = "fecha_vencimiento", nullable = false)
     private LocalDate fechaVencimiento;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "estatus_termino", length = 30, nullable = false)
-    private String estatusTermino; // PROYECTISTA, REVISION, etc.
+    private EstatusTermino estatusTermino; // PROYECTISTA, REVISION, etc.
 
     @Column(name = "archivo_word", length = 500)
     private String archivoWord;
@@ -64,9 +66,12 @@ public class Termino {
     @Column(name = "fecha_presentacion")
     private LocalDate fechaPresentacion;
 
+    @Column(name = "acuse_nombre", length = 500)
+    private String acuseNombre;
+
     public String getSemaforoColor() {
         // Si ya está terminado, semáforo gris (apagado)
-        if ("Concluido".equalsIgnoreCase(this.estatusTermino) || "Presentado".equalsIgnoreCase(this.estatusTermino)) {
+        if (this.estatusTermino == EstatusTermino.CONCLUIDO || this.estatusTermino == EstatusTermino.PRESENTADO) {
             return "bg-gray-400"; 
         }
 
@@ -80,7 +85,7 @@ public class Termino {
 
     
     public String getDiasRestantesTexto() {
-        if ("Concluido".equalsIgnoreCase(this.estatusTermino)) return "Término Concluido";
+        if (this.estatusTermino == EstatusTermino.CONCLUIDO) return "Término Concluido";
         
         long dias = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaVencimiento);
         

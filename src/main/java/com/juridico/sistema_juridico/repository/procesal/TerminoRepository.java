@@ -1,5 +1,6 @@
 package com.juridico.sistema_juridico.repository.procesal;
 
+import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import org.springframework.data.domain.Page;
@@ -33,7 +34,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             "AND (:materiaId IS NULL OR e.materia.id = :materiaId)")
     List<Termino> listarParaExcel(
             @Param("keyword") String keyword,
-            @Param("estatus") String estatus,
+            @Param("estatus") EstatusTermino estatus,
             @Param("prioridad") Prioridad prioridad,
             @Param("abogadoId") Integer abogadoId,
             @Param("gerenciaId") Integer gerenciaId,
@@ -56,7 +57,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             "AND (:materiaId IS NULL OR e.materia.id = :materiaId)")
     Page<Termino> buscarConFiltros(
             @Param("keyword") String keyword,
-            @Param("estatus") String estatus,
+            @Param("estatus") EstatusTermino estatus,
             @Param("prioridad") Prioridad prioridad,
             @Param("abogadoId") Integer abogadoId,
             @Param("gerenciaId") Integer gerenciaId,
@@ -64,7 +65,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             Pageable pageable);
 
     // ... Métodos auxiliares (sin cambios) ...
-    List<Termino> findByFechaVencimientoBeforeAndEstatusTerminoNot(LocalDate fecha, String estatus);
+    List<Termino> findByFechaVencimientoBeforeAndEstatusTerminoNot(LocalDate fecha, EstatusTermino estatus);
 
     List<Termino> findByExpedienteId(UUID expedienteId);
 
@@ -77,10 +78,10 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             "AND t.estatusTermino NOT IN :estatusExcluidos")
     List<Termino> findByFechaVencimientoAndEstatusTerminoNotIn(
             @Param("fecha") LocalDate fecha,
-            @Param("estatusExcluidos") List<String> estatusExcluidos);
+            @Param("estatusExcluidos") List<EstatusTermino> estatusExcluidos);
 
     Page<Termino> findByEstatusTerminoInAndFechaPresentacionBetweenOrderByFechaPresentacionDesc(
-            List<String> estatus,
+            List<EstatusTermino> estatus,
             LocalDate inicio,
             LocalDate fin,
             Pageable pageable);
@@ -115,14 +116,14 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
 
     // --- 4. CONTEO PARA DASHBOARD KPIs ---
     // Conteo por gerencia individual (solo términos activos - excluidos concluidos/presentados)
-    @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.gerencia.id = :gerenciaId AND t.estatusTermino NOT IN ('Concluido', 'Presentado')")
+    @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.gerencia.id = :gerenciaId AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
     long countByExpedienteGerenciaIdAndActivo(@Param("gerenciaId") Long gerenciaId);
 
     // Conteo por lista de gerencias (solo términos activos)
-    @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.gerencia.id IN :gerenciaIds AND t.estatusTermino NOT IN ('Concluido', 'Presentado')")
+    @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.gerencia.id IN :gerenciaIds AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
     long countByExpedienteGerenciaIdInAndActivo(@Param("gerenciaIds") List<Long> gerenciaIds);
 
     // Conteo total términos activos (sin filtro)
-    @Query("SELECT COUNT(t) FROM Termino t WHERE t.estatusTermino NOT IN ('Concluido', 'Presentado')")
+    @Query("SELECT COUNT(t) FROM Termino t WHERE t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
     long countByActivo();
 }

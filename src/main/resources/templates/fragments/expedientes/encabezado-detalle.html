@@ -39,11 +39,15 @@
                 class="px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition">
                 <i class="fas fa-comment-dots mr-1"></i> Observaciones
             </button>
-            <button onclick="openModal('modal-editar')"
+            <!-- Botón Editar: Oculto para ABOGADO y JEFE_DEPTO -->
+            <button sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE')"
+                onclick="openModal('modal-editar')"
                 class="px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition">
                 <i class="fas fa-edit mr-1"></i> Editar
             </button>
-            <button onclick="openModal('modal-etapa')"
+            <!-- Botón Cambiar Etapa: Oculto para ABOGADO -->
+            <button sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')"
+                onclick="openModal('modal-etapa')"
                 class="px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition">
                 <i class="fas fa-step-forward mr-1"></i> Cambiar Etapa
             </button>

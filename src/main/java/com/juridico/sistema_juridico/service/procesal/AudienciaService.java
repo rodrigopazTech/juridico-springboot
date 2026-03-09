@@ -13,6 +13,7 @@ import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.NotificacionService;
+import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -75,8 +76,8 @@ public class AudienciaService {
                     : "Desconocida";
 
             // Lógica de Estatus: Si estaba pendiente, ahora tiene acta
-            if ("PENDIENTE".equals(audiencia.getEstatusAudiencia())) {
-                audiencia.setEstatusAudiencia("CON_ACTA");
+            if (EstatusAudiencia.PENDIENTE.equals(audiencia.getEstatusAudiencia())) {
+                audiencia.setEstatusAudiencia(EstatusAudiencia.CON_ACTA);
                 notificarSubidaActa(audiencia);
             }
             audienciaRepository.save(audiencia);
@@ -130,7 +131,7 @@ public class AudienciaService {
         Audiencia audiencia = audienciaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
 
-        audiencia.setEstatusAudiencia("CONCLUIDA");
+        audiencia.setEstatusAudiencia(EstatusAudiencia.CONCLUIDA);
         audiencia.setFechaDesahogo(LocalDate.now());
         audiencia.setObservaciones(observaciones);
 
@@ -150,8 +151,12 @@ public class AudienciaService {
         String tipoConcluida = (audiencia.getTipoAudiencia() != null) ? audiencia.getTipoAudiencia().getNombre()
                 : "Desconocida";
 
+        String usuarioActual = SecurityContextHolder.getContext().getAuthentication().getName();
+        String fechaFormat = LocalDate.now().toString();
         registrarActividad(audiencia.getExpediente(), "Audiencia Concluida",
-                "La audiencia ha sido marcada como concluida: " + tipoConcluida, "CHECK");
+                "La audiencia ha sido marcada como concluida: " + tipoConcluida + ". Acción realizada por: "
+                        + usuarioActual + " el " + fechaFormat + ".",
+                "CHECK");
     }
 
     @Transactional
@@ -217,8 +222,12 @@ public class AudienciaService {
             }
 
             String tipoProg = (a.getTipoAudiencia() != null) ? a.getTipoAudiencia().getNombre() : "Desconocida";
-            registrarActividad(a.getExpediente(), "Audiencia Programada",
-                    "Se ha programado una nueva audiencia: " + tipoProg + " para el " + a.getFechaAudiencia(), "PLUS");
+
+            String fechaFormat = LocalDate.now().toString();
+            registrarActividad(a.getExpediente(), "Audiencia Creada",
+                    "Se ha programado una nueva audiencia: " + tipoProg + " para el " + a.getFechaAudiencia()
+                            + ". Acción realizada por: " + emailCreador + " el " + fechaFormat + ".",
+                    "PLUS");
 
         } catch (Exception e) {
             System.err.println("CRÍTICO - Error al notificar creación: " + e.getMessage());
@@ -247,7 +256,7 @@ public class AudienciaService {
                 .fechaAudiencia(request.getFecha())
                 .horaAudiencia(horaFormateada)
                 .salaLugar(request.getSala())
-                .estatusAudiencia("PENDIENTE")
+                .estatusAudiencia(EstatusAudiencia.PENDIENTE)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
