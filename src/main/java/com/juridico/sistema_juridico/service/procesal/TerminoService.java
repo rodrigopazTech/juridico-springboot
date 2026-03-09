@@ -110,8 +110,8 @@ public class TerminoService {
         String fechaFormat = LocalDate.now().toString();
 
         registrarActividad(termino.getExpediente(), "Cambio de Estado (Término)",
-                "Cambio de estatus de Término a " + nuevoEstado.toUpperCase() + " (Expediente ID: "
-                        + termino.getExpediente().getId() + "). Acción realizada por: " + usuarioActual + " el "
+                "Cambio de estatus de Término a " + nuevoEstado.getDescripcion() + ". Acción realizada por: "
+                        + usuarioActual + " el "
                         + fechaFormat + ".",
                 "EDIT");
     }

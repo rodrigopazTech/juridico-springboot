@@ -76,15 +76,18 @@ public class TerminosController {
     // --- MATRIZ DE PERMISOS ---
     private static final Map<EstatusTermino, List<RolUsuario>> PERMISOS_ETAPAS = new HashMap<>();
     static {
-        PERMISOS_ETAPAS.put(EstatusTermino.PROYECTISTA, Arrays.asList(RolUsuario.ABOGADO, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO,
-                RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
-        PERMISOS_ETAPAS.put(EstatusTermino.REVISION, Arrays.asList(RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE, RolUsuario.DIRECCION,
-                RolUsuario.SUBDIRECCION));
+        PERMISOS_ETAPAS.put(EstatusTermino.PROYECTISTA,
+                Arrays.asList(RolUsuario.ABOGADO, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO,
+                        RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
+        PERMISOS_ETAPAS.put(EstatusTermino.REVISION,
+                Arrays.asList(RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE, RolUsuario.DIRECCION,
+                        RolUsuario.SUBDIRECCION));
         PERMISOS_ETAPAS.put(EstatusTermino.GERENCIA,
                 Arrays.asList(RolUsuario.GERENTE, RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
         PERMISOS_ETAPAS.put(EstatusTermino.DIRECCION, Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
-        PERMISOS_ETAPAS.put(EstatusTermino.LIBERADO, Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE,
-                RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
+        PERMISOS_ETAPAS.put(EstatusTermino.LIBERADO,
+                Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE,
+                        RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
         PERMISOS_ETAPAS.put(EstatusTermino.PRESENTADO, Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION,
                 RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO));
     }
@@ -174,7 +177,8 @@ public class TerminosController {
             List<Expediente> expedientesPorAudiencia = audienciaRepository.findAll().stream()
                     .filter(a -> a.getAbogadoComparece() != null &&
                             a.getAbogadoComparece().getId().equals(usuarioActual.getId()) &&
-                            com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.CONCLUIDA != a.getEstatusAudiencia())
+                            com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.CONCLUIDA != a
+                                    .getEstatusAudiencia())
                     .map(com.juridico.sistema_juridico.Entity.procesal.Audiencia::getExpediente)
                     .collect(Collectors.toList());
 
@@ -329,7 +333,7 @@ public class TerminosController {
         if (etapaAnterior == EstatusTermino.PROYECTISTA && termino.getArchivoWord() == null) {
             throw new BadRequestException("Debes subir el archivo Word antes de enviar a Revisión.");
         }
-        
+
         if (etapaAnterior == EstatusTermino.LIBERADO && termino.getAcuseNombre() == null) {
             throw new BadRequestException("Debes subir el acuse antes de marcar como Presentado.");
         }
@@ -343,8 +347,8 @@ public class TerminosController {
         // Registro en historial
         if (termino.getExpediente() != null) {
             String fechaFormat = LocalDate.now().toString();
-            String desc = "Cambio de estatus de Término a " + siguienteEtapa.toUpperCase() + " (Expediente ID: "
-                    + termino.getExpediente().getId() + "). Acción realizada por: " + actor.getNombreCompleto() + " el "
+            String desc = "Cambio de estatus de Término a " + siguienteEtapa.getDescripcion()
+                    + "). Acción realizada por: " + actor.getNombreCompleto() + " el "
                     + fechaFormat + ".";
 
             auditoriaService.registrar(termino.getExpediente(), "Cambio de Estado (Término)",
@@ -359,9 +363,11 @@ public class TerminosController {
         return "redirect:/terminos";
     }
 
-    private void notificarCambioDeEtapa(Termino termino, EstatusTermino etapaAnterior, EstatusTermino nuevaEtapa, Usuario actor) {
+    private void notificarCambioDeEtapa(Termino termino, EstatusTermino etapaAnterior, EstatusTermino nuevaEtapa,
+            Usuario actor) {
         String titulo = "Término en " + nuevaEtapa.getDescripcion();
-        String mensajeBase = String.format("Movimiento de '%s' a '%s' por %s", etapaAnterior.getDescripcion(), nuevaEtapa.getDescripcion(),
+        String mensajeBase = String.format("Movimiento de '%s' a '%s' por %s", etapaAnterior.getDescripcion(),
+                nuevaEtapa.getDescripcion(),
                 actor.getNombreCompleto());
 
         List<Usuario> destinatarios = new ArrayList<>();
@@ -423,7 +429,8 @@ public class TerminosController {
 
                 // --- CANDADO 2: ETAPAS FINALES BLOQUEADAS ---
                 EstatusTermino st = termino.getEstatusTermino();
-                if (st == EstatusTermino.LIBERADO || st == EstatusTermino.PRESENTADO || st == EstatusTermino.CONCLUIDO) {
+                if (st == EstatusTermino.LIBERADO || st == EstatusTermino.PRESENTADO
+                        || st == EstatusTermino.CONCLUIDO) {
                     redirectAttrs.addFlashAttribute("mensaje", "El documento está bloqueado en esta etapa.");
                     redirectAttrs.addFlashAttribute("tipo", "error");
                     return "redirect:/terminos";
@@ -490,7 +497,8 @@ public class TerminosController {
                         .sincronizadoAt(LocalDateTime.now()).build();
                 terminoPresentadoRepository.save(presentado);
 
-                // No avanzamos la etapa automáticamente, permitimos que el usuario lo haga manualmente
+                // No avanzamos la etapa automáticamente, permitimos que el usuario lo haga
+                // manualmente
                 // para validar la existencia del campo acuseNombre
                 termino.setAcuseNombre(nombreAcuse);
                 if (observaciones != null) {
@@ -499,7 +507,8 @@ public class TerminosController {
                 termino.setUpdatedAt(LocalDateTime.now());
                 terminoRepository.save(termino);
 
-                redirectAttrs.addFlashAttribute("mensaje", "Acuse cargado correctamente. Ahora puedes avanzar el término a 'Presentado'.");
+                redirectAttrs.addFlashAttribute("mensaje",
+                        "Acuse cargado correctamente. Ahora puedes avanzar el término a 'Presentado'.");
                 redirectAttrs.addFlashAttribute("tipo", "success");
             }
         } catch (Exception e) {
