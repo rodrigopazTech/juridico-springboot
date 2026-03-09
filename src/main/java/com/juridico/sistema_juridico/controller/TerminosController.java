@@ -464,6 +464,11 @@ public class TerminosController {
                 termino.setUpdatedAt(LocalDateTime.now());
                 terminoRepository.save(termino);
 
+                // AUDITORIA: Registro de subida de archivo borrador
+                auditoriaService.registrar(termino.getExpediente(), "ARCHIVO CARGADO",
+                        "Borrador: " + archivo.getOriginalFilename(),
+                        "UPLOAD", actor);
+
                 redirectAttrs.addFlashAttribute("mensaje", "Borrador actualizado correctamente.");
                 redirectAttrs.addFlashAttribute("tipo", "success");
             }
@@ -522,6 +527,11 @@ public class TerminosController {
                 }
                 termino.setUpdatedAt(LocalDateTime.now());
                 terminoRepository.save(termino);
+
+                // AUDITORIA: Registro de subida de acuse
+                auditoriaService.registrar(termino.getExpediente(), "ARCHIVO CARGADO",
+                        "Acuse: " + archivo.getOriginalFilename(),
+                        "UPLOAD", actor);
 
                 redirectAttrs.addFlashAttribute("mensaje",
                         "Acuse cargado correctamente. Ahora puedes avanzar el término a 'Presentado'.");

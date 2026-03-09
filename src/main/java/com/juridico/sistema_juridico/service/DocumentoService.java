@@ -121,13 +121,10 @@ public class DocumentoService {
         // Auditoría
         Expediente exp = expedienteRepository.findById(expedienteId).orElse(null);
         if (exp != null) {
-            String fechaFormat = LocalDate.now().toString();
-            String nombreUsr = (usuario != null) ? usuario.getNombreCompleto() : "Desconocido";
-            auditoriaService.registrar(exp, "Archivo Subido",
-                    "Se ha cargado un nuevo archivo: " + documento.getNombreOriginal() +
-                            (carpeta != null ? " en la carpeta " + carpeta.getNombre() : "")
-                            + ". Acción realizada por: " + nombreUsr + " el " + fechaFormat + ".",
-                    "PAPERCLIP", usuario);
+            auditoriaService.registrar(exp, "ARCHIVO CARGADO",
+                    "Subido al gestor documental: " + documento.getNombreOriginal() +
+                            (carpeta != null ? " en la carpeta " + carpeta.getNombre() : ""),
+                    "UPLOAD", usuario);
         }
 
         return guardado;
