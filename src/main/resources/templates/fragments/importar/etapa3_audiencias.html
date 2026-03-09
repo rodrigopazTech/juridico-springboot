@@ -1,0 +1,95 @@
+<div th:fragment="contenido" xmlns:th="http://www.thymeleaf.org">
+  <div th:if="${pasoActual == 3}">
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h2 class="text-2xl font-bold text-gob-guinda mb-1">
+          <i class="fas fa-gavel mr-2"></i> Etapa 3: Revisión de Audiencias
+        </h2>
+        <p class="text-gray-600">
+          Verifica la agenda de audiencias detectadas en este lote.
+        </p>
+      </div>
+      <div
+        class="bg-orange-50 text-orange-700 px-4 py-2 rounded-lg border border-orange-200 font-bold text-sm"
+      >
+        <i class="fas fa-calendar-alt mr-1"></i>
+        <span th:text="${#lists.size(audienciasResumen)}"></span> audiencias
+      </div>
+    </div>
+
+    <div
+      th:if="${#lists.isEmpty(audienciasResumen)}"
+      class="text-center p-8 bg-gray-50 rounded-xl border border-gray-200 mb-8"
+    >
+      <i class="fas fa-calendar-times text-4xl text-gray-400 mb-3"></i>
+      <h3 class="font-bold text-lg text-gray-700">
+        No hay audiencias en este lote
+      </h3>
+      <p class="text-sm text-gray-500 mt-1">
+        Este lote solo contiene expedientes o términos. Puedes avanzar.
+      </p>
+    </div>
+
+    <div
+      th:if="${not #lists.isEmpty(audienciasResumen)}"
+      class="overflow-hidden rounded-xl border border-gray-200 shadow-sm mb-8"
+    >
+      <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
+        <thead
+          class="bg-gray-100 text-gray-700 uppercase font-bold text-xs tracking-wider"
+        >
+          <tr>
+            <th scope="col" class="px-6 py-4">Expediente</th>
+            <th scope="col" class="px-6 py-4">Fecha y Hora</th>
+            <th scope="col" class="px-6 py-4">Tipo de Audiencia</th>
+            <th scope="col" class="px-6 py-4">Compareciente</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr
+            th:each="aud : ${audienciasResumen}"
+            class="hover:bg-gray-50 transition"
+          >
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span
+                class="font-bold text-gob-guinda"
+                th:text="${aud.numeroExpediente}"
+              ></span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center text-gray-900 font-medium">
+                <i class="far fa-calendar text-gob-oro mr-2"></i>
+                <span th:text="${aud.fecha}"></span>
+                <span class="mx-2 text-gray-300">|</span>
+                <i class="far fa-clock text-gray-400 mr-1"></i>
+                <span th:text="${aud.hora}"></span>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <span
+                class="bg-gray-100 text-gray-800 px-2.5 py-1 rounded-md text-xs font-bold border border-gray-200"
+                th:text="${aud.tipoAudiencia}"
+              ></span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+              <i class="fas fa-user-tie text-gray-400 mr-2"></i
+              ><span th:text="${aud.compareciente}"></span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <form th:action="@{/admin/importar/validar-audiencias}" method="post">
+      <input type="hidden" name="loteId" th:value="${lote.id}" />
+      <div class="flex justify-end border-t border-gray-200 pt-5">
+        <button
+          type="submit"
+          class="bg-gob-oro text-white px-8 py-3 rounded-xl font-bold shadow hover:bg-[#a37e46] transition"
+        >
+          Aprobar Audiencias y Continuar <i class="fas fa-arrow-right ml-2"></i>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
