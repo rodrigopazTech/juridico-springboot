@@ -184,6 +184,13 @@ public class ExpedientesController {
             }
 
             if (esNuevo) {
+                // Validación de Roles para Creación
+                String rol = usuario.getRol().name();
+                if (!rol.equals("ADMIN") && !rol.equals("DIRECCION") && !rol.equals("SUBDIRECCION")) {
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                            "No tienes permiso para crear expedientes.");
+                }
+
                 expediente.setCreatedAt(LocalDateTime.now());
                 expediente.setEtapaProcesal(EtapaProcesal.TRAMITE);
             } else {
