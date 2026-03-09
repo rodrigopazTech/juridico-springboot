@@ -42,13 +42,13 @@
 
                         <td class="px-4 py-3">
                             <div class="flex flex-col max-w-[180px]">
-                                <a th:if="${t.expediente != null}" th:href="@{/expedientes/{id}(id=${t.expediente.id})}"
+                                <a th:if="${t.expediente != null}" th:href="@{/expedientes/{id}(id=${t.expediente?.id})}"
                                     class="font-bold text-gob-guinda hover:underline text-sm truncate"
-                                    th:title="'Ver expediente: ' + ${t.expediente.numero}"
-                                    th:text="${t.expediente.numero}">EXP-001</a>
+                                    th:title="'Ver expediente: ' + ${t.expediente?.numero}"
+                                    th:text="${t.expediente?.numero}">EXP-001</a>
 
                                 <span class="text-xs text-gray-400 truncate cursor-help" th:if="${t.expediente != null}"
-                                    th:title="${t.expediente.partes}" th:text="${t.expediente.partes}">Partes</span>
+                                    th:title="${t.expediente?.partes}" th:text="${t.expediente?.partes}">Partes</span>
 
                                 <span class="text-xs text-gray-300 italic" th:if="${t.expediente == null}">Sin
                                     Asignar</span>
@@ -58,11 +58,11 @@
                         <td class="px-4 py-3">
                             <div class="flex items-center gap-1.5">
                                 <span class="w-1.5 h-1.5 rounded-full"
-                                    th:classappend="${t.prioridad != null && t.prioridad.name() == 'ALTA' ? 'bg-red-500' : (t.prioridad != null && t.prioridad.name() == 'BAJA' ? 'bg-gray-400' : 'bg-orange-400')}">
+                                    th:classappend="${t.prioridad?.name() == 'ALTA' ? 'bg-red-500' : (t.prioridad?.name() == 'BAJA' ? 'bg-gray-400' : 'bg-orange-400')}">
                                 </span>
                                 <span class="text-[10px] font-bold uppercase tracking-tight"
-                                    th:classappend="${t.prioridad != null && t.prioridad.name() == 'ALTA' ? 'text-red-600' : (t.prioridad != null && t.prioridad.name() == 'BAJA' ? 'text-gray-500' : 'text-orange-600')}"
-                                    th:text="${t.prioridad != null ? t.prioridad : 'MEDIA'}">
+                                    th:classappend="${t.prioridad?.name() == 'ALTA' ? 'text-red-600' : (t.prioridad?.name() == 'BAJA' ? 'text-gray-500' : 'text-orange-600')}"
+                                    th:text="${t.prioridad ?: 'MEDIA'}">
                                     MEDIA
                                 </span>
                             </div>
@@ -71,14 +71,13 @@
                         <td class="px-4 py-3 max-w-xs truncate" th:text="${t.actuacion}" th:title="${t.actuacion}">
                             Actuación</td>
 
-                        <td class="px-4 py-3"
-                            th:text="${t.abogadoResponsable != null ? t.abogadoResponsable.nombreCompleto : 'Sin Asignar'}">
+                            th:text="${t.abogadoResponsable?.nombreCompleto ?: 'Sin Asignar'}">
                         </td>
 
                         <td class="px-4 py-3">
                             <span class="px-2 py-1 rounded text-xs font-bold border"
-                                th:text="${t.estatusTermino.descripcion}"
-                                th:classappend="${t.estatusTermino.name() == 'CONCLUIDO' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-blue-50 text-blue-800 border-blue-200'}">
+                                th:text="${t.estatusTermino?.descripcion}"
+                                th:classappend="${t.estatusTermino?.name() == 'CONCLUIDO' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-blue-50 text-blue-800 border-blue-200'}">
                                 Proyectista
                             </span>
                         </td>
@@ -86,7 +85,7 @@
                         <td class="px-4 py-3 text-right relative">
                             <button
                                 th:if="${t.estatusTermino?.name() != 'LIBERADO' && t.estatusTermino?.name() != 'PRESENTADO' && t.estatusTermino?.name() != 'CONCLUIDO'}"
-                                th:onclick="editarTermino([[${t.id}]], [[${t.actuacion}]], [[${t.fechaVencimiento}]], [[${t.expediente != null ? t.expediente.id : ''}]], [[${t.abogadoResponsable != null ? t.abogadoResponsable.id : ''}]])"
+                                th:onclick="editarTermino([[${t.id}]], [[${t.actuacion}]], [[${t.fechaVencimiento}]], [[${t.expediente?.id ?: ''}]], [[${t.abogadoResponsable?.id ?: ''}]])"
                                 class="text-gray-400 hover:text-gob-oro mr-2" title="Editar">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -106,7 +105,7 @@
                             <div th:id="'menu-' + ${t.id}"
                                 class="hidden absolute right-0 mt-2 w-64 bg-white rounded-md shadow-xl z-50 border border-gray-100 text-left overflow-hidden ring-1 ring-black ring-opacity-5">
 
-                                <a th:if="${t.expediente != null}" th:href="@{/expedientes/{id}(id=${t.expediente.id})}"
+                                <a th:if="${t.expediente != null}" th:href="@{/expedientes/{id}(id=${t.expediente?.id})}"
                                     class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-guinda transition border-l-4 border-transparent hover:border-gob-guinda">
                                     <i class="fas fa-folder-open mr-3 w-4 text-center text-gray-400"></i> Ver Expediente
                                 </a>
