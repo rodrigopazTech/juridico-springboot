@@ -30,6 +30,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
@@ -231,6 +233,13 @@ public class AudienciasController {
 
         boolean esNueva = (audiencia.getId() == null);
 
+        if (audiencia.getFechaAudiencia() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha de la audiencia es obligatoria.");
+        }
+        if (audiencia.getTipoAudiencia() == null || audiencia.getTipoAudiencia().getId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El tipo de audiencia es obligatorio.");
+        }
+
         if (!esNueva) {
             // Lógica de EDICIÓN:
             // Buscamos la audiencia. Si no existe, lanzamos la excepción y el sistema
@@ -244,8 +253,11 @@ public class AudienciasController {
             audiencia.setActaDocumento(audienciaExistente.getActaDocumento());
 
             // Preservar observaciones si no se enviaron nuevas
-            if (audiencia.getObservaciones() == null) {
+            if (audiencia.getObservaciones() == null && audienciaExistente.getObservaciones() != null) {
                 audiencia.setObservaciones(audienciaExistente.getObservaciones());
+            }
+            if (audiencia.getExpediente() == null && audienciaExistente.getExpediente() != null) {
+                audiencia.setExpediente(audienciaExistente.getExpediente());
             }
         } else {
             // Lógica de CREACIÓN
@@ -307,7 +319,8 @@ public class AudienciasController {
 
             // 2. VALIDAR PERMISOS (Solo Jefes hacia arriba pueden concluir)
             if (usuario.getRol().name().equals("ABOGADO")) {
-                throw new ForbiddenException("Acceso denegado: Solo Dirección o Jefatura pueden validar y concluir audiencias.");
+                throw new ForbiddenException(
+                        "Acceso denegado: Solo Dirección o Jefatura pueden validar y concluir audiencias.");
             }
 
             // 3. EJECUTAR LÓGICA
@@ -346,9 +359,10 @@ public class AudienciasController {
     @GetMapping("/descargar-acta/{id}")
     public ResponseEntity<Resource> descargarActa(@PathVariable Integer id) {
         try {
-            Audiencia audiencia = audienciaRepository.findById(id).orElse(null);
+            Audiencia audiencia = audienciaRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Audiencia no encontrada"));
 
-            if (audiencia == null || audiencia.getActaDocumento() == null) {
+            if (audiencia.getActaDocumento() == null) {
                 return ResponseEntity.notFound().build();
             }
 

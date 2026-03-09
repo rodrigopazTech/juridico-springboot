@@ -39,6 +39,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -228,6 +230,14 @@ public class TerminosController {
         Termino terminoGuardar;
         boolean esNuevo = false;
 
+        // Validaciones Críticas para Término
+        if (terminoForm.getActuacion() == null || terminoForm.getActuacion().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El campo actuación es obligatorio.");
+        }
+        if (terminoForm.getFechaVencimiento() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha de vencimiento es obligatoria.");
+        }
+
         // 1. VINCULAR EXPEDIENTE (Si viene el ID)
         if (expedienteId != null) {
             Expediente exp = expedienteRepository.findById(expedienteId)
@@ -265,6 +275,10 @@ public class TerminosController {
             terminoGuardar = existente;
         } else {
             // CREACIÓN
+            if (expedienteId == null && terminoForm.getExpediente() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "El expediente asociado es obligatorio para crear un término.");
+            }
             esNuevo = true;
             terminoGuardar = terminoForm;
             terminoGuardar.setFechaIngreso(LocalDate.now());
@@ -415,7 +429,8 @@ public class TerminosController {
         }
 
         try {
-            Termino termino = terminoRepository.findById(id).orElse(null);
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
             if (termino != null) {
 
                 // --- CANDADO 1: VERIFICAR PERMISOS POR ROL Y ESTATUS ---
@@ -475,7 +490,8 @@ public class TerminosController {
         }
 
         try {
-            Termino termino = terminoRepository.findById(id).orElse(null);
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
 
             // 2. Verificar que el término exista y esté efectivamente en estado 'Liberado'
             if (termino != null && termino.getEstatusTermino() == EstatusTermino.LIBERADO) {
@@ -533,7 +549,8 @@ public class TerminosController {
         }
 
         try {
-            Termino termino = terminoRepository.findById(id).orElse(null);
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
 
             // Solo se puede concluir si ya fue "Presentado" (ya tiene acuse)
             if (termino != null && termino.getEstatusTermino() == EstatusTermino.PRESENTADO) {
@@ -584,15 +601,17 @@ public class TerminosController {
 
     private Usuario getUsuarioActual() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return usuarioRepository.findByEmail(email).orElse(null);
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no autenticado"));
     }
 
     @GetMapping("/descargar/{id}")
     public ResponseEntity<Resource> descargarArchivo(@PathVariable Integer id) {
         try {
-            Termino termino = terminoRepository.findById(id).orElse(null);
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
 
-            if (termino == null || termino.getArchivoWord() == null) {
+            if (termino.getArchivoWord() == null) {
                 return ResponseEntity.notFound().build();
             }
 
@@ -675,15 +694,18 @@ public class TerminosController {
     @GetMapping("/descargar-acuse/{id}")
     public ResponseEntity<Resource> descargarAcuse(@PathVariable Integer id) {
         try {
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
+
             List<TerminoPresentado> presentados = terminoPresentadoRepository.findByTerminoExpedienteId(
-                    terminoRepository.findById(id).get().getExpediente().getId());
+                    termino.getExpediente().getId());
 
             TerminoPresentado acuse = presentados.stream()
                     .filter(p -> p.getTermino().getId().equals(id))
                     .findFirst()
-                    .orElse(null);
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Acuse no encontrado"));
 
-            if (acuse == null || acuse.getAcuseDocumento() == null) {
+            if (acuse.getAcuseDocumento() == null) {
                 return ResponseEntity.notFound().build();
             }
 
