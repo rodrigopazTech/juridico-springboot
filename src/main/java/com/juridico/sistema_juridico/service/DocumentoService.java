@@ -181,22 +181,19 @@ public class DocumentoService {
         Documento documento = documentoRepository.findById(documentoId)
                 .orElseThrow(() -> new IllegalArgumentException("Documento no encontrado"));
 
+        // Auditoría (ANTES de eliminar el registro)
+        Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
+        if (exp != null) {
+            auditoriaService.registrar(exp, "ARCHIVO ELIMINADO",
+                    "Eliminado del gestor documental: " + documento.getNombreOriginal(),
+                    "TRASH", usuario);
+        }
+
         // Eliminar archivo del filesystem
         fileStorageService.eliminarArchivo(documento.getRutaArchivo());
 
         // Eliminar registro de BD
         documentoRepository.delete(documento);
-
-        // Auditoría
-        Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
-        if (exp != null) {
-            String fechaFormat = LocalDate.now().toString();
-            String nombreUsr = (usuario != null) ? usuario.getNombreCompleto() : "Desconocido";
-            auditoriaService.registrar(exp, "Archivo Eliminado",
-                    "Se ha eliminado el archivo: " + documento.getNombreOriginal() + ". Acción realizada por: "
-                            + nombreUsr + " el " + fechaFormat + ".",
-                    "TRASH", usuario);
-        }
     }
 
     /**
@@ -225,6 +222,9 @@ public class DocumentoService {
             }
         }
 
+        // Determinar carpeta origen antes de cambiarla
+        String origen = documento.getCarpeta() != null ? documento.getCarpeta().getNombre() : "Raíz";
+
         documento.setCarpeta(nuevaCarpeta);
         Documento guardado = documentoRepository.save(documento);
 
@@ -232,12 +232,9 @@ public class DocumentoService {
         Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
         if (exp != null) {
             String destino = nuevaCarpeta != null ? nuevaCarpeta.getNombre() : "Raíz";
-            String fechaFormat = LocalDate.now().toString();
-            String nombreUsr = (usuario != null) ? usuario.getNombreCompleto() : "Desconocido";
 
-            auditoriaService.registrar(exp, "Archivo Movido",
-                    "Se movió el archivo " + documento.getNombreOriginal() + " a " + destino
-                            + ". Acción realizada por: " + nombreUsr + " el " + fechaFormat + ".",
+            auditoriaService.registrar(exp, "ARCHIVO MOVIDO",
+                    "Movido de " + origen + " a " + destino + ": " + documento.getNombreOriginal(),
                     "ARROWS_ALT", usuario);
         }
 
