@@ -114,7 +114,10 @@
                                 <div class="border-t border-gray-100"></div>
 
                                 <button
-                                    th:unless="${t.estatusTermino.name() == 'LIBERADO' || t.estatusTermino.name() == 'PRESENTADO' || t.estatusTermino.name() == 'CONCLUIDO'}"
+                                    th:if="${(t.estatusTermino.name() == 'PROYECTISTA' and (rolActual.name() == 'ABOGADO' or rolActual.name() == 'ADMIN')) or
+                                                (t.estatusTermino.name() == 'REVISION' and (rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ADMIN')) or
+                                                (t.estatusTermino.name() == 'GERENCIA' and (rolActual.name() == 'GERENTE' or rolActual.name() == 'ADMIN')) or
+                                                (t.estatusTermino.name() == 'DIRECCION' and (rolActual.name() == 'DIRECCION' or rolActual.name() == 'SUBDIRECCION' or rolActual.name() == 'ADMIN'))}"
                                     th:onclick="'activarSubida(' + ${t.id} + ')'"
                                     class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-oro transition flex items-center border-l-4 border-transparent hover:border-gob-oro">
                                     <i
