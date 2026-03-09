@@ -313,6 +313,35 @@ public class ExpedientesController {
         Expediente expediente = expedienteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Expediente no encontrado con ID: " + id));
 
+        // --- PREVENCIÓN DE IDOR ---
+        boolean tienePermiso = false;
+        String rol = usuario.getRol().name();
+
+        if (rol.equals("ADMIN") || rol.equals("DIRECCION") || rol.equals("SUBDIRECCION")) {
+            tienePermiso = true;
+        } else if (rol.equals("GERENTE") && usuario.getGerencia() != null
+                && expediente.getGerencia() != null
+                && expediente.getGerencia().getId().equals(usuario.getGerencia().getId())) {
+            tienePermiso = true;
+        } else if (rol.equals("JEFE_DEPTO") && !usuario.getMaterias().isEmpty()
+                && expediente.getMateria() != null) {
+            boolean materiaCoincide = usuario.getMaterias().stream()
+                    .anyMatch(m -> m.getId().equals(expediente.getMateria().getId()));
+            if (materiaCoincide) {
+                tienePermiso = true;
+            }
+        } else if (expediente.getAbogadoResponsable() != null
+                && expediente.getAbogadoResponsable().getId().equals(usuario.getId())) {
+            tienePermiso = true;
+        }
+
+        if (!tienePermiso) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN,
+                    "No tienes permiso para ver este expediente.");
+        }
+        // --- FIN PREVENCIÓN DE IDOR ---
+
         model.addAttribute("expediente", expediente);
 
         // Búsqueda de próxima audiencia excluida concluida
