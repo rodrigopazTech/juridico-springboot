@@ -114,10 +114,10 @@
                                 <div class="border-t border-gray-100"></div>
 
                                 <button
-                                    th:if="${(t.estatusTermino.name() == 'PROYECTISTA' and (rolActual.name() == 'ABOGADO' or rolActual.name() == 'ADMIN')) or
-                                                (t.estatusTermino.name() == 'REVISION' and (rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ADMIN')) or
-                                                (t.estatusTermino.name() == 'GERENCIA' and (rolActual.name() == 'GERENTE' or rolActual.name() == 'ADMIN')) or
-                                                (t.estatusTermino.name() == 'DIRECCION' and (rolActual.name() == 'DIRECCION' or rolActual.name() == 'SUBDIRECCION' or rolActual.name() == 'ADMIN'))}"
+                                    th:if="${(t.estatusTermino?.name() == 'PROYECTISTA' and (rolActual.name() == 'ABOGADO' or rolActual.name() == 'ADMIN')) or
+                                                (t.estatusTermino?.name() == 'REVISION' and (rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ADMIN')) or
+                                                (t.estatusTermino?.name() == 'GERENCIA' and (rolActual.name() == 'GERENTE' or rolActual.name() == 'ADMIN')) or
+                                                (t.estatusTermino?.name() == 'DIRECCION' and (rolActual.name() == 'DIRECCION' or rolActual.name() == 'SUBDIRECCION' or rolActual.name() == 'ADMIN'))}"
                                     th:onclick="'activarSubida(' + ${t.id} + ')'"
                                     class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-oro transition flex items-center border-l-4 border-transparent hover:border-gob-oro">
                                     <i
@@ -134,7 +134,7 @@
                                 </a>
 
                                 <button
-                                    th:if="${t.estatusTermino.name() == 'LIBERADO' and mapaPermisos.get(t.estatusTermino).contains(rolActual)}"
+                                    th:if="${t.estatusTermino?.name() == 'LIBERADO' and mapaPermisos.get(t.estatusTermino)?.contains(rolActual)}"
                                     th:onclick="'activarSubidaAcuse(' + ${t.id} + ')'"
                                     class="w-full text-left px-4 py-3 text-sm text-purple-700 hover:bg-purple-50 transition flex items-center border-l-4 border-transparent hover:border-purple-500 font-bold bg-purple-50/50">
                                     <i class="fas fa-file-signature mr-3 w-4 text-center text-purple-600"></i>
@@ -142,7 +142,7 @@
                                 </button>
 
                                 <button
-                                    th:if="${t.estatusTermino.name() == 'PRESENTADO' and mapaPermisos.get(t.estatusTermino).contains(rolActual)}"
+                                    th:if="${t.estatusTermino?.name() == 'PRESENTADO' and mapaPermisos.get(t.estatusTermino)?.contains(rolActual)}"
                                     th:onclick="'abrirModalConcluir(' + ${t.id} + ')'"
                                     class="w-full text-left px-4 py-3 text-sm text-green-700 hover:bg-green-50 transition flex items-center border-l-4 border-transparent hover:border-green-500 font-bold bg-green-50/50">
                                     <i class="fas fa-check-circle mr-3 w-4 text-center text-green-600"></i>
@@ -151,17 +151,17 @@
 
                                 <div class="border-t border-gray-100"></div>
 
-                                <a th:if="${((t.estatusTermino.name() == 'PROYECTISTA' and t.archivoWord != null) or 
-                                             (t.estatusTermino.name() == 'LIBERADO' and t.acuseNombre != null) or 
-                                             (t.estatusTermino.name() != 'PROYECTISTA' and t.estatusTermino.name() != 'LIBERADO' and 
-                                              t.estatusTermino.name() != 'PRESENTADO' and t.estatusTermino.name() != 'CONCLUIDO')) 
-                                            and mapaPermisos.get(t.estatusTermino).contains(rolActual)}"
+                                <a th:if="${((t.estatusTermino?.name() == 'PROYECTISTA' and t.archivoWord != null) or 
+                                             (t.estatusTermino?.name() == 'LIBERADO' and t.acuseNombre != null) or 
+                                             (t.estatusTermino?.name() != 'PROYECTISTA' and t.estatusTermino?.name() != 'LIBERADO' and 
+                                              t.estatusTermino?.name() != 'PRESENTADO' and t.estatusTermino?.name() != 'CONCLUIDO')) 
+                                            and mapaPermisos.get(t.estatusTermino)?.contains(rolActual)}"
                                     th:href="@{/terminos/avanzar/{id}(id=${t.id})}"
                                     class="block px-4 py-3 text-sm text-green-700 hover:bg-green-50 transition border-l-4 border-transparent hover:border-green-500">
                                     <i class="fas fa-arrow-right mr-3 w-4 text-center text-green-500"></i> Avanzar Etapa
                                 </a>
 
-                                <div th:if="${t.estatusTermino.name() == 'CONCLUIDO' || t.estatusTermino.name() == 'PRESENTADO'}"
+                                <div th:if="${t.estatusTermino?.name() == 'CONCLUIDO' || t.estatusTermino?.name() == 'PRESENTADO'}"
                                     class="bg-gray-50 border-l-4 border-gray-400">
                                     <a th:href="@{/terminos/descargar-acuse/{id}(id=${t.id})}"
                                         class="block w-full text-left px-4 py-2 text-sm text-purple-700 hover:bg-purple-100 transition flex items-center font-bold">
