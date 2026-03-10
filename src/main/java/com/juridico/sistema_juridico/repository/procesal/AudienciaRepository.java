@@ -38,8 +38,10 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
             "AND (:filtroUsuarioId IS NULL OR (e.abogadoResponsable.id = :filtroUsuarioId OR a.abogadoComparece.id = :filtroUsuarioId)) "
             +
             "AND (:filtroGerenciaId IS NULL OR e.gerencia.id = :filtroGerenciaId) " +
-            "AND ((:filtroMateriaIds) IS NULL OR e.materia.id IN (:filtroMateriaIds))")
+            "AND ((:filtroMateriaIds) IS NULL OR e.materia.id IN (:filtroMateriaIds)) " +
+            "AND (:id IS NULL OR a.id = :id)")
     Page<Audiencia> buscarConFiltros(
+            @Param("id") Integer id,
             @Param("keyword") String keyword,
             @Param("tipo") String tipo,
             @Param("gerencia") String gerencia,
@@ -73,8 +75,10 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
             "AND (:filtroUsuarioId IS NULL OR (e.abogadoResponsable.id = :filtroUsuarioId OR a.abogadoComparece.id = :filtroUsuarioId)) "
             +
             "AND (:filtroGerenciaId IS NULL OR e.gerencia.id = :filtroGerenciaId) " +
-            "AND ((:filtroMateriaIds) IS NULL OR e.materia.id IN (:filtroMateriaIds))")
+            "AND ((:filtroMateriaIds) IS NULL OR e.materia.id IN (:filtroMateriaIds)) " +
+            "AND (:id IS NULL OR a.id = :id)")
     List<Audiencia> listarParaExcel(
+            @Param("id") Integer id,
             @Param("keyword") String keyword,
             @Param("tipo") String tipo,
             @Param("gerencia") String gerencia,

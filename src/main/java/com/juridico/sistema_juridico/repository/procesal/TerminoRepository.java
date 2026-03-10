@@ -31,8 +31,10 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             "AND (:prioridad IS NULL OR t.prioridad = :prioridad) " +
             "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
             "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
-            "AND (:materiaId IS NULL OR e.materia.id = :materiaId)")
+            "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
+            "AND (:id IS NULL OR t.id = :id)")
     List<Termino> listarParaExcel(
+            @Param("id") Integer id,
             @Param("keyword") String keyword,
             @Param("estatus") EstatusTermino estatus,
             @Param("prioridad") Prioridad prioridad,
@@ -54,8 +56,10 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             "AND (:prioridad IS NULL OR t.prioridad = :prioridad) " +
             "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
             "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
-            "AND (:materiaId IS NULL OR e.materia.id = :materiaId)")
+            "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
+            "AND (:id IS NULL OR t.id = :id)")
     Page<Termino> buscarConFiltros(
+            @Param("id") Integer id,
             @Param("keyword") String keyword,
             @Param("estatus") EstatusTermino estatus,
             @Param("prioridad") Prioridad prioridad,

@@ -106,6 +106,7 @@ public class TerminosController {
     @GetMapping
     public String index(Model model,
             @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Integer id,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) EstatusTermino estatus,
             @RequestParam(required = false) Prioridad prioridad,
@@ -134,7 +135,7 @@ public class TerminosController {
         }
 
         Page<Termino> paginaTerminos = terminoRepository.buscarConFiltros(
-                keyword, estatus, prioridad,
+                id, keyword, estatus, prioridad,
                 filtroAbogadoSeguro,
                 filtroGerenciaSeguro,
                 materiaId,
@@ -214,6 +215,7 @@ public class TerminosController {
         model.addAttribute("paramMateriaId", materiaId);
 
         model.addAttribute("activePage", "terminos");
+        model.addAttribute("id", id);
 
         return "views/terminos/index";
     }
@@ -620,6 +622,7 @@ public class TerminosController {
 
     @GetMapping("/exportar-excel")
     public void exportarExcel(HttpServletResponse response,
+            @RequestParam(required = false) Integer id,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) EstatusTermino estatus,
             @RequestParam(required = false) Prioridad prioridad,
@@ -648,7 +651,7 @@ public class TerminosController {
         }
 
         List<Termino> listaTerminos = terminoRepository.listarParaExcel(
-                keyword, estatus, prioridad, filtroAbogado, filtroGerencia, materiaId);
+                id, keyword, estatus, prioridad, filtroAbogado, filtroGerencia, materiaId);
 
         TerminoExcelExporter excelExporter = new TerminoExcelExporter(listaTerminos);
         excelExporter.export(response);
