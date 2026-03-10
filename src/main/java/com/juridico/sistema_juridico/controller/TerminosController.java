@@ -317,10 +317,8 @@ public class TerminosController {
             String fechaFormat = LocalDate.now().toString();
             String logTitulo = esNuevo ? "Término Programado" : "Término Editado";
             String logDesc = esNuevo
-                    ? "Se ha registrado un nuevo término: " + terminoGuardado.getActuacion() + " (Expediente ID: "
-                            + terminoGuardado.getExpediente().getId() + ")"
-                    : "Se ha editado el término: " + terminoGuardado.getActuacion() + " (Expediente ID: "
-                            + terminoGuardado.getExpediente().getId() + ")";
+                    ? "Se ha registrado un nuevo término: " + terminoGuardado.getActuacion()
+                    : "Se ha editado el término: " + terminoGuardado.getActuacion();
             logDesc += ". Acción realizada por: " + actor.getNombreCompleto() + " el " + fechaFormat + ".";
 
             auditoriaService.registrar(terminoGuardado.getExpediente(), logTitulo, logDesc,
