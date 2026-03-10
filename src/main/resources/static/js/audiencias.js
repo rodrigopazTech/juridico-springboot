@@ -222,3 +222,39 @@ function cargarAbogadosPosibles(idPreseleccionado = null) {
             abogadoSelect.innerHTML = '<option value="">Error al cargar abogados</option>';
         });
 }
+
+// 4. CONFIRMAR ELIMINAR AUDIENCIA
+function confirmarEliminarAudiencia(id) {
+    Swal.fire({
+        title: '¿Eliminar audiencia?',
+        text: "Esta acción no se puede deshacer",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('/audiencias/eliminar/' + id, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Eliminada', data.message, 'success').then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire('Error', data.message || 'Error al eliminar la audiencia.', 'error');
+                    }
+                })
+                .catch(error => {
+                    Swal.fire('Error', 'Hubo un problema de conexión.', 'error');
+                });
+        }
+    });
+}

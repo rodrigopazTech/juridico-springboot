@@ -23,17 +23,19 @@ import com.juridico.sistema_juridico.service.NotificacionService;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
@@ -166,19 +168,29 @@ public class ExpedientesController {
         // específico de negocio
         try {
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
-            Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+            Usuario usuario = usuarioRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
             boolean esNuevo = (expediente.getId() == null);
             Expediente anterior = null;
             if (!esNuevo) {
                 // Capturar estado anterior para la bitácora
-                anterior = expedienteRepository.findById(expediente.getId()).orElse(null);
+                anterior = expedienteRepository.findById(expediente.getId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                "Expediente previo no encontrado"));
                 if (anterior != null) {
                     entityManager.detach(anterior);
                 }
             }
 
             if (esNuevo) {
+                // Validación de Roles para Creación
+                String rol = usuario.getRol().name();
+                if (!rol.equals("ADMIN") && !rol.equals("DIRECCION") && !rol.equals("SUBDIRECCION")) {
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                            "No tienes permiso para crear expedientes.");
+                }
+
                 expediente.setCreatedAt(LocalDateTime.now());
                 expediente.setEtapaProcesal(EtapaProcesal.TRAMITE);
             } else {
@@ -187,6 +199,27 @@ public class ExpedientesController {
                     throw new ResourceNotFoundException("El expediente a editar no existe.");
                 }
             }
+
+            // Validaciones Críticas para Edición (y creación)
+            if (expediente.getNumero() == null || expediente.getNumero().trim().isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El número de expediente es obligatorio.");
+            }
+            if (!esNuevo && anterior != null) {
+                // Restaurar campos críticos si vienen nulos en el formulario para evitar
+                // pérdida de referencialidad
+                if (expediente.getMateria() == null && anterior.getMateria() != null) {
+                    expediente.setMateria(anterior.getMateria());
+                }
+                if (expediente.getGerencia() == null && anterior.getGerencia() != null) {
+                    expediente.setGerencia(anterior.getGerencia());
+                }
+                // Si el abogado ya había sido asignado y en el form vino null accidentalmente,
+                // se podría restaurar:
+                if (expediente.getAbogadoResponsable() == null && anterior.getAbogadoResponsable() != null) {
+                    expediente.setAbogadoResponsable(anterior.getAbogadoResponsable());
+                }
+            }
+
             expediente.setUpdatedAt(LocalDateTime.now());
 
             Expediente guardado = expedienteRepository.save(expediente);
@@ -287,6 +320,35 @@ public class ExpedientesController {
         Expediente expediente = expedienteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Expediente no encontrado con ID: " + id));
 
+        // --- PREVENCIÓN DE IDOR ---
+        boolean tienePermiso = false;
+        String rol = usuario.getRol().name();
+
+        if (rol.equals("ADMIN") || rol.equals("DIRECCION") || rol.equals("SUBDIRECCION")) {
+            tienePermiso = true;
+        } else if (rol.equals("GERENTE") && usuario.getGerencia() != null
+                && expediente.getGerencia() != null
+                && expediente.getGerencia().getId().equals(usuario.getGerencia().getId())) {
+            tienePermiso = true;
+        } else if (rol.equals("JEFE_DEPTO") && !usuario.getMaterias().isEmpty()
+                && expediente.getMateria() != null) {
+            boolean materiaCoincide = usuario.getMaterias().stream()
+                    .anyMatch(m -> m.getId().equals(expediente.getMateria().getId()));
+            if (materiaCoincide) {
+                tienePermiso = true;
+            }
+        } else if (expediente.getAbogadoResponsable() != null
+                && expediente.getAbogadoResponsable().getId().equals(usuario.getId())) {
+            tienePermiso = true;
+        }
+
+        if (!tienePermiso) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN,
+                    "No tienes permiso para ver este expediente.");
+        }
+        // --- FIN PREVENCIÓN DE IDOR ---
+
         model.addAttribute("expediente", expediente);
 
         // Búsqueda de próxima audiencia excluida concluida
@@ -324,7 +386,8 @@ public class ExpedientesController {
     @ResponseBody
     public ResponseEntity<?> addComentario(@PathVariable String id, @RequestBody Comentario nuevo) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
 
         nuevo.setEntidadTipo("EXPEDIENTE");
         nuevo.setEntidadId(id);
@@ -357,7 +420,8 @@ public class ExpedientesController {
     @ResponseBody
     public ResponseEntity<?> cambiarEtapa(@PathVariable UUID id, @RequestParam EtapaProcesal etapa) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
 
         Expediente exp = expedienteRepository.findById(id).orElseThrow();
         EtapaProcesal anterior = exp.getEtapaProcesal();

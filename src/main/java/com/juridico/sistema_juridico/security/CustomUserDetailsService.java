@@ -5,7 +5,6 @@ import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -28,16 +27,16 @@ public class CustomUserDetailsService implements UserDetailsService {
         // 2. Convertimos tu Rol (Enum) a una autoridad de Spring Security
         GrantedAuthority authority = new SimpleGrantedAuthority(usuario.getRol().name());
 
-        // 3. Retornamos el objeto User
-        return new User(
+        // 3. Retornamos el objeto CustomUserDetails
+        return new CustomUserDetails(
                 usuario.getEmail(),
-                // CAMBIO: getPassword() en lugar de getPasswordHash()
-                usuario.getPassword(),    
-                usuario.getActivo(),          // Enabled
-                true,                         // Account Non Expired
-                true,                         // Credentials Non Expired
-                true,                         // Account Non Locked
-                Collections.singletonList(authority) // Lista de roles
+                usuario.getPassword(),
+                usuario.getActivo(), // Enabled
+                true, // Account Non Expired
+                true, // Credentials Non Expired
+                true, // Account Non Locked
+                Collections.singletonList(authority), // Lista de roles
+                usuario.getForcePasswordChange() != null && usuario.getForcePasswordChange() // Propiedad force password
         );
     }
 }

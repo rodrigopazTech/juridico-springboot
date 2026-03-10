@@ -31,24 +31,24 @@
 
                     <td class="px-4 py-3">
                         <div class="flex flex-col">
-                            <a th:href="@{/expedientes/{id}(id=${a.expediente.id})}"
+                            <a th:href="@{/expedientes/{id}(id=${a.expediente?.id})}"
                                 class="text-sm font-bold text-gob-guinda hover:underline"
-                                th:text="${a.expediente.numero}">EXP-001</a>
+                                th:text="${a.expediente?.numero}">EXP-001</a>
                             <span class="text-[10px] text-gray-500 truncate max-w-[150px]"
-                                th:text="${a.expediente.partes}">Partes</span>
+                                th:text="${a.expediente?.partes}">Partes</span>
                         </div>
                     </td>
 
                     <td class="px-4 py-3">
                         <div class="flex flex-col">
                             <span class="text-xs font-bold text-gray-700"
-                                th:text="${a.expediente.gerencia != null ? a.expediente.gerencia.nombre : 'Sin Gerencia'}">Gerencia</span>
+                                th:text="${a.expediente?.gerencia?.nombre ?: 'Sin Gerencia'}">Gerencia</span>
                             <span class="text-[10px] text-gray-500"
-                                th:text="${a.expediente.materia != null ? a.expediente.materia.nombre : 'Sin Materia'}">Materia</span>
+                                th:text="${a.expediente?.materia?.nombre ?: 'Sin Materia'}">Materia</span>
                             <div class="mt-1 flex items-center text-[10px] text-gray-400">
                                 <i class="fas fa-user-tie mr-1"></i>
                                 <span
-                                    th:text="${a.abogadoComparece != null ? a.abogadoComparece.nombreCompleto : 'Sin asignar'}">Abogado</span>
+                                    th:text="${a.abogadoComparece?.nombreCompleto ?: 'Sin asignar'}">Abogado</span>
                             </div>
                         </div>
                     </td>
@@ -56,7 +56,7 @@
                     <td class="px-4 py-3">
                         <span
                             class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-semibold border border-gray-200"
-                            th:text="${a.tipoAudiencia != null ? a.tipoAudiencia.nombre : 'General'}">Tipo</span>
+                            th:text="${a.tipoAudiencia?.nombre ?: 'General'}">Tipo</span>
 
                         <div class="flex items-center gap-1 mt-1 text-xs text-gray-700">
                             <i th:if="${a.esVirtual}" class="fas fa-video text-blue-600"></i>
@@ -92,14 +92,14 @@
                         <button th:if="${a.estatusAudiencia?.name() == 'PENDIENTE'}" type="button"
                             class="text-gray-400 hover:text-gob-oro mr-2 transition-colors" title="Editar" th:onclick="abrirModalEditar(
                                 [[${a.id}]], 
-                                [[${a.expediente.id}]], 
-                                [[${a.tipoAudiencia != null ? a.tipoAudiencia.id : ''}]], 
+                                [[${a.expediente?.id}]], 
+                                [[${a.tipoAudiencia?.id ?: ''}]], 
                                 [[${a.fechaAudiencia}]], 
                                 [[${a.horaAudiencia}]], 
                                 [[${a.esVirtual}]], 
                                 [[${a.salaLugar}]], 
                                 [[${a.urlReunion}]],
-                                [[${a.abogadoComparece != null ? a.abogadoComparece.id : ''}]]
+                                [[${a.abogadoComparece?.id ?: ''}]]
                             )">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -153,13 +153,15 @@
                             <div th:if="${a.estatusAudiencia?.name() == 'CON_ACTA'}" class="border-t border-gray-100">
                             </div>
 
-                            <a th:href="@{/expedientes/{id}(id=${a.expediente.id})}"
+                            <a th:href="@{/expedientes/{id}(id=${a.expediente?.id})}"
                                 class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-guinda transition border-l-4 border-transparent hover:border-gob-guinda">
                                 <i class="fas fa-folder-open mr-3 w-4 text-center text-gray-400"></i> Ver Expediente
                             </a>
 
                             <a th:unless="${a.estatusAudiencia?.name() == 'CONCLUIDA'}"
-                                th:href="@{/audiencias/eliminar/{id}(id=${a.id})}"
+                                sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION')"
+                                href="javascript:void(0)"
+                                th:onclick="'confirmarEliminarAudiencia(' + ${a.id} + ')'"
                                 class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition border-l-4 border-transparent hover:border-red-500">
                                 <i class="fas fa-trash-alt mr-3 w-4 text-center text-red-400"></i> Eliminar
                             </a>

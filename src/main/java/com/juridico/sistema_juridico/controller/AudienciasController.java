@@ -30,6 +30,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
@@ -231,6 +233,13 @@ public class AudienciasController {
 
         boolean esNueva = (audiencia.getId() == null);
 
+        if (audiencia.getFechaAudiencia() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha de la audiencia es obligatoria.");
+        }
+        if (audiencia.getTipoAudiencia() == null || audiencia.getTipoAudiencia().getId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El tipo de audiencia es obligatorio.");
+        }
+
         if (!esNueva) {
             // Lógica de EDICIÓN:
             // Buscamos la audiencia. Si no existe, lanzamos la excepción y el sistema
@@ -244,8 +253,11 @@ public class AudienciasController {
             audiencia.setActaDocumento(audienciaExistente.getActaDocumento());
 
             // Preservar observaciones si no se enviaron nuevas
-            if (audiencia.getObservaciones() == null) {
+            if (audiencia.getObservaciones() == null && audienciaExistente.getObservaciones() != null) {
                 audiencia.setObservaciones(audienciaExistente.getObservaciones());
+            }
+            if (audiencia.getExpediente() == null && audienciaExistente.getExpediente() != null) {
+                audiencia.setExpediente(audienciaExistente.getExpediente());
             }
         } else {
             // Lógica de CREACIÓN
@@ -307,7 +319,8 @@ public class AudienciasController {
 
             // 2. VALIDAR PERMISOS (Solo Jefes hacia arriba pueden concluir)
             if (usuario.getRol().name().equals("ABOGADO")) {
-                throw new ForbiddenException("Acceso denegado: Solo Dirección o Jefatura pueden validar y concluir audiencias.");
+                throw new ForbiddenException(
+                        "Acceso denegado: Solo Dirección o Jefatura pueden validar y concluir audiencias.");
             }
 
             // 3. EJECUTAR LÓGICA
@@ -323,32 +336,39 @@ public class AudienciasController {
         return "redirect:/audiencias";
     }
 
-    @GetMapping("/eliminar/{id}")
-    public String eliminar(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+    @PostMapping("/eliminar/{id}")
+    @ResponseBody
+    public ResponseEntity<java.util.Map<String, Object>> eliminar(@PathVariable Integer id) {
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        try {
+            // 1. VALIDACIÓN LIMPIA
+            if (!audienciaRepository.existsById(id)) {
+                response.put("success", false);
+                response.put("message", "La audiencia no existe.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
 
-        // 1. VALIDACIÓN LIMPIA
-        // Si no existe, lanzamos la excepción y el GlobalHandler se encarga del resto.
-        if (!audienciaRepository.existsById(id)) {
-            throw new ResourceNotFoundException("No se puede eliminar: La audiencia con ID " + id + " no existe.");
+            // 2. LÓGICA FELIZ (Sin try-catch interno)
+            audienciaRepository.deleteById(id);
+
+            response.put("success", true);
+            response.put("message", "Audiencia eliminada correctamente.");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error al eliminar la audiencia.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-
-        // 2. LÓGICA FELIZ (Sin try-catch)
-        // Si hay un error de base de datos aquí (ej. llave foránea), el GlobalHandler
-        // (Exception.class) lo atrapará.
-        audienciaRepository.deleteById(id);
-
-        redirectAttrs.addFlashAttribute("mensaje", "Audiencia eliminada correctamente.");
-        redirectAttrs.addFlashAttribute("tipo", "success");
-
-        return "redirect:/audiencias";
     }
 
     @GetMapping("/descargar-acta/{id}")
     public ResponseEntity<Resource> descargarActa(@PathVariable Integer id) {
         try {
-            Audiencia audiencia = audienciaRepository.findById(id).orElse(null);
+            Audiencia audiencia = audienciaRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Audiencia no encontrada"));
 
-            if (audiencia == null || audiencia.getActaDocumento() == null) {
+            if (audiencia.getActaDocumento() == null) {
                 return ResponseEntity.notFound().build();
             }
 

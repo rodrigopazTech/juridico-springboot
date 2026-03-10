@@ -38,13 +38,13 @@
                     </a>
                 </li>
 
-                <li sec:authorize="hasAnyAuthority('ADMIN','DIRECCION', 'SUBDIRECCION')">
+                <li sec:authorize="hasAnyAuthority('ADMIN','DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')">
                     <a th:href="@{/agenda}"
                         class="flex items-center p-3 transition-all duration-200 border-l-4 rounded-r-lg"
                         th:classappend="${activePage == 'agenda' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
                         <i class="fas fa-address-book w-5 h-5 transition duration-75"
                             th:classappend="${activePage == 'agenda' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
-                        <span class="ms-3">Agenda General</span>
+                        <span class="ms-3">Agenda / Historial</span>
                     </a>
                 </li>
 

@@ -39,6 +39,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -228,6 +230,14 @@ public class TerminosController {
         Termino terminoGuardar;
         boolean esNuevo = false;
 
+        // Validaciones Críticas para Término
+        if (terminoForm.getActuacion() == null || terminoForm.getActuacion().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El campo actuación es obligatorio.");
+        }
+        if (terminoForm.getFechaVencimiento() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha de vencimiento es obligatoria.");
+        }
+
         // 1. VINCULAR EXPEDIENTE (Si viene el ID)
         if (expedienteId != null) {
             Expediente exp = expedienteRepository.findById(expedienteId)
@@ -265,6 +275,10 @@ public class TerminosController {
             terminoGuardar = existente;
         } else {
             // CREACIÓN
+            if (expedienteId == null && terminoForm.getExpediente() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "El expediente asociado es obligatorio para crear un término.");
+            }
             esNuevo = true;
             terminoGuardar = terminoForm;
             terminoGuardar.setFechaIngreso(LocalDate.now());
@@ -286,9 +300,12 @@ public class TerminosController {
 
         // Notificación
         if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
+            String expedienteNum = (terminoGuardado.getExpediente() != null)
+                    ? terminoGuardado.getExpediente().getNumero()
+                    : "S/N";
             notificacionService.crearNotificacion(
                     terminoGuardado.getAbogadoResponsable(),
-                    "Nuevo Término Asignado",
+                    "Nuevo Término: " + expedienteNum,
                     "El usuario " + actor.getNombreCompleto() + " te ha asignado: " + terminoGuardado.getActuacion(),
                     "TERMINO",
                     terminoGuardado.getPrioridad(),
@@ -300,10 +317,8 @@ public class TerminosController {
             String fechaFormat = LocalDate.now().toString();
             String logTitulo = esNuevo ? "Término Programado" : "Término Editado";
             String logDesc = esNuevo
-                    ? "Se ha registrado un nuevo término: " + terminoGuardado.getActuacion() + " (Expediente ID: "
-                            + terminoGuardado.getExpediente().getId() + ")"
-                    : "Se ha editado el término: " + terminoGuardado.getActuacion() + " (Expediente ID: "
-                            + terminoGuardado.getExpediente().getId() + ")";
+                    ? "Se ha registrado un nuevo término: " + terminoGuardado.getActuacion()
+                    : "Se ha editado el término: " + terminoGuardado.getActuacion();
             logDesc += ". Acción realizada por: " + actor.getNombreCompleto() + " el " + fechaFormat + ".";
 
             auditoriaService.registrar(terminoGuardado.getExpediente(), logTitulo, logDesc,
@@ -395,9 +410,12 @@ public class TerminosController {
         }
 
         Set<Usuario> unicos = new HashSet<>(destinatarios);
+        String expedienteNum = (termino.getExpediente() != null) ? termino.getExpediente().getNumero() : "S/N";
+        String tituloExp = titulo + ": " + expedienteNum;
+
         for (Usuario u : unicos) {
             if (!u.getId().equals(actor.getId())) {
-                notificacionService.crearNotificacion(u, titulo, mensajeBase, "TERMINO", Prioridad.ALTA,
+                notificacionService.crearNotificacion(u, tituloExp, mensajeBase, "TERMINO", Prioridad.ALTA,
                         termino.getId().toString());
             }
         }
@@ -415,7 +433,8 @@ public class TerminosController {
         }
 
         try {
-            Termino termino = terminoRepository.findById(id).orElse(null);
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
             if (termino != null) {
 
                 // --- CANDADO 1: VERIFICAR PERMISOS POR ROL Y ESTATUS ---
@@ -449,6 +468,11 @@ public class TerminosController {
                 termino.setUpdatedAt(LocalDateTime.now());
                 terminoRepository.save(termino);
 
+                // AUDITORIA: Registro de subida de archivo borrador
+                auditoriaService.registrar(termino.getExpediente(), "ARCHIVO CARGADO",
+                        "Borrador: " + archivo.getOriginalFilename(),
+                        "UPLOAD", actor);
+
                 redirectAttrs.addFlashAttribute("mensaje", "Borrador actualizado correctamente.");
                 redirectAttrs.addFlashAttribute("tipo", "success");
             }
@@ -475,7 +499,8 @@ public class TerminosController {
         }
 
         try {
-            Termino termino = terminoRepository.findById(id).orElse(null);
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
 
             // 2. Verificar que el término exista y esté efectivamente en estado 'Liberado'
             if (termino != null && termino.getEstatusTermino() == EstatusTermino.LIBERADO) {
@@ -507,6 +532,11 @@ public class TerminosController {
                 termino.setUpdatedAt(LocalDateTime.now());
                 terminoRepository.save(termino);
 
+                // AUDITORIA: Registro de subida de acuse
+                auditoriaService.registrar(termino.getExpediente(), "ARCHIVO CARGADO",
+                        "Acuse: " + archivo.getOriginalFilename(),
+                        "UPLOAD", actor);
+
                 redirectAttrs.addFlashAttribute("mensaje",
                         "Acuse cargado correctamente. Ahora puedes avanzar el término a 'Presentado'.");
                 redirectAttrs.addFlashAttribute("tipo", "success");
@@ -533,7 +563,8 @@ public class TerminosController {
         }
 
         try {
-            Termino termino = terminoRepository.findById(id).orElse(null);
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
 
             // Solo se puede concluir si ya fue "Presentado" (ya tiene acuse)
             if (termino != null && termino.getEstatusTermino() == EstatusTermino.PRESENTADO) {
@@ -584,15 +615,17 @@ public class TerminosController {
 
     private Usuario getUsuarioActual() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return usuarioRepository.findByEmail(email).orElse(null);
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no autenticado"));
     }
 
     @GetMapping("/descargar/{id}")
     public ResponseEntity<Resource> descargarArchivo(@PathVariable Integer id) {
         try {
-            Termino termino = terminoRepository.findById(id).orElse(null);
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
 
-            if (termino == null || termino.getArchivoWord() == null) {
+            if (termino.getArchivoWord() == null) {
                 return ResponseEntity.notFound().build();
             }
 
@@ -650,40 +683,55 @@ public class TerminosController {
         excelExporter.export(response);
     }
 
-    @GetMapping("/eliminar/{id}")
-    public String eliminar(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
-        Usuario actor = getUsuarioActual();
+    @PostMapping("/eliminar/{id}")
+    @ResponseBody
+    public ResponseEntity<java.util.Map<String, Object>> eliminar(@PathVariable Integer id) {
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        try {
+            Usuario actor = getUsuarioActual();
 
-        // VALIDACIÓN ROL
-        if (actor.getRol() == RolUsuario.ABOGADO) {
-            throw new ForbiddenException("Los abogados no tienen permiso para eliminar términos.");
+            // VALIDACIÓN ROL
+            if (actor.getRol() == RolUsuario.ABOGADO) {
+                response.put("success", false);
+                response.put("message", "Los abogados no tienen permiso para eliminar términos.");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            // VALIDACIÓN EXISTENCIA
+            if (!terminoRepository.existsById(id)) {
+                response.put("success", false);
+                response.put("message", "El término a eliminar no existe.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            // ELIMINACIÓN
+            terminoRepository.deleteById(id);
+
+            response.put("success", true);
+            response.put("message", "Término eliminado correctamente.");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error al eliminar el término: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-
-        // VALIDACIÓN EXISTENCIA
-        if (!terminoRepository.existsById(id)) {
-            throw new ResourceNotFoundException("El término a eliminar no existe.");
-        }
-
-        // ELIMINACIÓN (Si falla por FK, lo atrapa el GlobalHandler)
-        terminoRepository.deleteById(id);
-
-        redirectAttrs.addFlashAttribute("mensaje", "Término eliminado correctamente.");
-        redirectAttrs.addFlashAttribute("tipo", "success");
-        return "redirect:/terminos";
     }
 
     @GetMapping("/descargar-acuse/{id}")
     public ResponseEntity<Resource> descargarAcuse(@PathVariable Integer id) {
         try {
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
+
             List<TerminoPresentado> presentados = terminoPresentadoRepository.findByTerminoExpedienteId(
-                    terminoRepository.findById(id).get().getExpediente().getId());
+                    termino.getExpediente().getId());
 
             TerminoPresentado acuse = presentados.stream()
                     .filter(p -> p.getTermino().getId().equals(id))
                     .findFirst()
-                    .orElse(null);
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Acuse no encontrado"));
 
-            if (acuse == null || acuse.getAcuseDocumento() == null) {
+            if (acuse.getAcuseDocumento() == null) {
                 return ResponseEntity.notFound().build();
             }
 

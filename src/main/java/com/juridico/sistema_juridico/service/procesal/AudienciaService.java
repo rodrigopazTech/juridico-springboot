@@ -71,10 +71,6 @@ public class AudienciaService {
             Files.copy(archivo.getInputStream(), ruta.resolve(nombreArchivo), StandardCopyOption.REPLACE_EXISTING);
 
             audiencia.setActaDocumento(nombreArchivo);
-
-            String tipoActa = (audiencia.getTipoAudiencia() != null) ? audiencia.getTipoAudiencia().getNombre()
-                    : "Desconocida";
-
             // Lógica de Estatus: Si estaba pendiente, ahora tiene acta
             if (EstatusAudiencia.PENDIENTE.equals(audiencia.getEstatusAudiencia())) {
                 audiencia.setEstatusAudiencia(EstatusAudiencia.CON_ACTA);
@@ -82,9 +78,9 @@ public class AudienciaService {
             }
             audienciaRepository.save(audiencia);
 
-            registrarActividad(audiencia.getExpediente(), "Acta de Audiencia Cargada",
-                    "Se ha subido el acta para la audiencia de tipo: " + tipoActa,
-                    "EDIT");
+            registrarActividad(audiencia.getExpediente(), "ARCHIVO CARGADO",
+                    "Acta: " + archivo.getOriginalFilename(),
+                    "UPLOAD");
         }
     }
 
