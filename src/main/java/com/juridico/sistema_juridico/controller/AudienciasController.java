@@ -336,24 +336,30 @@ public class AudienciasController {
         return "redirect:/audiencias";
     }
 
-    @GetMapping("/eliminar/{id}")
-    public String eliminar(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+    @PostMapping("/eliminar/{id}")
+    @ResponseBody
+    public ResponseEntity<java.util.Map<String, Object>> eliminar(@PathVariable Integer id) {
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        try {
+            // 1. VALIDACIÓN LIMPIA
+            if (!audienciaRepository.existsById(id)) {
+                response.put("success", false);
+                response.put("message", "La audiencia no existe.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
 
-        // 1. VALIDACIÓN LIMPIA
-        // Si no existe, lanzamos la excepción y el GlobalHandler se encarga del resto.
-        if (!audienciaRepository.existsById(id)) {
-            throw new ResourceNotFoundException("No se puede eliminar: La audiencia con ID " + id + " no existe.");
+            // 2. LÓGICA FELIZ (Sin try-catch interno)
+            audienciaRepository.deleteById(id);
+
+            response.put("success", true);
+            response.put("message", "Audiencia eliminada correctamente.");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error al eliminar la audiencia.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-
-        // 2. LÓGICA FELIZ (Sin try-catch)
-        // Si hay un error de base de datos aquí (ej. llave foránea), el GlobalHandler
-        // (Exception.class) lo atrapará.
-        audienciaRepository.deleteById(id);
-
-        redirectAttrs.addFlashAttribute("mensaje", "Audiencia eliminada correctamente.");
-        redirectAttrs.addFlashAttribute("tipo", "success");
-
-        return "redirect:/audiencias";
     }
 
     @GetMapping("/descargar-acta/{id}")

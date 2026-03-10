@@ -73,7 +73,25 @@ function confirmarEliminar(id) {
         cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) {
-            window.location.href = '/terminos/eliminar/' + id;
+            fetch('/terminos/eliminar/' + id, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Eliminado', data.message, 'success').then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', data.message || 'Error al eliminar', 'error');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Error', 'Hubo un problema de conexión', 'error');
+            });
         }
     })
 }

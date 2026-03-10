@@ -300,7 +300,9 @@ public class TerminosController {
 
         // Notificación
         if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
-            String expedienteNum = (terminoGuardado.getExpediente() != null) ? terminoGuardado.getExpediente().getNumero() : "S/N";
+            String expedienteNum = (terminoGuardado.getExpediente() != null)
+                    ? terminoGuardado.getExpediente().getNumero()
+                    : "S/N";
             notificacionService.crearNotificacion(
                     terminoGuardado.getAbogadoResponsable(),
                     "Nuevo Término: " + expedienteNum,
@@ -683,26 +685,38 @@ public class TerminosController {
         excelExporter.export(response);
     }
 
-    @GetMapping("/eliminar/{id}")
-    public String eliminar(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
-        Usuario actor = getUsuarioActual();
+    @PostMapping("/eliminar/{id}")
+    @ResponseBody
+    public ResponseEntity<java.util.Map<String, Object>> eliminar(@PathVariable Integer id) {
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        try {
+            Usuario actor = getUsuarioActual();
 
-        // VALIDACIÓN ROL
-        if (actor.getRol() == RolUsuario.ABOGADO) {
-            throw new ForbiddenException("Los abogados no tienen permiso para eliminar términos.");
+            // VALIDACIÓN ROL
+            if (actor.getRol() == RolUsuario.ABOGADO) {
+                response.put("success", false);
+                response.put("message", "Los abogados no tienen permiso para eliminar términos.");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            // VALIDACIÓN EXISTENCIA
+            if (!terminoRepository.existsById(id)) {
+                response.put("success", false);
+                response.put("message", "El término a eliminar no existe.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            // ELIMINACIÓN
+            terminoRepository.deleteById(id);
+
+            response.put("success", true);
+            response.put("message", "Término eliminado correctamente.");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error al eliminar el término: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-
-        // VALIDACIÓN EXISTENCIA
-        if (!terminoRepository.existsById(id)) {
-            throw new ResourceNotFoundException("El término a eliminar no existe.");
-        }
-
-        // ELIMINACIÓN (Si falla por FK, lo atrapa el GlobalHandler)
-        terminoRepository.deleteById(id);
-
-        redirectAttrs.addFlashAttribute("mensaje", "Término eliminado correctamente.");
-        redirectAttrs.addFlashAttribute("tipo", "success");
-        return "redirect:/terminos";
     }
 
     @GetMapping("/descargar-acuse/{id}")
