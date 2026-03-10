@@ -231,6 +231,25 @@ public class ExpedientesController {
             } else {
                 // Registrar cambios en la bitácora estructurada
                 auditoriaService.registrarCambiosEstructurados(guardado, anterior, usuario);
+
+                // Reasignación de Abogado (ROD-168)
+                if (anterior != null && guardado.getAbogadoResponsable() != null) {
+                    Integer idAnterior = (anterior.getAbogadoResponsable() != null)
+                            ? anterior.getAbogadoResponsable().getId()
+                            : null;
+                    Integer idNuevo = guardado.getAbogadoResponsable().getId();
+
+                    if (!idNuevo.equals(idAnterior)
+                            && !guardado.getAbogadoResponsable().getEmail().equalsIgnoreCase(usuario.getEmail())) {
+                        notificacionService.crearNotificacion(
+                                guardado.getAbogadoResponsable(),
+                                "Expediente Reasignado",
+                                "Se te ha reasignado el expediente " + guardado.getNumero() + " para su atención.",
+                                "ASIGNACION",
+                                com.juridico.sistema_juridico.Entity.enums.Prioridad.ALTA,
+                                guardado.getId().toString());
+                    }
+                }
             }
 
             redirectAttrs.addFlashAttribute("mensaje", "Expediente guardado correctamente.");

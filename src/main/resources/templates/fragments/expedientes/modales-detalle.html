@@ -52,7 +52,7 @@
             </div>
 
             <form id="form-editar-expediente" th:action="@{/expedientes/guardar}" method="post"
-                class="p-6 space-y-4 text-sm">
+                class="p-6 space-y-4 text-sm" th:data-original-abogado="${expediente.abogadoResponsable?.id}">
                 <input type="hidden" name="id" th:value="${expediente.id}">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

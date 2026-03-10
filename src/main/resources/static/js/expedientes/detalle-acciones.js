@@ -185,4 +185,40 @@ document.addEventListener('DOMContentLoaded', () => {
             listaEtapas.appendChild(btn);
         });
     }
+
+    // Validación de Reasignación de Abogado en Edición (ROD-168)
+    const formEditarExpediente = document.getElementById('form-editar-expediente');
+    if (formEditarExpediente) {
+        formEditarExpediente.addEventListener('submit', function (e) {
+            e.preventDefault(); // Detener envío por defecto
+
+            const selectAbogado = document.getElementById('select-abogado-exp-edit');
+            const originalAbogadoId = formEditarExpediente.getAttribute('data-original-abogado') || "";
+            const currentAbogadoId = selectAbogado ? selectAbogado.value : "";
+
+            // Check si cambió el abogado y si ambos tienen un valor definido válido
+            if (originalAbogadoId !== currentAbogadoId && originalAbogadoId !== "" && currentAbogadoId !== "") {
+                const nuevoAbogadoNombre = selectAbogado.options[selectAbogado.selectedIndex].text;
+
+                Swal.fire({
+                    title: '¿Reasignar Expediente?',
+                    html: `Estás a punto de reasignar este expediente al abogado: <br><br><b>${nuevoAbogadoNombre}</b><br><br>Se le enviará una notificación informándole de la nueva asignación. ¿Deseas continuar?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#9B2242', // gob-guinda
+                    cancelButtonColor: '#6B7280', // gray-500
+                    confirmButtonText: '<i class="fas fa-exchange-alt"></i> Sí, reasignar',
+                    cancelButtonText: 'Cancelar',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        formEditarExpediente.submit(); // Enviar formulario tras confirmación
+                    }
+                });
+            } else {
+                // Si no hay cambio, enviar directamente
+                formEditarExpediente.submit();
+            }
+        });
+    }
 });
