@@ -86,7 +86,7 @@
                         <td class="px-4 py-3 text-right relative">
                             <button
                                 th:if="${t.estatusTermino?.name() != 'LIBERADO' && t.estatusTermino?.name() != 'PRESENTADO' && t.estatusTermino?.name() != 'CONCLUIDO'}"
-                                th:onclick="editarTermino([[${t.id}]], [[${t.actuacion}]], [[${t.fechaVencimiento}]], [[${t.expediente?.id ?: ''}]], [[${t.abogadoResponsable?.id ?: ''}]])"
+                                th:onclick="editarTermino([[${t.id}]], [[${t.actuacion}]], [[${t.fechaVencimiento}]], [[${t.expediente?.id ?: ''}]], [[${t.expediente?.numero ?: 'Sin Número'}]], [[${t.abogadoResponsable?.id ?: ''}]])"
                                 class="text-gray-400 hover:text-gob-oro mr-2" title="Editar">
                                 <i class="fas fa-edit"></i>
                             </button>
