@@ -131,6 +131,10 @@ function abrirModalNuevo() {
         abogadoSelect.classList.add('bg-gray-50');
     }
 
+    // Resetear prioridad
+    const prioridadSelect = document.getElementById('select-prioridad');
+    if (prioridadSelect) prioridadSelect.value = "MEDIA";
+
     if (titulo) titulo.innerHTML = '<i class="fas fa-plus-circle"></i> Nuevo Término';
 
     const modal = document.getElementById('modal-nuevo-termino');
@@ -138,18 +142,20 @@ function abrirModalNuevo() {
 }
 
 // 2. EDITAR TÉRMINO (Con el botón amarillo)
-function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogadoId) {
+function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogadoId, prioridad) {
 
     // Llenar datos en el formulario
     const idInput = document.getElementById('input-termino-id');
     const asuntoInput = document.getElementById('input-asunto');
     const vencimientoInput = document.getElementById('input-vencimiento');
     const expSelect = document.getElementById('select-expediente-termino');
+    const prioridadSelect = document.getElementById('select-prioridad');
     const titulo = document.getElementById('modal-titulo');
 
     if (idInput) idInput.value = id;
     if (asuntoInput) asuntoInput.value = actuacion;
     if (vencimientoInput) vencimientoInput.value = fecha;
+    if (prioridadSelect && prioridad) prioridadSelect.value = prioridad;
 
     if (expSelect && expedienteId) {
         // Verificar si la opción ya existe en la lista del select actual (por filtro de roles)
