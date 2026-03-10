@@ -68,7 +68,14 @@
                         <option value="">Primero selecciona una gerencia...</option>
                     </select>
                 </div>
-
+                <div>
+                    <label class="block font-bold text-gray-600 mb-1">Órgano Jurisdiccional*</label>
+                    <select name="organoJurisdiccional.id" required
+                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
+                        <option value="">Selecciona órgano...</option>
+                        <option th:each="org : ${organos}" th:value="${org.id}" th:text="${org.nombre}"></option>
+                    </select>
+                </div>
             </div>
 
             <div>
