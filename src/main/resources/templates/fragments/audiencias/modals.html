@@ -43,7 +43,7 @@
                                         class="block w-full min-w-0 flex-1 rounded-none rounded-r-md border-gray-300 focus:border-gob-oro focus:ring-gob-oro sm:text-sm py-2 px-3">
                                         <option value="">Buscar expediente...</option>
                                         <option th:each="e : ${expedientesList}" th:value="${e.id}"
-                                            th:text="${e.numero + ' - ' + (e.materia != null ? e.materia.nombre : '') + ' (' + e.prioridad + ')'}">
+                                            th:text="${e.numero + ' - ' + (e.materia != null ? e.materia.nombre : '')}">
                                         </option>
                                     </select>
                                 </div>
