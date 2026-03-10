@@ -11,6 +11,8 @@ import com.juridico.sistema_juridico.repository.Catalogo.EstadoRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRepository;
+import com.juridico.sistema_juridico.repository.catalogo.EtiquetaRepository;
+import com.juridico.sistema_juridico.Entity.catalogo.Etiqueta;
 
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
@@ -47,6 +49,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.Map;
+import java.util.Set;
 import java.util.HashMap;
 
 @Controller
@@ -70,6 +73,8 @@ public class ExpedientesController {
     private AudienciaRepository audienciaRepository;
     @Autowired
     private ComentarioRepository comentarioRepository;
+    @Autowired
+    private EtiquetaRepository etiquetaRepository;
 
     @Autowired
     private ActividadExpedienteRepository actividadRepository;
@@ -89,7 +94,8 @@ public class ExpedientesController {
             @RequestParam(required = false) Integer materiaId,
             @RequestParam(required = false) Prioridad prioridad,
             @RequestParam(required = false) EtapaProcesal etapa,
-            @RequestParam(required = false) Integer abogadoId) {
+            @RequestParam(required = false) Integer abogadoId,
+            @RequestParam(required = false) Integer etiquetaId) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
@@ -117,18 +123,18 @@ public class ExpedientesController {
         Pageable pageable = PageRequest.of(page, 20, Sort.by("createdAt").descending());
 
         Page<Expediente> paginaExpedientes = expedienteRepository.buscarConSeguridad(
-                keyword, gerenciaId, materiaId, prioridad, etapa, abogadoId,
+                keyword, gerenciaId, materiaId, prioridad, etapa, abogadoId, etiquetaId,
                 secGerenciaId, secMateriaIds, secUsuarioId,
                 pageable);
 
         // Conteos para resumen (Respetando seguridad)
         long totalAlta = expedienteRepository.buscarConSeguridad(
-                null, null, null, Prioridad.ALTA, null, null,
+                null, null, null, Prioridad.ALTA, null, null, null,
                 secGerenciaId, secMateriaIds, secUsuarioId,
                 PageRequest.of(0, 1)).getTotalElements();
 
         long totalTramite = expedienteRepository.buscarConSeguridad(
-                null, null, null, null, EtapaProcesal.TRAMITE, null,
+                null, null, null, null, EtapaProcesal.TRAMITE, null, null,
                 secGerenciaId, secMateriaIds, secUsuarioId,
                 PageRequest.of(0, 1)).getTotalElements();
 
@@ -138,6 +144,7 @@ public class ExpedientesController {
 
         model.addAttribute("expedientes", paginaExpedientes);
         model.addAttribute("keyword", keyword);
+        model.addAttribute("paramEtiquetaId", etiquetaId);
         model.addAttribute("pageTitle", "Gestión de Expedientes");
         model.addAttribute("activePage", "expedientes");
 
@@ -157,13 +164,16 @@ public class ExpedientesController {
         model.addAttribute("usuarios", usuarioRepository.findAll());
         model.addAttribute("prioridades", Prioridad.values());
         model.addAttribute("estados", estadoRepository.findAllByOrderByNombreAsc());
+        model.addAttribute("etiquetas", etiquetaRepository.findAll());
         model.addAttribute("usuarioActual", usuario);
 
         return "views/expedientes/index";
     }
 
     @PostMapping("/guardar")
-    public String guardar(@ModelAttribute Expediente expediente, RedirectAttributes redirectAttrs) {
+    public String guardar(@ModelAttribute Expediente expediente,
+            @RequestParam(required = false) List<String> etiquetasNombres,
+            RedirectAttributes redirectAttrs) {
         // Mantenemos este try-catch SOLO para la duplicidad, que es un error muy
         // específico de negocio
         try {
@@ -219,6 +229,28 @@ public class ExpedientesController {
                     expediente.setAbogadoResponsable(anterior.getAbogadoResponsable());
                 }
             }
+
+            // ====== PROCESAMIENTO DE ETIQUETAS ======
+            Set<Etiqueta> etiquetasEntidad = new HashSet<>();
+            if (etiquetasNombres != null && !etiquetasNombres.isEmpty()) {
+                for (String nombreTag : etiquetasNombres) {
+                    if (nombreTag == null || nombreTag.trim().isEmpty())
+                        continue;
+
+                    String nombreLimpio = nombreTag.trim();
+                    Etiqueta tag = etiquetaRepository.findByNombreIgnoreCase(nombreLimpio)
+                            .orElseGet(() -> {
+                                Etiqueta nueva = Etiqueta.builder()
+                                        .nombre(nombreLimpio)
+                                        .color("bg-gray-100 text-gray-800")
+                                        .build();
+                                return etiquetaRepository.save(nueva);
+                            });
+                    etiquetasEntidad.add(tag);
+                }
+            }
+            expediente.setEtiquetas(etiquetasEntidad);
+            // ==========================================
 
             expediente.setUpdatedAt(LocalDateTime.now());
 

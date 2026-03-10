@@ -9,6 +9,10 @@
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <script th:src="@{/lib/chart.umd.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Choices.js para etiquetas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 </head>
 
 <body class="bg-gray-100 text-gray-800 font-sans pb-10">
@@ -48,6 +52,15 @@
                                     th:text="${exp.numero}">EXP-0000</h4>
                                 <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide"
                                     th:text="${exp.materia != null ? exp.materia.nombre : 'S/N'}">MATERIA</span>
+                                
+                                <div class="flex flex-wrap gap-1 mt-2">
+                                    <span th:each="et : ${exp.etiquetas}" 
+                                          class="px-1.5 py-0.5 rounded text-[9px] font-bold border"
+                                          th:classappend="${et.color != null ? et.color : 'bg-gray-100 text-gray-600 border-gray-200'}"
+                                          th:text="${et.nombre}">
+                                          TAG
+                                    </span>
+                                </div>
                             </div>
 
                             <div class="flex flex-col items-end gap-1">

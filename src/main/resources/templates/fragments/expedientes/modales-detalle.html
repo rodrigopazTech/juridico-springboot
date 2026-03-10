@@ -149,6 +149,18 @@
                 </div>
 
                 <div class="col-span-1 md:col-span-2">
+                    <label class="block font-bold text-gray-600 mb-1">Etiquetas (Opcional)</label>
+                    <select name="etiquetasNombres" id="etiquetas-editar" multiple
+                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none">
+                        <!-- Etiquetas seleccionadas -->
+                        <option th:each="et : ${expediente.etiquetas}" th:value="${et.nombre}" th:text="${et.nombre}" selected></option>
+                        <!-- Todas las etiquetas disponibles -->
+                        <option th:each="et : ${etiquetas}" th:value="${et.nombre}" th:text="${et.nombre}"></option>
+                    </select>
+                    <p class="text-[10px] text-gray-400 mt-1"><i class="fas fa-info-circle"></i> Escriba y presione Enter para crear o buscar una etiqueta.</p>
+                </div>
+
+                <div class="col-span-1 md:col-span-2">
                     <label class="block font-bold text-gray-600 mb-1">Descripción</label>
                     <textarea name="descripcion" rows="4" required
                         placeholder="Escribe aquí todo el detalle del expediente. Esta información se verá en la vista detallada."

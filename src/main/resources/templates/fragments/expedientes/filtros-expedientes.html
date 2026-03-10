@@ -60,6 +60,16 @@
             </div>
 
             <div>
+                <select name="etiquetaId" class="w-full border border-gray-300 rounded p-2 text-xs focus:border-gob-guinda outline-none">
+                    <option value="">Etiqueta: Todas</option>
+                    <option th:each="et : ${etiquetas}" 
+                            th:value="${et.id}" 
+                            th:text="${et.nombre}"
+                            th:selected="${paramEtiquetaId != null and paramEtiquetaId == et.id}"></option>
+                </select>
+            </div>
+
+            <div>
                 <select name="prioridad" class="w-full border border-gray-300 rounded p-2 text-xs focus:border-gob-guinda outline-none">
                     <option value="">Prioridad: Todas</option>
                     <option th:each="p : ${listaPrioridades}" 
