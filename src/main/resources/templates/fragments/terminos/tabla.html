@@ -86,7 +86,7 @@
                         <td class="px-4 py-3 text-right relative">
                             <button
                                 th:if="${t.estatusTermino?.name() != 'LIBERADO' && t.estatusTermino?.name() != 'PRESENTADO' && t.estatusTermino?.name() != 'CONCLUIDO'}"
-                                th:onclick="editarTermino([[${t.id}]], [[${t.actuacion}]], [[${t.fechaVencimiento}]], [[${t.expediente?.id ?: ''}]], [[${t.expediente?.numero ?: 'Sin Número'}]], [[${t.abogadoResponsable?.id ?: ''}]], [[${t.prioridad?.name() ?: 'MEDIA'}]])"
+                                th:onclick="editarTermino([[${t.id}]], [[${t.actuacion}]], [[${t.fechaVencimiento}]], [[${t.expediente?.id ?: ''}]], [[${t.expediente?.numero ?: 'Sin Número'}]], [[${t.abogadoResponsable?.id ?: ''}]], [[${t.prioridad?.name() ?: 'MEDIA'}]], [[${t.observaciones != null ? #strings.escapeJavaScript(t.observaciones) : ''}]])"
                                 class="text-gray-400 hover:text-gob-oro mr-2" title="Editar">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -208,6 +208,15 @@
                                     </div>
                                 </th:block>
                             </div>
+                            
+                            <!-- Observaciones -->
+                            <div th:if="${t.observaciones != null and !#strings.isEmpty(t.observaciones)}" class="mt-8 bg-white border border-yellow-200 rounded-lg p-4 shadow-sm relative text-left">
+                                <div class="absolute -top-3 left-4 bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-1 rounded border border-yellow-200 shadow-sm flex items-center gap-1">
+                                    <i class="fas fa-sticky-note"></i> Notas internas
+                                </div>
+                                <p class="text-xs text-gray-700 whitespace-pre-wrap mt-1" th:text="${t.observaciones}"></p>
+                            </div>
+
                         </td>
                     </tr>
                 </th:block>

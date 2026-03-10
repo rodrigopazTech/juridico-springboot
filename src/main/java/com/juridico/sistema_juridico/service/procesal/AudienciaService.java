@@ -220,10 +220,13 @@ public class AudienciaService {
             String tipoProg = (a.getTipoAudiencia() != null) ? a.getTipoAudiencia().getNombre() : "Desconocida";
 
             String fechaFormat = LocalDate.now().toString();
-            registrarActividad(a.getExpediente(), "Audiencia Creada",
-                    "Se ha programado una nueva audiencia: " + tipoProg + " para el " + a.getFechaAudiencia()
-                            + ". Acción realizada por: " + emailCreador + " el " + fechaFormat + ".",
-                    "PLUS");
+            String desc = "Se ha programado una nueva audiencia: " + tipoProg + " para el " + a.getFechaAudiencia();
+            if (a.getObservaciones() != null && !a.getObservaciones().isEmpty()) {
+                desc += " - Nota: " + a.getObservaciones();
+            }
+            desc += ". Acción realizada por: " + emailCreador + " el " + fechaFormat + ".";
+
+            registrarActividad(a.getExpediente(), "Audiencia Creada", desc, "PLUS");
 
         } catch (Exception e) {
             System.err.println("CRÍTICO - Error al notificar creación: " + e.getMessage());
@@ -269,5 +272,25 @@ public class AudienciaService {
         Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
 
         auditoriaService.registrar(expediente, titulo, descripcion, tipoIcono, usuario);
+    }
+
+    @Transactional
+    public void registrarEdicionAudiencia(Audiencia a) {
+        try {
+            String emailCreador = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                    .getAuthentication().getName();
+            String tipoProg = (a.getTipoAudiencia() != null) ? a.getTipoAudiencia().getNombre() : "Desconocida";
+            String fechaFormat = LocalDate.now().toString();
+
+            String desc = "Se han guardado cambios en la audiencia: " + tipoProg;
+            if (a.getObservaciones() != null && !a.getObservaciones().isEmpty()) {
+                desc += " - Nota: " + a.getObservaciones();
+            }
+            desc += ". Acción realizada por: " + emailCreador + " el " + fechaFormat + ".";
+
+            registrarActividad(a.getExpediente(), "Audiencia Editada", desc, "EDIT");
+        } catch (Exception e) {
+            System.err.println("Error al registrar auditoria edicion: " + e.getMessage());
+        }
     }
 }

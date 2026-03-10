@@ -270,6 +270,9 @@ public class TerminosController {
             if (terminoForm.getPrioridad() != null) {
                 existente.setPrioridad(terminoForm.getPrioridad());
             }
+            if (terminoForm.getObservaciones() != null) {
+                existente.setObservaciones(terminoForm.getObservaciones());
+            }
 
             existente.setUpdatedAt(LocalDateTime.now());
             terminoGuardar = existente;
@@ -319,6 +322,9 @@ public class TerminosController {
             String logDesc = esNuevo
                     ? "Se ha registrado un nuevo término: " + terminoGuardado.getActuacion()
                     : "Se ha editado el término: " + terminoGuardado.getActuacion();
+            if (terminoGuardado.getObservaciones() != null && !terminoGuardado.getObservaciones().isEmpty()) {
+                logDesc += " - Nota: " + terminoGuardado.getObservaciones();
+            }
             logDesc += ". Acción realizada por: " + actor.getNombreCompleto() + " el " + fechaFormat + ".";
 
             auditoriaService.registrar(terminoGuardado.getExpediente(), logTitulo, logDesc,

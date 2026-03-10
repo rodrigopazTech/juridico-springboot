@@ -116,6 +116,7 @@ function abrirModalNuevo() {
     const asuntoInput = document.getElementById('input-asunto');
     const vencimientoInput = document.getElementById('input-vencimiento');
     const abogadoSelect = document.getElementById('select-abogado-termino');
+    const observacionesInput = document.getElementById('input-observaciones-termino');
     const titulo = document.getElementById('modal-titulo');
 
     // Limpiar campos
@@ -123,6 +124,7 @@ function abrirModalNuevo() {
     if (expSelect) expSelect.value = "";
     if (asuntoInput) asuntoInput.value = "";
     if (vencimientoInput) vencimientoInput.value = "";
+    if (observacionesInput) observacionesInput.value = "";
 
     // Resetear abogado
     if (abogadoSelect) {
@@ -142,7 +144,7 @@ function abrirModalNuevo() {
 }
 
 // 2. EDITAR TÉRMINO (Con el botón amarillo)
-function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogadoId, prioridad) {
+function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogadoId, prioridad, observaciones = "") {
 
     // Llenar datos en el formulario
     const idInput = document.getElementById('input-termino-id');
@@ -150,12 +152,14 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
     const vencimientoInput = document.getElementById('input-vencimiento');
     const expSelect = document.getElementById('select-expediente-termino');
     const prioridadSelect = document.getElementById('select-prioridad');
+    const observacionesInput = document.getElementById('input-observaciones-termino');
     const titulo = document.getElementById('modal-titulo');
 
     if (idInput) idInput.value = id;
     if (asuntoInput) asuntoInput.value = actuacion;
     if (vencimientoInput) vencimientoInput.value = fecha;
     if (prioridadSelect && prioridad) prioridadSelect.value = prioridad;
+    if (observacionesInput) observacionesInput.value = observaciones;
 
     if (expSelect && expedienteId) {
         // Verificar si la opción ya existe en la lista del select actual (por filtro de roles)

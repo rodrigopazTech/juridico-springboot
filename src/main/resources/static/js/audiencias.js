@@ -38,6 +38,9 @@ function abrirModalAudiencia() {
     const inputId = document.getElementById('input-audiencia-id');
     if (inputId) inputId.value = '';
 
+    const observacionesInput = document.getElementById('input-observaciones-aud');
+    if (observacionesInput) observacionesInput.value = '';
+
     const titulo = document.getElementById('modal-titulo-audiencia');
     if (titulo) titulo.innerHTML = '<i class="fas fa-gavel"></i> Nueva Audiencia';
 
@@ -58,7 +61,7 @@ function abrirModalAudiencia() {
 }
 
 // 2. ABRIR PARA EDITAR (¡CORREGIDO!)
-function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala, link, abogadoId) {
+function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala, link, abogadoId, observaciones = "") {
 
     // A. Llenar campos básicos
     setValueIfExists('input-audiencia-id', id);
@@ -66,6 +69,7 @@ function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala
     setValueIfExists('input-tipo', tipoId);
     setValueIfExists('input-fecha', fecha);
     setValueIfExists('input-hora', hora);
+    setValueIfExists('input-observaciones-aud', observaciones);
 
     // B. Configurar Modalidad (Virtual/Presencial)
     // Convertimos a booleano real por si viene como string "true"

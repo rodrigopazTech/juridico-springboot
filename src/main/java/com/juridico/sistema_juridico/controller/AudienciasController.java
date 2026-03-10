@@ -276,6 +276,8 @@ public class AudienciasController {
         // Notificación (Solo si es nueva)
         if (esNueva) {
             audienciaService.notificarCreacionAudiencia(guardada);
+        } else {
+            audienciaService.registrarEdicionAudiencia(guardada);
         }
 
         // Mensaje de Éxito (Solo definimos el camino feliz)
