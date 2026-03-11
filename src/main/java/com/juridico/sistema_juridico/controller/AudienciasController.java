@@ -79,6 +79,7 @@ public class AudienciasController {
     @GetMapping
     public String index(Model model,
             @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Integer id,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String tipo,
             @RequestParam(required = false) String gerencia,
@@ -143,7 +144,7 @@ public class AudienciasController {
         Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaAudiencia").ascending());
 
         Page<Audiencia> audiencias = audienciaRepository.buscarConFiltros(
-                keyword, tipo, gerencia, materia, estatus,
+                id, keyword, tipo, gerencia, materia, estatus,
                 abogadoId, fechaInicio, fechaFin,
                 filtroUsuarioId, filtroGerenciaId, filtroMateriaIds,
                 pageable);
@@ -395,6 +396,7 @@ public class AudienciasController {
 
     @GetMapping("/exportar-excel")
     public void exportarExcel(HttpServletResponse response,
+            @RequestParam(required = false) Integer id,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String tipo,
             @RequestParam(required = false) String gerencia,
@@ -466,7 +468,7 @@ public class AudienciasController {
 
         // 3. LLAMAR AL REPOSITORIO
         List<Audiencia> listado = audienciaRepository.listarParaExcel(
-                keyword, tipo, gerencia, materia, estatus,
+                id, keyword, tipo, gerencia, materia, estatus,
                 abogadoId, fechaInicio, fechaFin,
                 filtroUsuarioId, filtroGerenciaId, filtroMateriaIds);
 

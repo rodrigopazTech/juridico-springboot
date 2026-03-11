@@ -108,6 +108,7 @@ public class TerminosController {
     @GetMapping
     public String index(Model model,
             @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Integer id,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) EstatusTermino estatus,
             @RequestParam(required = false) Prioridad prioridad,
@@ -136,7 +137,7 @@ public class TerminosController {
         }
 
         Page<Termino> paginaTerminos = terminoRepository.buscarConFiltros(
-                keyword, estatus, prioridad,
+                id, keyword, estatus, prioridad,
                 filtroAbogadoSeguro,
                 filtroGerenciaSeguro,
                 materiaId,
@@ -215,9 +216,55 @@ public class TerminosController {
         model.addAttribute("paramGerenciaId", gerenciaId);
         model.addAttribute("paramMateriaId", materiaId);
 
+        // --- 6. CONTEOS PARA LA LÍNEA DE TIEMPO (NUEVO) ---
+        List<Object[]> rawCounts = terminoRepository.contarPorEtapaConFiltros(
+                keyword, prioridad, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId);
+        
+        Map<EstatusTermino, Long> conteosMap = new EnumMap<>(EstatusTermino.class);
+        for (EstatusTermino e : EstatusTermino.values()) {
+            conteosMap.put(e, 0L);
+        }
+        for (Object[] row : rawCounts) {
+            if (row[0] != null) {
+                conteosMap.put((EstatusTermino) row[0], (Long) row[1]);
+            }
+        }
+        model.addAttribute("conteosEtapas", conteosMap);
+
         model.addAttribute("activePage", "terminos");
 
+        // --- 7. ETAPAS ASIGNADAS AL ROL (REFINADO CON MÚLTIPLES ETAPAS) ---
+        List<EstatusTermino> etapasAsignadas = getEtapasAsignadasPorRol(usuarioActual.getRol());
+        model.addAttribute("etapasAsignadas", etapasAsignadas);
+
+        // --- 8. FILTRO POR DEFECTO PARA EL USUARIO ---
+        if (estatus == null && (keyword == null || keyword.isEmpty()) && id == null && !etapasAsignadas.isEmpty()) {
+            // Si tiene múltiples etapas, por defecto filtramos por la primera (o podrías no filtrar, pero el usuario pidió "muestrales por default los que se encuentren en su etapa asignada")
+            // Para múltiples etapas, ajustamos la consulta para que traiga todas las de su rol si no hay estatus seleccionado
+            model.addAttribute("etapasDefault", etapasAsignadas); // Para que la UI sepa cuáles son las default
+            paginaTerminos = terminoRepository.buscarPorMultiplesEstatus(
+                    id, keyword, etapasAsignadas, prioridad, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId, pageable);
+             model.addAttribute("terminos", paginaTerminos);
+        }
+
         return "views/terminos/index";
+    }
+
+    private List<EstatusTermino> getEtapasAsignadasPorRol(RolUsuario rol) {
+        if (rol == null) return new ArrayList<>();
+        switch (rol) {
+            case ABOGADO: 
+                return Arrays.asList(EstatusTermino.PROYECTISTA, EstatusTermino.LIBERADO);
+            case JEFE_DEPTO: 
+                return Collections.singletonList(EstatusTermino.REVISION);
+            case GERENTE: 
+                return Collections.singletonList(EstatusTermino.GERENCIA);
+            case DIRECCION:
+            case SUBDIRECCION: 
+                return Arrays.asList(EstatusTermino.DIRECCION, EstatusTermino.PRESENTADO, EstatusTermino.CONCLUIDO);
+            default: 
+                return new ArrayList<>();
+        }
     }
 
     @PostMapping("/guardar")
@@ -655,6 +702,7 @@ public class TerminosController {
 
     @GetMapping("/exportar-excel")
     public void exportarExcel(HttpServletResponse response,
+            @RequestParam(required = false) Integer id,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) EstatusTermino estatus,
             @RequestParam(required = false) Prioridad prioridad,
@@ -683,7 +731,7 @@ public class TerminosController {
         }
 
         List<Termino> listaTerminos = terminoRepository.listarParaExcel(
-                keyword, estatus, prioridad, filtroAbogado, filtroGerencia, materiaId);
+                id, keyword, estatus, prioridad, filtroAbogado, filtroGerencia, materiaId);
 
         TerminoExcelExporter excelExporter = new TerminoExcelExporter(listaTerminos);
         excelExporter.export(response);

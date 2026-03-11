@@ -106,11 +106,11 @@ public class NotificacionesController {
                 
                 // A) AUDIENCIAS (Va a la tabla filtrada)
                 if ("AUDIENCIA".equals(notificacion.getEntidadTipo())) {
-                    return "redirect:/audiencias?keyword=" + notificacion.getEntidadId();                
+                    return "redirect:/audiencias?id=" + notificacion.getEntidadId();                
                 }            
                 // B) TÉRMINOS (Va a la tabla filtrada)
                 else if ("TERMINO".equals(notificacion.getEntidadTipo())) {
-                    return "redirect:/terminos?keyword=" + notificacion.getEntidadId();
+                    return "redirect:/terminos?id=" + notificacion.getEntidadId();
                 }
                 // C) EXPEDIENTES (NUEVO: Va directo al detalle del expediente)
                 else if ("EXPEDIENTE".equals(notificacion.getEntidadTipo())) {
