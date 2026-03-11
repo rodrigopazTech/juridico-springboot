@@ -41,7 +41,7 @@
             </button>
             <!-- Botón Editar: Oculto para ABOGADO y JEFE_DEPTO -->
             <button sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE')"
-                onclick="openModal('modal-editar')"
+                th:onclick="|abrirModalEdit('${expediente.gerencia?.id}', '${expediente.materia?.id}', '${expediente.abogadoResponsable?.id}')|"
                 class="px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition">
                 <i class="fas fa-edit mr-1"></i> Editar
             </button>

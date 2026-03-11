@@ -39,7 +39,7 @@ document.onkeydown = function (evt) {
 };
 
 // LÓGICA DE SELECTORES EN CASCADA (REUTILIZABLE)
-function cargarMateriasExpediente(arg1 = '', arg2 = '', arg3 = '') {
+function cargarMateriasExpediente(arg1 = '', arg2 = '', arg3 = '', materiaIdSeleccionado = null) {
     let gerId, matId, abogId;
 
     if (arg2 === '' && arg3 === '') {
@@ -78,17 +78,20 @@ function cargarMateriasExpediente(arg1 = '', arg2 = '', arg3 = '') {
     }
 
     // 2. Traer materias de la API
-    fetch(`/usuarios/api/materias-por-gerencia/${gerenciaId}`)
+    return fetch(`/usuarios/api/materias-por-gerencia/${gerenciaId}`)
         .then(res => res.json())
         .then(materias => {
             selectMateria.innerHTML = '<option value="">Selecciona materia...</option>';
             materias.forEach(m => {
-                selectMateria.innerHTML += `<option value="${m.id}">${m.nombre}</option>`;
+                const selected = (materiaIdSeleccionado && m.id == materiaIdSeleccionado) ? 'selected' : '';
+                selectMateria.innerHTML += `<option value="${m.id}" ${selected}>${m.nombre}</option>`;
             });
 
             // Desbloquear selector
             selectMateria.disabled = false;
             selectMateria.classList.remove('bg-gray-50');
+
+            return materias;
         })
         .catch(error => {
             console.error("Error:", error);
@@ -96,7 +99,7 @@ function cargarMateriasExpediente(arg1 = '', arg2 = '', arg3 = '') {
         });
 }
 
-function cargarAbogadosExpediente(arg1 = '', arg2 = '', arg3 = '') {
+function cargarAbogadosExpediente(arg1 = '', arg2 = '', arg3 = '', abogadoIdSeleccionado = null) {
     let gerId, matId, abogId;
 
     if (arg2 === '' && arg3 === '') {
@@ -127,7 +130,7 @@ function cargarAbogadosExpediente(arg1 = '', arg2 = '', arg3 = '') {
     }
 
     // 2. Traer abogados filtrados (Backend ahora incluye Gerentes, Abogados y Jefes con lógica de materia)
-    fetch(`/expedientes/api/abogados?gerenciaId=${gerenciaId}&materiaId=${materiaId}`)
+    return fetch(`/expedientes/api/abogados?gerenciaId=${gerenciaId}&materiaId=${materiaId}`)
         .then(res => res.json())
         .then(abogados => {
             selectAbogado.innerHTML = '<option value="">Asignar abogado...</option>';
@@ -136,11 +139,13 @@ function cargarAbogadosExpediente(arg1 = '', arg2 = '', arg3 = '') {
                 selectAbogado.innerHTML = '<option value="">No hay abogados para esta materia</option>';
             } else {
                 abogados.forEach(a => {
-                    selectAbogado.innerHTML += `<option value="${a.id}">${a.nombreCompleto}</option>`;
+                    const selected = (abogadoIdSeleccionado && a.id == abogadoIdSeleccionado) ? 'selected' : '';
+                    selectAbogado.innerHTML += `<option value="${a.id}" ${selected}>${a.nombreCompleto}</option>`;
                 });
                 selectAbogado.disabled = false;
                 selectAbogado.classList.remove('bg-gray-50');
             }
+            return abogados;
         })
         .catch(error => {
             console.error("Error:", error);

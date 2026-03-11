@@ -109,9 +109,7 @@
                             onchange="cargarAbogadosExpediente('-edit')"
                             class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white"
                             required>
-                            <option value="">Selecciona...</option>
-                            <option th:each="m : ${materias}" th:value="${m.id}" th:text="${m.nombre}"
-                                th:selected="${expediente.materia != null and expediente.materia.id == m.id}"></option>
+                            <option value="">Cargando materias...</option>
                         </select>
                     </div>
                     <div>
@@ -133,10 +131,7 @@
                         <label class="block font-bold text-gray-600 mb-1">Abogado Responsable*</label>
                         <select name="abogadoResponsable.id" id="select-abogado-exp-edit"
                             class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
-                            <option value="">Asignar abogado...</option>
-                            <option th:each="a : ${usuarios}" th:value="${a.id}" th:text="${a.nombreCompleto}"
-                                th:selected="${expediente.abogadoResponsable != null and expediente.abogadoResponsable.id == a.id}">
-                            </option>
+                            <option value="">Cargando abogados...</option>
                         </select>
                     </div>
                 </div>

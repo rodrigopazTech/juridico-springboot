@@ -24,6 +24,22 @@ function closeModal(modalId) {
     }
 }
 
+/**
+ * Abre el modal de edición e inicializa los selectores en cascada
+ * @param {string} gerenciaId 
+ * @param {string} materiaId 
+ * @param {string} abogadoId 
+ */
+function abrirModalEdit(gerenciaId, materiaId, abogadoId) {
+    openModal('modal-editar');
+
+    // 1. Cargar materias filtradas por gerencia y seleccionar la actual
+    cargarMateriasExpediente('-edit', '', '', materiaId).then(() => {
+        // 2. Una vez cargadas las materias, cargar abogados filtrados por gerencia y materia
+        cargarAbogadosExpediente('-edit', '', '', abogadoId);
+    });
+}
+
 // Cerrar modales al hacer clic fuera del contenido
 window.onclick = function (event) {
     if (event.target.classList.contains('bg-gray-900/50')) {
