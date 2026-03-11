@@ -127,6 +127,52 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
     @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.gerencia.id IN :gerenciaIds AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
     long countByExpedienteGerenciaIdInAndActivo(@Param("gerenciaIds") List<Long> gerenciaIds);
 
+    @Query("SELECT t.estatusTermino, COUNT(t) FROM Termino t " +
+            "LEFT JOIN t.expediente e " +
+            "LEFT JOIN t.abogadoResponsable a " +
+            "WHERE " +
+            "(:keyword IS NULL OR :keyword = '' OR " +
+            "LOWER(t.actuacion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "CONCAT(t.id, '') LIKE CONCAT('%', :keyword, '%')) " +
+            "AND (:prioridad IS NULL OR t.prioridad = :prioridad) " +
+            "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
+            "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
+            "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
+            "GROUP BY t.estatusTermino")
+    List<Object[]> contarPorEtapaConFiltros(
+            @Param("keyword") String keyword,
+            @Param("prioridad") Prioridad prioridad,
+            @Param("abogadoId") Integer abogadoId,
+            @Param("gerenciaId") Integer gerenciaId,
+            @Param("materiaId") Integer materiaId);
+
+    @Query("SELECT t FROM Termino t " +
+            "LEFT JOIN t.expediente e " +
+            "LEFT JOIN t.abogadoResponsable a " +
+            "WHERE " +
+            "(:keyword IS NULL OR :keyword = '' OR " +
+            "LOWER(t.actuacion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "CONCAT(t.id, '') LIKE CONCAT('%', :keyword, '%')) " +
+            "AND (t.estatusTermino IN :estatusList) " +
+            "AND (:prioridad IS NULL OR t.prioridad = :prioridad) " +
+            "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
+            "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
+            "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
+            "AND (:id IS NULL OR t.id = :id)")
+    Page<Termino> buscarPorMultiplesEstatus(
+            @Param("id") Integer id,
+            @Param("keyword") String keyword,
+            @Param("estatusList") List<EstatusTermino> estatusList,
+            @Param("prioridad") Prioridad prioridad,
+            @Param("abogadoId") Integer abogadoId,
+            @Param("gerenciaId") Integer gerenciaId,
+            @Param("materiaId") Integer materiaId,
+            Pageable pageable);
+
     // Conteo total términos activos (sin filtro)
     @Query("SELECT COUNT(t) FROM Termino t WHERE t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
     long countByActivo();
