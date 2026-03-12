@@ -38,10 +38,10 @@ public class UsuariosController {
 
     @GetMapping
     public String index(Model model,
-            @RequestParam(defaultValue = "0") int pageUsuarios,
-            @RequestParam(defaultValue = "0") int pageGerencias,
-            @RequestParam(defaultValue = "0") int pageOrganos,
-            @RequestParam(defaultValue = "0") int pageTiposAudiencia) {
+            @RequestParam(value = "pageUsuarios", defaultValue = "0") int pageUsuarios,
+            @RequestParam(value = "pageGerencias", defaultValue = "0") int pageGerencias,
+            @RequestParam(value = "pageOrganos", defaultValue = "0") int pageOrganos,
+            @RequestParam(value = "pageTiposAudiencia", defaultValue = "0") int pageTiposAudiencia) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuarioActual = usuarioRepository.findByEmail(email)
@@ -93,7 +93,7 @@ public class UsuariosController {
 
     @PostMapping("/guardar")
     public String guardarUsuario(@ModelAttribute Usuario usuario,
-            @RequestParam(required = false) java.util.List<Integer> materiasIds,
+            @RequestParam(value = "materiasIds", required = false) java.util.List<Integer> materiasIds,
             RedirectAttributes redirectAttrs) {
         usuarioService.guardarUsuario(usuario, materiasIds);
         redirectAttrs.addFlashAttribute("mensaje", "Usuario guardado correctamente.");
@@ -128,7 +128,7 @@ public class UsuariosController {
     // --- ACCIONES DE ESTADO ---
 
     @GetMapping("/toggle/{id}")
-    public String toggleStatusUsuario(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+    public String toggleStatusUsuario(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
         Usuario usuario = usuarioService.buscarPorId(id);
         usuario.setActivo(!usuario.getActivo());
         List<Integer> materiasIds = usuario.getMaterias().stream().map(Materia::getId).collect(Collectors.toList());
@@ -140,7 +140,7 @@ public class UsuariosController {
     }
 
     @GetMapping("/gerencias/toggle/{id}")
-    public String toggleStatusGerencia(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+    public String toggleStatusGerencia(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
         Gerencia g = usuarioService.buscarGerenciaPorId(id);
         g.setActivo(!g.getActivo());
         usuarioService.guardarGerencia(g);
@@ -150,7 +150,7 @@ public class UsuariosController {
     }
 
     @GetMapping("/organos/toggle/{id}")
-    public String toggleStatusOrgano(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+    public String toggleStatusOrgano(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
         OrganoJurisdiccional o = usuarioService.buscarOrganoPorId(id);
         o.setActivo(!o.getActivo());
         usuarioService.guardarOrgano(o);
@@ -160,7 +160,7 @@ public class UsuariosController {
     }
 
     @GetMapping("/tipos-audiencia/toggle/{id}")
-    public String toggleStatusTipoAudiencia(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+    public String toggleStatusTipoAudiencia(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
         TipoAudiencia t = usuarioService.buscarTipoAudienciaPorId(id);
         t.setActivo(!t.getActivo());
         usuarioService.guardarTipoAudiencia(t);
@@ -172,7 +172,7 @@ public class UsuariosController {
     // --- ELIMINACIÓN ---
 
     @GetMapping("/eliminar/{id}")
-    public String eliminarUsuario(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+    public String eliminarUsuario(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
         usuarioService.eliminarUsuario(id);
         redirectAttrs.addFlashAttribute("mensaje", "Usuario eliminado.");
         redirectAttrs.addFlashAttribute("tipo", "success");
@@ -180,7 +180,7 @@ public class UsuariosController {
     }
 
     @GetMapping("/organos/eliminar/{id}")
-    public String eliminarOrgano(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+    public String eliminarOrgano(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
         usuarioService.eliminarOrgano(id);
         redirectAttrs.addFlashAttribute("mensaje", "Órgano eliminado.");
         redirectAttrs.addFlashAttribute("tipo", "success");
@@ -188,7 +188,7 @@ public class UsuariosController {
     }
 
     @GetMapping("/tipos-audiencia/eliminar/{id}")
-    public String eliminarTipoAudiencia(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+    public String eliminarTipoAudiencia(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
         usuarioService.eliminarTipoAudiencia(id);
         redirectAttrs.addFlashAttribute("mensaje", "Tipo de audiencia eliminado.");
         redirectAttrs.addFlashAttribute("tipo", "success");
@@ -199,7 +199,7 @@ public class UsuariosController {
 
     @GetMapping("/api/materias-por-gerencia/{id}")
     @ResponseBody
-    public ResponseEntity<List<Materia>> getMateriasJson(@PathVariable Integer id) {
+    public ResponseEntity<List<Materia>> getMateriasJson(@PathVariable("id") Integer id) {
         try {
             Gerencia gerencia = usuarioService.buscarGerenciaPorId(id);
             return ResponseEntity.ok(new ArrayList<>(gerencia.getMaterias()));
@@ -209,7 +209,7 @@ public class UsuariosController {
     }
 
     @GetMapping("/gerencias/{id}/materias")
-    public String obtenerMateriasGerencia(@PathVariable Integer id, Model model) {
+    public String obtenerMateriasGerencia(@PathVariable("id") Integer id, Model model) {
         Gerencia gerencia = usuarioService.buscarGerenciaPorId(id);
         model.addAttribute("materias", gerencia.getMaterias());
         return "fragments/usuarios/modal-materias :: lista";

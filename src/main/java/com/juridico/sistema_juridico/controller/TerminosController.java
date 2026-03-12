@@ -265,6 +265,7 @@ public class TerminosController {
             case GERENTE:
                 return Collections.singletonList(EstatusTermino.GERENCIA);
             case DIRECCION:
+                return Collections.singletonList(EstatusTermino.DIRECCION);
             case SUBDIRECCION:
                 return Arrays.asList(EstatusTermino.DIRECCION, EstatusTermino.PRESENTADO, EstatusTermino.CONCLUIDO);
             default:

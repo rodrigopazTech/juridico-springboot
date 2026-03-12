@@ -78,15 +78,15 @@ public class AudienciasController {
 
     @GetMapping
     public String index(Model model,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(required = false) Integer id,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String tipo,
-            @RequestParam(required = false) String gerencia,
-            @RequestParam(required = false) String materia,
-            @RequestParam(required = false) EstatusAudiencia estatus,
-            @RequestParam(required = false) Integer abogadoId,
-            @RequestParam(required = false) String periodo) {
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "id", required = false) Integer id,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "tipo", required = false) String tipo,
+            @RequestParam(value = "gerencia", required = false) String gerencia,
+            @RequestParam(value = "materia", required = false) String materia,
+            @RequestParam(value = "estatus", required = false) EstatusAudiencia estatus,
+            @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
+            @RequestParam(value = "periodo", required = false) String periodo) {
 
         if (keyword != null && keyword.contains("?keyword=")) {
             // Nos quedamos solo con lo que esté después del último igual (=)
@@ -290,7 +290,7 @@ public class AudienciasController {
 
     @GetMapping("/obtener/{id}")
     @ResponseBody
-    public ResponseEntity<Audiencia> obtenerPorId(@PathVariable Integer id) {
+    public ResponseEntity<Audiencia> obtenerPorId(@PathVariable("id") Integer id) {
         return audienciaRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -341,7 +341,7 @@ public class AudienciasController {
 
     @PostMapping("/eliminar/{id}")
     @ResponseBody
-    public ResponseEntity<java.util.Map<String, Object>> eliminar(@PathVariable Integer id) {
+    public ResponseEntity<java.util.Map<String, Object>> eliminar(@PathVariable("id") Integer id) {
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         try {
             // 1. VALIDACIÓN LIMPIA
@@ -366,7 +366,7 @@ public class AudienciasController {
     }
 
     @GetMapping("/descargar-acta/{id}")
-    public ResponseEntity<Resource> descargarActa(@PathVariable Integer id) {
+    public ResponseEntity<Resource> descargarActa(@PathVariable("id") Integer id) {
         try {
             Audiencia audiencia = audienciaRepository.findById(id)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Audiencia no encontrada"));
@@ -396,14 +396,14 @@ public class AudienciasController {
 
     @GetMapping("/exportar-excel")
     public void exportarExcel(HttpServletResponse response,
-            @RequestParam(required = false) Integer id,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String tipo,
-            @RequestParam(required = false) String gerencia,
-            @RequestParam(required = false) String materia,
-            @RequestParam(required = false) EstatusAudiencia estatus,
-            @RequestParam(required = false) Integer abogadoId,
-            @RequestParam(required = false) String periodo) throws IOException {
+            @RequestParam(value = "id", required = false) Integer id,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "tipo", required = false) String tipo,
+            @RequestParam(value = "gerencia", required = false) String gerencia,
+            @RequestParam(value = "materia", required = false) String materia,
+            @RequestParam(value = "estatus", required = false) EstatusAudiencia estatus,
+            @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
+            @RequestParam(value = "periodo", required = false) String periodo) throws IOException {
 
         response.setContentType("application/octet-stream");
         DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
@@ -479,7 +479,8 @@ public class AudienciasController {
     // --- API: BUSCAR ABOGADOS DISPONIBLES (PARA SUSTITUCIÓN EN AUDIENCIAS) ---
     @GetMapping("/api/abogados-disponibles/{expedienteId}")
     @ResponseBody
-    public ResponseEntity<List<Map<String, Object>>> obtenerAbogadosDisponibles(@PathVariable String expedienteId) {
+    public ResponseEntity<List<Map<String, Object>>> obtenerAbogadosDisponibles(
+            @PathVariable("expedienteId") String expedienteId) {
         try {
             // 1. Obtener datos del expediente
             Expediente exp = expedienteRepository.findById(UUID.fromString(expedienteId))
