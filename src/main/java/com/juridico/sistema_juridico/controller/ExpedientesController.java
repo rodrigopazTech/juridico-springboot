@@ -39,6 +39,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -171,8 +172,9 @@ public class ExpedientesController {
     }
 
     @PostMapping("/guardar")
+    @Transactional
     public String guardar(@ModelAttribute Expediente expedienteForm,
-            @RequestParam(required = false) List<String> etiquetasNombres,
+            @RequestParam(value = "etiquetasNombres", required = false) List<String> etiquetasNombres,
             RedirectAttributes redirectAttrs) {
 
         UUID idParaRedirigir = null;
@@ -197,8 +199,25 @@ public class ExpedientesController {
                 expedienteReal = expedienteForm;
                 expedienteReal.setCreatedAt(LocalDateTime.now());
                 expedienteReal.setEtapaProcesal(EtapaProcesal.TRAMITE);
+
+                // Inyectar relaciones reales de la base de datos (Creación)
+                if (expedienteForm.getGerencia() != null && expedienteForm.getGerencia().getId() != null)
+                    expedienteReal.setGerencia(
+                            gerenciaRepository.findById(expedienteForm.getGerencia().getId()).orElse(null));
+                if (expedienteForm.getMateria() != null && expedienteForm.getMateria().getId() != null)
+                    expedienteReal
+                            .setMateria(materiaRepository.findById(expedienteForm.getMateria().getId()).orElse(null));
+                if (expedienteForm.getOrganoJurisdiccional() != null
+                        && expedienteForm.getOrganoJurisdiccional().getId() != null)
+                    expedienteReal.setOrganoJurisdiccional(
+                            organoRepository.findById(expedienteForm.getOrganoJurisdiccional().getId()).orElse(null));
+                if (expedienteForm.getAbogadoResponsable() != null
+                        && expedienteForm.getAbogadoResponsable().getId() != null)
+                    expedienteReal.setAbogadoResponsable(
+                            usuarioRepository.findById(expedienteForm.getAbogadoResponsable().getId()).orElse(null));
+
             } else {
-                // MODO EDICIÓN: Evitar que los campos nulos del HTML borren la BD
+                // MODO EDICIÓN
                 Expediente dbOriginal = expedienteRepository.findById(expedienteForm.getId())
                         .orElseThrow(() -> new ResourceNotFoundException("El expediente no existe."));
 
@@ -209,27 +228,31 @@ public class ExpedientesController {
                 // Obtener copia fresca para inyectarle los cambios
                 expedienteReal = expedienteRepository.findById(expedienteForm.getId()).get();
 
-                // Actualizar SÓLO lo que viene del formulario HTML
+                // Actualizar SÓLO los campos de texto
                 expedienteReal.setNumero(expedienteForm.getNumero());
                 expedienteReal.setPrioridad(expedienteForm.getPrioridad());
                 expedienteReal.setSede(expedienteForm.getSede());
                 expedienteReal.setPartes(expedienteForm.getPartes());
                 expedienteReal.setDescripcion(expedienteForm.getDescripcion());
 
-                // Validar los Selects que podrían venir vacíos por cargar tarde en JS
+                // Inyectar relaciones reales (evita errores de Hibernate por objetos "huecos")
                 if (expedienteForm.getGerencia() != null && expedienteForm.getGerencia().getId() != null)
-                    expedienteReal.setGerencia(expedienteForm.getGerencia());
+                    expedienteReal.setGerencia(
+                            gerenciaRepository.findById(expedienteForm.getGerencia().getId()).orElse(null));
 
                 if (expedienteForm.getMateria() != null && expedienteForm.getMateria().getId() != null)
-                    expedienteReal.setMateria(expedienteForm.getMateria());
+                    expedienteReal
+                            .setMateria(materiaRepository.findById(expedienteForm.getMateria().getId()).orElse(null));
 
                 if (expedienteForm.getOrganoJurisdiccional() != null
                         && expedienteForm.getOrganoJurisdiccional().getId() != null)
-                    expedienteReal.setOrganoJurisdiccional(expedienteForm.getOrganoJurisdiccional());
+                    expedienteReal.setOrganoJurisdiccional(
+                            organoRepository.findById(expedienteForm.getOrganoJurisdiccional().getId()).orElse(null));
 
                 if (expedienteForm.getAbogadoResponsable() != null
                         && expedienteForm.getAbogadoResponsable().getId() != null)
-                    expedienteReal.setAbogadoResponsable(expedienteForm.getAbogadoResponsable());
+                    expedienteReal.setAbogadoResponsable(
+                            usuarioRepository.findById(expedienteForm.getAbogadoResponsable().getId()).orElse(null));
             }
 
             if (expedienteReal.getNumero() == null || expedienteReal.getNumero().trim().isEmpty()) {
@@ -292,6 +315,10 @@ public class ExpedientesController {
 
         } catch (DataIntegrityViolationException e) {
             redirectAttrs.addFlashAttribute("mensaje", "Error: El número de expediente ya existe.");
+            redirectAttrs.addFlashAttribute("tipo", "error");
+        } catch (Exception e) {
+            System.out.println("Error al guardar: " + e.getMessage());
+            redirectAttrs.addFlashAttribute("mensaje", "Ocurrió un error interno al guardar.");
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
 
@@ -412,10 +439,8 @@ public class ExpedientesController {
         model.addAttribute("proximaAudiencia", proxima);
 
         model.addAttribute("gerencias", gerenciaRepository.findAll());
-        model.addAttribute("materias", materiaRepository.findAll());
 
         model.addAttribute("organos", organoRepository.findAll());
-        model.addAttribute("usuarios", usuarioRepository.findAll());
         model.addAttribute("prioridades", Prioridad.values());
         model.addAttribute("estados", estadoRepository.findAll());
         model.addAttribute("etapas", EtapaProcesal.values());
