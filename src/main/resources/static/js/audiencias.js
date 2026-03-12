@@ -249,8 +249,25 @@ function confirmarEliminarAudiencia(id) {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        Swal.fire('Eliminada', data.message, 'success').then(() => {
-                            window.location.reload();
+                        // Éxito: Usamos un toast
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true
+                        });
+
+                        Toast.fire({
+                            icon: 'success',
+                            title: 'Audiencia eliminada',
+                            iconColor: '#22c55e',
+                            background: '#f0fdf4',
+                            customClass: {
+                                title: 'text-green-800 text-sm font-bold'
+                            }
+                        }).then(() => {
+                            location.reload();
                         });
                     } else {
                         Swal.fire('Error', data.message || 'Error al eliminar la audiencia.', 'error');

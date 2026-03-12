@@ -132,14 +132,25 @@ async function updateEtapa(nuevaEtapa) {
         if (response.ok) {
             closeModal('modal-etapa');
             if (typeof Swal !== 'undefined') {
-                Swal.fire({
+                // Éxito: Usamos un toast en lugar de un modal bloqueante
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true
+                });
+
+                Toast.fire({
                     icon: 'success',
-                    title: 'Etapa Actualizada',
-                    text: `El expediente ha pasado a la etapa: ${nuevaEtapa}`,
-                    timer: 1500,
-                    showConfirmButton: false
+                    title: '¡Etapa actualizada!',
+                    iconColor: '#22c55e',
+                    background: '#f0fdf4',
+                    customClass: {
+                        title: 'text-green-800 text-sm font-bold'
+                    }
                 }).then(() => {
-                    window.location.reload();
+                    location.reload();
                 });
             } else {
                 window.location.reload();

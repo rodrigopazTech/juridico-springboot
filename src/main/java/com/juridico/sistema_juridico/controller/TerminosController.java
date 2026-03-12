@@ -433,6 +433,13 @@ public class TerminosController {
 
     private void notificarCambioDeEtapa(Termino termino, EstatusTermino etapaAnterior, EstatusTermino nuevaEtapa,
             Usuario actor) {
+        
+        // Validar que el término tenga un expediente para obtener la gerencia
+        if (termino.getExpediente() == null) {
+            System.out.println("No se pudo enviar notificación: El término no tiene un expediente asociado.");
+            return;
+        }
+
         String titulo = "Término en " + nuevaEtapa.getDescripcion();
         String mensajeBase = String.format("Movimiento de '%s' a '%s' por %s", etapaAnterior.getDescripcion(),
                 nuevaEtapa.getDescripcion(),
@@ -440,6 +447,11 @@ public class TerminosController {
 
         List<Usuario> destinatarios = new ArrayList<>();
         Gerencia g = termino.getExpediente().getGerencia();
+        
+        if (g == null) {
+            System.out.println("No se pudo enviar notificación: El expediente no tiene una gerencia asociada.");
+            return;
+        }
 
         switch (nuevaEtapa) {
             case REVISION:

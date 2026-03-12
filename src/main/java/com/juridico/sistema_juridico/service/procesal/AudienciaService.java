@@ -103,7 +103,7 @@ public class AudienciaService {
                 nombreAbogado = audiencia.getExpediente().getAbogadoResponsable().getNombreCompleto();
             }
 
-            String linkRedireccion = "/audiencias?keyword=" + audiencia.getId();
+            String entidadId = audiencia.getId().toString();
 
             for (Usuario directivo : directivos) {
                 notificacionService.crearNotificacion(
@@ -112,7 +112,7 @@ public class AudienciaService {
                         "El abogado " + nombreAbogado + " ha subido el acta. Requiere validación.",
                         "AUDIENCIA",
                         Prioridad.ALTA,
-                        linkRedireccion);
+                        entidadId);
             }
         } catch (Exception e) {
             System.err.println("Error al enviar notificación de acta: " + e.getMessage());

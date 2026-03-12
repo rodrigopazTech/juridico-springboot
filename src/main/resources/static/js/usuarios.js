@@ -437,8 +437,26 @@ function eliminarUsuarioDesdeModal() {
             })
                 .then(async response => {
                     if (response.ok) {
-                        await Swal.fire('¡Eliminado!', 'El usuario ha sido borrado.', 'success');
-                        window.location.reload(); // Recargar para actualizar tabla
+                        // Éxito: Usamos un toast
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true
+                        });
+
+                        Toast.fire({
+                            icon: 'success',
+                            title: 'Eliminado correctamente',
+                            iconColor: '#22c55e',
+                            background: '#f0fdf4',
+                            customClass: {
+                                title: 'text-green-800 text-sm font-bold'
+                            }
+                        }).then(() => {
+                            location.reload();
+                        });
                     } else {
                         const msg = await response.text();
                         Swal.fire('Error', msg || 'No se pudo eliminar el usuario.', 'error');

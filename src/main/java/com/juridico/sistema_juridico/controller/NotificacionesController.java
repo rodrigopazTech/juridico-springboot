@@ -103,23 +103,42 @@ public class NotificacionesController {
             
             // 2. Redirecciones inteligentes
             if (notificacion.getEntidadId() != null) {
+                String rawId = notificacion.getEntidadId();
+                String idClean = extraerSoloId(rawId);
                 
                 // A) AUDIENCIAS (Va a la tabla filtrada)
                 if ("AUDIENCIA".equals(notificacion.getEntidadTipo())) {
-                    return "redirect:/audiencias?id=" + notificacion.getEntidadId();                
+                    return "redirect:/audiencias?id=" + idClean;
                 }            
                 // B) TÉRMINOS (Va a la tabla filtrada)
                 else if ("TERMINO".equals(notificacion.getEntidadTipo())) {
-                    return "redirect:/terminos?id=" + notificacion.getEntidadId();
+                    return "redirect:/terminos?id=" + idClean;
                 }
                 // C) EXPEDIENTES (NUEVO: Va directo al detalle del expediente)
                 else if ("EXPEDIENTE".equals(notificacion.getEntidadTipo())) {
-                    return "redirect:/expedientes/" + notificacion.getEntidadId();
+                    return "redirect:/expedientes/" + idClean;
                 }
             }
         }
         // Si no tiene redirección o no es tu notificación, vuelves a alertas
         return "redirect:/alertas";
+    }
+
+    /**
+     * Limpia el ID en caso de que se haya guardado una URL malformada.
+     * Ejemplo: "/audiencias?keyword=3" -> "3"
+     */
+    private String extraerSoloId(String rawId) {
+        if (rawId == null) return "";
+        // Si contiene un '=', tomamos lo que esté después del último igual
+        if (rawId.contains("=")) {
+            return rawId.substring(rawId.lastIndexOf("=") + 1);
+        }
+        // Si contiene un '/', tomamos lo que esté después de la última diagonal
+        if (rawId.contains("/")) {
+            return rawId.substring(rawId.lastIndexOf("/") + 1);
+        }
+        return rawId;
     }
 
     // ELIMINAR NOTIFICACIÓN

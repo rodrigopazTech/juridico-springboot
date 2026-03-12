@@ -1,13 +1,15 @@
 ﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8" />
     <title>Gestión de Audiencias - Agenda Legal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
+
 <body class="bg-gray-100 text-gray-800 font-sans">
 
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
@@ -26,23 +28,16 @@
     </div>
 
     <div th:replace="~{fragments/audiencias/modals :: modals}"></div>
-    <form id="form-subir-acta" th:action="@{/audiencias/subir-acta}" method="post" enctype="multipart/form-data" class="hidden">
+    <form id="form-subir-acta" th:action="@{/audiencias/subir-acta}" method="post" enctype="multipart/form-data"
+        class="hidden">
         <input type="hidden" name="id" id="input-acta-id">
-        <input type="file" name="archivo" id="input-acta-file" onchange="document.getElementById('form-subir-acta').submit()">
+        <input type="file" name="archivo" id="input-acta-file"
+            onchange="document.getElementById('form-subir-acta').submit()">
     </form>
 
     <script th:src="@{/js/audiencias.js(v=4)}"></script>
 
-     <script th:if="${mensaje != null}">
-        document.addEventListener("DOMContentLoaded", function () {
-            Swal.fire({
-                title: "[[${tipo == 'success' ? '¡Éxito!' : 'Aviso'}]]",
-                text: "[[${mensaje}]]",
-                icon: "[[${tipo}]]",
-                confirmButtonColor: "#621132"
-            });
-        });
-    </script>
-
+    <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
 </body>
+
 </html>
