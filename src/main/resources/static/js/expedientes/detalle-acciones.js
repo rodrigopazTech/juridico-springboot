@@ -186,21 +186,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Cargar etapas dinámicamente
-    const listaEtapas = document.getElementById('lista-etapas');
-    if (listaEtapas) {
-        const etapas = ['TRAMITE', 'LAUDO', 'FIRME', 'CONCLUIDO'];
-        etapas.forEach(etapa => {
-            const btn = document.createElement('button');
-            btn.onclick = () => updateEtapa(etapa);
-            btn.className = 'w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-green-50 hover:border-green-300 transition-all flex justify-between items-center group';
-            btn.innerHTML = `
-                <span class="text-sm font-medium text-gray-700">${etapa}</span>
-                <i class="fas fa-check text-green-500 opacity-0 group-hover:opacity-100"></i>
-            `;
-            listaEtapas.appendChild(btn);
-        });
-    }
 
     // Validación de Reasignación de Abogado en Edición (ROD-168)
     const formEditarExpediente = document.getElementById('form-editar-expediente');

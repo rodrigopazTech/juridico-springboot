@@ -192,7 +192,11 @@
             <div class="p-6">
                 <p class="text-sm text-gray-600 mb-4">Seleccione la nueva etapa para este expediente:</p>
                 <div class="space-y-2" id="lista-etapas">
-                    <!-- Se llenará dinámicamente con JavaScript -->
+                    <button th:each="etapa : ${etapas}" th:onclick="'updateEtapa(\'' + ${etapa} + '\')'"
+                        class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-green-50 hover:border-green-300 transition-all flex justify-between items-center group">
+                        <span class="text-sm font-medium text-gray-700" th:text="${etapa}">ETAPA</span>
+                        <i class="fas fa-check text-green-500 opacity-0 group-hover:opacity-100"></i>
+                    </button>
                 </div>
             </div>
         </div>
