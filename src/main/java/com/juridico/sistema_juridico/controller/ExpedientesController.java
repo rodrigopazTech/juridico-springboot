@@ -88,14 +88,14 @@ public class ExpedientesController {
 
     @GetMapping
     public String index(Model model,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Integer gerenciaId,
-            @RequestParam(required = false) Integer materiaId,
-            @RequestParam(required = false) Prioridad prioridad,
-            @RequestParam(required = false) EtapaProcesal etapa,
-            @RequestParam(required = false) Integer abogadoId,
-            @RequestParam(required = false) Integer etiquetaId) {
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "gerenciaId", required = false) Integer gerenciaId,
+            @RequestParam(value = "materiaId", required = false) Integer materiaId,
+            @RequestParam(value = "prioridad", required = false) Prioridad prioridad,
+            @RequestParam(value = "etapa", required = false) EtapaProcesal etapa,
+            @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
+            @RequestParam(value = "etiquetaId", required = false) Integer etiquetaId) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
@@ -171,27 +171,20 @@ public class ExpedientesController {
     }
 
     @PostMapping("/guardar")
-    public String guardar(@ModelAttribute Expediente expediente,
+    public String guardar(@ModelAttribute Expediente expedienteForm,
             @RequestParam(required = false) List<String> etiquetasNombres,
             RedirectAttributes redirectAttrs) {
-        // Mantenemos este try-catch SOLO para la duplicidad, que es un error muy
-        // específico de negocio
+
+        UUID idParaRedirigir = null;
+
         try {
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuario = usuarioRepository.findByEmail(email)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-            boolean esNuevo = (expediente.getId() == null);
+            boolean esNuevo = (expedienteForm.getId() == null);
             Expediente anterior = null;
-            if (!esNuevo) {
-                // Capturar estado anterior para la bitácora
-                anterior = expedienteRepository.findById(expediente.getId())
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                "Expediente previo no encontrado"));
-                if (anterior != null) {
-                    entityManager.detach(anterior);
-                }
-            }
+            Expediente expedienteReal;
 
             if (esNuevo) {
                 // Validación de Roles para Creación
@@ -201,33 +194,46 @@ public class ExpedientesController {
                             "No tienes permiso para crear expedientes.");
                 }
 
-                expediente.setCreatedAt(LocalDateTime.now());
-                expediente.setEtapaProcesal(EtapaProcesal.TRAMITE);
+                expedienteReal = expedienteForm;
+                expedienteReal.setCreatedAt(LocalDateTime.now());
+                expedienteReal.setEtapaProcesal(EtapaProcesal.TRAMITE);
             } else {
-                // Verificar que existe antes de guardar
-                if (!expedienteRepository.existsById(expediente.getId())) {
-                    throw new ResourceNotFoundException("El expediente a editar no existe.");
-                }
+                // MODO EDICIÓN: Evitar que los campos nulos del HTML borren la BD
+                Expediente dbOriginal = expedienteRepository.findById(expedienteForm.getId())
+                        .orElseThrow(() -> new ResourceNotFoundException("El expediente no existe."));
+
+                // Guardar la foto del "antes" para la auditoría (Detach)
+                entityManager.detach(dbOriginal);
+                anterior = dbOriginal;
+
+                // Obtener copia fresca para inyectarle los cambios
+                expedienteReal = expedienteRepository.findById(expedienteForm.getId()).get();
+
+                // Actualizar SÓLO lo que viene del formulario HTML
+                expedienteReal.setNumero(expedienteForm.getNumero());
+                expedienteReal.setPrioridad(expedienteForm.getPrioridad());
+                expedienteReal.setSede(expedienteForm.getSede());
+                expedienteReal.setPartes(expedienteForm.getPartes());
+                expedienteReal.setDescripcion(expedienteForm.getDescripcion());
+
+                // Validar los Selects que podrían venir vacíos por cargar tarde en JS
+                if (expedienteForm.getGerencia() != null && expedienteForm.getGerencia().getId() != null)
+                    expedienteReal.setGerencia(expedienteForm.getGerencia());
+
+                if (expedienteForm.getMateria() != null && expedienteForm.getMateria().getId() != null)
+                    expedienteReal.setMateria(expedienteForm.getMateria());
+
+                if (expedienteForm.getOrganoJurisdiccional() != null
+                        && expedienteForm.getOrganoJurisdiccional().getId() != null)
+                    expedienteReal.setOrganoJurisdiccional(expedienteForm.getOrganoJurisdiccional());
+
+                if (expedienteForm.getAbogadoResponsable() != null
+                        && expedienteForm.getAbogadoResponsable().getId() != null)
+                    expedienteReal.setAbogadoResponsable(expedienteForm.getAbogadoResponsable());
             }
 
-            // Validaciones Críticas para Edición (y creación)
-            if (expediente.getNumero() == null || expediente.getNumero().trim().isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El número de expediente es obligatorio.");
-            }
-            if (!esNuevo && anterior != null) {
-                // Restaurar campos críticos si vienen nulos en el formulario para evitar
-                // pérdida de referencialidad
-                if (expediente.getMateria() == null && anterior.getMateria() != null) {
-                    expediente.setMateria(anterior.getMateria());
-                }
-                if (expediente.getGerencia() == null && anterior.getGerencia() != null) {
-                    expediente.setGerencia(anterior.getGerencia());
-                }
-                // Si el abogado ya había sido asignado y en el form vino null accidentalmente,
-                // se podría restaurar:
-                if (expediente.getAbogadoResponsable() == null && anterior.getAbogadoResponsable() != null) {
-                    expediente.setAbogadoResponsable(anterior.getAbogadoResponsable());
-                }
+            if (expedienteReal.getNumero() == null || expedienteReal.getNumero().trim().isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El número es obligatorio.");
             }
 
             // ====== PROCESAMIENTO DE ETIQUETAS ======
@@ -236,7 +242,6 @@ public class ExpedientesController {
                 for (String nombreTag : etiquetasNombres) {
                     if (nombreTag == null || nombreTag.trim().isEmpty())
                         continue;
-
                     String nombreLimpio = nombreTag.trim();
                     Etiqueta tag = etiquetaRepository.findByNombreIgnoreCase(nombreLimpio)
                             .orElseGet(() -> {
@@ -249,22 +254,20 @@ public class ExpedientesController {
                     etiquetasEntidad.add(tag);
                 }
             }
-            expediente.setEtiquetas(etiquetasEntidad);
+            expedienteReal.setEtiquetas(etiquetasEntidad);
             // ==========================================
 
-            expediente.setUpdatedAt(LocalDateTime.now());
-
-            Expediente guardado = expedienteRepository.save(expediente);
+            expedienteReal.setUpdatedAt(LocalDateTime.now());
+            Expediente guardado = expedienteRepository.save(expedienteReal);
+            idParaRedirigir = guardado.getId();
 
             if (esNuevo) {
                 enviarNotificacionesNuevoExpediente(guardado);
                 auditoriaService.registrar(guardado, "Expediente Creado",
                         "Se ha registrado un nuevo expediente: " + guardado.getNumero(), "PLUS", usuario);
             } else {
-                // Registrar cambios en la bitácora estructurada
                 auditoriaService.registrarCambiosEstructurados(guardado, anterior, usuario);
 
-                // Reasignación de Abogado (ROD-168)
                 if (anterior != null && guardado.getAbogadoResponsable() != null) {
                     Integer idAnterior = (anterior.getAbogadoResponsable() != null)
                             ? anterior.getAbogadoResponsable().getId()
@@ -278,7 +281,7 @@ public class ExpedientesController {
                                 "Expediente Reasignado",
                                 "Se te ha reasignado el expediente " + guardado.getNumero() + " para su atención.",
                                 "ASIGNACION",
-                                com.juridico.sistema_juridico.Entity.enums.Prioridad.ALTA,
+                                Prioridad.ALTA,
                                 guardado.getId().toString());
                     }
                 }
@@ -288,13 +291,14 @@ public class ExpedientesController {
             redirectAttrs.addFlashAttribute("tipo", "success");
 
         } catch (DataIntegrityViolationException e) {
-            // Feedback específico para duplicidad de número
-            redirectAttrs.addFlashAttribute("mensaje",
-                    "Error: El número de expediente '" + expediente.getNumero() + "' ya existe.");
+            redirectAttrs.addFlashAttribute("mensaje", "Error: El número de expediente ya existe.");
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
-        // Eliminamos el 'catch (Exception e)' general. El GlobalHandler lo hará.
 
+        // UX MEJORADA: Redirigir al detalle si se editó, a la lista si se creó
+        if (idParaRedirigir != null && expedienteForm.getId() != null) {
+            return "redirect:/expedientes/" + idParaRedirigir;
+        }
         return "redirect:/expedientes";
     }
 
@@ -360,7 +364,7 @@ public class ExpedientesController {
 
     @GetMapping("/{id}")
     @SuppressWarnings("null")
-    public String verDetalle(@PathVariable UUID id, Model model) {
+    public String verDetalle(@PathVariable("id") UUID id, Model model) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
@@ -429,13 +433,13 @@ public class ExpedientesController {
 
     @GetMapping("/{id}/comentarios")
     @ResponseBody
-    public List<Comentario> getComentarios(@PathVariable String id) {
+    public List<Comentario> getComentarios(@PathVariable("id") String id) {
         return comentarioRepository.findByEntidadTipoAndEntidadIdOrderByCreatedAtDesc("EXPEDIENTE", id);
     }
 
     @PostMapping("/{id}/comentarios")
     @ResponseBody
-    public ResponseEntity<?> addComentario(@PathVariable String id, @RequestBody Comentario nuevo) {
+    public ResponseEntity<?> addComentario(@PathVariable("id") String id, @RequestBody Comentario nuevo) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
@@ -469,7 +473,7 @@ public class ExpedientesController {
 
     @PostMapping("/{id}/cambiar-etapa")
     @ResponseBody
-    public ResponseEntity<?> cambiarEtapa(@PathVariable UUID id, @RequestParam EtapaProcesal etapa) {
+    public ResponseEntity<?> cambiarEtapa(@PathVariable("id") UUID id, @RequestParam("etapa") EtapaProcesal etapa) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
@@ -492,8 +496,8 @@ public class ExpedientesController {
     @GetMapping("/api/abogados")
     @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> obtenerAbogadosPorMateria(
-            @RequestParam Integer gerenciaId,
-            @RequestParam Integer materiaId) {
+            @RequestParam("gerenciaId") Integer gerenciaId,
+            @RequestParam("materiaId") Integer materiaId) {
 
         // Buscamos todos los usuarios activos de la gerencia que tengan la materia
         // asignada

@@ -32,8 +32,8 @@ public class DashboardController {
 
     @GetMapping
     public String dashboard(Model model,
-            @RequestParam(required = false) Long gerenciaId,
-            @RequestParam(required = false) String grupoGerencia) {
+            @RequestParam(value = "gerenciaId", required = false) Long gerenciaId,
+            @RequestParam(value = "grupoGerencia", required = false) String grupoGerencia) {
         // Obtenemos el nombre del usuario logueado
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
@@ -58,8 +58,8 @@ public class DashboardController {
     @GetMapping("/data")
     @ResponseBody
     public Map<String, Object> obtenerDatosFiltrados(
-            @RequestParam(required = false) Long gerenciaId,
-            @RequestParam(required = false) String grupoGerencia) {
+            @RequestParam(value = "gerenciaId", required = false) Long gerenciaId,
+            @RequestParam(value = "grupoGerencia", required = false) String grupoGerencia) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Usuario usuario = usuarioService.obtenerPorUsername(auth.getName());
 

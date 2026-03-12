@@ -164,26 +164,30 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Inicializar selectores de Etiquetas (Tags)
-    const choicesConfig = {
-        removeItemButton: true,
-        allowHTML: true,
-        placeholderValue: 'Seleccione o escriba...',
-        searchPlaceholderValue: 'Buscar o añadir etiqueta',
-        noResultsText: 'No se encontraron etiquetas con ese nombre',
-        noChoicesText: 'No hay más etiquetas para escoger',
-        itemSelectText: 'Presione para seleccionar',
-        addItems: true,
-        addChoices: true,
-        duplicateItemsAllowed: false,
-    };
+    if (typeof Choices !== 'undefined') {
+        const choicesConfig = {
+            removeItemButton: true,
+            allowHTML: true,
+            placeholderValue: 'Seleccione o escriba...',
+            searchPlaceholderValue: 'Buscar o añadir etiqueta',
+            noResultsText: 'No se encontraron etiquetas con ese nombre',
+            noChoicesText: 'No hay más etiquetas para escoger',
+            itemSelectText: 'Presione para seleccionar',
+            addItems: true,
+            addChoices: true,
+            duplicateItemsAllowed: false,
+        };
 
-    const elNuevo = document.getElementById('etiquetas-nuevo');
-    if (elNuevo) {
-        new Choices(elNuevo, choicesConfig);
-    }
+        const elNuevo = document.getElementById('etiquetas-nuevo');
+        if (elNuevo) {
+            new Choices(elNuevo, choicesConfig);
+        }
 
-    const elEditar = document.getElementById('etiquetas-editar');
-    if (elEditar) {
-        new Choices(elEditar, choicesConfig);
+        const elEditar = document.getElementById('etiquetas-editar');
+        if (elEditar) {
+            new Choices(elEditar, choicesConfig);
+        }
+    } else {
+        console.warn("La librería Choices.js no se cargó correctamente.");
     }
 });

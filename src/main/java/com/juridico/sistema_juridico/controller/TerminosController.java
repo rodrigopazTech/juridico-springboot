@@ -107,14 +107,14 @@ public class TerminosController {
 
     @GetMapping
     public String index(Model model,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(required = false) Integer id,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) EstatusTermino estatus,
-            @RequestParam(required = false) Prioridad prioridad,
-            @RequestParam(required = false) Integer abogadoId,
-            @RequestParam(required = false) Integer gerenciaId,
-            @RequestParam(required = false) Integer materiaId) {
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "id", required = false) Integer id,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "estatus", required = false) EstatusTermino estatus,
+            @RequestParam(value = "prioridad", required = false) Prioridad prioridad,
+            @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
+            @RequestParam(value = "gerenciaId", required = false) Integer gerenciaId,
+            @RequestParam(value = "materiaId", required = false) Integer materiaId) {
 
         // --- 1. LIMPIEZA DE URL (Fix Notificaciones) ---
         if (keyword != null && keyword.contains("?keyword=")) {
@@ -219,7 +219,7 @@ public class TerminosController {
         // --- 6. CONTEOS PARA LA LÍNEA DE TIEMPO (NUEVO) ---
         List<Object[]> rawCounts = terminoRepository.contarPorEtapaConFiltros(
                 keyword, prioridad, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId);
-        
+
         Map<EstatusTermino, Long> conteosMap = new EnumMap<>(EstatusTermino.class);
         for (EstatusTermino e : EstatusTermino.values()) {
             conteosMap.put(e, 0L);
@@ -239,30 +239,35 @@ public class TerminosController {
 
         // --- 8. FILTRO POR DEFECTO PARA EL USUARIO ---
         if (estatus == null && (keyword == null || keyword.isEmpty()) && id == null && !etapasAsignadas.isEmpty()) {
-            // Si tiene múltiples etapas, por defecto filtramos por la primera (o podrías no filtrar, pero el usuario pidió "muestrales por default los que se encuentren en su etapa asignada")
-            // Para múltiples etapas, ajustamos la consulta para que traiga todas las de su rol si no hay estatus seleccionado
+            // Si tiene múltiples etapas, por defecto filtramos por la primera (o podrías no
+            // filtrar, pero el usuario pidió "muestrales por default los que se encuentren
+            // en su etapa asignada")
+            // Para múltiples etapas, ajustamos la consulta para que traiga todas las de su
+            // rol si no hay estatus seleccionado
             model.addAttribute("etapasDefault", etapasAsignadas); // Para que la UI sepa cuáles son las default
             paginaTerminos = terminoRepository.buscarPorMultiplesEstatus(
-                    id, keyword, etapasAsignadas, prioridad, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId, pageable);
-             model.addAttribute("terminos", paginaTerminos);
+                    id, keyword, etapasAsignadas, prioridad, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId,
+                    pageable);
+            model.addAttribute("terminos", paginaTerminos);
         }
 
         return "views/terminos/index";
     }
 
     private List<EstatusTermino> getEtapasAsignadasPorRol(RolUsuario rol) {
-        if (rol == null) return new ArrayList<>();
+        if (rol == null)
+            return new ArrayList<>();
         switch (rol) {
-            case ABOGADO: 
+            case ABOGADO:
                 return Arrays.asList(EstatusTermino.PROYECTISTA, EstatusTermino.LIBERADO);
-            case JEFE_DEPTO: 
+            case JEFE_DEPTO:
                 return Collections.singletonList(EstatusTermino.REVISION);
-            case GERENTE: 
+            case GERENTE:
                 return Collections.singletonList(EstatusTermino.GERENCIA);
             case DIRECCION:
-            case SUBDIRECCION: 
+            case SUBDIRECCION:
                 return Arrays.asList(EstatusTermino.DIRECCION, EstatusTermino.PRESENTADO, EstatusTermino.CONCLUIDO);
-            default: 
+            default:
                 return new ArrayList<>();
         }
     }
@@ -384,7 +389,7 @@ public class TerminosController {
     }
 
     @GetMapping("/avanzar/{id}")
-    public String avanzarEstado(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+    public String avanzarEstado(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
         // 1. BUSCAR (O LANZAR ERROR 404)
         Termino termino = terminoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Término no encontrado."));
@@ -673,7 +678,7 @@ public class TerminosController {
     }
 
     @GetMapping("/descargar/{id}")
-    public ResponseEntity<Resource> descargarArchivo(@PathVariable Integer id) {
+    public ResponseEntity<Resource> descargarArchivo(@PathVariable("id") Integer id) {
         try {
             Termino termino = terminoRepository.findById(id)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
@@ -702,13 +707,13 @@ public class TerminosController {
 
     @GetMapping("/exportar-excel")
     public void exportarExcel(HttpServletResponse response,
-            @RequestParam(required = false) Integer id,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) EstatusTermino estatus,
-            @RequestParam(required = false) Prioridad prioridad,
-            @RequestParam(required = false) Integer abogadoId,
-            @RequestParam(required = false) Integer gerenciaId,
-            @RequestParam(required = false) Integer materiaId) throws IOException {
+            @RequestParam(value = "id", required = false) Integer id,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "estatus", required = false) EstatusTermino estatus,
+            @RequestParam(value = "prioridad", required = false) Prioridad prioridad,
+            @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
+            @RequestParam(value = "gerenciaId", required = false) Integer gerenciaId,
+            @RequestParam(value = "materiaId", required = false) Integer materiaId) throws IOException {
 
         response.setContentType("application/octet-stream");
         DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
@@ -739,7 +744,7 @@ public class TerminosController {
 
     @PostMapping("/eliminar/{id}")
     @ResponseBody
-    public ResponseEntity<java.util.Map<String, Object>> eliminar(@PathVariable Integer id) {
+    public ResponseEntity<java.util.Map<String, Object>> eliminar(@PathVariable("id") Integer id) {
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         try {
             Usuario actor = getUsuarioActual();
@@ -772,7 +777,7 @@ public class TerminosController {
     }
 
     @GetMapping("/descargar-acuse/{id}")
-    public ResponseEntity<Resource> descargarAcuse(@PathVariable Integer id) {
+    public ResponseEntity<Resource> descargarAcuse(@PathVariable("id") Integer id) {
         try {
             Termino termino = terminoRepository.findById(id)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Término no encontrado"));
@@ -809,7 +814,7 @@ public class TerminosController {
     // OBTENER ABOGADO DEL EXPEDIENTE (PARA VINCULACIÓN AUTOMÁTICA)
     @GetMapping("/api/responsable-expediente/{id}")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> obtenerResponsable(@PathVariable String id) {
+    public ResponseEntity<Map<String, Object>> obtenerResponsable(@PathVariable("id") String id) {
         try {
             // Buscamos el expediente por su UUID
             Expediente exp = expedienteRepository.findById(UUID.fromString(id))
