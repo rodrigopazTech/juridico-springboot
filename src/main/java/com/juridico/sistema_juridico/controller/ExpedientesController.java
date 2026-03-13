@@ -445,12 +445,12 @@ public class ExpedientesController {
         nuevo.setUsuario(usuario);
         nuevo.setUsuarioNombre(usuario != null ? usuario.getNombreCompleto() : "Sistema");
 
-        comentarioRepository.save(nuevo);
-
-        // Registro de Auditoría
+        // Capturar la etapa procesal actual del expediente
         try {
             UUID expId = UUID.fromString(id);
             expedienteRepository.findById(expId).ifPresent(exp -> {
+                nuevo.setEtapaProcesal(exp.getEtapaProcesal());
+                
                 auditoriaService.registrar(exp, "Nueva Observación",
                         "Se agregó una nota: "
                                 + (nuevo.getComentario().length() > 50 ? nuevo.getComentario().substring(0, 47) + "..."
@@ -460,6 +460,8 @@ public class ExpedientesController {
         } catch (Exception e) {
             // Ignorar si el ID no es de expediente
         }
+
+        comentarioRepository.save(nuevo);
 
         return ResponseEntity.ok(nuevo);
     }

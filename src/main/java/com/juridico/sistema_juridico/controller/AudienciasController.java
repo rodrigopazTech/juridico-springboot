@@ -48,6 +48,8 @@ import java.time.LocalDate;
 import java.util.UUID;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.EnumMap;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -223,6 +225,27 @@ public class AudienciasController {
         model.addAttribute("paramAbogadoId", abogadoId);
         model.addAttribute("paramPeriodo", periodo);
         model.addAttribute("usuarioActual", usuario);
+
+        // --- 6. CONTEOS PARA KPIs (NUEVO) ---
+        List<Object[]> rawCounts = audienciaRepository.contarPorEstatusConFiltros(
+                keyword, tipo, gerencia, materia, abogadoId, fechaInicio, fechaFin,
+                filtroUsuarioId, filtroGerenciaId, filtroMateriaIds);
+
+        Map<EstatusAudiencia, Long> kpisAudit = new EnumMap<>(EstatusAudiencia.class);
+        for (EstatusAudiencia e : EstatusAudiencia.values()) {
+            kpisAudit.put(e, 0L);
+        }
+        long totalKpi = 0;
+        for (Object[] row : rawCounts) {
+            if (row[0] != null) {
+                EstatusAudiencia e = (EstatusAudiencia) row[0];
+                long count = (long) row[1];
+                kpisAudit.put(e, count);
+                totalKpi += count;
+            }
+        }
+        model.addAttribute("kpisAudiencias", kpisAudit);
+        model.addAttribute("totalAudiencias", totalKpi);
 
         return "views/audiencias/index";
     }

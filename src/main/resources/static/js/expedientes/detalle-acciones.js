@@ -62,11 +62,27 @@ async function loadObservaciones() {
             const fechaStr = date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
             const horaStr = date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 
+            // Badge de etapa (Nuevo)
+            let badgeEtapa = '';
+            if (nota.etapaProcesal) {
+                const colorMap = {
+                    'TRAMITE': 'bg-blue-100 text-blue-700 border-blue-200',
+                    'LAUDO': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                    'FIRME': 'bg-amber-100 text-amber-700 border-amber-200',
+                    'CONCLUIDO': 'bg-gray-100 text-gray-700 border-gray-200'
+                };
+                const colorClass = colorMap[nota.etapaProcesal] || 'bg-gray-100 text-gray-700 border-gray-200';
+                badgeEtapa = `<span class="px-2 py-0.5 rounded border text-[9px] font-bold uppercase ${colorClass}">${nota.etapaProcesal}</span>`;
+            }
+
             const div = document.createElement('div');
             div.className = 'bg-white p-3 rounded-lg border border-gray-200 shadow-sm';
             div.innerHTML = `
-                <div class="flex justify-between items-start mb-2 border-b border-gray-100 pb-1">
-                    <span class="text-xs font-bold text-blue-600 uppercase">${nota.usuarioNombre || 'Usuario'}</span>
+                <div class="flex justify-between items-center mb-2 border-b border-gray-100 pb-1">
+                    <div class="flex items-center gap-2">
+                         <span class="text-xs font-bold text-blue-600 uppercase">${nota.usuarioNombre || 'Usuario'}</span>
+                         ${badgeEtapa}
+                    </div>
                     <span class="text-[10px] text-gray-400">${fechaStr} ${horaStr}</span>
                 </div>
                 <p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">${nota.comentario}</p>
