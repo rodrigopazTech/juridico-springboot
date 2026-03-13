@@ -6,6 +6,7 @@ import com.juridico.sistema_juridico.exception.BadRequestException;
 import com.juridico.sistema_juridico.exception.ForbiddenException;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
+import com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
@@ -86,7 +87,7 @@ public class AudienciasController {
             @RequestParam(value = "materia", required = false) String materia,
             @RequestParam(value = "estatus", required = false) EstatusAudiencia estatus,
             @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
-            @RequestParam(value = "periodo", required = false) String periodo) {
+            @RequestParam(value = "periodo", required = false) PeriodoFiltro periodo) {
 
         if (keyword != null && keyword.contains("?keyword=")) {
             // Nos quedamos solo con lo que esté después del último igual (=)
@@ -118,26 +119,10 @@ public class AudienciasController {
         LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
         LocalDate fechaFin = LocalDate.of(2100, 12, 31);
 
-        if (periodo != null && !periodo.isEmpty()) {
-            LocalDate hoy = LocalDate.now();
-            switch (periodo) {
-                case "HOY":
-                    fechaInicio = hoy;
-                    fechaFin = hoy;
-                    break;
-                case "MANANA":
-                    fechaInicio = hoy.plusDays(1);
-                    fechaFin = hoy.plusDays(1);
-                    break;
-                case "SEMANA":
-                    fechaInicio = hoy;
-                    fechaFin = hoy.plusDays(7);
-                    break;
-                case "MES":
-                    fechaInicio = hoy.withDayOfMonth(1);
-                    fechaFin = hoy.withDayOfMonth(hoy.lengthOfMonth());
-                    break;
-            }
+        if (periodo != null) {
+            LocalDate[] rango = periodo.calcularRango();
+            fechaInicio = rango[0];
+            fechaFin = rango[1];
         }
 
         // 4. CONSULTA
@@ -152,6 +137,7 @@ public class AudienciasController {
         model.addAttribute("audiencias", audiencias);
         model.addAttribute("pageTitle", "Gestión de Audiencias");
         model.addAttribute("activePage", "audiencias");
+        model.addAttribute("paramPeriodo", periodo != null ? periodo.name() : null);
 
         // 5. DROPDOWN INTELIGENTE (MODO ANTI-FANTASMA)
         List<Expediente> expedientesParaDropdown;
@@ -220,7 +206,7 @@ public class AudienciasController {
         model.addAttribute("paramGerencia", gerencia);
         model.addAttribute("paramMateria", materia);
         model.addAttribute("paramEstatus", estatus != null ? estatus.name() : null);
-        model.addAttribute("paramAbogadoId", abogadoId);
+        model.addAttribute("paramAbogadoId", filtroUsuarioId != null ? filtroUsuarioId : abogadoId);
         model.addAttribute("paramPeriodo", periodo);
         model.addAttribute("usuarioActual", usuario);
 
@@ -403,7 +389,7 @@ public class AudienciasController {
             @RequestParam(value = "materia", required = false) String materia,
             @RequestParam(value = "estatus", required = false) EstatusAudiencia estatus,
             @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
-            @RequestParam(value = "periodo", required = false) String periodo) throws IOException {
+            @RequestParam(value = "periodo", required = false) PeriodoFiltro periodo) throws IOException {
 
         response.setContentType("application/octet-stream");
         DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
@@ -444,26 +430,10 @@ public class AudienciasController {
         LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
         LocalDate fechaFin = LocalDate.of(2100, 12, 31);
 
-        if (periodo != null && !periodo.isEmpty()) {
-            LocalDate hoy = LocalDate.now();
-            switch (periodo) {
-                case "HOY":
-                    fechaInicio = hoy;
-                    fechaFin = hoy;
-                    break;
-                case "MANANA":
-                    fechaInicio = hoy.plusDays(1);
-                    fechaFin = hoy.plusDays(1);
-                    break;
-                case "SEMANA":
-                    fechaInicio = hoy;
-                    fechaFin = hoy.plusDays(7);
-                    break;
-                case "MES":
-                    fechaInicio = hoy.withDayOfMonth(1);
-                    fechaFin = hoy.withDayOfMonth(hoy.lengthOfMonth());
-                    break;
-            }
+        if (periodo != null) {
+            LocalDate[] rango = periodo.calcularRango();
+            fechaInicio = rango[0];
+            fechaFin = rango[1];
         }
 
         // 3. LLAMAR AL REPOSITORIO
@@ -474,6 +444,7 @@ public class AudienciasController {
 
         AudienciaExcelExporter excelExporter = new AudienciaExcelExporter(listado);
         excelExporter.export(response);
+
     }
 
     // --- API: BUSCAR ABOGADOS DISPONIBLES (PARA SUSTITUCIÓN EN AUDIENCIAS) ---

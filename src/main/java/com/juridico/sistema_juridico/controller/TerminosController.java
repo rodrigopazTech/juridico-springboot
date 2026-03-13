@@ -9,6 +9,7 @@ import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
 import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
+import com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
@@ -49,6 +50,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -114,7 +116,8 @@ public class TerminosController {
             @RequestParam(value = "prioridad", required = false) Prioridad prioridad,
             @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
             @RequestParam(value = "gerenciaId", required = false) Integer gerenciaId,
-            @RequestParam(value = "materiaId", required = false) Integer materiaId) {
+            @RequestParam(value = "materiaId", required = false) Integer materiaId,
+            @RequestParam(value = "periodo", required = false) PeriodoFiltro periodo) {
 
         // --- 1. LIMPIEZA DE URL (Fix Notificaciones) ---
         if (keyword != null && keyword.contains("?keyword=")) {
@@ -136,11 +139,21 @@ public class TerminosController {
             }
         }
 
+        // CÁLCULO DE FECHAS
+        LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
+        LocalDate fechaFin = LocalDate.of(2100, 12, 31);
+
+        if (periodo != null) {
+            LocalDate[] rango = periodo.calcularRango();
+            fechaInicio = rango[0];
+            fechaFin = rango[1];
+        }
+
         Page<Termino> paginaTerminos = terminoRepository.buscarConFiltros(
                 id, keyword, estatus, prioridad,
-                filtroAbogadoSeguro,
-                filtroGerenciaSeguro,
-                materiaId,
+                filtroAbogadoSeguro, filtroGerenciaSeguro,
+                fechaInicio, fechaFin, // <-- Fechas primero
+                materiaId, // <-- MateriaId después
                 pageable);
 
         model.addAttribute("terminos", paginaTerminos);
@@ -212,9 +225,10 @@ public class TerminosController {
         model.addAttribute("keyword", keyword);
         model.addAttribute("paramEstatus", estatus);
         model.addAttribute("paramPrioridad", prioridad);
-        model.addAttribute("paramAbogadoId", abogadoId);
-        model.addAttribute("paramGerenciaId", gerenciaId);
+        model.addAttribute("paramAbogadoId", filtroAbogadoSeguro);
+        model.addAttribute("paramGerenciaId", filtroGerenciaSeguro);
         model.addAttribute("paramMateriaId", materiaId);
+        model.addAttribute("paramPeriodo", periodo != null ? periodo.name() : null);
 
         // --- 6. CONTEOS PARA LA LÍNEA DE TIEMPO (NUEVO) ---
         List<Object[]> rawCounts = terminoRepository.contarPorEtapaConFiltros(
@@ -714,6 +728,7 @@ public class TerminosController {
             @RequestParam(value = "prioridad", required = false) Prioridad prioridad,
             @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
             @RequestParam(value = "gerenciaId", required = false) Integer gerenciaId,
+            @RequestParam(value = "periodo", required = false) PeriodoFiltro periodo,
             @RequestParam(value = "materiaId", required = false) Integer materiaId) throws IOException {
 
         response.setContentType("application/octet-stream");
@@ -728,6 +743,16 @@ public class TerminosController {
         Integer filtroAbogado = abogadoId;
         Integer filtroGerencia = gerenciaId;
 
+        // CÁLCULO DE FECHAS
+        LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
+        LocalDate fechaFin = LocalDate.of(2100, 12, 31);
+
+        if (periodo != null) {
+            LocalDate[] rango = periodo.calcularRango();
+            fechaInicio = rango[0];
+            fechaFin = rango[1];
+        }
+
         if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
             filtroAbogado = usuarioActual.getId();
         } else if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
@@ -737,7 +762,7 @@ public class TerminosController {
         }
 
         List<Termino> listaTerminos = terminoRepository.listarParaExcel(
-                id, keyword, estatus, prioridad, filtroAbogado, filtroGerencia, materiaId);
+                id, keyword, estatus, prioridad, filtroAbogado, filtroGerencia, fechaInicio, fechaFin, materiaId);
 
         TerminoExcelExporter excelExporter = new TerminoExcelExporter(listaTerminos);
         excelExporter.export(response);
