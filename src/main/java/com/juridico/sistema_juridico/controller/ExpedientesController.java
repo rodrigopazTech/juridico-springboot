@@ -154,7 +154,7 @@ public class ExpedientesController {
         model.addAttribute("listaMaterias", materiaRepository.findAll());
 
         model.addAttribute("listaPrioridades", Prioridad.values());
-        model.addAttribute("listaEtapas", EtapaProcesal.values());
+        model.addAttribute("etapas", EtapaProcesal.values());
         model.addAttribute("listaAbogados", usuarioRepository.findAll());
 
         model.addAttribute("gerencias", gerenciaRepository.findAll());
@@ -202,7 +202,6 @@ public class ExpedientesController {
                 }
 
                 expediente.setCreatedAt(LocalDateTime.now());
-                expediente.setEtapaProcesal(EtapaProcesal.TRAMITE);
             } else {
                 // Verificar que existe antes de guardar
                 if (!expedienteRepository.existsById(expediente.getId())) {

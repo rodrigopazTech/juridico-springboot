@@ -15,7 +15,7 @@
 
         <form th:action="@{/expedientes/guardar}" method="post" class="p-6 space-y-4 text-sm">
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Número de Expediente*</label>
                     <input type="text" name="numero" placeholder="0000/2025" required
@@ -26,6 +26,13 @@
                     <select name="prioridad"
                         class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
                         <option th:each="p : ${prioridades}" th:value="${p}" th:text="${p}"></option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-600 mb-1">Etapa Procesal*</label>
+                    <select name="etapaProcesal" required
+                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
+                        <option th:each="e : ${etapas}" th:value="${e}" th:text="${e}"></option>
                     </select>
                 </div>
             </div>
@@ -99,13 +106,14 @@
                     class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none">
                     <option th:each="et : ${etiquetas}" th:value="${et.nombre}" th:text="${et.nombre}"></option>
                 </select>
-                <p class="text-[10px] text-gray-400 mt-1"><i class="fas fa-info-circle"></i> Escriba y presione Enter para crear una nueva etiqueta.</p>
+                <p class="text-[10px] text-gray-400 mt-1"><i class="fas fa-info-circle"></i> Escriba y presione Enter
+                    para crear una nueva etiqueta.</p>
             </div>
 
             <div class="col-span-1 md:col-span-2">
-                <label class="block font-bold text-gray-600 mb-1">Descripción </label>
+                <label class="block font-bold text-gray-600 mb-1">Procedimiento</label>
                 <textarea name="descripcion" rows="4" required
-                    placeholder="Escribe aquí todo el detalle del expediente. Esta información se verá en la vista detallada."
+                    placeholder="Escribe aquí el procedimiento o detalles del expediente. Esta información se verá en la vista detallada."
                     class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none resize-none"></textarea>
             </div>
 

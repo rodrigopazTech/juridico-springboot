@@ -139,6 +139,14 @@
                             </option>
                         </select>
                     </div>
+                    <div>
+                        <label class="block font-bold text-gray-600 mb-1">Etapa Procesal*</label>
+                        <select name="etapaProcesal"
+                            class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
+                            <option th:each="e : ${etapas}" th:value="${e}" th:text="${e}"
+                                th:selected="${expediente.etapaProcesal == e}"></option>
+                        </select>
+                    </div>
                 </div>
 
                 <div>
@@ -153,17 +161,19 @@
                     <select name="etiquetasNombres" id="etiquetas-editar" multiple
                         class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none">
                         <!-- Etiquetas seleccionadas -->
-                        <option th:each="et : ${expediente.etiquetas}" th:value="${et.nombre}" th:text="${et.nombre}" selected></option>
+                        <option th:each="et : ${expediente.etiquetas}" th:value="${et.nombre}" th:text="${et.nombre}"
+                            selected></option>
                         <!-- Todas las etiquetas disponibles -->
                         <option th:each="et : ${etiquetas}" th:value="${et.nombre}" th:text="${et.nombre}"></option>
                     </select>
-                    <p class="text-[10px] text-gray-400 mt-1"><i class="fas fa-info-circle"></i> Escriba y presione Enter para crear o buscar una etiqueta.</p>
+                    <p class="text-[10px] text-gray-400 mt-1"><i class="fas fa-info-circle"></i> Escriba y presione
+                        Enter para crear o buscar una etiqueta.</p>
                 </div>
 
                 <div class="col-span-1 md:col-span-2">
-                    <label class="block font-bold text-gray-600 mb-1">Descripción</label>
+                    <label class="block font-bold text-gray-600 mb-1">Procedimiento</label>
                     <textarea name="descripcion" rows="4" required
-                        placeholder="Escribe aquí todo el detalle del expediente. Esta información se verá en la vista detallada."
+                        placeholder="Escribe aquí el procedimiento o detalles del expediente. Esta información se verá en la vista detallada."
                         class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none resize-none"
                         th:text="${expediente.descripcion}"></textarea>
                 </div>
@@ -182,25 +192,5 @@
         </div>
     </div>
 
-    <!-- 3. MODAL CAMBIAR ETAPA -->
-    <div id="modal-etapa"
-        class="fixed inset-0 z-50 hidden items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
-        <div class="relative w-full max-w-md bg-white rounded-lg shadow-2xl border-t-4 border-green-600">
-            <div class="p-4 border-b bg-gray-50 rounded-t-lg flex justify-between items-center">
-                <h3 class="text-lg font-bold text-gray-800">
-                    <i class="fas fa-step-forward text-green-600 mr-2"></i> Cambiar Etapa Procesal
-                </h3>
-                <button onclick="closeModal('modal-etapa')" class="text-gray-400 hover:text-gray-900">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="p-6">
-                <p class="text-sm text-gray-600 mb-4">Seleccione la nueva etapa para este expediente:</p>
-                <div class="space-y-2" id="lista-etapas">
-                    <!-- Se llenará dinámicamente con JavaScript -->
-                </div>
-            </div>
-        </div>
-    </div>
 
 </div>
