@@ -5,7 +5,7 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 
 import java.time.LocalDateTime;
 
@@ -37,9 +37,9 @@ public class Recordatorio {
     @Column(name = "hora_recordatorio", nullable = false)
     private LocalTime horaRecordatorio;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Prioridad prioridad;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "prioridad_id")
+    private CatPrioridad prioridad;
 
     @Builder.Default
     private Boolean completado = false;

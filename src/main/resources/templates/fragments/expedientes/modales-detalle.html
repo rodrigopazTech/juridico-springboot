@@ -63,10 +63,11 @@
                     </div>
                     <div>
                         <label class="block font-bold text-gray-600 mb-1">Prioridad*</label>
-                        <select name="prioridad"
+                        <select name="prioridad.id"
                             class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
-                            <option th:each="p : ${prioridades}" th:value="${p}" th:text="${p}"
-                                th:selected="${expediente.prioridad == p}"></option>
+                            <option th:each="p : ${prioridades}" th:value="${p.id}" th:text="${p.nombre}"
+                                th:selected="${expediente.prioridad != null and expediente.prioridad.id == p.id}">
+                            </option>
                         </select>
                     </div>
                 </div>

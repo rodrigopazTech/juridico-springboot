@@ -6,8 +6,8 @@ import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import com.juridico.sistema_juridico.Entity.procesal.TerminoPresentado;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
@@ -16,6 +16,7 @@ import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoPresentadoRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
+import com.juridico.sistema_juridico.repository.Catalogos.CatPrioridadRepository;
 import com.juridico.sistema_juridico.service.NotificacionService;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.util.TerminoExcelExporter;
@@ -73,6 +74,8 @@ public class TerminosController {
     @Autowired
     private MateriaRepository materiaRepository;
     @Autowired
+    private CatPrioridadRepository catPrioridadRepository;
+    @Autowired
     private AuditoriaService auditoriaService;
 
     // --- MATRIZ DE PERMISOS ---
@@ -111,7 +114,7 @@ public class TerminosController {
             @RequestParam(required = false) Integer id,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) EstatusTermino estatus,
-            @RequestParam(required = false) Prioridad prioridad,
+            @RequestParam(required = false) Integer prioridadId,
             @RequestParam(required = false) Integer abogadoId,
             @RequestParam(required = false) Integer gerenciaId,
             @RequestParam(required = false) Integer materiaId) {
@@ -137,7 +140,7 @@ public class TerminosController {
         }
 
         Page<Termino> paginaTerminos = terminoRepository.buscarConFiltros(
-                id, keyword, estatus, prioridad,
+                id, keyword, estatus, prioridadId,
                 filtroAbogadoSeguro,
                 filtroGerenciaSeguro,
                 materiaId,
@@ -163,7 +166,7 @@ public class TerminosController {
         model.addAttribute("listaAbogados", usuarioRepository.findAll());
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
         model.addAttribute("listaMaterias", materiaRepository.findAll());
-        model.addAttribute("listaPrioridades", Prioridad.values());
+        model.addAttribute("listaPrioridades", catPrioridadRepository.findAll());
         model.addAttribute("listaEstatus", EstatusTermino.values());
 
         // --- 5. LOGICA ANTI-FANTASMAS (EXPEDIENTES DISPONIBLES) ---
@@ -211,14 +214,14 @@ public class TerminosController {
         // Mantener valores
         model.addAttribute("keyword", keyword);
         model.addAttribute("paramEstatus", estatus);
-        model.addAttribute("paramPrioridad", prioridad);
+        model.addAttribute("paramPrioridad", prioridadId);
         model.addAttribute("paramAbogadoId", abogadoId);
         model.addAttribute("paramGerenciaId", gerenciaId);
         model.addAttribute("paramMateriaId", materiaId);
 
         // --- 6. CONTEOS PARA LA LÍNEA DE TIEMPO (NUEVO) ---
         List<Object[]> rawCounts = terminoRepository.contarPorEtapaConFiltros(
-                keyword, prioridad, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId);
+                keyword, prioridadId, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId);
         
         Map<EstatusTermino, Long> conteosMap = new EnumMap<>(EstatusTermino.class);
         for (EstatusTermino e : EstatusTermino.values()) {
@@ -252,7 +255,7 @@ public class TerminosController {
             // Para múltiples etapas, ajustamos la consulta para que traiga todas las de su rol si no hay estatus seleccionado
             model.addAttribute("etapasDefault", etapasAsignadas); // Para que la UI sepa cuáles son las default
             paginaTerminos = terminoRepository.buscarPorMultiplesEstatus(
-                    id, keyword, etapasAsignadas, prioridad, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId, pageable);
+                    id, keyword, etapasAsignadas, prioridadId, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId, pageable);
              model.addAttribute("terminos", paginaTerminos);
         }
 
@@ -489,7 +492,7 @@ public class TerminosController {
 
         for (Usuario u : unicos) {
             if (!u.getId().equals(actor.getId())) {
-                notificacionService.crearNotificacion(u, tituloExp, mensajeBase, "TERMINO", Prioridad.ALTA,
+                notificacionService.crearNotificacion(u, tituloExp, mensajeBase, "TERMINO", termino.getPrioridad(),
                         termino.getId().toString());
             }
         }
@@ -607,9 +610,12 @@ public class TerminosController {
                 terminoRepository.save(termino);
 
                 // AUDITORIA: Registro de subida de acuse
+                String logDesc = "Se ha cargado el acuse: " + archivo.getOriginalFilename();
+                if (observaciones != null && !observaciones.trim().isEmpty()) {
+                    logDesc += " - Observaciones: " + observaciones;
+                }
                 auditoriaService.registrar(termino.getExpediente(), "ARCHIVO CARGADO",
-                        "Acuse: " + archivo.getOriginalFilename(),
-                        "UPLOAD", actor);
+                        logDesc, "UPLOAD", actor);
 
                 redirectAttrs.addFlashAttribute("mensaje",
                         "Acuse cargado correctamente. Ahora puedes avanzar el término a 'Presentado'.");
@@ -648,6 +654,14 @@ public class TerminosController {
                 }
                 termino.setUpdatedAt(LocalDateTime.now());
                 terminoRepository.save(termino);
+
+                // AUDITORIA: Registro de conclusión de término
+                String logDesc = "El término ha sido marcado como CONCLUIDO y archivado.";
+                if (observaciones != null && !observaciones.trim().isEmpty()) {
+                    logDesc += " - Observaciones: " + observaciones;
+                }
+                auditoriaService.registrar(termino.getExpediente(), "TÉRMINO CONCLUIDO",
+                        logDesc, "CHECK", actor);
 
                 redirectAttrs.addFlashAttribute("mensaje", "¡Término finalizado y archivado correctamente!");
                 redirectAttrs.addFlashAttribute("tipo", "success");
@@ -726,7 +740,7 @@ public class TerminosController {
             @RequestParam(required = false) Integer id,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) EstatusTermino estatus,
-            @RequestParam(required = false) Prioridad prioridad,
+            @RequestParam(required = false) Integer prioridadId,
             @RequestParam(required = false) Integer abogadoId,
             @RequestParam(required = false) Integer gerenciaId,
             @RequestParam(required = false) Integer materiaId) throws IOException {
@@ -752,7 +766,7 @@ public class TerminosController {
         }
 
         List<Termino> listaTerminos = terminoRepository.listarParaExcel(
-                id, keyword, estatus, prioridad, filtroAbogado, filtroGerencia, materiaId);
+                id, keyword, estatus, prioridadId, filtroAbogado, filtroGerencia, materiaId);
 
         TerminoExcelExporter excelExporter = new TerminoExcelExporter(listaTerminos);
         excelExporter.export(response);

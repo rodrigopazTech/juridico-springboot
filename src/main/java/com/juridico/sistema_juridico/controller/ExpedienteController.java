@@ -1,7 +1,6 @@
 package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.service.ExpedienteService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,12 +22,12 @@ public class ExpedienteController {
             @RequestParam(required = false) String folio,
             @RequestParam(required = false) Integer gerenciaId,
             @RequestParam(required = false) Integer materiaId,
-            @RequestParam(required = false) Prioridad prioridad,
+            @RequestParam(required = false) Integer prioridadId,
             @RequestParam(required = false) Integer abogadoId,
             Pageable pageable) {
         // Se pasan los parámetros corregidos
         Page<Expediente> expedientes = expedienteService.buscarExpedientes(
-                folio, gerenciaId, materiaId, prioridad, abogadoId, pageable);
+                folio, gerenciaId, materiaId, prioridadId, abogadoId, pageable);
         return ResponseEntity.ok(expedientes);
     }
 

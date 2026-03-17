@@ -12,7 +12,7 @@ import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional;
 
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
@@ -63,10 +63,9 @@ public class Expediente {
     @Column(length = 150)
     private String sede;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    @Builder.Default
-    private Prioridad prioridad = Prioridad.MEDIA;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "prioridad_id")
+    private CatPrioridad prioridad;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "etapa_procesal", nullable = false, length = 30)

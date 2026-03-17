@@ -1,6 +1,6 @@
 package com.juridico.sistema_juridico.service;
 
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.Entity.usuario.Notificacion;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Usuarios.NotificacionRepository;
@@ -15,7 +15,7 @@ public class NotificacionService {
 
     @Autowired private NotificacionRepository notificacionRepository;
 
-    public void crearNotificacion(Usuario usuario, String titulo, String mensaje, String tipo, Prioridad prioridad, String entidadId) {
+    public void crearNotificacion(Usuario usuario, String titulo, String mensaje, String tipo, CatPrioridad prioridad, String entidadId) {
         if(usuario == null) return; // Evitar null pointer
         
         Notificacion notif = Notificacion.builder()

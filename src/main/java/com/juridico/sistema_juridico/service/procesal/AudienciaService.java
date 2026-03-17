@@ -5,11 +5,12 @@ import com.juridico.sistema_juridico.Entity.procesal.AudienciaDesahogada;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.dto.request.audiencias.AudienciaRequest;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaDesahogadaRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
+import com.juridico.sistema_juridico.repository.Catalogos.CatPrioridadRepository;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.NotificacionService;
@@ -53,6 +54,9 @@ public class AudienciaService {
 
     @Autowired
     private AuditoriaService auditoriaService;
+
+    @Autowired
+    private CatPrioridadRepository catPrioridadRepository;
 
     // 1. PASO INTERMEDIO: SUBIR ACTA (Cambia a CON_ACTA)
     @Transactional
@@ -111,7 +115,7 @@ public class AudienciaService {
                         "Acta Disponible: " + expediente,
                         "El abogado " + nombreAbogado + " ha subido el acta. Requiere validación.",
                         "AUDIENCIA",
-                        Prioridad.ALTA,
+                        catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
                         entidadId);
             }
         } catch (Exception e) {
@@ -149,10 +153,14 @@ public class AudienciaService {
 
         String usuarioActual = SecurityContextHolder.getContext().getAuthentication().getName();
         String fechaFormat = LocalDate.now().toString();
-        registrarActividad(audiencia.getExpediente(), "Audiencia Concluida",
-                "La audiencia ha sido marcada como concluida: " + tipoConcluida + ". Acción realizada por: "
-                        + usuarioActual + " el " + fechaFormat + ".",
-                "CHECK");
+        
+        String desc = "La audiencia ha sido marcada como concluida: " + tipoConcluida + ".";
+        if (observaciones != null && !observaciones.trim().isEmpty()) {
+            desc += " - Observaciones: " + observaciones;
+        }
+        desc += " Acción realizada por: " + usuarioActual + " el " + fechaFormat + ".";
+
+        registrarActividad(audiencia.getExpediente(), "Audiencia Concluida", desc, "CHECK");
     }
 
     @Transactional
@@ -199,7 +207,7 @@ public class AudienciaService {
                         tituloBase,
                         mensajeBase,
                         "AUDIENCIA",
-                        Prioridad.MEDIA,
+                        catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                         entidadId);
             }
 
@@ -212,7 +220,7 @@ public class AudienciaService {
                             "Asignación de Comparecencia",
                             "Has sido asignado para asistir a la audiencia del expediente " + numeroExpediente,
                             "AUDIENCIA",
-                            Prioridad.ALTA,
+                            catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
                             entidadId);
                 }
             }

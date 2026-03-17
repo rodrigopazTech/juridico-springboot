@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 
@@ -46,9 +46,9 @@ public class Termino {
     @Column(name = "archivo_word", length = 500)
     private String archivoWord;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private Prioridad prioridad;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "prioridad_id")
+    private CatPrioridad prioridad;
     
     @ManyToOne
     @JoinColumn(name = "abogado_responsable_id")

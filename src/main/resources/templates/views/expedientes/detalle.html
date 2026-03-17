@@ -68,9 +68,9 @@
                             <div>
                                 <p class="text-gray-400 text-[10px] uppercase font-bold tracking-wider mb-1">Prioridad
                                 </p>
-                                <span th:text="${expediente.prioridad}" th:class="${expediente.prioridad.name() == 'ALTA' ? 'badge-priority-alta' : 
-                                                     (expediente.prioridad.name() == 'MEDIA' ? 'badge-priority-media' : 
-                                                     'badge-priority-baja')}">
+                                <span th:text="${expediente.prioridad != null ? expediente.prioridad.nombre : 'S/N'}"
+                                    th:classappend="${expediente.prioridad != null ? expediente.prioridad.color : 'bg-gray-100 text-gray-500 border-gray-200'}"
+                                    class="px-2 py-0.5 rounded font-bold border inline-block text-[11px]">
                                     ALTA
                                 </span>
                             </div>

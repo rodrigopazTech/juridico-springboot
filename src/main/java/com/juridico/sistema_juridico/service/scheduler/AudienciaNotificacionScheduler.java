@@ -1,12 +1,13 @@
 package com.juridico.sistema_juridico.service.scheduler;
 
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Notificacion;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Usuarios.NotificacionRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+import com.juridico.sistema_juridico.repository.Catalogos.CatPrioridadRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,7 @@ public class AudienciaNotificacionScheduler {
 
     @Autowired private AudienciaRepository audienciaRepository;
     @Autowired private NotificacionRepository notificacionRepository;
+    @Autowired private CatPrioridadRepository catPrioridadRepository;
 
     //@Scheduled(fixedRate = 10000) // <--- NUEVA (PARA PROBAR) comenta el otro y descomenta este para pruebas 
     @Scheduled(cron = "0 0 8 * * ?") 
@@ -42,7 +44,7 @@ public class AudienciaNotificacionScheduler {
                     "Expediente: " + a.getExpediente().getNumero() + ". Prepárate para el " + fechaObjetivo,
                     "AUDIENCIA",
                     a.getId().toString(),
-                    Prioridad.MEDIA
+                    catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null)
                 );
             }
         }
@@ -68,7 +70,7 @@ public class AudienciaNotificacionScheduler {
                     "Expediente: " + a.getExpediente().getNumero() + ". Prepárate, es mañana a las " + a.getHoraAudiencia(),
                     "AUDIENCIA",
                     a.getId().toString(),
-                    Prioridad.ALTA 
+                    catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null) 
                 );
             }
         }
@@ -96,7 +98,7 @@ public class AudienciaNotificacionScheduler {
                     "Es hoy a las " + a.getHoraAudiencia() + ". Sala/Link: " + (a.getEsVirtual() ? "Virtual" : a.getSalaLugar()),
                     "AUDIENCIA",
                     a.getId().toString(),
-                    Prioridad.ALTA
+                    catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null)
                 );
             }
         }
@@ -108,7 +110,7 @@ public class AudienciaNotificacionScheduler {
         return null;
     }
 
-    private void crearNotificacion(Usuario user, String titulo, String mensaje, String entidadTipo, String entidadId, Prioridad prioridad) {
+    private void crearNotificacion(Usuario user, String titulo, String mensaje, String entidadTipo, String entidadId, CatPrioridad prioridad) {
         Notificacion n = new Notificacion();
         n.setUsuario(user);
         n.setTitulo(titulo);

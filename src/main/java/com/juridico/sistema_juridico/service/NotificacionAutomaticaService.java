@@ -3,10 +3,11 @@ package com.juridico.sistema_juridico.service;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
+import com.juridico.sistema_juridico.repository.Catalogos.CatPrioridadRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -33,6 +34,9 @@ public class NotificacionAutomaticaService {
     @Autowired
     private NotificacionService notificacionService;
 
+    @Autowired
+    private CatPrioridadRepository catPrioridadRepository;
+
     // CORRECCIÓN CLAVE: Ahora SOLO "Concluido" apaga la alarma.
     // Si está en Liberado o Presentado y se acaba el tiempo, ¡la alarma sonará!
     private final List<EstatusTermino> ESTATUS_FINALES = Arrays.asList(EstatusTermino.CONCLUIDO);
@@ -45,12 +49,12 @@ public class NotificacionAutomaticaService {
         LocalDate hoy = LocalDate.now();
         System.out.println("⏰ Ejecutando revisión automática de términos: " + hoy);
 
-        verificarYNotificar(hoy.plusDays(3), "Advertencia de Vencimiento", Prioridad.MEDIA);
-        verificarYNotificar(hoy.plusDays(1), "¡Vence Mañana!", Prioridad.ALTA);
-        verificarYNotificar(hoy, "¡VENCE HOY! URGENTE", Prioridad.ALTA);
+        verificarYNotificar(hoy.plusDays(3), "Advertencia de Vencimiento", catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null));
+        verificarYNotificar(hoy.plusDays(1), "¡Vence Mañana!", catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null));
+        verificarYNotificar(hoy, "¡VENCE HOY! URGENTE", catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null));
     }
 
-    private void verificarYNotificar(LocalDate fechaObjetivo, String tituloBase, Prioridad prioridad) {
+    private void verificarYNotificar(LocalDate fechaObjetivo, String tituloBase, CatPrioridad prioridad) {
         // La consulta trae el expediente y abogado de inmediato (Evita LazyInitializationException)
         List<Termino> terminos = terminoRepository.findByFechaVencimientoAndEstatusTerminoNotIn(fechaObjetivo, ESTATUS_FINALES);
 

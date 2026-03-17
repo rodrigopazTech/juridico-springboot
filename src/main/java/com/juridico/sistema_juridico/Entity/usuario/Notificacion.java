@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 
 @Data
 @Builder
@@ -31,9 +31,9 @@ public class Notificacion {
     @Column(nullable = false, length = 30)
     private String tipo; // AUDIENCIA, TERMINO...
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Prioridad prioridad;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "prioridad_id")
+    private CatPrioridad prioridad;
 
     @Builder.Default
     private Boolean leida = false;

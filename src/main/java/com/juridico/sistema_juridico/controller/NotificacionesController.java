@@ -6,6 +6,7 @@ import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Usuarios.NotificacionRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.RecordatorioRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+import com.juridico.sistema_juridico.repository.Catalogos.CatPrioridadRepository;
 import com.juridico.sistema_juridico.service.NotificacionService; 
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,7 @@ public class NotificacionesController {
     @Autowired private RecordatorioRepository recordatorioRepository;
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private NotificacionService notificacionService;
+    @Autowired private CatPrioridadRepository catPrioridadRepository;
 
     // VISTA PRINCIPAL UNIFICADA
    @GetMapping
@@ -44,6 +46,7 @@ public class NotificacionesController {
 
         List<Recordatorio> recordatorios = recordatorioRepository.findByUsuarioAndCompletadoFalseOrderByFechaRecordatorioAsc(usuario);
         model.addAttribute("recordatorios", recordatorios);
+        model.addAttribute("listaPrioridades", catPrioridadRepository.findAll());
 
         model.addAttribute("activePage", "alertas"); 
 

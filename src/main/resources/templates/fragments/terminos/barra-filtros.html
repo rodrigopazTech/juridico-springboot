@@ -11,11 +11,12 @@
                     th:selected="${paramEstatus == st}"></option>
             </select>
 
-            <select name="prioridad"
+            <select name="prioridadId"
                 class="w-full border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none bg-white text-gray-700">
                 <option value="">Prioridad: Todas</option>
-                <option th:each="p : ${listaPrioridades}" th:value="${p}" th:text="${p}"
-                    th:selected="${paramPrioridad != null and paramPrioridad.toString() == p.toString()}"></option>
+                <option th:each="p : ${listaPrioridades}" th:value="${p.id}" th:text="${p.nombre}"
+                    th:selected="${paramPrioridadId != null and paramPrioridadId.toString() == p.id.toString()}">
+                </option>
             </select>
 
             <select sec:authorize="hasAnyAuthority('DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')"

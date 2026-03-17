@@ -1,7 +1,7 @@
 package com.juridico.sistema_juridico.repository.procesal;
 
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +28,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "CONCAT(t.id, '') LIKE CONCAT('%', :keyword, '%')) " +
             "AND (:estatus IS NULL OR :estatus = '' OR t.estatusTermino = :estatus) " +
-            "AND (:prioridad IS NULL OR t.prioridad = :prioridad) " +
+            "AND (:prioridadId IS NULL OR t.prioridad.id = :prioridadId) " +
             "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
             "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
             "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
@@ -37,7 +37,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("id") Integer id,
             @Param("keyword") String keyword,
             @Param("estatus") EstatusTermino estatus,
-            @Param("prioridad") Prioridad prioridad,
+            @Param("prioridadId") Integer prioridadId,
             @Param("abogadoId") Integer abogadoId,
             @Param("gerenciaId") Integer gerenciaId,
             @Param("materiaId") Integer materiaId);
@@ -53,7 +53,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "CONCAT(t.id, '') LIKE CONCAT('%', :keyword, '%')) " +
             "AND (:estatus IS NULL OR :estatus = '' OR t.estatusTermino = :estatus) " +
-            "AND (:prioridad IS NULL OR t.prioridad = :prioridad) " +
+            "AND (:prioridadId IS NULL OR t.prioridad.id = :prioridadId) " +
             "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
             "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
             "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
@@ -62,7 +62,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("id") Integer id,
             @Param("keyword") String keyword,
             @Param("estatus") EstatusTermino estatus,
-            @Param("prioridad") Prioridad prioridad,
+            @Param("prioridadId") Integer prioridadId,
             @Param("abogadoId") Integer abogadoId,
             @Param("gerenciaId") Integer gerenciaId,
             @Param("materiaId") Integer materiaId,
@@ -137,14 +137,14 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "CONCAT(t.id, '') LIKE CONCAT('%', :keyword, '%')) " +
-            "AND (:prioridad IS NULL OR t.prioridad = :prioridad) " +
+            "AND (:prioridadId IS NULL OR t.prioridad.id = :prioridadId) " +
             "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
             "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
             "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
             "GROUP BY t.estatusTermino")
     List<Object[]> contarPorEtapaConFiltros(
             @Param("keyword") String keyword,
-            @Param("prioridad") Prioridad prioridad,
+            @Param("prioridadId") Integer prioridadId,
             @Param("abogadoId") Integer abogadoId,
             @Param("gerenciaId") Integer gerenciaId,
             @Param("materiaId") Integer materiaId);
@@ -159,7 +159,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "CONCAT(t.id, '') LIKE CONCAT('%', :keyword, '%')) " +
             "AND (t.estatusTermino IN :estatusList) " +
-            "AND (:prioridad IS NULL OR t.prioridad = :prioridad) " +
+            "AND (:prioridadId IS NULL OR t.prioridad.id = :prioridadId) " +
             "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
             "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
             "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
@@ -168,7 +168,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("id") Integer id,
             @Param("keyword") String keyword,
             @Param("estatusList") List<EstatusTermino> estatusList,
-            @Param("prioridad") Prioridad prioridad,
+            @Param("prioridadId") Integer prioridadId,
             @Param("abogadoId") Integer abogadoId,
             @Param("gerenciaId") Integer gerenciaId,
             @Param("materiaId") Integer materiaId,

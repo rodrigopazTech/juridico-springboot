@@ -42,7 +42,8 @@
 
                         <td class="px-4 py-3">
                             <div class="flex flex-col max-w-[180px]">
-                                <a th:if="${t.expediente != null}" th:href="@{/expedientes/{id}(id=${t.expediente?.id})}"
+                                <a th:if="${t.expediente != null}"
+                                    th:href="@{/expedientes/{id}(id=${t.expediente?.id})}"
                                     class="font-bold text-gob-guinda hover:underline text-sm truncate"
                                     th:title="'Ver expediente: ' + ${t.expediente?.numero}"
                                     th:text="${t.expediente?.numero}">EXP-001</a>
@@ -56,13 +57,10 @@
                         </td>
 
                         <td class="px-4 py-3">
-                            <div class="flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full"
-                                    th:classappend="${t.prioridad?.name() == 'ALTA' ? 'bg-red-500' : (t.prioridad?.name() == 'BAJA' ? 'bg-gray-400' : 'bg-orange-400')}">
-                                </span>
-                                <span class="text-[10px] font-bold uppercase tracking-tight"
-                                    th:classappend="${t.prioridad?.name() == 'ALTA' ? 'text-red-600' : (t.prioridad?.name() == 'BAJA' ? 'text-gray-500' : 'text-orange-600')}"
-                                    th:text="${t.prioridad ?: 'MEDIA'}">
+                            <div class="flex items-center gap-1.5 inline-flex px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-tight"
+                                th:classappend="${t.prioridad != null ? t.prioridad.color : 'bg-gray-100 text-gray-800'}">
+                                <i class="fas fa-circle text-[8px] opacity-70"></i>
+                                <span th:text="${t.prioridad != null ? t.prioridad.nombre : 'MEDIA'}">
                                     MEDIA
                                 </span>
                             </div>
@@ -71,8 +69,7 @@
                         <td class="px-4 py-3 max-w-xs truncate" th:text="${t.actuacion}" th:title="${t.actuacion}">
                             Actuación</td>
 
-                        <td class="px-4 py-3"
-                            th:text="${t.abogadoResponsable?.nombreCompleto ?: 'Sin Asignar'}">
+                        <td class="px-4 py-3" th:text="${t.abogadoResponsable?.nombreCompleto ?: 'Sin Asignar'}">
                         </td>
 
                         <td class="px-4 py-3">
@@ -86,7 +83,7 @@
                         <td class="px-4 py-3 text-right relative">
                             <button
                                 th:if="${t.estatusTermino?.name() != 'LIBERADO' && t.estatusTermino?.name() != 'PRESENTADO' && t.estatusTermino?.name() != 'CONCLUIDO'}"
-                                th:onclick="editarTermino([[${t.id}]], [[${t.actuacion}]], [[${t.fechaVencimiento}]], [[${t.expediente?.id ?: ''}]], [[${t.expediente?.numero ?: 'Sin Número'}]], [[${t.abogadoResponsable?.id ?: ''}]], [[${t.prioridad?.name() ?: 'MEDIA'}]], [[${t.observaciones != null ? #strings.escapeJavaScript(t.observaciones) : ''}]])"
+                                th:onclick="editarTermino([[${t.id}]], [[${t.actuacion}]], [[${t.fechaVencimiento}]], [[${t.expediente?.id ?: ''}]], [[${t.expediente?.numero ?: 'Sin Número'}]], [[${t.abogadoResponsable?.id ?: ''}]], [[${t.prioridad?.id ?: ''}]], [[${t.observaciones != null ? #strings.escapeJavaScript(t.observaciones) : ''}]])"
                                 class="text-gray-400 hover:text-gob-oro mr-2" title="Editar">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -106,7 +103,8 @@
                             <div th:id="'menu-' + ${t.id}"
                                 class="hidden absolute right-0 mt-2 w-64 bg-white rounded-md shadow-xl z-50 border border-gray-100 text-left overflow-hidden ring-1 ring-black ring-opacity-5">
 
-                                <a th:if="${t.expediente != null}" th:href="@{/expedientes/{id}(id=${t.expediente?.id})}"
+                                <a th:if="${t.expediente != null}"
+                                    th:href="@{/expedientes/{id}(id=${t.expediente?.id})}"
                                     class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-guinda transition border-l-4 border-transparent hover:border-gob-guinda">
                                     <i class="fas fa-folder-open mr-3 w-4 text-center text-gray-400"></i> Ver Expediente
                                 </a>
@@ -208,13 +206,16 @@
                                     </div>
                                 </th:block>
                             </div>
-                            
+
                             <!-- Observaciones -->
-                            <div th:if="${t.observaciones != null and !#strings.isEmpty(t.observaciones)}" class="mt-8 bg-white border border-yellow-200 rounded-lg p-4 shadow-sm relative text-left">
-                                <div class="absolute -top-3 left-4 bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-1 rounded border border-yellow-200 shadow-sm flex items-center gap-1">
+                            <div th:if="${t.observaciones != null and !#strings.isEmpty(t.observaciones)}"
+                                class="mt-8 bg-white border border-yellow-200 rounded-lg p-4 shadow-sm relative text-left">
+                                <div
+                                    class="absolute -top-3 left-4 bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-1 rounded border border-yellow-200 shadow-sm flex items-center gap-1">
                                     <i class="fas fa-sticky-note"></i> Notas internas
                                 </div>
-                                <p class="text-xs text-gray-700 whitespace-pre-wrap mt-1" th:text="${t.observaciones}"></p>
+                                <p class="text-xs text-gray-700 whitespace-pre-wrap mt-1" th:text="${t.observaciones}">
+                                </p>
                             </div>
 
                         </td>

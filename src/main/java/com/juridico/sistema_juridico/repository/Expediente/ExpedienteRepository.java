@@ -2,7 +2,7 @@ package com.juridico.sistema_juridico.repository.Expediente;
 
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -44,7 +44,7 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
                         "AND (:gerenciaId IS NULL OR g.id = :gerenciaId) " +
                         "AND (:materiaId IS NULL OR m.id = :materiaId) " +
                         "AND (:etiquetaId IS NULL OR et.id = :etiquetaId) " +
-                        "AND (:prioridad IS NULL OR e.prioridad = :prioridad) " +
+                        "AND (:prioridadId IS NULL OR e.prioridad.id = :prioridadId) " +
                         "AND (:etapa IS NULL OR e.etapaProcesal = :etapa) " +
                         "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
                         "AND (:secGerenciaId IS NULL OR g.id = :secGerenciaId) " +
@@ -58,7 +58,7 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
                         @Param("keyword") String keyword,
                         @Param("gerenciaId") Integer gerenciaId,
                         @Param("materiaId") Integer materiaId,
-                        @Param("prioridad") Prioridad prioridad,
+                        @Param("prioridadId") Integer prioridadId,
                         @Param("etapa") EtapaProcesal etapa,
                         @Param("abogadoId") Integer abogadoId,
                         @Param("etiquetaId") Integer etiquetaId,
@@ -75,13 +75,13 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
                         +
                         "(:materiaId IS NULL OR e.materia.id = :materiaId) AND " +
                         "(:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) AND " +
-                        "(:prioridad IS NULL OR e.prioridad = :prioridad) AND " +
+                        "(:prioridadId IS NULL OR e.prioridad.id = :prioridadId) AND " +
                         "(:abogadoId IS NULL OR e.abogadoResponsable.id = :abogadoId)")
         Page<Expediente> buscarExpedientes(
                         @Param("keyword") String keyword,
                         @Param("materiaId") Integer materiaId,
                         @Param("gerenciaId") Integer gerenciaId,
-                        @Param("prioridad") Prioridad prioridad,
+                        @Param("prioridadId") Integer prioridadId,
                         @Param("abogadoId") Integer abogadoId,
                         Pageable pageable);
 
