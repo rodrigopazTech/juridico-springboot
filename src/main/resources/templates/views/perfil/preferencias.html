@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Preferencias | Sistema Jurídico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script th:src="@{/js/tailwind.config.js}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
+</head>
+<body class="bg-gob-fondo text-gray-800 font-sans pb-10">
+
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="p-4 sm:ml-64">
+        <div class="mb-6 container mx-auto max-w-4xl">
+            <h1 class="text-3xl font-bold text-gob-guinda font-headings mb-2">
+                <i class="fas fa-user-cog text-gob-oro mr-2"></i> Mi Perfil
+            </h1>
+            <p class="text-gray-500 text-sm mb-6">Configura cómo y cuándo quieres que el sistema te notifique.</p>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
+                    <h3 class="text-lg font-bold text-gray-800">
+                        <i class="fas fa-bell text-gob-oro mr-2"></i> Preferencias de Notificación
+                    </h3>
+                </div>
+
+                <form th:action="@{/perfil/preferencias/guardar}" method="post" class="p-6">
+                    
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+                            <div>
+                                <p class="text-sm font-bold text-gray-800">Nuevas Audiencias</p>
+                                <p class="text-xs text-gray-500">Recibir alertas cuando se programe o se te invite a una audiencia.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="notificarNuevaAudiencia" class="sr-only peer" th:checked="${preferencias.notificarNuevaAudiencia}">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+                            <div>
+                                <p class="text-sm font-bold text-gray-800">Nuevos Términos Asignados</p>
+                                <p class="text-xs text-gray-500">Alertas cuando se te asigne un nuevo término o actuación.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="notificarNuevoTermino" class="sr-only peer" th:checked="${preferencias.notificarNuevoTermino}">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+                            <div>
+                                <p class="text-sm font-bold text-gray-800">Términos por Vencer</p>
+                                <p class="text-xs text-gray-500">Recordatorios de vencimiento (Sistema de semáforo 3 y 1 días).</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="notificarTerminoVencer" class="sr-only peer" th:checked="${preferencias.notificarTerminoVencer}">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between pb-2">
+                            <div>
+                                <p class="text-sm font-bold text-gray-800">Reasignación de Expedientes</p>
+                                <p class="text-xs text-gray-500">Notificar cuando la titularidad de un expediente cambie hacia ti.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="notificarReasignacion" class="sr-only peer" th:checked="${preferencias.notificarReasignacion}">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 flex justify-end">
+                        <button type="submit" class="bg-gob-guinda text-white px-6 py-2.5 rounded hover:bg-gob-guinda-claro font-bold shadow-sm transition-colors flex items-center gap-2">
+                            <i class="fas fa-save"></i> Guardar Preferencias
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script th:if="${mensaje != null}">
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                title: "[[${tipo == 'success' ? '¡Éxito!' : 'Atención'}]]",
+                text: "[[${mensaje}]]",
+                icon: "[[${tipo}]]",
+                confirmButtonColor: '#bc955c'
+            });
+        });
+    </script>
+</body>
+</html>

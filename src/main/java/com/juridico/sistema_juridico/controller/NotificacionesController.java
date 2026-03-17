@@ -6,10 +6,10 @@ import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Usuarios.NotificacionRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.RecordatorioRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
-import com.juridico.sistema_juridico.service.NotificacionService; 
+import com.juridico.sistema_juridico.service.NotificacionService;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest; 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,28 +24,33 @@ import java.util.List;
 @RequestMapping("/alertas")
 public class NotificacionesController {
 
-    @Autowired private NotificacionRepository notificacionRepository;
-    @Autowired private RecordatorioRepository recordatorioRepository;
-    @Autowired private UsuarioRepository usuarioRepository;
-    @Autowired private NotificacionService notificacionService;
+    @Autowired
+    private NotificacionRepository notificacionRepository;
+    @Autowired
+    private RecordatorioRepository recordatorioRepository;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+    @Autowired
+    private NotificacionService notificacionService;
 
     // VISTA PRINCIPAL UNIFICADA
-   @GetMapping
-    public String index(@RequestParam(defaultValue = "0") int page, Model model) {
+    @GetMapping
+    public String index(Model model, @RequestParam(value = "page", defaultValue = "0") int page) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
         // Ahora sí funcionará porque notificacionService ya existe
         var notificacionesPage = notificacionService.listarMisNotificaciones(usuario, PageRequest.of(page, 10));
-        
+
         model.addAttribute("notificaciones", notificacionesPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", notificacionesPage.getTotalPages());
 
-        List<Recordatorio> recordatorios = recordatorioRepository.findByUsuarioAndCompletadoFalseOrderByFechaRecordatorioAsc(usuario);
+        List<Recordatorio> recordatorios = recordatorioRepository
+                .findByUsuarioAndCompletadoFalseOrderByFechaRecordatorioAsc(usuario);
         model.addAttribute("recordatorios", recordatorios);
 
-        model.addAttribute("activePage", "alertas"); 
+        model.addAttribute("activePage", "alertas");
 
         return "views/alertas/index";
     }
@@ -53,14 +58,14 @@ public class NotificacionesController {
     // GUARDAR RECORDATORIO (Y GENERAR NOTIFICACIÓN AUTOMÁTICA)
     @PostMapping("/recordatorios/guardar")
     public String guardarRecordatorio(@ModelAttribute Recordatorio recordatorio, RedirectAttributes redirectAttrs) {
-         try {
+        try {
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
-            
+
             recordatorio.setUsuario(usuario);
             recordatorio.setCreatedAt(LocalDateTime.now());
-            recordatorio.setCompletado(false); 
-            
+            recordatorio.setCompletado(false);
+
             Recordatorio guardado = recordatorioRepository.save(recordatorio);
 
             Notificacion notif = Notificacion.builder()
@@ -71,7 +76,7 @@ public class NotificacionesController {
                     .prioridad(guardado.getPrioridad())
                     .entidadTipo("RECORDATORIO")
                     .entidadId(guardado.getId().toString())
-                    .notificarEn(LocalDateTime.of(guardado.getFechaRecordatorio(), LocalTime.of(8, 0))) 
+                    .notificarEn(LocalDateTime.of(guardado.getFechaRecordatorio(), LocalTime.of(8, 0)))
                     .leida(false)
                     .createdAt(LocalDateTime.now())
                     .build();
@@ -90,24 +95,24 @@ public class NotificacionesController {
     }
 
     @GetMapping("/notificaciones/leer/{id}")
-    public String leerNotificacion(@PathVariable Integer id) {
+    public String leerNotificacion(@PathVariable("id") Integer id) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        
+
         Notificacion notificacion = notificacionRepository.findById(id).orElse(null);
-        
+
         if (notificacion != null && notificacion.getUsuario().getEmail().equals(email)) {
             // 1. Marcar como leída
             notificacion.setLeida(true);
             notificacion.setFechaLeida(LocalDateTime.now());
             notificacionRepository.save(notificacion);
-            
+
             // 2. Redirecciones inteligentes
             if (notificacion.getEntidadId() != null) {
-                
+
                 // A) AUDIENCIAS (Va a la tabla filtrada)
                 if ("AUDIENCIA".equals(notificacion.getEntidadTipo())) {
-                    return "redirect:/audiencias?id=" + notificacion.getEntidadId();                
-                }            
+                    return "redirect:/audiencias?id=" + notificacion.getEntidadId();
+                }
                 // B) TÉRMINOS (Va a la tabla filtrada)
                 else if ("TERMINO".equals(notificacion.getEntidadTipo())) {
                     return "redirect:/terminos?id=" + notificacion.getEntidadId();
@@ -123,26 +128,26 @@ public class NotificacionesController {
     }
 
     // ELIMINAR NOTIFICACIÓN
-   @GetMapping("/notificaciones/eliminar/{id}")
-    public String eliminarNotificacion(@PathVariable Integer id) {
+    @GetMapping("/notificaciones/eliminar/{id}")
+    public String eliminarNotificacion(@PathVariable("id") Integer id) {
         notificacionRepository.deleteById(id);
         return "redirect:/alertas";
     }
 
     // COMPLETAR RECORDATORIO
     @GetMapping("/recordatorios/completar/{id}")
-    public String completarRecordatorio(@PathVariable Integer id) {
+    public String completarRecordatorio(@PathVariable("id") Integer id) {
         Recordatorio r = recordatorioRepository.findById(id).orElse(null);
-        if(r != null) {
+        if (r != null) {
             r.setCompletado(true);
             recordatorioRepository.save(r);
         }
         return "redirect:/alertas?tab=recordatorios";
     }
-    
+
     // ELIMINAR RECORDATORIO
     @GetMapping("/recordatorios/eliminar/{id}")
-    public String eliminarRecordatorio(@PathVariable Integer id) {
+    public String eliminarRecordatorio(@PathVariable("id") Integer id) {
         recordatorioRepository.deleteById(id);
         return "redirect:/alertas?tab=recordatorios";
     }
