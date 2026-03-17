@@ -8,10 +8,14 @@ import com.juridico.sistema_juridico.Entity.usuario.Usuario; // Importar Usuario
 
 @Repository
 public interface RecordatorioRepository extends JpaRepository<Recordatorio, Integer> {
-     
+
      // Método existente
      List<Recordatorio> findByUsuarioIdAndCompletadoFalse(Integer usuarioId);
 
-     // Busca recordatorios del usuario, que NO estén completados, ordenados por fecha (más próximos primero)
+     // Busca recordatorios del usuario, que NO estén completados, ordenados por
+     // fecha (más próximos primero)
      List<Recordatorio> findByUsuarioAndCompletadoFalseOrderByFechaRecordatorioAsc(Usuario usuario);
+
+     // Agrega esta línea debajo de las demás
+     List<Recordatorio> findByUsuarioOrderByFechaRecordatorioDesc(Usuario usuario);
 }

@@ -28,15 +28,12 @@
 
             <div class="flex items-center gap-5">
                 
-                <a th:href="@{/alertas?tab=recordatorios}" class="relative text-gray-400 hover:text-gob-guinda transition-colors" title="Mis Tareas">
+                <a th:href="@{/tareas}" title="Mis Tareas">
                     <i class="fas fa-tasks text-xl"></i>
-                    </a>
+                </a>
 
-                <a th:href="@{/alertas}" class="relative text-gray-400 hover:text-gob-guinda transition-colors" title="Centro de Alertas">
+                <a th:href="@{/notificaciones}" title="Centro de Notificaciones">
                     <i class="fas fa-bell text-xl"></i>
-                    <div th:if="${notificacionesNoLeidas > 0}" class="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] bg-red-600 border-2 border-white rounded-full animate-bounce">
-                        <span class="text-[9px] font-bold text-white leading-none" th:text="${notificacionesNoLeidas > 99 ? '99+' : notificacionesNoLeidas}"></span>
-                    </div>
                 </a>
 
                 <div class="h-8 w-px bg-gray-200"></div>

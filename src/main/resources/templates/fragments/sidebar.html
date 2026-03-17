@@ -57,6 +57,16 @@
                     </a>
                 </li>
 
+                <li>
+                    <a th:href="@{/tareas}"
+                        class="flex items-center p-3 transition-all duration-200 border-l-4 rounded-r-lg"
+                        th:classappend="${activePage == 'tareas' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-tasks w-5 h-5 transition duration-75"
+                            th:classappend="${activePage == 'tareas' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
+                        <span class="ms-3">Mis Tareas</span>
+                    </a>
+                </li>
+
                 <li class="px-3 mt-6 mb-2 border-t border-white/10 pt-4">
                     <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Gestión Jurídica</span>
                 </li>

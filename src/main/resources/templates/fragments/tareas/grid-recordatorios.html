@@ -9,7 +9,7 @@
         <div th:each="r : ${recordatorios}" 
              class="relative bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all group">
             
-            <a th:href="@{/alertas/recordatorios/eliminar/{id}(id=${r.id})}" 
+            <a th:href="@{/tareas/eliminar/{id}(id=${r.id})}" 
                class="absolute top-3 right-3 text-gray-300 hover:text-red-500 transition-colors" title="Eliminar">
                 <i class="fas fa-trash-alt"></i>
             </a>
@@ -31,7 +31,7 @@
                             <span th:text="${#temporals.format(r.fechaRecordatorio, 'dd MMM') + ' ' + r.horaRecordatorio}">Fecha</span>
                         </div>
                         
-                        <a th:href="@{/alertas/recordatorios/completar/{id}(id=${r.id})}" 
+                        <a th:href="@{/tareas/completar/{id}(id=${r.id})}" 
                            class="text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-100 hover:bg-green-100 transition-colors">
                             <i class="fas fa-check mr-1"></i> Completar
                         </a>

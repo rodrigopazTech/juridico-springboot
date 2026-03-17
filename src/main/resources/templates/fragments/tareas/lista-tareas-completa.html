@@ -1,0 +1,54 @@
+<div th:fragment="lista" class="overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+        <thead class="bg-gray-50/50 text-gray-400 text-xs font-bold uppercase tracking-widest border-b border-gray-100">
+            <tr>
+                <th class="px-6 py-4 w-10 text-center">#</th>
+                <th class="px-6 py-4">Descripción de la Tarea</th>
+                <th class="px-6 py-4">Fecha Límite</th>
+                <th class="px-6 py-4">Prioridad</th>
+                <th class="px-6 py-4 text-center">Estado</th>
+                <th class="px-6 py-4 text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+            <tr th:each="r, iter : ${recordatoriosTodos}" class="hover:bg-gray-50 transition-colors group">
+                <td class="px-6 py-5 text-center text-gray-400 font-mono text-sm" th:text="${iter.count}">1</td>
+                <td class="px-6 py-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full" th:classappend="${r.prioridad.name() == 'ALTA' ? 'bg-red-500' : 'bg-amber-400'}"></div>
+                        <div>
+                            <p class="font-bold text-gray-800" th:classappend="${r.completado ? 'line-through text-gray-400' : ''}" th:text="${r.titulo}">Título</p>
+                            <p class="text-xs text-gray-500 line-clamp-1" th:text="${r.detalles}">Detalles...</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-5">
+                    <div class="text-sm font-medium text-gray-600 flex items-center gap-2">
+                        <i class="far fa-calendar-alt text-gray-300"></i>
+                        <span th:text="${#temporals.format(r.fechaRecordatorio, 'dd/MM/yyyy')}">01/01/2026</span>
+                    </div>
+                </td>
+                <td class="px-6 py-5">
+                    <span th:text="${r.prioridad}" class="text-[10px] font-extrabold px-2 py-0.5 rounded border"
+                          th:classappend="${r.prioridad.name() == 'ALTA' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-blue-50 text-blue-600 border-blue-100'}">
+                        ALTA
+                    </span>
+                </td>
+                <td class="px-6 py-5 text-center">
+                    <span th:if="${r.completado}" class="text-green-600 bg-green-50 px-3 py-1 rounded-full text-xs font-bold border border-green-100">Completada</span>
+                    <span th:unless="${r.completado}" class="text-amber-600 bg-amber-50 px-3 py-1 rounded-full text-xs font-bold border border-amber-100">Pendiente</span>
+                </td>
+                <td class="px-6 py-5 text-right">
+                    <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <a th:unless="${r.completado}" th:href="@{/alertas/recordatorios/completar/{id}(id=${r.id})}" class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Marcar como completada">
+                            <i class="fas fa-check-double"></i>
+                        </a>
+                        <a th:href="@{/alertas/recordatorios/eliminar/{id}(id=${r.id})}" class="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
