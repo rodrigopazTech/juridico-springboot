@@ -231,29 +231,14 @@ public class TerminosController {
         }
         model.addAttribute("conteosEtapas", conteosMap);
 
-        // --- 7. RESUMEN KPI PARA TARJETAS (NUEVO) ---
-        long enProceso = 0, liberados = 0, completados = 0, total = 0;
+        // --- 7. TOTALES EN PROCESO ---
+        long totalesEnProceso = 0;
         for (Map.Entry<EstatusTermino, Long> entry : conteosMap.entrySet()) {
-            EstatusTermino st = entry.getKey();
-            long count = entry.getValue();
-            total += count;
-            
-            switch (st) {
-                case PROYECTISTA: case REVISION: case GERENCIA: case DIRECCION:
-                    enProceso += count;
-                    break;
-                case LIBERADO:
-                    liberados += count;
-                    break;
-                case PRESENTADO: case CONCLUIDO:
-                    completados += count;
-                    break;
+            if (entry.getKey() != EstatusTermino.CONCLUIDO) {
+                totalesEnProceso += entry.getValue();
             }
         }
-        model.addAttribute("totalTerminos", total);
-        model.addAttribute("kpiEnProceso", enProceso);
-        model.addAttribute("kpiLiberados", liberados);
-        model.addAttribute("kpiCompletados", completados);
+        model.addAttribute("totalesEnProceso", totalesEnProceso);
 
         model.addAttribute("activePage", "terminos");
 
