@@ -14,16 +14,11 @@
 <body class="bg-gray-100 text-gray-800 font-sans">
 
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <div class="p-4 sm:ml-64">
+    <div class="p-4 sm:ml-64 pt-20">
         
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-            <div class="p-6 border-b border-gray-200">
-                <h1 class="text-3xl font-bold text-gob-gris font-headings">
-                    <i class="fas fa-calendar-check text-gob-oro mr-2"></i> Agenda General
-                </h1>
-                <p class="text-sm text-gray-500 mt-1">Histórico y seguimiento de actividades desahogadas y términos presentados.</p>
-            </div>
             
             <div class="flex overflow-x-auto px-6">
                 <button onclick="window.cambiarTab('audiencias')" 

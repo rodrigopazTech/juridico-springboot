@@ -244,7 +244,7 @@ public class TerminosController {
             }
         }
         model.addAttribute("conteosEtapas", conteosMap);
-
+        model.addAttribute("pageTitle", "Términos");
         model.addAttribute("activePage", "terminos");
 
         // --- 7. ETAPAS ASIGNADAS AL ROL (REFINADO CON MÚLTIPLES ETAPAS) ---

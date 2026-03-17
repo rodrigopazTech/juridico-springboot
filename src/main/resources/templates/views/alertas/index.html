@@ -12,17 +12,12 @@
 <body class="bg-gray-100 text-gray-800 font-sans">
 
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <div class="p-4 sm:ml-64">
+    <div class="p-4 sm:ml-64 pt-20">
         
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
             <div class="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
-                <div>
-                    <h1 class="text-3xl font-bold text-gob-gris font-headings">
-                        <i class="fas fa-bell text-gob-oro mr-2"></i> Centro de Alertas
-                    </h1>
-                    <p class="text-sm text-gray-500 mt-1">Gestiona tus avisos del sistema y recordatorios personales.</p>
-                </div>
                 
                 <div class="flex gap-2">
                     <button onclick="abrirModalRecordatorio()" class="bg-gob-guinda text-white px-4 py-2 rounded-lg hover:bg-opacity-90 shadow-md transition-transform hover:scale-105">

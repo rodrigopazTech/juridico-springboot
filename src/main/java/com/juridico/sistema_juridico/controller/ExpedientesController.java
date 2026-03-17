@@ -444,7 +444,7 @@ public class ExpedientesController {
         model.addAttribute("prioridades", Prioridad.values());
         model.addAttribute("estados", estadoRepository.findAll());
         model.addAttribute("etapas", EtapaProcesal.values());
-
+        model.addAttribute("pageTitle", "Detalle del Expediente");
         model.addAttribute("activePage", "expedientes");
 
         // CARGAR HISTORIAL DE ACTIVIDADES (Bitácora)

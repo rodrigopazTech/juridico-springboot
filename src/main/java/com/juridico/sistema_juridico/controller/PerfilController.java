@@ -37,6 +37,7 @@ public class PerfilController {
 
         model.addAttribute("preferencias", preferencias);
         model.addAttribute("usuario", usuario);
+        model.addAttribute("pageTitle", "Perfil");
         model.addAttribute("activePage", "perfil");
         return "views/perfil/preferencias";
     }

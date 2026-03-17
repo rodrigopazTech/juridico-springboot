@@ -37,10 +37,11 @@ public class CalendarioController {
 
     @GetMapping
     public String index(Model model) {
+        model.addAttribute("pageTitle", "Calendario");
         model.addAttribute("activePage", "calendario");
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        
+
         // Valores por defecto
         String userRole = "ANONYMOUS";
         boolean puedeVerFiltroGerencia = false;
@@ -52,60 +53,61 @@ public class CalendarioController {
 
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
             Usuario usuarioActual = usuarioRepository.findByEmail(auth.getName()).orElse(null);
-            
+
             if (usuarioActual != null) {
                 model.addAttribute("usuarioGlobal", usuarioActual);
                 model.addAttribute("notificacionesNoLeidas", notificacionService.contarNoLeidas(usuarioActual));
-                
+
                 userRole = usuarioActual.getRol().name();
 
                 // Lógica de Permisos para Gerencias
-                if (usuarioActual.getRol() == RolUsuario.DIRECCION || usuarioActual.getRol() == RolUsuario.SUBDIRECCION) {
+                if (usuarioActual.getRol() == RolUsuario.DIRECCION
+                        || usuarioActual.getRol() == RolUsuario.SUBDIRECCION) {
                     puedeVerFiltroGerencia = true;
                     // Cargar gerencias desde la base de datos (solo activas)
                     listaGerencias = gerenciaRepository.findByActivoTrueOrderByNombreAsc();
-                    
+
                     // Filtro de usuario visible para DIRECCION y SUBDIRECCION
                     puedeVerFiltroUsuario = true;
                     listaUsuarios = usuarioRepository.findAll();
-                    
+
                 } else if (usuarioActual.getRol() == RolUsuario.GERENTE) {
                     // GERENTE no ve el filtro de gerencia (solo ve su propia gerencia)
                     puedeVerFiltroGerencia = false;
                     if (usuarioActual.getGerencia() != null) {
                         listaGerencias.add(usuarioActual.getGerencia());
                     }
-                    
+
                     // Filtro de usuario visible para GERENTE (solo usuarios de su gerencia)
                     puedeVerFiltroUsuario = true;
                     listaUsuarios = usuarioRepository.findByGerenciaId(
-                        usuarioActual.getGerencia().getId().longValue());
-                    
+                            usuarioActual.getGerencia().getId().longValue());
+
                 } else if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
                     // ABOGADO no ve el filtro de usuario
                     puedeVerFiltroUsuario = false;
                     listaUsuarios = new ArrayList<>();
                 }
-                
+
                 // GERENTE, JEFE_DEPTO pueden ver el filtro de materia
                 if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
                     puedeVerFiltroMateria = true;
-                    
+
                     // Cargar materias desde la base de datos
                     if (usuarioActual.getGerencia() != null) {
                         // GERENTE y JEFE_DEPTO ven las materias de su gerencia
                         listaMaterias = materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(
-                            usuarioActual.getGerencia().getId());
+                                usuarioActual.getGerencia().getId());
                     }
                 }
-                
+
                 // GERENTE y JEFE_DEPTO pueden ver el filtro de usuario
                 if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
                     puedeVerFiltroUsuario = true;
                     // JEFE_DEPTO ve los usuarios de su gerencia
                     if (usuarioActual.getGerencia() != null) {
                         listaUsuarios = usuarioRepository.findByGerenciaId(
-                            usuarioActual.getGerencia().getId().longValue());
+                                usuarioActual.getGerencia().getId().longValue());
                     }
                 }
             }
@@ -119,14 +121,13 @@ public class CalendarioController {
         model.addAttribute("listaUsuarios", listaUsuarios);
         model.addAttribute("puedeVerFiltroMateria", puedeVerFiltroMateria);
         model.addAttribute("listaMaterias", listaMaterias);
-        
+
         // Tipos de eventos dinámicos para el filtro
         model.addAttribute("listaTiposEvento", List.of(
-            new String[]{"todos", "Todos"},
-            new String[]{"audiencia", "Audiencias"},
-            new String[]{"termino", "Términos"},
-            new String[]{"recordatorio", "Recordatorios"}
-        ));
+                new String[] { "todos", "Todos" },
+                new String[] { "audiencia", "Audiencias" },
+                new String[] { "termino", "Términos" },
+                new String[] { "recordatorio", "Recordatorios" }));
 
         return "views/calendario/index";
     }

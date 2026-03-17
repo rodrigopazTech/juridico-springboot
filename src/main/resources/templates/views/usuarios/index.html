@@ -14,19 +14,11 @@
 <body class="bg-gray-100 text-gray-800 font-sans">
 
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <div class="p-4 sm:ml-64">
+    <div class="p-4 sm:ml-64 pt-20">
 
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-                <div>
-                    <h1 class="text-3xl font-bold text-gob-gris font-headings">
-                        <i class="fas fa-users-cog text-gob-oro mr-2"></i> Administración
-                    </h1>
-                    <p class="text-sm text-gray-500 mt-1">Gestión de usuarios, roles y gerencias.</p>
-                </div>
-            </div>
-
             <div class="flex overflow-x-auto px-6">
                 <button onclick="cambiarTab('usuarios')" id="btn-tab-usuarios"
                     class="tab-btn active flex items-center gap-2 py-3 px-4 border-b-2 border-gob-guinda text-gob-guinda font-bold">
@@ -62,13 +54,13 @@
         <div id="tab-tipos-audiencia" class="tab-content hidden">
             <div th:replace="~{fragments/usuarios/tabla-tipos-audiencia :: tabla}"></div>
         </div>
-    </div>
 
-    <div th:replace="~{fragments/usuarios/modal-usuario :: modal}"></div>
+    </div> <div th:replace="~{fragments/usuarios/modal-usuario :: modal}"></div>
     <div th:replace="~{fragments/usuarios/modal-gerencia :: modal}"></div>
     <div th:replace="~{fragments/usuarios/modal-materias :: modal}"></div>
     <div th:replace="~{fragments/usuarios/modal-organo :: modal}"></div>
     <div th:replace="~{fragments/usuarios/modal-tipo-audiencia :: modal}"></div>
+    
     <script th:src="@{/js/usuarios.js}"></script>
 
     <script th:if="${mensaje != null}">
@@ -81,9 +73,6 @@
             });
         });
     </script>
-</body>
-
-</html>
 </body>
 
 </html>

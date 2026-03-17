@@ -86,6 +86,7 @@ public class UsuariosController {
         model.addAttribute("nuevaGerencia", new Gerencia());
         model.addAttribute("nuevoOrgano", new OrganoJurisdiccional());
         model.addAttribute("nuevoTipoAudiencia", new TipoAudiencia());
+        model.addAttribute("pageTitle", "Usuarios");
         model.addAttribute("activePage", "usuarios");
 
         return "views/usuarios/index";
