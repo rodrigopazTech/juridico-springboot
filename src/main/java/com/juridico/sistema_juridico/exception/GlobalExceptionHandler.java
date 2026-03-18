@@ -7,8 +7,18 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    // 0. IGNORAR RECURSOS ESTÁTICOS NO ENCONTRADOS (Evita popups por favicon.ico, etc.)
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Void> handleNoResourceFound(NoResourceFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
 
     // 1. RECURSO NO ENCONTRADO (404)
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -45,8 +55,9 @@ public class GlobalExceptionHandler {
     // 5. ERROR GENERAL (Cualquier otra cosa)
     @ExceptionHandler(Exception.class)
     public RedirectView handleGeneralError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
-        // Imprimimos el error real en la consola para que tú (desarrollador) sepas qué pasó
+        // Imprimimos el error real en la consola
         System.err.println("--- ERROR CAPTURADO POR GLOBAL HANDLER ---");
+        System.err.println("Mensaje: " + ex.getMessage());
         ex.printStackTrace();
         
         attrs.addFlashAttribute("mensaje", "Ocurrió un error inesperado en el sistema.");

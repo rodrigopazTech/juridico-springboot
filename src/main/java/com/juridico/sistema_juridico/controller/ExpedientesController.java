@@ -1,6 +1,6 @@
 package com.juridico.sistema_juridico.controller;
 
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
@@ -11,7 +11,7 @@ import com.juridico.sistema_juridico.repository.Catalogo.EstadoRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRepository;
-import com.juridico.sistema_juridico.repository.catalogo.EtiquetaRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.EtiquetaRepository;
 import com.juridico.sistema_juridico.Entity.catalogo.Etiqueta;
 
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
@@ -23,6 +23,7 @@ import com.juridico.sistema_juridico.Entity.general.Comentario;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.NotificacionService;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
+import com.juridico.sistema_juridico.repository.Catalogos.CatPrioridadRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,6 +77,8 @@ public class ExpedientesController {
     private ComentarioRepository comentarioRepository;
     @Autowired
     private EtiquetaRepository etiquetaRepository;
+    @Autowired
+    private CatPrioridadRepository catPrioridadRepository;
 
     @Autowired
     private ActividadExpedienteRepository actividadRepository;
@@ -89,14 +92,14 @@ public class ExpedientesController {
 
     @GetMapping
     public String index(Model model,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "keyword", required = false) String keyword,
-            @RequestParam(value = "gerenciaId", required = false) Integer gerenciaId,
-            @RequestParam(value = "materiaId", required = false) Integer materiaId,
-            @RequestParam(value = "prioridad", required = false) Prioridad prioridad,
-            @RequestParam(value = "etapa", required = false) EtapaProcesal etapa,
-            @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
-            @RequestParam(value = "etiquetaId", required = false) Integer etiquetaId) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer gerenciaId,
+            @RequestParam(required = false) Integer materiaId,
+            @RequestParam(required = false) Integer prioridadId,
+            @RequestParam(required = false) EtapaProcesal etapa,
+            @RequestParam(required = false) Integer abogadoId,
+            @RequestParam(required = false) Integer etiquetaId) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
@@ -124,13 +127,14 @@ public class ExpedientesController {
         Pageable pageable = PageRequest.of(page, 20, Sort.by("createdAt").descending());
 
         Page<Expediente> paginaExpedientes = expedienteRepository.buscarConSeguridad(
-                keyword, gerenciaId, materiaId, prioridad, etapa, abogadoId, etiquetaId,
+                keyword, gerenciaId, materiaId, prioridadId, etapa, abogadoId, etiquetaId,
                 secGerenciaId, secMateriaIds, secUsuarioId,
                 pageable);
 
         // Conteos para resumen (Respetando seguridad)
+        Integer idAlta = catPrioridadRepository.findByNombreIgnoreCase("ALTA").map(CatPrioridad::getId).orElse(null);
         long totalAlta = expedienteRepository.buscarConSeguridad(
-                null, null, null, Prioridad.ALTA, null, null, null,
+                null, null, null, idAlta, null, null, null,
                 secGerenciaId, secMateriaIds, secUsuarioId,
                 PageRequest.of(0, 1)).getTotalElements();
 
@@ -154,8 +158,8 @@ public class ExpedientesController {
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
         model.addAttribute("listaMaterias", materiaRepository.findAll());
 
-        model.addAttribute("listaPrioridades", Prioridad.values());
-        model.addAttribute("listaEtapas", EtapaProcesal.values());
+        model.addAttribute("listaPrioridades", catPrioridadRepository.findAll());
+        model.addAttribute("etapas", EtapaProcesal.values());
         model.addAttribute("listaAbogados", usuarioRepository.findAll());
 
         model.addAttribute("gerencias", gerenciaRepository.findAll());
@@ -163,7 +167,7 @@ public class ExpedientesController {
 
         model.addAttribute("organos", organoRepository.findAll());
         model.addAttribute("usuarios", usuarioRepository.findAll());
-        model.addAttribute("prioridades", Prioridad.values());
+        model.addAttribute("prioridades", catPrioridadRepository.findAll());
         model.addAttribute("estados", estadoRepository.findAllByOrderByNombreAsc());
         model.addAttribute("etiquetas", etiquetaRepository.findAll());
         model.addAttribute("usuarioActual", usuario);
@@ -304,7 +308,7 @@ public class ExpedientesController {
                                 "Expediente Reasignado",
                                 "Se te ha reasignado el expediente " + guardado.getNumero() + " para su atención.",
                                 "ASIGNACION",
-                                Prioridad.ALTA,
+                                catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
                                 guardado.getId().toString());
                     }
                 }
@@ -378,13 +382,16 @@ public class ExpedientesController {
         // Enviar notificaciones
         // Usamos un Set para evitar duplicados si una persona tuviera doble rol (raro
         // pero posible)
+        
+        // Obtener el registro Alta del catalogo
+        CatPrioridad prioAlta = catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null);
         for (Usuario u : new HashSet<>(destinatarios)) {
             notificacionService.crearNotificacion(
                     u,
                     titulo,
                     mensaje,
                     "EXPEDIENTE",
-                    exp.getPrioridad(),
+                    prioAlta,
                     exp.getId().toString());
         }
     }
@@ -441,7 +448,8 @@ public class ExpedientesController {
         model.addAttribute("gerencias", gerenciaRepository.findAll());
 
         model.addAttribute("organos", organoRepository.findAll());
-        model.addAttribute("prioridades", Prioridad.values());
+        model.addAttribute("usuarios", usuarioRepository.findAll());
+        model.addAttribute("prioridades", catPrioridadRepository.findAll());
         model.addAttribute("estados", estadoRepository.findAll());
         model.addAttribute("etapas", EtapaProcesal.values());
         model.addAttribute("pageTitle", "Detalle del Expediente");
@@ -475,12 +483,12 @@ public class ExpedientesController {
         nuevo.setUsuario(usuario);
         nuevo.setUsuarioNombre(usuario != null ? usuario.getNombreCompleto() : "Sistema");
 
-        comentarioRepository.save(nuevo);
-
-        // Registro de Auditoría
+        // Capturar la etapa procesal actual del expediente
         try {
             UUID expId = UUID.fromString(id);
             expedienteRepository.findById(expId).ifPresent(exp -> {
+                nuevo.setEtapaProcesal(exp.getEtapaProcesal());
+                
                 auditoriaService.registrar(exp, "Nueva Observación",
                         "Se agregó una nota: "
                                 + (nuevo.getComentario().length() > 50 ? nuevo.getComentario().substring(0, 47) + "..."
@@ -490,6 +498,8 @@ public class ExpedientesController {
         } catch (Exception e) {
             // Ignorar si el ID no es de expediente
         }
+
+        comentarioRepository.save(nuevo);
 
         return ResponseEntity.ok(nuevo);
     }

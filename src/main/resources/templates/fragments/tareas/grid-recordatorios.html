@@ -13,13 +13,13 @@
              class="relative bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group overflow-hidden flex flex-col justify-between h-44">
             
             <div class="absolute left-0 top-0 bottom-0 w-1.5"
-                 th:classappend="${r.prioridad.name() == 'ALTA' ? 'bg-red-500' : 'bg-gob-oro'}"></div>
+                 th:classappend="${r.prioridad != null and r.prioridad.nombre == 'ALTA' ? 'bg-red-500' : 'bg-gob-oro'}"></div>
 
             <div class="flex justify-between items-start pl-2">
                 <h4 class="font-bold text-gray-800 text-lg leading-tight pr-4 line-clamp-2" th:text="${r.titulo}">Título de la Tarea</h4>
                 
                 <div class="p-2.5 rounded-xl bg-gray-50 text-gray-400 group-hover:text-gob-guinda transition-colors flex-shrink-0">
-                    <i class="fas" th:classappend="${r.prioridad.name() == 'ALTA' ? 'fa-exclamation-circle text-red-400' : 'fa-clipboard-list'}"></i>
+                    <i class="fas" th:classappend="${r.prioridad != null and r.prioridad.nombre == 'ALTA' ? 'fa-exclamation-circle text-red-400' : 'fa-clipboard-list'}"></i>
                 </div>
             </div>
 

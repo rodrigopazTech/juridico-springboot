@@ -7,7 +7,7 @@ import com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional;
 import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
 
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
@@ -22,6 +22,7 @@ import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository
 
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+import com.juridico.sistema_juridico.repository.Catalogos.CatPrioridadRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -56,12 +57,24 @@ public class DataInitializer implements CommandLineRunner {
         private AudienciaRepository audienciaRepository;
         @Autowired
         private ExpedienteRepository expedienteRepository;
+        @Autowired
+        private CatPrioridadRepository catPrioridadRepository;
 
         @Override
         @Transactional
         public void run(String... args) throws Exception {
 
                 System.out.println("🌱 Iniciando carga de datos (Semilla)...");
+
+                // 0. PRIORIDADES
+                if (catPrioridadRepository.count() == 0) {
+                    catPrioridadRepository.saveAll(List.of(
+                        CatPrioridad.builder().nombre("ALTA").color("bg-red-100 text-red-800").activo(true).createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build(),
+                        CatPrioridad.builder().nombre("MEDIA").color("bg-yellow-100 text-yellow-800").activo(true).createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build(),
+                        CatPrioridad.builder().nombre("BAJA").color("bg-green-100 text-green-800").activo(true).createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build()
+                    ));
+                    System.out.println("✅ Catálogo de Prioridades inicializado.");
+                }
 
                 // 1. GERENCIAS Y MATERIAS
                 if (gerenciaRepository.count() == 0) {
@@ -301,6 +314,10 @@ public class DataInitializer implements CommandLineRunner {
                         Materia materiaCivil = materiaRepository.findAll().stream()
                                         .filter(m -> m.getNombre().equals("Civil")).findFirst().orElse(null);
 
+                        CatPrioridad prioAlta = catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null);
+                        CatPrioridad prioMedia = catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null);
+                        CatPrioridad prioBaja = catPrioridadRepository.findByNombreIgnoreCase("BAJA").orElse(null);
+
                         Usuario abogado = usuarioRepository.findByEmail("abogado@juridico.com").orElse(null);
                         OrganoJurisdiccional organo = organoRepository.findAll().stream()
                                         .filter(o -> o.getNombre().contains("Juzgado 34")).findFirst().orElse(null);
@@ -314,7 +331,7 @@ public class DataInitializer implements CommandLineRunner {
                                                 .gerencia(materiaCivil.getGerencia())
                                                 .organoJurisdiccional(organo)
                                                 .sede("Sede Central")
-                                                .prioridad(Prioridad.ALTA)
+                                                .prioridad(prioAlta)
                                                 .etapaProcesal(EtapaProcesal.TRAMITE)
                                                 .abogadoResponsable(abogado)
                                                 .abogadoResponsableNombre(abogado.getNombreCompleto())
@@ -330,7 +347,7 @@ public class DataInitializer implements CommandLineRunner {
                                                 .gerencia(materiaCivil.getGerencia())
                                                 .organoJurisdiccional(organo)
                                                 .sede("Sede Norte")
-                                                .prioridad(Prioridad.MEDIA)
+                                                .prioridad(prioMedia)
                                                 .etapaProcesal(EtapaProcesal.CONCLUIDO)
                                                 .abogadoResponsable(abogado)
                                                 .abogadoResponsableNombre(abogado.getNombreCompleto())
@@ -365,7 +382,7 @@ public class DataInitializer implements CommandLineRunner {
                                                         .sede("CDMX")
                                                         .abogadoResponsable(expAbogado)
                                                         .etapaProcesal(EtapaProcesal.TRAMITE)
-                                                        .prioridad(Prioridad.ALTA)
+                                                        .prioridad(prioAlta)
                                                         .createdAt(LocalDateTime.now())
                                                         .build();
 
@@ -380,7 +397,7 @@ public class DataInitializer implements CommandLineRunner {
                                                         .organoJurisdiccional(expOrgano)
                                                         .abogadoResponsable(expAbogado)
                                                         .etapaProcesal(EtapaProcesal.LAUDO)
-                                                        .prioridad(Prioridad.MEDIA).createdAt(LocalDateTime.now())
+                                                        .prioridad(prioMedia).createdAt(LocalDateTime.now())
                                                         .build();
                                         expedienteRepository.save(expLaudo);
 
@@ -393,7 +410,7 @@ public class DataInitializer implements CommandLineRunner {
                                                         .organoJurisdiccional(expOrgano)
                                                         .abogadoResponsable(expAbogado)
                                                         .etapaProcesal(EtapaProcesal.FIRME)
-                                                        .prioridad(Prioridad.BAJA).createdAt(LocalDateTime.now())
+                                                        .prioridad(prioBaja).createdAt(LocalDateTime.now())
                                                         .build();
                                         expedienteRepository.save(expFirme);
 
@@ -406,7 +423,7 @@ public class DataInitializer implements CommandLineRunner {
                                                         .organoJurisdiccional(expOrgano)
                                                         .abogadoResponsable(expAbogado)
                                                         .etapaProcesal(EtapaProcesal.CONCLUIDO)
-                                                        .prioridad(Prioridad.MEDIA)
+                                                        .prioridad(prioMedia)
                                                         .createdAt(LocalDateTime.now().minusMonths(1)).build();
                                         expedienteRepository.save(expConcluido);
 

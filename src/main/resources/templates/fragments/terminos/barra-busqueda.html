@@ -1,7 +1,7 @@
-<div th:fragment="barra" class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
-    
-    <form th:action="@{/terminos}" method="get" class="relative w-full md:w-96">
-        
+<div th:fragment="barra" class="flex flex-col md:flex-row gap-2 justify-between items-center mb-3">
+
+    <!-- Buscador -->
+    <form th:action="@{/terminos}" method="get" class="relative w-full md:w-80">
         <input type="hidden" name="estatus" th:value="${paramEstatus}">
         <input type="hidden" name="prioridad" th:value="${paramPrioridad}">
         <input type="hidden" name="abogadoId" th:value="${paramAbogadoId}">
@@ -10,21 +10,28 @@
             <i class="fas fa-search text-gray-400"></i>
         </div>
         <input type="text" name="keyword" th:value="${keyword}"
-               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-gob-oro block w-full ps-10 p-2.5 focus:outline-none"
-               placeholder="Buscar por Asunto, Expediente, Partes...">
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-gob-oro block w-full ps-10 p-2.5 focus:outline-none"
+            placeholder="Buscar asunto, expediente...">
     </form>
 
-    <div class="flex gap-2 w-full md:w-auto">
-        
-        <a th:href="@{/terminos/exportar-excel(keyword=${keyword}, estatus=${paramEstatus}, prioridad=${paramPrioridad}, abogadoId=${paramAbogadoId})}" 
-           class="flex-1 md:flex-none text-gob-gris bg-white border border-gray-300 hover:bg-gray-50 font-medium rounded-lg text-sm px-4 py-2.5 shadow-sm transition-colors flex items-center justify-center decoration-0"
-           title="Descargar Excel">
-            <i class="fas fa-file-excel text-green-600 mr-2"></i> Exportar
+    <!-- Acciones -->
+    <div class="flex items-center gap-2 w-full md:w-auto">
+        <a th:href="@{/terminos}" class="text-sm text-gray-400 hover:text-gray-600 underline px-2">Limpiar</a>
+
+        <button type="submit" form="form-filtros"
+            class="text-white bg-gob-oro hover:bg-yellow-600 font-bold rounded-lg text-sm px-4 py-2.5 shadow-sm transition-colors flex items-center gap-1.5">
+            <i class="fas fa-filter"></i> Aplicar
+        </button>
+
+        <a th:href="@{/terminos/exportar-excel(keyword=${keyword}, estatus=${paramEstatus}, prioridad=${paramPrioridad}, abogadoId=${paramAbogadoId})}"
+            class="text-gob-gris bg-white border border-gray-300 hover:bg-gray-50 font-bold rounded-lg text-sm px-4 py-2.5 shadow-sm transition-colors flex items-center decoration-0"
+            title="Descargar Excel">
+            <i class="fas fa-file-excel text-green-600 mr-1.5"></i> Exportar
         </a>
-        
-        <button onclick="abrirModalNuevo()" 
-                class="flex-1 md:flex-none text-white bg-gob-guinda hover:bg-gob-guindaDark font-bold rounded-lg text-sm px-5 py-2.5 shadow-md transition-colors flex items-center justify-center gap-2">
-            <i class="fas fa-plus"></i> Nuevo Término
+
+        <button onclick="abrirModalNuevo()"
+            class="text-white bg-gob-guinda hover:bg-gob-guindaDark font-bold rounded-lg text-sm px-5 py-2.5 shadow-sm transition-colors flex items-center gap-1.5">
+            <i class="fas fa-plus"></i> Nuevo
         </button>
     </div>
 </div>

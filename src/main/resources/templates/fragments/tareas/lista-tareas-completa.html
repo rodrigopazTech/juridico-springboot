@@ -55,10 +55,11 @@
                 </td>
 
                 <td class="px-4 py-2 text-center whitespace-nowrap">
-                    <span th:text="${r.prioridad}" 
+                    <span th:if="${r.prioridad != null}" th:text="${r.prioridad.nombre}" 
                           class="text-[9px] px-2 py-1 rounded font-extrabold tracking-wider border"
-                          th:classappend="${r.prioridad.name() == 'ALTA' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-blue-50 text-blue-600 border-blue-100'}">
+                          th:classappend="${r.prioridad.nombre == 'ALTA' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-blue-50 text-blue-600 border-blue-100'}">
                     </span>
+                    <span th:if="${r.prioridad == null}" class="text-[9px] px-2 py-1 rounded font-extrabold tracking-wider border bg-gray-50 text-gray-400 border-gray-100">—</span>
                 </td>
 
                 <td class="px-4 py-2 text-center whitespace-nowrap">

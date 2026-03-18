@@ -4,6 +4,7 @@ import com.juridico.sistema_juridico.Entity.usuario.Notificacion;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Usuarios.NotificacionRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -51,16 +52,34 @@ public class NotificacionesController {
             notificacionRepository.save(notificacion);
 
             if (notificacion.getEntidadId() != null) {
+                String rawId = notificacion.getEntidadId();
+                String idClean = extraerSoloId(rawId);
+
                 if ("AUDIENCIA".equals(notificacion.getEntidadTipo())) {
-                    return "redirect:/audiencias?id=" + notificacion.getEntidadId();
+                    return "redirect:/audiencias?id=" + idClean;
                 } else if ("TERMINO".equals(notificacion.getEntidadTipo())) {
-                    return "redirect:/terminos?id=" + notificacion.getEntidadId();
+                    return "redirect:/terminos?id=" + idClean;
                 } else if ("EXPEDIENTE".equals(notificacion.getEntidadTipo())) {
-                    return "redirect:/expedientes/" + notificacion.getEntidadId();
+                    return "redirect:/expedientes/" + idClean;
                 }
             }
         }
         return "redirect:/notificaciones"; // Redirige al historial si no hay destino
+    }
+
+    /**
+     * Limpia el ID en caso de que se haya guardado una URL malformada.
+     * Ejemplo: "/audiencias?keyword=3" -> "3"
+     */
+    private String extraerSoloId(String rawId) {
+        if (rawId == null) return "";
+        if (rawId.contains("=")) {
+            return rawId.substring(rawId.lastIndexOf("=") + 1);
+        }
+        if (rawId.contains("/")) {
+            return rawId.substring(rawId.lastIndexOf("/") + 1);
+        }
+        return rawId;
     }
 
     @GetMapping("/eliminar/{id}")

@@ -1,4 +1,4 @@
-﻿<div th:fragment="modal" id="modal-recordatorio" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+<div th:fragment="modal" id="modal-recordatorio" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-25" aria-hidden="true" onclick="cerrarModalTarea()"></div>
 
@@ -39,12 +39,11 @@
                         </div>
 
                         <div>
-                            <label for="prioridad" class="block text-sm font-medium text-gray-700">Prioridad</label>
-                            <select name="prioridad" id="prioridad" required
+                            <label for="prioridadId" class="block text-sm font-medium text-gray-700">Prioridad</label>
+                            <select name="prioridadId" id="prioridadId" required
                                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gob-oro focus:border-gob-oro sm:text-sm">
-                                <option value="MEDIA">Media</option>
-                                <option value="ALTA">Alta</option>
-                                <option value="BAJA">Baja</option>
+                                <option value="" disabled selected>Selecciona...</option>
+                                <option th:each="p : ${prioridades}" th:value="${p.id}" th:text="${p.nombre}"></option>
                             </select>
                         </div>
 

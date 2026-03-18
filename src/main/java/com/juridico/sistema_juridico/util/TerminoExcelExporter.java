@@ -71,7 +71,7 @@ public class TerminoExcelExporter {
             createCell(row, columnCount++, t.getActuacion(), style);
             createCell(row, columnCount++, t.getFechaVencimiento().toString(), style);
             
-            String prioridadStr = (t.getPrioridad() != null) ? t.getPrioridad().name() : "MEDIA";
+            String prioridadStr = (t.getPrioridad() != null) ? t.getPrioridad().getNombre() : "MEDIA";
             createCell(row, columnCount++, prioridadStr, style);
             
             createCell(row, columnCount++, t.getEstatusTermino(), style);

@@ -1,0 +1,55 @@
+<div th:fragment="notificaciones" xmlns:th="http://www.thymeleaf.org">
+    <script th:if="${mensaje != null}" th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            const mensaje = /*[[${mensaje}]]*/ 'Operación exitosa';
+            const tipo = /*[[${tipo}]]*/ 'success';
+
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            if (tipo === 'success') {
+                Toast.fire({
+                    icon: 'success',
+                    title: mensaje,
+                    iconColor: '#22c55e', // Verde de avanzar etapa
+                    background: '#f0fdf4', // Fondo verde muy claro
+                    padding: '1em',
+                    customClass: {
+                        title: 'text-green-800 text-sm font-bold'
+                    }
+                });
+            } else if (tipo === 'error') {
+                // Errores mantienen el modal actual (bloqueante)
+                Swal.fire({
+                    title: 'Atención',
+                    text: mensaje,
+                    icon: 'error',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#bc955c',
+                    background: '#f9fafb',
+                    customClass: {
+                        confirmButton: 'font-bold'
+                    }
+                });
+            } else {
+                Toast.fire({
+                    icon: 'info',
+                    title: mensaje,
+                    padding: '1em',
+                    customClass: {
+                        title: 'text-gray-800 text-sm font-bold'
+                    }
+                });
+            }
+        });
+    </script>
+</div>

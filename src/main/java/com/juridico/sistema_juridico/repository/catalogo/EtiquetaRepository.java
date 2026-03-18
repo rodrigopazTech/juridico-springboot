@@ -1,4 +1,4 @@
-package com.juridico.sistema_juridico.repository.catalogo;
+package com.juridico.sistema_juridico.repository.Catalogo;
 
 import com.juridico.sistema_juridico.Entity.catalogo.Etiqueta;
 import org.springframework.data.jpa.repository.JpaRepository;

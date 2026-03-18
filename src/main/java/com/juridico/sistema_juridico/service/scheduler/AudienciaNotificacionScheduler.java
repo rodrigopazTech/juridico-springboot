@@ -1,10 +1,10 @@
 package com.juridico.sistema_juridico.service.scheduler;
 
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+import com.juridico.sistema_juridico.repository.Catalogos.CatPrioridadRepository;
 import com.juridico.sistema_juridico.service.NotificacionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,6 +23,9 @@ public class AudienciaNotificacionScheduler {
 
     @Autowired
     private NotificacionService notificacionService;
+
+    @Autowired
+    private CatPrioridadRepository catPrioridadRepository;
 
     @Scheduled(cron = "0 0 8 * * ?") // Se ejecuta todos los días a las 8:00 AM
     @Transactional
@@ -64,7 +67,7 @@ public class AudienciaNotificacionScheduler {
                         titulo,
                         mensaje,
                         "AUDIENCIA",
-                        Prioridad.ALTA,
+                        catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
                         a.getId().toString());
             }
         }

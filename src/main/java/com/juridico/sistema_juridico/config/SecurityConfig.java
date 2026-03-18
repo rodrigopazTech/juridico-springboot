@@ -59,7 +59,7 @@ public class SecurityConfig {
 
                         // 3. NIVEL MEDIO
                         .requestMatchers("/dashboard", "/dashboard/**")
-                        .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO")
+                        .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO", "ABOGADO")
 
                         // 4. NIVEL OPERATIVO
                         .requestMatchers("/expedientes", "/expedientes/**", "/terminos", "/terminos/**", "/audiencias",
@@ -80,14 +80,7 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/")
                         .loginProcessingUrl("/perform_login")
-                        .successHandler((request, response, authentication) -> {
-                            String role = authentication.getAuthorities().iterator().next().getAuthority();
-                            if (role.equals("ABOGADO")) {
-                                response.sendRedirect("/expedientes");
-                            } else {
-                                response.sendRedirect("/dashboard");
-                            }
-                        })
+                        .defaultSuccessUrl("/dashboard", true)
                         .failureUrl("/?error=true")
                         .permitAll())
                 .logout(logout -> logout

@@ -4,6 +4,7 @@ import com.juridico.sistema_juridico.Entity.usuario.Recordatorio;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Usuarios.RecordatorioRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+import com.juridico.sistema_juridico.repository.Catalogos.CatPrioridadRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -23,6 +24,8 @@ public class TareasController {
     private RecordatorioRepository recordatorioRepository;
     @Autowired
     private UsuarioRepository usuarioRepository;
+    @Autowired
+    private CatPrioridadRepository catPrioridadRepository;
 
     @GetMapping
     public String index(Model model) {
@@ -39,6 +42,7 @@ public class TareasController {
 
         model.addAttribute("recordatorios", proximos);
         model.addAttribute("recordatoriosTodos", todos);
+        model.addAttribute("prioridades", catPrioridadRepository.findAll());
         model.addAttribute("pageTitle", "Mis Tareas");
         model.addAttribute("activePage", "tareas"); // Cambiamos el activePage
 
@@ -46,13 +50,21 @@ public class TareasController {
     }
 
     @PostMapping("/guardar")
-    public String guardar(@ModelAttribute Recordatorio recordatorio, RedirectAttributes redirectAttrs) {
+    public String guardar(@ModelAttribute Recordatorio recordatorio,
+            @RequestParam(value = "prioridadId", required = false) Integer prioridadId,
+            RedirectAttributes redirectAttrs) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
         recordatorio.setUsuario(usuario);
         recordatorio.setCreatedAt(LocalDateTime.now());
         recordatorio.setCompletado(false);
+
+        // Buscar la entidad CatPrioridad por ID
+        if (prioridadId != null) {
+            catPrioridadRepository.findById(prioridadId).ifPresent(recordatorio::setPrioridad);
+        }
+
         recordatorioRepository.save(recordatorio);
 
         redirectAttrs.addFlashAttribute("mensaje", "Tarea guardada correctamente.");

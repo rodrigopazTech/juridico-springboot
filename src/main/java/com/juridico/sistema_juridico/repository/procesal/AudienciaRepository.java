@@ -142,6 +142,20 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
         List<Object[]> contarAudienciasPorUsuarioYGerencias(@Param("gerenciaIds") List<Long> gerenciaIds);
 
         // --- 5. CONTEO PARA DASHBOARD KPIs ---
+        // Conteo por abogado individual (solo audiencias pendientes)
+        @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.abogadoResponsable.id = :abogadoId AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
+        long countPendientesByAbogadoId(@Param("abogadoId") Integer abogadoId);
+
+        @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.abogadoResponsable.id = :abogadoId AND e.materia.id = :materiaId AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
+        long countPendientesByAbogadoIdAndMateriaId(@Param("abogadoId") Integer abogadoId, @Param("materiaId") Integer materiaId);
+
+        // Fetch audiencias pendientes como lista (para calcular semáforo en el service)
+        @Query("SELECT a FROM Audiencia a JOIN a.expediente e WHERE e.abogadoResponsable.id = :abogadoId AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
+        List<com.juridico.sistema_juridico.Entity.procesal.Audiencia> fetchPendientesByAbogadoId(@Param("abogadoId") Integer abogadoId);
+
+        @Query("SELECT a FROM Audiencia a JOIN a.expediente e WHERE e.abogadoResponsable.id = :abogadoId AND e.materia.id = :materiaId AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
+        List<com.juridico.sistema_juridico.Entity.procesal.Audiencia> fetchPendientesByAbogadoIdAndMateriaId(@Param("abogadoId") Integer abogadoId, @Param("materiaId") Integer materiaId);
+
         // Conteo por gerencia individual (solo audiencias pendientes)
         @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.gerencia.id = :gerenciaId AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
         long countByExpedienteGerenciaIdAndEstatusPendiente(@Param("gerenciaId") Long gerenciaId);
@@ -176,4 +190,36 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         @Param("fin") LocalDate fin,
                         @Param("materiaIds") List<Integer> materiaIds,
                         Pageable pageable);
+
+        @Query("SELECT a.estatusAudiencia, COUNT(a) FROM Audiencia a " +
+                        "LEFT JOIN a.expediente e " +
+                        "WHERE " +
+                        "(:keyword IS NULL OR :keyword = '' OR " +
+                        "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "CONCAT(a.id, '') LIKE CONCAT('%', :keyword, '%')) " +
+                        "AND (:tipo IS NULL OR :tipo = '' OR a.tipoAudiencia.nombre = :tipo) " +
+                        "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
+                        "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
+                        "AND (a.fechaAudiencia >= :fechaInicio) " +
+                        "AND (a.fechaAudiencia <= :fechaFin) " +
+                        "AND (:targetAbogadoId IS NULL OR (e.abogadoResponsable.id = :targetAbogadoId OR a.abogadoComparece.id = :targetAbogadoId)) "
+                        +
+                        "AND (:filtroUsuarioId IS NULL OR (e.abogadoResponsable.id = :filtroUsuarioId OR a.abogadoComparece.id = :filtroUsuarioId)) "
+                        +
+                        "AND (:filtroGerenciaId IS NULL OR e.gerencia.id = :filtroGerenciaId) " +
+                        "AND ((:filtroMateriaIds) IS NULL OR e.materia.id IN (:filtroMateriaIds)) " +
+                        "GROUP BY a.estatusAudiencia")
+        List<Object[]> contarPorEstatusConFiltros(
+                        @Param("keyword") String keyword,
+                        @Param("tipo") String tipo,
+                        @Param("gerencia") String gerencia,
+                        @Param("materia") String materia,
+                        @Param("targetAbogadoId") Integer targetAbogadoId,
+                        @Param("fechaInicio") LocalDate fechaInicio,
+                        @Param("fechaFin") LocalDate fechaFin,
+                        @Param("filtroUsuarioId") Integer filtroUsuarioId,
+                        @Param("filtroGerenciaId") Integer filtroGerenciaId,
+                        @Param("filtroMateriaIds") List<Integer> filtroMateriaIds);
 }

@@ -4,12 +4,13 @@ import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
+import com.juridico.sistema_juridico.repository.Catalogos.CatPrioridadRepository;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
@@ -33,6 +34,7 @@ public class TerminoImportService {
     @Autowired private UsuarioRepository usuarioRepository;    
     @Autowired private GerenciaRepository gerenciaRepository;
     @Autowired private MateriaRepository materiaRepository;
+    @Autowired private CatPrioridadRepository catPrioridadRepository;
 
 
     @Transactional
@@ -121,12 +123,13 @@ if (expediente == null) {
                 // Manejo seguro de la prioridad
                 try {
                     if(prioridadStr != null) {
-                        termino.setPrioridad(Prioridad.valueOf(prioridadStr.toUpperCase()));
+                        termino.setPrioridad(catPrioridadRepository.findByNombreIgnoreCase(prioridadStr.trim())
+                                .orElse(catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null)));
                     } else {
-                        termino.setPrioridad(Prioridad.MEDIA);
+                        termino.setPrioridad(catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null));
                     }
-                } catch (IllegalArgumentException e) {
-                    termino.setPrioridad(Prioridad.MEDIA);
+                } catch (Exception e) {
+                    termino.setPrioridad(catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null));
                 }
 
                 terminoRepository.save(termino);

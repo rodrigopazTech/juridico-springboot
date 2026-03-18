@@ -28,7 +28,8 @@
                     <span class="text-[10px] font-extrabold text-white/40 uppercase tracking-widest">Principal</span>
                 </li>
 
-                <li sec:authorize="hasAnyAuthority('ADMIN','DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')">
+                <li
+                    sec:authorize="hasAnyAuthority('ADMIN','DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO', 'ABOGADO')">
                     <a th:href="@{/dashboard}"
                         class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
                         th:classappend="${activePage == 'dashboard' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">

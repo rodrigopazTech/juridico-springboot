@@ -5,7 +5,6 @@ import com.juridico.sistema_juridico.dto.request.expedientes.ExpedienteRequest;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
@@ -53,9 +52,9 @@ public class ExpedienteService {
     }
 
     // Corregido: Coincide con los 7 parámetros y tipos Integer del Repository
-    public Page<Expediente> buscarExpedientes(String folio, Integer gerenciaId, Integer materiaId, Prioridad prioridad,
+    public Page<Expediente> buscarExpedientes(String folio, Integer gerenciaId, Integer materiaId, Integer prioridadId,
             Integer abogadoId, Pageable pageable) {
-        return expedienteRepository.buscarExpedientes(folio, gerenciaId, materiaId, prioridad, abogadoId, pageable);
+        return expedienteRepository.buscarExpedientes(folio, gerenciaId, materiaId, prioridadId, abogadoId, pageable);
     }
 
     // Corregido: count() es el método estándar de JpaRepository

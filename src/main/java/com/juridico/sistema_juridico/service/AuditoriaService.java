@@ -70,8 +70,8 @@ public class AuditoriaService {
                                 actual.getOrganoJurisdiccionalTexto());
                 compararYAgregar(cambios, actual, anterior, "Sede", anterior.getSede(), actual.getSede());
                 compararYAgregar(cambios, actual, anterior, "Prioridad",
-                                anterior.getPrioridad() != null ? anterior.getPrioridad().name() : "N/A",
-                                actual.getPrioridad() != null ? actual.getPrioridad().name() : "N/A");
+                                anterior.getPrioridad() != null ? anterior.getPrioridad().getNombre() : "N/A",
+                                actual.getPrioridad() != null ? actual.getPrioridad().getNombre() : "N/A");
                 compararYAgregar(cambios, actual, anterior, "Etapa Procesal",
                                 anterior.getEtapaProcesal() != null ? anterior.getEtapaProcesal().name() : "N/A",
                                 actual.getEtapaProcesal() != null ? actual.getEtapaProcesal().name() : "N/A");

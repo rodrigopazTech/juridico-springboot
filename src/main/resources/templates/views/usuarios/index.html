@@ -63,16 +63,7 @@
     
     <script th:src="@{/js/usuarios.js}"></script>
 
-    <script th:if="${mensaje != null}">
-        document.addEventListener("DOMContentLoaded", function () {
-            Swal.fire({
-                title: "[[${tipo == 'success' ? '¡Éxito!' : 'Error'}]]",
-                text: "[[${mensaje}]]",
-                icon: "[[${tipo}]]",
-                confirmButtonColor: "#bc955c",
-            });
-        });
-    </script>
+    <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
 </body>
 
 </html>
