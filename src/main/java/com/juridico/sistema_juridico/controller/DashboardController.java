@@ -5,6 +5,7 @@ import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.service.DashboardService;
 import com.juridico.sistema_juridico.service.UsuarioService;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -20,20 +21,24 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
     private final GerenciaRepository gerenciaRepository;
+    private final MateriaRepository materiaRepository;
     private final UsuarioService usuarioService;
 
     public DashboardController(DashboardService dashboardService,
             GerenciaRepository gerenciaRepository,
+            MateriaRepository materiaRepository,
             UsuarioService usuarioService) {
         this.dashboardService = dashboardService;
         this.gerenciaRepository = gerenciaRepository;
+        this.materiaRepository = materiaRepository;
         this.usuarioService = usuarioService;
     }
 
     @GetMapping
     public String dashboard(Model model,
             @RequestParam(required = false) Long gerenciaId,
-            @RequestParam(required = false) String grupoGerencia) {
+            @RequestParam(required = false) String grupoGerencia,
+            @RequestParam(required = false) Integer materiaId) {
         // Obtenemos el nombre del usuario logueado
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
@@ -41,10 +46,24 @@ public class DashboardController {
         // Buscamos el objeto Usuario completo
         Usuario usuario = usuarioService.obtenerPorUsername(username);
 
+        model.addAttribute("usuario", usuario);
+
+        if (usuario.getRol() == RolUsuario.ABOGADO) {
+            // Load materias for the lawyer's gerencia
+            List<?> materias = (usuario.getGerencia() != null)
+                ? materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(usuario.getGerencia().getId())
+                : java.util.Collections.emptyList();
+
+            model.addAttribute("materias", materias);
+            model.addAttribute("materiaSeleccionada", materiaId);
+            model.addAttribute("kpis", dashboardService.obtenerKpisPersonales(usuario.getId(), materiaId));
+            model.addAttribute("dashboardData", dashboardService.obtenerMetricasPersonales(usuario.getId(), materiaId));
+            return "views/dashboard/index_abogado";
+        }
+
         // Aplicamos la lógica de restricción y obtenemos filtros
         FiltroResult filtro = validarFiltrosPorRol(usuario, gerenciaId, grupoGerencia);
 
-        model.addAttribute("usuario", usuario);
         model.addAttribute("gerencias", gerenciaRepository.findByActivoTrueOrderByNombreAsc());
         model.addAttribute("kpis", dashboardService.obtenerKpisPorLista(filtro.gerenciaId(), filtro.gerenciaIds()));
         model.addAttribute("dashboardData",

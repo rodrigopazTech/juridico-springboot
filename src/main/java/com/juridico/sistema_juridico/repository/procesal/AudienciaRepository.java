@@ -142,6 +142,20 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
         List<Object[]> contarAudienciasPorUsuarioYGerencias(@Param("gerenciaIds") List<Long> gerenciaIds);
 
         // --- 5. CONTEO PARA DASHBOARD KPIs ---
+        // Conteo por abogado individual (solo audiencias pendientes)
+        @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.abogadoResponsable.id = :abogadoId AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
+        long countPendientesByAbogadoId(@Param("abogadoId") Integer abogadoId);
+
+        @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.abogadoResponsable.id = :abogadoId AND e.materia.id = :materiaId AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
+        long countPendientesByAbogadoIdAndMateriaId(@Param("abogadoId") Integer abogadoId, @Param("materiaId") Integer materiaId);
+
+        // Fetch audiencias pendientes como lista (para calcular semáforo en el service)
+        @Query("SELECT a FROM Audiencia a JOIN a.expediente e WHERE e.abogadoResponsable.id = :abogadoId AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
+        List<com.juridico.sistema_juridico.Entity.procesal.Audiencia> fetchPendientesByAbogadoId(@Param("abogadoId") Integer abogadoId);
+
+        @Query("SELECT a FROM Audiencia a JOIN a.expediente e WHERE e.abogadoResponsable.id = :abogadoId AND e.materia.id = :materiaId AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
+        List<com.juridico.sistema_juridico.Entity.procesal.Audiencia> fetchPendientesByAbogadoIdAndMateriaId(@Param("abogadoId") Integer abogadoId, @Param("materiaId") Integer materiaId);
+
         // Conteo por gerencia individual (solo audiencias pendientes)
         @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.gerencia.id = :gerenciaId AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
         long countByExpedienteGerenciaIdAndEstatusPendiente(@Param("gerenciaId") Long gerenciaId);

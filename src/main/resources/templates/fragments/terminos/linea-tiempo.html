@@ -16,7 +16,7 @@
 
                         <!-- Esfera con Conteo (Reducida) -->
                         <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 shadow-sm transition-all duration-300 relative"
-                            th:with="enEtapa=${conteosEtapas.get(etapa)}, isSelected=${paramEstatus == etapa}, isAssigned=${etapasAsignadas.contains(etapa)}"
+                            th:with="enEtapa=${conteosEtapas.get(etapa)}, isSelected=${paramEstatus == etapa}, isAssigned=${etapasAsignadas != null and !etapasAsignadas.isEmpty() and etapasAsignadas.contains(etapa)}"
                             th:classappend="${isAssigned ? 'bg-gob-guinda border-white text-white' : 'bg-gob-oro border-white text-white'}">
 
                             <!-- Anillo de Selección (Solo si está seleccionada) -->
@@ -36,7 +36,7 @@
                         <!-- Etiqueta de la Etapa (Compacta) -->
                         <span
                             class="mt-1.5 text-[11px] font-extrabold uppercase tracking-tight text-center max-w-[80px] leading-none transition-colors duration-300"
-                            th:classappend="${paramEstatus == etapa ? 'text-gob-oro' : (etapasAsignadas.contains(etapa) ? 'text-gob-guinda' : 'text-gray-400')}"
+                            th:classappend="${paramEstatus == etapa ? 'text-gob-oro' : (etapasAsignadas != null and etapasAsignadas.contains(etapa) ? 'text-gob-guinda' : 'text-gray-400')}"
                             th:text="${etapa.descripcion}">
                             ETAPA
                         </span>

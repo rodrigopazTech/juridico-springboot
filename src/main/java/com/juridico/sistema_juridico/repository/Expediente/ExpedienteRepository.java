@@ -90,9 +90,18 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
         // ==========================================
         long countByGerenciaId(Long gerenciaId);
 
+        // Abogado dashboard
+        long countByAbogadoResponsableId(Integer abogadoId);
+
+        long countByAbogadoResponsableIdAndMateriaId(Integer abogadoId, Integer materiaId);
+
         long countByEtapaProcesal(EtapaProcesal etapa);
 
         long countByEtapaProcesalAndGerenciaId(EtapaProcesal etapa, Long gerenciaId);
+
+        long countByEtapaProcesalAndAbogadoResponsableId(EtapaProcesal etapa, Integer abogadoId);
+
+        long countByEtapaProcesalAndAbogadoResponsableIdAndMateriaId(EtapaProcesal etapa, Integer abogadoId, Integer materiaId);
 
         // Filtro por lista de gerencias (para grupos)
         long countByGerenciaIdIn(List<Long> gerenciaIds);
@@ -107,6 +116,18 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
 
         @Query("SELECT e.etapaProcesal, COUNT(e) FROM Expediente e WHERE e.gerencia.id IN :gerenciaIds GROUP BY e.etapaProcesal")
         List<Object[]> contarExpedientesPorEstatusYGerencias(@Param("gerenciaIds") List<Long> gerenciaIds);
+
+        @Query("SELECT e.etapaProcesal, COUNT(e) FROM Expediente e WHERE e.abogadoResponsable.id = :abogadoId GROUP BY e.etapaProcesal")
+        List<Object[]> contarExpedientesPorEstatusYAbogado(@Param("abogadoId") Integer abogadoId);
+
+        @Query("SELECT e.etapaProcesal, COUNT(e) FROM Expediente e WHERE e.abogadoResponsable.id = :abogadoId AND e.materia.id = :materiaId GROUP BY e.etapaProcesal")
+        List<Object[]> contarExpedientesPorEstatusYAbogadoYMateria(@Param("abogadoId") Integer abogadoId, @Param("materiaId") Integer materiaId);
+
+        @Query("SELECT e.prioridad.nombre, COUNT(e) FROM Expediente e WHERE e.abogadoResponsable.id = :abogadoId AND e.prioridad IS NOT NULL GROUP BY e.prioridad.nombre")
+        List<Object[]> contarExpedientesPorPrioridadYAbogado(@Param("abogadoId") Integer abogadoId);
+
+        @Query("SELECT e.prioridad.nombre, COUNT(e) FROM Expediente e WHERE e.abogadoResponsable.id = :abogadoId AND e.materia.id = :materiaId AND e.prioridad IS NOT NULL GROUP BY e.prioridad.nombre")
+        List<Object[]> contarExpedientesPorPrioridadYAbogadoYMateria(@Param("abogadoId") Integer abogadoId, @Param("materiaId") Integer materiaId);
 
         @Query("SELECT e.abogadoResponsable.nombreCompleto, COUNT(e) FROM Expediente e GROUP BY e.abogadoResponsable.nombreCompleto")
         List<Object[]> contarExpedientesPorUsuario();

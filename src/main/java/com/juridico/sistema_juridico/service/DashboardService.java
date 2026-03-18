@@ -78,6 +78,112 @@ public class DashboardService {
         return kpis;
     }
 
+    public Map<String, Long> obtenerKpisPersonales(Integer usuarioId, Integer materiaId) {
+        Map<String, Long> kpis = new HashMap<>();
+        if (materiaId == null) {
+            kpis.put("totalExpedientes", expedienteRepository.countByAbogadoResponsableId(usuarioId));
+            kpis.put("expedientesActivos", expedienteRepository.countByEtapaProcesalAndAbogadoResponsableId(EtapaProcesal.TRAMITE, usuarioId));
+            kpis.put("audienciasProgramadas", audienciaRepository.countPendientesByAbogadoId(usuarioId));
+            kpis.put("terminosActivos", terminoRepository.countActivosByAbogadoId(usuarioId));
+        } else {
+            kpis.put("totalExpedientes", expedienteRepository.countByAbogadoResponsableIdAndMateriaId(usuarioId, materiaId));
+            kpis.put("expedientesActivos", expedienteRepository.countByEtapaProcesalAndAbogadoResponsableIdAndMateriaId(EtapaProcesal.TRAMITE, usuarioId, materiaId));
+            kpis.put("audienciasProgramadas", audienciaRepository.countPendientesByAbogadoIdAndMateriaId(usuarioId, materiaId));
+            kpis.put("terminosActivos", terminoRepository.countActivosByAbogadoIdAndMateriaId(usuarioId, materiaId));
+        }
+        return kpis;
+    }
+
+    public Map<String, Object> obtenerMetricasPersonales(Integer usuarioId, Integer materiaId) {
+        Map<String, Object> data = new HashMap<>();
+        
+        List<Object[]> rows;
+        if (materiaId == null) {
+            rows = expedienteRepository.contarExpedientesPorEstatusYAbogado(usuarioId);
+        } else {
+            rows = expedienteRepository.contarExpedientesPorEstatusYAbogadoYMateria(usuarioId, materiaId);
+        }
+
+        Map<EtapaProcesal, Long> statusMap = new HashMap<>();
+        for (Object[] row : rows) {
+            EtapaProcesal etapa = (EtapaProcesal) row[0];
+            Long count = ((Number) row[1]).longValue();
+            statusMap.put(etapa, count);
+        }
+        List<String> labelsEstatus = new ArrayList<>();
+        List<Long> valuesEstatus = new ArrayList<>();
+        for (EtapaProcesal etapa : EtapaProcesal.values()) {
+            labelsEstatus.add(etapa.name());
+            valuesEstatus.add(statusMap.getOrDefault(etapa, 0L));
+        }
+        data.put("estatusExpedientes", Map.of("labels", labelsEstatus, "values", valuesEstatus));
+
+        // Priority distribution
+        List<Object[]> prioridadRows;
+        if (materiaId == null) {
+            prioridadRows = expedienteRepository.contarExpedientesPorPrioridadYAbogado(usuarioId);
+        } else {
+            prioridadRows = expedienteRepository.contarExpedientesPorPrioridadYAbogadoYMateria(usuarioId, materiaId);
+        }
+        List<String> labelsPrioridad = new ArrayList<>();
+        List<Long> valuesPrioridad = new ArrayList<>();
+        for (Object[] row : prioridadRows) {
+            labelsPrioridad.add((String) row[0]);
+            valuesPrioridad.add(((Number) row[1]).longValue());
+        }
+        data.put("prioridadExpedientes", Map.of("labels", labelsPrioridad, "values", valuesPrioridad));
+
+        List<String> labelsTrabajo = List.of("Audiencias y Términos");
+        List<Integer> audiencias;
+        List<Integer> terminos;
+
+        if (materiaId == null) {
+            audiencias = List.of((int) audienciaRepository.countPendientesByAbogadoId(usuarioId));
+            terminos = List.of((int) terminoRepository.countActivosByAbogadoId(usuarioId));
+        } else {
+            audiencias = List.of((int) audienciaRepository.countPendientesByAbogadoIdAndMateriaId(usuarioId, materiaId));
+            terminos = List.of((int) terminoRepository.countActivosByAbogadoIdAndMateriaId(usuarioId, materiaId));
+        }
+        
+        data.put("cargaTrabajoUsuarios", Map.of("labels", labelsTrabajo, "audiencias", audiencias, "terminos", terminos));
+
+        // === PRIORITY BAR: Audiencias por semáforo (calculado en Java) ===
+        List<com.juridico.sistema_juridico.Entity.procesal.Audiencia> audList = materiaId == null
+            ? audienciaRepository.fetchPendientesByAbogadoId(usuarioId)
+            : audienciaRepository.fetchPendientesByAbogadoIdAndMateriaId(usuarioId, materiaId);
+
+        java.time.LocalDate hoy = java.time.LocalDate.now();
+        // Orden fijo: ALTA, MEDIA, BAJA
+        List<String> prioLabels = new ArrayList<>(java.util.Arrays.asList("ALTA", "MEDIA", "BAJA"));
+        java.util.Map<String, Integer> audSemaforo = new java.util.LinkedHashMap<>();
+        audSemaforo.put("ALTA", 0);
+        audSemaforo.put("MEDIA", 0);
+        audSemaforo.put("BAJA", 0);
+
+        for (com.juridico.sistema_juridico.Entity.procesal.Audiencia a : audList) {
+            if (a.getFechaAudiencia() == null) continue;
+            long dias = java.time.temporal.ChronoUnit.DAYS.between(hoy, a.getFechaAudiencia());
+            if (dias <= 1)       audSemaforo.merge("ALTA", 1, Integer::sum);
+            else if (dias <= 3)  audSemaforo.merge("MEDIA", 1, Integer::sum);
+            else                 audSemaforo.merge("BAJA", 1, Integer::sum);
+        }
+
+        // === PRIORITY BAR: Términos por su propia prioridad ===
+        List<Object[]> terPrioRows = materiaId == null
+            ? terminoRepository.contarTerminosPorPrioridadYAbogado(usuarioId)
+            : terminoRepository.contarTerminosPorPrioridadYAbogadoYMateria(usuarioId, materiaId);
+
+        java.util.Map<String, Integer> terMap = new HashMap<>();
+        terPrioRows.forEach(r -> terMap.put((String) r[0], ((Number) r[1]).intValue()));
+
+        List<Integer> audByPrio = prioLabels.stream().map(l -> audSemaforo.getOrDefault(l, 0)).collect(java.util.stream.Collectors.toList());
+        List<Integer> terByPrio = prioLabels.stream().map(l -> terMap.getOrDefault(l, 0)).collect(java.util.stream.Collectors.toList());
+
+        data.put("cargaTrabajoPrioridad", Map.of("labels", prioLabels, "audiencias", audByPrio, "terminos", terByPrio));
+        
+        return data;
+    }
+
     public Map<String, Object> obtenerMetricas(Long gerenciaId) {
         return obtenerMetricasPorLista(gerenciaId, null);
     }
