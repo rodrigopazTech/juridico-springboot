@@ -1,136 +1,149 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-
 <head>
 </head>
-
 <body>
 
     <aside th:fragment="sidebar" id="logo-sidebar"
         class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0 bg-gob-verde border-r border-gob-oro shadow-2xl"
         aria-label="Sidebar">
 
-        <div class="h-full px-3 py-4 overflow-y-auto bg-gob-verde flex flex-col">
+        <div class="h-full py-5 overflow-y-auto bg-gob-verde flex flex-col custom-scrollbar">
 
-            <a th:href="@{/}" class="flex items-center ps-2.5 mb-6 group">
-                <div class="p-2 bg-white/5 rounded-lg group-hover:bg-white/10 transition-colors">
-                    <i
-                        class="fas fa-balance-scale text-gob-oro text-2xl group-hover:scale-110 transition-transform duration-300"></i>
+            <a th:href="@{/}" class="flex items-center px-6 pb-6 mb-4 border-b border-white/10 group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-gob-oro to-yellow-600 flex items-center justify-center shadow-lg group-hover:shadow-gob-oro/50 transition-all duration-300">
+                    <i class="fas fa-balance-scale text-white text-xl group-hover:scale-110 transition-transform duration-300"></i>
                 </div>
-                <span
-                    class="self-center text-xl font-bold whitespace-nowrap text-white font-headings ms-3 tracking-wide">
-                    Agenda Legal
-                </span>
+                <div class="ms-3 flex flex-col">
+                    <span class="text-xl font-bold whitespace-nowrap text-white font-headings tracking-wide leading-tight">
+                        Agenda Legal
+                    </span>
+                    <span class="text-[10px] text-white/50 tracking-widest uppercase font-bold">Sistema Jurídico</span>
+                </div>
             </a>
 
-            <ul class="space-y-1 font-medium flex-1">
-                <li class="px-3 mt-4 mb-2">
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Principal</span>
+            <ul class="space-y-1.5 font-medium flex-1">
+                
+                <li class="px-6 mt-2 mb-3">
+                    <span class="text-[10px] font-extrabold text-white/40 uppercase tracking-widest">Principal</span>
                 </li>
 
                 <li sec:authorize="hasAnyAuthority('ADMIN','DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')">
                     <a th:href="@{/dashboard}"
-                        class="flex items-center p-3 transition-all duration-200 border-l-4 rounded-r-lg"
-                        th:classappend="${activePage == 'dashboard' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
-                        <i class="fas fa-chart-pie w-5 h-5 transition duration-75"
-                            th:classappend="${activePage == 'dashboard' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
-                        <span class="ms-3">Dashboard</span>
+                        class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
+                        th:classappend="${activePage == 'dashboard' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-chart-pie w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                            th:classappend="${activePage == 'dashboard' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
+                        <span class="ms-3 text-sm">Dashboard</span>
                     </a>
                 </li>
 
                 <li sec:authorize="hasAnyAuthority('ADMIN','DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')">
                     <a th:href="@{/agenda}"
-                        class="flex items-center p-3 transition-all duration-200 border-l-4 rounded-r-lg"
-                        th:classappend="${activePage == 'agenda' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
-                        <i class="fas fa-address-book w-5 h-5 transition duration-75"
-                            th:classappend="${activePage == 'agenda' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
-                        <span class="ms-3">Agenda / Historial</span>
+                        class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
+                        th:classappend="${activePage == 'agenda' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-address-book w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                            th:classappend="${activePage == 'agenda' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
+                        <span class="ms-3 text-sm">Agenda Historial</span>
                     </a>
                 </li>
 
                 <li>
-                    <a th:href="@{/calendario}" class="flex items-center p-3 transition-all duration-200 border-l-4"
-                        th:classappend="${activePage == 'calendario' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
-                        <i class="fas fa-calendar-alt w-5 h-5 transition duration-75"
-                            th:classappend="${activePage == 'calendario' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
-                        <span class="ms-3">Calendario</span>
+                    <a th:href="@{/calendario}" 
+                        class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
+                        th:classappend="${activePage == 'calendario' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-calendar-alt w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                            th:classappend="${activePage == 'calendario' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
+                        <span class="ms-3 text-sm">Calendario</span>
                     </a>
                 </li>
 
                 <li>
                     <a th:href="@{/tareas}"
-                        class="flex items-center p-3 transition-all duration-200 border-l-4 rounded-r-lg"
-                        th:classappend="${activePage == 'tareas' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
-                        <i class="fas fa-tasks w-5 h-5 transition duration-75"
-                            th:classappend="${activePage == 'tareas' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
-                        <span class="ms-3">Mis Tareas</span>
+                        class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
+                        th:classappend="${activePage == 'tareas' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-tasks w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                            th:classappend="${activePage == 'tareas' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
+                        <span class="ms-3 text-sm">Mis Tareas</span>
                     </a>
                 </li>
 
-                <li class="px-3 mt-6 mb-2 border-t border-white/10 pt-4">
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Gestión Jurídica</span>
+                <li class="px-6 mt-8 mb-3">
+                    <span class="text-[10px] font-extrabold text-white/40 uppercase tracking-widest">Gestión Jurídica</span>
                 </li>
 
                 <li>
                     <a th:href="@{/expedientes}"
-                        class="flex items-center p-3 transition-all duration-200 border-l-4 rounded-r-lg"
-                        th:classappend="${activePage == 'expedientes' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
-                        <i class="fas fa-folder-open w-5 h-5 transition duration-75"
-                            th:classappend="${activePage == 'expedientes' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
-                        <span class="ms-3">Expedientes</span>
+                        class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
+                        th:classappend="${activePage == 'expedientes' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-folder-open w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                            th:classappend="${activePage == 'expedientes' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
+                        <span class="ms-3 text-sm">Expedientes</span>
                     </a>
                 </li>
 
                 <li>
                     <a th:href="@{/terminos}"
-                        class="flex items-center p-3 transition-all duration-200 border-l-4 rounded-r-lg"
-                        th:classappend="${activePage == 'terminos' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
-                        <i class="fas fa-hourglass-half w-5 h-5 transition duration-75"
-                            th:classappend="${activePage == 'terminos' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
-                        <span class="ms-3">Términos</span>
+                        class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
+                        th:classappend="${activePage == 'terminos' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-hourglass-half w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                            th:classappend="${activePage == 'terminos' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
+                        <span class="ms-3 text-sm">Términos</span>
                     </a>
                 </li>
 
                 <li>
                     <a th:href="@{/audiencias}"
-                        class="flex items-center p-3 transition-all duration-200 border-l-4 rounded-r-lg"
-                        th:classappend="${activePage == 'audiencias' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
-                        <i class="fas fa-gavel w-5 h-5 transition duration-75"
-                            th:classappend="${activePage == 'audiencias' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
-                        <span class="ms-3">Audiencias</span>
+                        class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
+                        th:classappend="${activePage == 'audiencias' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-gavel w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                            th:classappend="${activePage == 'audiencias' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
+                        <span class="ms-3 text-sm">Audiencias</span>
                     </a>
                 </li>
 
-                <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE')"
-                    class="px-3 mt-6 mb-2 border-t border-white/10 pt-4">
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Administración</span>
+                <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE')" class="px-6 mt-8 mb-3">
+                    <span class="text-[10px] font-extrabold text-white/40 uppercase tracking-widest">Administración</span>
                 </li>
 
                 <li sec:authorize="hasAuthority('ADMIN')">
                     <a th:href="@{/admin/importar}"
-                        class="flex items-center p-3 transition-all duration-200 border-l-4 rounded-r-lg"
-                        th:classappend="${activePage == 'importar' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
-                        <i class="fas fa-file-import w-5 h-5 transition duration-75"
-                            th:classappend="${activePage == 'importar' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
-                        <span class="ms-3">Migración Inteligente</span>
+                        class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
+                        th:classappend="${activePage == 'importar' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-file-import w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                            th:classappend="${activePage == 'importar' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
+                        <span class="ms-3 text-sm">Migración Inteligente</span>
                     </a>
                 </li>
 
                 <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE')">
                     <a th:href="@{/usuarios}"
-                        class="flex items-center p-3 transition-all duration-200 border-l-4 rounded-r-lg"
-                        th:classappend="${activePage == 'usuarios' ? 'border-gob-oro bg-white/10 text-white' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white'}">
-                        <i class="fas fa-users-cog w-5 h-5 transition duration-75"
-                            th:classappend="${activePage == 'usuarios' ? 'text-gob-oro' : 'text-gray-400 group-hover:text-white'}"></i>
-                        <span class="ms-3">Usuarios</span>
+                        class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
+                        th:classappend="${activePage == 'usuarios' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-users-cog w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                            th:classappend="${activePage == 'usuarios' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
+                        <span class="ms-3 text-sm">Usuarios</span>
                     </a>
                 </li>
             </ul>
-
-            
         </div>
     </aside>
 
-</body>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
 
+</body>
 </html>
