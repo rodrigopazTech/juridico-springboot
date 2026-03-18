@@ -21,25 +21,21 @@ public class PerfilController {
     @Autowired
     private PreferenciaNotificacionRepository preferenciaRepository;
 
-    @GetMapping("/preferencias")
-    public String verPreferencias(Model model) {
+    @GetMapping
+    public String verPerfil(Model model) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
-        // Buscar preferencias o crear por defecto si es la primera vez
-        PreferenciaNotificacion preferencias = preferenciaRepository.findByUsuarioId(usuario.getId())
-                .orElseGet(() -> {
-                    PreferenciaNotificacion nueva = PreferenciaNotificacion.builder()
-                            .usuario(usuario)
-                            .build();
-                    return preferenciaRepository.save(nueva);
-                });
+        // Obtenemos o creamos las preferencias si no existen
+        PreferenciaNotificacion prefs = preferenciaRepository.findByUsuarioId(usuario.getId())
+                .orElseGet(() -> PreferenciaNotificacion.builder().usuario(usuario).build());
 
-        model.addAttribute("preferencias", preferencias);
         model.addAttribute("usuario", usuario);
-        model.addAttribute("pageTitle", "Perfil");
+        model.addAttribute("preferencias", prefs);
+        model.addAttribute("pageTitle", "Mi Cuenta");
         model.addAttribute("activePage", "perfil");
-        return "views/perfil/preferencias";
+
+        return "views/perfil/index"; // Una sola vista para todo
     }
 
     @PostMapping("/preferencias/guardar")
@@ -48,8 +44,10 @@ public class PerfilController {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
+        // CORRECCIÓN: Si no existen, creamos un objeto nuevo asociado al usuario en
+        // lugar de lanzar error
         PreferenciaNotificacion preferencias = preferenciaRepository.findByUsuarioId(usuario.getId())
-                .orElseThrow(() -> new RuntimeException("Preferencias no encontradas"));
+                .orElseGet(() -> PreferenciaNotificacion.builder().usuario(usuario).build());
 
         // Actualizar valores
         preferencias.setNotificarNuevaAudiencia(prefsForm.isNotificarNuevaAudiencia());
@@ -61,6 +59,7 @@ public class PerfilController {
 
         redirectAttrs.addFlashAttribute("mensaje", "Preferencias de notificación actualizadas correctamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
-        return "redirect:/perfil/preferencias";
+
+        return "redirect:/perfil";
     }
 }

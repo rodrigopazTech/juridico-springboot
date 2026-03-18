@@ -57,21 +57,17 @@
                                 <p class="text-sm font-bold text-gray-700 truncate" th:text="${usuarioGlobal.nombreCompleto}">Usuario</p>
                             </div>
                             
-                            <a th:href="@{/perfil}" class="flex items-center px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gob-guinda rounded-xl transition-colors font-medium">
-                                <i class="fas fa-id-badge w-5 text-center text-gray-400 mr-2"></i> Mi Perfil
-                            </a>
-                            <a th:href="@{/perfil/configuracion}" class="flex items-center px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gob-guinda rounded-xl transition-colors font-medium">
-                                <i class="fas fa-user-cog w-5 text-center text-gray-400 mr-2"></i> Configuración
-                            </a>
-                            <a th:href="@{/perfil/preferencias}" class="flex items-center px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gob-guinda rounded-xl transition-colors font-medium">
-                                <i class="fas fa-sliders-h w-5 text-center text-gray-400 mr-2"></i> Preferencias
-                            </a>
-                            
-                            <div class="border-t border-gray-50 my-1"></div>
-                            
-                            <a th:href="@{/logout}" class="flex items-center px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors font-bold">
-                                <i class="fas fa-sign-out-alt w-5 text-center mr-2"></i> Cerrar Sesión
-                            </a>
+                            <div class="p-2 space-y-1">
+                                <a th:href="@{/perfil}" class="flex items-center px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gob-guinda rounded-xl transition-colors font-medium">
+                                    <i class="fas fa-user-circle w-5 text-center text-gray-400 mr-2"></i> Gestionar mi Cuenta
+                                </a>
+                                
+                                <div class="border-t border-gray-50 my-1"></div>
+                                
+                                <a th:href="@{/logout}" class="flex items-center px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors font-bold">
+                                    <i class="fas fa-sign-out-alt w-5 text-center mr-2"></i> Cerrar Sesión
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
