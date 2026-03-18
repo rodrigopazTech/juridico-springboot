@@ -9,8 +9,8 @@ import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaDesahogadaRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.CatPrioridadRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
-import com.juridico.sistema_juridico.repository.Catalogos.CatPrioridadRepository;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.NotificacionService;
@@ -153,7 +153,7 @@ public class AudienciaService {
 
         String usuarioActual = SecurityContextHolder.getContext().getAuthentication().getName();
         String fechaFormat = LocalDate.now().toString();
-        
+
         String desc = "La audiencia ha sido marcada como concluida: " + tipoConcluida + ".";
         if (observaciones != null && !observaciones.trim().isEmpty()) {
             desc += " - Observaciones: " + observaciones;

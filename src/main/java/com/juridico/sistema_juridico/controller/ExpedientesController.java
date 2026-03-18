@@ -7,11 +7,12 @@ import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.expediente.ActividadExpediente;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.repository.Catalogo.CatPrioridadRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.EstadoRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.EtiquetaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRepository;
-import com.juridico.sistema_juridico.repository.Catalogo.EtiquetaRepository;
 import com.juridico.sistema_juridico.Entity.catalogo.Etiqueta;
 
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
@@ -23,7 +24,7 @@ import com.juridico.sistema_juridico.Entity.general.Comentario;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.NotificacionService;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
-import com.juridico.sistema_juridico.repository.Catalogos.CatPrioridadRepository;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -382,7 +383,7 @@ public class ExpedientesController {
         // Enviar notificaciones
         // Usamos un Set para evitar duplicados si una persona tuviera doble rol (raro
         // pero posible)
-        
+
         // Obtener el registro Alta del catalogo
         CatPrioridad prioAlta = catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null);
         for (Usuario u : new HashSet<>(destinatarios)) {
@@ -488,7 +489,7 @@ public class ExpedientesController {
             UUID expId = UUID.fromString(id);
             expedienteRepository.findById(expId).ifPresent(exp -> {
                 nuevo.setEtapaProcesal(exp.getEtapaProcesal());
-                
+
                 auditoriaService.registrar(exp, "Nueva Observación",
                         "Se agregó una nota: "
                                 + (nuevo.getComentario().length() > 50 ? nuevo.getComentario().substring(0, 47) + "..."

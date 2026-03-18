@@ -36,9 +36,9 @@ public class DashboardController {
 
     @GetMapping
     public String dashboard(Model model,
-            @RequestParam(required = false) Long gerenciaId,
-            @RequestParam(required = false) String grupoGerencia,
-            @RequestParam(required = false) Integer materiaId) {
+            @RequestParam(value = "gerenciaId", required = false) Long gerenciaId,
+            @RequestParam(value = "grupoGerencia", required = false) String grupoGerencia,
+            @RequestParam(value = "materiaId", required = false) Integer materiaId) {
         // Obtenemos el nombre del usuario logueado
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
@@ -46,18 +46,23 @@ public class DashboardController {
         // Buscamos el objeto Usuario completo
         Usuario usuario = usuarioService.obtenerPorUsername(username);
 
+        // AQUÍ ESTÁ LA SOLUCIÓN: Agregamos ambas variables para que tanto el dashboard
+        // como la navbar funcionen
         model.addAttribute("usuario", usuario);
+        model.addAttribute("usuarioGlobal", usuario);
 
         if (usuario.getRol() == RolUsuario.ABOGADO) {
             // Load materias for the lawyer's gerencia
             List<?> materias = (usuario.getGerencia() != null)
-                ? materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(usuario.getGerencia().getId())
-                : java.util.Collections.emptyList();
+                    ? materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(usuario.getGerencia().getId())
+                    : java.util.Collections.emptyList();
 
             model.addAttribute("materias", materias);
             model.addAttribute("materiaSeleccionada", materiaId);
             model.addAttribute("kpis", dashboardService.obtenerKpisPersonales(usuario.getId(), materiaId));
             model.addAttribute("dashboardData", dashboardService.obtenerMetricasPersonales(usuario.getId(), materiaId));
+            model.addAttribute("pageTitle", "Dashboard - Abogado");
+            model.addAttribute("activePage", "dashboard");
             return "views/dashboard/index_abogado";
         }
 
@@ -70,6 +75,8 @@ public class DashboardController {
                 dashboardService.obtenerMetricasPorLista(filtro.gerenciaId(), filtro.gerenciaIds()));
         model.addAttribute("gerenciaSeleccionada", filtro.gerenciaId());
         model.addAttribute("grupoGerenciaSeleccionado", filtro.grupoGerencia());
+        model.addAttribute("pageTitle", "Dashboard - Gerencia");
+        model.addAttribute("activePage", "dashboard");
 
         return "views/dashboard/index";
     }

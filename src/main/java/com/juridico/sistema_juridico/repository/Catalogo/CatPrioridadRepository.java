@@ -1,4 +1,4 @@
-package com.juridico.sistema_juridico.repository.Catalogos;
+package com.juridico.sistema_juridico.repository.Catalogo;
 
 import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import org.springframework.data.jpa.repository.JpaRepository;

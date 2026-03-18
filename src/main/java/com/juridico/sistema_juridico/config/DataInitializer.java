@@ -13,6 +13,7 @@ import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.repository.Catalogo.CatPrioridadRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.EstadoRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
@@ -22,7 +23,7 @@ import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository
 
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
-import com.juridico.sistema_juridico.repository.Catalogos.CatPrioridadRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -68,12 +69,17 @@ public class DataInitializer implements CommandLineRunner {
 
                 // 0. PRIORIDADES
                 if (catPrioridadRepository.count() == 0) {
-                    catPrioridadRepository.saveAll(List.of(
-                        CatPrioridad.builder().nombre("ALTA").color("bg-red-100 text-red-800").activo(true).createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build(),
-                        CatPrioridad.builder().nombre("MEDIA").color("bg-yellow-100 text-yellow-800").activo(true).createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build(),
-                        CatPrioridad.builder().nombre("BAJA").color("bg-green-100 text-green-800").activo(true).createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build()
-                    ));
-                    System.out.println("✅ Catálogo de Prioridades inicializado.");
+                        catPrioridadRepository.saveAll(List.of(
+                                        CatPrioridad.builder().nombre("ALTA").color("bg-red-100 text-red-800")
+                                                        .activo(true).createdAt(LocalDateTime.now())
+                                                        .updatedAt(LocalDateTime.now()).build(),
+                                        CatPrioridad.builder().nombre("MEDIA").color("bg-yellow-100 text-yellow-800")
+                                                        .activo(true).createdAt(LocalDateTime.now())
+                                                        .updatedAt(LocalDateTime.now()).build(),
+                                        CatPrioridad.builder().nombre("BAJA").color("bg-green-100 text-green-800")
+                                                        .activo(true).createdAt(LocalDateTime.now())
+                                                        .updatedAt(LocalDateTime.now()).build()));
+                        System.out.println("✅ Catálogo de Prioridades inicializado.");
                 }
 
                 // 1. GERENCIAS Y MATERIAS
@@ -187,7 +193,7 @@ public class DataInitializer implements CommandLineRunner {
                 }
 
                 // 4. ÓRGANOS JURISDICCIONALES (¡LISTA AMPLIADA!)
-                    if (organoRepository.count() == 0) {
+                if (organoRepository.count() == 0) {
                         List<String> nombresOrganos = List.of(
                                         "Primera Sala del Tribunal Federal de Conciliación y Arbitraje",
                                         "Segunda Sala del Tribunal Federal de Conciliación y Arbitraje",
@@ -241,18 +247,17 @@ public class DataInitializer implements CommandLineRunner {
                                         "Mecanismo Alternativo de Mediación",
                                         "Órgano Especializado de Mecanismos Alternativos de Solución de Controversias de la FGR",
                                         // --- EL COMODÍN PARA LOS PENDIENTES ---
-                                        "POR DEFINIR / EN TURNO"
-                        );
+                                        "POR DEFINIR / EN TURNO");
 
                         List<OrganoJurisdiccional> organos = new ArrayList<>();
                         for (String nombre : nombresOrganos) {
-                                organos.add(OrganoJurisdiccional.builder().nombre(nombre).tipo("Órgano Judicial").sede("Varios").build());
+                                organos.add(OrganoJurisdiccional.builder().nombre(nombre).tipo("Órgano Judicial")
+                                                .sede("Varios").build());
                         }
 
                         organoRepository.saveAll(organos);
                         System.out.println("✅ Órganos Jurisdiccionales creados (Catálogo Real FINABIEN).");
                 }
-
 
                 // 5. CATÁLOGO DE ESTADOS
                 if (estadoRepository.count() == 0) {

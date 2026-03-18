@@ -15,9 +15,9 @@ import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoPresentadoRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.CatPrioridadRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
-import com.juridico.sistema_juridico.repository.Catalogos.CatPrioridadRepository;
 import com.juridico.sistema_juridico.service.NotificacionService;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.util.TerminoExcelExporter;
@@ -465,7 +465,7 @@ public class TerminosController {
 
     private void notificarCambioDeEtapa(Termino termino, EstatusTermino etapaAnterior, EstatusTermino nuevaEtapa,
             Usuario actor) {
-        
+
         // Validar que el término tenga un expediente para obtener la gerencia
         if (termino.getExpediente() == null) {
             System.out.println("No se pudo enviar notificación: El término no tiene un expediente asociado.");
@@ -479,7 +479,7 @@ public class TerminosController {
 
         List<Usuario> destinatarios = new ArrayList<>();
         Gerencia g = termino.getExpediente().getGerencia();
-        
+
         if (g == null) {
             System.out.println("No se pudo enviar notificación: El expediente no tiene una gerencia asociada.");
             return;
