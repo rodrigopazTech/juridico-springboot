@@ -2,8 +2,90 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("Abogados cargados");
 });
 
-
 let materiasUsuarioActual = [];
+let usuarioSeleccionadoId = null;
+
+// --- 1. LÓGICA DE MAESTRO - DETALLE ---
+
+function seleccionarAbogado(cardElement) {
+    // 1. Quitar estado activo de todas las tarjetas (Tonos rojizos ligeros)
+    document.querySelectorAll('.abogado-card').forEach(card => {
+        card.classList.remove('bg-red-50', 'border-red-100');
+        card.classList.add('border-transparent');
+    });
+
+    // 2. Poner estado activo a la tarjeta clickeada
+    cardElement.classList.add('bg-red-50', 'border-red-100');
+    cardElement.classList.remove('border-transparent');
+
+    // 3. Extraer datos de los atributos data-*
+    const id = cardElement.getAttribute('data-id');
+    const nombre = cardElement.getAttribute('data-nombre');
+    const email = cardElement.getAttribute('data-email');
+    const rol = cardElement.getAttribute('data-rol');
+    const gerenciaNombre = cardElement.getAttribute('data-gerencia-nombre');
+    const activo = cardElement.getAttribute('data-activo') === 'true';
+
+    const materiasStr = cardElement.getAttribute('data-materias-nombres');
+    const materiasNombres = materiasStr ? materiasStr.split('|') : [];
+
+    usuarioSeleccionadoId = id;
+
+    // 4. Ocultar estado vacío, mostrar detalle
+    document.getElementById('panel-vacio').classList.add('hidden');
+    const panelDetalle = document.getElementById('panel-detalle');
+    panelDetalle.classList.remove('hidden');
+
+    panelDetalle.classList.remove('animate-fade-in');
+    void panelDetalle.offsetWidth; // Trigger reflow
+    panelDetalle.classList.add('animate-fade-in');
+
+    // 5. Inyectar datos en el panel derecho
+    document.getElementById('det-avatar').innerText = nombre.charAt(0).toUpperCase();
+    document.getElementById('det-nombre').innerText = nombre;
+    document.getElementById('det-email').innerText = email;
+
+    // Badges rediseñados para verse bien sobre el fondo GOB-VERDE
+    let badgesHtml = `<span class="bg-white/10 border border-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">${rol}</span>`;
+    badgesHtml += `<span class="bg-white/10 border border-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fas fa-building mr-1"></i>${gerenciaNombre}</span>`;
+
+    if (activo) {
+        badgesHtml += `<span class="bg-green-500/20 border border-green-400/50 text-green-300 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fas fa-check-circle mr-1"></i>Activo</span>`;
+    } else {
+        badgesHtml += `<span class="bg-red-500/30 border border-red-400/50 text-red-300 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fas fa-ban mr-1"></i>Inactivo</span>`;
+    }
+
+    // Materias en tono Oro para resaltar sobre el fondo verde
+    materiasNombres.forEach(m => {
+        if (m.trim() !== '') {
+            badgesHtml += `<span class="bg-yellow-500/20 border border-yellow-500/50 text-yellow-300 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">${m}</span>`;
+        }
+    });
+
+    document.getElementById('det-badges').innerHTML = badgesHtml;
+
+    // 6. Configurar botones de acción
+    const btnEditar = document.getElementById('btn-editar');
+    const btnEstatus = document.getElementById('btn-estatus');
+
+    if (btnEditar) {
+        btnEditar.onclick = () => {
+            const gerenciaId = cardElement.getAttribute('data-gerencia-id');
+            const materiasIdsStr = cardElement.getAttribute('data-materias-ids');
+            const materiasIdsArray = materiasIdsStr ? materiasIdsStr.split(',').map(Number) : [];
+            editarUsuario(id, nombre, email, rol, gerenciaId, activo, materiasIdsArray);
+        };
+    }
+
+    if (btnEstatus) {
+        btnEstatus.innerHTML = activo ? '<i class="fas fa-ban mr-1"></i> Desactivar' : '<i class="fas fa-check-circle mr-1"></i> Activar';
+        btnEstatus.className = activo ? 'px-3 py-1.5 bg-white/10 hover:bg-red-500/80 rounded-lg text-sm font-bold transition-colors backdrop-blur-sm border border-white/10' : 'px-3 py-1.5 bg-white/10 hover:bg-green-500/80 rounded-lg text-sm font-bold transition-colors backdrop-blur-sm border border-white/10';
+        btnEstatus.onclick = () => confirmarCambioEstatus(id);
+    }
+    cambiarTabAbogado('casos');
+}
+
+// --- 2. LÓGICA DE MODALES (MANTENIDA Y ADAPTADA) ---
 
 function abrirModalUsuario() {
     document.getElementById('titulo-modal-usuario').innerHTML = '<i class="fas fa-user-plus mr-2"></i> Nuevo Abogado';
@@ -61,8 +143,8 @@ function cargarMateriasDeGerencia() {
                 const isChecked = materiasUsuarioActual.includes(m.id) ? 'checked' : '';
                 lista.innerHTML += `
                     <div class="flex items-center space-x-2">
-                        <input type="checkbox" name="materiasIds" value="${m.id}" id="mat-${m.id}" ${isChecked} class="rounded text-gob-guinda h-4 w-4 border-gray-300">
-                        <label for="mat-${m.id}" class="text-xs text-gray-700 cursor-pointer">${m.nombre}</label>
+                        <input type="checkbox" name="materiasIds" value="${m.id}" id="mat-${m.id}" ${isChecked} class="rounded text-gob-guinda h-4 w-4 border-gray-300 focus:ring-gob-oro">
+                        <label for="mat-${m.id}" class="text-xs text-gray-700 cursor-pointer select-none">${m.nombre}</label>
                     </div>`;
             });
         });
@@ -79,7 +161,7 @@ function editarUsuario(id, nombre, email, rol, gerenciaId, activo, materiasIdsAr
 
     const inputPass = document.getElementById('input-usuario-password');
     inputPass.required = false;
-    inputPass.placeholder = "Dejar en blanco para mantener";
+    inputPass.placeholder = "Dejar en blanco para mantener actual";
 
     materiasUsuarioActual = materiasIdsArray || [];
     actualizarFormularioPorRol();
@@ -95,8 +177,8 @@ function eliminarUsuarioDesdeModal() {
     const id = document.getElementById('input-usuario-id').value;
     if (!id) return;
     Swal.fire({
-        title: '¿Eliminar abogado?', text: "Acción irreversible.", icon: 'error',
-        showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Eliminar'
+        title: '¿Eliminar abogado?', text: "Esta acción no se puede deshacer.", icon: 'error',
+        showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) {
             window.location.href = `/abogados/eliminar/${id}`;
@@ -106,20 +188,160 @@ function eliminarUsuarioDesdeModal() {
 
 function confirmarCambioEstatus(id) {
     Swal.fire({
-        title: '¿Cambiar acceso?', icon: 'warning', showCancelButton: true,
-        confirmButtonColor: '#9D2449', confirmButtonText: 'Sí, cambiar'
+        title: '¿Cambiar acceso al sistema?',
+        text: 'El abogado perderá/recuperará acceso a la plataforma.',
+        icon: 'warning', showCancelButton: true,
+        confirmButtonColor: '#9D2449', confirmButtonText: 'Sí, cambiar', cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) window.location.href = `/abogados/toggle/${id}`;
     });
 }
+
+// --- 3. BUSCADOR EN TIEMPO REAL PARA TARJETAS ---
 
 document.addEventListener('DOMContentLoaded', () => {
     const search = document.getElementById('input-search-usuarios');
     if (search) {
         search.addEventListener('keyup', function () {
             const filter = this.value.toLowerCase();
-            const rows = document.getElementById('tabla-usuarios-body').getElementsByTagName('tr');
-            for (let row of rows) row.style.display = row.textContent.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+            const cards = document.querySelectorAll('.abogado-card');
+
+            cards.forEach(card => {
+                const nombre = card.getAttribute('data-nombre').toLowerCase();
+                const email = card.getAttribute('data-email').toLowerCase();
+                const rol = card.getAttribute('data-rol').toLowerCase();
+
+                if (nombre.includes(filter) || email.includes(filter) || rol.includes(filter)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
         });
     }
 });
+
+// --- 4. NAVEGACIÓN DE PESTAÑAS (DETALLE) ---
+
+function cambiarTabAbogado(tabName) {
+    // 1. Ocultar todos los contenidos de las pestañas
+    document.querySelectorAll('.tab-abogado-content').forEach(el => {
+        el.classList.add('hidden');
+        el.classList.remove('block');
+    });
+
+    // 2. Mostrar el contenido de la pestaña seleccionada
+    const contenidoActivo = document.getElementById('tab-content-' + tabName);
+    if (contenidoActivo) {
+        contenidoActivo.classList.remove('hidden');
+        contenidoActivo.classList.add('block');
+    }
+
+    // 3. Resetear el diseño de todos los botones de las pestañas
+    document.querySelectorAll('.tab-abogado').forEach(btn => {
+        btn.classList.remove('border-gob-guinda', 'text-gob-guinda', 'font-bold');
+        btn.classList.add('border-transparent', 'text-gray-500', 'font-medium');
+    });
+
+    // 4. Activar el diseño del botón presionado
+    const botonActivo = document.getElementById('tab-btn-' + tabName);
+    if (botonActivo) {
+        botonActivo.classList.remove('border-transparent', 'text-gray-500', 'font-medium');
+        botonActivo.classList.add('border-gob-guinda', 'text-gob-guinda', 'font-bold');
+    }
+
+    // Aquí en el futuro agregaremos una llamada Fetch/AJAX para traer los datos:
+    // si (tabName === 'casos') cargarCasosAbogado(usuarioSeleccionadoId);
+}// --- 4. NAVEGACIÓN Y CARGA DE DATOS (PESTAÑAS) ---
+
+function cambiarTabAbogado(tabName) {
+    // 1. Ocultar todos y mostrar el activo
+    document.querySelectorAll('.tab-abogado-content').forEach(el => { el.classList.add('hidden'); el.classList.remove('block'); });
+    const contenidoActivo = document.getElementById('tab-content-' + tabName);
+    if (contenidoActivo) { contenidoActivo.classList.remove('hidden'); contenidoActivo.classList.add('block'); }
+
+    // 2. Estilos de los botones
+    document.querySelectorAll('.tab-abogado').forEach(btn => {
+        btn.classList.remove('border-gob-guinda', 'text-gob-guinda', 'font-bold');
+        btn.classList.add('border-transparent', 'text-gray-500', 'font-medium');
+    });
+    const botonActivo = document.getElementById('tab-btn-' + tabName);
+    if (botonActivo) {
+        botonActivo.classList.remove('border-transparent', 'text-gray-500', 'font-medium');
+        botonActivo.classList.add('border-gob-guinda', 'text-gob-guinda', 'font-bold');
+    }
+
+    // 3. CARGA DINÁMICA DE DATOS SEGÚN LA PESTAÑA
+    if (!usuarioSeleccionadoId) return;
+
+    if (tabName === 'casos') {
+        cargarCasosAbogado(usuarioSeleccionadoId);
+    } else if (tabName === 'terminos') {
+        cargarAgendaAbogado(usuarioSeleccionadoId);
+    }
+}
+
+function cargarCasosAbogado(idUsuario) {
+    const tbody = document.getElementById('tbody-casos');
+    document.getElementById('container-tabla-casos').classList.add('hidden');
+    document.getElementById('empty-casos').classList.add('hidden');
+    document.getElementById('loading-casos').classList.remove('hidden');
+
+    fetch(`/abogados/api/${idUsuario}/casos`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loading-casos').classList.add('hidden');
+            if (data.length === 0) {
+                document.getElementById('empty-casos').classList.remove('hidden');
+            } else {
+                tbody.innerHTML = '';
+                data.forEach(caso => {
+                    // Colores del estatus
+                    let estatusClass = caso.estatus === 'Activo' ? 'bg-green-100 text-green-800' :
+                        caso.estatus === 'En Espera' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-200 text-gray-700';
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gob-verde transition-colors">
+                            <td class="px-6 py-4">
+                                <p class="font-bold text-slate-800">${caso.numero}</p>
+                                <p class="text-xs text-slate-500">${caso.asunto}</p>
+                            </td>
+                            <td class="px-6 py-4 text-slate-700 font-medium">${caso.cliente}</td>
+                            <td class="px-6 py-4"><span class="${estatusClass} text-xs font-bold px-2.5 py-1 rounded-md border border-black/5">${caso.estatus}</span></td>
+                            <td class="px-6 py-4 text-right text-slate-600 font-medium">${caso.fecha}</td>
+                        </tr>
+                    `;
+                });
+                document.getElementById('container-tabla-casos').classList.remove('hidden');
+            }
+        }).catch(err => console.error(err));
+}
+
+function cargarAgendaAbogado(idUsuario) {
+    const tbody = document.getElementById('tbody-terminos');
+    document.getElementById('container-tabla-terminos').classList.add('hidden');
+    document.getElementById('empty-terminos').classList.add('hidden');
+    document.getElementById('loading-terminos').classList.remove('hidden');
+
+    fetch(`/abogados/api/${idUsuario}/agenda`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loading-terminos').classList.add('hidden');
+            if (data.length === 0) {
+                document.getElementById('empty-terminos').classList.remove('hidden');
+            } else {
+                tbody.innerHTML = '';
+                data.forEach(item => {
+                    let icon = item.tipo === 'Audiencia' ? '<i class="fas fa-gavel text-gob-oro mr-2"></i>' : '<i class="fas fa-hourglass-half text-gob-guinda mr-2"></i>';
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gob-verde transition-colors">
+                            <td class="px-6 py-4 font-bold text-slate-800">${icon} ${item.tipo}</td>
+                            <td class="px-6 py-4 text-slate-600">${item.descripcion}</td>
+                            <td class="px-6 py-4 font-medium text-red-600">${item.fecha}</td>
+                        </tr>
+                    `;
+                });
+                document.getElementById('container-tabla-terminos').classList.remove('hidden');
+            }
+        }).catch(err => console.error(err));
+}

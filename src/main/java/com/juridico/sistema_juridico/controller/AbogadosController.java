@@ -93,4 +93,53 @@ public class AbogadosController {
         redirectAttrs.addFlashAttribute("tipo", "success");
         return "redirect:/abogados";
     }
+
+    // ====================================================================
+    // --- APIS PARA EL PANEL DE DETALLE (MAESTRO-DETALLE) ---
+    // ====================================================================
+
+    @GetMapping("/api/{id}/casos")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<List<java.util.Map<String, Object>>> obtenerCasosMock(
+            @PathVariable("id") Integer id) {
+
+        List<java.util.Map<String, Object>> casosMock = new java.util.ArrayList<>();
+
+        // Simulamos que si el ID es par tiene datos, si es impar no tiene (para probar
+        // estados vacíos)
+        if (id % 2 == 0) {
+            casosMock.add(java.util.Map.of(
+                    "numero", "C-2023-015", "asunto", "Adquisición TechCorp",
+                    "cliente", "Innovate Solutions", "estatus", "Activo", "fecha", "25/10/2024"));
+            casosMock.add(java.util.Map.of(
+                    "numero", "C-2023-021", "asunto", "Patente de Software",
+                    "cliente", "Quantum Leap Inc.", "estatus", "Activo", "fecha", "15/11/2024"));
+            casosMock.add(java.util.Map.of(
+                    "numero", "C-2022-108", "asunto", "Litigio Contractual",
+                    "cliente", "Global Logistics", "estatus", "En Espera", "fecha", "-"));
+            casosMock.add(java.util.Map.of(
+                    "numero", "C-2021-095", "asunto", "Reestructuración Fiscal",
+                    "cliente", "Alpha Investments", "estatus", "Cerrado", "fecha", "-"));
+        }
+
+        return org.springframework.http.ResponseEntity.ok(casosMock);
+    }
+
+    @GetMapping("/api/{id}/agenda")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<List<java.util.Map<String, Object>>> obtenerAgendaMock(
+            @PathVariable("id") Integer id) {
+
+        List<java.util.Map<String, Object>> agendaMock = new java.util.ArrayList<>();
+
+        if (id % 2 == 0) {
+            agendaMock.add(java.util.Map.of(
+                    "tipo", "Audiencia", "descripcion", "Desahogo de pruebas (C-2023-015)", "fecha",
+                    "25/10/2024 10:00 AM"));
+            agendaMock.add(java.util.Map.of(
+                    "tipo", "Término", "descripcion", "Presentación de alegatos", "fecha", "30/10/2024 23:59 PM"));
+        }
+
+        return org.springframework.http.ResponseEntity.ok(agendaMock);
+    }
 }

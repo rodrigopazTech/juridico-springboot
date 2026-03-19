@@ -14,11 +14,6 @@
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
     <div class="p-6 sm:ml-64 pt-24">
-        <div class="mb-8">
-            <h1 class="text-4xl font-extrabold text-gob-guinda font-headings">Catálogos Generales</h1>
-            <p class="text-gray-500 mt-1">Configuración de unidades, órganos y parámetros globales.</p>
-        </div>
-
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <button onclick="cambiarTab('gerencias')" id="card-gerencias" class="bg-white p-6 rounded-2xl border-2 border-transparent shadow-sm hover:shadow-md hover:border-gob-oro/50 transition-all flex items-center gap-4 text-left group">
                 <div class="p-4 bg-gob-guinda/10 text-gob-guinda rounded-xl text-2xl group-hover:scale-110 transition-transform">
@@ -52,20 +47,20 @@
         </div>
 
         <div id="tab-gerencias" class="tab-content block animate-fade-in">
-            <div th:replace="~{fragments/usuarios/tabla-gerencias :: tabla}"></div>
+            <div th:replace="~{fragments/catalogos/tabla-gerencias :: tabla}"></div>
         </div>
         <div id="tab-organos" class="tab-content hidden animate-fade-in">
-            <div th:replace="~{fragments/usuarios/tabla-organos :: tabla}"></div>
+            <div th:replace="~{fragments/catalogos/tabla-organos :: tabla}"></div>
         </div>
         <div id="tab-tipos-audiencia" class="tab-content hidden animate-fade-in">
-            <div th:replace="~{fragments/usuarios/tabla-tipos-audiencia :: tabla}"></div>
+            <div th:replace="~{fragments/catalogos/tabla-tipos-audiencia :: tabla}"></div>
         </div>
     </div>
 
-    <div th:replace="~{fragments/usuarios/modal-gerencia :: modal}"></div>
-    <div th:replace="~{fragments/usuarios/modal-materias :: modal}"></div>
-    <div th:replace="~{fragments/usuarios/modal-organo :: modal}"></div>
-    <div th:replace="~{fragments/usuarios/modal-tipo-audiencia :: modal}"></div>
+    <div th:replace="~{fragments/catalogos/modal-gerencia :: modal}"></div>
+    <div th:replace="~{fragments/catalogos/modal-materias :: modal}"></div>
+    <div th:replace="~{fragments/catalogos/modal-organo :: modal}"></div>
+    <div th:replace="~{fragments/catalogos/modal-tipo-audiencia :: modal}"></div>
 
     <script th:src="@{/js/catalogos.js}"></script>
     <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
