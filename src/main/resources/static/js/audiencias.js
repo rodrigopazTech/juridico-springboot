@@ -279,3 +279,93 @@ function confirmarEliminarAudiencia(id) {
         }
     });
 }
+
+// ==========================================
+// 📅 LÓGICA DEL MINI-CALENDARIO
+// ==========================================
+
+const miniCalendarState = {
+    currentDate: new Date(),
+    selectedDate: new Date(),
+    names: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
+    events: [] // Para los puntos indicadores (opcional por ahora)
+};
+
+function initMiniCalendar() {
+    const prevBtn = document.getElementById('miniPrev');
+    const nextBtn = document.getElementById('miniNext');
+
+    if (prevBtn && nextBtn) {
+        prevBtn.onclick = () => {
+            miniCalendarState.currentDate.setMonth(miniCalendarState.currentDate.getMonth() - 1);
+            renderMiniCalendar();
+        };
+        nextBtn.onclick = () => {
+            miniCalendarState.currentDate.setMonth(miniCalendarState.currentDate.getMonth() + 1);
+            renderMiniCalendar();
+        };
+    }
+
+    renderMiniCalendar();
+}
+
+function renderMiniCalendar() {
+    const grid = document.getElementById('miniCalendarGrid');
+    const monthLabel = document.getElementById('miniCalendarMonth');
+    if (!grid || !monthLabel) return;
+
+    grid.innerHTML = '';
+    const year = miniCalendarState.currentDate.getFullYear();
+    const month = miniCalendarState.currentDate.getMonth();
+
+    monthLabel.innerText = `${miniCalendarState.names[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // Celdas vacías
+    for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'mini-day-cell mini-empty';
+        grid.appendChild(emptyCell);
+    }
+
+    // Días del mes
+    const today = new Date();
+    for (let day = 1; day <= daysInMonth; day++) {
+        const cell = document.createElement('div');
+        cell.className = 'mini-day-cell';
+        cell.innerText = day;
+
+        const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+        if (isToday) cell.classList.add('mini-day-today');
+
+        const isSelected = day === miniCalendarState.selectedDate.getDate() && 
+                             month === miniCalendarState.selectedDate.getMonth() && 
+                             year === miniCalendarState.selectedDate.getFullYear();
+        if (isSelected) cell.classList.add('mini-day-selected');
+
+        cell.onclick = () => {
+            miniCalendarState.selectedDate = new Date(year, month, day);
+            
+            // Actualizar visualmente
+            renderMiniCalendar();
+            
+            // Filtrar la tabla de audiencias por esta fecha
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            console.log("Filtrar por fecha:", dateStr);
+            
+            // Redirigir con el filtro de fecha (backend lo maneja como keyword o keyword de fecha)
+            const url = new URL(window.location.href);
+            url.searchParams.set('keyword', dateStr);
+            window.location.href = url.toString();
+        };
+
+        grid.appendChild(cell);
+    }
+}
+
+// Iniciar componentes al cargar
+document.addEventListener('DOMContentLoaded', () => {
+    initMiniCalendar();
+});
