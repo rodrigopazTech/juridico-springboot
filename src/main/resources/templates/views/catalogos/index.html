@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-
 <head>
     <meta charset="UTF-8" />
     <title>Catálogos | Sistema Jurídico</title>
@@ -9,16 +8,10 @@
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
+<body class="bg-gray-50 text-gray-800 font-sans">
 
-<body class="bg-gray-50 text-gray-800 font-sans overflow-x-hidden">
-
-    <!-- Sidebar Fragment -->
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
-
-    <div class="sm:ml-64 flex flex-col min-h-screen">
-
-        <!-- Navbar Fragment -->
-        <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
     <div class="p-6 sm:ml-64 pt-24">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -32,30 +25,26 @@
                 </div>
             </button>
 
-                <button onclick="cambiarTab('organos')" id="card-organos"
-                    class="bg-white p-6 rounded-2xl border-2 border-transparent shadow-sm hover:shadow-md hover:border-gob-oro/50 transition-all flex items-center gap-4 text-left group">
-                    <div
-                        class="p-4 bg-blue-50 text-blue-600 rounded-xl text-2xl group-hover:scale-110 transition-transform">
-                        <i class="fas fa-university"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-gray-800 text-lg">Órganos</h4>
-                        <p class="text-xs text-gray-500">Juzgados y Tribunales</p>
-                    </div>
-                </button>
+            <button onclick="cambiarTab('organos')" id="card-organos" class="bg-white p-6 rounded-2xl border-2 border-transparent shadow-sm hover:shadow-md hover:border-gob-oro/50 transition-all flex items-center gap-4 text-left group">
+                <div class="p-4 bg-blue-50 text-blue-600 rounded-xl text-2xl group-hover:scale-110 transition-transform">
+                    <i class="fas fa-university"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-800 text-lg">Órganos</h4>
+                    <p class="text-xs text-gray-500">Juzgados y Tribunales</p>
+                </div>
+            </button>
 
-                <button onclick="cambiarTab('tipos-audiencia')" id="card-tipos-audiencia"
-                    class="bg-white p-6 rounded-2xl border-2 border-transparent shadow-sm hover:shadow-md hover:border-gob-oro/50 transition-all flex items-center gap-4 text-left group">
-                    <div
-                        class="p-4 bg-amber-50 text-amber-600 rounded-xl text-2xl group-hover:scale-110 transition-transform">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-gray-800 text-lg">Tipos Audiencia</h4>
-                        <p class="text-xs text-gray-500">Clasificación de eventos</p>
-                    </div>
-                </button>
-            </div>
+            <button onclick="cambiarTab('tipos-audiencia')" id="card-tipos-audiencia" class="bg-white p-6 rounded-2xl border-2 border-transparent shadow-sm hover:shadow-md hover:border-gob-oro/50 transition-all flex items-center gap-4 text-left group">
+                <div class="p-4 bg-amber-50 text-amber-600 rounded-xl text-2xl group-hover:scale-110 transition-transform">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-800 text-lg">Tipos Audiencia</h4>
+                    <p class="text-xs text-gray-500">Clasificación de eventos</p>
+                </div>
+            </button>
+        </div>
 
         <div id="tab-gerencias" class="tab-content block animate-fade-in">
             <div th:replace="~{fragments/catalogos/tabla-gerencias :: tabla}"></div>
@@ -76,5 +65,4 @@
     <script th:src="@{/js/catalogos.js}"></script>
     <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
 </body>
-
 </html>
