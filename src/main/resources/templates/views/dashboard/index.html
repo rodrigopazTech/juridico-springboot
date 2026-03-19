@@ -38,12 +38,18 @@
     </style>
 </head>
 
-<body class="bg-gray-100 text-gray-800 font-sans">
+<body class="bg-gray-100 text-gray-800 font-sans overflow-x-hidden">
 
+    <!-- Sidebar Fragment -->
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <div class="p-4 sm:ml-64 pt-20">
+    <div class="sm:ml-64 flex flex-col min-h-screen">
+        
+        <!-- Navbar Fragment -->
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <!-- Main Content with padding to avoid overlapping -->
+        <main class="p-4 md:p-6 flex-1 animate-fade-in pt-24">
 
         <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 border-b pb-4">
 
@@ -140,8 +146,7 @@
                 </div>
             </div>
 
-        </div>
-
+        </main>
     </div>
 
     <script th:inline="javascript">

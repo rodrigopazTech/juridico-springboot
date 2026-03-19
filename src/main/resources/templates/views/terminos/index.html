@@ -20,11 +20,18 @@
     </style>
 </head>
 
-<body class="bg-gray-100 text-gray-800 font-sans">
+<body class="bg-gray-100 text-gray-800 font-sans overflow-x-hidden">
 
+    <!-- Sidebar Fragment -->
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
-    <div class="p-4 sm:ml-64 pt-20">
+
+    <div class="sm:ml-64 flex flex-col min-h-screen">
+        
+        <!-- Navbar Fragment -->
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <!-- Main Content with padding to avoid overlapping -->
+        <main class="p-4 md:p-6 flex-1 animate-fade-in pt-24">
 
 
 
@@ -39,6 +46,7 @@
 
         <div th:replace="~{fragments/terminos/tabla :: tabla-resultados}"></div>
 
+        </main>
     </div>
 
     <div th:replace="~{fragments/terminos/modal-nuevo-termino :: modal}"></div>

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
 <head>
@@ -10,13 +10,19 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 
-<body class="bg-gray-100 text-gray-800 font-sans">
+<body class="bg-gray-100 text-gray-800 font-sans overflow-x-hidden">
 
+    <!-- Sidebar Fragment -->
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <div class="p-4 sm:ml-64 pt-20">
+    <div class="sm:ml-64 flex flex-col min-h-screen">
         
+        <!-- Navbar Fragment -->
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <!-- Main Content with padding to avoid overlapping -->
+        <main class="p-4 md:p-6 flex-1 animate-fade-in pt-24">
+
 
         <!-- Tarjetas de KPIs (Nuevo) -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -67,6 +73,7 @@
         <div th:replace="~{fragments/audiencias/barra-busqueda :: barra}"></div>
         <div th:replace="~{fragments/audiencias/barra-filtros :: filtros}"></div>
         <div th:replace="~{fragments/audiencias/tabla :: tabla}"></div>
+        </main>
     </div>
 
     <div th:replace="~{fragments/audiencias/modals :: modals}"></div>

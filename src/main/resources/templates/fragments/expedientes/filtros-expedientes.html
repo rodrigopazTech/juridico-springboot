@@ -1,89 +1,62 @@
-<div th:fragment="filtros" class="bg-white p-4 rounded-lg shadow-sm mb-8 border-t border-gob-oro">
-
-    <form th:action="@{/expedientes}" method="get" id="formFiltros">
-
+<div th:fragment="filtros" class="mb-10">
+    <form th:action="@{/expedientes}" method="get" id="formFiltros" class="flex flex-wrap items-center gap-4">
         <input type="hidden" name="keyword" th:value="${keyword}">
 
-        <div class="flex justify-between items-center mb-3">
-            <h3 class="text-xs font-bold text-gob-oro uppercase">
-                <i class="fas fa-filter mr-1"></i> Filtros Disponibles
-            </h3>
-
-            <div class="flex gap-2">
-                <a th:href="@{/expedientes}" class="text-xs text-gray-400 hover:text-gray-600 underline">Limpiar</a>
-                <button type="submit"
-                    class="bg-gob-guinda text-white text-xs px-3 py-1 rounded hover:bg-gob-guinda-claro">
-                    Aplicar
-                </button>
-            </div>
+        <div class="flex items-center gap-2 text-gob-guinda/40 mr-2">
+            <i class="fas fa-filter text-xs"></i>
+            <span class="text-[10px] font-extrabold uppercase tracking-widest">Filtrar por:</span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-
-            <div th:if="${rolActual.name() == 'DIRECCION' or rolActual.name() == 'SUBDIRECCION'}">
-                <select name="gerenciaId"
-                    class="w-full border border-gray-300 rounded p-2 text-xs focus:border-gob-guinda outline-none bg-gray-50">
-                    <option value="">Gerencia: Todas</option>
-                    <option th:each="g : ${listaGerencias}" th:value="${g.id}" th:text="${g.nombre}"
-                        th:selected="${param.gerenciaId != null and param.gerenciaId[0] == g.id.toString()}"></option>
-                </select>
-            </div>
-
-            <div
-                th:if="${rolActual.name() == 'DIRECCION' or rolActual.name() == 'SUBDIRECCION' or rolActual.name() == 'GERENTE'}">
-                <select name="materiaId"
-                    class="w-full border border-gray-300 rounded p-2 text-xs focus:border-gob-guinda outline-none bg-gray-50">
-                    <option value="">Materia: Todas</option>
-                    <option th:each="m : ${listaMaterias}" th:value="${m.id}" th:text="${m.nombre}"
-                        th:selected="${param.materiaId != null and param.materiaId[0] == m.id.toString()}"></option>
-                </select>
-            </div>
-
-            <div th:if="${rolActual.name() != 'ABOGADO'}">
-                <select name="abogadoId"
-                    class="w-full border border-gray-300 rounded p-2 text-xs focus:border-gob-guinda outline-none bg-gray-50">
-                    <option value="">Abogado: Todos</option>
-                    <option th:each="a : ${listaAbogados}" th:value="${a.id}" th:text="${a.nombreCompleto}"
-                        th:selected="${param.abogadoId != null and param.abogadoId[0] == a.id.toString()}"></option>
-                </select>
-            </div>
-
-            <div>
-                <select name="etapa"
-                    class="w-full border border-gray-300 rounded p-2 text-xs focus:border-gob-guinda outline-none">
-                    <option value="">Etapa: Todas</option>
-                    <option th:each="e : ${listaEtapas}" th:value="${e}" th:text="${e}"
-                        th:selected="${param.etapa != null and param.etapa[0] == e.name()}"></option>
-                </select>
-            </div>
-
-            <div>
-                <select name="etiquetaId"
-                    class="w-full border border-gray-300 rounded p-2 text-xs focus:border-gob-guinda outline-none">
-                    <option value="">Etiqueta: Todas</option>
-                    <option th:each="et : ${etiquetas}" th:value="${et.id}" th:text="${et.nombre}"
-                        th:selected="${paramEtiquetaId != null and paramEtiquetaId == et.id}"></option>
-                </select>
-            </div>
-
-            <div>
-                <select name="prioridadId"
-                    class="w-full border border-gray-300 rounded p-2 text-xs focus:border-gob-guinda outline-none">
-                    <option value="">Prioridad: Todas</option>
-                    <option th:each="p : ${listaPrioridades}" th:value="${p.id}" th:text="${p.nombre}"
-                        th:selected="${param.prioridadId != null and param.prioridadId[0] == p.id.toString()}"></option>
-                </select>
-            </div>
-
-            <div>
-                <select name="tipoId"
-                    class="w-full border border-gray-300 rounded p-2 text-xs focus:border-gob-guinda outline-none">
-                    <option value="">Tipo: Todos</option>
-                    <option th:each="t : ${listaTipos}" th:value="${t.id}" th:text="${t.nombre}"
-                        th:selected="${param.tipoId != null and param.tipoId[0] == t.id.toString()}"></option>
-                </select>
-            </div>
-
+        <!-- Gerencia chip -->
+        <div th:if="${rolActual != null and (rolActual.name() == 'ADMIN' or rolActual.name() == 'DIRECCION' or rolActual.name() == 'SUBDIRECCION')}"
+             class="filter-chip group">
+            <i class="fas fa-building text-gob-oro/50 group-hover:text-gob-oro transition-colors"></i>
+            <select name="gerenciaId" onchange="this.form.submit()">
+                <option value="">Gerencia (Todas)</option>
+                <option th:each="g : ${listaGerencias}" th:value="${g.id}" th:text="${g.nombre}"
+                        th:selected="${param.gerenciaId != null and #arrays.length(param.gerenciaId) > 0 and param.gerenciaId[0] == #strings.toString(g.id)}"></option>
+            </select>
+            <i class="fas fa-chevron-down chip-icon"></i>
         </div>
+
+        <!-- Materia chip -->
+        <div th:if="${rolActual != null and rolActual.name() != 'ABOGADO'}" class="filter-chip group">
+            <i class="fas fa-gavel text-gob-oro/50 group-hover:text-gob-oro transition-colors"></i>
+            <select name="materiaId" onchange="this.form.submit()">
+                <option value="">Materia (Todas)</option>
+                <option th:each="m : ${listaMaterias}" th:value="${m.id}" th:text="${m.nombre}"
+                        th:selected="${param.materiaId != null and #arrays.length(param.materiaId) > 0 and param.materiaId[0] == #strings.toString(m.id)}"></option>
+            </select>
+            <i class="fas fa-chevron-down chip-icon"></i>
+        </div>
+
+        <!-- Abogado chip -->
+        <div th:if="${rolActual != null and rolActual.name() != 'ABOGADO'}" class="filter-chip group">
+            <i class="fas fa-user-tie text-gob-oro/50 group-hover:text-gob-oro transition-colors"></i>
+            <select name="abogadoId" onchange="this.form.submit()">
+                <option value="">Abogado (Todos)</option>
+                <option th:each="a : ${listaAbogados}" th:value="${a.id}" th:text="${a.nombreCompleto}"
+                        th:selected="${param.abogadoId != null and #arrays.length(param.abogadoId) > 0 and param.abogadoId[0] == #strings.toString(a.id)}"></option>
+            </select>
+            <i class="fas fa-chevron-down chip-icon"></i>
+        </div>
+
+        <!-- Prioridad chip -->
+        <div class="filter-chip group">
+            <i class="fas fa-layer-group text-gob-oro/50 group-hover:text-gob-oro transition-colors"></i>
+            <select name="prioridadId" onchange="this.form.submit()">
+                <option value="">Prioridad (Todas)</option>
+                <option th:each="p : ${listaPrioridades}" th:value="${p.id}" th:text="${p.nombre}"
+                        th:selected="${param.prioridadId != null and #arrays.length(param.prioridadId) > 0 and param.prioridadId[0] == #strings.toString(p.id)}"></option>
+            </select>
+            <i class="fas fa-chevron-down chip-icon"></i>
+        </div>
+
+        <!-- Limpiar filtros -->
+        <a th:href="@{/expedientes}"
+           class="ml-auto text-[10px] text-gray-400 hover:text-gob-guinda font-bold uppercase tracking-widest transition-all p-2 hover:bg-gob-guinda/5 rounded-lg flex items-center gap-2">
+            <i class="fas fa-redo-alt text-[9px]"></i>
+            Limpiar Filtros
+        </a>
     </form>
 </div>

@@ -1,49 +1,62 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8" />
     <title>Mis Tareas | Sistema Jurídico</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans">
 
+<body class="bg-gray-50 text-gray-800 font-sans overflow-x-hidden">
+
+    <!-- Sidebar Fragment -->
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-  <div class="p-6 sm:ml-64 pt-24">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-4xl font-extrabold text-gob-guinda font-headings">Mis Tareas</h1>
-        <button onclick="abrirModalTarea()" class="bg-gob-guinda text-white px-5 py-2.5 rounded-full font-bold shadow-lg hover:bg-gob-guinda-dark transition-all flex items-center gap-2">
-            <i class="fas fa-plus-circle"></i> Nueva tarea
-        </button>
-    </div>
-
-    <div class="mb-10">
-        <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2 uppercase tracking-wider">
-            <i class="fas fa-thumbtack text-gob-oro"></i> Recordatorios Próximos
-        </h2>
-        <div th:replace="~{fragments/tareas/grid-recordatorios :: grid}"></div>
-    </div>
-
-    <div>
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-bold text-gray-700 flex items-center gap-2 uppercase tracking-wider">
-                <i class="fas fa-check-double text-gob-oro"></i> Pendientes de Trabajo
-            </h2>
-            <div class="flex gap-2 bg-gray-100 p-1 rounded-lg text-xs font-bold text-gray-500">
-                <button onclick="filtrarTareas('todas', this)" class="filtro-btn px-3 py-1 bg-white rounded shadow-sm text-gob-guinda transition-colors">Todas</button>
-                <button onclick="filtrarTareas('pendiente', this)" class="filtro-btn px-3 py-1 hover:text-gob-guinda transition-colors">Pendientes</button>
-                <button onclick="filtrarTareas('completada', this)" class="filtro-btn px-3 py-1 hover:text-gob-guinda transition-colors">Completadas</button>
-            </div>
-        </div>
+    <div class="sm:ml-64 flex flex-col min-h-screen">
         
-        <div th:replace="~{fragments/tareas/lista-tareas-completa :: lista}"></div>
+        <!-- Navbar Fragment -->
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <!-- Main Content with padding to avoid overlapping -->
+        <main class="p-4 md:p-6 flex-1 animate-fade-in pt-24">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-4xl font-extrabold text-gob-guinda font-headings">Mis Tareas</h1>
+            <button onclick="abrirModalTarea()"
+                class="bg-gob-guinda text-white px-5 py-2.5 rounded-full font-bold shadow-lg hover:bg-gob-guinda-dark transition-all flex items-center gap-2">
+                <i class="fas fa-plus-circle"></i> Nueva tarea
+            </button>
+        </div>
+
+        <div class="mb-10">
+            <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2 uppercase tracking-wider">
+                <i class="fas fa-thumbtack text-gob-oro"></i> Recordatorios Próximos
+            </h2>
+            <div th:replace="~{fragments/tareas/grid-recordatorios :: grid}"></div>
+        </div>
+
+        <div>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-gray-700 flex items-center gap-2 uppercase tracking-wider">
+                    <i class="fas fa-check-double text-gob-oro"></i> Pendientes de Trabajo
+                </h2>
+                <div class="flex gap-2 bg-gray-100 p-1 rounded-lg text-xs font-bold text-gray-500">
+                    <button onclick="filtrarTareas('todas', this)"
+                        class="filtro-btn px-3 py-1 bg-white rounded shadow-sm text-gob-guinda transition-colors">Todas</button>
+                    <button onclick="filtrarTareas('pendiente', this)"
+                        class="filtro-btn px-3 py-1 hover:text-gob-guinda transition-colors">Pendientes</button>
+                    <button onclick="filtrarTareas('completada', this)"
+                        class="filtro-btn px-3 py-1 hover:text-gob-guinda transition-colors">Completadas</button>
+                </div>
+            </div>
+
+            <div th:replace="~{fragments/tareas/lista-tareas-completa :: lista}"></div>
+        </div>
+        </main>
     </div>
-</div>
-<script th:src="@{/js/tareas.js}"></script>
+    <script th:src="@{/js/tareas.js}"></script>
     <div th:replace="~{fragments/tareas/modal-recordatorio :: modal}"></div>
 
     <script>
@@ -60,4 +73,5 @@
         function cerrarModalRecordatorio() { document.getElementById('modal-recordatorio').classList.add('hidden'); }
     </script>
 </body>
+
 </html>
