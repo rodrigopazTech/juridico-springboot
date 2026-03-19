@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" th:href="@{/css/semantic-badges.css}">
 
-   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/styles/choices.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/styles/choices.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/scripts/choices.min.js"></script>
 </head>
 
@@ -19,7 +19,7 @@
 
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
     <div th:replace="~{fragments/navbar :: navbar}"></div>
-    <div class="p-4 sm:ml-64 pt-20">
+    <div class="p-4 sm:ml-64" style="padding-top: 100px !important;">
         <div class="container mx-auto px-4">
             <div th:replace="~{fragments/expedientes/encabezado-detalle :: encabezado(${expediente})}"></div>
 

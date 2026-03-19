@@ -16,63 +16,63 @@
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
 
     <div class="sm:ml-64 flex flex-col min-h-screen">
-        
+
         <!-- Navbar Fragment -->
         <div th:replace="~{fragments/navbar :: navbar}"></div>
 
         <!-- Main Content with padding to avoid overlapping -->
-        <main class="p-4 md:p-6 flex-1 animate-fade-in pt-24">
+        <main class="p-4 md:p-6 flex-1 animate-fade-in" style="padding-top: 100px !important;">
 
 
-        <!-- Tarjetas de KPIs (Nuevo) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white p-4 rounded shadow border-l-4 border-gob-guinda flex items-center">
-                <div class="p-3 bg-red-100 rounded-full mr-4">
-                    <i class="fas fa-list-check text-gob-guinda"></i>
+            <!-- Tarjetas de KPIs (Nuevo) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded shadow border-l-4 border-gob-guinda flex items-center">
+                    <div class="p-3 bg-red-100 rounded-full mr-4">
+                        <i class="fas fa-list-check text-gob-guinda"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase text-gray-500 font-bold">Total</p>
+                        <h3 class="text-2xl font-bold" th:text="${totalAudiencias}">0</h3>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-xs uppercase text-gray-500 font-bold">Total</p>
-                    <h3 class="text-2xl font-bold" th:text="${totalAudiencias}">0</h3>
+                <div class="bg-white p-4 rounded shadow border-l-4 border-gob-oro flex items-center">
+                    <div class="p-3 bg-yellow-100 rounded-full mr-4">
+                        <i class="fas fa-calendar-alt text-gob-oro"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase text-gray-500 font-bold">Pendientes</p>
+                        <h3 class="text-2xl font-bold"
+                            th:text="${kpisAudiencias[T(com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia).PENDIENTE]}">
+                            0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded shadow border-l-4 border-blue-500 flex items-center">
+                    <div class="p-3 bg-blue-100 rounded-full mr-4">
+                        <i class="fas fa-file-signature text-blue-500"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase text-gray-500 font-bold">Con Acta</p>
+                        <h3 class="text-2xl font-bold"
+                            th:text="${kpisAudiencias[T(com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia).CON_ACTA]}">
+                            0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded shadow border-l-4 border-green-600 flex items-center">
+                    <div class="p-3 bg-green-100 rounded-full mr-4">
+                        <i class="fas fa-check-circle text-green-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase text-gray-500 font-bold">Concluidas</p>
+                        <h3 class="text-2xl font-bold"
+                            th:text="${kpisAudiencias[T(com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia).CONCLUIDA]}">
+                            0</h3>
+                    </div>
                 </div>
             </div>
-            <div class="bg-white p-4 rounded shadow border-l-4 border-gob-oro flex items-center">
-                <div class="p-3 bg-yellow-100 rounded-full mr-4">
-                    <i class="fas fa-calendar-alt text-gob-oro"></i>
-                </div>
-                <div>
-                    <p class="text-xs uppercase text-gray-500 font-bold">Pendientes</p>
-                    <h3 class="text-2xl font-bold"
-                        th:text="${kpisAudiencias[T(com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia).PENDIENTE]}">
-                        0</h3>
-                </div>
-            </div>
-            <div class="bg-white p-4 rounded shadow border-l-4 border-blue-500 flex items-center">
-                <div class="p-3 bg-blue-100 rounded-full mr-4">
-                    <i class="fas fa-file-signature text-blue-500"></i>
-                </div>
-                <div>
-                    <p class="text-xs uppercase text-gray-500 font-bold">Con Acta</p>
-                    <h3 class="text-2xl font-bold"
-                        th:text="${kpisAudiencias[T(com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia).CON_ACTA]}">
-                        0</h3>
-                </div>
-            </div>
-            <div class="bg-white p-4 rounded shadow border-l-4 border-green-600 flex items-center">
-                <div class="p-3 bg-green-100 rounded-full mr-4">
-                    <i class="fas fa-check-circle text-green-600"></i>
-                </div>
-                <div>
-                    <p class="text-xs uppercase text-gray-500 font-bold">Concluidas</p>
-                    <h3 class="text-2xl font-bold"
-                        th:text="${kpisAudiencias[T(com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia).CONCLUIDA]}">
-                        0</h3>
-                </div>
-            </div>
-        </div>
 
-        <div th:replace="~{fragments/audiencias/barra-busqueda :: barra}"></div>
-        <div th:replace="~{fragments/audiencias/barra-filtros :: filtros}"></div>
-        <div th:replace="~{fragments/audiencias/tabla :: tabla}"></div>
+            <div th:replace="~{fragments/audiencias/barra-busqueda :: barra}"></div>
+            <div th:replace="~{fragments/audiencias/barra-filtros :: filtros}"></div>
+            <div th:replace="~{fragments/audiencias/tabla :: tabla}"></div>
         </main>
     </div>
 
