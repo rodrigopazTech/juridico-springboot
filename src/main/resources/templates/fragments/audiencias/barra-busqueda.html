@@ -1,4 +1,4 @@
-﻿<div th:fragment="barra" class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
+<div th:fragment="barra" class="flex flex-col md:flex-row gap-4 justify-between items-center w-full">
 
     <form th:action="@{/audiencias}" method="get" class="relative w-full md:w-96">
         <input type="hidden" name="tipo" th:value="${paramTipo}">

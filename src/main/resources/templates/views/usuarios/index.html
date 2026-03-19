@@ -16,7 +16,7 @@
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <div class="p-4 sm:ml-64 pt-20">
+    <div class="p-4 sm:ml-64" style="padding-top: 100px !important;">
 
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
             <div class="flex overflow-x-auto px-6">
@@ -55,12 +55,13 @@
             <div th:replace="~{fragments/usuarios/tabla-tipos-audiencia :: tabla}"></div>
         </div>
 
-    </div> <div th:replace="~{fragments/usuarios/modal-usuario :: modal}"></div>
+    </div>
+    <div th:replace="~{fragments/usuarios/modal-usuario :: modal}"></div>
     <div th:replace="~{fragments/usuarios/modal-gerencia :: modal}"></div>
     <div th:replace="~{fragments/usuarios/modal-materias :: modal}"></div>
     <div th:replace="~{fragments/usuarios/modal-organo :: modal}"></div>
     <div th:replace="~{fragments/usuarios/modal-tipo-audiencia :: modal}"></div>
-    
+
     <script th:src="@{/js/usuarios.js}"></script>
 
     <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>

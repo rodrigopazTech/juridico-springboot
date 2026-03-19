@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head></head>
+
 <body>
 
-    <nav th:fragment="navbar" class="bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-3 fixed top-0 right-0 z-30 transition-all sm:ml-64 shadow-sm" style="width: calc(100% - 16rem);">
+    <nav th:fragment="navbar"
+        class="bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 fixed top-0 right-0 z-30 transition-all sm:ml-64 shadow-sm flex items-center h-[72px]"
+        style="width: calc(100% - 16rem);">
         <div class="flex justify-between items-center w-full">
-            
+
             <div class="flex justify-start items-center w-1/2">
                 <h1 class="text-xl md:text-2xl font-bold text-gray-800 font-headings flex items-center tracking-tight">
                     <div class="p-2 bg-gob-oro/10 rounded-lg mr-3 text-gob-oro flex items-center justify-center">
@@ -27,44 +31,58 @@
             </div>
 
             <div class="flex items-center gap-3">
-                
-                <a th:href="@{/notificaciones}" title="Centro de Notificaciones" class="relative group p-2.5 rounded-full hover:bg-gray-100 transition-colors">
+
+                <a th:href="@{/notificaciones}" title="Centro de Notificaciones"
+                    class="relative group p-2.5 rounded-full hover:bg-gray-100 transition-colors">
                     <i class="fas fa-bell text-xl text-gray-400 group-hover:text-gob-guinda transition-colors"></i>
-                    
-                    <span th:if="${notificacionesNoLeidas != null and notificacionesNoLeidas > 0}" class="absolute top-2 right-2.5 flex h-2.5 w-2.5">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white"></span>
+
+                    <span th:if="${notificacionesNoLeidas != null and notificacionesNoLeidas > 0}"
+                        class="absolute top-2 right-2.5 flex h-2.5 w-2.5">
+                        <span
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span
+                            class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white"></span>
                     </span>
                 </a>
 
                 <div class="h-8 w-px bg-gray-200 mx-2"></div>
 
                 <div class="relative group cursor-pointer" th:if="${usuarioGlobal != null}">
-                    
-                    <div class="flex items-center gap-3 hover:bg-gray-50 p-1.5 pr-4 rounded-full border border-transparent hover:border-gray-200 transition-all duration-300">
+
+                    <div
+                        class="flex items-center gap-3 hover:bg-gray-50 p-1.5 pr-4 rounded-full border border-transparent hover:border-gray-200 transition-all duration-300">
                         <div class="text-right hidden md:block">
-                            <p class="text-sm font-bold text-gray-800 leading-none font-headings" th:text="${usuarioGlobal.nombreCompleto}">Usuario</p>
-                            <p class="text-[10px] text-gray-500 leading-none mt-1 uppercase tracking-widest font-bold" th:text="${usuarioGlobal.rol}">Rol</p>
+                            <p class="text-sm font-bold text-gray-800 leading-none font-headings"
+                                th:text="${usuarioGlobal.nombreCompleto}">Usuario</p>
+                            <p class="text-[10px] text-gray-500 leading-none mt-1 uppercase tracking-widest font-bold"
+                                th:text="${usuarioGlobal.rol}">Rol</p>
                         </div>
-                        
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gob-oro to-yellow-600 flex items-center justify-center text-white font-bold text-sm shadow-md border-2 border-white" th:text="${#strings.substring(usuarioGlobal.nombreCompleto, 0, 1)}">U</div>
-                        <i class="fas fa-chevron-down text-xs text-gray-400 group-hover:text-gob-guinda transition-transform duration-300 group-hover:rotate-180"></i>
+
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gob-oro to-yellow-600 flex items-center justify-center text-white font-bold text-sm shadow-md border-2 border-white"
+                            th:text="${#strings.substring(usuarioGlobal.nombreCompleto, 0, 1)}">U</div>
+                        <i
+                            class="fas fa-chevron-down text-xs text-gray-400 group-hover:text-gob-guinda transition-transform duration-300 group-hover:rotate-180"></i>
                     </div>
 
-                    <div class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right translate-y-3 group-hover:translate-y-0 z-50 overflow-hidden">
+                    <div
+                        class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right translate-y-3 group-hover:translate-y-0 z-50 overflow-hidden">
                         <div class="p-2 space-y-1">
                             <div class="px-3 py-2 border-b border-gray-50 mb-2 block md:hidden">
-                                <p class="text-sm font-bold text-gray-700 truncate" th:text="${usuarioGlobal.nombreCompleto}">Usuario</p>
+                                <p class="text-sm font-bold text-gray-700 truncate"
+                                    th:text="${usuarioGlobal.nombreCompleto}">Usuario</p>
                             </div>
-                            
+
                             <div class="p-2 space-y-1">
-                                <a th:href="@{/perfil}" class="flex items-center px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gob-guinda rounded-xl transition-colors font-medium">
-                                    <i class="fas fa-user-circle w-5 text-center text-gray-400 mr-2"></i> Gestionar mi Cuenta
+                                <a th:href="@{/perfil}"
+                                    class="flex items-center px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gob-guinda rounded-xl transition-colors font-medium">
+                                    <i class="fas fa-user-circle w-5 text-center text-gray-400 mr-2"></i> Gestionar mi
+                                    Cuenta
                                 </a>
-                                
+
                                 <div class="border-t border-gray-50 my-1"></div>
-                                
-                                <a th:href="@{/logout}" class="flex items-center px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors font-bold">
+
+                                <a th:href="@{/logout}"
+                                    class="flex items-center px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors font-bold">
                                     <i class="fas fa-sign-out-alt w-5 text-center mr-2"></i> Cerrar Sesión
                                 </a>
                             </div>
@@ -77,4 +95,5 @@
     </nav>
 
 </body>
+
 </html>

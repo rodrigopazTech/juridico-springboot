@@ -1,183 +1,143 @@
-﻿<div th:fragment="tabla" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-    <div class="overflow-x-auto min-h-[400px]">
-        <table class="w-full text-sm text-left text-gob-gris">
-            <thead class="text-xs text-gob-gris uppercase bg-gray-50 border-b border-gray-200 font-headings">
-                <tr>
-                    <th class="px-4 py-3">Fecha / Hora</th>
-                    <th class="px-4 py-3">Expediente</th>
-                    <th class="px-4 py-3">Gerencia / Materia</th>
-                    <th class="px-4 py-3">Tipo / Ubicación</th>
-                    <th class="px-4 py-3">Estatus</th>
-                    <th class="px-4 py-3 text-right">Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                <tr th:if="${audiencias.empty}">
-                    <td colspan="6" class="px-4 py-8 text-center text-gray-400">No se encontraron audiencias.</td>
-                </tr>
-
-                <tr th:each="a : ${audiencias}" class="bg-white hover:bg-gray-50 transition-colors group">
-
-                    <td class="px-4 py-3 whitespace-nowrap">
-                        <div class="flex items-center" th:title="${a.textoDiasRestantes}">
-                            <div class="w-3 h-3 rounded-full mr-3 shadow-sm" th:classappend="${a.semaforoColor}"></div>
-                            <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-900"
-                                    th:text="${#temporals.format(a.fechaAudiencia, 'dd/MM/yyyy')}">01/01/2026</span>
-                                <span class="text-xs text-gray-500" th:text="${a.horaAudiencia}">10:00</span>
-                            </div>
-                        </div>
-                    </td>
-
-                    <td class="px-4 py-3">
-                        <div class="flex flex-col">
-                            <a th:href="@{/expedientes/{id}(id=${a.expediente?.id})}"
-                                class="text-sm font-bold text-gob-guinda hover:underline"
-                                th:text="${a.expediente?.numero}">EXP-001</a>
-                            <span class="text-[10px] text-gray-500 truncate max-w-[150px]"
-                                th:text="${a.expediente?.partes}">Partes</span>
-                        </div>
-                    </td>
-
-                    <td class="px-4 py-3">
-                        <div class="flex flex-col">
-                            <span class="text-xs font-bold text-gray-700"
-                                th:text="${a.expediente?.gerencia?.nombre ?: 'Sin Gerencia'}">Gerencia</span>
-                            <span class="text-[10px] text-gray-500"
-                                th:text="${a.expediente?.materia?.nombre ?: 'Sin Materia'}">Materia</span>
-                            <div class="mt-1 flex items-center text-[10px] text-gray-400">
-                                <i class="fas fa-user-tie mr-1"></i>
-                                <span
-                                    th:text="${a.abogadoComparece?.nombreCompleto ?: 'Sin asignar'}">Abogado</span>
-                            </div>
-                        </div>
-                    </td>
-
-                    <td class="px-4 py-3">
-                        <span
-                            class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-semibold border border-gray-200"
-                            th:text="${a.tipoAudiencia?.nombre ?: 'General'}">Tipo</span>
-
-                        <div class="flex items-center gap-1 mt-1 text-xs text-gray-700">
-                            <i th:if="${a.esVirtual}" class="fas fa-video text-blue-600"></i>
-                            <i th:unless="${a.esVirtual}" class="fas fa-map-marker-alt text-gray-500"></i>
-
-                            <a th:if="${a.estatusAudiencia?.name() != 'CONCLUIDA' and a.esVirtual == true and a.urlReunion != null and !#strings.isEmpty(a.urlReunion)}"
-                                th:href="${a.urlReunion}" target="_blank"
-                                class="ml-2 text-blue-600 hover:text-blue-800 hover:scale-110 transition-transform"
-                                title="Unirse a la reunión ahora">
-                                <i class="fas fa-external-link-alt"></i>
-                            </a>
-                        </div>
-                    </td>
-                    <td class="px-4 py-3">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold border"
-                            th:classappend="${a.estatusAudiencia?.name() == 'CONCLUIDA' ? 'bg-green-100 text-green-800 border-green-200' : 
-                                            (a.estatusAudiencia?.name() == 'CON_ACTA' ? 'bg-blue-50 text-blue-800 border-blue-200' : 
-                                            'bg-yellow-50 text-yellow-800 border-yellow-200')}"
-                            th:text="${a.estatusAudiencia != null ? a.estatusAudiencia.descripcion : 'Pendiente'}">
-                            STATUS
-                        </span>
-
-                        <div th:if="${a.actaDocumento != null}" class="mt-1">
-                            <a th:href="@{/audiencias/descargar-acta/{id}(id=${a.id})}"
-                                class="text-[10px] text-gob-oro hover:text-gob-guinda hover:underline flex items-center gap-1">
-                                <i class="fas fa-paperclip"></i> Ver Acta
-                            </a>
-                        </div>
-
-                        <div th:if="${a.observaciones != null and !#strings.isEmpty(a.observaciones)}" class="mt-2 text-left">
-                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-yellow-700 bg-yellow-50 px-1.5 py-0.5 rounded border border-yellow-200 cursor-help" th:title="${a.observaciones}">
-                                <i class="fas fa-comment-dots"></i> Nota
-                            </span>
-                        </div>
-                    </td>
-
-                    <td class="px-4 py-3 text-right relative">
-
-                        <button th:if="${a.estatusAudiencia?.name() == 'PENDIENTE'}" type="button"
-                            class="text-gray-400 hover:text-gob-oro mr-2 transition-colors" title="Editar" th:onclick="abrirModalEditar(
-                                [[${a.id}]], 
-                                [[${a.expediente?.id}]], 
-                                [[${a.tipoAudiencia?.id ?: ''}]], 
-                                [[${a.fechaAudiencia}]], 
-                                [[${a.horaAudiencia}]], 
-                                [[${a.esVirtual}]], 
-                                [[${a.salaLugar}]], 
-                                [[${a.urlReunion}]],
-                                [[${a.abogadoComparece?.id ?: ''}]],
-                                [[${a.observaciones != null ? #strings.escapeJavaScript(a.observaciones) : ''}]]
-                            )">
-                            <i class="fas fa-edit"></i>
-                        </button>
-
-                        <button th:unless="${a.estatusAudiencia?.name() == 'PENDIENTE'}"
-                            class="text-gray-200 cursor-not-allowed mr-2"
-                            title="Edición Bloqueada (Ya tiene acta o concluyó)">
-                            <i class="fas fa-edit"></i>
-                        </button>
-
-                        <button type="button" th:data-audiencia-id="${a.id}"
-                            onclick="toggleMenu(this.dataset.audienciaId)"
-                            class="text-gray-400 hover:text-gob-guinda px-2 transition-colors">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-
-                        <div th:id="'menu-' + ${a.id}"
-                            class="hidden absolute right-0 mt-2 w-64 bg-white rounded-md shadow-xl z-50 border border-gray-100 text-left overflow-hidden ring-1 ring-black ring-opacity-5">
-
-                            <button th:unless="${a.estatusAudiencia?.name() == 'CONCLUIDA'}"
-                                th:data-audiencia-id="${a.id}" onclick="activarSubidaActa(this.dataset.audienciaId)"
-                                class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-oro transition flex items-center border-l-4 border-transparent hover:border-gob-oro">
-                                <i class="fas fa-cloud-upload-alt mr-3 w-4 text-center"
-                                    th:classappend="${a.actaDocumento != null ? 'text-orange-400' : 'text-gray-400'}"></i>
-                                <span th:text="${a.actaDocumento != null ? 'Reemplazar Acta' : 'Subir Acta'}">Subir
-                                    Acta</span>
-                            </button>
-
-                            <a th:if="${a.actaDocumento != null}"
-                                th:href="@{/audiencias/descargar-acta/{id}(id=${a.id})}"
-                                class="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition flex items-center border-l-4 border-transparent hover:border-red-500">
-                                <i class="fas fa-file-pdf mr-3 w-4 text-center text-red-500"></i> Ver Acta Subida
-                            </a>
-
-                            <div class="border-t border-gray-100"></div>
-
-                            <button th:if="${a.estatusAudiencia?.name() == 'CON_ACTA'}"
-                                sec:authorize="hasAnyAuthority('DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO', 'ADMIN')"
-                                th:data-audiencia-id="${a.id}" onclick="abrirModalConcluir(this.dataset.audienciaId)"
-                                class="w-full text-left px-4 py-3 text-sm text-green-700 hover:bg-green-50 transition flex items-center font-bold border-l-4 border-transparent hover:border-green-500">
-                                <i class="fas fa-check-circle mr-3 w-4 text-center text-green-600"></i> Validar y
-                                Concluir
-                            </button>
-
-                            <div th:if="${a.estatusAudiencia?.name() == 'CON_ACTA'}"
-                                sec:authorize="hasAuthority('ABOGADO')"
-                                class="px-4 py-2 text-xs text-gray-400 italic text-center bg-gray-50">
-                                <i class="fas fa-clock mr-1"></i> Esperando validación de Dirección/Jefe
-                            </div>
-
-                            <div th:if="${a.estatusAudiencia?.name() == 'CON_ACTA'}" class="border-t border-gray-100">
-                            </div>
-
-                            <a th:href="@{/expedientes/{id}(id=${a.expediente?.id})}"
-                                class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-guinda transition border-l-4 border-transparent hover:border-gob-guinda">
-                                <i class="fas fa-folder-open mr-3 w-4 text-center text-gray-400"></i> Ver Expediente
-                            </a>
-
-                            <a th:unless="${a.estatusAudiencia?.name() == 'CONCLUIDA'}"
-                                sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION')"
-                                href="javascript:void(0)"
-                                th:onclick="'confirmarEliminarAudiencia(' + ${a.id} + ')'"
-                                class="block px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition border-l-4 border-transparent hover:border-red-500">
-                                <i class="fas fa-trash-alt mr-3 w-4 text-center text-red-400"></i> Eliminar
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+<div th:fragment="tabla" class="space-y-4">
+    <!-- Encabezado de la Tabla (Invisible en mobile, pero útil para estructura) -->
+    <div class="hidden lg:grid grid-cols-12 gap-4 px-6 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50">
+        <div class="col-span-2">Fecha y Hora</div>
+        <div class="col-span-3">Asunto / Expediente</div>
+        <div class="col-span-2">Tipo</div>
+        <div class="col-span-2">Abogado</div>
+        <div class="col-span-2 text-center">Estado</div>
+        <div class="col-span-1 text-right"></div>
     </div>
+
+    <!-- Filas de la Tabla -->
+    <div th:if="${audiencias.empty}" class="bg-white p-12 rounded-2xl text-center border border-dashed border-gray-200">
+        <i class="fas fa-calendar-times text-4xl text-gray-200 mb-4"></i>
+        <p class="text-gray-400 text-sm">No se encontraron audiencias registradas.</p>
+    </div>
+
+    <div th:each="a : ${audiencias}" 
+         class="bg-white hover:bg-gray-50/80 transition-all border border-gray-100 rounded-2xl p-4 lg:p-0 lg:grid lg:grid-cols-12 lg:items-center lg:gap-4 shadow-sm group">
+        
+        <!-- Fecha y Hora -->
+        <div class="col-span-2 lg:px-6 lg:py-6 border-b lg:border-b-0 lg:border-r border-gray-50">
+            <div class="flex items-center lg:flex-col lg:items-start gap-3 lg:gap-1">
+                <div class="w-10 lg:w-auto h-10 lg:h-auto rounded-xl bg-gray-50 lg:bg-transparent flex items-center justify-center lg:block">
+                    <span class="text-base font-bold text-gray-900 leading-none" 
+                          th:text="${#temporals.format(a.fechaAudiencia, 'dd MMM, yyyy')}">14 Oct, 2024</span>
+                </div>
+                <span class="text-xs font-medium text-gray-400" th:text="${a.horaAudiencia}">10:00 AM</span>
+            </div>
+        </div>
+
+        <!-- Asunto / Expediente -->
+        <div class="col-span-3 py-4 lg:px-4 border-b lg:border-b-0 lg:border-r border-gray-50">
+            <div class="flex flex-col">
+                <span class="text-sm font-bold text-gray-800 mb-1" th:text="${a.tipoAudiencia?.nombre ?: 'Audiencia General'}">Revisión de Contrato</span>
+                <a th:href="@{/expedientes/{id}(id=${a.expediente?.id})}" 
+                   class="text-xs font-semibold text-gob-guinda hover:underline inline-flex items-center gap-1">
+                   <i class="fas fa-folder-open text-[10px] opacity-70"></i>
+                   <span th:text="${a.expediente?.numero}">EXP-2024-001</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Tipo / Ubicación -->
+        <div class="col-span-2 py-4 lg:px-4 border-b lg:border-b-0 lg:border-r border-gray-50 flex items-center gap-2">
+            <div class="flex flex-col">
+                <span class="text-xs font-bold text-gray-600 truncate" 
+                      th:text="${a.tipoAudiencia?.nombre ?: 'General'}">Conciliación</span>
+                <div class="flex items-center gap-1.5 mt-1">
+                    <i th:if="${a.esVirtual}" class="fas fa-video text-[10px] text-blue-500"></i>
+                    <i th:unless="${a.esVirtual}" class="fas fa-map-marker-alt text-[10px] text-gray-400"></i>
+                    <span class="text-[10px] font-medium text-gray-400" 
+                          th:text="${a.esVirtual ? 'Virtual' : (a.salaLugar ?: 'Presencial')}">Virtual</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Abogado -->
+        <div class="col-span-2 py-4 lg:px-4 border-b lg:border-b-0 lg:border-r border-gray-50">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-gob-guinda/10 flex items-center justify-center text-gob-guinda font-bold text-[10px]"
+                     th:text="${#strings.substring(a.abogadoComparece?.nombreCompleto ?: 'S A', 0, 1)}">A</div>
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold text-gray-700 truncate" 
+                          th:text="${a.abogadoComparece?.nombreCompleto ?: 'Sin asignar'}">Ana Gómez</span>
+                    <span class="text-[10px] text-gray-400 font-medium">Asistente</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado -->
+        <div class="col-span-2 py-4 lg:px-4 flex justify-center border-b lg:border-b-0 border-gray-50 lg:border-r border-gray-50">
+            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold border whitespace-nowrap"
+                th:classappend="${a.estatusAudiencia?.name() == 'CONCLUIDA' ? 'bg-green-50 text-green-700 border-green-100' : 
+                                (a.estatusAudiencia?.name() == 'CON_ACTA' ? 'bg-blue-50 text-blue-700 border-blue-100' : 
+                                'bg-orange-50 text-orange-700 border-orange-100')}"
+                th:text="${a.estatusAudiencia != null ? a.estatusAudiencia.descripcion : 'Pendiente'}">
+                <span class="w-1.5 h-1.5 rounded-full" 
+                      th:classappend="${a.estatusAudiencia?.name() == 'CONCLUIDA' ? 'bg-green-600' : 
+                                      (a.estatusAudiencia?.name() == 'CON_ACTA' ? 'bg-blue-600' : 'bg-orange-600')}"></span>
+                PENDIENTE
+            </span>
+        </div>
+
+        <!-- Acciones -->
+        <div class="col-span-1 py-4 lg:px-6 flex justify-end gap-2">
+            <button th:if="${a.estatusAudiencia?.name() == 'PENDIENTE'}" type="button"
+                    class="p-2 text-gray-400 hover:text-gob-oro hover:bg-gray-100 rounded-lg transition-all" 
+                    th:onclick="abrirModalEditar(
+                        [[${a.id}]], 
+                        [[${a.expediente?.id}]], 
+                        [[${a.tipoAudiencia?.id ?: ''}]], 
+                        [[${a.fechaAudiencia}]], 
+                        [[${a.horaAudiencia}]], 
+                        [[${a.esVirtual}]], 
+                        [[${a.salaLugar}]], 
+                        [[${a.urlReunion}]],
+                        [[${a.abogadoComparece?.id ?: ''}]],
+                        [[${a.observaciones != null ? #strings.escapeJavaScript(a.observaciones) : ''}]]
+                    )">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" th:data-audiencia-id="${a.id}"
+                    onclick="toggleMenu(this.dataset.audienciaId)"
+                    class="p-2 text-gray-400 hover:text-gob-guinda hover:bg-gray-100 rounded-lg transition-all">
+                <i class="fas fa-ellipsis-h"></i>
+            </button>
+        </div>
+
+        <!-- Menú Contextual (Flota fuera del grid) -->
+        <div th:id="'menu-' + ${a.id}"
+            class="hidden absolute right-4 mt-12 w-64 bg-white rounded-xl shadow-2xl z-50 border border-gray-50 text-left overflow-hidden ring-1 ring-black ring-opacity-5">
+            <!-- Items del menú (conservados del original) -->
+            <button th:unless="${a.estatusAudiencia?.name() == 'CONCLUIDA'}"
+                th:data-audiencia-id="${a.id}" onclick="activarSubidaActa(this.dataset.audienciaId)"
+                class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors">
+                <i class="fas fa-cloud-upload-alt mr-3 w-4 text-center text-gray-400"></i>
+                <span th:text="${a.actaDocumento != null ? 'Reemplazar Acta' : 'Subir Acta'}">Subir Acta</span>
+            </button>
+            <a th:if="${a.actaDocumento != null}" th:href="@{/audiencias/descargar-acta/{id}(id=${a.id})}"
+                class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors">
+                <i class="fas fa-file-pdf mr-3 w-4 text-center text-red-500"></i> Ver Acta
+            </a>
+            <!-- Lógica de validación -->
+            <div class="border-t border-gray-50"></div>
+            <button th:if="${a.estatusAudiencia?.name() == 'CON_ACTA'}"
+                sec:authorize="hasAnyAuthority('DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO', 'ADMIN')"
+                th:data-audiencia-id="${a.id}" onclick="abrirModalConcluir(this.dataset.audienciaId)"
+                class="w-full text-left px-4 py-3 text-sm text-green-700 hover:bg-green-50 flex items-center font-bold transition-colors">
+                <i class="fas fa-check-circle mr-3 w-4 text-center"></i> Validar y Concluir
+            </button>
+            <a th:unless="${a.estatusAudiencia?.name() == 'CONCLUIDA'}"
+                sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION')"
+                href="javascript:void(0)" th:onclick="'confirmarEliminarAudiencia(' + ${a.id} + ')'"
+                class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors">
+                <i class="fas fa-trash-alt mr-3 w-4 text-center opacity-70"></i> Eliminar
+            </a>
+        </div>
+    </div>
+</div>
 
     <div class="p-4 border-t border-gray-200 flex justify-between items-center" th:if="${!audiencias.empty}">
         <span class="text-sm text-gray-600">Página <span th:text="${audiencias.number + 1}">1</span> de <span
