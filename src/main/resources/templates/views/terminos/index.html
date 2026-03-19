@@ -26,25 +26,25 @@
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
 
     <div class="sm:ml-64 flex flex-col min-h-screen">
-        
+
         <!-- Navbar Fragment -->
         <div th:replace="~{fragments/navbar :: navbar}"></div>
 
         <!-- Main Content with padding to avoid overlapping -->
-        <main class="p-4 md:p-6 flex-1 animate-fade-in pt-24">
+        <main class="p-4 md:p-6 flex-1 animate-fade-in" style="padding-top: 100px !important;">
 
 
 
-        <!-- Panel de Control Unificado -->
-        <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-4">
-            <div th:replace="~{fragments/terminos/barra-busqueda :: barra}"></div>
-            <div th:replace="~{fragments/terminos/barra-filtros :: filtros}"></div>
-        </div>
+            <!-- Panel de Control Unificado -->
+            <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-4">
+                <div th:replace="~{fragments/terminos/barra-busqueda :: barra}"></div>
+                <div th:replace="~{fragments/terminos/barra-filtros :: filtros}"></div>
+            </div>
 
-        <!-- Línea de Tiempo Global (Nueva Ubicación) -->
-        <div th:replace="~{fragments/terminos/linea-tiempo :: linea}"></div>
+            <!-- Línea de Tiempo Global (Nueva Ubicación) -->
+            <div th:replace="~{fragments/terminos/linea-tiempo :: linea}"></div>
 
-        <div th:replace="~{fragments/terminos/tabla :: tabla-resultados}"></div>
+            <div th:replace="~{fragments/terminos/tabla :: tabla-resultados}"></div>
 
         </main>
     </div>
