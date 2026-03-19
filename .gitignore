@@ -56,3 +56,5 @@ nul
 .env.local
 
 ```,oldString:
+node_modules/
+test-results/
