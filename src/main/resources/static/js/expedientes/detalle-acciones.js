@@ -1,67 +1,75 @@
 /**
- * Lógica para los modales y acciones de la vista de detalle del expediente.
+ * Lógica simplificada y robusta para los modales de la vista de detalle.
  */
 
-const EXPEDIENTE_ID = window.location.pathname.split('/').pop();
+console.log("DETALLE-ACCIONES: Cargando script...");
 
-// --- FUNCIONES GENÉRICAS DE MODALES ---
+// Extracción del ID de forma segura
+const pathParts = window.location.pathname.split('/').filter(p => p);
+const EXPEDIENTE_ID = pathParts.length > 0 ? pathParts[pathParts.length - 1] : null;
+
+console.log("DETALLE-ACCIONES: ID Detectado =", EXPEDIENTE_ID);
 
 function openModal(modalId) {
+    console.log("DETALLE-ACCIONES: Intentando abrir modal =", modalId);
     const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        document.body.style.overflow = 'hidden';
+    if (!modal) {
+        console.error("DETALLE-ACCIONES: No se encontró el elemento con ID:", modalId);
+        alert("Error técnico: El modal '" + modalId + "' no existe en esta página.");
+        return;
     }
+
+    // Forzar visibilidad ignorando clases si es necesario
+    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
 }
 
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
+        modal.style.display = 'none';
         modal.classList.add('hidden');
         modal.classList.remove('flex');
         document.body.style.overflow = 'auto';
     }
 }
 
-/**
- * Abre el modal de edición e inicializa los selectores en cascada
- * @param {string} gerenciaId 
- * @param {string} materiaId 
- * @param {string} abogadoId 
- */
-function abrirModalEdit(gerenciaId, materiaId, abogadoId) {
+// Globalizar funciones para asegurar que sean accesibles desde onclick
+window.openObservaciones = async function () {
+    console.log("DETALLE-ACCIONES: Función openObservaciones ejecutada");
+    openModal('modal-observaciones');
+    await loadObservaciones();
+};
+
+window.abrirModalEdit = function (gerenciaId, materiaId, abogadoId) {
+    console.log("DETALLE-ACCIONES: Función abrirModalEdit ejecutada", { gerenciaId, materiaId, abogadoId });
     openModal('modal-editar');
 
-    // 1. Cargar materias filtradas por gerencia y seleccionar la actual
-    cargarMateriasExpediente('-edit', '', '', materiaId).then(() => {
-        // 2. Una vez cargadas las materias, cargar abogados filtrados por gerencia y materia
-        cargarAbogadosExpediente('-edit', '', '', abogadoId);
-    });
-}
-
-// Cerrar modales al hacer clic fuera del contenido
-window.onclick = function (event) {
-    if (event.target.classList.contains('bg-gray-900/50')) {
-        event.target.classList.add('hidden');
-        event.target.classList.remove('flex');
-        document.body.style.overflow = 'auto';
+    // Inicialización de selectores (reutiliza lógica de main-EXP.js)
+    if (typeof cargarMateriasExpediente === 'function') {
+        cargarMateriasExpediente('-edit', '', '', materiaId).then(() => {
+            if (typeof cargarAbogadosExpediente === 'function') {
+                cargarAbogadosExpediente('-edit', '', '', abogadoId);
+            }
+        }).catch(err => console.error("Error al inicializar selectores de edición:", err));
+    } else {
+        console.warn("DETALLE-ACCIONES: cargarMateriasExpediente no está disponible.");
     }
-}
+};
 
 // --- MÓDULO DE OBSERVACIONES (NOTAS) ---
 
-async function openObservaciones() {
-    openModal('modal-observaciones');
-    await loadObservaciones();
-}
-
 async function loadObservaciones() {
     const container = document.getElementById('lista-observaciones');
+    if (!container) return;
+
     try {
         const response = await fetch(`/expedientes/${EXPEDIENTE_ID}/comentarios`);
-        const notas = await response.json();
+        if (!response.ok) throw new Error("Error en respuesta de servidor");
 
+        const notas = await response.json();
         container.innerHTML = '';
 
         if (notas.length === 0) {
@@ -78,7 +86,6 @@ async function loadObservaciones() {
             const fechaStr = date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
             const horaStr = date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 
-            // Badge de etapa (Nuevo)
             let badgeEtapa = '';
             if (nota.etapaProcesal) {
                 const colorMap = {
@@ -92,7 +99,7 @@ async function loadObservaciones() {
             }
 
             const div = document.createElement('div');
-            div.className = 'bg-white p-3 rounded-lg border border-gray-200 shadow-sm';
+            div.className = 'bg-white p-3 rounded-lg border border-gray-200 shadow-sm mb-3';
             div.innerHTML = `
                 <div class="flex justify-between items-center mb-2 border-b border-gray-100 pb-1">
                     <div class="flex items-center gap-2">
@@ -110,15 +117,16 @@ async function loadObservaciones() {
 
     } catch (error) {
         console.error('Error al cargar notas:', error);
-        container.innerHTML = '<p class="text-center text-red-500 py-4">Error al cargar las notas.</p>';
+        container.innerHTML = '<p class="text-center text-red-500 py-4">Error al cargar las observaciones.</p>';
     }
 }
 
 async function guardarNota() {
     const textarea = document.getElementById('texto-nueva-nota');
-    const texto = textarea.value.trim();
     const btn = document.getElementById('btn-guardar-nota');
+    if (!textarea || !btn) return;
 
+    const texto = textarea.value.trim();
     if (!texto) return;
 
     btn.disabled = true;
@@ -135,14 +143,14 @@ async function guardarNota() {
             textarea.value = '';
             await loadObservaciones();
             if (typeof Swal !== 'undefined') {
-                const Toast = Swal.mixin({
+                Swal.fire({
                     toast: true,
                     position: 'top-end',
-                    showConfirmButton: false,
+                    icon: 'success',
+                    title: 'Nota guardada',
                     timer: 2000,
-                    timerProgressBar: true
+                    showConfirmButton: false
                 });
-                Toast.fire({ icon: 'success', title: 'Nota guardada' });
             }
         }
     } catch (error) {
@@ -153,9 +161,8 @@ async function guardarNota() {
     }
 }
 
-// --- MÓDULO DE CAMBIO DE ETAPA ---
-
-async function updateEtapa(nuevaEtapa) {
+// --- ACTUALIZAR ETAPA ---
+window.updateEtapa = async function (nuevaEtapa) {
     try {
         const response = await fetch(`/expedientes/${EXPEDIENTE_ID}/cambiar-etapa?etapa=${nuevaEtapa}`, {
             method: 'POST'
@@ -163,90 +170,29 @@ async function updateEtapa(nuevaEtapa) {
 
         if (response.ok) {
             closeModal('modal-etapa');
-            if (typeof Swal !== 'undefined') {
-                // Éxito: Usamos un toast en lugar de un modal bloqueante
-                const Toast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true
-                });
-
-                Toast.fire({
-                    icon: 'success',
-                    title: '¡Etapa actualizada!',
-                    iconColor: '#22c55e',
-                    background: '#f0fdf4',
-                    customClass: {
-                        title: 'text-green-800 text-sm font-bold'
-                    }
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                window.location.reload();
-            }
+            location.reload();
         }
     } catch (error) {
         console.error('Error al cambiar etapa:', error);
-        if (typeof Swal !== 'undefined') {
-            Swal.fire('Error', 'No se pudo actualizar la etapa', 'error');
-        }
     }
-}
+};
 
-// --- INICIALIZACIÓN ---
+// Cerrar al hacer clic fuera
+window.addEventListener('click', function (event) {
+    if (event.target.classList.contains('fixed') && event.target.id.startsWith('modal-')) {
+        closeModal(event.target.id);
+    }
+});
 
+// Inicialización de listeners
 document.addEventListener('DOMContentLoaded', () => {
     const btnGuardarNota = document.getElementById('btn-guardar-nota');
-    if (btnGuardarNota) {
-        btnGuardarNota.addEventListener('click', guardarNota);
-    }
+    if (btnGuardarNota) btnGuardarNota.addEventListener('click', guardarNota);
 
     const textareaNota = document.getElementById('texto-nueva-nota');
     if (textareaNota) {
         textareaNota.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key === 'Enter') {
-                guardarNota();
-            }
-        });
-    }
-
-
-    // Validación de Reasignación de Abogado en Edición (ROD-168)
-    const formEditarExpediente = document.getElementById('form-editar-expediente');
-    if (formEditarExpediente) {
-        formEditarExpediente.addEventListener('submit', function (e) {
-            e.preventDefault(); // Detener envío por defecto
-
-            const selectAbogado = document.getElementById('select-abogado-exp-edit');
-            const originalAbogadoId = formEditarExpediente.getAttribute('data-original-abogado') || "";
-            const currentAbogadoId = selectAbogado ? selectAbogado.value : "";
-
-            // Check si cambió el abogado y si ambos tienen un valor definido válido
-            if (originalAbogadoId !== currentAbogadoId && originalAbogadoId !== "" && currentAbogadoId !== "") {
-                const nuevoAbogadoNombre = selectAbogado.options[selectAbogado.selectedIndex].text;
-
-                Swal.fire({
-                    title: '¿Reasignar Expediente?',
-                    html: `Estás a punto de reasignar este expediente al abogado: <br><br><b>${nuevoAbogadoNombre}</b><br><br>Se le enviará una notificación informándole de la nueva asignación. ¿Deseas continuar?`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#9B2242', // gob-guinda
-                    cancelButtonColor: '#6B7280', // gray-500
-                    confirmButtonText: '<i class="fas fa-exchange-alt"></i> Sí, reasignar',
-                    cancelButtonText: 'Cancelar',
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        formEditarExpediente.submit(); // Enviar formulario tras confirmación
-                    }
-                });
-            } else {
-                // Si no hay cambio, enviar directamente
-                formEditarExpediente.submit();
-            }
+            if (e.ctrlKey && e.key === 'Enter') guardarNota();
         });
     }
 });

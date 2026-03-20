@@ -92,8 +92,8 @@
             <div class="flex items-center gap-4 w-full lg:w-auto">
                 <!-- Search Input -->
                 <div class="relative flex-1 lg:w-64">
-                    <form th:action="@{/expedientes}" method="get">
-                        <input type="text" name="keyword" th:value="${keyword}"
+                    <form th:action="@{/expedientes}" method="get" onsubmit="return false;">
+                        <input type="text" id="input-search-expedientes" th:value="${keyword}"
                             placeholder="Buscar expediente o partes..."
                             class="w-full bg-white border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 transition-all font-medium">
                         <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
@@ -128,7 +128,7 @@
                             <th class="px-8 py-5 text-right w-32">Gestión</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-50">
+                    <tbody id="tabla-expedientes-body" class="divide-y divide-gray-50">
                         <!-- Loop Start -->
                         <tr th:each="exp : ${expedientes.content}"
                             class="group hover:bg-[#fdfbf9] transition-all duration-200">
@@ -244,6 +244,7 @@
 
     <div th:replace="~{fragments/expedientes/modal-nuevo-exp :: modal}"></div>
     <script th:src="@{/js/main-EXP.js}"></script>
+    <script th:src="@{/js/realtime-search.js}"></script>
 </div>
 <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
 </body>

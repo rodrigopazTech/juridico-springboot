@@ -71,7 +71,7 @@
                                     <i class="fas fa-search text-gray-400"></i>
                                 </div>
                                 <input type="text" id="search-documentos-gestor"
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-gob-oro focus:border-gob-oro block w-full pl-10 p-2.5"
+                                    class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all font-medium"
                                     placeholder="Buscar archivo en esta carpeta...">
                             </div>
 
@@ -99,17 +99,19 @@
 
                     <!-- Lista de Documentos -->
                     <div class="flex-1 overflow-y-auto p-6 relative" id="area-documentos"
-                         ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-                        
+                        ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+                        ondrop="handleDrop(event)">
+
                         <!-- Overlay para drag & drop -->
-                        <div id="drop-zone-overlay" class="hidden absolute inset-0 bg-gob-guinda/10 border-4 border-dashed border-gob-guinda rounded-lg z-10 flex items-center justify-center">
+                        <div id="drop-zone-overlay"
+                            class="hidden absolute inset-0 bg-gob-guinda/10 border-4 border-dashed border-gob-guinda rounded-lg z-10 flex items-center justify-center">
                             <div class="text-center">
                                 <i class="fas fa-cloud-upload-alt text-5xl text-gob-guinda mb-3"></i>
                                 <p class="text-lg font-bold text-gob-guinda">Suelta los archivos aquí</p>
                                 <p class="text-sm text-gray-600" id="drop-zone-carpeta">Se subirán a: Raíz</p>
                             </div>
                         </div>
-                        
+
                         <!-- Vista de Lista (por defecto) -->
                         <div id="vista-lista" class="space-y-2">
                             <div class="text-center text-gray-400 py-12">
@@ -151,7 +153,8 @@
                     </p>
                 </div>
 
-                <p id="indicador-ubicacion-carpeta" class="text-xs text-gob-guinda bg-red-50 rounded px-2 py-1 flex items-center gap-1">
+                <p id="indicador-ubicacion-carpeta"
+                    class="text-xs text-gob-guinda bg-red-50 rounded px-2 py-1 flex items-center gap-1">
                     <i class="fas fa-folder-open"></i>
                     <span>Se creará en: <strong id="nombre-carpeta-destino">Raíz</strong></span>
                 </p>
@@ -191,9 +194,11 @@
                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Seleccionar Archivo(s) *</label>
                     <input type="file" id="doc-file-gestor" required multiple
                         class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none">
-                    <p class="mt-1 text-xs text-gray-500">Todos los formatos permitidos. Máximo 500MB por archivo. Puedes seleccionar múltiples archivos.</p>
+                    <p class="mt-1 text-xs text-gray-500">Todos los formatos permitidos. Máximo 500MB por archivo.
+                        Puedes seleccionar múltiples archivos.</p>
                     <div id="archivos-seleccionados" class="mt-2 hidden">
-                        <p class="text-xs font-medium text-gob-guinda"><i class="fas fa-files-alt mr-1"></i> <span id="contador-archivos">0</span> archivo(s) seleccionado(s)</p>
+                        <p class="text-xs font-medium text-gob-guinda"><i class="fas fa-files-alt mr-1"></i> <span
+                                id="contador-archivos">0</span> archivo(s) seleccionado(s)</p>
                     </div>
                 </div>
 
@@ -205,7 +210,8 @@
                         <!-- Se llenará dinámicamente -->
                     </select>
                 </div>
-                <p id="indicador-ubicacion-documento" class="text-xs text-gob-guinda bg-red-50 rounded px-2 py-1 flex items-center gap-1">
+                <p id="indicador-ubicacion-documento"
+                    class="text-xs text-gob-guinda bg-red-50 rounded px-2 py-1 flex items-center gap-1">
                     <i class="fas fa-folder-open"></i>
                     <span>Se subirá a: <strong id="nombre-carpeta-destino-doc">Raíz</strong></span>
                 </p>
@@ -246,7 +252,7 @@
 
             <form id="form-mover-documento" class="p-6 space-y-4">
                 <input type="hidden" id="documento-id-mover">
-                
+
                 <div class="bg-gray-50 rounded p-3 mb-4">
                     <p class="text-xs text-gray-500 uppercase font-bold mb-1">Documento</p>
                     <p id="nombre-documento-mover" class="text-sm font-medium text-gray-800 truncate">
@@ -261,7 +267,8 @@
                         <option value="">Raíz del expediente</option>
                         <!-- Se llenará dinámicamente -->
                     </select>
-                    <p id="indicador-destino-mover" class="mt-2 text-xs text-gob-guinda bg-red-50 rounded px-2 py-1 flex items-center gap-1">
+                    <p id="indicador-destino-mover"
+                        class="mt-2 text-xs text-gob-guinda bg-red-50 rounded px-2 py-1 flex items-center gap-1">
                         <i class="fas fa-arrow-right"></i>
                         <span>Nueva ubicación: <strong id="nombre-carpeta-destino-mover">Raíz</strong></span>
                     </p>

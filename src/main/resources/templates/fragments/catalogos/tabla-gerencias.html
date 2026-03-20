@@ -2,10 +2,12 @@
     <div class="flex justify-between mb-4">
         <h3 class="text-lg font-bold text-gob-gris">Catálogo de Gerencias</h3>
         <div class="flex gap-2">
-             <input type="text" id="input-search-gerencias" placeholder="Buscar gerencia..." class="border border-gray-300 rounded p-2 text-sm w-48 focus:ring-gob-oro focus:border-gob-oro outline-none">
-             
-             <button th:if="${usuarioActual.rol.name() == 'DIRECCION' or usuarioActual.rol.name() == 'SUBDIRECCION'}" 
-                     onclick="abrirModalGerencia()" class="bg-gob-guinda text-white px-4 py-2 rounded text-sm hover:bg-opacity-90 shadow-sm transition-colors">
+            <input type="text" id="input-search-gerencias" placeholder="Buscar gerencia..."
+                class="border border-gray-200 rounded-lg p-2 text-sm w-48 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all font-medium bg-white">
+
+            <button th:if="${usuarioActual.rol.name() == 'DIRECCION' or usuarioActual.rol.name() == 'SUBDIRECCION'}"
+                onclick="abrirModalGerencia()"
+                class="bg-gob-guinda text-white px-4 py-2 rounded text-sm hover:bg-opacity-90 shadow-sm transition-colors">
                 <i class="fas fa-plus mr-2"></i> Nueva
             </button>
         </div>
@@ -25,43 +27,42 @@
                 <td class="px-6 py-4 font-bold text-gray-800" th:text="${g.nombre}">Nombre</td>
                 <td class="px-6 py-4 truncate max-w-xs" th:text="${g.descripcion}">Desc</td>
                 <td class="px-6 py-4">
-                    <span th:if="${g.activo}" class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded">Activo</span>
-                    <span th:unless="${g.activo}" class="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded">Inactivo</span>
+                    <span th:if="${g.activo}"
+                        class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded">Activo</span>
+                    <span th:unless="${g.activo}"
+                        class="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded">Inactivo</span>
                 </td>
-                
+
                 <td class="px-6 py-4 text-center">
-                    
-                    <div th:if="${usuarioActual.rol.name() == 'DIRECCION' or usuarioActual.rol.name() == 'SUBDIRECCION' or (usuarioActual.rol.name() == 'GERENTE' and usuarioActual.gerencia != null and g.id == usuarioActual.gerencia.id)}">
-                        
-                        <button th:data-id="${g.id}" 
-                                th:data-nombre="${g.nombre}" 
-                                th:data-descripcion="${g.descripcion}" 
-                                th:data-activo="${g.activo}"
-                                onclick="editarGerencia(this.dataset.id, this.dataset.nombre, this.dataset.descripcion, this.dataset.activo)"
-                                class="text-gob-oro hover:text-gob-guinda transition-colors mx-1">
+
+                    <div
+                        th:if="${usuarioActual.rol.name() == 'DIRECCION' or usuarioActual.rol.name() == 'SUBDIRECCION' or (usuarioActual.rol.name() == 'GERENTE' and usuarioActual.gerencia != null and g.id == usuarioActual.gerencia.id)}">
+
+                        <button th:data-id="${g.id}" th:data-nombre="${g.nombre}" th:data-descripcion="${g.descripcion}"
+                            th:data-activo="${g.activo}"
+                            onclick="editarGerencia(this.dataset.id, this.dataset.nombre, this.dataset.descripcion, this.dataset.activo)"
+                            class="text-gob-oro hover:text-gob-guinda transition-colors mx-1">
                             <i class="fas fa-edit fa-lg"></i>
                         </button>
-                        
-                        <button th:data-id="${g.id}" 
-                                th:data-nombre="${g.nombre}"
-                                onclick="verMaterias(this.dataset.id, this.dataset.nombre)"
-                                class="text-blue-600 hover:text-blue-800 transition-colors mx-1" title="Gestionar Materias">
+
+                        <button th:data-id="${g.id}" th:data-nombre="${g.nombre}"
+                            onclick="verMaterias(this.dataset.id, this.dataset.nombre)"
+                            class="text-blue-600 hover:text-blue-800 transition-colors mx-1" title="Gestionar Materias">
                             <i class="fas fa-list-ul fa-lg"></i>
                         </button>
 
-                        <button type="button" 
-                                th:data-id="${g.id}"
-                                onclick="confirmarCambioEstatus(this.dataset.id, 'gerencia')"
-                                class="hover:scale-110 transition-transform mx-1" 
-                                th:title="${g.activo ? 'Desactivar Gerencia' : 'Activar Gerencia'}"
-                                th:classappend="${g.activo ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'}">
+                        <button type="button" th:data-id="${g.id}"
+                            onclick="confirmarCambioEstatus(this.dataset.id, 'gerencia')"
+                            class="hover:scale-110 transition-transform mx-1"
+                            th:title="${g.activo ? 'Desactivar Gerencia' : 'Activar Gerencia'}"
+                            th:classappend="${g.activo ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'}">
                             <i class="fas" th:classappend="${g.activo ? 'fa-ban' : 'fa-check-circle'}"></i>
                         </button>
 
                     </div>
 
-                    <div th:unless="${usuarioActual.rol.name() == 'DIRECCION' or usuarioActual.rol.name() == 'SUBDIRECCION' or (usuarioActual.rol.name() == 'GERENTE' and usuarioActual.gerencia != null and g.id == usuarioActual.gerencia.id)}" 
-                         class="text-gray-300 bg-gray-50 rounded px-2 py-1 text-xs font-bold inline-block border border-gray-200 cursor-not-allowed">
+                    <div th:unless="${usuarioActual.rol.name() == 'DIRECCION' or usuarioActual.rol.name() == 'SUBDIRECCION' or (usuarioActual.rol.name() == 'GERENTE' and usuarioActual.gerencia != null and g.id == usuarioActual.gerencia.id)}"
+                        class="text-gray-300 bg-gray-50 rounded px-2 py-1 text-xs font-bold inline-block border border-gray-200 cursor-not-allowed">
                         <i class="fas fa-lock mr-1"></i> Bloqueado
                     </div>
 
@@ -70,22 +71,24 @@
         </tbody>
     </table>
 
-    <div class="mt-4 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500" th:if="${!listaGerencias.empty}">
+    <div class="mt-4 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500"
+        th:if="${!listaGerencias.empty}">
         <span class="mb-2 sm:mb-0">
-            Página <span th:text="${listaGerencias.number + 1}" class="font-bold text-gray-700"></span> de <span th:text="${listaGerencias.totalPages}" class="font-bold text-gray-700"></span>
+            Página <span th:text="${listaGerencias.number + 1}" class="font-bold text-gray-700"></span> de <span
+                th:text="${listaGerencias.totalPages}" class="font-bold text-gray-700"></span>
         </span>
-        
+
         <div class="flex gap-2">
-            <a th:if="${listaGerencias.hasPrevious()}" 
-               th:href="@{/usuarios(pageGerencias=${listaGerencias.number - 1}, tab='gerencias')}" 
-               class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">
-               <i class="fas fa-chevron-left mr-1"></i> Anterior
+            <a th:if="${listaGerencias.hasPrevious()}"
+                th:href="@{/usuarios(pageGerencias=${listaGerencias.number - 1}, tab='gerencias')}"
+                class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">
+                <i class="fas fa-chevron-left mr-1"></i> Anterior
             </a>
-            
-            <a th:if="${listaGerencias.hasNext()}" 
-               th:href="@{/usuarios(pageGerencias=${listaGerencias.number + 1}, tab='gerencias')}" 
-               class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">
-               Siguiente <i class="fas fa-chevron-right ml-1"></i>
+
+            <a th:if="${listaGerencias.hasNext()}"
+                th:href="@{/usuarios(pageGerencias=${listaGerencias.number + 1}, tab='gerencias')}"
+                class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">
+                Siguiente <i class="fas fa-chevron-right ml-1"></i>
             </a>
         </div>
     </div>

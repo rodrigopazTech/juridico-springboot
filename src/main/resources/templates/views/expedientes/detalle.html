@@ -156,10 +156,50 @@
     <!-- Gestor Documental -->
     <div th:replace="~{fragments/expedientes/gestor-documental :: gestor-documental}"></div>
 
-    <!-- Scripts de Acciones -->
+    <!-- Scripts -->
     <script th:src="@{/js/main-EXP.js}"></script>
     <script th:src="@{/js/expedientes/detalle-acciones.js}"></script>
     <script th:src="@{/js/expedientes/gestor-documental.js}"></script>
+
+    <!-- Script de emergencia para asegurar que los botones funcionen -->
+    <script th:inline="javascript">
+        console.log("DETALLE.HTML: Iniciando script de emergencia...");
+
+        function forceOpenModal(modalId) {
+            console.log("DETALLE.HTML: Abriendo modal " + modalId);
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'flex';
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            } else {
+                console.error("DETALLE.HTML: No se encontró el modal " + modalId);
+                alert("Error: No se encontró el modal " + modalId);
+            }
+        }
+
+        // Sobrescribir funciones globales para asegurar visibilidad
+        window.openObservaciones = function () {
+            console.log("DETALLE.HTML: Clic detectado en Observaciones");
+            forceOpenModal('modal-observaciones');
+            if (typeof loadObservaciones === 'function') {
+                loadObservaciones();
+            }
+        };
+
+        window.abrirModalEdit = function (g, m, a) {
+            console.log("DETALLE.HTML: Clic detectado en Editar", g, m, a);
+            forceOpenModal('modal-editar');
+            if (typeof cargarMateriasExpediente === 'function') {
+                cargarMateriasExpediente('-edit', '', '', m).then(() => {
+                    if (typeof cargarAbogadosExpediente === 'function') {
+                        cargarAbogadosExpediente('-edit', '', '', a);
+                    }
+                });
+            }
+        };
+    </script>
 </body>
 
 </html>

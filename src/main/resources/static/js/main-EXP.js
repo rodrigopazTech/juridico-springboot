@@ -55,11 +55,13 @@ function cargarMateriasExpediente(arg1 = '', arg2 = '', arg3 = '', materiaIdSele
         abogId = arg3;
     }
 
-    const gerenciaId = document.getElementById(gerId).value;
+    const gerenciaEl = document.getElementById(gerId);
     const selectMateria = document.getElementById(matId);
     const selectAbogado = document.getElementById(abogId);
 
-    if (!selectMateria) return;
+    if (!gerenciaEl || !selectMateria) return Promise.resolve();
+
+    const gerenciaId = gerenciaEl.value;
 
     // 1. Limpiar y bloquear selectores hijos
     selectMateria.innerHTML = '<option value="">Cargando materias...</option>';
@@ -74,7 +76,7 @@ function cargarMateriasExpediente(arg1 = '', arg2 = '', arg3 = '', materiaIdSele
 
     if (!gerenciaId) {
         selectMateria.innerHTML = '<option value="">Primero selecciona una gerencia...</option>';
-        return;
+        return Promise.resolve();
     }
 
     // 2. Traer materias de la API
@@ -158,7 +160,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const gerenciaSelect = document.getElementById('select-gerencia-exp');
 
     // Si existe el select y ya tiene un valor (porque Thymeleaf lo pre-seleccionó)
-    if (gerenciaSelect && gerenciaSelect.value && !document.getElementById('select-materia-exp').value) {
+    const materiaSelect = document.getElementById('select-materia-exp');
+    if (gerenciaSelect && gerenciaSelect.value && materiaSelect && !materiaSelect.value) {
         console.log("Gerencia pre-detectada, cargando materias...");
         cargarMateriasExpediente();
     }
