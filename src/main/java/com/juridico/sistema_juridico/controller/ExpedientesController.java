@@ -208,18 +208,18 @@ public class ExpedientesController {
                 // Inyectar relaciones reales de la base de datos (Creación)
                 if (expedienteForm.getGerencia() != null && expedienteForm.getGerencia().getId() != null)
                     expedienteReal.setGerencia(
-                            gerenciaRepository.findById(expedienteForm.getGerencia().getId()).orElseThrow(() -> new ResourceNotFoundException("Gerencia no encontrada")));
+                            gerenciaRepository.findById(expedienteForm.getGerencia().getId()).orElse(null));
                 if (expedienteForm.getMateria() != null && expedienteForm.getMateria().getId() != null)
                     expedienteReal
-                            .setMateria(materiaRepository.findById(expedienteForm.getMateria().getId()).orElseThrow(() -> new ResourceNotFoundException("Materia no encontrada")));
+                            .setMateria(materiaRepository.findById(expedienteForm.getMateria().getId()).orElse(null));
                 if (expedienteForm.getOrganoJurisdiccional() != null
                         && expedienteForm.getOrganoJurisdiccional().getId() != null)
                     expedienteReal.setOrganoJurisdiccional(
-                            organoRepository.findById(expedienteForm.getOrganoJurisdiccional().getId()).orElseThrow(() -> new ResourceNotFoundException("Órgano no encontrado")));
+                            organoRepository.findById(expedienteForm.getOrganoJurisdiccional().getId()).orElse(null));
                 if (expedienteForm.getAbogadoResponsable() != null
                         && expedienteForm.getAbogadoResponsable().getId() != null)
                     expedienteReal.setAbogadoResponsable(
-                            usuarioRepository.findById(expedienteForm.getAbogadoResponsable().getId()).orElseThrow(() -> new ResourceNotFoundException("Abogado no encontrado")));
+                            usuarioRepository.findById(expedienteForm.getAbogadoResponsable().getId()).orElse(null));
 
             } else {
                 // MODO EDICIÓN
@@ -243,21 +243,21 @@ public class ExpedientesController {
                 // Inyectar relaciones reales (evita errores de Hibernate por objetos "huecos")
                 if (expedienteForm.getGerencia() != null && expedienteForm.getGerencia().getId() != null)
                     expedienteReal.setGerencia(
-                            gerenciaRepository.findById(expedienteForm.getGerencia().getId()).orElseThrow(() -> new ResourceNotFoundException("Gerencia no encontrada")));
+                            gerenciaRepository.findById(expedienteForm.getGerencia().getId()).orElse(null));
 
                 if (expedienteForm.getMateria() != null && expedienteForm.getMateria().getId() != null)
                     expedienteReal
-                            .setMateria(materiaRepository.findById(expedienteForm.getMateria().getId()).orElseThrow(() -> new ResourceNotFoundException("Materia no encontrada")));
+                            .setMateria(materiaRepository.findById(expedienteForm.getMateria().getId()).orElse(null));
 
                 if (expedienteForm.getOrganoJurisdiccional() != null
                         && expedienteForm.getOrganoJurisdiccional().getId() != null)
                     expedienteReal.setOrganoJurisdiccional(
-                            organoRepository.findById(expedienteForm.getOrganoJurisdiccional().getId()).orElseThrow(() -> new ResourceNotFoundException("Órgano no encontrado")));
+                            organoRepository.findById(expedienteForm.getOrganoJurisdiccional().getId()).orElse(null));
 
                 if (expedienteForm.getAbogadoResponsable() != null
                         && expedienteForm.getAbogadoResponsable().getId() != null)
                     expedienteReal.setAbogadoResponsable(
-                            usuarioRepository.findById(expedienteForm.getAbogadoResponsable().getId()).orElseThrow(() -> new ResourceNotFoundException("Abogado no encontrada")));
+                            usuarioRepository.findById(expedienteForm.getAbogadoResponsable().getId()).orElse(null));
             }
 
             if (expedienteReal.getNumero() == null || expedienteReal.getNumero().trim().isEmpty()) {
