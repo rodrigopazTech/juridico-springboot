@@ -30,7 +30,7 @@ public class Termino {
     private Expediente expediente;
 
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String actuacion;
+    private String asunto;
 
     @Column(name = "fecha_ingreso")
     private LocalDate fechaIngreso;
@@ -41,8 +41,8 @@ public class Termino {
     @Column(name = "estatus_termino", length = 30, nullable = false)
     private String estatusTermino; // PROYECTISTA, REVISION, etc.
 
-    @Column(name = "archivo_word", length = 500)
-    private String archivoWord;
+    @Column(name = "acuse", length = 500)
+    private String acuse;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)

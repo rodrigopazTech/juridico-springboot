@@ -23,7 +23,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "LEFT JOIN t.abogadoResponsable a " +
            "WHERE " +
            "(:keyword IS NULL OR :keyword = '' OR " +
-           "LOWER(t.actuacion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(t.asunto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
            "AND (:estatus IS NULL OR :estatus = '' OR t.estatusTermino = :estatus) " +
@@ -44,7 +44,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "LEFT JOIN t.abogadoResponsable a " +
            "WHERE " +
            "(:keyword IS NULL OR :keyword = '' OR " +
-           "LOWER(t.actuacion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(t.asunto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
            "AND (:estatus IS NULL OR :estatus = '' OR t.estatusTermino = :estatus) " +

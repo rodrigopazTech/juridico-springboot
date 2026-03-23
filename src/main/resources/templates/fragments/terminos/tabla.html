@@ -56,7 +56,7 @@
                         </div>
                     </td>
 
-                    <td class="px-4 py-3 max-w-xs truncate" th:text="${t.actuacion}" th:title="${t.actuacion}">Actuación</td>
+                    <td class="px-4 py-3 max-w-xs truncate" th:text="${t.asunto}" th:title="${t.asunto}">Actuación</td>
                     
                     <td class="px-4 py-3" th:text="${t.abogadoResponsable != null ? t.abogadoResponsable.nombreCompleto : 'Sin Asignar'}"></td>
 
@@ -77,7 +77,7 @@
                         <button th:unless="${t.estatusTermino == 'Liberado' || t.estatusTermino == 'Presentado' || t.estatusTermino == 'Concluido'}"
                                 th:onclick="editarTermino(
                                     [[${t.id}]], 
-                                    [[${t.actuacion}]], 
+                                    [[${t.asunto}]], 
                                     [[${t.fechaVencimiento}]], 
                                     [[${t.expediente != null ? t.expediente.id : ''}]], 
                                     [[${t.abogadoResponsable != null ? t.abogadoResponsable.id : ''}]]
@@ -106,15 +106,15 @@
                                     th:data-termino-id="${t.id}"
                                     onclick="activarSubida(this.dataset.terminoId)"
                                     class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gob-oro transition flex items-center border-l-4 border-transparent hover:border-gob-oro">
-                                <i th:class="${t.archivoWord != null ? 'fas fa-sync-alt mr-3 w-4 text-center text-orange-400' : 'fas fa-cloud-upload-alt mr-3 w-4 text-center text-gray-400'}"></i> 
-                                <span th:text="${t.archivoWord != null ? 'Reemplazar Borrador' : 'Subir Borrador'}">Subir Borrador</span>
+                                <i th:class="${t.acuse != null ? 'fas fa-sync-alt mr-3 w-4 text-center text-orange-400' : 'fas fa-cloud-upload-alt mr-3 w-4 text-center text-gray-400'}"></i> 
+                                <span th:text="${t.acuse != null ? 'Reemplazar Borrador' : 'Subir Borrador'}">Subir Borrador</span>
                             </button>
                             
-                            <a th:if="${t.archivoWord != null}" 
+                            <a th:if="${t.acuse != null}" 
                                 th:href="@{/terminos/descargar/{id}(id=${t.id})}" 
                                 class="block w-full text-left px-4 py-3 text-sm text-blue-600 hover:bg-blue-50 transition flex items-center border-l-4 border-transparent hover:border-blue-500">
                                 <i class="fas fa-file-word mr-3 w-4 text-center"></i> 
-                                <span class="truncate font-medium" th:text="${t.archivoWord}">Archivo.docx</span>
+                                <span class="truncate font-medium" th:text="${t.acuse}">Archivo.docx</span>
                             </a>
 
                             <button th:if="${t.estatusTermino == 'Presentado' and mapaPermisos.get('Presentado').contains(rolActual)}"
@@ -127,7 +127,7 @@
                             
                             <div class="border-t border-gray-100"></div>
 
-                            <a th:if="${t.estatusTermino != 'Presentado' and t.estatusTermino != 'Concluido' and t.archivoWord != null and mapaPermisos.containsKey(t.estatusTermino) and mapaPermisos.get(t.estatusTermino).contains(rolActual)}"
+                            <a th:if="${t.estatusTermino != 'Presentado' and t.estatusTermino != 'Concluido' and t.acuse != null and mapaPermisos.containsKey(t.estatusTermino) and mapaPermisos.get(t.estatusTermino).contains(rolActual)}"
                                 th:href="@{/terminos/avanzar/{id}(id=${t.id})}"
                                 class="block px-4 py-3 text-sm text-green-700 hover:bg-green-50 transition border-l-4 border-transparent hover:border-green-500">
                                 <i class="fas fa-arrow-right mr-3 w-4 text-center text-green-500"></i> Avanzar Etapa

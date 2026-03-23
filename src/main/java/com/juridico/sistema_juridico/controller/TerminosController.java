@@ -125,7 +125,7 @@ public class TerminosController {
                 Termino existente = terminoRepository.findById(terminoForm.getId()).orElse(null);
                 if (existente == null) return "redirect:/terminos";
                 
-                existente.setActuacion(terminoForm.getActuacion());
+                existente.setAsunto(terminoForm.getAsunto());
                 existente.setFechaVencimiento(terminoForm.getFechaVencimiento());
                 existente.setAbogadoResponsable(terminoForm.getAbogadoResponsable());
                 existente.setUpdatedAt(LocalDateTime.now());
@@ -165,7 +165,7 @@ public class TerminosController {
                 notificacionService.crearNotificacion(
                     terminoGuardado.getAbogadoResponsable(),
                     "Nuevo Término Asignado",
-                    "El usuario " + actor.getNombreCompleto() + " te ha asignado: " + terminoGuardado.getActuacion(),
+                    "El usuario " + actor.getNombreCompleto() + " te ha asignado: " + terminoGuardado.getAsunto(),
                     "TERMINO", 
                     terminoGuardado.getPrioridad(), 
                     terminoGuardado.getId().toString()
@@ -196,7 +196,7 @@ public class TerminosController {
                 return "redirect:/terminos";
             }
             
-            if ("Proyectista".equals(etapaAnterior) && termino.getArchivoWord() == null) {
+            if ("Proyectista".equals(etapaAnterior) && termino.getAcuse() == null) {
                 redirectAttrs.addFlashAttribute("mensaje", "Sube el archivo Word antes de avanzar.");
                 redirectAttrs.addFlashAttribute("tipo", "error");
                 return "redirect:/terminos";
@@ -273,7 +273,7 @@ public class TerminosController {
                 Files.copy(archivo.getInputStream(), rutaCarpeta.resolve(nombreFinal), StandardCopyOption.REPLACE_EXISTING);
 
                 // 3. Actualizar base de datos
-                termino.setArchivoWord(nombreFinal);
+                termino.setAcuse(nombreFinal);
                 termino.setUpdatedAt(LocalDateTime.now());
                 terminoRepository.save(termino);
 
@@ -370,12 +370,12 @@ public class TerminosController {
             Termino termino = terminoRepository.findById(id).orElse(null);
             
             // Validamos que exista el término y tenga archivo
-            if (termino == null || termino.getArchivoWord() == null) {
+            if (termino == null || termino.getAcuse() == null) {
                 return ResponseEntity.notFound().build();
             }
 
             // Buscamos el archivo en la carpeta "uploads/terminos"
-            Path rutaArchivo = Paths.get("uploads/terminos").resolve(termino.getArchivoWord());
+            Path rutaArchivo = Paths.get("uploads/terminos").resolve(termino.getAcuse());
             Resource recurso = new UrlResource(rutaArchivo.toUri());
 
             if (recurso.exists() || recurso.isReadable()) {

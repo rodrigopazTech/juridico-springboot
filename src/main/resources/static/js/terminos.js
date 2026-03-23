@@ -80,10 +80,10 @@ function abrirModalNuevo() {
     document.getElementById('modal-nuevo-termino').classList.remove('hidden');
 }
 
-function editarTermino(id, actuacion, fecha, expedienteId, abogadoId) {
+function editarTermino(id, asunto, fecha, expedienteId, abogadoId) {
     // 1. Rellenar campos del formulario
     document.getElementById('input-termino-id').value = id;
-    document.getElementById('input-actuacion').value = actuacion;
+    document.getElementById('input-asunto').value = asunto;
     document.getElementById('input-fecha').value = fecha;
     document.getElementById('input-expediente').value = expedienteId;
     

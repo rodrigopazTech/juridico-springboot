@@ -40,7 +40,7 @@ public class TerminoService {
 
         Termino termino = Termino.builder()
                 .expediente(exp)
-                .actuacion(request.getAsunto()) // En tu entidad se llama actuacion
+                .asunto(request.getAsunto()) // En tu entidad se llama asunto
                 .fechaVencimiento(request.getFechaVencimiento())
                 .estatusTermino("PROYECTISTA") // En tu entidad se llama estatusTermino
                 .fechaIngreso(LocalDate.now())
@@ -88,7 +88,7 @@ public class TerminoService {
     private TerminoResponse mapToResponse(Termino entity) {
         TerminoResponse res = new TerminoResponse();
         res.setId(Long.valueOf(entity.getId()));
-        res.setActuación(entity.getActuacion()); 
+        res.setActuación(entity.getAsunto()); 
         res.setFechaVencimiento(entity.getFechaVencimiento());
         
         if (entity.getExpediente() != null) {
