@@ -101,29 +101,32 @@ public class LoteMigracionService {
         List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
         LoteMigracion lote = loteRepository.findById(loteId).orElseThrow();
 
+        // 2. Cache en memoria para evitar N+1
+        java.util.Set<String> cacheMapeo = new java.util.HashSet<>();
+
         for (RegistroMigracion reg : registros) {
             try {
-                // 2. Leemos el JSON como un árbol de nodos
+                // 3. Leemos el JSON como un árbol de nodos
                 JsonNode json = objectMapper.readTree(reg.getPayloadJson());
                 
-                // 3. Extraemos y guardamos si no existen ya en la tabla de homologación
+                // 4. Extraemos y guardamos usando el caché local
                 if (json.has("gerencia") && !json.get("gerencia").isNull()) {
-                    guardarCatalogoUnico(lote, "GERENCIA", json.get("gerencia").asText());
+                    guardarCatalogoUnico(lote, "GERENCIA", json.get("gerencia").asText(), cacheMapeo);
                 }
                 if (json.has("materia") && !json.get("materia").isNull()) {
-                    guardarCatalogoUnico(lote, "MATERIA", json.get("materia").asText());
+                    guardarCatalogoUnico(lote, "MATERIA", json.get("materia").asText(), cacheMapeo);
                 }
                 if (json.has("organoJurisdiccional") && !json.get("organoJurisdiccional").isNull()) {
-                    guardarCatalogoUnico(lote, "ORGANO", json.get("organoJurisdiccional").asText());
+                    guardarCatalogoUnico(lote, "ORGANO", json.get("organoJurisdiccional").asText(), cacheMapeo);
                 }
                 if (json.has("tipoAudiencia") && !json.get("tipoAudiencia").isNull()) {
-                    guardarCatalogoUnico(lote, "TIPO_AUDIENCIA", json.get("tipoAudiencia").asText());
+                    guardarCatalogoUnico(lote, "TIPO_AUDIENCIA", json.get("tipoAudiencia").asText(), cacheMapeo);
                 }
                 if (json.has("abogadoResponsable") && !json.get("abogadoResponsable").isNull()) {
-                    guardarCatalogoUnico(lote, "USUARIO", json.get("abogadoResponsable").asText());
+                    guardarCatalogoUnico(lote, "USUARIO", json.get("abogadoResponsable").asText(), cacheMapeo);
                 }
                 if (json.has("abogadoCompareciente") && !json.get("abogadoCompareciente").isNull()) {
-                    guardarCatalogoUnico(lote, "USUARIO", json.get("abogadoCompareciente").asText());
+                    guardarCatalogoUnico(lote, "USUARIO", json.get("abogadoCompareciente").asText(), cacheMapeo);
                 }
             } catch (Exception e) {
                 // Ignorar JSON malformados en esta etapa
@@ -131,11 +134,15 @@ public class LoteMigracionService {
         }
     }
 
-    private void guardarCatalogoUnico(LoteMigracion lote, String tipo, String valor) {
+    private void guardarCatalogoUnico(LoteMigracion lote, String tipo, String valor, java.util.Set<String> cache) {
         String valorLimpio = valor.trim();
         if (valorLimpio.isEmpty()) return;
 
-        // Si la palabra ("Juzgado 1") aún no está en nuestra lista temporal de este lote, la agregamos
+        // Validar caché primero
+        String cacheKey = tipo + "___" + valorLimpio.toLowerCase();
+        if (cache.contains(cacheKey)) return;
+
+        // Validar en BDD si no está en la caché
         if (!catalogoRepository.existsByLoteIdAndTipoCatalogoAndValorOriginal(lote.getId(), tipo, valorLimpio)) {
             CatalogoMigracion cat = new CatalogoMigracion();
             cat.setLote(lote);
@@ -144,6 +151,9 @@ public class LoteMigracionService {
             cat.setEstatus("PENDIENTE");
             catalogoRepository.save(cat);
         }
+        
+        // Agregar al caché una vez verificado para no volver a consultarlo en la base
+        cache.add(cacheKey);
     }
 
     @Transactional
