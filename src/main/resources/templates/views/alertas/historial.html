@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Centro de Notificaciones | Sistema Jurídico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script th:src="@{/js/tailwind.config.js}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="p-6 sm:ml-64" style="padding-top: 100px !important;">
+
+        <div class="mb-8">
+            <h1 class="text-4xl font-extrabold text-gob-guinda font-headings">Notificaciones</h1>
+            <p class="text-gray-500 mt-1">Avisos automáticos sobre expedientes, términos y audiencias.</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead
+                        class="bg-gray-50 text-gray-400 text-xs font-bold uppercase tracking-widest border-b border-gray-100">
+                        <tr>
+                            <th class="px-6 py-4">Evento</th>
+                            <th class="px-6 py-4">Tipo</th>
+                            <th class="px-6 py-4">Detalles</th>
+                            <th class="px-6 py-4 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        <tr th:if="${notificaciones.empty}">
+                            <td colspan="4" class="px-6 py-12 text-center text-gray-400">
+                                <i class="fas fa-bell-slash text-4xl mb-3 block opacity-20"></i>
+                                <p class="font-bold">No hay notificaciones en tu historial.</p>
+                            </td>
+                        </tr>
+
+                        <tr th:each="n : ${notificaciones.content}" class="hover:bg-gray-50/80 transition-colors group"
+                            th:classappend="${!n.leida ? 'bg-blue-50/30' : ''}">
+
+                            <td class="px-6 py-5 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900"
+                                    th:text="${#temporals.format(n.createdAt, 'dd MMM, yyyy')}">Fecha</div>
+                                <div class="text-xs text-gray-500" th:text="${#temporals.format(n.createdAt, 'HH:mm')}">
+                                    Hora</div>
+                            </td>
+
+                            <td class="px-6 py-5 whitespace-nowrap">
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold border"
+                                    th:classappend="${n.tipo == 'AUDIENCIA' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                   (n.tipo == 'TERMINO' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gob-oro/10 text-gob-oro border-gob-oro/20')}">
+                                    <i class="fas"
+                                        th:classappend="${n.tipo == 'AUDIENCIA' ? 'fa-gavel' : (n.tipo == 'TERMINO' ? 'fa-hourglass-end' : 'fa-info-circle')}"></i>
+                                    <span th:text="${n.tipo}">TIPO</span>
+                                </span>
+                            </td>
+
+                            <td class="px-6 py-5 w-1/2">
+                                <div class="max-w-md">
+                                    <p class="text-sm font-bold text-gray-800" th:text="${n.titulo}">Título de la
+                                        Notificación</p>
+                                    <p class="text-xs text-gray-500 mt-0.5 line-clamp-2" th:text="${n.mensaje}">
+                                        Mensaje...</p>
+                                </div>
+                            </td>
+
+                            <td class="px-6 py-5 text-right whitespace-nowrap">
+                                <div class="flex justify-end gap-3 items-center">
+                                    <a th:href="@{/notificaciones/leer/{id}(id=${n.id})}"
+                                        class="text-xs font-bold text-gob-guinda hover:underline flex items-center gap-1"
+                                        title="Ir al origen">
+                                        Ver <i class="fas fa-external-link-alt text-[10px]"></i>
+                                    </a>
+
+                                    <a th:href="@{/notificaciones/eliminar/{id}(id=${n.id})}"
+                                        class="text-gray-300 hover:text-red-500 transition-colors p-2 rounded hover:bg-red-50">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>

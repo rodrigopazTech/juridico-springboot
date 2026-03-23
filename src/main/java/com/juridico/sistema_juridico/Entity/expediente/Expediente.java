@@ -10,26 +10,26 @@ import java.util.UUID;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional;
-import com.juridico.sistema_juridico.Entity.catalogo.TipoExpediente;
+
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
-import com.juridico.sistema_juridico.Entity.enums.Prioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.catalogo.Etiqueta;
+import java.util.Set;
+import java.util.HashSet;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(
-    name = "expedientes",
-    indexes = {
+@Table(name = "expedientes", indexes = {
         @Index(name = "idx_expedientes_numero", columnList = "numero"),
         @Index(name = "idx_expedientes_etapa", columnList = "etapa_procesal"),
         @Index(name = "idx_expedientes_abogado", columnList = "abogado_responsable_id")
-    }
-)
+})
 public class Expediente {
 
     @Id
@@ -63,10 +63,9 @@ public class Expediente {
     @Column(length = 150)
     private String sede;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    @Builder.Default
-    private Prioridad prioridad = Prioridad.MEDIA;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "prioridad_id")
+    private CatPrioridad prioridad;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "etapa_procesal", nullable = false, length = 30)
@@ -89,6 +88,11 @@ public class Expediente {
     @OneToMany(mappedBy = "expediente", cascade = CascadeType.ALL)
     private List<Termino> terminos;
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "expediente_etiquetas", joinColumns = @JoinColumn(name = "expediente_id"), inverseJoinColumns = @JoinColumn(name = "etiqueta_id"))
+    @Builder.Default
+    private Set<Etiqueta> etiquetas = new HashSet<>();
+
     // =========================
     // FECHAS (OPCIÓN 2)
     // =========================
@@ -97,10 +101,6 @@ public class Expediente {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    @ManyToOne
-    @JoinColumn(name = "tipo_expediente_id")
-    private TipoExpediente tipoExpediente;
 
     // =========================
     // CALLBACKS JPA

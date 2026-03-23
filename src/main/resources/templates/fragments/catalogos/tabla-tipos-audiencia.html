@@ -1,0 +1,77 @@
+<div th:fragment="tabla" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="flex justify-between mb-4">
+        <h3 class="text-lg font-bold text-gob-gris">Tipos de Audiencia</h3>
+        <div class="flex gap-2">
+            <input type="text" id="input-search-tipos-audiencia" placeholder="Buscar tipo..."
+                class="border border-gray-200 rounded-lg p-2 text-sm w-48 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all font-medium bg-white">
+
+            <button th:if="${usuarioActual.rol.name() == 'DIRECCION' or usuarioActual.rol.name() == 'SUBDIRECCION'}"
+                onclick="abrirModalTipoAudiencia()"
+                class="bg-gob-guinda text-white px-4 py-2 rounded text-sm hover:bg-opacity-90 shadow-sm transition-colors">
+                <i class="fas fa-plus mr-2"></i> Nuevo
+            </button>
+        </div>
+    </div>
+
+    <table class="w-full text-sm text-left text-gray-500">
+        <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
+            <tr>
+                <th class="px-6 py-3 font-bold">Descripción / Nombre</th>
+                <th class="px-6 py-3 font-bold">Estatus</th>
+                <th class="px-6 py-3 font-bold text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tabla-tipos-audiencia-body">
+            <tr th:each="t : ${listaTiposAudiencia.content}" class="border-b hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 font-bold text-gray-800" th:text="${t.nombre}">Nombre</td>
+                <td class="px-6 py-4">
+                    <span th:if="${t.activo}"
+                        class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded">Activo</span>
+                    <span th:unless="${t.activo}"
+                        class="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded">Inactivo</span>
+                </td>
+
+                <td class="px-6 py-4 text-center">
+                    <div
+                        th:if="${usuarioActual.rol.name() == 'DIRECCION' or usuarioActual.rol.name() == 'SUBDIRECCION'}">
+                        <button th:data-id="${t.id}" th:data-nombre="${t.nombre}" th:data-activo="${t.activo}"
+                            onclick="editarTipoAudiencia(this.dataset.id, this.dataset.nombre, this.dataset.activo)"
+                            class="text-gob-oro hover:text-gob-guinda transition-colors mx-1">
+                            <i class="fas fa-edit fa-lg"></i>
+                        </button>
+
+                        <button type="button" th:data-id="${t.id}"
+                            onclick="confirmarCambioEstatusCatalogo(this.dataset.id, 'tipo-audiencia')"
+                            class="hover:scale-110 transition-transform mx-1"
+                            th:title="${t.activo ? 'Desactivar' : 'Activar'}"
+                            th:classappend="${t.activo ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'}">
+                            <i class="fas" th:classappend="${t.activo ? 'fa-ban' : 'fa-check-circle'}"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="mt-4 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500"
+        th:if="${!listaTiposAudiencia.empty}">
+        <span class="mb-2 sm:mb-0">
+            Página <span th:text="${listaTiposAudiencia.number + 1}" class="font-bold text-gray-700"></span> de <span
+                th:text="${listaTiposAudiencia.totalPages}" class="font-bold text-gray-700"></span>
+        </span>
+
+        <div class="flex gap-2">
+            <a th:if="${listaTiposAudiencia.hasPrevious()}"
+                th:href="@{/usuarios(pageTiposAudiencia=${listaTiposAudiencia.number - 1}, tab='tipos-audiencia')}"
+                class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">
+                <i class="fas fa-chevron-left mr-1"></i> Anterior
+            </a>
+
+            <a th:if="${listaTiposAudiencia.hasNext()}"
+                th:href="@{/usuarios(pageTiposAudiencia=${listaTiposAudiencia.number + 1}, tab='tipos-audiencia')}"
+                class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">
+                Siguiente <i class="fas fa-chevron-right ml-1"></i>
+            </a>
+        </div>
+    </div>
+</div>

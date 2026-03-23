@@ -1,56 +1,68 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8" />
     <title>Gestión de Términos - Agenda Legal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
-        .table-responsive { overflow-x: visible; }
+        .table-responsive {
+            overflow-x: visible;
+        }
+
         /* Asegura que los modales estén por encima de todo */
-        .z-50 { z-index: 50; }
+        .z-50 {
+            z-index: 50;
+        }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans">
 
+<body class="bg-gray-100 text-gray-800 font-sans overflow-x-hidden">
+
+    <!-- Sidebar Fragment -->
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
 
-    <div class="p-4 sm:ml-64">
-        
-        <div class="mb-6">
-            <h1 class="text-3xl font-bold text-gob-guinda font-headings">
-                <i class="fas fa-hourglass-end text-gob-oro mr-2"></i> Gestión de Términos
-            </h1>
-            <hr class="h-1 w-20 bg-gob-oro border-0 mt-2 mb-4" />
-        </div>
+    <div class="sm:ml-64 flex flex-col min-h-screen">
 
-        <div th:replace="~{fragments/terminos/barra-busqueda :: barra}"></div>
-        <div th:replace="~{fragments/terminos/barra-filtros :: filtros}"></div>
-        <div th:replace="~{fragments/terminos/tabla :: tabla-resultados}"></div>
+        <!-- Navbar Fragment -->
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
 
+        <!-- Main Content with padding to avoid overlapping -->
+        <main class="p-4 md:p-6 flex-1 animate-fade-in" style="padding-top: 100px !important;">
+
+
+
+            <!-- Panel de Control Unificado -->
+            <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-4">
+                <div th:replace="~{fragments/terminos/barra-busqueda :: barra}"></div>
+                <div th:replace="~{fragments/terminos/barra-filtros :: filtros}"></div>
+            </div>
+
+            <!-- Línea de Tiempo Global (Nueva Ubicación) -->
+            <div th:replace="~{fragments/terminos/linea-tiempo :: linea}"></div>
+
+            <div th:replace="~{fragments/terminos/tabla :: tabla-resultados}"></div>
+
+        </main>
     </div>
 
     <div th:replace="~{fragments/terminos/modal-nuevo-termino :: modal}"></div>
     <div th:replace="~{fragments/terminos/modal-subir-acuse :: modal}"></div>
+    <div th:replace="~{fragments/terminos/modal-concluir :: modal}"></div>
 
-    <form id="form-upload" th:action="@{/terminos/subir-archivo}" method="post" enctype="multipart/form-data" class="hidden">
+    <form id="form-upload" th:action="@{/terminos/subir-archivo}" method="post" enctype="multipart/form-data"
+        class="hidden">
         <input type="hidden" name="id" id="upload-termino-id">
-        <input type="file" name="archivo" id="upload-file-input" onchange="document.getElementById('form-upload').submit()">
+        <input type="file" name="archivo" id="upload-file-input"
+            onchange="document.getElementById('form-upload').submit()">
     </form>
+    <script th:src="@{/js/terminos.js(v=4)}"></script>
+    <script th:src="@{/js/realtime-search.js}"></script>
 
-    <script th:if="${mensaje != null}">
-        document.addEventListener("DOMContentLoaded", function () {
-            Swal.fire({
-                title: "[[${tipo == 'success' ? '¡Éxito!' : 'Error'}]]",
-                text: "[[${mensaje}]]",
-                icon: "[[${tipo}]]",
-                confirmButtonColor: "#bc955c",
-            });
-        });
-    </script>
-
-    <script th:src="@{/js/terminos.js}"></script>
+    <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
 </body>
+
 </html>

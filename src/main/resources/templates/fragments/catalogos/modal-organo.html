@@ -1,0 +1,70 @@
+<div th:fragment="modal" id="modal-organo"
+    class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+    <div
+        class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all border border-gray-100">
+        <!-- Header -->
+        <div
+            class="bg-gob-guinda px-6 py-4 flex justify-between items-center border-b border-gob-oro border-opacity-20 shadow-sm">
+            <h3 id="titulo-modal-organo" class="text-white text-xl font-bold font-headings tracking-wide">
+                <i class="fas fa-gavel mr-2 text-gob-oro"></i> Nuevo Órgano Jurisdiccional
+            </h3>
+            <button onclick="document.getElementById('modal-organo').classList.add('hidden')"
+                class="text-white hover:text-gob-oro transition-colors">
+                <i class="fas fa-times fa-lg"></i>
+            </button>
+        </div>
+
+        <form th:action="@{/catalogos/organos/guardar}" method="POST" class="p-6 space-y-4 bg-white">
+            <input type="hidden" name="id" id="input-organo-id">
+
+            <div class="space-y-1">
+                <label class="block font-bold text-gob-gris text-sm">Nombre del Órgano*</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                        <i class="fas fa-university"></i>
+                    </span>
+                    <input type="text" name="nombre" id="input-organo-nombre" required
+                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gob-oro focus:border-gob-oro outline-none text-sm transition-all"
+                        placeholder="Ej. Juzgado Primero de Distrito">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="block font-bold text-gob-gris text-sm">Tipo*</label>
+                    <select name="tipo" id="select-organo-tipo" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gob-oro focus:border-gob-oro outline-none text-sm bg-white transition-all">
+                        <option value="JUZGADO">Juzgado</option>
+                        <option value="TRIBUNAL">Tribunal</option>
+                        <option value="INSTITUTO">Instituto</option>
+                        <option value="OTRO">Otro</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block font-bold text-gob-gris text-sm">Sede*</label>
+                    <input type="text" name="sede" id="input-organo-sede" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gob-oro focus:border-gob-oro outline-none text-sm transition-all"
+                        placeholder="Ej. Morelia">
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2 pt-2">
+                <input type="checkbox" name="activo" id="check-organo-activo" value="true" checked
+                    class="rounded text-gob-guinda focus:ring-gob-oro h-4 w-4 border-gray-300">
+                <label class="text-sm font-medium text-gray-700 cursor-pointer select-none"
+                    for="check-organo-activo">Estatus Activo</label>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-6 border-t border-gray-100">
+                <button type="button" onclick="document.getElementById('modal-organo').classList.add('hidden')"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm hover:bg-gray-50 font-medium transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="bg-gob-guinda text-white px-6 py-2 rounded-lg text-sm hover:bg-opacity-90 font-bold shadow-md hover:shadow-lg transform active:scale-95 transition-all">
+                    Guardar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

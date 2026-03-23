@@ -3,20 +3,18 @@
  * Autor: Ricardo Villalobos
  */
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Aquí puedes poner inicializaciones si las necesitas
+document.addEventListener('DOMContentLoaded', function () {
+    console.log("Sistema de Terminos Cargado");
 });
 
 // --- MENÚS DESPLEGABLES ---
 function toggleMenu(id) {
-    // 1. Cierra todos los otros menús abiertos
     document.querySelectorAll('[id^="menu-"]').forEach(menu => {
         if (menu.id !== 'menu-' + id) {
             menu.classList.add('hidden');
         }
     });
 
-    // 2. Alterna el menú actual
     const menu = document.getElementById('menu-' + id);
     if (menu) {
         menu.classList.toggle('hidden');
@@ -24,7 +22,7 @@ function toggleMenu(id) {
 }
 
 // Cierra el menú si haces clic fuera de él
-window.addEventListener('click', function(e) {
+window.addEventListener('click', function (e) {
     if (!e.target.closest('td.relative')) {
         document.querySelectorAll('[id^="menu-"]').forEach(menu => {
             menu.classList.add('hidden');
@@ -32,21 +30,37 @@ window.addEventListener('click', function(e) {
     }
 });
 
-// --- SUBIDA DE ARCHIVOS ---
-function activarSubida(idTermino) {
-    // Vincula el ID al input oculto y abre el selector de archivos
-    const inputId = document.getElementById('upload-termino-id');
-    const inputFile = document.getElementById('upload-file-input');
-    
-    if(inputId && inputFile) {
-        inputId.value = idTermino;
-        inputFile.click();
-    } else {
-        console.error("No se encontraron los inputs de subida (upload-termino-id o upload-file-input)");
+// --- LÍNEA DE TIEMPO (NUEVO) ---
+function toggleTimeline(id) {
+    const row = document.getElementById('timeline-' + id);
+    const btn = document.getElementById('btn-expand-' + id);
+
+    if (row) {
+        row.classList.toggle('hidden');
+        if (btn) {
+            // Rotar flecha
+            if (!row.classList.contains('hidden')) {
+                btn.classList.add('rotate-180', 'text-gob-guinda');
+                btn.classList.remove('text-gray-400');
+            } else {
+                btn.classList.remove('rotate-180', 'text-gob-guinda');
+                btn.classList.add('text-gray-400');
+            }
+        }
     }
 }
 
-// --- ELIMINAR ---
+// --- SUBIDA DE ARCHIVOS ---
+function activarSubida(idTermino) {
+    const inputId = document.getElementById('upload-termino-id');
+    const inputFile = document.getElementById('upload-file-input');
+
+    if (inputId && inputFile) {
+        inputId.value = idTermino;
+        inputFile.click();
+    }
+}
+
 function confirmarEliminar(id) {
     Swal.fire({
         title: '¿Eliminar término?',
@@ -68,27 +82,27 @@ function confirmarEliminar(id) {
 
 function abrirModalNuevo() {
     const form = document.getElementById('form-termino');
-    if(form) form.reset();
-    
+    if (form) form.reset();
+
     // Limpiamos el ID oculto para que el Controller sepa que es CREAR
-    document.getElementById('input-termino-id').value = ''; 
-    
+    document.getElementById('input-termino-id').value = '';
+
     // Cambiamos título
     document.getElementById('modal-titulo').innerHTML = '<i class="fas fa-plus-circle"></i> Nuevo Término';
-    
+
     // Mostramos modal
     document.getElementById('modal-nuevo-termino').classList.remove('hidden');
 }
 
-function editarTermino(id, asunto, fecha, expedienteId, abogadoId) {
+function editarTermino(id, actuacion, fecha, expedienteId, abogadoId) {
     // 1. Rellenar campos del formulario
     document.getElementById('input-termino-id').value = id;
-    document.getElementById('input-asunto').value = asunto;
+    document.getElementById('input-actuacion').value = actuacion;
     document.getElementById('input-fecha').value = fecha;
     document.getElementById('input-expediente').value = expedienteId;
-    
+
     // Manejo seguro del abogado (puede ser null)
-    if(abogadoId) {
+    if (abogadoId) {
         document.getElementById('input-abogado').value = abogadoId;
     } else {
         document.getElementById('input-abogado').value = "";
@@ -96,42 +110,139 @@ function editarTermino(id, asunto, fecha, expedienteId, abogadoId) {
 
     // 2. Cambiar título a "Editar"
     document.getElementById('modal-titulo').innerHTML = '<i class="fas fa-edit"></i> Editar Término';
-    
+
     // 3. Mostrar modal
     document.getElementById('modal-nuevo-termino').classList.remove('hidden');
 }
 
+
 function activarSubidaAcuse(idTermino) {
-    // 1. Asignar ID al input oculto
-    const inputId = document.getElementById('acuse-termino-id');
-    const inputFile = document.getElementById('acuse-file-input');
-    
-    if(inputId && inputFile) {
+    const inputId = document.getElementById('input-acuse-id');
+    if (inputId) {
         inputId.value = idTermino;
-        // 2. Abrir selector de archivos
-        inputFile.click();
-    } else {
-        console.error("No se encontraron los inputs de acuse");
+        const modal = document.getElementById('modal-subir-acuse');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
     }
 }
 
-function activarSubidaAcuse(idTermino) {
-    // 1. Asignar el ID al input oculto dentro del modal nuevo
-    const inputId = document.getElementById('input-acuse-id');
-    
-    if(inputId) {
-        inputId.value = idTermino;
-        
-        // 2. Mostrar el modal
-        const modal = document.getElementById('modal-subir-acuse');
-        if(modal) {
-            modal.classList.remove('hidden');
-            modal.style.display = 'flex'; // Asegurar display flex para centrado
-            modal.classList.add('flex');
-            modal.classList.add('items-center');
-            modal.classList.add('justify-center');
+
+// 1. ABRIR MODAL NUEVO (Limpio)
+function abrirModalNuevo() {
+    const idInput = document.getElementById('input-termino-id');
+    const expSelect = document.getElementById('select-expediente-termino');
+    const asuntoInput = document.getElementById('input-asunto');
+    const vencimientoInput = document.getElementById('input-vencimiento');
+    const abogadoSelect = document.getElementById('select-abogado-termino');
+    const observacionesInput = document.getElementById('input-observaciones-termino');
+    const titulo = document.getElementById('modal-titulo');
+
+    // Limpiar campos
+    if (idInput) idInput.value = "";
+    if (expSelect) expSelect.value = "";
+    if (asuntoInput) asuntoInput.value = "";
+    if (vencimientoInput) vencimientoInput.value = "";
+    if (observacionesInput) observacionesInput.value = "";
+
+    // Resetear abogado
+    if (abogadoSelect) {
+        abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
+        abogadoSelect.classList.add('cursor-not-allowed');
+        abogadoSelect.classList.add('bg-gray-50');
+    }
+
+    // Resetear prioridad
+    const prioridadSelect = document.getElementById('select-prioridad');
+    if (prioridadSelect) prioridadSelect.value = "MEDIA";
+
+    if (titulo) titulo.innerHTML = '<i class="fas fa-plus-circle"></i> Nuevo Término';
+
+    const modal = document.getElementById('modal-nuevo-termino');
+    if (modal) modal.classList.remove('hidden');
+}
+
+// 2. EDITAR TÉRMINO (Con el botón amarillo)
+function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogadoId, prioridad, observaciones = "") {
+
+    // Llenar datos en el formulario
+    const idInput = document.getElementById('input-termino-id');
+    const asuntoInput = document.getElementById('input-asunto');
+    const vencimientoInput = document.getElementById('input-vencimiento');
+    const expSelect = document.getElementById('select-expediente-termino');
+    const prioridadSelect = document.getElementById('select-prioridad');
+    const observacionesInput = document.getElementById('input-observaciones-termino');
+    const titulo = document.getElementById('modal-titulo');
+
+    if (idInput) idInput.value = id;
+    if (asuntoInput) asuntoInput.value = actuacion;
+    if (vencimientoInput) vencimientoInput.value = fecha;
+    if (prioridadSelect && prioridad) prioridadSelect.value = prioridad;
+    if (observacionesInput) observacionesInput.value = observaciones;
+
+    if (expSelect && expedienteId) {
+        // Verificar si la opción ya existe en la lista del select actual (por filtro de roles)
+        let optionExists = Array.from(expSelect.options).some(opt => opt.value == expedienteId);
+
+        // Si no existe, agregarla dinámicamente para que el 'required' del select no bloquee el guardado
+        if (!optionExists) {
+            const opt = document.createElement('option');
+            opt.value = expedienteId;
+            opt.text = expedienteNum + " (Autoseleccionado)";
+            expSelect.add(opt);
         }
-    } else {
-        console.error("Error: No se encontró el input 'input-acuse-id' en el modal de acuse.");
+
+        expSelect.value = expedienteId;
+        vincularAbogadoTermino(); // Cargar abogado automáticamente
+    }
+
+    if (titulo) titulo.innerHTML = '<i class="fas fa-edit"></i> Editar Término';
+
+    const modal = document.getElementById('modal-nuevo-termino');
+    if (modal) modal.classList.remove('hidden');
+}
+
+// 3. VINCULACIÓN AUTOMÁTICA
+function vincularAbogadoTermino() {
+    const expSelect = document.getElementById('select-expediente-termino');
+    const abogadoSelect = document.getElementById('select-abogado-termino');
+
+    if (!expSelect || !abogadoSelect) return;
+
+    const expId = expSelect.value;
+    if (!expId) return;
+
+    abogadoSelect.innerHTML = '<option>Cargando...</option>';
+
+    fetch(`/terminos/api/responsable-expediente/${expId}`)
+        .then(response => {
+            if (!response.ok) throw new Error("Sin responsable");
+            return response.json();
+        })
+        .then(data => {
+            abogadoSelect.innerHTML = '';
+            const option = document.createElement('option');
+            option.value = data.id;
+            option.text = data.nombre;
+            option.selected = true;
+            abogadoSelect.appendChild(option);
+
+            abogadoSelect.classList.remove('cursor-not-allowed', 'bg-gray-50');
+            abogadoSelect.classList.add('bg-white');
+        })
+        .catch(err => {
+            console.error(err);
+            abogadoSelect.innerHTML = '<option value="">Sin abogado asignado</option>';
+        });
+}
+// ABRIR MODAL PARA CONCLUIR TÉRMINO
+function abrirModalConcluir(idTermino) {
+    const inputId = document.getElementById('input-concluir-id');
+    const modal = document.getElementById('modal-concluir-final');
+
+    if (inputId && modal) {
+        inputId.value = idTermino;
+        modal.classList.remove('hidden');
     }
 }

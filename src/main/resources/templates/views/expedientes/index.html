@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title th:text="${pageTitle}">Sistema Jurídico</title>
@@ -8,144 +9,246 @@
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <script th:src="@{/lib/chart.umd.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head>
-<body class="bg-gray-100 text-gray-800 font-sans pb-10">
 
-    <div th:replace="~{fragments/sidebar :: sidebar}"></div> 
-    <div class="p-4 sm:ml-64">
-       
-        <div class="mb-6">
-            <h1 class="text-3xl font-bold text-gob-guinda font-headings">
-                <i class="fas fa-folder-open text-gob-oro mr-2"></i> Gestión de Expedientes
-            </h1>
-            <hr class="h-1 w-20 bg-gob-oro border-0 mt-2 mb-4" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e5e7eb;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+        }
+
+        .line-clamp-1 {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        /* Filter Chips Styles */
+        .filter-chip {
+            @apply flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full text-[11px] font-bold text-gray-500 hover:border-gob-guinda/30 transition-all cursor-pointer relative shadow-sm;
+        }
+
+        .filter-chip select {
+            @apply bg-transparent outline-none appearance-none pr-6 cursor-pointer text-gray-700;
+        }
+
+        .filter-chip .chip-icon {
+            @apply absolute right-3 text-[9px] text-gray-400 pointer-events-none transition-transform;
+        }
+
+        .filter-chip:hover .chip-icon {
+            @apply text-gob-guinda;
+        }
+    </style>
+</head>
+
+<!-- Sidebar Fragment -->
+<div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+<div class="sm:ml-64 flex flex-col min-h-screen">
+
+    <!-- Navbar Fragment -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <!-- Main Content with padding to avoid overlapping -->
+    <main class="p-6 md:p-10 flex-1 animate-fade-in" style="padding-top: 100px !important;">
+
+        <!-- ===== HEADER & SEARCH ===== -->
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-10">
+
+
+            <div class="flex items-center gap-4 w-full lg:w-auto">
+                <!-- Search Input -->
+                <div class="relative flex-1 lg:w-64">
+                    <form th:action="@{/expedientes}" method="get" onsubmit="return false;">
+                        <input type="text" id="input-search-expedientes" th:value="${keyword}"
+                            placeholder="Buscar expediente o partes..."
+                            class="w-full bg-white border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 transition-all font-medium">
+                        <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    </form>
+                </div>
+
+                <!-- Add Button (Role Protected) -->
+                <button
+                    th:if="${rolActual != null and (rolActual.name() == 'ADMIN' or rolActual.name() == 'DIRECCION' or rolActual.name() == 'SUBDIRECCION')}"
+                    onclick="document.getElementById('modal-nuevo-exp').classList.remove('hidden')"
+                    class="bg-gob-guinda hover:bg-gob-guindaDark text-white font-bold py-2.5 px-6 rounded-lg shadow-lg hover:shadow-gob-guinda/20 transition-all flex items-center gap-2 text-sm shrink-0">
+                    <i class="fas fa-plus"></i>
+                    <span class="hidden sm:inline">Nuevo Expediente</span>
+                </button>
+            </div>
         </div>
 
-        <main class="container mx-auto px-4 py-8">
-            
-            <div th:if="${success}" class="mb-4 p-4 bg-green-100 text-green-700 rounded border border-green-200" th:text="${success}"></div>
-            <div th:if="${error}" class="mb-4 p-4 bg-red-100 text-red-700 rounded border border-red-200" th:text="${error}"></div>
+        <!-- ===== FILTERS (Pill Fragment) ===== -->
+        <div th:replace="~{fragments/expedientes/filtros-expedientes :: filtros}"></div>
 
-            <div th:replace="~{fragments/expedientes/barra-busqueda-exp :: barra}"></div>
-            <div th:replace="~{fragments/expedientes/filtros-expedientes :: filtros}"></div>
+        <!-- ===== TABLE SECTION ===== -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr
+                            class="bg-gray-50/50 text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">
+                            <th class="px-8 py-5">Identificador</th>
+                            <th class="px-6 py-5">Estructura Orgánica</th>
+                            <th class="px-6 py-5">Responsable</th>
+                            <th class="px-6 py-5">Estado Procesal</th>
+                            <th class="px-8 py-5 text-right w-32">Gestión</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-expedientes-body" class="divide-y divide-gray-50">
+                        <!-- Loop Start -->
+                        <tr th:each="exp : ${expedientes.content}"
+                            class="group hover:bg-[#fdfbf9] transition-all duration-200">
 
+                            <!-- ID & Numero -->
+                            <td class="px-8 py-6">
+                                <div class="flex items-center gap-4">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gob-guinda group-hover:bg-gob-guinda group-hover:text-white transition-all">
+                                        <i class="fas fa-file-invoice text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-extrabold text-gray-900 group-hover:text-gob-guinda transition-colors"
+                                            th:text="${exp.numero}">0001/2025</div>
+                                        <div class="text-[10px] text-gray-400 font-mono tracking-tighter mt-0.5 line-clamp-1 w-32"
+                                            th:text="${exp.id}">UUID</div>
+                                    </div>
+                                </div>
+                            </td>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                
-                <a th:each="exp : ${expedientes.content}" 
-                th:href="@{/expedientes/{id}(id=${exp.id})}" 
-                class="block group">
-                
-                    <div class="bg-white rounded-lg shadow group-hover:shadow-lg transition duration-300 border-l-4 p-5 relative cursor-pointer h-full"
-                        th:classappend="${exp.prioridad.name() == 'ALTA' ? 'border-red-600' : (exp.prioridad.name() == 'MEDIA' ? 'border-yellow-500' : 'border-green-500')}">
-                        
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <h4 class="text-lg font-bold text-gob-guinda group-hover:underline" th:text="${exp.numero}">EXP-0000</h4>
-                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide" 
-                                    th:text="${exp.materia != null ? exp.materia.nombre : 'S/N'}">MATERIA</span>
-                            </div>
-                            
-                            <div class="flex flex-col items-end gap-1">
-                                <span class="text-[10px] border border-blue-500 text-blue-600 px-2 py-0.5 rounded font-bold" 
-                                    th:text="${exp.etapaProcesal}">TRAMITE</span>
-                                
-                                    <span class="text-[10px] px-2 py-0.5 rounded font-bold border"
-                                    th:text="${exp.prioridad}"
-                                    th:classappend="${exp.prioridad.name() == 'ALTA' ? 'bg-red-100 text-red-700 border-red-200' : 
-                                                    (exp.prioridad.name() == 'MEDIA' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 
-                                                    'bg-green-100 text-green-700 border-green-200')}">
-                                    PRIORIDAD
+                            <!-- Gerencia / Materia -->
+                            <td class="px-6 py-6">
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-xs font-bold text-gray-700"
+                                        th:text="${exp.gerencia != null ? exp.gerencia.nombre : 'GERENCIA NO DEF.'}">GERENCIA</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-gob-oro"></span>
+                                        <span class="text-[11px] text-gray-400 font-medium italic"
+                                            th:text="${exp.materia != null ? exp.materia.nombre : 'MATERIA NO DEF.'}">MATERIA</span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Abogado (Safe Initials) -->
+                            <td class="px-6 py-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-gob-oro text-white text-[10px] font-bold flex items-center justify-center shrink-0 border-2 border-white shadow-sm"
+                                        th:text="${exp.abogadoResponsable != null and exp.abogadoResponsable.nombreCompleto != null and #strings.length(exp.abogadoResponsable.nombreCompleto) > 0 ? #strings.substring(exp.abogadoResponsable.nombreCompleto, 0, 1).toUpperCase() : '?'}">
+                                        X
+                                    </div>
+                                    <span class="text-xs font-semibold text-gray-600 truncate max-w-[150px]"
+                                        th:text="${exp.abogadoResponsable != null ? exp.abogadoResponsable.nombreCompleto : 'SIN ASIGNAR'}">Nombre</span>
+                                </div>
+                            </td>
+
+                            <!-- Etapa Procesal -->
+                            <td class="px-6 py-6">
+                                <span
+                                    class="px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-widest border"
+                                    th:classappend="${exp.etapaProcesal != null and exp.etapaProcesal.name() == 'CONCLUIDO' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gob-oro/10 text-gob-oro border-gob-oro/20'}"
+                                    th:text="${exp.etapaProcesal != null ? exp.etapaProcesal.name() : 'DESCONOCIDO'}">
+                                    TRAMITE
                                 </span>
-                            </div>
-                        </div>
-                        
-                        <p class="text-gray-600 text-sm mb-4 line-clamp-2 h-10 font-medium" 
-                        th:text="${exp.partes != null ? exp.partes : exp.descripcion}">
-                            Descripción...
-                        </p>
-                        
-                        <div class="border-t border-gray-100 pt-3 flex justify-between items-center text-xs text-gray-500">
-                            <div class="flex items-center gap-1">
-                                <i class="fas fa-user-tie"></i> 
-                                <span th:text="${exp.abogadoResponsable != null ? exp.abogadoResponsable.nombreCompleto : 'Sin Asignar'}">Lic. Nombre</span>
-                            </div>
-                            <div class="flex items-center gap-1">
-                                <i class="fas fa-university"></i>
-                                <span th:text="${exp.organoJurisdiccional != null ? exp.organoJurisdiccional.nombre : 'Sin Órgano'}" class="truncate max-w-[100px]">Órgano</span>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-                
-                <div th:if="${expedientes.totalElements == 0}" class="col-span-3 text-center py-10 text-gray-400">
-                    <i class="fas fa-folder-open text-4xl mb-2"></i>
-                    <p class="mt-2 text-sm">No se encontraron expedientes con esa búsqueda.</p>
-                </div>
-            </div> 
+                            </td>
 
-            <div class="mt-8 flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border-t border-gray-100"
-                th:if="${expedientes.totalPages > 0}">
-                
-                <span class="text-xs text-gray-500 font-medium">
-                    Página <span th:text="${expedientes.number + 1}">1</span> de <span th:text="${expedientes.totalPages}">1</span>
-                </span>
-
-                <div class="flex gap-2">
-                    <a th:if="${expedientes.hasPrevious()}"
-                    th:href="@{/expedientes(page=${expedientes.number - 1}, keyword=${keyword})}"
-                    class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 text-sm font-medium transition">
-                    <i class="fas fa-chevron-left mr-1"></i> Anterior
-                    </a>
-
-                    <a th:if="${expedientes.hasNext()}"
-                    th:href="@{/expedientes(page=${expedientes.number + 1}, keyword=${keyword})}"
-                    class="px-3 py-1.5 bg-gob-guinda text-white rounded hover:bg-gob-guinda-claro text-sm font-medium transition shadow-sm">
-                    Siguiente <i class="fas fa-chevron-right ml-1"></i>
-                    </a>
-                </div>
+                            <!-- Actions -->
+                            <td class="px-8 py-6 text-right">
+                                <a th:href="@{/expedientes/{id}(id=${exp.id})}"
+                                    class="inline-flex items-center justify-center w-9 h-9 border border-gray-200 text-gray-400 rounded-xl hover:bg-gob-guinda hover:text-white hover:border-gob-guinda hover:shadow-lg transition-all transform hover:scale-110 active:scale-95">
+                                    <i class="fas fa-eye text-sm transition-transform group-hover:scale-110"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <!-- No Results -->
+                        <tr th:if="${expedientes.empty}">
+                            <td colspan="5" class="px-8 py-20 text-center">
+                                <div class="flex flex-col items-center gap-3 opacity-30">
+                                    <i class="fas fa-search text-5xl"></i>
+                                    <p class="text-lg font-bold italic">No se encontraron expedientes</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
+        </div>
 
-        </main>
+        <!-- ===== PAGINATION (Ultra Safe) ===== -->
+        <div
+            class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white/50 p-4 rounded-2xl border border-gray-100">
+            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                Mostrando <span class="text-gray-900" th:text="${expedientes.numberOfElements}">0</span>
+                de <span class="text-gray-900" th:text="${expedientes.totalElements}">0</span> registros
+            </p>
 
-        <div th:replace="~{fragments/expedientes/modal-nuevo-exp :: modal}"></div>
-    </div>
-    <script>
-        document.onkeydown = function(evt) {
-            evt = evt || window.event;
-            if (evt.keyCode == 27) { 
-                document.getElementById('modal-nuevo-exp').classList.add('hidden');
-            }
-        };
-    </script>
-    <script th:if="${mensaje != null}">
-        document.addEventListener('DOMContentLoaded', function() {
-            // Obtenemos los valores enviados desde el Controller
-            const mensaje = "[[${mensaje}]]";
-            const tipo = "[[${tipo}]]"; // 'success' o 'error'
+            <nav class="flex items-center gap-1.5" th:if="${expedientes.totalPages > 0}">
+                <!-- Prev -->
+                <a th:href="@{/expedientes(page=${expedientes.number - 1}, keyword=${keyword}, gerenciaId=${param.gerenciaId}, materiaId=${param.materiaId}, abogadoId=${param.abogadoId}, etapa=${param.etapa}, etiquetaId=${param.etiquetaId}, prioridadId=${param.prioridadId}, tipoId=${param.tipoId})}"
+                    th:if="${expedientes.hasPrevious()}"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-white hover:border-gob-oro hover:text-gob-guinda transition-all">
+                    <i class="fas fa-chevron-left text-[10px]"></i>
+                </a>
 
-            // Configuramos el título y el icono según el tipo
-            let titulo = "¡Éxito!";
-            let icono = "success";
-            
-            if (tipo === 'error') {
-                titulo = "Atención";
-                icono = "error";
-            }
+                <!-- Pages -->
+                <th:block
+                    th:each="i : ${expedientes.totalPages > 0 ? #numbers.sequence(0, expedientes.totalPages - 1) : {}}">
+                    <a th:href="@{/expedientes(page=${i}, keyword=${keyword}, gerenciaId=${param.gerenciaId}, materiaId=${param.materiaId}, abogadoId=${param.abogadoId}, etapa=${param.etapa}, etiquetaId=${param.etiquetaId}, prioridadId=${param.prioridadId}, tipoId=${param.tipoId})}"
+                        th:text="${i + 1}"
+                        class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all border"
+                        th:classappend="${expedientes.number == i ? 'bg-gob-guinda text-white border-gob-guinda shadow-md' : 'bg-white text-gray-500 border-gray-200 hover:border-gob-oro hover:text-gob-guinda'}">
+                    </a>
+                </th:block>
 
-            // Mostramos la alerta bonita
-            Swal.fire({
-                title: titulo,
-                text: mensaje,
-                icon: icono,
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#bc955c', // Color gob-oro
-                background: '#f9fafb',
-                customClass: {
-                    confirmButton: 'font-bold'
-                }
-            });
-        });
-    </script>
+                <!-- Next -->
+                <a th:href="@{/expedientes(page=${expedientes.number + 1}, keyword=${keyword}, gerenciaId=${param.gerenciaId}, materiaId=${param.materiaId}, abogadoId=${param.abogadoId}, etapa=${param.etapa}, etiquetaId=${param.etiquetaId}, prioridadId=${param.prioridadId}, tipoId=${param.tipoId})}"
+                    th:if="${expedientes.hasNext()}"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-white hover:border-gob-oro hover:text-gob-guinda transition-all">
+                    <i class="fas fa-chevron-right text-[10px]"></i>
+                </a>
+            </nav>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/expedientes/modal-nuevo-exp :: modal}"></div>
+    <script th:src="@{/js/main-EXP.js}"></script>
+    <script th:src="@{/js/realtime-search.js}"></script>
+</div>
+<div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
 </body>
+
+</html>
+
 </html>

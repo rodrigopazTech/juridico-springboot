@@ -1,6 +1,6 @@
 /**
  * dashboard.js
- * Manejo de gráficas dinámicas y filtros por gerencia
+ * Manejo de gráficas dinámicas y filtros por gerencia y grupos de gerencias
  */
 
 // Paleta de colores basada en tailwind.config.js
@@ -16,7 +16,7 @@ const colorPalette = [
 ];
 
 // Objeto global para almacenar las instancias de las gráficas
-let chartInstances = {};
+window.chartInstances = {};
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -30,29 +30,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 2. Escuchar cambios en el filtro de gerencia
     const filtroGerencia = document.getElementById("filtroGerencia");
-    
+
     // Verificamos si es un SELECT (Directivos) para añadir el evento de cambio
     if (filtroGerencia && filtroGerencia.tagName === 'SELECT') {
         filtroGerencia.addEventListener("change", (e) => {
-            const idGerencia = e.target.value;
-            actualizarDashboard(idGerencia);
+            const value = e.target.value;
+            actualizarDashboard(value);
         });
     }
 });
 
 /**
  * Solicita nuevos datos al servidor y actualiza la vista
- * @param {string} gerenciaId 
+ * @param {string} value - ID de la gerencia individual (o vacío para todas)
  */
-async function actualizarDashboard(gerenciaId) {
+async function actualizarDashboard(value) {
     try {
-        // Mostrar un pequeño indicador de carga (opcional con SweetAlert o CSS)
-        
-        const url = gerenciaId ? `/dashboard/data?gerenciaId=${gerenciaId}` : '/dashboard/data';
+        let url;
+        if (value) {
+            url = `/dashboard/data?gerenciaId=${value}`;
+        } else {
+            url = '/dashboard/data';
+        }
+
         const response = await fetch(url);
-        
+
         if (!response.ok) throw new Error("Error en la respuesta del servidor");
-        
+
         const data = await response.json();
 
         // 3. Actualizar los números (KPIs) en la parte superior
@@ -78,12 +82,20 @@ function updateKPIs(kpis) {
 }
 
 /**
+ * Roles para los cuales se oculta la gráfica de distribución por gerencia
+ */
+const ROLES_SIN_GRAFICA_GERENCIA = ['JEFE_DEPTO', 'GERENTE'];
+
+/**
  * Llama a las funciones de renderizado de cada gráfica
  */
 function renderAllCharts(data) {
     renderEstatus(data.estatusExpedientes);
     renderCargaUsuarios(data.cargaTrabajoUsuarios);
-    renderGerencias(data.distribucionGerencias);
+    // Solo renderizar gráfica de gerencias si el usuario no es JEFE_DEPTO o GERENTE
+    if (!ROLES_SIN_GRAFICA_GERENCIA.includes(window.userRole)) {
+        renderGerencias(data.distribucionGerencias);
+    }
     renderTrabajoMensual(data.trabajoMensual);
 }
 
@@ -91,8 +103,8 @@ function renderAllCharts(data) {
  * Función auxiliar para destruir una gráfica si ya existe en el canvas
  */
 function destroyExistingChart(id) {
-    if (chartInstances[id]) {
-        chartInstances[id].destroy();
+    if (window.chartInstances[id]) {
+        window.chartInstances[id].destroy();
     }
 }
 
@@ -105,7 +117,7 @@ function renderEstatus(d) {
     const canvasId = "chartEstatusExpedientes";
     destroyExistingChart(canvasId);
 
-    chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+    window.chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
         type: "doughnut",
         data: {
             labels: d.labels,
@@ -128,15 +140,16 @@ function renderCargaUsuarios(d) {
     const canvasId = "chartCargaTrabajoUsuarios";
     destroyExistingChart(canvasId);
 
-    chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+    const datasets = [];
+    if (d.expedientes) datasets.push({ label: "Expedientes", data: d.expedientes, backgroundColor: colorPalette[0] });
+    if (d.audiencias) datasets.push({ label: "Audiencias", data: d.audiencias, backgroundColor: colorPalette[1] });
+    if (d.terminos) datasets.push({ label: "Términos", data: d.terminos, backgroundColor: colorPalette[2] });
+
+    window.chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
         type: "bar",
         data: {
             labels: d.labels,
-            datasets: [
-                { label: "Expedientes", data: d.expedientes, backgroundColor: colorPalette[0] },
-                { label: "Audiencias", data: d.audiencias, backgroundColor: colorPalette[1] },
-                { label: "Términos", data: d.terminos, backgroundColor: colorPalette[2] }
-            ]
+            datasets: datasets
         },
         options: {
             responsive: true,
@@ -151,7 +164,7 @@ function renderGerencias(d) {
     const canvasId = "chartDistribucionGerencias";
     destroyExistingChart(canvasId);
 
-    chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+    window.chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
         type: "pie",
         data: {
             labels: d.labels,
@@ -177,7 +190,7 @@ function renderTrabajoMensual(d) {
     const rgbaColor = baseColor.replace('#', '').match(/.{2}/g).map(x => parseInt(x, 16)).join(', ');
     const backgroundColor = `rgba(${rgbaColor}, 0.1)`;
 
-    chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+    window.chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
         type: "line",
         data: {
             labels: d.labels,

@@ -1,0 +1,56 @@
+<div th:fragment="linea">
+    <!-- Contenedor Principal de la Línea de Tiempo (Compacto) -->
+    <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 mb-4 overflow-hidden">
+        <div class="relative flex items-center justify-between w-full px-4 sm:px-8 mb-4">
+
+            <!-- Línea de Conexión (Fondo) -->
+            <div class="absolute top-1/2 left-0 w-full h-1 bg-gray-100 -translate-y-4 z-0 rounded-full"></div>
+
+            <!-- Iterar por cada etapa de EstatusTermino -->
+            <th:block th:each="etapa, stat : ${T(com.juridico.sistema_juridico.Entity.enums.EstatusTermino).values()}">
+
+                <div class="relative z-10 flex flex-col items-center group">
+                    <!-- Enlace de Filtro -->
+                    <a th:href="@{/terminos(keyword=${keyword}, estatus=${etapa}, prioridad=${paramPrioridad}, abogadoId=${paramAbogadoId}, gerenciaId=${paramGerenciaId}, materiaId=${paramMateriaId})}"
+                        class="flex flex-col items-center no-underline transition-all duration-300 hover:scale-105">
+
+                        <!-- Esfera con Conteo (Reducida) -->
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 shadow-sm transition-all duration-300 relative"
+                            th:with="enEtapa=${conteosEtapas.get(etapa)}, isSelected=${paramEstatus == etapa}, isAssigned=${etapasAsignadas != null and !etapasAsignadas.isEmpty() and etapasAsignadas.contains(etapa)}"
+                            th:classappend="${isAssigned ? 'bg-gob-guinda border-white text-white' : 'bg-gob-oro border-white text-white'}">
+
+                            <!-- Anillo de Selección (Solo si está seleccionada) -->
+                            <th:block th:if="${isSelected}">
+                                <div th:if="${isAssigned}"
+                                    class="absolute inset-0 -m-[4px] rounded-full border-[3px] border-gob-oro ring-2 ring-gob-oro/20 z-10">
+                                </div>
+                                <div th:unless="${isAssigned}"
+                                    class="absolute inset-0 -m-[4px] rounded-full border-[3px] border-gray-400 ring-2 ring-gray-400/20 z-10">
+                                </div>
+                            </th:block>
+
+                            <!-- Número de Términos -->
+                            <span th:text="${enEtapa}" class="z-20">0</span>
+                        </div>
+
+                        <!-- Etiqueta de la Etapa (Compacta) -->
+                        <span
+                            class="mt-1.5 text-[11px] font-extrabold uppercase tracking-tight text-center max-w-[80px] leading-none transition-colors duration-300"
+                            th:classappend="${paramEstatus == etapa ? 'text-gob-oro' : (etapasAsignadas != null and etapasAsignadas.contains(etapa) ? 'text-gob-guinda' : 'text-gray-400')}"
+                            th:text="${etapa.descripcion}">
+                            ETAPA
+                        </span>
+                    </a>
+                </div>
+
+            </th:block>
+        </div>
+
+        <div class="flex justify-start mt-2 px-4 sm:px-8">
+            <span
+                class="text-[9px] font-bold text-gray-500 uppercase tracking-wider bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100 inline-flex items-center">
+                Total en proceso: <span class="text-gob-guinda text-[10px] ml-1" th:text="${totalesEnProceso}">0</span>
+            </span>
+        </div>
+    </div>
+</div>

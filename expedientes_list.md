@@ -1,0 +1,148 @@
+- generic [active] [ref=e1]:
+  - complementary "Sidebar" [ref=e2]:
+    - generic [ref=e3]:
+      - link " Agenda Legal" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: 
+        - generic [ref=e7]: Agenda Legal
+      - list [ref=e8]:
+        - listitem [ref=e9]: Principal
+        - listitem [ref=e10]:
+          - link " Dashboard" [ref=e11] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=e12]: 
+            - generic [ref=e13]: Dashboard
+        - listitem [ref=e14]:
+          - link " Agenda General" [ref=e15] [cursor=pointer]:
+            - /url: /agenda
+            - generic [ref=e16]: 
+            - generic [ref=e17]: Agenda General
+        - listitem [ref=e18]:
+          - link " Calendario" [ref=e19] [cursor=pointer]:
+            - /url: /calendario
+            - generic [ref=e20]: 
+            - generic [ref=e21]: Calendario
+        - listitem [ref=e22]:
+          - link " Centro de Alertas" [ref=e23] [cursor=pointer]:
+            - /url: /alertas
+            - generic [ref=e25]: 
+            - generic [ref=e26]: Centro de Alertas
+        - listitem [ref=e27]: Gestión Jurídica
+        - listitem [ref=e28]:
+          - link " Expedientes" [ref=e29] [cursor=pointer]:
+            - /url: /expedientes
+            - generic [ref=e30]: 
+            - generic [ref=e31]: Expedientes
+        - listitem [ref=e32]:
+          - link " Términos" [ref=e33] [cursor=pointer]:
+            - /url: /terminos
+            - generic [ref=e34]: 
+            - generic [ref=e35]: Términos
+        - listitem [ref=e36]:
+          - link " Audiencias" [ref=e37] [cursor=pointer]:
+            - /url: /audiencias
+            - generic [ref=e38]: 
+            - generic [ref=e39]: Audiencias
+        - listitem [ref=e40]: Administración
+        - listitem [ref=e41]:
+          - link " Usuarios" [ref=e42] [cursor=pointer]:
+            - /url: /usuarios
+            - generic [ref=e43]: 
+            - generic [ref=e44]: Usuarios
+        - generic [ref=e45]:
+          - generic [ref=e46]:
+            - generic [ref=e48]: D
+            - generic [ref=e49]:
+              - paragraph [ref=e50]: Director General
+              - paragraph [ref=e51]: DIRECCION
+          - link " Cerrar Sesión" [ref=e52] [cursor=pointer]:
+            - /url: /logout
+            - generic [ref=e53]: 
+            - generic [ref=e54]: Cerrar Sesión
+  - generic [ref=e55]:
+    - generic [ref=e56]:
+      - heading " Gestión de Expedientes" [level=1] [ref=e57]:
+        - generic [ref=e58]: 
+        - text: Gestión de Expedientes
+      - separator [ref=e59]
+    - main [ref=e60]:
+      - generic [ref=e61]:
+        - generic [ref=e62]:
+          - generic [ref=e64]: 
+          - textbox "Buscar por Expediente, Partes, Materia, Abogado, Órgano..." [ref=e65]
+        - button "+ Nuevo Expediente" [ref=e66] [cursor=pointer]:
+          - generic [ref=e67]: +
+          - text: Nuevo Expediente
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - heading " Filtros Disponibles" [level=3] [ref=e71]:
+            - generic [ref=e72]: 
+            - text: Filtros Disponibles
+          - generic [ref=e73]:
+            - link "Limpiar" [ref=e74] [cursor=pointer]:
+              - /url: /expedientes
+            - button "Aplicar" [ref=e75] [cursor=pointer]
+        - generic [ref=e76]:
+          - combobox [ref=e78]:
+            - 'option "Gerencia: Todas" [selected]'
+            - option "Gerencia Civil, Mercantil, Fiscal y Administrativo"
+            - option "Gerencia Laboral y Penal"
+            - option "Gerencia Transparencia y Amparo"
+          - combobox [ref=e80]:
+            - 'option "Materia: Todas" [selected]'
+            - option "Civil"
+            - option "Mercantil"
+            - option "Fiscal"
+            - option "Administrativo"
+            - option "Laboral"
+            - option "Penal"
+            - option "Amparo"
+            - option "Transparencia"
+          - combobox [ref=e82]:
+            - 'option "Abogado: Todos" [selected]'
+            - option "Director General"
+            - option "Subdirector Jurídico"
+            - option "Gerente Civil"
+            - option "Lic. Juan Pérez"
+            - option "Lic. Ana López (Jefa)"
+            - option "Administrador del Sistema"
+          - combobox [ref=e84]:
+            - 'option "Etapa: Todas" [selected]'
+            - option "TRAMITE"
+            - option "LAUDO"
+            - option "FIRME"
+            - option "CONCLUIDO"
+          - combobox [ref=e86]:
+            - 'option "Prioridad: Todas" [selected]'
+            - option "ALTA"
+            - option "MEDIA"
+            - option "BAJA"
+          - combobox [ref=e88]:
+            - 'option "Tipo: Todos" [selected]'
+            - option "Juicio Ordinario Civil"
+            - option "Juicio Ejecutivo Mercantil"
+            - option "Juicio Oral Mercantil"
+            - option "Amparo Indirecto"
+            - option "Amparo Directo"
+            - option "Procedimiento Laboral"
+            - option "Carpeta de Investigación"
+      - link "001 Laboral TRAMITE ALTA Juan vs Perez  Sin Asignar  Sin Órgano" [ref=e90] [cursor=pointer]:
+        - /url: /expedientes/05e2b847-6e4a-4aaf-8828-f7ec0e0bc9e4
+        - generic [ref=e91]:
+          - generic [ref=e92]:
+            - generic [ref=e93]:
+              - heading "001" [level=4] [ref=e94]
+              - text: Laboral
+            - generic [ref=e95]:
+              - generic [ref=e96]: TRAMITE
+              - generic [ref=e97]: ALTA
+          - paragraph [ref=e98]: Juan vs Perez
+          - generic [ref=e99]:
+            - generic [ref=e100]:
+              - generic [ref=e101]: 
+              - generic [ref=e102]: Sin Asignar
+            - generic [ref=e103]:
+              - generic [ref=e104]: 
+              - generic [ref=e105]: Sin Órgano
+      - generic [ref=e107]: Página 1 de 1
+    - text: +  

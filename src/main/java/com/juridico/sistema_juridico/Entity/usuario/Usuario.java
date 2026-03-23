@@ -17,11 +17,11 @@ import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 @AllArgsConstructor
 @Entity
 @Table(name = "usuarios", indexes = {
-    @Index(name = "idx_usuarios_email", columnList = "email"),
-    @Index(name = "idx_usuarios_rol", columnList = "rol")
+        @Index(name = "idx_usuarios_email", columnList = "email"),
+        @Index(name = "idx_usuarios_rol", columnList = "rol")
 })
 // --- CAMBIO 2: AGREGAMOS ESTOS 2 PARA EVITAR ERRORES DE GUARDADO ---
-@ToString(exclude = "materias") 
+@ToString(exclude = "materias")
 @EqualsAndHashCode(exclude = "materias")
 public class Usuario {
 
@@ -29,7 +29,8 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    // ... (Mantén tus otros campos: nombreCompleto, email, password, rol, gerencia, activo, fechas) ...
+    // ... (Mantén tus otros campos: nombreCompleto, email, password, rol, gerencia,
+    // activo, fechas) ...
     @Column(name = "nombre_completo", nullable = false, length = 200)
     private String nombreCompleto;
 
@@ -46,31 +47,31 @@ public class Usuario {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gerencia_id")
     private Gerencia gerencia;
-    
+
     @Builder.Default
     private Boolean activo = true;
 
     @Column(name = "ultimo_acceso")
     private LocalDateTime ultimoAcceso;
 
+    @Column(name = "force_password_change")
+    @Builder.Default
+    private Boolean forcePasswordChange = true;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-    
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "usuario_materias",
-        joinColumns = @JoinColumn(name = "usuario_id"),
-        inverseJoinColumns = @JoinColumn(name = "materia_id")
-    )
+    @JoinTable(name = "usuario_materias", joinColumns = @JoinColumn(name = "usuario_id"), inverseJoinColumns = @JoinColumn(name = "materia_id"))
     @Builder.Default
     private Set<Materia> materias = new HashSet<>();
 
-    
     public boolean tieneMateria(Integer materiaId) {
-        if (this.materias == null) return false;
+        if (this.materias == null)
+            return false;
         return this.materias.stream().anyMatch(m -> m.getId().equals(materiaId));
     }
 
@@ -79,6 +80,7 @@ public class Usuario {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
+
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();

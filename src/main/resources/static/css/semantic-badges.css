@@ -1,0 +1,83 @@
+/* Semantic Badges for Expedientes and Audiencias - PREMIUM EDITION */
+
+/* Base badge system */
+[class^="badge-"] {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+    border-width: 1px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    transition: all 0.2s ease;
+    font-family: 'Montserrat', sans-serif;
+}
+
+[class^="badge-"]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+/* Base tailwind @apply versions for main theme */
+.badge-stage-tramite {
+    @apply bg-blue-100 text-blue-700 border-blue-200;
+    background: linear-gradient(to bottom right, #eff6ff, #dbeafe);
+}
+
+.badge-stage-laudo {
+    @apply bg-orange-100 text-orange-700 border-orange-200;
+    background: linear-gradient(to bottom right, #fff7ed, #ffedd5);
+}
+
+.badge-stage-firme {
+    @apply bg-red-100 text-red-900 border-red-200;
+    background: linear-gradient(to bottom right, #fef2f2, #fee2e2);
+}
+
+.badge-stage-concluido {
+    @apply bg-green-100 text-green-700 border-green-200;
+    background: linear-gradient(to bottom right, #f0fdf4, #dcfce7);
+}
+
+/* Priorities (Prioridad) */
+.badge-priority-alta {
+    @apply bg-red-100 text-red-700 border-red-200;
+    background: linear-gradient(to bottom right, #fef2f2, #fee2e2);
+    border-color: rgba(185, 28, 28, 0.2);
+}
+
+.badge-priority-media {
+    @apply bg-yellow-100 text-yellow-800 border-yellow-200;
+    background: linear-gradient(to bottom right, #fefce8, #fef9c3);
+    border-color: rgba(133, 77, 14, 0.2);
+}
+
+.badge-priority-baja {
+    @apply bg-green-100 text-green-700 border-green-200;
+    background: linear-gradient(to bottom right, #f0fdf4, #dcfce7);
+    border-color: rgba(21, 128, 61, 0.2);
+}
+
+/* Status (Estatus Audiencia/Termino) */
+.badge-status-pendiente {
+    @apply bg-gray-100 text-gray-700 border-gray-200;
+    background: linear-gradient(to bottom right, #f9fafb, #f3f4f6);
+}
+
+.badge-status-programada {
+    @apply bg-blue-50 text-blue-600 border-blue-100;
+    background: linear-gradient(to bottom right, #f0f9ff, #e0f2fe);
+}
+
+.badge-status-concluida {
+    @apply bg-green-100 text-green-800 border-green-200;
+    background: linear-gradient(to bottom right, #f0fdf4, #dcfce7);
+}
+
+.badge-status-vencido {
+    @apply bg-red-600 text-white border-red-700;
+    background: linear-gradient(to bottom right, #dc2626, #b91c1c);
+}

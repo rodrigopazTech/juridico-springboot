@@ -1,69 +1,68 @@
-<div th:fragment="filtros" class="bg-white p-4 rounded-lg shadow-sm mb-8 border-t border-gob-oro">
-    
+<div th:fragment="filtros" class="bg-gray-50/50 p-5 rounded-2xl border border-gray-100">
+
     <form th:action="@{/audiencias}" method="get">
-        
+
         <input type="hidden" name="keyword" th:value="${keyword}">
 
         <div class="flex justify-between items-center mb-3">
             <h3 class="text-xs font-bold text-gob-oro uppercase">
                 <i class="fas fa-filter mr-1"></i> Filtros Inteligentes
             </h3>
-            
             <div class="flex gap-2">
                 <a th:href="@{/audiencias}" class="text-xs text-gray-400 hover:text-gray-600 underline flex items-center">
                     Limpiar
                 </a>
-                <button type="submit" class="bg-gob-guinda text-white text-xs px-3 py-1 rounded hover:bg-gob-guinda-claro font-bold transition-colors">
-                    Aplicar Filtros
-                </button>
             </div>
         </div>
 
+
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            
-            <select name="periodo" class="w-full border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none bg-white text-gray-700 font-medium">
+
+            <select name="periodo" onchange="this.form.submit()"
+                class="w-full border border-gray-200 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-gob-oro/20 focus:border-gob-oro outline-none bg-white text-gray-700 font-bold transition-all shadow-sm">
                 <option value="">Periodo: Todos</option>
+
                 <option value="HOY" th:selected="${paramPeriodo == 'HOY'}" class="text-red-600 font-bold">Hoy</option>
                 <option value="MANANA" th:selected="${paramPeriodo == 'MANANA'}" class="text-orange-600">Mañana</option>
                 <option value="SEMANA" th:selected="${paramPeriodo == 'SEMANA'}">Próx. 7 Días</option>
                 <option value="MES" th:selected="${paramPeriodo == 'MES'}">Este Mes</option>
             </select>
 
-            <select name="tipo" class="w-full border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none bg-white text-gray-600">
+            <select name="tipo" onchange="this.form.submit()"
+                class="w-full border border-gray-200 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-gob-oro/20 focus:border-gob-oro outline-none bg-white text-gray-600 font-medium transition-all shadow-sm">
                 <option value="">Tipo: Todos</option>
-                <option th:each="t : ${listaTiposAudiencia}" 
-                        th:value="${t.nombre}" 
-                        th:text="${t.nombre}" 
-                        th:selected="${paramTipo == t.nombre}"></option>
+
+                <option th:each="t : ${listaTiposAudiencia}" th:value="${t.nombre}" th:text="${t.nombre}"
+                    th:selected="${paramTipo == t.nombre}"></option>
             </select>
 
             <div sec:authorize="hasAnyAuthority('DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')">
-                <select name="abogadoId" class="w-full border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none bg-white text-gray-600">
+                <select name="abogadoId" onchange="this.form.submit()"
+                    class="w-full border border-gray-200 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-gob-oro/20 focus:border-gob-oro outline-none bg-white text-gray-600 font-medium transition-all shadow-sm">
                     <option value="">Abogado: Todos</option>
-                    <option th:each="a : ${abogados}" 
-                            th:value="${a.id}" 
-                            th:text="${a.nombreCompleto}" 
-                            th:selected="${paramAbogadoId == a.id}"></option>
+
+                    <option th:each="a : ${abogados}" th:value="${a.id}" th:text="${a.nombreCompleto}"
+                        th:selected="${paramAbogadoId == a.id}"></option>
                 </select>
             </div>
 
             <div sec:authorize="hasAnyAuthority('DIRECCION', 'SUBDIRECCION')">
-                <select name="gerencia" class="w-full border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none bg-white text-gray-600">
+                <select name="gerencia" onchange="this.form.submit()"
+                    class="w-full border border-gray-200 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-gob-oro/20 focus:border-gob-oro outline-none bg-white text-gray-600 font-medium transition-all shadow-sm">
                     <option value="">Gerencia: Todas</option>
-                    <option th:each="g : ${listaGerencias}" 
-                            th:value="${g.nombre}" 
-                            th:text="${g.nombre}" 
-                            th:selected="${paramGerencia == g.nombre}"></option>
+
+                    <option th:each="g : ${listaGerencias}" th:value="${g.nombre}" th:text="${g.nombre}"
+                        th:selected="${paramGerencia == g.nombre}"></option>
                 </select>
             </div>
 
             <div sec:authorize="hasAnyAuthority('DIRECCION', 'SUBDIRECCION', 'GERENTE')">
-                <select name="materia" class="w-full border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none bg-white text-gray-600">
+                <select name="materia" onchange="this.form.submit()"
+                    class="w-full border border-gray-200 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-gob-oro/20 focus:border-gob-oro outline-none bg-white text-gray-600 font-medium transition-all shadow-sm">
                     <option value="">Materia: Todas</option>
-                    <option th:each="m : ${listaMaterias}" 
-                            th:value="${m.nombre}" 
-                            th:text="${m.nombre}" 
-                            th:selected="${paramMateria == m.nombre}"></option>
+
+                    <option th:each="m : ${listaMaterias}" th:value="${m.nombre}" th:text="${m.nombre}"
+                        th:selected="${paramMateria == m.nombre}"></option>
                 </select>
             </div>
 

@@ -12,6 +12,7 @@ import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 
+import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import java.time.LocalDateTime;
 
 @Data
@@ -55,8 +56,9 @@ public class Audiencia {
     @Column(name = "sala_lugar", columnDefinition = "TEXT")
     private String salaLugar;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "estatus_audiencia", length = 30)
-    private String estatusAudiencia; // PENDIENTE, CON_ACTA, CONCLUIDA (Podría ser Enum)
+    private EstatusAudiencia estatusAudiencia; // PENDIENTE, CON_ACTA, CONCLUIDA
 
     @Column(name = "acta_documento", length = 500)
     private String actaDocumento;
@@ -79,12 +81,11 @@ public class Audiencia {
     @Column(name = "observaciones", columnDefinition = "TEXT")
     private String observaciones; // Resultados o notas de la audiencia
 
-    public String getSemaforoColor() {
-        if ("CONCLUIDA".equals(this.estatusAudiencia)) return "bg-gray-800"; // Concluida (Negro/Gris fuerte)
-        if ("CON_ACTA".equals(this.estatusAudiencia)) return "bg-purple-600"; // Con Acta (Morado)
-        
+   public String getSemaforoColor() {
+        // Calculamos los días restantes
         long dias = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaAudiencia);
         
+        // El color ahora depende 100% del tiempo restante
         if (dias < 0) return "bg-gray-400"; // Pasada (Gris)
         if (dias <= 1) return "bg-red-600 animate-pulse"; // ¡HOY o MAÑANA! (Rojo parpadeante)
         if (dias <= 3) return "bg-yellow-400"; // Próxima (Amarillo)
@@ -92,7 +93,7 @@ public class Audiencia {
     }
 
     public String getTextoDiasRestantes() {
-        if ("CONCLUIDA".equals(this.estatusAudiencia)) return "Concluida";
+        if (EstatusAudiencia.CONCLUIDA.equals(this.estatusAudiencia)) return "Concluida";
         
         long dias = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaAudiencia);
         

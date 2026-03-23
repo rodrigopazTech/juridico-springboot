@@ -9,20 +9,17 @@
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <script th:src="@{/lib/chart.umd.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/semantic-badges.css}">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/scripts/choices.min.js"></script>
 </head>
 
 <body class="bg-gob-fondo text-gray-800 font-sans pb-10">
 
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
-    <div class="p-4 sm:ml-64">
-
-        <div class="mb-6 container mx-auto">
-            <h1 class="text-3xl font-bold text-gob-guinda font-headings">
-                <i class="fas fa-folder-open text-gob-oro mr-2"></i> Detalle del Expediente
-            </h1>
-            <hr class="h-1 w-20 bg-gob-oro border-0 mt-2 mb-4" />
-        </div>
-
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="p-4 sm:ml-64" style="padding-top: 100px !important;">
         <div class="container mx-auto px-4">
             <div th:replace="~{fragments/expedientes/encabezado-detalle :: encabezado(${expediente})}"></div>
 
@@ -47,13 +44,7 @@
                                 <p class="font-semibold text-gray-800" th:text="${expediente.materia.nombre}">Materia
                                 </p>
                             </div>
-                            <div>
-                                <p class="text-gray-400 text-[10px] uppercase font-bold tracking-wider">Tipo Expediente
-                                </p>
-                                <p class="font-semibold text-gray-800"
-                                    th:text="${expediente.tipoExpediente != null ? expediente.tipoExpediente.nombre : 'N/A'}">
-                                    Tipo</p>
-                            </div>
+
 
                             <div>
                                 <p class="text-gray-400 text-[10px] uppercase font-bold tracking-wider">Órgano
@@ -71,67 +62,13 @@
                                 </p>
                             </div>
                             <div>
-                                <p class="text-gray-400 text-[10px] uppercase font-bold tracking-wider">Prioridad</p>
-                                <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold border mt-0.5"
-                                    th:text="${expediente.prioridad}"
-                                    th:classappend="${expediente.prioridad.name() == 'ALTA' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-yellow-50 text-yellow-800 border-yellow-200'}">
+                                <p class="text-gray-400 text-[10px] uppercase font-bold tracking-wider mb-1">Prioridad
+                                </p>
+                                <span th:text="${expediente.prioridad != null ? expediente.prioridad.nombre : 'S/N'}"
+                                    th:classappend="${expediente.prioridad != null ? expediente.prioridad.color : 'bg-gray-100 text-gray-500 border-gray-200'}"
+                                    class="px-2 py-0.5 rounded font-bold border inline-block text-[11px]">
                                     ALTA
                                 </span>
-                            </div>
-                        </div>
-                        <div th:if="${proximaAudiencia != null}" class="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4 relative overflow-hidden">
-                            <div class="absolute top-0 right-0 w-16 h-16 bg-orange-100 rounded-bl-full -mr-8 -mt-8 z-0"></div>
-
-                            <div class="relative z-10 flex items-start gap-4">
-                                <div class="bg-white p-2 rounded-lg shadow-sm text-center min-w-[60px]">
-                                    <span class="block text-xs text-gray-500 uppercase font-bold"
-                                        th:text="${proximaAudiencia.fechaAudiencia != null ? #temporals.format(proximaAudiencia.fechaAudiencia, 'MMM') : '-'}">ENE</span>
-                                    <span class="block text-xl font-bold text-gob-guinda"
-                                        th:text="${proximaAudiencia.fechaAudiencia != null ? #temporals.format(proximaAudiencia.fechaAudiencia, 'dd') : '-'}">15</span>
-                                </div>
-
-                                <div class="flex-1">
-                                    <h4 class="text-sm font-bold text-gob-guinda uppercase flex items-center gap-2">
-                                        <i class="fas fa-gavel"></i> Próxima Audiencia
-                                    </h4>
-                                    <p class="text-sm font-medium text-gray-800"
-                                       th:text="${proximaAudiencia.tipoAudiencia != null ? proximaAudiencia.tipoAudiencia.nombre : 'Audiencia'}">Audiencia</p>
-                                    <p class="text-xs text-gray-500 mt-1">
-                                        <i class="far fa-clock mr-1"></i>
-                                        <span th:text="${proximaAudiencia.fechaAudiencia != null ? #temporals.format(proximaAudiencia.fechaAudiencia, 'HH:mm') : '--:--'}">10:00</span> hrs
-                                    </p>
-                                </div>
-
-                                <div class="text-right">
-                                    <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Comparece</p>
-
-                                    <div class="flex items-center justify-end gap-2">
-
-                                        <span th:if="${proximaAudiencia.abogadoComparece == null}"
-                                              class="text-xs text-red-400 italic font-bold">
-                                            Por definir
-                                        </span>
-
-                                        <span th:if="${proximaAudiencia.abogadoComparece != null
-                                                       and expediente.abogadoResponsable != null
-                                                       and proximaAudiencia.abogadoComparece.id == expediente.abogadoResponsable.id}"
-                                              class="text-xs font-bold text-gray-600 bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
-                                            Titular
-                                        </span>
-
-                                        <div th:if="${proximaAudiencia.abogadoComparece != null
-                                                       and (expediente.abogadoResponsable == null
-                                                           or proximaAudiencia.abogadoComparece.id != expediente.abogadoResponsable.id)}"
-                                             class="flex items-center gap-2 bg-white px-2 py-1 rounded border border-gob-oro shadow-sm">
-                                            <div class="w-5 h-5 rounded-full bg-gob-oro text-white flex items-center justify-center text-[10px]">
-                                                <i class="fas fa-user-shield"></i>
-                                            </div>
-                                            <span class="text-xs font-bold text-gob-guinda" th:text="${proximaAudiencia.abogadoComparece.nombreCompleto}">
-                                                Lic. Sustituto
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
@@ -158,7 +95,7 @@
 
                                 <div>
                                     <p class="text-gray-400 text-[10px] uppercase font-bold tracking-wider mb-1">
-                                        Descripción de los Hechos</p>
+                                        Procedimiento</p>
                                     <div class="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap"
                                         th:text="${expediente.descripcion}">Descripción...</div>
                                 </div>
@@ -206,22 +143,63 @@
 
             </div>
 
-            <div th:replace="~{fragments/expedientes/archivos-recientes :: archivos}"></div>
+            <!-- Se eliminó sección de Archivos Recientes por requerimiento de limpieza UI (ROD-134) -->
 
         </div>
     </div>
 
     <!-- Modales -->
     <div
-        th:replace="~{fragments/expedientes/modales-detalle :: modales(${expediente}, ${gerencias}, ${materias}, ${usuarios}, ${organos}, ${prioridades}, ${estados}, ${etapas}, ${tipos})}">
+        th:replace="~{fragments/expedientes/modales-detalle :: modales(${expediente}, ${gerencias}, ${organos}, ${prioridades}, ${estados}, ${etapas})}">
     </div>
 
     <!-- Gestor Documental -->
     <div th:replace="~{fragments/expedientes/gestor-documental :: gestor-documental}"></div>
 
-    <!-- Scripts de Acciones -->
+    <!-- Scripts -->
+    <script th:src="@{/js/main-EXP.js}"></script>
     <script th:src="@{/js/expedientes/detalle-acciones.js}"></script>
     <script th:src="@{/js/expedientes/gestor-documental.js}"></script>
+
+    <!-- Script de emergencia para asegurar que los botones funcionen -->
+    <script th:inline="javascript">
+        console.log("DETALLE.HTML: Iniciando script de emergencia...");
+
+        function forceOpenModal(modalId) {
+            console.log("DETALLE.HTML: Abriendo modal " + modalId);
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'flex';
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            } else {
+                console.error("DETALLE.HTML: No se encontró el modal " + modalId);
+                alert("Error: No se encontró el modal " + modalId);
+            }
+        }
+
+        // Sobrescribir funciones globales para asegurar visibilidad
+        window.openObservaciones = function () {
+            console.log("DETALLE.HTML: Clic detectado en Observaciones");
+            forceOpenModal('modal-observaciones');
+            if (typeof loadObservaciones === 'function') {
+                loadObservaciones();
+            }
+        };
+
+        window.abrirModalEdit = function (g, m, a) {
+            console.log("DETALLE.HTML: Clic detectado en Editar", g, m, a);
+            forceOpenModal('modal-editar');
+            if (typeof cargarMateriasExpediente === 'function') {
+                cargarMateriasExpediente('-edit', '', '', m).then(() => {
+                    if (typeof cargarAbogadosExpediente === 'function') {
+                        cargarAbogadosExpediente('-edit', '', '', a);
+                    }
+                });
+            }
+        };
+    </script>
 </body>
 
 </html>

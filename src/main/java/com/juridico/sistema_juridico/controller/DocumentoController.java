@@ -69,7 +69,8 @@ public class DocumentoController {
             }
 
             // Guardar documento
-            Documento documento = documentoService.guardarDocumento(file, expedienteId, carpetaId, descripcion, usuario);
+            Documento documento = documentoService.guardarDocumento(file, expedienteId, carpetaId, descripcion,
+                    usuario);
 
             return ResponseEntity.ok(documento);
 
@@ -283,7 +284,7 @@ public class DocumentoController {
                         .body(Map.of("error", "No tiene permisos para eliminar este documento"));
             }
 
-            documentoService.eliminarDocumento(documentoId);
+            documentoService.eliminarDocumento(documentoId, usuario);
             return ResponseEntity.ok(Map.of("message", "Documento eliminado correctamente"));
 
         } catch (Exception e) {
@@ -341,7 +342,7 @@ public class DocumentoController {
                         .body(Map.of("error", "No tiene permisos para mover este documento"));
             }
 
-            Documento documentoMovido = documentoService.moverDocumento(documentoId, nuevaCarpetaId);
+            Documento documentoMovido = documentoService.moverDocumento(documentoId, nuevaCarpetaId, usuario);
             return ResponseEntity.ok(documentoMovido);
 
         } catch (IllegalArgumentException e) {

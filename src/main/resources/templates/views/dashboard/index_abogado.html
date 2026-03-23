@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Dashboard Personal - Sistema Jurídico</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script th:src="@{/js/tailwind.config.js}"></script>
+
+    <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+        .bg-gob-guinda {
+            background-color: #8B1E3F;
+        }
+
+        .text-gob-guinda {
+            color: #8B1E3F;
+        }
+
+        .bg-gob-oro {
+            background-color: #D4AF37;
+        }
+
+        .text-gob-oro {
+            color: #D4AF37;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="p-4 sm:ml-64" style="padding-top: 100px !important;">
+
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 border-b pb-4">
+
+            <div class="mt-4 md:mt-0 flex flex-col md:flex-row items-start md:items-center gap-3">
+
+                <!-- Filtro por Materia -->
+                <form method="get" th:action="@{/dashboard}" class="flex items-center gap-2">
+                    <label class="text-sm font-semibold text-gray-600 whitespace-nowrap">
+                        <i class="fas fa-filter text-gob-guinda mr-1"></i>Materia:
+                    </label>
+                    <select name="materiaId" onchange="this.form.submit()"
+                        class="text-sm border border-gray-300 rounded px-3 py-1.5 bg-white focus:ring-2 focus:ring-gob-guinda focus:outline-none">
+                        <option value="">— Todas —</option>
+                        <option th:each="m : ${materias}" th:value="${m.id}" th:text="${m.nombre}"
+                            th:selected="${materiaSeleccionada != null and m.id == materiaSeleccionada}">
+                        </option>
+                    </select>
+                </form>
+
+                <span
+                    class="bg-gob-guinda text-white text-sm font-bold px-4 py-2 rounded-full shadow border border-gob-oro flex items-center">
+                    <i class="fas fa-user-tie mr-2 text-gob-oro"></i>
+                    Abogado: <span class="ml-1 italic" th:text="${usuario.nombreCompleto}">Nombre Abogado</span>
+                </span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+            <div
+                class="bg-white p-6 rounded-lg shadow-md border-l-4 border-gob-guinda hover:shadow-lg transition duration-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-1">Mis Expedientes</p>
+                        <h3 class="text-4xl font-bold text-gray-800" th:text="${kpis.totalExpedientes}">0</h3>
+                    </div>
+                    <div class="bg-red-50 p-3 rounded-full">
+                        <i class="fas fa-folder-open text-2xl text-gob-guinda"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-sm text-gray-500">Total asignados a mi cargo</div>
+            </div>
+
+            <div
+                class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500 hover:shadow-lg transition duration-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-1">En Trámite</p>
+                        <h3 class="text-4xl font-bold text-gray-800" th:text="${kpis.expedientesActivos}">0</h3>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-full">
+                        <i class="fas fa-file-signature text-2xl text-blue-500"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-sm text-gray-500">Expedientes activos actualmente</div>
+            </div>
+
+            <div
+                class="bg-white p-6 rounded-lg shadow-md border-l-4 border-gob-oro hover:shadow-lg transition duration-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-1">Mis Audiencias</p>
+                        <h3 class="text-4xl font-bold text-gray-800" th:text="${kpis.audienciasProgramadas}">0</h3>
+                    </div>
+                    <div class="bg-yellow-50 p-3 rounded-full">
+                        <i class="fas fa-gavel text-2xl text-gob-oro"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-sm text-gray-500">Audiencias pendientes</div>
+            </div>
+
+            <div
+                class="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-600 hover:shadow-lg transition duration-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-1">Mis Términos</p>
+                        <h3 class="text-4xl font-bold text-gray-800" th:text="${kpis.terminosActivos}">0</h3>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded-full">
+                        <i class="fas fa-clock text-2xl text-green-600"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-sm text-gray-500">Términos activos asignados</div>
+            </div>
+
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+            <div class="bg-white p-6 rounded shadow border-t-2 border-gob-oro">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-gray-700 uppercase text-sm tracking-wider">
+                        <i class="fas fa-tasks mr-2"></i><span id="chartEstatusTitle">Estatus de Mis Expedientes</span>
+                    </h3>
+                    <div class="flex gap-1">
+                        <button id="btnEtapas" onclick="switchDonutChart('etapas')"
+                            class="text-xs px-3 py-1 rounded-full font-semibold bg-gob-guinda text-white transition">
+                            Etapas
+                        </button>
+                        <button id="btnPrioridad" onclick="switchDonutChart('prioridad')"
+                            class="text-xs px-3 py-1 rounded-full font-semibold bg-gray-200 text-gray-600 transition">
+                            Prioridad
+                        </button>
+                    </div>
+                </div>
+                <div class="relative h-80">
+                    <canvas id="chartEstatusExpedientes"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded shadow border-t-2 border-gob-oro">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-gray-700 uppercase text-sm tracking-wider">
+                        <i class="fas fa-chart-bar mr-2"></i><span id="chartBarTitle">Mis Audiencias y Términos</span>
+                    </h3>
+                    <div class="flex gap-1">
+                        <button id="btnBarTotal" onclick="switchBarChart('total')"
+                            class="text-xs px-3 py-1 rounded-full font-semibold bg-gob-guinda text-white transition">
+                            Total
+                        </button>
+                        <button id="btnBarPrioridad" onclick="switchBarChart('prioridad')"
+                            class="text-xs px-3 py-1 rounded-full font-semibold bg-gray-200 text-gray-600 transition">
+                            Por Prioridad
+                        </button>
+                    </div>
+                </div>
+                <div class="relative h-80">
+                    <canvas id="chartCargaTrabajoUsuarios"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        window.dashboardData = /*[[${dashboardData}]]*/ {};
+        window.userRole = /*[[${usuario.rol.name()}]]*/ '';
+        /*]]>*/
+    </script>
+
+    <script th:src="@{/lib/chart.umd.min.js}"></script>
+    <script th:src="@{/js/dashboard.js}"></script>
+
+    <script>
+        // Paleta de colores del proyecto para prioridad
+        const prioridadColores = {
+            'ALTA': '#691228', // gob-guinda
+            'MEDIA': '#D4C19C', // gob-oro
+            'BAJA': '#13322B'  // gob-verde
+        };
+
+        let currentDonutMode = 'etapas';
+
+        function switchDonutChart(mode) {
+            currentDonutMode = mode;
+            const data = window.dashboardData;
+            const canvasId = 'chartEstatusExpedientes';
+
+            if (window.chartInstances && window.chartInstances[canvasId]) {
+                window.chartInstances[canvasId].destroy();
+            }
+
+            const btnEtapas = document.getElementById('btnEtapas');
+            const btnPrioridad = document.getElementById('btnPrioridad');
+            const titleEl = document.getElementById('chartEstatusTitle');
+
+            if (mode === 'etapas') {
+                btnEtapas.className = 'text-xs px-3 py-1 rounded-full font-semibold bg-gob-guinda text-white transition';
+                btnPrioridad.className = 'text-xs px-3 py-1 rounded-full font-semibold bg-gray-200 text-gray-600 transition';
+                titleEl.textContent = 'Estatus de Mis Expedientes';
+                const d = data.estatusExpedientes;
+                window.chartInstances = window.chartInstances || {};
+                window.chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+                    type: 'doughnut',
+                    data: {
+                        labels: d.labels,
+                        datasets: [{ data: d.values, backgroundColor: ['#691228', '#4e0c1d', '#D4C19C', '#545454', '#98989A', '#13322B'], borderWidth: 1 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                });
+            } else {
+                btnEtapas.className = 'text-xs px-3 py-1 rounded-full font-semibold bg-gray-200 text-gray-600 transition';
+                btnPrioridad.className = 'text-xs px-3 py-1 rounded-full font-semibold bg-gob-guinda text-white transition';
+                titleEl.textContent = 'Expedientes por Prioridad';
+                const d = data.prioridadExpedientes;
+                const colors = (d.labels || []).map(l => prioridadColores[l] || '#888');
+                window.chartInstances = window.chartInstances || {};
+                window.chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+                    type: 'doughnut',
+                    data: {
+                        labels: d.labels,
+                        datasets: [{ data: d.values, backgroundColor: colors, borderWidth: 1 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                });
+            }
+        }
+
+        function switchBarChart(mode) {
+            const data = window.dashboardData;
+            const canvasId = 'chartCargaTrabajoUsuarios';
+
+            if (window.chartInstances && window.chartInstances[canvasId]) {
+                window.chartInstances[canvasId].destroy();
+            }
+
+            const btnTotal = document.getElementById('btnBarTotal');
+            const btnPrioridad = document.getElementById('btnBarPrioridad');
+            const titleEl = document.getElementById('chartBarTitle');
+
+            const activeClass = 'text-xs px-3 py-1 rounded-full font-semibold bg-gob-guinda text-white transition';
+            const inactiveClass = 'text-xs px-3 py-1 rounded-full font-semibold bg-gray-200 text-gray-600 transition';
+
+            if (mode === 'total') {
+                btnTotal.className = activeClass;
+                btnPrioridad.className = inactiveClass;
+                titleEl.textContent = 'Mis Audiencias y Términos';
+                const d = data.cargaTrabajoUsuarios;
+                window.chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+                    type: 'bar',
+                    data: {
+                        labels: d.labels,
+                        datasets: [
+                            { label: 'Audiencias', data: d.audiencias, backgroundColor: '#691228' },
+                            { label: 'Términos', data: d.terminos, backgroundColor: '#D4C19C' }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+                });
+            } else {
+                btnTotal.className = inactiveClass;
+                btnPrioridad.className = activeClass;
+                titleEl.textContent = 'Audiencias y Términos por Prioridad';
+                const d = data.cargaTrabajoPrioridad;
+                const barColors = (d.labels || []).map(l => prioridadColores[l] || '#888');
+                window.chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+                    type: 'bar',
+                    data: {
+                        labels: d.labels,
+                        datasets: [
+                            { label: 'Audiencias', data: d.audiencias, backgroundColor: '#691228' },
+                            { label: 'Términos', data: d.terminos, backgroundColor: '#D4C19C' }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true } },
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+        }
+    </script>
+
+</body>
+
+</html>

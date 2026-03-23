@@ -5,6 +5,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 
 @Data
 @Builder
@@ -38,4 +39,8 @@ public class Comentario {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "etapa_procesal", length = 30)
+    private EtapaProcesal etapaProcesal;
 }

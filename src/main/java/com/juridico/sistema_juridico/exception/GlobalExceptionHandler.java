@@ -1,74 +1,73 @@
 package com.juridico.sistema_juridico.exception;
 
-import com.juridico.sistema_juridico.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.web.bind.annotation.ControllerAdvice; // <--- OJO: No @RestControllerAdvice
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.view.RedirectView;
+
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
-
-@RestControllerAdvice
+@ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 400 - Bad Request (Errores de sintaxis o datos manuales)
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage(), request);
+    // 0. IGNORAR RECURSOS ESTÁTICOS NO ENCONTRADOS (Evita popups por favicon.ico, etc.)
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Void> handleNoResourceFound(NoResourceFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
-    // 400 - Validation Errors (Atrapa los errores de las anotaciones @Valid)
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex, HttpServletRequest request) {
-        String firstErrorMessage = ex.getBindingResult().getFieldErrors().get(0).getDefaultMessage();
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "Error de validación: " + firstErrorMessage, request);
-    }
-
-    // 401 - Unauthorized (No ha iniciado sesión)
-    @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Unauthorized", ex.getMessage(), request);
-    }
-
-    // 403 - Forbidden (No tiene permisos suficientes)
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenException ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.FORBIDDEN, "Forbidden", ex.getMessage(), request);
-    }
-
-    // 404 - Not Found (Recurso no existe)
+    // 1. RECURSO NO ENCONTRADO (404)
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request);
+    public RedirectView handleResourceNotFound(ResourceNotFoundException ex, RedirectAttributes attrs, HttpServletRequest request) {
+        attrs.addFlashAttribute("mensaje", ex.getMessage());
+        attrs.addFlashAttribute("tipo", "error"); // Alerta Roja
+        return new RedirectView(getRefererOrHome(request));
     }
 
-    // 409 - Conflict (Ya existe un registro con esos datos, ej: mismo número de expediente)
-    @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.CONFLICT, "Conflict", ex.getMessage(), request);
+    // 2. PERMISOS (403)
+    @ExceptionHandler({ForbiddenException.class, UnauthorizedException.class})
+    public RedirectView handleSecurityErrors(RuntimeException ex, RedirectAttributes attrs, HttpServletRequest request) {
+        attrs.addFlashAttribute("mensaje", "Acceso Denegado: " + ex.getMessage());
+        attrs.addFlashAttribute("tipo", "warning"); // Alerta Amarilla
+        return new RedirectView(getRefererOrHome(request));
     }
 
-    // 500 - Internal Server Error (Errores genéricos o de base de datos)
+    // 3. ERRORES DE LÓGICA (400)
+    @ExceptionHandler({BadRequestException.class, ConflictException.class})
+    public RedirectView handleLogicErrors(RuntimeException ex, RedirectAttributes attrs, HttpServletRequest request) {
+        attrs.addFlashAttribute("mensaje", ex.getMessage());
+        attrs.addFlashAttribute("tipo", "info"); // Alerta Azul
+        return new RedirectView(getRefererOrHome(request));
+    }
+
+    // 4. ERROR DE BASE DE DATOS (Integridad / FK)
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public RedirectView handleDatabaseError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
+        attrs.addFlashAttribute("mensaje", "No se puede realizar la acción: El registro está vinculado a otros datos o ya existe.");
+        attrs.addFlashAttribute("tipo", "error");
+        return new RedirectView(getRefererOrHome(request));
+    }
+
+    // 5. ERROR GENERAL (Cualquier otra cosa)
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", 
-                "Ocurrió un error inesperado en el sistema jurídico.", request);
+    public RedirectView handleGeneralError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
+        // Imprimimos el error real en la consola
+        System.err.println("--- ERROR CAPTURADO POR GLOBAL HANDLER ---");
+        System.err.println("Mensaje: " + ex.getMessage());
+        ex.printStackTrace();
+        
+        attrs.addFlashAttribute("mensaje", "Ocurrió un error inesperado en el sistema.");
+        attrs.addFlashAttribute("tipo", "error");
+        
+        return new RedirectView(getRefererOrHome(request));
     }
 
-    /**
-     * Método privado auxiliar para evitar repetir código al construir la respuesta.
-     */
-    private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String errorLabel, String message, HttpServletRequest request) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(status.value())
-                .error(errorLabel)
-                .message(message)
-                .path(request.getRequestURI())
-                .build();
-        
-        return new ResponseEntity<>(error, status);
+    private String getRefererOrHome(HttpServletRequest request) {
+        String referer = request.getHeader("Referer");
+        return referer != null ? referer : "/";
     }
 }

@@ -188,7 +188,7 @@ public class CarpetaController {
                         .body(Map.of("error", "No tiene permisos para eliminar esta carpeta"));
             }
 
-            carpetaService.eliminarCarpeta(carpetaId);
+            carpetaService.eliminarCarpeta(carpetaId, usuario);
             return ResponseEntity.ok(Map.of("message", "Carpeta eliminada correctamente"));
 
         } catch (IllegalArgumentException e) {
@@ -221,7 +221,7 @@ public class CarpetaController {
                         .body(Map.of("error", "No tiene permisos para mover esta carpeta"));
             }
 
-            Carpeta carpetaMovida = carpetaService.moverCarpeta(carpetaId, nuevaCarpetaPadreId);
+            Carpeta carpetaMovida = carpetaService.moverCarpeta(carpetaId, nuevaCarpetaPadreId, usuario);
             return ResponseEntity.ok(carpetaMovida);
 
         } catch (IllegalArgumentException e) {

@@ -10,6 +10,7 @@ import com.juridico.sistema_juridico.repository.documento.CarpetaRepository;
 import com.juridico.sistema_juridico.repository.documento.DocumentoRepository;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+import com.juridico.sistema_juridico.service.AuditoriaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,9 @@ public class DocumentoService {
 
     @Autowired
     private FileStorageService fileStorageService;
+
+    @Autowired
+    private AuditoriaService auditoriaService;
 
     /**
      * Verifica si un usuario tiene permiso para acceder a documentos de un
@@ -112,7 +116,18 @@ public class DocumentoService {
                 .usuarioSubida(usuario)
                 .build();
 
-        return documentoRepository.save(documento);
+        Documento guardado = documentoRepository.save(documento);
+
+        // Auditoría
+        Expediente exp = expedienteRepository.findById(expedienteId).orElse(null);
+        if (exp != null) {
+            auditoriaService.registrar(exp, "ARCHIVO CARGADO",
+                    "Subido al gestor documental: " + documento.getNombreOriginal() +
+                            (carpeta != null ? " en la carpeta " + carpeta.getNombre() : ""),
+                    "UPLOAD", usuario);
+        }
+
+        return guardado;
     }
 
     /**
@@ -162,9 +177,17 @@ public class DocumentoService {
      * Elimina un documento
      */
     @Transactional
-    public void eliminarDocumento(UUID documentoId) throws IOException {
+    public void eliminarDocumento(UUID documentoId, Usuario usuario) throws IOException {
         Documento documento = documentoRepository.findById(documentoId)
                 .orElseThrow(() -> new IllegalArgumentException("Documento no encontrado"));
+
+        // Auditoría (ANTES de eliminar el registro)
+        Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
+        if (exp != null) {
+            auditoriaService.registrar(exp, "ARCHIVO ELIMINADO",
+                    "Eliminado del gestor documental: " + documento.getNombreOriginal(),
+                    "TRASH", usuario);
+        }
 
         // Eliminar archivo del filesystem
         fileStorageService.eliminarArchivo(documento.getRutaArchivo());
@@ -185,7 +208,7 @@ public class DocumentoService {
      * Mueve un documento a otra carpeta
      */
     @Transactional
-    public Documento moverDocumento(UUID documentoId, UUID nuevaCarpetaId) {
+    public Documento moverDocumento(UUID documentoId, UUID nuevaCarpetaId, Usuario usuario) {
         Documento documento = obtenerDocumento(documentoId);
 
         Carpeta nuevaCarpeta = null;
@@ -199,7 +222,22 @@ public class DocumentoService {
             }
         }
 
+        // Determinar carpeta origen antes de cambiarla
+        String origen = documento.getCarpeta() != null ? documento.getCarpeta().getNombre() : "Raíz";
+
         documento.setCarpeta(nuevaCarpeta);
-        return documentoRepository.save(documento);
+        Documento guardado = documentoRepository.save(documento);
+
+        // Auditoría
+        Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
+        if (exp != null) {
+            String destino = nuevaCarpeta != null ? nuevaCarpeta.getNombre() : "Raíz";
+
+            auditoriaService.registrar(exp, "ARCHIVO MOVIDO",
+                    "Movido de " + origen + " a " + destino + ": " + documento.getNombreOriginal(),
+                    "ARROWS_ALT", usuario);
+        }
+
+        return guardado;
     }
 }

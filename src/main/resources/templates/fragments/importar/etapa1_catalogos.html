@@ -1,0 +1,140 @@
+<div th:fragment="contenido" xmlns:th="http://www.thymeleaf.org">
+  <div th:if="${pasoActual == 1}">
+    <h2 class="text-2xl font-bold text-gob-guinda mb-2">
+      <i class="fas fa-spell-check mr-2"></i> Etapa 1: Homologación de Catálogos y Usuarios
+    </h2>
+    <p class="text-gray-600 mb-6">
+      Empareja los textos detectados con los catálogos y cuentas oficiales del sistema.
+    </p>
+
+    <div
+      th:if="${#maps.isEmpty(catalogosAgrupados)}"
+      class="text-center p-8 bg-green-50 rounded-xl border border-green-200"
+    >
+      <i class="fas fa-check-circle text-4xl text-gob-verde mb-3"></i>
+      <h3 class="font-bold text-lg text-green-800">
+        No se detectaron catálogos sucios.
+      </h3>
+      <p class="text-sm text-green-700 mt-1">
+        Puedes avanzar a la siguiente etapa.
+      </p>
+    </div>
+
+    <form
+      th:action="@{/admin/importar/mapear-catalogos}"
+      method="post"
+      th:if="${not #maps.isEmpty(catalogosAgrupados)}"
+    >
+      <input type="hidden" name="loteId" th:value="${lote.id}" />
+
+      <div class="border-b border-gray-200 mb-6">
+        <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="tab-lista">
+          <li class="mr-2" th:if="${catalogosAgrupados.containsKey('GERENCIA')}">
+            <button type="button" class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300" data-target="tab-gerencia">
+              <i class="fas fa-building mr-2"></i> Gerencias (<span th:text="${#lists.size(catalogosAgrupados['GERENCIA'])}"></span>)
+            </button>
+          </li>
+          <li class="mr-2" th:if="${catalogosAgrupados.containsKey('MATERIA')}">
+            <button type="button" class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300" data-target="tab-materia">
+              <i class="fas fa-balance-scale mr-2"></i> Materias (<span th:text="${#lists.size(catalogosAgrupados['MATERIA'])}"></span>)
+            </button>
+          </li>
+          <li class="mr-2" th:if="${catalogosAgrupados.containsKey('ORGANO')}">
+            <button type="button" class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300" data-target="tab-organo">
+              <i class="fas fa-landmark mr-2"></i> Órganos Jurisd. (<span th:text="${#lists.size(catalogosAgrupados['ORGANO'])}"></span>)
+            </button>
+          </li>
+          <li class="mr-2" th:if="${catalogosAgrupados.containsKey('TIPO_AUDIENCIA')}">
+            <button type="button" class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300" data-target="tab-tipo_audiencia">
+              <i class="fas fa-gavel mr-2"></i> Tipos de Audiencia (<span th:text="${#lists.size(catalogosAgrupados['TIPO_AUDIENCIA'])}"></span>)
+            </button>
+          </li>
+          <li class="mr-2" th:if="${catalogosAgrupados.containsKey('USUARIO')}">
+            <button type="button" class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300" data-target="tab-usuario">
+              <i class="fas fa-users mr-2"></i> Usuarios/Abogados (<span th:text="${#lists.size(catalogosAgrupados['USUARIO'])}"></span>)
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <div id="tab-contenedores" class="min-h-[300px]">
+        <th:block th:each="grupo : ${catalogosAgrupados}">
+          <div
+            th:id="'tab-' + ${#strings.toLowerCase(grupo.key)}"
+            class="tab-panel hidden bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+          >
+            <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
+              <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-xs tracking-wider">
+                <tr>
+                  <th scope="col" class="px-6 py-4 w-1/2">Texto Detectado (n8n)</th>
+                  <th scope="col" class="px-6 py-4 w-1/2">Mapear al Sistema</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr th:each="cat : ${grupo.value}" class="hover:bg-gray-50 transition">
+                  
+                  <td class="px-6 py-4">
+                    <span class="font-bold text-gob-guinda text-base" th:text="${cat.valorOriginal}"></span>
+                  </td>
+                  
+                  <td class="px-6 py-4">
+                    <select
+                      th:name="'cat_' + ${cat.id}"
+                      class="w-full border-gray-300 rounded-md shadow-sm focus:border-gob-oro focus:ring-gob-oro text-sm py-2 bg-white cursor-pointer"
+                      required
+                    >
+                      <option value="" disabled selected>-- Selecciona un valor oficial --</option>
+                      
+                      <option
+                        th:value="'NEW_' + ${cat.valorOriginal}"
+                        class="font-bold text-gob-verde"
+                        th:if="${grupo.key != 'USUARIO'}"
+                      >
+                        [+] CREAR COMO NUEVO CATÁLOGO
+                      </option>
+                      <option
+                        th:value="'NEW_' + ${cat.valorOriginal}"
+                        class="font-bold text-gob-verde"
+                        th:if="${grupo.key == 'USUARIO'}"
+                      >
+                        [+] CREAR NUEVO USUARIO EN SISTEMA
+                      </option>
+
+                      <option disabled>───────────</option>
+
+                      <th:block th:if="${grupo.key == 'GERENCIA'}">
+                        <option th:each="bd : ${gerenciasDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                      </th:block>
+                      <th:block th:if="${grupo.key == 'MATERIA'}">
+                        <option th:each="bd : ${materiasDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                      </th:block>
+                      <th:block th:if="${grupo.key == 'ORGANO'}">
+                        <option th:each="bd : ${organosDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                      </th:block>
+                      <th:block th:if="${grupo.key == 'TIPO_AUDIENCIA'}">
+                        <option th:each="bd : ${tiposAudDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                      </th:block>
+                      <th:block th:if="${grupo.key == 'USUARIO'}">
+                        <option th:each="bd : ${usuariosDB}" th:value="${bd.id}" th:text="${bd.nombreCompleto}"></option>
+                      </th:block>
+                    </select>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </th:block>
+      </div>
+
+      <div class="mt-8 flex justify-end border-t border-gray-200 pt-5">
+        <button
+          type="submit"
+          class="bg-gob-oro text-white px-8 py-3 rounded-xl font-bold shadow hover:bg-[#a37e46] transition"
+        >
+          Guardar TODOS los Mapeos y Continuar
+          <i class="fas fa-arrow-right ml-2"></i>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
