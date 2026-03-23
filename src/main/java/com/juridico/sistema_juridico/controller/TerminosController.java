@@ -227,7 +227,7 @@ public class TerminosController {
         // Mantener valores
         model.addAttribute("keyword", keyword);
         model.addAttribute("paramEstatus", estatus);
-        model.addAttribute("paramPrioridad", prioridadId);
+        model.addAttribute("paramPrioridadId", prioridadId);
         model.addAttribute("paramAbogadoId", filtroAbogadoSeguro);
         model.addAttribute("paramGerenciaId", filtroGerenciaSeguro);
         model.addAttribute("paramMateriaId", materiaId);

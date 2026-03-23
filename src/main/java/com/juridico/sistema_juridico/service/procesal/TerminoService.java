@@ -58,8 +58,8 @@ public class TerminoService {
 
         String usuarioActual = SecurityContextHolder.getContext().getAuthentication().getName();
         String fechaFormat = LocalDate.now().toString();
-        String actuacionStr = (termino.getActuacion() != null && !termino.getActuacion().isEmpty())
-                ? termino.getActuacion()
+        String actuacionStr = (termino.getAsunto() != null && !termino.getAsunto().isEmpty())
+                ? termino.getAsunto()
                 : "Sin Especificar";
 
         registrarActividad(exp, "Término Creado",

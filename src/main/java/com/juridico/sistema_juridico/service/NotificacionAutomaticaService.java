@@ -66,7 +66,7 @@ public class NotificacionAutomaticaService {
         for (Termino t : terminos) {
             String mensaje = String.format(
                     "El término '%s' del expediente %s vence el %s. Actualmente está en la etapa: %s",
-                    t.getActuacion(),
+                    t.getAsunto(),
                     t.getExpediente().getNumero(),
                     t.getFechaVencimiento(),
                     t.getEstatusTermino());

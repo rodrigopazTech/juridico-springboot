@@ -121,7 +121,7 @@ public class TerminoImportService {
                 // ==========================================
                 Termino termino = new Termino();
                 termino.setExpediente(expediente);
-                termino.setActuacion(actuacion);
+                termino.setAsunto(actuacion);
                 termino.setFechaVencimiento(fechaVencimiento);
                 termino.setAbogadoResponsable(abogado);
                 termino.setFechaIngreso(LocalDate.now());

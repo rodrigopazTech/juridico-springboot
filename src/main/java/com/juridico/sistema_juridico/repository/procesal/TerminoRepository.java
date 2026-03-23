@@ -27,7 +27,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
            "AND (:estatus IS NULL OR :estatus = '' OR t.estatusTermino = :estatus) " +
-           "AND (:prioridad IS NULL OR t.prioridad = :prioridad) " +
+           "AND (:prioridadId IS NULL OR t.prioridad.id = :prioridadId) " +
            "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
            "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId)") // <--- NUEVO FILTRO
     List<Termino> listarParaExcel(
@@ -51,7 +51,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
            "AND (:estatus IS NULL OR :estatus = '' OR t.estatusTermino = :estatus) " +
-           "AND (:prioridad IS NULL OR t.prioridad = :prioridad) " +
+           "AND (:prioridadId IS NULL OR t.prioridad.id = :prioridadId) " +
            "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
            "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId)")
     Page<Termino> buscarConFiltros(
