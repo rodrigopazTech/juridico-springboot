@@ -80,6 +80,8 @@ public class ExpedientesController {
     private EtiquetaRepository etiquetaRepository;
     @Autowired
     private CatPrioridadRepository catPrioridadRepository;
+    @Autowired
+    private com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository tipoAudienciaRepository;
 
     @Autowired
     private ActividadExpedienteRepository actividadRepository;
@@ -453,6 +455,8 @@ public class ExpedientesController {
         model.addAttribute("prioridades", catPrioridadRepository.findAll());
         model.addAttribute("estados", estadoRepository.findAll());
         model.addAttribute("etapas", EtapaProcesal.values());
+        model.addAttribute("materias", materiaRepository.findAll());
+        model.addAttribute("tipos", tipoAudienciaRepository.findAll());
         model.addAttribute("pageTitle", "Detalle del Expediente");
         model.addAttribute("activePage", "expedientes");
 

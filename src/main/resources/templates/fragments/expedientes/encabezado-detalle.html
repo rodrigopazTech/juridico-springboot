@@ -1,32 +1,15 @@
 <div th:fragment="encabezado(expediente)" class="bg-white border-b border-gray-200 shadow-sm p-6 mb-6">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
 
-        <div class="flex-1">
+        <div>
             <div class="flex items-center gap-3">
                 <h2 class="text-2xl font-bold text-gob-guinda" th:text="${expediente.numero}">EXP-0000/2026</h2>
-                <span th:text="${expediente.etapaProcesal}" th:class="${expediente.etapaProcesal.name() == 'FIRME' ? 'badge-stage-firme' : 
-                                    (expediente.etapaProcesal.name() == 'LAUDO' ? 'badge-stage-laudo' : 
-                                    (expediente.etapaProcesal.name() == 'CONCLUIDO' ? 'badge-stage-concluido' : 
-                                    'badge-stage-tramite'))}">
+                <span class="px-2 py-1 rounded text-xs font-bold border" th:text="${expediente.etapaProcesal}"
+                    th:classappend="${expediente.etapaProcesal.name() == 'CONCLUIDO' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-blue-50 text-blue-700 border-blue-200'}">
                     ETAPA
                 </span>
             </div>
-
-            <div th:if="${proximaAudiencia != null}" class="flex items-center gap-4 mt-2">
-                <div
-                    class="flex items-center gap-2 text-orange-700 bg-orange-50 px-3 py-1 rounded-full border border-orange-100 shadow-sm animate-pulse">
-                    <i class="fas fa-gavel text-xs"></i>
-                    <span class="text-[11px] font-black uppercase tracking-wider">Próxima Audiencia:</span>
-                    <span class="text-xs font-bold"
-                        th:text="${#temporals.format(proximaAudiencia.fechaAudiencia, 'dd/MM/yyyy')}">01/01/2024</span>
-                    <span class="text-xs font-bold border-l border-orange-200 pl-2"
-                        th:text="${#temporals.format(proximaAudiencia.horaAudiencia, 'HH:mm')}">10:00</span>
-                    <span class="text-[10px] bg-orange-200 text-orange-800 px-2 py-0.5 rounded font-bold ml-1"
-                        th:text="${proximaAudiencia.tipoAudiencia.nombre}">TIPO</span>
-                </div>
-            </div>
-            <p th:unless="${proximaAudiencia != null}" class="text-gray-500 text-sm mt-1">Detalle general del asunto
-                jurídico y seguimiento.</p>
+            <p class="text-gray-500 text-sm mt-1">Detalle general del asunto jurídico y seguimiento.</p>
         </div>
 
         <div class="flex flex-wrap gap-2">
@@ -39,13 +22,16 @@
                 class="px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition">
                 <i class="fas fa-comment-dots mr-1"></i> Observaciones
             </button>
-            <!-- Botón Editar: Oculto para ABOGADO y JEFE_DEPTO -->
-            <button sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE')"
-                th:onclick="|abrirModalEdit('${expediente.gerencia?.id}', '${expediente.materia?.id}', '${expediente.abogadoResponsable?.id}')|"
+            <button onclick="openModal('modal-editar')"
                 class="px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition">
                 <i class="fas fa-edit mr-1"></i> Editar
             </button>
-            <button th:data-expediente-id="${expediente.id}" th:data-expediente-numero="${expediente.numero}"
+            <button onclick="openModal('modal-etapa')"
+                class="px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition">
+                <i class="fas fa-step-forward mr-1"></i> Cambiar Etapa
+            </button>
+            <button th:data-expediente-id="${expediente.id}" 
+                th:data-expediente-numero="${expediente.numero}"
                 onclick="openGestorDocumental(this.dataset.expedienteId, this.dataset.expedienteNumero)"
                 class="px-4 py-2 bg-gob-guinda text-white rounded hover:bg-gob-guinda-claro text-sm font-medium transition shadow-sm">
                 <i class="fas fa-file-archive mr-1"></i> Gestor Documental
