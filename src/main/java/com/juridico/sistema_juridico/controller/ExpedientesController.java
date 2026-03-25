@@ -241,6 +241,10 @@ public class ExpedientesController {
                 expedienteReal.setSede(expedienteForm.getSede());
                 expedienteReal.setPartes(expedienteForm.getPartes());
                 expedienteReal.setDescripcion(expedienteForm.getDescripcion());
+                // Etapa procesal (desde el select del formulario de edición)
+                if (expedienteForm.getEtapaProcesal() != null) {
+                    expedienteReal.setEtapaProcesal(expedienteForm.getEtapaProcesal());
+                }
 
                 // Inyectar relaciones reales (evita errores de Hibernate por objetos "huecos")
                 if (expedienteForm.getGerencia() != null && expedienteForm.getGerencia().getId() != null)

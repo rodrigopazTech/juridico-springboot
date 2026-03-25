@@ -62,12 +62,33 @@ async function loadObservaciones() {
             const fechaStr = date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
             const horaStr = date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 
+            // Mapeo de etapa a color de badge
+            const etapaColores = {
+                'TRAMITE': 'bg-blue-100 text-blue-700 border-blue-200',
+                'LAUDO': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+                'FIRME': 'bg-green-100 text-green-700 border-green-200',
+                'CONCLUIDO': 'bg-gray-100 text-gray-600 border-gray-200'
+            };
+            const etapaLabels = {
+                'TRAMITE': 'Trámite',
+                'LAUDO': 'Laudo',
+                'FIRME': 'Firme',
+                'CONCLUIDO': 'Concluido'
+            };
+            const etapa = nota.etapaProcesal;
+            const etapaBadge = etapa
+                ? `<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${etapaColores[etapa] || 'bg-gray-100 text-gray-500 border-gray-200'}">${etapaLabels[etapa] || etapa}</span>`
+                : '';
+
             const div = document.createElement('div');
             div.className = 'bg-white p-3 rounded-lg border border-gray-200 shadow-sm';
             div.innerHTML = `
                 <div class="flex justify-between items-start mb-2 border-b border-gray-100 pb-1">
                     <span class="text-xs font-bold text-blue-600 uppercase">${nota.usuarioNombre || 'Usuario'}</span>
-                    <span class="text-[10px] text-gray-400">${fechaStr} ${horaStr}</span>
+                    <div class="flex items-center gap-2">
+                        ${etapaBadge}
+                        <span class="text-[10px] text-gray-400">${fechaStr} ${horaStr}</span>
+                    </div>
                 </div>
                 <p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">${nota.comentario}</p>
             `;
@@ -130,7 +151,7 @@ async function updateEtapa(nuevaEtapa) {
         });
 
         if (response.ok) {
-            closeModal('modal-etapa');
+            closeModal('modal-editar');
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     icon: 'success',
@@ -170,19 +191,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Cargar etapas dinámicamente
-    const listaEtapas = document.getElementById('lista-etapas');
-    if (listaEtapas) {
-        const etapas = ['TRAMITE', 'LAUDO', 'FIRME', 'CONCLUIDO'];
-        etapas.forEach(etapa => {
-            const btn = document.createElement('button');
-            btn.onclick = () => updateEtapa(etapa);
-            btn.className = 'w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-green-50 hover:border-green-300 transition-all flex justify-between items-center group';
-            btn.innerHTML = `
-                <span class="text-sm font-medium text-gray-700">${etapa}</span>
-                <i class="fas fa-check text-green-500 opacity-0 group-hover:opacity-100"></i>
-            `;
-            listaEtapas.appendChild(btn);
-        });
-    }
+    // Cargar etapas — ahora es un <select> estático en el HTML (ver modales-detalle.html)
 });

@@ -74,6 +74,23 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
+                        <label class="block font-bold text-gray-600 mb-1">Etapa Procesal</label>
+                        <select name="etapaProcesal"
+                            class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
+                            <option value="TRAMITE" th:selected="${expediente.etapaProcesal.name() == 'TRAMITE'}">
+                                Trámite</option>
+                            <option value="LAUDO" th:selected="${expediente.etapaProcesal.name() == 'LAUDO'}">Laudo
+                            </option>
+                            <option value="FIRME" th:selected="${expediente.etapaProcesal.name() == 'FIRME'}">Firme
+                            </option>
+                            <option value="CONCLUIDO" th:selected="${expediente.etapaProcesal.name() == 'CONCLUIDO'}">
+                                Concluido</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
                         <label class="block font-bold text-gray-600 mb-1">Gerencia*</label>
 
                         <select
@@ -152,6 +169,7 @@
                         th:text="${expediente.descripcion}"></textarea>
                 </div>
 
+
                 <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-4">
                     <button type="button" onclick="closeModal('modal-editar')"
                         class="px-4 py-2 border border-gray-300 text-gray-600 rounded hover:bg-gray-50 font-medium">
@@ -165,26 +183,4 @@
             </form>
         </div>
     </div>
-
-    <!-- 3. MODAL CAMBIAR ETAPA -->
-    <div id="modal-etapa"
-        class="fixed inset-0 z-50 hidden items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
-        <div class="relative w-full max-w-md bg-white rounded-lg shadow-2xl border-t-4 border-green-600">
-            <div class="p-4 border-b bg-gray-50 rounded-t-lg flex justify-between items-center">
-                <h3 class="text-lg font-bold text-gray-800">
-                    <i class="fas fa-step-forward text-green-600 mr-2"></i> Cambiar Etapa Procesal
-                </h3>
-                <button onclick="closeModal('modal-etapa')" class="text-gray-400 hover:text-gray-900">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="p-6">
-                <p class="text-sm text-gray-600 mb-4">Seleccione la nueva etapa para este expediente:</p>
-                <div class="space-y-2" id="lista-etapas">
-                    <!-- Se llenará dinámicamente con JavaScript -->
-                </div>
-            </div>
-        </div>
-    </div>
-
 </div>
