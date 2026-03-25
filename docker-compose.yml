@@ -19,7 +19,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-ricardo@juridico.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASS:-admin}
     ports:
-      - "5050:80"
+      - "5051:80"
     depends_on:
       - db-juridico
 

@@ -29,16 +29,14 @@ function inicializarAsistente() {
             const tId = this.getAttribute("data-target");
             const tPanel = document.getElementById(tId);
 
-            if(!tPanel) return; // Si no existe el panel, no hace nada y no se rompe
+            if(!tPanel) return;
 
-            // Resetear botones y paneles
             tabBtns.forEach(b => {
                 b.classList.remove("border-gob-oro", "text-gob-oro", "font-bold");
                 b.classList.add("border-transparent", "text-gray-500");
             });
             tabPanels.forEach(p => p.classList.add("hidden"));
 
-            // Activar el seleccionado
             this.classList.add("border-gob-oro", "text-gob-oro", "font-bold");
             this.classList.remove("border-transparent", "text-gray-500");
             tPanel.classList.remove("hidden");
@@ -69,7 +67,6 @@ function inicializarMapeo() {
                 placeholder: '-- Selecciona un valor oficial --',
                 dropdownParent: 'body',
                 onDropdownOpen: function(dropdown) {
-                    // Posicionar el dropdown justo debajo del campo de búsqueda
                     const rect = this.control.getBoundingClientRect();
                     dropdown.style.position = 'fixed';
                     dropdown.style.zIndex   = '99999';
@@ -81,26 +78,79 @@ function inicializarMapeo() {
         }
     });
 
-    // Lógica para botones de "Crear como Nuevo"
+    // ==========================================
+    // BOTÓN: EDITAR TEXTO DETECTADO (lápiz)
+    // ==========================================
+    document.querySelectorAll('.btn-editar-texto').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const catId = this.getAttribute('data-cat-id');
+            // Ocultar display, mostrar input
+            document.getElementById('texto-display-' + catId).classList.add('hidden');
+            document.getElementById('texto-display-' + catId).classList.remove('flex');
+            const editDiv = document.getElementById('texto-edit-' + catId);
+            editDiv.classList.remove('hidden');
+            editDiv.classList.add('flex');
+            // Focus en el input
+            document.getElementById('texto-input-' + catId).focus();
+        });
+    });
+
+    // Confirmar edición del texto
+    document.querySelectorAll('.btn-confirmar-edit').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const catId = this.getAttribute('data-cat-id');
+            const nuevoTexto = document.getElementById('texto-input-' + catId).value.trim();
+            if (!nuevoTexto) return;
+            // Actualizar el texto visible
+            document.getElementById('texto-valor-' + catId).textContent = nuevoTexto;
+            // Actualizar el data-original-val en los botones que lo usan
+            const btnNuevo = document.querySelector('.btn-marcar-nuevo[data-cat-id="' + catId + '"]');
+            if (btnNuevo) btnNuevo.setAttribute('data-original-val', nuevoTexto);
+            // Ocultar input, mostrar display
+            document.getElementById('texto-edit-' + catId).classList.add('hidden');
+            document.getElementById('texto-edit-' + catId).classList.remove('flex');
+            document.getElementById('texto-display-' + catId).classList.remove('hidden');
+            document.getElementById('texto-display-' + catId).classList.add('flex');
+        });
+    });
+
+    // Cancelar edición del texto
+    document.querySelectorAll('.btn-cancelar-edit').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const catId = this.getAttribute('data-cat-id');
+            // Restaurar input al valor actual del span
+            const textoActual = document.getElementById('texto-valor-' + catId).textContent;
+            document.getElementById('texto-input-' + catId).value = textoActual;
+            // Ocultar input, mostrar display
+            document.getElementById('texto-edit-' + catId).classList.add('hidden');
+            document.getElementById('texto-edit-' + catId).classList.remove('flex');
+            document.getElementById('texto-display-' + catId).classList.remove('hidden');
+            document.getElementById('texto-display-' + catId).classList.add('flex');
+        });
+    });
+
+    // ==========================================
+    // BOTÓN: CREAR COMO NUEVO (+)
+    // ==========================================
     document.querySelectorAll('.btn-marcar-nuevo').forEach(btn => {
         btn.addEventListener('click', function() {
             const catId = this.getAttribute('data-cat-id');
             const originalVal = this.getAttribute('data-original-val');
             
-            // Ocultar select original y botón +
+            // Ocultar select original y botones
             document.getElementById('mapeo-container-' + catId).classList.add('hidden');
             document.getElementById('mapeo-container-' + catId).classList.remove('flex');
             
-            // Mostrar badge
+            // Mostrar badge de "nuevo"
             const badge = document.getElementById('nuevo-badge-' + catId);
             badge.classList.remove('hidden');
             badge.classList.add('flex');
             
-            // Ocultamos y deshabilitamos el select
+            // Deshabilitar el select
             const selectEl = document.getElementById('select-' + catId);
-            selectEl.disabled = true; // Deshabilitamos para que no se envíe en el submit
+            selectEl.disabled = true;
             
-            // Inyectar el campo hidden para el envío form
+            // Inyectar hidden input
             if (!document.getElementById('hidden-nuevo-' + catId)) {
                 const hiddenInput = document.createElement('input');
                 hiddenInput.type = 'hidden';
@@ -112,32 +162,24 @@ function inicializarMapeo() {
         });
     });
 
-    // Lógica para deshacer "Crear como Nuevo"
+    // Deshacer "Crear como Nuevo"
     document.querySelectorAll('.btn-deshacer-nuevo').forEach(btn => {
         btn.addEventListener('click', function() {
             const catId = this.getAttribute('data-cat-id');
             
-            // Eliminar hidden input si existe
             const hiddenInput = document.getElementById('hidden-nuevo-' + catId);
-            if (hiddenInput) {
-                hiddenInput.remove();
-            }
+            if (hiddenInput) hiddenInput.remove();
             
-            // Volver a mostrar select y botón +
             const container = document.getElementById('mapeo-container-' + catId);
             container.classList.remove('hidden');
             container.classList.add('flex');
             
-            // Ocultar badge
             const badge = document.getElementById('nuevo-badge-' + catId);
             badge.classList.add('hidden');
             badge.classList.remove('flex');
             
-            // Habilitar y limpiar el select
             const selectEl = document.getElementById('select-' + catId);
             selectEl.disabled = false;
-            
-            // Restablecer TomSelect
             if (selectEl.tomselect) {
                 selectEl.tomselect.clear();
             } else {
@@ -146,19 +188,111 @@ function inicializarMapeo() {
         });
     });
 
-    // Botón Global "Crear TODOS como Nuevos"
+    // ==========================================
+    // BOTÓN: DESCARTAR (-)
+    // ==========================================
+    document.querySelectorAll('.btn-descartar').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const catId = this.getAttribute('data-cat-id');
+            
+            // Ocultar select y botones
+            document.getElementById('mapeo-container-' + catId).classList.add('hidden');
+            document.getElementById('mapeo-container-' + catId).classList.remove('flex');
+            
+            // Mostrar badge "descartado"
+            const badge = document.getElementById('descartado-badge-' + catId);
+            badge.classList.remove('hidden');
+            badge.classList.add('flex');
+            
+            // Deshabilitar select para que no se envíe
+            const selectEl = document.getElementById('select-' + catId);
+            selectEl.disabled = true;
+            
+            // Inyectar hidden con valor SKIP para que el backend lo ignore
+            if (!document.getElementById('hidden-skip-' + catId)) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.id = 'hidden-skip-' + catId;
+                hiddenInput.name = 'cat_' + catId;
+                hiddenInput.value = 'SKIP';
+                badge.appendChild(hiddenInput);
+            }
+
+            // Atenuar la fila
+            const fila = document.getElementById('fila-' + catId);
+            if (fila) fila.classList.add('opacity-40');
+        });
+    });
+
+    // Deshacer descarte
+    document.querySelectorAll('.btn-deshacer-descartado').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const catId = this.getAttribute('data-cat-id');
+            
+            const hiddenInput = document.getElementById('hidden-skip-' + catId);
+            if (hiddenInput) hiddenInput.remove();
+            
+            const container = document.getElementById('mapeo-container-' + catId);
+            container.classList.remove('hidden');
+            container.classList.add('flex');
+            
+            const badge = document.getElementById('descartado-badge-' + catId);
+            badge.classList.add('hidden');
+            badge.classList.remove('flex');
+            
+            const selectEl = document.getElementById('select-' + catId);
+            selectEl.disabled = false;
+
+            const fila = document.getElementById('fila-' + catId);
+            if (fila) fila.classList.remove('opacity-40');
+        });
+    });
+
+    // ==========================================
+    // BOTÓN GLOBAL: "Crear TODOS como Nuevos" (toggle)
+    // ==========================================
     const btnCrearTodos = document.getElementById('btn-crear-todos-nuevos');
     if (btnCrearTodos) {
+        let todosNuevos = false; // Estado del toggle
+
         btnCrearTodos.addEventListener('click', function() {
-            // Aplicar a todos los botones que esten visibles (o ocultos) sin excepcion
-            document.querySelectorAll('.btn-marcar-nuevo').forEach(b => {
-                // Solo clickear si el select contenedor todavia esta visible (para no duplicar)
-                const catId = b.getAttribute('data-cat-id');
-                const container = document.getElementById('mapeo-container-' + catId);
-                if (container && !container.classList.contains('hidden')) {
-                    b.click();
-                }
-            });
+            todosNuevos = !todosNuevos;
+
+            if (todosNuevos) {
+                // ACTIVAR: Solo marcar como nuevo los que NO tienen un valor asignado
+                document.querySelectorAll('.btn-marcar-nuevo').forEach(b => {
+                    const catId = b.getAttribute('data-cat-id');
+                    const container = document.getElementById('mapeo-container-' + catId);
+                    if (!container || container.classList.contains('hidden')) return; // Ya tiene acción
+
+                    // Revisar si el select tiene un valor seleccionado
+                    const selectEl = document.getElementById('select-' + catId);
+                    const tieneValor = selectEl && selectEl.tomselect 
+                        ? selectEl.tomselect.getValue() !== '' 
+                        : (selectEl && selectEl.value !== '');
+
+                    if (!tieneValor) {
+                        b.click(); // Solo aplicar a los vacíos
+                    }
+                });
+
+                this.innerHTML = '<i class="fas fa-undo mr-2"></i> Restaurar Vacíos';
+                this.classList.add('bg-amber-100', 'border-amber-400', 'text-amber-800');
+                this.classList.remove('bg-gray-100', 'border-gray-300', 'text-gray-700');
+            } else {
+                // DESACTIVAR: Deshacer todos los que se marcaron como nuevo
+                document.querySelectorAll('.btn-deshacer-nuevo').forEach(b => {
+                    const catId = b.getAttribute('data-cat-id');
+                    const badge = document.getElementById('nuevo-badge-' + catId);
+                    if (badge && !badge.classList.contains('hidden')) {
+                        b.click();
+                    }
+                });
+
+                this.innerHTML = '<i class="fas fa-plus-square mr-2"></i> Crear TODOS como Nuevos';
+                this.classList.remove('bg-amber-100', 'border-amber-400', 'text-amber-800');
+                this.classList.add('bg-gray-100', 'border-gray-300', 'text-gray-700');
+            }
         });
     }
 }

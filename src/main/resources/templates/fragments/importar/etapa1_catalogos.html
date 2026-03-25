@@ -78,10 +78,31 @@
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr th:each="cat : ${grupo.value}" class="hover:bg-gray-50 transition">
+                <tr th:each="cat : ${grupo.value}" class="hover:bg-gray-50 transition" th:id="'fila-' + ${cat.id}">
                   
                   <td class="px-6 py-4">
-                    <span class="font-bold text-gob-guinda text-base" th:text="${cat.valorOriginal}"></span>
+                    <!-- Texto original (visible por defecto) -->
+                    <div class="flex items-center gap-2" th:id="'texto-display-' + ${cat.id}">
+                      <span class="font-bold text-gob-guinda text-base" th:text="${cat.valorOriginal}" th:id="'texto-valor-' + ${cat.id}"></span>
+                      <button type="button" class="btn-editar-texto text-gray-400 hover:text-gob-oro transition text-sm" 
+                              th:data-cat-id="${cat.id}" th:data-original-val="${cat.valorOriginal}" title="Editar texto detectado">
+                          <i class="fas fa-pencil-alt"></i>
+                      </button>
+                    </div>
+                    <!-- Input de edición (oculto por defecto) -->
+                    <div class="hidden items-center gap-2" th:id="'texto-edit-' + ${cat.id}">
+                      <input type="text" th:value="${cat.valorOriginal}" 
+                             class="border border-gob-oro rounded px-3 py-1.5 text-sm w-full focus:ring-gob-oro focus:border-gob-oro"
+                             th:id="'texto-input-' + ${cat.id}" />
+                      <button type="button" class="btn-confirmar-edit text-green-600 hover:text-green-800 transition text-base" 
+                              th:data-cat-id="${cat.id}" title="Confirmar">
+                          <i class="fas fa-check"></i>
+                      </button>
+                      <button type="button" class="btn-cancelar-edit text-red-500 hover:text-red-700 transition text-base" 
+                              th:data-cat-id="${cat.id}" title="Cancelar">
+                          <i class="fas fa-times"></i>
+                      </button>
+                    </div>
                   </td>
                   
                   <td class="px-6 py-4">
@@ -116,14 +137,30 @@
                               th:data-cat-id="${cat.id}" th:data-original-val="${cat.valorOriginal}" title="Crear como nuevo">
                           <i class="fas fa-plus"></i>
                       </button>
+                      <button type="button" class="btn-descartar bg-red-500 text-white px-3 py-2 rounded shadow hover:bg-red-700 transition flex-shrink-0" 
+                              th:data-cat-id="${cat.id}" title="Descartar este valor">
+                          <i class="fas fa-minus"></i>
+                      </button>
                     </div>
 
+                    <!-- Badge: SE CREARÁ COMO NUEVO -->
                     <div class="hidden gap-2 items-center w-full" th:id="'nuevo-badge-' + ${cat.id}">
                         <div class="bg-green-100 text-green-800 border-green-300 px-3 py-2 rounded font-bold w-full text-center flex-grow flex items-center justify-center">
                             <i class="fas fa-plus-circle mr-2"></i> SE CREARÁ COMO NUEVO
                         </div>
                         <button type="button" class="btn-deshacer-nuevo bg-gray-200 text-gray-700 px-3 py-2 rounded shadow hover:bg-gray-300 transition flex-shrink-0" 
                                 th:data-cat-id="${cat.id}" title="Deshacer">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                    </div>
+
+                    <!-- Badge: DESCARTADO -->
+                    <div class="hidden gap-2 items-center w-full" th:id="'descartado-badge-' + ${cat.id}">
+                        <div class="bg-red-100 text-red-700 border-red-300 px-3 py-2 rounded font-bold w-full text-center flex-grow flex items-center justify-center">
+                            <i class="fas fa-ban mr-2"></i> DESCARTADO
+                        </div>
+                        <button type="button" class="btn-deshacer-descartado bg-gray-200 text-gray-700 px-3 py-2 rounded shadow hover:bg-gray-300 transition flex-shrink-0" 
+                                th:data-cat-id="${cat.id}" title="Restaurar">
                             <i class="fas fa-undo"></i>
                         </button>
                     </div>

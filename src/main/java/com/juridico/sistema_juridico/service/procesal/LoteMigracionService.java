@@ -53,8 +53,7 @@ public class LoteMigracionService {
     @Autowired private TipoAudienciaRepository tipoAudienciaRepository;
     @Autowired private PasswordEncoder passwordEncoder;
 
-    // La gerencia que se usará por defecto al crear nuevos usuarios durante la migración
-    private static final String GERENCIA_DEFAULT_MIGRACION = "Gerencia de Asuntos Laborales";
+
 
     // 1. Obtener el lote que está a medias, o crear uno nuevo si todo está limpio
     @Transactional
@@ -194,7 +193,10 @@ public class LoteMigracionService {
                 CatalogoMigracion cat = catalogoRepository.findById(catalogoMigracionId).orElse(null);
                 
                 if (cat != null) {
-                    if (value.startsWith("NEW_")) {
+                    if (value.equals("SKIP")) {
+                        // El usuario descartó este valor
+                        cat.setEstatus("DESCARTADO");
+                    } else if (value.startsWith("NEW_")) {
                         // El usuario decidió crear uno nuevo
                         cat.setNuevoValor(value.replace("NEW_", ""));
                         cat.setEstatus("NUEVO");
@@ -308,7 +310,7 @@ public class LoteMigracionService {
                 java.util.Map<String, Object> map = new java.util.HashMap<>();
                 
                 map.put("numeroExpediente", reg.getNumeroExpedienteExtraido());
-                map.put("actuacion", json.has("actuacion") ? json.get("actuacion").asText() : "Sin actuación");
+                map.put("actuacion", json.has("asunto") ? json.get("asunto").asText() : (json.has("actuacion") ? json.get("actuacion").asText() : (json.has("prestacion") ? json.get("prestacion").asText() : "Sin actuación")));
                 map.put("fechaVencimiento", json.has("fechaVencimiento") ? json.get("fechaVencimiento").asText() : "Sin fecha");
                 map.put("abogado", json.has("abogadoResponsable") ? json.get("abogadoResponsable").asText() : "N/A");
                 
@@ -369,7 +371,7 @@ public class LoteMigracionService {
                         }
                         if (expediente.getAbogadoResponsable() == null && json.has("abogadoResponsable")) {
                             String nombreAbog = json.get("abogadoResponsable").asText();
-                            Usuario u = resolveUsuario(nombreAbog, lookup);
+                            Usuario u = resolveUsuario(nombreAbog, lookup, expediente.getGerencia(), loteId);
                             if (u != null) {
                                 expediente.setAbogadoResponsable(u);
                             } else {
@@ -418,7 +420,7 @@ public class LoteMigracionService {
                         termino.setObservaciones(json.has("observaciones") ? json.get("observaciones").asText() : "");
                         
                         if (json.has("abogadoResponsable")) {
-                            Usuario u = resolveUsuario(json.get("abogadoResponsable").asText(), lookup);
+                            Usuario u = resolveUsuario(json.get("abogadoResponsable").asText(), lookup, expediente.getGerencia(), loteId);
                             if (u != null) termino.setAbogadoResponsable(u);
                         }
                         
@@ -443,7 +445,7 @@ public class LoteMigracionService {
                         }
                         
                         if (json.has("abogadoCompareciente")) {
-                            Usuario u = resolveUsuario(json.get("abogadoCompareciente").asText(), lookup);
+                            Usuario u = resolveUsuario(json.get("abogadoCompareciente").asText(), lookup, expediente.getGerencia(), loteId);
                             if (u != null) audiencia.setAbogadoComparece(u);
                         }
 
@@ -572,17 +574,17 @@ public class LoteMigracionService {
         return null;
     }
 
-    private Usuario resolveUsuario(String original, java.util.Map<String, CatalogoMigracion> lookup) {
+    private Usuario resolveUsuario(String original, java.util.Map<String, CatalogoMigracion> lookup, Gerencia gerencia, Long loteId) {
         if (original == null || original.trim().isEmpty()) return null;
         CatalogoMigracion c = lookup.get("USUARIO___" + original.trim().toLowerCase());
         if (c != null && c.getIdMapeado() != null) {
             return usuarioRepository.findById(c.getIdMapeado().intValue()).orElse(null);
         }
         // Si no hay mapeo, buscar por nombre o crear uno nuevo
-        return crearOEncontrarAbogado(original.trim());
+        return crearOEncontrarAbogado(original.trim(), gerencia, loteId, lookup);
     }
 
-    private Usuario crearOEncontrarAbogado(String nombreCompleto) {
+    private Usuario crearOEncontrarAbogado(String nombreCompleto, Gerencia gerenciaExpediente, Long loteId, java.util.Map<String, CatalogoMigracion> lookup) {
         if (nombreCompleto == null || nombreCompleto.isEmpty()) return null;
 
         // 1. Buscar si ya existe alguien con ese nombre completo
@@ -600,7 +602,6 @@ public class LoteMigracionService {
         if (emailBase.length() > 50) emailBase = emailBase.substring(0, 50);
         
         String email = emailBase + "@juridico.com";
-        // Si el email ya existe (raro pero posible), añadir sufijo numérico
         int intento = 0;
         while (usuarioRepository.existsByEmail(email)) {
             intento++;
@@ -611,13 +612,15 @@ public class LoteMigracionService {
         String passwordRaw = "tempora" + String.format("%06d", new java.util.Random().nextInt(999999));
         String passwordHash = passwordEncoder.encode(passwordRaw);
 
-        // 4. Obtener la Gerencia por defecto para migración
-        Gerencia gerencia = gerenciaRepository.findByNombreIgnoreCase(GERENCIA_DEFAULT_MIGRACION)
-            .orElse(getFallbackGerencia());
+        // 4. Usar la gerencia del expediente (mapeada en Etapa 1)
+        Gerencia gerenciaFinal = gerenciaExpediente != null ? gerenciaExpediente : getFallbackGerencia();
 
-        // 5. Obtener todas las materias de esa gerencia para asignarlas
-        java.util.Set<Materia> materiasAutorizadas = new java.util.HashSet<>(
-            materiaRepository.findByActivoTrueOrderByNombreAsc());
+        // 5. Escanear todos los registros del lote para encontrar las materias reales de este abogado
+        java.util.Set<Materia> materiasAbogado = obtenerMateriasDeAbogado(nombreCompleto, loteId, lookup);
+        // Si no se encontraron materias, no asignar ninguna (el admin puede asignarlas después)
+        if (materiasAbogado.isEmpty()) {
+            System.out.println(">>> Migracion: No se encontraron materias en los registros para: " + nombreCompleto);
+        }
 
         // 6. Construir y guardar el usuario
         Usuario nuevoAbogado = new Usuario();
@@ -625,14 +628,47 @@ public class LoteMigracionService {
         nuevoAbogado.setEmail(email);
         nuevoAbogado.setPassword(passwordHash);
         nuevoAbogado.setRol(RolUsuario.ABOGADO);
-        nuevoAbogado.setGerencia(gerencia);
+        nuevoAbogado.setGerencia(gerenciaFinal);
         nuevoAbogado.setActivo(true);
         nuevoAbogado.setForcePasswordChange(true);
-        nuevoAbogado.setMaterias(materiasAutorizadas);
+        nuevoAbogado.setMaterias(materiasAbogado);
 
         Usuario guardado = usuarioRepository.save(nuevoAbogado);
-        System.out.println(">>> Migracion: Usuario creado automaticamente: " + email + " / pass: " + passwordRaw);
+        System.out.println(">>> Migracion: Usuario creado: " + email + " / pass: " + passwordRaw 
+            + " / gerencia: " + gerenciaFinal.getNombre() 
+            + " / materias: " + materiasAbogado.stream().map(Materia::getNombre).toList());
         return guardado;
+    }
+
+    /**
+     * Escanea todos los registros del lote buscando las materias asociadas a un abogado.
+     * Busca en los campos abogadoResponsable y abogadoCompareciente, y extrae el campo "materia".
+     */
+    private java.util.Set<Materia> obtenerMateriasDeAbogado(String nombreAbogado, Long loteId, java.util.Map<String, CatalogoMigracion> lookup) {
+        java.util.Set<Materia> materias = new java.util.HashSet<>();
+        List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
+
+        for (RegistroMigracion reg : registros) {
+            try {
+                JsonNode json = objectMapper.readTree(reg.getPayloadJson());
+
+                // Verificar si este registro pertenece a este abogado
+                String abogResp = json.has("abogadoResponsable") ? json.get("abogadoResponsable").asText("") : "";
+                String abogComp = json.has("abogadoCompareciente") ? json.get("abogadoCompareciente").asText("") : "";
+
+                boolean esDeEsteAbogado = abogResp.trim().equalsIgnoreCase(nombreAbogado) 
+                                      || abogComp.trim().equalsIgnoreCase(nombreAbogado);
+
+                if (esDeEsteAbogado && json.has("materia") && !json.get("materia").isNull()) {
+                    String materiaTexto = json.get("materia").asText().trim();
+                    if (!materiaTexto.isEmpty()) {
+                        Materia m = resolveMateria(materiaTexto, lookup);
+                        if (m != null) materias.add(m);
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+        return materias;
     }
 
     private LocalDate parseDate(JsonNode dateNode) {
