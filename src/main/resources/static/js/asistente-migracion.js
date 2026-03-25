@@ -316,3 +316,109 @@ function confirmarInyeccion() {
         }
     });
 }
+
+// ==========================================
+// AJAX HELPER: enviar formulario al backend
+// ==========================================
+async function guardarEdicionRegistro(formEl) {
+    const data = new URLSearchParams(new FormData(formEl));
+    try {
+        const resp = await fetch('/admin/importar/editar-registro', { method: 'POST', body: data });
+        const json = await resp.json();
+        if (resp.ok && json.status === 'ok') {
+            Swal.fire({ icon: 'success', title: '¡Guardado!', text: json.mensaje, timer: 1500, showConfirmButton: false })
+                .then(() => location.reload());
+        } else {
+            Swal.fire({ icon: 'error', title: 'Error', text: json.error || 'No se pudo guardar.' });
+        }
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error de conexión', text: e.message });
+    }
+}
+
+// ==========================================
+// MODALES: ETAPA 2 - EXPEDIENTES
+// ==========================================
+document.querySelectorAll('.btn-editar-registro').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const d = this.dataset;
+        document.getElementById('exp-registro-id').value = d.registroId;
+        document.getElementById('exp-numero').value      = d.numeroExpediente || '';
+        document.getElementById('exp-partes').value      = d.partes || '';
+        document.getElementById('exp-materia').value     = d.materia || '';
+        document.getElementById('exp-gerencia').value    = d.gerencia || '';
+        document.getElementById('exp-organo').value      = d.organo || '';
+        document.getElementById('exp-sede').value        = d.sede || '';
+        document.getElementById('exp-abogado').value     = d.abogado || '';
+        document.getElementById('exp-descripcion').value = d.descripcion || '';
+        const modal = document.getElementById('modal-editar-expediente');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    });
+});
+['cerrar-modal-exp','cancelar-modal-exp'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', () => {
+        const modal = document.getElementById('modal-editar-expediente');
+        modal.classList.add('hidden'); modal.classList.remove('flex');
+    });
+});
+const formExp = document.getElementById('form-editar-expediente');
+if (formExp) formExp.addEventListener('submit', function(e) { e.preventDefault(); guardarEdicionRegistro(this); });
+
+// ==========================================
+// MODALES: ETAPA 3 - AUDIENCIAS
+// ==========================================
+document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const d = this.dataset;
+        document.getElementById('aud-registro-id').value  = d.registroId;
+        document.getElementById('aud-numero').value       = d.numeroExpediente || '';
+        document.getElementById('aud-fecha').value        = d.fechaAudiencia || '';
+        document.getElementById('aud-hora').value         = d.horaAudiencia || '';
+        document.getElementById('aud-tipo').value         = d.tipoAudiencia || '';
+        document.getElementById('aud-compareciente').value = d.abogadoCompareciente || '';
+        document.getElementById('aud-responsable').value  = d.abogadoResponsable || '';
+        document.getElementById('aud-sede').value         = d.sede || '';
+        document.getElementById('aud-organo').value       = d.organoJurisdiccional || '';
+        const modal = document.getElementById('modal-editar-audiencia');
+        modal.classList.remove('hidden'); modal.classList.add('flex');
+    });
+});
+['cerrar-modal-aud','cancelar-modal-aud'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', () => {
+        const modal = document.getElementById('modal-editar-audiencia');
+        modal.classList.add('hidden'); modal.classList.remove('flex');
+    });
+});
+const formAud = document.getElementById('form-editar-audiencia');
+if (formAud) formAud.addEventListener('submit', function(e) { e.preventDefault(); guardarEdicionRegistro(this); });
+
+// ==========================================
+// MODALES: ETAPA 4 - TÉRMINOS
+// ==========================================
+document.querySelectorAll('.btn-editar-termino').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const d = this.dataset;
+        document.getElementById('term-registro-id').value    = d.registroId;
+        document.getElementById('term-numero').value         = d.numeroExpediente || '';
+        document.getElementById('term-actuacion').value      = d.actuacion || '';
+        document.getElementById('term-fecha').value          = d.fechaVencimiento || '';
+        document.getElementById('term-abogado').value        = d.abogadoResponsable || '';
+        document.getElementById('term-observaciones').value  = d.observaciones || '';
+        const selectPrioridad = document.getElementById('term-prioridad');
+        if (selectPrioridad && d.prioridad) selectPrioridad.value = d.prioridad;
+        const modal = document.getElementById('modal-editar-termino');
+        modal.classList.remove('hidden'); modal.classList.add('flex');
+    });
+});
+['cerrar-modal-term','cancelar-modal-term'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', () => {
+        const modal = document.getElementById('modal-editar-termino');
+        modal.classList.add('hidden'); modal.classList.remove('flex');
+    });
+});
+const formTerm = document.getElementById('form-editar-termino');
+if (formTerm) formTerm.addEventListener('submit', function(e) { e.preventDefault(); guardarEdicionRegistro(this); });

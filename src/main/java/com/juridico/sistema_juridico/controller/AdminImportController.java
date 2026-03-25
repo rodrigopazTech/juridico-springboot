@@ -172,4 +172,18 @@ public class AdminImportController {
         }
         return "redirect:/admin/importar";
     }
+
+    // AJAX: Editar un registro individual (Expediente, Audiencia o Término)
+    @PostMapping("/editar-registro")
+    @ResponseBody
+    public ResponseEntity<?> editarRegistro(@RequestParam("registroId") Long registroId,
+                                              @RequestParam Map<String, String> campos) {
+        try {
+            campos.remove("registroId"); // quitar el propio id de los campos a editar
+            loteMigracionService.editarRegistro(registroId, campos);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Registro actualizado correctamente."));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

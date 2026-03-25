@@ -259,6 +259,19 @@ public class LoteMigracionService {
             map.put("esCritico", critico);
             map.put("estaListo", camposFaltantes.isEmpty());
             
+            // Expose registroId of the first record for AJAX editing
+            map.put("registroId", entry.getValue().get(0).getId());
+            try {
+                JsonNode jsonPrimero = objectMapper.readTree(entry.getValue().get(0).getPayloadJson());
+                map.put("partes", jsonPrimero.has("partes") ? jsonPrimero.get("partes").asText() : "");
+                map.put("sede", jsonPrimero.has("sede") ? jsonPrimero.get("sede").asText() : "");
+                map.put("gerencia", jsonPrimero.has("gerencia") ? jsonPrimero.get("gerencia").asText() : "");
+                map.put("materia", jsonPrimero.has("materia") ? jsonPrimero.get("materia").asText() : "");
+                map.put("organo", jsonPrimero.has("organoJurisdiccional") ? jsonPrimero.get("organoJurisdiccional").asText() : "");
+                map.put("abogado", jsonPrimero.has("abogadoResponsable") ? jsonPrimero.get("abogadoResponsable").asText() : "");
+                map.put("descripcion", jsonPrimero.has("descripcion") ? jsonPrimero.get("descripcion").asText() : "");
+            } catch (Exception ignored) {}
+
             resumen.add(map);
         }
         return resumen;
@@ -286,6 +299,11 @@ public class LoteMigracionService {
                 map.put("fecha", json.has("fechaAudiencia") ? json.get("fechaAudiencia").asText() : "Sin fecha");
                 map.put("hora", json.has("horaAudiencia") ? json.get("horaAudiencia").asText() : "--:--");
                 map.put("compareciente", json.has("abogadoCompareciente") ? json.get("abogadoCompareciente").asText() : "N/A");
+                map.put("abogadoResponsable", json.has("abogadoResponsable") ? json.get("abogadoResponsable").asText() : "");
+                map.put("sede", json.has("sede") ? json.get("sede").asText() : "");
+                map.put("sala", json.has("sala") ? json.get("sala").asText() : "");
+                map.put("organo", json.has("organoJurisdiccional") ? json.get("organoJurisdiccional").asText() : "");
+                map.put("partes", json.has("partes") ? json.get("partes").asText() : "");
                 
                 resumen.add(map);
             } catch (Exception e) {
@@ -309,15 +327,49 @@ public class LoteMigracionService {
                 JsonNode json = objectMapper.readTree(reg.getPayloadJson());
                 java.util.Map<String, Object> map = new java.util.HashMap<>();
                 
+                map.put("id", reg.getId());
                 map.put("numeroExpediente", reg.getNumeroExpedienteExtraido());
                 map.put("actuacion", json.has("asunto") ? json.get("asunto").asText() : (json.has("actuacion") ? json.get("actuacion").asText() : (json.has("prestacion") ? json.get("prestacion").asText() : "Sin actuación")));
                 map.put("fechaVencimiento", json.has("fechaVencimiento") ? json.get("fechaVencimiento").asText() : "Sin fecha");
                 map.put("abogado", json.has("abogadoResponsable") ? json.get("abogadoResponsable").asText() : "N/A");
+                map.put("prioridad", json.has("prioridad") ? json.get("prioridad").asText() : "Media");
+                map.put("observaciones", json.has("observaciones") ? json.get("observaciones").asText() : "");
                 
                 resumen.add(map);
             } catch (Exception e) { }
         }
         return resumen;
+    }
+
+    /**
+     * AJAX: Edita los campos de un RegistroMigracion individual y guarda el JSON actualizado.
+     */
+    @Transactional
+    public void editarRegistro(Long registroId, java.util.Map<String, String> campos) {
+        RegistroMigracion reg = registroRepository.findById(registroId)
+            .orElseThrow(() -> new RuntimeException("Registro no encontrado: " + registroId));
+        
+        try {
+            com.fasterxml.jackson.databind.node.ObjectNode json = 
+                (com.fasterxml.jackson.databind.node.ObjectNode) objectMapper.readTree(reg.getPayloadJson());
+            
+            // Actualizamos solo los campos que nos pasen (los no vacíos)
+            campos.forEach((campo, valor) -> {
+                if (valor != null && !valor.trim().isEmpty()) {
+                    json.put(campo, valor.trim());
+                }
+            });
+            
+            // Actualizamos también el número de expediente si cambió
+            if (campos.containsKey("numeroExpediente") && !campos.get("numeroExpediente").trim().isEmpty()) {
+                reg.setNumeroExpedienteExtraido(campos.get("numeroExpediente").trim());
+            }
+            
+            reg.setPayloadJson(objectMapper.writeValueAsString(json));
+            registroRepository.save(reg);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al editar registro: " + e.getMessage(), e);
+        }
     }
 
     @Transactional

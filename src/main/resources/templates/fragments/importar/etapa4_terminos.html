@@ -3,97 +3,82 @@
     <div class="flex justify-between items-center mb-6">
       <div>
         <h2 class="text-2xl font-bold text-gob-guinda mb-1">
-          <i class="fas fa-hourglass-half mr-2"></i> Etapa 4: Revisión de
-          Términos
+          <i class="fas fa-hourglass-half mr-2"></i> Etapa 4: Revisión de Términos
         </h2>
-        <p class="text-gray-600">
-          Última revisión. Estos son los vencimientos y términos que se
-          inyectarán.
-        </p>
+        <p class="text-gray-600">Última revisión. Estos son los vencimientos y términos que se inyectarán.</p>
       </div>
-      <div
-        class="bg-purple-50 text-purple-700 px-4 py-2 rounded-lg border border-purple-200 font-bold text-sm"
-      >
+      <div class="bg-purple-50 text-purple-700 px-4 py-2 rounded-lg border border-purple-200 font-bold text-sm">
         <i class="fas fa-file-contract mr-1"></i>
         <span th:text="${#lists.size(terminosResumen)}"></span> términos
       </div>
     </div>
 
-    <div
-      th:if="${#lists.isEmpty(terminosResumen)}"
-      class="text-center p-8 bg-gray-50 rounded-xl border border-gray-200 mb-8"
-    >
+    <div th:if="${#lists.isEmpty(terminosResumen)}" class="text-center p-8 bg-gray-50 rounded-xl border border-gray-200 mb-8">
       <i class="fas fa-folder-minus text-4xl text-gray-400 mb-3"></i>
-      <h3 class="font-bold text-lg text-gray-700">
-        No hay términos en este lote
-      </h3>
-      <p class="text-sm text-gray-500 mt-1">
-        Puedes proceder a inyectar el resto de la información directamente.
-      </p>
+      <h3 class="font-bold text-lg text-gray-700">No hay términos en este lote</h3>
+      <p class="text-sm text-gray-500 mt-1">Puedes proceder a inyectar el resto de la información directamente.</p>
     </div>
 
-    <div
-      th:if="${not #lists.isEmpty(terminosResumen)}"
-      class="overflow-hidden rounded-xl border border-gray-200 shadow-sm mb-8"
-    >
-      <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
-        <thead
-          class="bg-gray-100 text-gray-700 uppercase font-bold text-xs tracking-wider"
-        >
+    <div th:if="${not #lists.isEmpty(terminosResumen)}" class="overflow-x-auto rounded-xl border border-gray-200 shadow-sm mb-8">
+      <table class="min-w-full divide-y divide-gray-200 text-sm text-left whitespace-nowrap">
+        <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-xs tracking-wider">
           <tr>
-            <th scope="col" class="px-6 py-4">Expediente</th>
-            <th scope="col" class="px-6 py-4 w-1/3">Actuación</th>
-            <th scope="col" class="px-6 py-4">Vencimiento</th>
-            <th scope="col" class="px-6 py-4">Abogado Responsable</th>
+            <th scope="col" class="px-5 py-3 sticky left-0 bg-gray-100 z-10">Expediente</th>
+            <th scope="col" class="px-5 py-3 w-1/4">Actuación</th>
+            <th scope="col" class="px-5 py-3">Vencimiento</th>
+            <th scope="col" class="px-5 py-3">Abogado Responsable</th>
+            <th scope="col" class="px-5 py-3">Prioridad</th>
+            <th scope="col" class="px-5 py-3 text-center">Acción</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr
-            th:each="term : ${terminosResumen}"
-            class="hover:bg-gray-50 transition"
-          >
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span
-                class="font-bold text-gob-guinda"
-                th:text="${term.numeroExpediente}"
-              ></span>
+          <tr th:each="term : ${terminosResumen}" class="hover:bg-gray-50 transition">
+            <td class="px-5 py-3 sticky left-0 bg-white z-10">
+              <span class="font-bold text-gob-guinda" th:text="${term.numeroExpediente}"></span>
             </td>
-            <td class="px-6 py-4">
-              <span
-                class="text-gray-800 font-medium"
-                th:text="${term.actuacion}"
-              ></span>
+            <td class="px-5 py-3 max-w-[200px]">
+              <span class="block truncate text-gray-800 font-medium" th:text="${term.actuacion}" th:title="${term.actuacion}"></span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span
-                class="bg-red-50 text-red-700 border border-red-200 px-2.5 py-1 rounded-md text-xs font-bold"
-              >
+            <td class="px-5 py-3">
+              <span class="bg-red-50 text-red-700 border border-red-200 px-2.5 py-1 rounded-md text-xs font-bold">
                 <i class="far fa-calendar-times mr-1"></i>
                 <span th:text="${term.fechaVencimiento}"></span>
               </span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-gray-600">
-              <i class="fas fa-user-shield text-gray-400 mr-2"></i
-              ><span th:text="${term.abogado}"></span>
+            <td class="px-5 py-3 max-w-[180px]">
+              <span class="block truncate text-gray-600" th:text="${term.abogado}" th:title="${term.abogado}"></span>
+            </td>
+            <td class="px-5 py-3">
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full"
+                    th:classappend="${term.prioridad == 'Alta' ? 'bg-red-100 text-red-700' : (term.prioridad == 'Baja' ? 'bg-gray-100 text-gray-600' : 'bg-yellow-100 text-yellow-700')}"
+                    th:text="${term.prioridad}"></span>
+            </td>
+            <td class="px-5 py-3 text-center">
+              <button type="button"
+                class="btn-editar-termino text-gob-oro hover:text-[#a37e46] transition font-bold text-sm"
+                th:data-registro-id="${term.id}"
+                th:data-numero-expediente="${term.numeroExpediente}"
+                th:data-actuacion="${term.actuacion}"
+                th:data-fecha-vencimiento="${term.fechaVencimiento}"
+                th:data-abogado-responsable="${term.abogado}"
+                th:data-prioridad="${term.prioridad}"
+                th:data-observaciones="${term.observaciones}"
+                title="Editar término">
+                <i class="fas fa-edit"></i>
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <div
-      class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 rounded-r-lg"
-    >
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 rounded-r-lg">
       <div class="flex">
-        <div class="flex-shrink-0">
-          <i class="fas fa-exclamation-triangle text-yellow-500"></i>
-        </div>
+        <div class="flex-shrink-0"><i class="fas fa-exclamation-triangle text-yellow-500"></i></div>
         <div class="ml-3">
           <p class="text-sm text-yellow-700 font-bold">Atención Director:</p>
           <p class="text-sm text-yellow-600 mt-1">
-            Al hacer clic en el botón inferior, la información será inyectada
-            definitivamente en el sistema y estará disponible para los abogados
-            en sus agendas.
+            Al hacer clic en el botón inferior, la información será inyectada definitivamente en el sistema y estará disponible para los abogados en sus agendas.
           </p>
         </div>
       </div>
@@ -102,15 +87,58 @@
     <form th:action="@{/admin/importar/inyectar}" method="post" id="formFinal">
       <input type="hidden" name="loteId" th:value="${lote.id}" />
       <div class="flex justify-end border-t border-gray-200 pt-5">
-        <button
-          type="button"
-          onclick="confirmarInyeccion()"
-          class="bg-gob-verde text-white px-10 py-4 rounded-xl font-bold shadow-lg hover:bg-[#132c26] transition transform hover:scale-105"
-        >
-          <i class="fas fa-database mr-2"></i> Confirmar e Inyectar Datos
-          Oficiales
+        <button type="button" onclick="confirmarInyeccion()"
+          class="bg-gob-verde text-white px-10 py-4 rounded-xl font-bold shadow-lg hover:bg-[#132c26] transition transform hover:scale-105">
+          <i class="fas fa-database mr-2"></i> Confirmar e Inyectar Datos Oficiales
         </button>
       </div>
     </form>
+  </div>
+
+  <!-- MODAL EDITAR TÉRMINO -->
+  <div id="modal-editar-termino" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-y-auto max-h-[90vh]">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-bold text-gob-guinda"><i class="fas fa-hourglass-half mr-2"></i> Editar Término</h3>
+        <button type="button" id="cerrar-modal-term" class="text-gray-400 hover:text-gray-700 text-xl"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="form-editar-termino" class="px-6 py-5 grid grid-cols-2 gap-4">
+        <input type="hidden" id="term-registro-id" name="registroId"/>
+        <div class="col-span-2">
+          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Número de Expediente</label>
+          <input type="text" id="term-numero" name="numeroExpediente" class="border border-gray-300 rounded-lg px-3 py-2 w-full text-sm bg-gray-50" readonly/>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Actuación / Asunto</label>
+          <input type="text" id="term-actuacion" name="asunto" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Fecha de Vencimiento</label>
+          <input type="date" id="term-fecha" name="fechaVencimiento" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Prioridad</label>
+          <select id="term-prioridad" name="prioridad" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
+            <option value="Alta">Alta</option>
+            <option value="Media" selected>Media</option>
+            <option value="Baja">Baja</option>
+          </select>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Abogado Responsable</label>
+          <input type="text" id="term-abogado" name="abogadoResponsable" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"/>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Observaciones</label>
+          <textarea id="term-observaciones" name="observaciones" rows="2" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"></textarea>
+        </div>
+        <div class="col-span-2 flex justify-end gap-3 pt-2 border-t border-gray-100">
+          <button type="button" id="cancelar-modal-term" class="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50">Cancelar</button>
+          <button type="submit" class="px-6 py-2 rounded-lg bg-gob-oro text-white text-sm font-bold hover:bg-[#a37e46] transition">
+            <i class="fas fa-save mr-1"></i> Guardar Cambios
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
