@@ -15,5 +15,7 @@ public interface MateriaRepository extends JpaRepository<Materia, Integer> {
     List<Materia> findByActivoTrueOrderByNombreAsc();
     
     Optional<Materia> findByNombreAndGerenciaId(String nombre, Integer gerenciaId);
+    
+    Optional<Materia> findByNombreIgnoreCase(String nombre);
 }
 

@@ -164,8 +164,12 @@ public class AdminImportController {
     // Procesar la Inyección Final a la Base de Datos
     @PostMapping("/inyectar")
     public String inyectarLoteFinal(@RequestParam("loteId") Long loteId, RedirectAttributes redirectAttributes) {
-        loteMigracionService.inyectarLoteOficial(loteId);
-        redirectAttributes.addFlashAttribute("mensaje", "¡Inyección Exitosa! Todos los datos del lote han sido migrados a la base de datos oficial.");
+        try {
+            loteMigracionService.inyectarLoteOficial(loteId);
+            redirectAttributes.addFlashAttribute("mensaje", "¡Inyección Exitosa! Todos los datos del lote han sido migrados a la base de datos oficial.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error durante la inyección: " + e.getMessage());
+        }
         return "redirect:/admin/importar";
     }
 }

@@ -11,9 +11,26 @@ import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.CatalogoMigracionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.juridico.sistema_juridico.Entity.catalogo.*;
+import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
+import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
+import com.juridico.sistema_juridico.Entity.expediente.Expediente;
+import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
+import com.juridico.sistema_juridico.Entity.procesal.Termino;
+import com.juridico.sistema_juridico.repository.Catalogo.*;
+import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
+import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 import java.util.List;
 
@@ -26,6 +43,18 @@ public class LoteMigracionService {
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private CatalogoMigracionRepository catalogoRepository;
     @Autowired private ObjectMapper objectMapper;
+
+    @Autowired private ExpedienteRepository expedienteRepository;
+    @Autowired private TerminoRepository terminoRepository;
+    @Autowired private AudienciaRepository audienciaRepository;
+    @Autowired private GerenciaRepository gerenciaRepository;
+    @Autowired private MateriaRepository materiaRepository;
+    @Autowired private OrganoJurisdiccionalRepository organoRepository;
+    @Autowired private TipoAudienciaRepository tipoAudienciaRepository;
+    @Autowired private PasswordEncoder passwordEncoder;
+
+    // La gerencia que se usará por defecto al crear nuevos usuarios durante la migración
+    private static final String GERENCIA_DEFAULT_MIGRACION = "Gerencia de Asuntos Laborales";
 
     // 1. Obtener el lote que está a medias, o crear uno nuevo si todo está limpio
     @Transactional
@@ -291,25 +320,337 @@ public class LoteMigracionService {
 
     @Transactional
     public void inyectarLoteOficial(Long loteId) {
-        LoteMigracion lote = loteRepository.findById(loteId).orElseThrow();
-        
-
+        try {
+            LoteMigracion lote = loteRepository.findById(loteId).orElseThrow();
         List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
-        
-        String textoProvisional = "Migrado desde sistema histórico - Pendiente de completar por el abogado responsable.";
-        // Aquí conectaremos el servicio de creación real (ExpedienteService, etc.)
-        // Por ahora, simulamos que los datos se inyectan correctamente y cerramos el lote.
+        List<CatalogoMigracion> catalogosMap = catalogoRepository.findByLoteId(loteId);
+
+        java.util.Map<String, CatalogoMigracion> lookup = new java.util.HashMap<>();
+        for (CatalogoMigracion c : catalogosMap) {
+            lookup.put(c.getTipoCatalogo() + "___" + c.getValorOriginal().toLowerCase(), c);
+        }
+
+        java.util.Map<String, List<RegistroMigracion>> expedientesAgrupados = registros.stream()
+            .collect(java.util.stream.Collectors.groupingBy(
+                r -> r.getNumeroExpedienteExtraido() != null && !r.getNumeroExpedienteExtraido().trim().isEmpty() ? r.getNumeroExpedienteExtraido() : "SIN_NUMERO"
+            ));
+
+        for (java.util.Map.Entry<String, List<RegistroMigracion>> entry : expedientesAgrupados.entrySet()) {
+            String numExp = entry.getKey();
+            List<RegistroMigracion> expRegistros = entry.getValue();
+
+            Expediente expediente = expedienteRepository.findByNumeroIgnoreCase(numExp).orElse(null);
+
+            if (expediente == null) {
+                expediente = new Expediente();
+                String numeroAsignado = numExp.equals("SIN_NUMERO") ? ("S/N-" + java.util.UUID.randomUUID().toString().substring(0,8)) : numExp;
+                if (numeroAsignado.length() > 50) numeroAsignado = numeroAsignado.substring(0, 50);
+                expediente.setNumero(numeroAsignado);
+                expediente.setDescripcion("Migrado desde sistema histórico - Pendiente de completar por el abogado responsable.");
+                
+                for (RegistroMigracion r : expRegistros) {
+                    try {
+                        JsonNode json = objectMapper.readTree(r.getPayloadJson());
+                        
+                        if (expediente.getMateria() == null && json.has("materia")) {
+                            Materia m = resolveMateria(json.get("materia").asText(), lookup);
+                            if (m != null) expediente.setMateria(m);
+                        }
+                        if (expediente.getGerencia() == null && json.has("gerencia") && !json.get("gerencia").isNull()) {
+                            Gerencia g = resolveGerencia(json.get("gerencia").asText(), lookup);
+                            if (g != null) expediente.setGerencia(g);
+                        }
+                        if (expediente.getOrganoJurisdiccional() == null && json.has("organoJurisdiccional")) {
+                            OrganoJurisdiccional o = resolveOrgano(json.get("organoJurisdiccional").asText(), lookup);
+                            if (o != null) expediente.setOrganoJurisdiccional(o);
+                        }
+                        if (expediente.getPartes() == null && json.has("partes") && !json.get("partes").isNull()) {
+                            expediente.setPartes(json.get("partes").asText());
+                        }
+                        if (expediente.getAbogadoResponsable() == null && json.has("abogadoResponsable")) {
+                            String nombreAbog = json.get("abogadoResponsable").asText();
+                            Usuario u = resolveUsuario(nombreAbog, lookup);
+                            if (u != null) {
+                                expediente.setAbogadoResponsable(u);
+                            } else {
+                                if (nombreAbog.length() > 200) nombreAbog = nombreAbog.substring(0, 200);
+                                expediente.setAbogadoResponsableNombre(nombreAbog);
+                            }
+                        }
+                        if (expediente.getSede() == null && json.has("sede") && !json.get("sede").isNull()) {
+                            String sedeStr = json.get("sede").asText();
+                            if (sedeStr.length() > 150) sedeStr = sedeStr.substring(0, 150);
+                            expediente.setSede(sedeStr);
+                        }
+                    } catch (Exception ignored) {}
+                }
+                
+                if (expediente.getMateria() == null) {
+                    expediente.setMateria(getFallbackMateria());
+                }
+                
+                if (expediente.getGerencia() == null) {
+                    expediente.setGerencia(getFallbackGerencia());
+                }
+
+                expediente = expedienteRepository.save(expediente);
+            }
+
+            for (RegistroMigracion r : expRegistros) {
+                try {
+                    JsonNode json = objectMapper.readTree(r.getPayloadJson());
+                    if ("TERMINO".equals(r.getTipoDato())) {
+                        Termino termino = new Termino();
+                        termino.setExpediente(expediente);
+                        termino.setAsunto(json.has("prestacion") ? json.get("prestacion").asText() : (json.has("asunto") ? json.get("asunto").asText() : "Sin actuación"));
+                        
+                        termino.setFechaVencimiento(parseDate(json.get("fechaVencimiento")));
+                        termino.setFechaIngreso(parseDate(json.get("fechaIngreso")));
+                        termino.setEstatusTermino(EstatusTermino.PROYECTISTA);
+                        String acuseStr = json.has("acuse") ? json.get("acuse").asText() : "";
+                        if (acuseStr.length() > 500) acuseStr = acuseStr.substring(0, 500);
+                        termino.setAcuse(acuseStr);
+                        
+                        String acuseNombreStr = json.has("archivoWord") ? json.get("archivoWord").asText() : (json.has("acuseNombre") ? json.get("acuseNombre").asText() : "");
+                        if (acuseNombreStr.length() > 500) acuseNombreStr = acuseNombreStr.substring(0, 500);
+                        termino.setAcuseNombre(acuseNombreStr);
+
+                        termino.setObservaciones(json.has("observaciones") ? json.get("observaciones").asText() : "");
+                        
+                        if (json.has("abogadoResponsable")) {
+                            Usuario u = resolveUsuario(json.get("abogadoResponsable").asText(), lookup);
+                            if (u != null) termino.setAbogadoResponsable(u);
+                        }
+                        
+                        terminoRepository.save(termino);
+
+                    } else if ("AUDIENCIA".equals(r.getTipoDato())) {
+                        Audiencia audiencia = new Audiencia();
+                        audiencia.setExpediente(expediente);
+                        
+                        audiencia.setFechaAudiencia(parseDate(json.get("fechaAudiencia")));
+                        audiencia.setHoraAudiencia(parseTime(json.get("horaAudiencia")));
+                        audiencia.setEstatusAudiencia(EstatusAudiencia.PENDIENTE);
+                        audiencia.setSalaLugar(json.has("sede") ? json.get("sede").asText() : "");
+                        String actaStr = json.has("actaDocumento") ? json.get("actaDocumento").asText() : "";
+                        if (actaStr.length() > 500) actaStr = actaStr.substring(0, 500);
+                        audiencia.setActaDocumento(actaStr);
+                        audiencia.setObservaciones(json.has("observaciones") ? json.get("observaciones").asText() : "");
+                        
+                        if (json.has("tipoAudiencia")) {
+                            TipoAudiencia ta = resolveTipoAudiencia(json.get("tipoAudiencia").asText(), lookup);
+                            if (ta != null) audiencia.setTipoAudiencia(ta);
+                        }
+                        
+                        if (json.has("abogadoCompareciente")) {
+                            Usuario u = resolveUsuario(json.get("abogadoCompareciente").asText(), lookup);
+                            if (u != null) audiencia.setAbogadoComparece(u);
+                        }
+
+                        audienciaRepository.save(audiencia);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error procesando registro: " + r.getId() + " - " + e.getMessage());
+                }
+
+                r.setEstatus("PROCESADO");
+                r.setProcessedAt(java.time.LocalDateTime.now());
+            }
+        }
         
         lote.setEstatus("COMPLETADO");
-        lote.setPasoActual(5); // El paso 5 ya no muestra el wizard, vuelve al inicio
+        lote.setPasoActual(5);
         loteRepository.save(lote);
-        
-        // Marcamos los registros crudos como procesados para que queden en el historial
-        
-        for(RegistroMigracion reg : registros) {
-            reg.setEstatus("PROCESADO");
-            reg.setProcessedAt(java.time.LocalDateTime.now());
-        }
         registroRepository.saveAll(registros);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error inyectando lote: " + e.getMessage(), e);
+        }
+    }
+
+    private Gerencia getFallbackGerencia() {
+        return gerenciaRepository.findAll().stream().findFirst().orElseGet(() -> {
+            Gerencia g = new Gerencia(); g.setNombre("Sin Gerencia"); g.setActivo(true);
+            return gerenciaRepository.save(g);
+        });
+    }
+
+    private Materia getFallbackMateria() {
+        return materiaRepository.findAll().stream().findFirst().orElseGet(() -> {
+            Materia m = new Materia(); m.setNombre("Sin Materia"); m.setActivo(true);
+            m.setGerencia(getFallbackGerencia());
+            return materiaRepository.save(m);
+        });
+    }
+
+    private Materia resolveMateria(String original, java.util.Map<String, CatalogoMigracion> lookup) {
+        CatalogoMigracion c = lookup.get("MATERIA___" + original.trim().toLowerCase());
+        if (c != null) {
+            if (c.getIdMapeado() != null) return materiaRepository.findById(c.getIdMapeado().intValue()).orElse(null);
+            if (c.getNuevoValor() != null) {
+                String nombreFinal = c.getNuevoValor();
+                if (nombreFinal.length() > 100) nombreFinal = nombreFinal.substring(0, 100);
+                
+                final String searchName = nombreFinal;
+                Materia existente = materiaRepository.findByNombreIgnoreCase(searchName).orElse(null);
+                if (existente == null) {
+                    Materia m = new Materia(); m.setNombre(searchName); m.setActivo(true);
+                    m.setGerencia(getFallbackGerencia());
+                    existente = materiaRepository.save(m);
+                }
+                c.setIdMapeado(existente.getId().longValue());
+                c.setNuevoValor(null);
+                return existente;
+            }
+        }
+        return null;
+    }
+
+    private Gerencia resolveGerencia(String original, java.util.Map<String, CatalogoMigracion> lookup) {
+        CatalogoMigracion c = lookup.get("GERENCIA___" + original.trim().toLowerCase());
+        if (c != null) {
+            if (c.getIdMapeado() != null) return gerenciaRepository.findById(c.getIdMapeado().intValue()).orElse(null);
+            if (c.getNuevoValor() != null) {
+                String nombreFinal = c.getNuevoValor();
+                if (nombreFinal.length() > 200) nombreFinal = nombreFinal.substring(0, 200);
+
+                final String searchName = nombreFinal;
+                Gerencia existente = gerenciaRepository.findByNombreIgnoreCase(searchName).orElse(null);
+                if (existente == null) {
+                    Gerencia g = new Gerencia(); g.setNombre(searchName); g.setActivo(true);
+                    existente = gerenciaRepository.save(g);
+                }
+                c.setIdMapeado(existente.getId().longValue());
+                c.setNuevoValor(null);
+                return existente;
+            }
+        }
+        return null;
+    }
+
+    private OrganoJurisdiccional resolveOrgano(String original, java.util.Map<String, CatalogoMigracion> lookup) {
+        CatalogoMigracion c = lookup.get("ORGANO___" + original.trim().toLowerCase());
+        if (c != null) {
+            if (c.getIdMapeado() != null) return organoRepository.findById(c.getIdMapeado().intValue()).orElse(null);
+            if (c.getNuevoValor() != null) {
+                String nombreFinal = c.getNuevoValor();
+                if (nombreFinal.length() > 300) nombreFinal = nombreFinal.substring(0, 300);
+
+                final String searchName = nombreFinal;
+                OrganoJurisdiccional existente = organoRepository.findByNombreIgnoreCase(searchName).orElse(null);
+                if (existente == null) {
+                    OrganoJurisdiccional o = new OrganoJurisdiccional(); o.setNombre(searchName); o.setActivo(true);
+                    existente = organoRepository.save(o);
+                }
+                c.setIdMapeado(existente.getId().longValue());
+                c.setNuevoValor(null);
+                return existente;
+            }
+        }
+        return null;
+    }
+
+    private TipoAudiencia resolveTipoAudiencia(String original, java.util.Map<String, CatalogoMigracion> lookup) {
+        CatalogoMigracion c = lookup.get("TIPO_AUDIENCIA___" + original.trim().toLowerCase());
+        if (c != null) {
+            if (c.getIdMapeado() != null) return tipoAudienciaRepository.findById(c.getIdMapeado().intValue()).orElse(null);
+            if (c.getNuevoValor() != null) {
+                String nombreFinal = c.getNuevoValor();
+                if (nombreFinal.length() > 100) nombreFinal = nombreFinal.substring(0, 100);
+
+                final String searchName = nombreFinal;
+                TipoAudiencia existente = tipoAudienciaRepository.findByNombreIgnoreCase(searchName).orElse(null);
+                if (existente == null) {
+                    TipoAudiencia t = new TipoAudiencia(); t.setNombre(searchName); t.setActivo(true);
+                    existente = tipoAudienciaRepository.save(t);
+                }
+                c.setIdMapeado(existente.getId().longValue());
+                c.setNuevoValor(null);
+                return existente;
+            }
+        }
+        return null;
+    }
+
+    private Usuario resolveUsuario(String original, java.util.Map<String, CatalogoMigracion> lookup) {
+        if (original == null || original.trim().isEmpty()) return null;
+        CatalogoMigracion c = lookup.get("USUARIO___" + original.trim().toLowerCase());
+        if (c != null && c.getIdMapeado() != null) {
+            return usuarioRepository.findById(c.getIdMapeado().intValue()).orElse(null);
+        }
+        // Si no hay mapeo, buscar por nombre o crear uno nuevo
+        return crearOEncontrarAbogado(original.trim());
+    }
+
+    private Usuario crearOEncontrarAbogado(String nombreCompleto) {
+        if (nombreCompleto == null || nombreCompleto.isEmpty()) return null;
+
+        // 1. Buscar si ya existe alguien con ese nombre completo
+        List<Usuario> existentes = usuarioRepository.findAll().stream()
+            .filter(u -> u.getNombreCompleto().equalsIgnoreCase(nombreCompleto))
+            .toList();
+        if (!existentes.isEmpty()) return existentes.get(0);
+
+        // 2. Generar email único a partir del nombre: "juan.perez@juridico.com"
+        String emailBase = nombreCompleto.trim().toLowerCase()
+            .replaceAll("[áàäâ]", "a").replaceAll("[éèëê]", "e")
+            .replaceAll("[íìïî]", "i").replaceAll("[óòöô]", "o")
+            .replaceAll("[úùüû]", "u").replaceAll("ñ", "n")
+            .replaceAll("[^a-z0-9\\s]", "").trim().replaceAll("\\s+", ".");
+        if (emailBase.length() > 50) emailBase = emailBase.substring(0, 50);
+        
+        String email = emailBase + "@juridico.com";
+        // Si el email ya existe (raro pero posible), añadir sufijo numérico
+        int intento = 0;
+        while (usuarioRepository.existsByEmail(email)) {
+            intento++;
+            email = emailBase + intento + "@juridico.com";
+        }
+
+        // 3. Generar contraseña temporal: "tempora" + 6 dígitos aleatorios
+        String passwordRaw = "tempora" + String.format("%06d", new java.util.Random().nextInt(999999));
+        String passwordHash = passwordEncoder.encode(passwordRaw);
+
+        // 4. Obtener la Gerencia por defecto para migración
+        Gerencia gerencia = gerenciaRepository.findByNombreIgnoreCase(GERENCIA_DEFAULT_MIGRACION)
+            .orElse(getFallbackGerencia());
+
+        // 5. Obtener todas las materias de esa gerencia para asignarlas
+        java.util.Set<Materia> materiasAutorizadas = new java.util.HashSet<>(
+            materiaRepository.findByActivoTrueOrderByNombreAsc());
+
+        // 6. Construir y guardar el usuario
+        Usuario nuevoAbogado = new Usuario();
+        nuevoAbogado.setNombreCompleto(nombreCompleto.length() > 200 ? nombreCompleto.substring(0, 200) : nombreCompleto);
+        nuevoAbogado.setEmail(email);
+        nuevoAbogado.setPassword(passwordHash);
+        nuevoAbogado.setRol(RolUsuario.ABOGADO);
+        nuevoAbogado.setGerencia(gerencia);
+        nuevoAbogado.setActivo(true);
+        nuevoAbogado.setForcePasswordChange(true);
+        nuevoAbogado.setMaterias(materiasAutorizadas);
+
+        Usuario guardado = usuarioRepository.save(nuevoAbogado);
+        System.out.println(">>> Migracion: Usuario creado automaticamente: " + email + " / pass: " + passwordRaw);
+        return guardado;
+    }
+
+    private LocalDate parseDate(JsonNode dateNode) {
+        if (dateNode == null || dateNode.isNull() || dateNode.asText().trim().isEmpty()) return LocalDate.now();
+        try {
+            return LocalDate.parse(dateNode.asText());
+        } catch (DateTimeParseException e) {
+            return LocalDate.now();
+        }
+    }
+
+    private LocalTime parseTime(JsonNode timeNode) {
+        if (timeNode == null || timeNode.isNull() || timeNode.asText().trim().isEmpty()) return LocalTime.of(0, 0);
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+            return LocalTime.parse(timeNode.asText(), formatter);
+        } catch (DateTimeParseException e) {
+            return LocalTime.of(0, 0);
+        }
     }
 }

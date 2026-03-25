@@ -49,8 +49,118 @@ function inicializarAsistente() {
 // Forzar ejecución inmediata de las pestañas al cargar la página
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', inicializarAsistente);
+    document.addEventListener('DOMContentLoaded', inicializarMapeo);
 } else {
     inicializarAsistente();
+    inicializarMapeo();
+}
+
+// ==========================================
+// LÓGICA DE MAPEO (ETAPA 1)
+// ==========================================
+function inicializarMapeo() {
+    // Inicializar TomSelect en todos los selects
+    const selects = document.querySelectorAll('.searchable-select');
+    selects.forEach(select => {
+        if (!select.tomselect) {
+            const ts = new TomSelect(select, {
+                create: false,
+                sortField: { field: "text", direction: "asc" },
+                placeholder: '-- Selecciona un valor oficial --',
+                dropdownParent: 'body',
+                onDropdownOpen: function(dropdown) {
+                    // Posicionar el dropdown justo debajo del campo de búsqueda
+                    const rect = this.control.getBoundingClientRect();
+                    dropdown.style.position = 'fixed';
+                    dropdown.style.zIndex   = '99999';
+                    dropdown.style.top      = rect.bottom + 'px';
+                    dropdown.style.left     = rect.left + 'px';
+                    dropdown.style.width    = rect.width + 'px';
+                }
+            });
+        }
+    });
+
+    // Lógica para botones de "Crear como Nuevo"
+    document.querySelectorAll('.btn-marcar-nuevo').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const catId = this.getAttribute('data-cat-id');
+            const originalVal = this.getAttribute('data-original-val');
+            
+            // Ocultar select original y botón +
+            document.getElementById('mapeo-container-' + catId).classList.add('hidden');
+            document.getElementById('mapeo-container-' + catId).classList.remove('flex');
+            
+            // Mostrar badge
+            const badge = document.getElementById('nuevo-badge-' + catId);
+            badge.classList.remove('hidden');
+            badge.classList.add('flex');
+            
+            // Ocultamos y deshabilitamos el select
+            const selectEl = document.getElementById('select-' + catId);
+            selectEl.disabled = true; // Deshabilitamos para que no se envíe en el submit
+            
+            // Inyectar el campo hidden para el envío form
+            if (!document.getElementById('hidden-nuevo-' + catId)) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.id = 'hidden-nuevo-' + catId;
+                hiddenInput.name = 'cat_' + catId;
+                hiddenInput.value = 'NEW_' + originalVal;
+                badge.appendChild(hiddenInput);
+            }
+        });
+    });
+
+    // Lógica para deshacer "Crear como Nuevo"
+    document.querySelectorAll('.btn-deshacer-nuevo').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const catId = this.getAttribute('data-cat-id');
+            
+            // Eliminar hidden input si existe
+            const hiddenInput = document.getElementById('hidden-nuevo-' + catId);
+            if (hiddenInput) {
+                hiddenInput.remove();
+            }
+            
+            // Volver a mostrar select y botón +
+            const container = document.getElementById('mapeo-container-' + catId);
+            container.classList.remove('hidden');
+            container.classList.add('flex');
+            
+            // Ocultar badge
+            const badge = document.getElementById('nuevo-badge-' + catId);
+            badge.classList.add('hidden');
+            badge.classList.remove('flex');
+            
+            // Habilitar y limpiar el select
+            const selectEl = document.getElementById('select-' + catId);
+            selectEl.disabled = false;
+            
+            // Restablecer TomSelect
+            if (selectEl.tomselect) {
+                selectEl.tomselect.clear();
+            } else {
+                selectEl.value = '';
+            }
+        });
+    });
+
+    // Botón Global "Crear TODOS como Nuevos"
+    const btnCrearTodos = document.getElementById('btn-crear-todos-nuevos');
+    if (btnCrearTodos) {
+        btnCrearTodos.addEventListener('click', function() {
+            // Aplicar a todos los botones que esten visibles (o ocultos) sin excepcion
+            document.querySelectorAll('.btn-marcar-nuevo').forEach(b => {
+                // Solo clickear si el select contenedor todavia esta visible (para no duplicar)
+                const catId = b.getAttribute('data-cat-id');
+                const container = document.getElementById('mapeo-container-' + catId);
+                if (container && !container.classList.contains('hidden')) {
+                    b.click();
+                }
+            });
+        });
+    }
 }
 
 // ==========================================

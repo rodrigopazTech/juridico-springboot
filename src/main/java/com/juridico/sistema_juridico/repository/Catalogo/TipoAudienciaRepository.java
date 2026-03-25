@@ -10,4 +10,6 @@ import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
 @Repository
 public interface TipoAudienciaRepository extends JpaRepository<TipoAudiencia, Integer> {
     List<TipoAudiencia> findByActivoTrue();
+
+    java.util.Optional<TipoAudiencia> findByNombreIgnoreCase(String nombre);
 }

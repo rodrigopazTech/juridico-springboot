@@ -15,6 +15,8 @@ public interface GerenciaRepository extends JpaRepository<Gerencia, Integer> {
     // Método que te faltaba: Busca una gerencia exacta por su nombre
     Optional<Gerencia> findByNombre(String nombre);
 
+    Optional<Gerencia> findByNombreIgnoreCase(String nombre);
+
     // El que ya tenías
     @Cacheable("gerencias")
     List<Gerencia> findByActivoTrueOrderByNombreAsc();

@@ -12,4 +12,8 @@ import com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional;
 public interface OrganoJurisdiccionalRepository extends JpaRepository<OrganoJurisdiccional, Integer> {
     @Cacheable("organos")
     List<OrganoJurisdiccional> findBySedeAndActivoTrue(String sede);
+
+    List<OrganoJurisdiccional> findByActivoTrue();
+
+    java.util.Optional<OrganoJurisdiccional> findByNombreIgnoreCase(String nombre);
 }

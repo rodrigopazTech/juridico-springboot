@@ -8,9 +8,9 @@ import java.util.List;
 @Repository
 public interface CatalogoMigracionRepository extends JpaRepository<CatalogoMigracion, Long> {
     
-    // Para traer los catálogos de un lote específico, filtrados por tipo (Ej. Tráeme todos los "ORGANO" del lote 1)
-    List<CatalogoMigracion> findByLoteIdAndTipoCatalogo(Long loteId, String tipoCatalogo);
-    
+    // Para traer los catálogos vinculados a un lote
+    List<CatalogoMigracion> findByLoteId(Long loteId);
+
     // Para revisar si un catálogo ya se guardó en este lote y no duplicarlo en la Etapa 1
     boolean existsByLoteIdAndTipoCatalogoAndValorOriginal(Long loteId, String tipoCatalogo, String valorOriginal);
 }

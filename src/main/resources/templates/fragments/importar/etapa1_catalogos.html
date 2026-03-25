@@ -16,8 +16,15 @@
         No se detectaron catálogos sucios.
       </h3>
       <p class="text-sm text-green-700 mt-1">
-        Puedes avanzar a la siguiente etapa.
+        Todos los valores ya están homologados. Puedes continuar.
       </p>
+      <form th:action="@{/admin/importar/mapear-catalogos}" method="post" class="mt-5">
+        <input type="hidden" name="loteId" th:value="${lote.id}" />
+        <button type="submit"
+          class="bg-gob-oro text-white px-8 py-3 rounded-xl font-bold shadow hover:bg-[#a37e46] transition">
+          Continuar a Expedientes <i class="fas fa-arrow-right ml-2"></i>
+        </button>
+      </form>
     </div>
 
     <form
@@ -78,29 +85,15 @@
                   </td>
                   
                   <td class="px-6 py-4">
-                    <select
-                      th:name="'cat_' + ${cat.id}"
-                      class="w-full border-gray-300 rounded-md shadow-sm focus:border-gob-oro focus:ring-gob-oro text-sm py-2 bg-white cursor-pointer"
-                      required
-                    >
-                      <option value="" disabled selected>-- Selecciona un valor oficial --</option>
-                      
-                      <option
-                        th:value="'NEW_' + ${cat.valorOriginal}"
-                        class="font-bold text-gob-verde"
-                        th:if="${grupo.key != 'USUARIO'}"
-                      >
-                        [+] CREAR COMO NUEVO CATÁLOGO
-                      </option>
-                      <option
-                        th:value="'NEW_' + ${cat.valorOriginal}"
-                        class="font-bold text-gob-verde"
-                        th:if="${grupo.key == 'USUARIO'}"
-                      >
-                        [+] CREAR NUEVO USUARIO EN SISTEMA
-                      </option>
-
-                      <option disabled>───────────</option>
+                    <div class="flex items-center gap-2" th:id="'mapeo-container-' + ${cat.id}">
+                      <div class="flex-grow select-wrapper w-full">
+                        <select
+                          th:name="'cat_' + ${cat.id}"
+                          th:id="'select-' + ${cat.id}"
+                          class="searchable-select w-full border-gray-300 rounded-md shadow-sm focus:border-gob-oro focus:ring-gob-oro text-sm bg-white cursor-pointer"
+                          required
+                        >
+                          <option value="" selected>-- Selecciona un valor oficial --</option>
 
                       <th:block th:if="${grupo.key == 'GERENCIA'}">
                         <option th:each="bd : ${gerenciasDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
@@ -117,7 +110,23 @@
                       <th:block th:if="${grupo.key == 'USUARIO'}">
                         <option th:each="bd : ${usuariosDB}" th:value="${bd.id}" th:text="${bd.nombreCompleto}"></option>
                       </th:block>
-                    </select>
+                        </select>
+                      </div>
+                      <button type="button" class="btn-marcar-nuevo bg-gob-verde text-white px-3 py-2 rounded shadow hover:bg-[#132c26] transition flex-shrink-0" 
+                              th:data-cat-id="${cat.id}" th:data-original-val="${cat.valorOriginal}" title="Crear como nuevo">
+                          <i class="fas fa-plus"></i>
+                      </button>
+                    </div>
+
+                    <div class="hidden gap-2 items-center w-full" th:id="'nuevo-badge-' + ${cat.id}">
+                        <div class="bg-green-100 text-green-800 border-green-300 px-3 py-2 rounded font-bold w-full text-center flex-grow flex items-center justify-center">
+                            <i class="fas fa-plus-circle mr-2"></i> SE CREARÁ COMO NUEVO
+                        </div>
+                        <button type="button" class="btn-deshacer-nuevo bg-gray-200 text-gray-700 px-3 py-2 rounded shadow hover:bg-gray-300 transition flex-shrink-0" 
+                                th:data-cat-id="${cat.id}" title="Deshacer">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -126,7 +135,10 @@
         </th:block>
       </div>
 
-      <div class="mt-8 flex justify-end border-t border-gray-200 pt-5">
+      <div class="mt-8 flex justify-between items-center border-t border-gray-200 pt-5">
+        <button type="button" id="btn-crear-todos-nuevos" class="bg-gray-100 text-gray-700 border border-gray-300 px-6 py-3 rounded-xl font-bold shadow-sm hover:bg-gray-200 transition">
+          <i class="fas fa-plus-square mr-2"></i> Crear TODOS como Nuevos
+        </button>
         <button
           type="submit"
           class="bg-gob-oro text-white px-8 py-3 rounded-xl font-bold shadow hover:bg-[#a37e46] transition"
