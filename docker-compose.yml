@@ -1,8 +1,14 @@
 version: '3.8'
+
+networks:
+  juridico-net:
+    driver: bridge
+
 services:
   db-juridico:
     image: postgres:15
     container_name: postgres-juridico
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-villalobos_admin}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password123}
@@ -11,17 +17,29 @@ services:
       - "${DB_PORT_EXT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - juridico-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-villalobos_admin} -d ${DB_NAME:-sistema_juridico}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin-juridico
+    restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-ricardo@juridico.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASS:-admin}
     ports:
-      - "5051:80"
+      - "5050:80"
+    networks:
+      - juridico-net
     depends_on:
-      - db-juridico
+      db-juridico:
+        condition: service_healthy
 
 volumes:
   postgres_data:

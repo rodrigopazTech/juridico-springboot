@@ -30,7 +30,7 @@ public class Termino {
     @JoinColumn(name = "expediente_id", nullable = false)
     private Expediente expediente;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = true, columnDefinition = "TEXT")
     private String asunto;
 
     @Column(name = "fecha_ingreso")
