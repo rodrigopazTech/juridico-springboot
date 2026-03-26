@@ -51,6 +51,7 @@ public class LoteMigracionService {
     @Autowired private MateriaRepository materiaRepository;
     @Autowired private OrganoJurisdiccionalRepository organoRepository;
     @Autowired private TipoAudienciaRepository tipoAudienciaRepository;
+    @Autowired private CatPrioridadRepository catPrioridadRepository;
     @Autowired private PasswordEncoder passwordEncoder;
 
 
@@ -107,6 +108,16 @@ public class LoteMigracionService {
             lote.setPasoActual(lote.getPasoActual() + 1);
         } else {
             lote.setEstatus("COMPLETADO");
+        }
+        return loteRepository.save(lote);
+    }
+
+    // 4.5. Retroceder el asistente de etapa
+    @Transactional
+    public LoteMigracion retrocederPaso(Long loteId) {
+        LoteMigracion lote = loteRepository.findById(loteId).orElseThrow(() -> new RuntimeException("Lote no encontrado"));
+        if(lote.getPasoActual() > 1) {
+            lote.setPasoActual(lote.getPasoActual() - 1);
         }
         return loteRepository.save(lote);
     }
@@ -457,50 +468,93 @@ public class LoteMigracionService {
                         Termino termino = new Termino();
                         termino.setExpediente(expediente);
                         termino.setAsunto(json.has("prestacion") ? json.get("prestacion").asText() : (json.has("asunto") ? json.get("asunto").asText() : "Sin actuación"));
-                        
-                        termino.setFechaVencimiento(parseDate(json.get("fechaVencimiento")));
-                        termino.setFechaIngreso(parseDate(json.get("fechaIngreso")));
-                        termino.setEstatusTermino(EstatusTermino.PROYECTISTA);
+
+                        LocalDate fechaVenc = parseDate(json.get("fechaVencimiento"));
+                        LocalDate fechaIng = parseDate(json.get("fechaIngreso"));
+                        termino.setFechaVencimiento(fechaVenc);
+                        termino.setFechaIngreso(fechaIng);
+
+                        // Estatus automático basado en fecha de vencimiento
+                        termino.setEstatusTermino(
+                            fechaVenc.isBefore(LocalDate.now()) ? EstatusTermino.CONCLUIDO : EstatusTermino.PROYECTISTA
+                        );
+
+                        // Resolver prioridad desde catálogo
+                        String prioridadStr = json.has("prioridad") ? json.get("prioridad").asText("Media") : "Media";
+                        CatPrioridad prioridad = catPrioridadRepository.findByNombreIgnoreCase(prioridadStr)
+                            .orElseGet(() -> catPrioridadRepository.findByNombreIgnoreCase("Media").orElse(null));
+                        termino.setPrioridad(prioridad);
+
                         String acuseStr = json.has("acuse") ? json.get("acuse").asText() : "";
                         if (acuseStr.length() > 500) acuseStr = acuseStr.substring(0, 500);
                         termino.setAcuse(acuseStr);
-                        
+
                         String acuseNombreStr = json.has("archivoWord") ? json.get("archivoWord").asText() : (json.has("acuseNombre") ? json.get("acuseNombre").asText() : "");
                         if (acuseNombreStr.length() > 500) acuseNombreStr = acuseNombreStr.substring(0, 500);
                         termino.setAcuseNombre(acuseNombreStr);
 
                         termino.setObservaciones(json.has("observaciones") ? json.get("observaciones").asText() : "");
-                        
+                        termino.setCreatedAt(java.time.LocalDateTime.now());
+                        termino.setUpdatedAt(java.time.LocalDateTime.now());
+
                         if (json.has("abogadoResponsable")) {
                             Usuario u = resolveUsuario(json.get("abogadoResponsable").asText(), lookup, expediente.getGerencia(), loteId);
                             if (u != null) termino.setAbogadoResponsable(u);
                         }
-                        
+
                         terminoRepository.save(termino);
 
                     } else if ("AUDIENCIA".equals(r.getTipoDato())) {
                         Audiencia audiencia = new Audiencia();
                         audiencia.setExpediente(expediente);
-                        
-                        audiencia.setFechaAudiencia(parseDate(json.get("fechaAudiencia")));
+
+                        LocalDate fechaAud = parseDate(json.get("fechaAudiencia"));
+                        audiencia.setFechaAudiencia(fechaAud);
                         audiencia.setHoraAudiencia(parseTime(json.get("horaAudiencia")));
-                        audiencia.setEstatusAudiencia(EstatusAudiencia.PENDIENTE);
-                        audiencia.setSalaLugar(json.has("sede") ? json.get("sede").asText() : "");
+
+                        // Estatus automático basado en la fecha de audiencia
+                        audiencia.setEstatusAudiencia(
+                            fechaAud.isBefore(LocalDate.now()) ? EstatusAudiencia.CONCLUIDA : EstatusAudiencia.PENDIENTE
+                        );
+
+                        // Sala y lugar (campo correcto: 'sala', no 'sede')
+                        String salaStr = json.has("sala") ? json.get("sala").asText() : (json.has("salaLugar") ? json.get("salaLugar").asText() : "");
+                        audiencia.setSalaLugar(salaStr);
+
+                        // Modalidad virtual
+                        boolean esVirtual = false;
+                        if (json.has("esEnLinea")) {
+                            String esEnLineaVal = json.get("esEnLinea").asText("").toLowerCase();
+                            esVirtual = esEnLineaVal.equals("true") || esEnLineaVal.equals("1") || esEnLineaVal.equals("si") || esEnLineaVal.equals("sí");
+                        } else if (json.has("esVirtual")) {
+                            esVirtual = json.get("esVirtual").asBoolean(false);
+                        }
+                        audiencia.setEsVirtual(esVirtual);
+
+                        // Enlace de reunión
+                        if (json.has("enlaceReunion") && !json.get("enlaceReunion").isNull()) {
+                            audiencia.setUrlReunion(json.get("enlaceReunion").asText());
+                        } else if (json.has("urlReunion") && !json.get("urlReunion").isNull()) {
+                            audiencia.setUrlReunion(json.get("urlReunion").asText());
+                        }
+
                         String actaStr = json.has("actaDocumento") ? json.get("actaDocumento").asText() : "";
                         if (actaStr.length() > 500) actaStr = actaStr.substring(0, 500);
                         audiencia.setActaDocumento(actaStr);
                         audiencia.setObservaciones(json.has("observaciones") ? json.get("observaciones").asText() : "");
-                        
+
                         if (json.has("tipoAudiencia")) {
                             TipoAudiencia ta = resolveTipoAudiencia(json.get("tipoAudiencia").asText(), lookup);
                             if (ta != null) audiencia.setTipoAudiencia(ta);
                         }
-                        
+
                         if (json.has("abogadoCompareciente")) {
                             Usuario u = resolveUsuario(json.get("abogadoCompareciente").asText(), lookup, expediente.getGerencia(), loteId);
                             if (u != null) audiencia.setAbogadoComparece(u);
                         }
 
+                        audiencia.setCreatedAt(java.time.LocalDateTime.now());
+                        audiencia.setUpdatedAt(java.time.LocalDateTime.now());
                         audienciaRepository.save(audiencia);
                     }
                 } catch (Exception e) {

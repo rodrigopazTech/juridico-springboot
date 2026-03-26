@@ -2,6 +2,7 @@ package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.Entity.procesal.LoteMigracion;
 import com.juridico.sistema_juridico.Entity.procesal.CatalogoMigracion;
+import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.service.procesal.LoteMigracionService;
 import com.juridico.sistema_juridico.repository.procesal.CatalogoMigracionRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.*;
@@ -32,6 +33,7 @@ public class AdminImportController {
     @Autowired private OrganoJurisdiccionalRepository organoRepository;
     @Autowired private TipoAudienciaRepository tipoAudienciaRepository;
     @Autowired private UsuarioRepository usuarioRepository;
+    @Autowired private CatPrioridadRepository catPrioridadRepository;
 
     @GetMapping
     public String mostrarWizard(Model model) {
@@ -72,6 +74,8 @@ public class AdminImportController {
                 case 2:
                     // Obtenemos el resumen de expedientes que detectó el sistema
                     model.addAttribute("expedientesResumen", loteMigracionService.obtenerResumenExpedientes(loteActivo.getId()));
+                    model.addAttribute("prioridadesDB", catPrioridadRepository.findAll());
+                    model.addAttribute("etapas", EtapaProcesal.values());
                     break;
                 case 3:
                     // Extraemos el resumen de las audiencias
@@ -80,6 +84,7 @@ public class AdminImportController {
                 case 4:
                     // Extraemos el resumen de los términos
                     model.addAttribute("terminosResumen", loteMigracionService.obtenerResumenTerminos(loteActivo.getId()));
+                    model.addAttribute("prioridadesDB", catPrioridadRepository.findAll());
                     break;
             }
         }
@@ -101,6 +106,13 @@ public class AdminImportController {
         if(lote.getEstatus().equals("COMPLETADO")) {
             redirectAttributes.addFlashAttribute("mensaje", "¡Migración completada e inyectada con éxito!");
         }
+        return "redirect:/admin/importar";
+    }
+
+    // Navegación del Wizard: Retroceder al paso anterior
+    @PostMapping("/retroceder")
+    public String retrocederPaso(@RequestParam("loteId") Long loteId) {
+        loteMigracionService.retrocederPaso(loteId);
         return "redirect:/admin/importar";
     }
     

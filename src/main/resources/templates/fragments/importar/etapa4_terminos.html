@@ -84,15 +84,21 @@
       </div>
     </div>
 
-    <form th:action="@{/admin/importar/inyectar}" method="post" id="formFinal">
-      <input type="hidden" name="loteId" th:value="${lote.id}" />
-      <div class="flex justify-end border-t border-gray-200 pt-5">
-        <button type="button" onclick="confirmarInyeccion()"
-          class="bg-gob-verde text-white px-10 py-4 rounded-xl font-bold shadow-lg hover:bg-[#132c26] transition transform hover:scale-105">
-          <i class="fas fa-database mr-2"></i> Confirmar e Inyectar Datos Oficiales
-        </button>
+      <div class="flex justify-between border-t border-gray-200 pt-5">
+        <form th:action="@{/admin/importar/retroceder}" method="post">
+          <input type="hidden" name="loteId" th:value="${lote.id}" />
+          <button type="submit" class="bg-gray-100 text-gray-700 px-8 py-3 rounded-xl font-bold shadow-sm hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left mr-2"></i> Regresar a Audiencias
+          </button>
+        </form>
+        <form th:action="@{/admin/importar/inyectar}" method="post" id="formFinal">
+          <input type="hidden" name="loteId" th:value="${lote.id}" />
+          <button type="button" onclick="confirmarInyeccion()"
+            class="bg-gob-verde text-white px-10 py-4 rounded-xl font-bold shadow-lg hover:bg-[#132c26] transition transform hover:scale-105">
+            <i class="fas fa-database mr-2"></i> Confirmar e Inyectar Datos Oficiales
+          </button>
+        </form>
       </div>
-    </form>
   </div>
 
   <!-- MODAL EDITAR TÉRMINO -->
@@ -117,8 +123,13 @@
           <input type="date" id="term-fecha" name="fechaVencimiento" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"/>
         </div>
         <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Fecha de Ingreso</label>
+          <input type="date" id="term-fecha-ingreso" name="fechaIngreso" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"/>
+        </div>
+        <div>
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Prioridad</label>
           <select id="term-prioridad" name="prioridad" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
+            <option th:each="p : ${prioridadesDB}" th:value="${p.nombre}" th:text="${p.nombre}"></option>
             <option value="Alta">Alta</option>
             <option value="Media" selected>Media</option>
             <option value="Baja">Baja</option>

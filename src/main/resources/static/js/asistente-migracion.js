@@ -351,6 +351,11 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
         document.getElementById('exp-sede').value        = d.sede || '';
         document.getElementById('exp-abogado').value     = d.abogado || '';
         document.getElementById('exp-descripcion').value = d.descripcion || '';
+        // Prioridad y Etapa Procesal (con fallback en caso de no existir aún)
+        const selPrioridad = document.getElementById('exp-prioridad');
+        if (selPrioridad && d.prioridad) selPrioridad.value = d.prioridad;
+        const selEtapa = document.getElementById('exp-etapa');
+        if (selEtapa && d.etapaProcesal) selEtapa.value = d.etapaProcesal;
         const modal = document.getElementById('modal-editar-expediente');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -381,6 +386,21 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
         document.getElementById('aud-responsable').value  = d.abogadoResponsable || '';
         document.getElementById('aud-sede').value         = d.sede || '';
         document.getElementById('aud-organo').value       = d.organoJurisdiccional || '';
+        // Sala / Lugar
+        const audSala = document.getElementById('aud-sala');
+        if (audSala) audSala.value = d.sala || '';
+        // Modalidad: esEnLinea/esVirtual
+        const esVirtual = d.esEnLinea === 'true' || d.esVirtual === 'true';
+        const rdPresencial = document.getElementById('aud-presencial');
+        const rdVirtual = document.getElementById('aud-virtual');
+        const urlGroup = document.getElementById('aud-url-group');
+        if (rdPresencial && rdVirtual) {
+            rdPresencial.checked = !esVirtual;
+            rdVirtual.checked = esVirtual;
+        }
+        if (urlGroup) urlGroup.classList.toggle('hidden', !esVirtual);
+        const audUrl = document.getElementById('aud-url');
+        if (audUrl) audUrl.value = d.enlaceReunion || d.urlReunion || '';
         const modal = document.getElementById('modal-editar-audiencia');
         modal.classList.remove('hidden'); modal.classList.add('flex');
     });
@@ -407,6 +427,9 @@ document.querySelectorAll('.btn-editar-termino').forEach(btn => {
         document.getElementById('term-fecha').value          = d.fechaVencimiento || '';
         document.getElementById('term-abogado').value        = d.abogadoResponsable || '';
         document.getElementById('term-observaciones').value  = d.observaciones || '';
+        // Fecha de Ingreso
+        const termFechaIngreso = document.getElementById('term-fecha-ingreso');
+        if (termFechaIngreso) termFechaIngreso.value = d.fechaIngreso || '';
         const selectPrioridad = document.getElementById('term-prioridad');
         if (selectPrioridad && d.prioridad) selectPrioridad.value = d.prioridad;
         const modal = document.getElementById('modal-editar-termino');

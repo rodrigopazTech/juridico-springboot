@@ -81,14 +81,20 @@
       </table>
     </div>
 
-    <form th:action="@{/admin/importar/validar-audiencias}" method="post">
-      <input type="hidden" name="loteId" th:value="${lote.id}" />
-      <div class="flex justify-end border-t border-gray-200 pt-5">
-        <button type="submit" class="bg-gob-oro text-white px-8 py-3 rounded-xl font-bold shadow hover:bg-[#a37e46] transition">
-          Aprobar Audiencias y Continuar <i class="fas fa-arrow-right ml-2"></i>
-        </button>
+      <div class="flex justify-between border-t border-gray-200 pt-5">
+        <form th:action="@{/admin/importar/retroceder}" method="post">
+          <input type="hidden" name="loteId" th:value="${lote.id}" />
+          <button type="submit" class="bg-gray-100 text-gray-700 px-8 py-3 rounded-xl font-bold shadow-sm hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left mr-2"></i> Regresar a Expedientes
+          </button>
+        </form>
+        <form th:action="@{/admin/importar/validar-audiencias}" method="post">
+          <input type="hidden" name="loteId" th:value="${lote.id}" />
+          <button type="submit" class="bg-gob-oro text-white px-8 py-3 rounded-xl font-bold shadow hover:bg-[#a37e46] transition">
+            Aprobar Audiencias y Continuar <i class="fas fa-arrow-right ml-2"></i>
+          </button>
+        </form>
       </div>
-    </form>
   </div>
 
   <!-- MODAL EDITAR AUDIENCIA -->
@@ -125,12 +131,33 @@
           <input type="text" id="aud-responsable" name="abogadoResponsable" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"/>
         </div>
         <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Sala / Lugar</label>
+          <input type="text" id="aud-sala" name="sala" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm" placeholder="Ej. Sala 3 de Juicios Orales"/>
+        </div>
+        <div>
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Sede</label>
           <input type="text" id="aud-sede" name="sede" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"/>
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Órgano Jurisdiccional</label>
           <input type="text" id="aud-organo" name="organoJurisdiccional" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Modalidad</label>
+          <div class="flex items-center gap-4 mt-2">
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" name="esEnLinea" id="aud-presencial" value="false" checked class="h-4 w-4 text-gob-guinda" onchange="document.getElementById('aud-url-group').classList.add('hidden')">
+              <span class="text-sm"><i class="fas fa-building text-gray-400 mr-1"></i> Presencial</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" name="esEnLinea" id="aud-virtual" value="true" class="h-4 w-4 text-gob-guinda" onchange="document.getElementById('aud-url-group').classList.remove('hidden')">
+              <span class="text-sm"><i class="fas fa-video text-gray-400 mr-1"></i> Virtual</span>
+            </label>
+          </div>
+        </div>
+        <div class="col-span-2 hidden" id="aud-url-group">
+          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Enlace de Reunión</label>
+          <input type="text" id="aud-url" name="enlaceReunion" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm" placeholder="https://..."/>
         </div>
         <div class="col-span-2 flex justify-end gap-3 pt-2 border-t border-gray-100">
           <button type="button" id="cancelar-modal-aud" class="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50">Cancelar</button>
