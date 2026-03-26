@@ -8,6 +8,7 @@
     <script th:src="@{/js/tailwind.config.js}"></script>
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" th:href="@{/css/calendario.css}">
 </head>
 
 <body class="bg-gray-100 text-gray-800 font-sans overflow-x-hidden">
@@ -144,6 +145,9 @@
     <script th:src="@{/js/realtime-search.js}"></script>
 
     <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
+    <!-- Estado del Mini-Calendario para JS -->
+    <input type="hidden" id="hdnMesActual" th:value="${mesActual}">
+    <input type="hidden" id="hdnAnioActual" th:value="${anioActual}">
 </body>
 
 </html>
