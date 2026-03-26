@@ -198,10 +198,10 @@ public class CalendarioService {
         
         return EventoResponse.builder()
                 .id(t.getId() != null ? t.getId().longValue() : null)
-                .titulo("Término: " + t.getAsunto())
+                .titulo("Término: " + (t.getAsunto() != null ? t.getAsunto() : "Sin Asunto"))
                 .tipo("termino")
                 .fecha(t.getFechaVencimiento() != null ? t.getFechaVencimiento().toString() : "")
-                .hora("23:59")
+                .hora("")
                 .gerenciaId(gerenciaId)
                 .gerenciaNombre(gerenciaNombre)
                 .usuarioId(usuarioId)

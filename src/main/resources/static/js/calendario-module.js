@@ -126,6 +126,13 @@ export class CalendarioModule {
         // Ocultar todas las vistas
         document.querySelectorAll('.calendar-view').forEach(v => v.classList.add('hidden'));
 
+        // Manejar visibilidad de cabecera estática (solo para vista mensual)
+        const weekHeader = document.getElementById('weekHeader');
+        if (weekHeader) {
+            if (this.view === 'month') weekHeader.classList.remove('hidden');
+            else weekHeader.classList.add('hidden');
+        }
+
         if (this.view === 'month') {
             document.getElementById('calendarMonthView').classList.remove('hidden');
             this.renderMonth();
@@ -342,21 +349,21 @@ export class CalendarioModule {
         periodLabel.innerText = `${formatDate(monday)} - ${formatDate(sunday)}`;
 
         // --- PRE-CALCULO: Alturas sincronizadas ---
-        // 1. Altura fija para el header del día (aprox 80px)
-        const HEADER_HEIGHT = 80;
+        // 1. Altura fija para el header del día (compacto)
+        const HEADER_HEIGHT = 50;
 
         // 2. Calcular máximo de eventos 'todo el día' (términos) para sincronizar altura
         let maxAllDayEvents = 0;
         for (let i = 0; i < 7; i++) {
             const dStr = new Date(monday);
             dStr.setDate(monday.getDate() + i);
-            const dateStr = dStr.toISOString().split('T')[0];
-            const count = this.filteredEvents.filter(e => e.fecha === dateStr && !e.hora).length;
+            const dateStr = `${dStr.getFullYear()}-${String(dStr.getMonth() + 1).padStart(2, '0')}-${String(dStr.getDate()).padStart(2, '0')}`;
+            const count = this.filteredEvents.filter(e => e.fecha === dateStr && e.tipo === 'termino').length;
             if (count > maxAllDayEvents) maxAllDayEvents = count;
         }
-        // Cada tag mide unos 24px + 4px de gap + padding. Aprox 28px por evento + 10px de base
+
         const ALL_DAY_MIN_HEIGHT = 20;
-        const allDaySectionHeight = Math.max(ALL_DAY_MIN_HEIGHT, (maxAllDayEvents * 28) + 10);
+        const allDaySectionHeight = Math.max(ALL_DAY_MIN_HEIGHT, (maxAllDayEvents * 26) + 12);
 
         // Generar columna de horas (06:00 a 22:00)
         const hoursColumn = document.getElementById('hoursColumn');
@@ -394,7 +401,7 @@ export class CalendarioModule {
             for (let i = 0; i < 7; i++) {
                 const currentDate = new Date(monday);
                 currentDate.setDate(monday.getDate() + i);
-                const dateStr = currentDate.toISOString().split('T')[0];
+                const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
                 const isToday = this.isToday(dateStr);
                 const dayNumber = currentDate.getDate();
                 const monthName = this.names[currentDate.getMonth()];
@@ -408,9 +415,11 @@ export class CalendarioModule {
                 dayHeader.style.height = `${HEADER_HEIGHT}px`;
                 dayHeader.style.minHeight = `${HEADER_HEIGHT}px`;
                 dayHeader.innerHTML = `
-                    <div class="text-xs font-bold text-gray-500 uppercase">${dayNames[i]}</div>
-                    <div class="text-lg font-bold ${isToday ? 'text-gob-guinda' : 'text-gray-700'}">${dayNumber}</div>
-                    <div class="text-xs text-gray-400">${monthName}</div>
+                    <div class="text-[10px] font-bold text-gray-500 uppercase leading-tight">${dayNames[i]}</div>
+                    <div class="flex items-center justify-center gap-1">
+                        <span class="text-base font-bold ${isToday ? 'text-gob-guinda' : 'text-gray-700'}">${dayNumber}</span>
+                        <span class="text-[10px] text-gray-400 capitalize">${monthName.substring(0, 3)}</span>
+                    </div>
                 `;
                 dayColumn.appendChild(dayHeader);
 
@@ -423,7 +432,7 @@ export class CalendarioModule {
                 allDaySection.style.height = `${allDaySectionHeight}px`;
                 allDaySection.style.minHeight = `${allDaySectionHeight}px`;
 
-                const allDayEvents = dayEvents.filter(e => !e.hora);
+                const allDayEvents = dayEvents.filter(e => e.tipo === 'termino');
                 allDayEvents.forEach(event => {
                     const tag = document.createElement('div');
                     tag.className = `event-tag event-${event.tipo} truncate text-xs px-1 py-0.5 rounded cursor-pointer`;
@@ -444,7 +453,8 @@ export class CalendarioModule {
                 dayContent.style.minHeight = '1020px';
 
                 // --- MANEJO DE SOLAPAMIENTOS ---
-                const timedEvents = dayEvents.filter(e => e.hora).sort((a, b) => a.hora.localeCompare(b.hora));
+                // Solo audiencias y recordatorios (eventos con hora real < 23:59)
+                const timedEvents = dayEvents.filter(e => e.tipo !== 'termino' && e.hora).sort((a, b) => a.hora.localeCompare(b.hora));
                 const positionedEvents = [];
 
                 const getMinutes = (h) => {
@@ -559,7 +569,36 @@ export class CalendarioModule {
             // Filtrar eventos del día
             const dayEvents = this.filteredEvents.filter(e => e.fecha === dateStr);
 
-            if (dayEvents.length === 0) {
+            // --- SECCIÓN DE TÉRMINOS (Encabezado) ---
+            const allDayEvents = dayEvents.filter(e => e.tipo === 'termino');
+            if (allDayEvents.length > 0) {
+                const termsHeader = document.createElement('div');
+                termsHeader.className = 'mb-6 bg-gray-50 border border-gray-200 rounded-lg p-3';
+                termsHeader.innerHTML = '<h5 class="text-xs font-bold text-gob-verde uppercase mb-2"><i class="fas fa-clock mr-1"></i> Términos del Día</h5>';
+
+                const termsGrid = document.createElement('div');
+                termsGrid.className = 'grid grid-cols-1 md:grid-cols-2 gap-2';
+
+                allDayEvents.forEach(event => {
+                    const termItem = document.createElement('div');
+                    termItem.className = 'event-tag event-termino p-2 rounded text-xs cursor-pointer hover:brightness-110 transition-all';
+                    termItem.innerText = event.titulo;
+                    termItem.onclick = () => this.showEventDetail(event);
+                    termsGrid.appendChild(termItem);
+                });
+
+                termsHeader.appendChild(termsGrid);
+                dayEventsContainer.appendChild(termsHeader);
+            }
+
+            // --- TIMELINE DE EVENTOS CON HORA ---
+            const timedEvents = dayEvents.filter(e => e.tipo !== 'termino' && e.hora).sort((a, b) => a.hora.localeCompare(b.hora));
+
+            if (timedEvents.length === 0 && allDayEvents.length > 0) {
+                return; // Solo había términos
+            }
+
+            if (timedEvents.length === 0 && allDayEvents.length === 0) {
                 dayEventsContainer.innerHTML = `
                     <div class="text-center text-gray-500 py-8">
                         <i class="fas fa-calendar-times text-4xl mb-4"></i>
@@ -569,18 +608,10 @@ export class CalendarioModule {
                 return;
             }
 
-            // Ordenar por hora
-            dayEvents.sort((a, b) => {
-                if (!a.hora) return 1;
-                if (!b.hora) return -1;
-                return a.hora.localeCompare(b.hora);
-            });
-
-            // Mostrar timeline con eventos
             const timeline = document.createElement('div');
             timeline.className = 'relative border-l-2 border-gob-guinda ml-4 space-y-6';
 
-            dayEvents.forEach(event => {
+            timedEvents.forEach(event => {
                 const eventItem = document.createElement('div');
                 eventItem.className = 'relative pl-6';
 
@@ -597,13 +628,11 @@ export class CalendarioModule {
                     <div class="flex items-start justify-between mb-2">
                         <div class="flex items-center gap-2">
                             <span class="px-2 py-1 text-xs font-semibold rounded ${this.getEventBadgeClass(event.tipo)}">${event.tipo.toUpperCase()}</span>
-                            ${event.tipo !== 'termino' ? `<span class="text-sm font-bold text-gray-700">${event.hora || '--:--'}</span>` : ''}
+                            <span class="text-sm font-bold text-gray-700">${event.hora || '--:--'}</span>
                         </div>
                     </div>
                     <h4 class="font-semibold text-gray-800 mb-1">${event.titulo}</h4>
                     ${event.expediente ? `<p class="text-sm text-gray-500">Expediente: ${event.expediente}</p>` : ''}
-                    ${event.usuarioNombre ? `<p class="text-sm text-gray-500">Responsable: ${event.usuarioNombre}</p>` : ''}
-                    ${event.gerenciaNombre ? `<p class="text-sm text-gray-500">Gerencia: ${event.gerenciaNombre}</p>` : ''}
                 `;
 
                 eventItem.appendChild(dot);
