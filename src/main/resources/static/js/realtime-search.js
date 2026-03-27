@@ -55,13 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // === MÓDULO: Audiencias (Listado Principal) ===
-    const searchAudiencias = document.getElementById('input-search-audiencias');
-    if (searchAudiencias) {
-        searchAudiencias.addEventListener('input', function () {
-            filtrarTablaRealTime('tabla-audiencias-body', this.value);
-        });
-    }
+    // === MÓDULO: Audiencias (Utiliza búsqueda en SERVIDOR para consistencia) ===
+    // Se gestiona directamente en audiencias.js
 
     // === MÓDULO: Términos (Listado Principal) ===
     const searchTerminos = document.getElementById('input-search-terminos');

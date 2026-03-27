@@ -382,4 +382,54 @@ function renderMiniCalendar() {
 // Iniciar componentes al cargar
 document.addEventListener('DOMContentLoaded', () => {
     initMiniCalendar();
+    initSearchBar();
 });
+
+function initSearchBar() {
+    const input = document.getElementById('input-search-audiencias');
+    const btnClear = document.getElementById('btn-clear-search');
+    const form = document.getElementById('form-search-audiencias');
+
+    if (!input || !form) return;
+
+    // A. Mostrar/Ocultar botón X según el contenido
+    input.addEventListener('input', function () {
+        if (btnClear) {
+            if (this.value.trim() !== "") {
+                btnClear.classList.remove('hidden');
+            } else {
+                btnClear.classList.add('hidden');
+            }
+        }
+    });
+
+    // B. Manejar tecla ENTER (Búsqueda Servidor)
+    input.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            form.submit();
+        }
+    });
+
+    // C. Manejar Botón Limpiar (X)
+    if (btnClear) {
+        btnClear.onclick = () => {
+            input.value = '';
+            // Al limpiar, quitamos también los parámetros de mes/anio si queremos volver a "Hoy"
+            // o simplemente enviamos el form para quitar el keyword.
+            // Para volver al "Estado Original", lo mejor es redirigir a la URL base de audiencias.
+            window.location.href = '/audiencias';
+        };
+    }
+
+    // D. Detección de "Borrado Total" por teclado
+    input.addEventListener('keyup', function (e) {
+        if (this.value.trim() === "" && (e.key === 'Backspace' || e.key === 'Delete')) {
+            // Si el usuario borra todo y ya había una búsqueda (keyword en URL), recargamos
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('keyword')) {
+                window.location.href = '/audiencias';
+            }
+        }
+    });
+}
