@@ -136,20 +136,26 @@
                             class="searchable-select w-full border-gray-300 rounded-md shadow-sm focus:border-gob-oro focus:ring-gob-oro text-sm bg-white cursor-pointer"
                             required
                           >
-                            <option value="" selected>-- Selecciona un valor oficial --</option>
+                            <option value="" selected>No definido</option>
 
                         <th:block th:if="${grupo.key == 'GERENCIA'}">
                           <option th:each="bd : ${gerenciasDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
                         </th:block>
+                        
                         <th:block th:if="${grupo.key == 'MATERIA'}">
-                          <option th:each="bd : ${materiasDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                          <optgroup th:each="g : ${gerenciasDB}" th:label="${g.nombre}">
+                            <option th:each="bd : ${g.materias}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                          </optgroup>
                         </th:block>
+                        
                         <th:block th:if="${grupo.key == 'ORGANO'}">
                           <option th:each="bd : ${organosDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
                         </th:block>
+                        
                         <th:block th:if="${grupo.key == 'TIPO_AUDIENCIA'}">
                           <option th:each="bd : ${tiposAudDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
                         </th:block>
+                        
                         <th:block th:if="${grupo.key == 'USUARIO'}">
                           <option th:each="bd : ${usuariosDB}" th:value="${bd.id}" th:text="${bd.nombreCompleto}"></option>
                         </th:block>

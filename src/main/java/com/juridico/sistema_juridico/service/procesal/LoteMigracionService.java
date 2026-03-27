@@ -316,6 +316,10 @@ public class LoteMigracionService {
                 map.put("organo", json.has("organoJurisdiccional") ? json.get("organoJurisdiccional").asText() : "");
                 map.put("partes", json.has("partes") ? json.get("partes").asText() : "");
                 
+                // Nuevos campos para el modal de edición
+                map.put("esEnLinea", json.has("esEnLinea") ? json.get("esEnLinea").asText() : (json.has("esVirtual") ? json.get("esVirtual").asText() : "false"));
+                map.put("enlaceReunion", json.has("enlaceReunion") ? json.get("enlaceReunion").asText() : (json.has("urlReunion") ? json.get("urlReunion").asText() : ""));
+                
                 resumen.add(map);
             } catch (Exception e) {
                 // Ignorar errores de parseo individuales
@@ -345,6 +349,9 @@ public class LoteMigracionService {
                 map.put("abogado", json.has("abogadoResponsable") ? json.get("abogadoResponsable").asText() : "N/A");
                 map.put("prioridad", json.has("prioridad") ? json.get("prioridad").asText() : "Media");
                 map.put("observaciones", json.has("observaciones") ? json.get("observaciones").asText() : "");
+                
+                // Nuevo campo para el modal de edición
+                map.put("fechaIngreso", json.has("fechaIngreso") ? json.get("fechaIngreso").asText() : "");
                 
                 resumen.add(map);
             } catch (Exception e) { }
@@ -592,18 +599,19 @@ public class LoteMigracionService {
     }
 
     private Materia resolveMateria(String original, java.util.Map<String, CatalogoMigracion> lookup) {
-        CatalogoMigracion c = lookup.get("MATERIA___" + original.trim().toLowerCase());
+        if (original == null || original.trim().isEmpty()) return null;
+        String key = "MATERIA___" + original.trim().toLowerCase();
+        CatalogoMigracion c = lookup.get(key);
         if (c != null) {
             if (c.getIdMapeado() != null) return materiaRepository.findById(c.getIdMapeado().intValue()).orElse(null);
             if (c.getNuevoValor() != null) {
                 String nombreFinal = c.getNuevoValor();
                 if (nombreFinal.length() > 100) nombreFinal = nombreFinal.substring(0, 100);
-                
+
                 final String searchName = nombreFinal;
                 Materia existente = materiaRepository.findByNombreIgnoreCase(searchName).orElse(null);
                 if (existente == null) {
                     Materia m = new Materia(); m.setNombre(searchName); m.setActivo(true);
-                    m.setGerencia(getFallbackGerencia());
                     existente = materiaRepository.save(m);
                 }
                 c.setIdMapeado(existente.getId().longValue());
@@ -611,19 +619,23 @@ public class LoteMigracionService {
                 return existente;
             }
         }
-        return null;
+        // Fallback: buscar directamente en la DB por nombre
+        return materiaRepository.findByNombreIgnoreCase(original.trim()).orElse(null);
     }
-
-    private Gerencia resolveGerencia(String original, java.util.Map<String, CatalogoMigracion> lookup) {
-        CatalogoMigracion c = lookup.get("GERENCIA___" + original.trim().toLowerCase());
+     private Gerencia resolveGerencia(String original, java.util.Map<String, CatalogoMigracion> lookup) {
+        if (original == null || original.trim().isEmpty()) return null;
+        String key = "GERENCIA___" + original.trim().toLowerCase();
+        CatalogoMigracion c = lookup.get(key);
         if (c != null) {
             if (c.getIdMapeado() != null) return gerenciaRepository.findById(c.getIdMapeado().intValue()).orElse(null);
             if (c.getNuevoValor() != null) {
                 String nombreFinal = c.getNuevoValor();
-                if (nombreFinal.length() > 200) nombreFinal = nombreFinal.substring(0, 200);
+                if (nombreFinal.length() > 100) nombreFinal = nombreFinal.substring(0, 100);
 
                 final String searchName = nombreFinal;
-                Gerencia existente = gerenciaRepository.findByNombreIgnoreCase(searchName).orElse(null);
+                Gerencia existente = gerenciaRepository.findAll().stream()
+                    .filter(g -> g.getNombre().equalsIgnoreCase(searchName))
+                    .findFirst().orElse(null);
                 if (existente == null) {
                     Gerencia g = new Gerencia(); g.setNombre(searchName); g.setActivo(true);
                     existente = gerenciaRepository.save(g);
@@ -633,16 +645,20 @@ public class LoteMigracionService {
                 return existente;
             }
         }
-        return null;
+        // Fallback: Si no está en el mapa de mapeos, buscar directamente en la DB por nombre
+        return gerenciaRepository.findAll().stream()
+                .filter(g -> g.getNombre().equalsIgnoreCase(original.trim()))
+                .findFirst().orElse(null);
     }
-
-    private OrganoJurisdiccional resolveOrgano(String original, java.util.Map<String, CatalogoMigracion> lookup) {
-        CatalogoMigracion c = lookup.get("ORGANO___" + original.trim().toLowerCase());
+     private OrganoJurisdiccional resolveOrgano(String original, java.util.Map<String, CatalogoMigracion> lookup) {
+        if (original == null || original.trim().isEmpty()) return null;
+        String key = "ORGANO___" + original.trim().toLowerCase();
+        CatalogoMigracion c = lookup.get(key);
         if (c != null) {
             if (c.getIdMapeado() != null) return organoRepository.findById(c.getIdMapeado().intValue()).orElse(null);
             if (c.getNuevoValor() != null) {
                 String nombreFinal = c.getNuevoValor();
-                if (nombreFinal.length() > 300) nombreFinal = nombreFinal.substring(0, 300);
+                if (nombreFinal.length() > 100) nombreFinal = nombreFinal.substring(0, 100);
 
                 final String searchName = nombreFinal;
                 OrganoJurisdiccional existente = organoRepository.findByNombreIgnoreCase(searchName).orElse(null);
@@ -655,11 +671,14 @@ public class LoteMigracionService {
                 return existente;
             }
         }
-        return null;
+        // Fallback: buscar directamente en la DB por nombre
+        return organoRepository.findByNombreIgnoreCase(original.trim()).orElse(null);
     }
 
     private TipoAudiencia resolveTipoAudiencia(String original, java.util.Map<String, CatalogoMigracion> lookup) {
-        CatalogoMigracion c = lookup.get("TIPO_AUDIENCIA___" + original.trim().toLowerCase());
+        if (original == null || original.trim().isEmpty()) return null;
+        String key = "TIPO_AUDIENCIA___" + original.trim().toLowerCase();
+        CatalogoMigracion c = lookup.get(key);
         if (c != null) {
             if (c.getIdMapeado() != null) return tipoAudienciaRepository.findById(c.getIdMapeado().intValue()).orElse(null);
             if (c.getNuevoValor() != null) {
@@ -677,7 +696,8 @@ public class LoteMigracionService {
                 return existente;
             }
         }
-        return null;
+        // Fallback: buscar directamente en la DB por nombre
+        return tipoAudienciaRepository.findByNombreIgnoreCase(original.trim()).orElse(null);
     }
 
     private Usuario resolveUsuario(String original, java.util.Map<String, CatalogoMigracion> lookup, Gerencia gerencia, Long loteId) {

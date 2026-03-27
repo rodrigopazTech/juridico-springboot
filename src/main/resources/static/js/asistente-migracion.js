@@ -11,13 +11,13 @@ function inicializarAsistente() {
 
     // 1. Esconder todos los paneles por seguridad
     tabPanels.forEach(p => p.classList.add("hidden"));
-    
+
     // 2. Encender dinámicamente el panel que corresponda al PRIMER botón que exista
     const firstBtn = tabBtns[0];
     const targetId = firstBtn.getAttribute("data-target");
     const firstPanel = document.getElementById(targetId);
 
-    if(firstPanel) {
+    if (firstPanel) {
         firstPanel.classList.remove("hidden");
         firstBtn.classList.add("border-gob-oro", "text-gob-oro", "font-bold");
         firstBtn.classList.remove("border-transparent", "text-gray-500");
@@ -25,11 +25,11 @@ function inicializarAsistente() {
 
     // 3. Asignar los eventos de clic
     tabBtns.forEach(btn => {
-        btn.addEventListener("click", function() {
+        btn.addEventListener("click", function () {
             const tId = this.getAttribute("data-target");
             const tPanel = document.getElementById(tId);
 
-            if(!tPanel) return;
+            if (!tPanel) return;
 
             tabBtns.forEach(b => {
                 b.classList.remove("border-gob-oro", "text-gob-oro", "font-bold");
@@ -66,23 +66,37 @@ function inicializarMapeo() {
                 sortField: { field: "text", direction: "asc" },
                 placeholder: '-- Selecciona un valor oficial --',
                 dropdownParent: 'body',
-                onDropdownOpen: function(dropdown) {
+                onDropdownOpen: function (dropdown) {
                     const rect = this.control.getBoundingClientRect();
                     dropdown.style.position = 'fixed';
-                    dropdown.style.zIndex   = '99999';
-                    dropdown.style.top      = rect.bottom + 'px';
-                    dropdown.style.left     = rect.left + 'px';
-                    dropdown.style.width    = rect.width + 'px';
+                    dropdown.style.zIndex = '99999';
+                    dropdown.style.top = rect.bottom + 'px';
+                    dropdown.style.left = rect.left + 'px';
+                    dropdown.style.width = rect.width + 'px';
                 }
             });
         }
     });
 
+    window.addEventListener('scroll', function (e) {
+        // 1. Verificamos si el scroll viene desde adentro del menú desplegable
+        if (e.target && e.target.closest && e.target.closest('.ts-dropdown')) {
+            return; // Si es así, detenemos la función aquí y dejamos que el usuario baje por la lista
+        }
+
+        // 2. Si el scroll viene de la tabla o la página, cerramos los selects abiertos
+        selects.forEach(select => {
+            if (select.tomselect && select.tomselect.isOpen) {
+                select.tomselect.close();
+            }
+        });
+    }, true);
+
     // ==========================================
     // BOTÓN: EDITAR TEXTO DETECTADO (lápiz)
     // ==========================================
     document.querySelectorAll('.btn-editar-texto').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const catId = this.getAttribute('data-cat-id');
             // Ocultar display, mostrar input
             document.getElementById('texto-display-' + catId).classList.add('hidden');
@@ -97,7 +111,7 @@ function inicializarMapeo() {
 
     // Confirmar edición del texto
     document.querySelectorAll('.btn-confirmar-edit').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const catId = this.getAttribute('data-cat-id');
             const nuevoTexto = document.getElementById('texto-input-' + catId).value.trim();
             if (!nuevoTexto) return;
@@ -116,7 +130,7 @@ function inicializarMapeo() {
 
     // Cancelar edición del texto
     document.querySelectorAll('.btn-cancelar-edit').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const catId = this.getAttribute('data-cat-id');
             // Restaurar input al valor actual del span
             const textoActual = document.getElementById('texto-valor-' + catId).textContent;
@@ -133,23 +147,23 @@ function inicializarMapeo() {
     // BOTÓN: CREAR COMO NUEVO (+)
     // ==========================================
     document.querySelectorAll('.btn-marcar-nuevo').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const catId = this.getAttribute('data-cat-id');
             const originalVal = this.getAttribute('data-original-val');
-            
+
             // Ocultar select original y botones
             document.getElementById('mapeo-container-' + catId).classList.add('hidden');
             document.getElementById('mapeo-container-' + catId).classList.remove('flex');
-            
+
             // Mostrar badge de "nuevo"
             const badge = document.getElementById('nuevo-badge-' + catId);
             badge.classList.remove('hidden');
             badge.classList.add('flex');
-            
+
             // Deshabilitar el select
             const selectEl = document.getElementById('select-' + catId);
             selectEl.disabled = true;
-            
+
             // Inyectar hidden input
             if (!document.getElementById('hidden-nuevo-' + catId)) {
                 const hiddenInput = document.createElement('input');
@@ -164,20 +178,20 @@ function inicializarMapeo() {
 
     // Deshacer "Crear como Nuevo"
     document.querySelectorAll('.btn-deshacer-nuevo').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const catId = this.getAttribute('data-cat-id');
-            
+
             const hiddenInput = document.getElementById('hidden-nuevo-' + catId);
             if (hiddenInput) hiddenInput.remove();
-            
+
             const container = document.getElementById('mapeo-container-' + catId);
             container.classList.remove('hidden');
             container.classList.add('flex');
-            
+
             const badge = document.getElementById('nuevo-badge-' + catId);
             badge.classList.add('hidden');
             badge.classList.remove('flex');
-            
+
             const selectEl = document.getElementById('select-' + catId);
             selectEl.disabled = false;
             if (selectEl.tomselect) {
@@ -192,22 +206,22 @@ function inicializarMapeo() {
     // BOTÓN: DESCARTAR (-)
     // ==========================================
     document.querySelectorAll('.btn-descartar').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const catId = this.getAttribute('data-cat-id');
-            
+
             // Ocultar select y botones
             document.getElementById('mapeo-container-' + catId).classList.add('hidden');
             document.getElementById('mapeo-container-' + catId).classList.remove('flex');
-            
+
             // Mostrar badge "descartado"
             const badge = document.getElementById('descartado-badge-' + catId);
             badge.classList.remove('hidden');
             badge.classList.add('flex');
-            
+
             // Deshabilitar select para que no se envíe
             const selectEl = document.getElementById('select-' + catId);
             selectEl.disabled = true;
-            
+
             // Inyectar hidden con valor SKIP para que el backend lo ignore
             if (!document.getElementById('hidden-skip-' + catId)) {
                 const hiddenInput = document.createElement('input');
@@ -226,20 +240,20 @@ function inicializarMapeo() {
 
     // Deshacer descarte
     document.querySelectorAll('.btn-deshacer-descartado').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const catId = this.getAttribute('data-cat-id');
-            
+
             const hiddenInput = document.getElementById('hidden-skip-' + catId);
             if (hiddenInput) hiddenInput.remove();
-            
+
             const container = document.getElementById('mapeo-container-' + catId);
             container.classList.remove('hidden');
             container.classList.add('flex');
-            
+
             const badge = document.getElementById('descartado-badge-' + catId);
             badge.classList.add('hidden');
             badge.classList.remove('flex');
-            
+
             const selectEl = document.getElementById('select-' + catId);
             selectEl.disabled = false;
 
@@ -255,7 +269,7 @@ function inicializarMapeo() {
     if (btnCrearTodos) {
         let todosNuevos = false; // Estado del toggle
 
-        btnCrearTodos.addEventListener('click', function() {
+        btnCrearTodos.addEventListener('click', function () {
             todosNuevos = !todosNuevos;
 
             if (todosNuevos) {
@@ -267,8 +281,8 @@ function inicializarMapeo() {
 
                     // Revisar si el select tiene un valor seleccionado
                     const selectEl = document.getElementById('select-' + catId);
-                    const tieneValor = selectEl && selectEl.tomselect 
-                        ? selectEl.tomselect.getValue() !== '' 
+                    const tieneValor = selectEl && selectEl.tomselect
+                        ? selectEl.tomselect.getValue() !== ''
                         : (selectEl && selectEl.value !== '');
 
                     if (!tieneValor) {
@@ -337,31 +351,135 @@ async function guardarEdicionRegistro(formEl) {
 }
 
 // ==========================================
+// LÓGICA DE SELECTORES JERÁRQUICOS
+// ==========================================
+
+async function cargarMaterias(gerenciaId, targetSelect, selectedValue = '') {
+    if (!gerenciaId) {
+        targetSelect.innerHTML = '<option value="">-- Primero selecciona una gerencia --</option>';
+        targetSelect.disabled = true;
+        return;
+    }
+    try {
+        const resp = await fetch(`/admin/importar/api/materias-por-gerencia/${gerenciaId}`);
+        const materias = await resp.json();
+        let html = '<option value="">-- Seleccione Materia --</option>';
+        materias.forEach(m => {
+            const selected = (m.nombre === selectedValue) ? 'selected' : '';
+            html += `<option value="${m.nombre}" data-id="${m.id}" ${selected}>${m.nombre}</option>`;
+        });
+        targetSelect.innerHTML = html;
+        targetSelect.disabled = false;
+
+        // Si hay un valor seleccionado, disparar cambio para cargar abogados
+        if (selectedValue) {
+            targetSelect.dispatchEvent(new Event('change'));
+        }
+    } catch (e) {
+        console.error("Error cargando materias:", e);
+    }
+}
+
+async function cargarAbogados(materiaId, targetSelect, selectedValue = '') {
+    if (!materiaId) {
+        targetSelect.innerHTML = '<option value="">-- Primero selecciona una materia --</option>';
+        targetSelect.disabled = true;
+        return;
+    }
+    try {
+        const resp = await fetch(`/admin/importar/api/usuarios-por-materia/${materiaId}`);
+        const usuarios = await resp.json();
+        let html = '<option value="">-- Seleccione Abogado --</option>';
+        usuarios.forEach(u => {
+            const selected = (u.nombre === selectedValue) ? 'selected' : '';
+            html += `<option value="${u.nombre}" ${selected}>${u.nombre}</option>`;
+        });
+        targetSelect.innerHTML = html;
+        targetSelect.disabled = false;
+    } catch (e) {
+        console.error("Error cargando abogados:", e);
+    }
+}
+
+function setupHierarchicalSelects(prefix) {
+    const gerenciaSel = document.getElementById(`${prefix}-gerencia`);
+    const materiaSel = document.getElementById(`${prefix}-materia`);
+    const abogadoSel = document.getElementById(`${prefix}-abogado`) || document.getElementById(`${prefix}-responsable`) || document.getElementById(`${prefix}-compareciente`);
+
+    if (gerenciaSel && materiaSel) {
+        gerenciaSel.addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const gerenciaId = selectedOption ? selectedOption.getAttribute('data-id') : null;
+            cargarMaterias(gerenciaId, materiaSel);
+            if (abogadoSel) {
+                abogadoSel.innerHTML = '<option value="">-- Primero selecciona una materia --</option>';
+                abogadoSel.disabled = true;
+            }
+        });
+    }
+
+    if (materiaSel) {
+        materiaSel.addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const materiaId = selectedOption ? selectedOption.getAttribute('data-id') : null;
+
+            // Si hay dos abogados (Compareciente y Responsable en Audiencias)
+            const abogados = document.querySelectorAll(`[id^="${prefix}-"][id$="abogado"], [id^="${prefix}-"][id$="responsable"], [id^="${prefix}-"][id$="compareciente"]`);
+            abogados.forEach(sel => {
+                if (sel.id !== `${prefix}-materia` && sel.id !== `${prefix}-gerencia`) {
+                    cargarAbogados(materiaId, sel);
+                }
+            });
+        });
+    }
+}
+
+// Inicializar jerarquías
+document.addEventListener('DOMContentLoaded', () => {
+    setupHierarchicalSelects('exp');
+    setupHierarchicalSelects('aud');
+    setupHierarchicalSelects('term');
+});
+
+// ==========================================
 // MODALES: ETAPA 2 - EXPEDIENTES
 // ==========================================
 document.querySelectorAll('.btn-editar-registro').forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', async function () {
         const d = this.dataset;
         document.getElementById('exp-registro-id').value = d.registroId;
-        document.getElementById('exp-numero').value      = d.numeroExpediente || '';
-        document.getElementById('exp-partes').value      = d.partes || '';
-        document.getElementById('exp-materia').value     = d.materia || '';
-        document.getElementById('exp-gerencia').value    = d.gerencia || '';
-        document.getElementById('exp-organo').value      = d.organo || '';
-        document.getElementById('exp-sede').value        = d.sede || '';
-        document.getElementById('exp-abogado').value     = d.abogado || '';
+        document.getElementById('exp-numero').value = d.numeroExpediente || '';
+        document.getElementById('exp-partes').value = d.partes || '';
+        document.getElementById('exp-organo').value = d.organo || '';
+        document.getElementById('exp-sede').value = d.sede || '';
         document.getElementById('exp-descripcion').value = d.descripcion || '';
-        // Prioridad y Etapa Procesal (con fallback en caso de no existir aún)
-        const selPrioridad = document.getElementById('exp-prioridad');
-        if (selPrioridad && d.prioridad) selPrioridad.value = d.prioridad;
-        const selEtapa = document.getElementById('exp-etapa');
-        if (selEtapa && d.etapaProcesal) selEtapa.value = d.etapaProcesal;
+        document.getElementById('exp-prioridad').value = d.prioridad || 'Media';
+        document.getElementById('exp-etapa').value = d.etapaProcesal || 'TRAMITE';
+
+        // Cargar jerarquía
+        const gerenciaSel = document.getElementById('exp-gerencia');
+        gerenciaSel.value = d.gerencia || '';
+
+        if (gerenciaSel.value && gerenciaSel.selectedIndex >= 0) {
+            const gerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
+            await cargarMaterias(gerenciaId, document.getElementById('exp-materia'), d.materia);
+
+            const materiaSel = document.getElementById('exp-materia');
+            if (materiaSel.value && materiaSel.selectedIndex >= 0) {
+                const materiaId = materiaSel.options[materiaSel.selectedIndex].getAttribute('data-id');
+                await cargarAbogados(materiaId, document.getElementById('exp-abogado'), d.abogado);
+            }
+        } else {
+            document.getElementById('exp-materia').disabled = true;
+            document.getElementById('exp-abogado').disabled = true;
+        }
+
         const modal = document.getElementById('modal-editar-expediente');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     });
 });
-['cerrar-modal-exp','cancelar-modal-exp'].forEach(id => {
+['cerrar-modal-exp', 'cancelar-modal-exp'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('click', () => {
         const modal = document.getElementById('modal-editar-expediente');
@@ -369,23 +487,41 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
     });
 });
 const formExp = document.getElementById('form-editar-expediente');
-if (formExp) formExp.addEventListener('submit', function(e) { e.preventDefault(); guardarEdicionRegistro(this); });
+if (formExp) formExp.addEventListener('submit', function (e) { e.preventDefault(); guardarEdicionRegistro(this); });
 
 // ==========================================
 // MODALES: ETAPA 3 - AUDIENCIAS
 // ==========================================
 document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', async function () {
         const d = this.dataset;
-        document.getElementById('aud-registro-id').value  = d.registroId;
-        document.getElementById('aud-numero').value       = d.numeroExpediente || '';
-        document.getElementById('aud-fecha').value        = d.fechaAudiencia || '';
-        document.getElementById('aud-hora').value         = d.horaAudiencia || '';
-        document.getElementById('aud-tipo').value         = d.tipoAudiencia || '';
-        document.getElementById('aud-compareciente').value = d.abogadoCompareciente || '';
-        document.getElementById('aud-responsable').value  = d.abogadoResponsable || '';
-        document.getElementById('aud-sede').value         = d.sede || '';
-        document.getElementById('aud-organo').value       = d.organoJurisdiccional || '';
+        document.getElementById('aud-registro-id').value = d.registroId;
+        document.getElementById('aud-numero').value = d.numeroExpediente || '';
+        document.getElementById('aud-fecha').value = d.fechaAudiencia || '';
+        document.getElementById('aud-hora').value = d.horaAudiencia || '';
+        document.getElementById('aud-tipo').value = d.tipoAudiencia || '';
+        document.getElementById('aud-sede').value = d.sede || '';
+        document.getElementById('aud-organo').value = d.organoJurisdiccional || '';
+
+        // Jerarquía
+        const gerenciaSel = document.getElementById('aud-gerencia');
+        gerenciaSel.value = d.gerencia || '';
+        if (gerenciaSel.value && gerenciaSel.selectedIndex >= 0) {
+            const gerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
+            await cargarMaterias(gerenciaId, document.getElementById('aud-materia'), d.materia);
+
+            const materiaSel = document.getElementById('aud-materia');
+            if (materiaSel.value && materiaSel.selectedIndex >= 0) {
+                const materiaId = materiaSel.options[materiaSel.selectedIndex].getAttribute('data-id');
+                await cargarAbogados(materiaId, document.getElementById('aud-responsable'), d.abogadoResponsable);
+                await cargarAbogados(materiaId, document.getElementById('aud-compareciente'), d.abogadoCompareciente);
+            }
+        } else {
+            document.getElementById('aud-materia').disabled = true;
+            document.getElementById('aud-responsable').disabled = true;
+            document.getElementById('aud-compareciente').disabled = true;
+        }
+
         // Sala / Lugar
         const audSala = document.getElementById('aud-sala');
         if (audSala) audSala.value = d.sala || '';
@@ -400,12 +536,12 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
         }
         if (urlGroup) urlGroup.classList.toggle('hidden', !esVirtual);
         const audUrl = document.getElementById('aud-url');
-        if (audUrl) audUrl.value = d.enlaceReunion || d.urlReunion || '';
+        if (audUrl) audUrl.value = d.enlaceReunion || '';
         const modal = document.getElementById('modal-editar-audiencia');
         modal.classList.remove('hidden'); modal.classList.add('flex');
     });
 });
-['cerrar-modal-aud','cancelar-modal-aud'].forEach(id => {
+['cerrar-modal-aud', 'cancelar-modal-aud'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('click', () => {
         const modal = document.getElementById('modal-editar-audiencia');
@@ -413,30 +549,46 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
     });
 });
 const formAud = document.getElementById('form-editar-audiencia');
-if (formAud) formAud.addEventListener('submit', function(e) { e.preventDefault(); guardarEdicionRegistro(this); });
+if (formAud) formAud.addEventListener('submit', function (e) { e.preventDefault(); guardarEdicionRegistro(this); });
 
 // ==========================================
 // MODALES: ETAPA 4 - TÉRMINOS
 // ==========================================
 document.querySelectorAll('.btn-editar-termino').forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', async function () {
         const d = this.dataset;
-        document.getElementById('term-registro-id').value    = d.registroId;
-        document.getElementById('term-numero').value         = d.numeroExpediente || '';
-        document.getElementById('term-actuacion').value      = d.actuacion || '';
-        document.getElementById('term-fecha').value          = d.fechaVencimiento || '';
-        document.getElementById('term-abogado').value        = d.abogadoResponsable || '';
-        document.getElementById('term-observaciones').value  = d.observaciones || '';
-        // Fecha de Ingreso
-        const termFechaIngreso = document.getElementById('term-fecha-ingreso');
-        if (termFechaIngreso) termFechaIngreso.value = d.fechaIngreso || '';
-        const selectPrioridad = document.getElementById('term-prioridad');
-        if (selectPrioridad && d.prioridad) selectPrioridad.value = d.prioridad;
+        document.getElementById('term-registro-id').value = d.registroId;
+        document.getElementById('term-numero').value = d.numeroExpediente || '';
+        document.getElementById('term-actuacion').value = d.actuacion || '';
+        document.getElementById('term-fecha').value = d.fechaVencimiento || '';
+        document.getElementById('term-fecha-ingreso').value = d.fechaIngreso || '';
+        document.getElementById('term-prioridad').value = d.prioridad || 'Media';
+        document.getElementById('term-sede').value = d.sede || '';
+        document.getElementById('term-organo').value = d.organo || '';
+        document.getElementById('term-observaciones').value = d.observaciones || '';
+
+        // Jerarquía
+        const gerenciaSel = document.getElementById('term-gerencia');
+        gerenciaSel.value = d.gerencia || '';
+        if (gerenciaSel.value && gerenciaSel.selectedIndex >= 0) {
+            const gerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
+            await cargarMaterias(gerenciaId, document.getElementById('term-materia'), d.materia);
+
+            const materiaSel = document.getElementById('term-materia');
+            if (materiaSel.value && materiaSel.selectedIndex >= 0) {
+                const materiaId = materiaSel.options[materiaSel.selectedIndex].getAttribute('data-id');
+                await cargarAbogados(materiaId, document.getElementById('term-abogado'), d.abogadoResponsable);
+            }
+        } else {
+            document.getElementById('term-materia').disabled = true;
+            document.getElementById('term-abogado').disabled = true;
+        }
+
         const modal = document.getElementById('modal-editar-termino');
         modal.classList.remove('hidden'); modal.classList.add('flex');
     });
 });
-['cerrar-modal-term','cancelar-modal-term'].forEach(id => {
+['cerrar-modal-term', 'cancelar-modal-term'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('click', () => {
         const modal = document.getElementById('modal-editar-termino');
@@ -444,4 +596,4 @@ document.querySelectorAll('.btn-editar-termino').forEach(btn => {
     });
 });
 const formTerm = document.getElementById('form-editar-termino');
-if (formTerm) formTerm.addEventListener('submit', function(e) { e.preventDefault(); guardarEdicionRegistro(this); });
+if (formTerm) formTerm.addEventListener('submit', function (e) { e.preventDefault(); guardarEdicionRegistro(this); });

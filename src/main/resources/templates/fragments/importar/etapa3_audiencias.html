@@ -72,6 +72,8 @@
                 th:data-abogado-responsable="${aud.abogadoResponsable}"
                 th:data-sede="${aud.sede}"
                 th:data-organo-jurisdiccional="${aud.organo}"
+                th:data-es-en-linea="${aud.esEnLinea}"
+                th:data-enlace-reunion="${aud.enlaceReunion}"
                 title="Editar audiencia">
                 <i class="fas fa-edit"></i>
               </button>
@@ -120,27 +122,62 @@
         </div>
         <div class="col-span-2">
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Tipo de Audiencia</label>
-          <input type="text" id="aud-tipo" name="tipoAudiencia" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"/>
+          <select id="aud-tipo" name="tipoAudiencia" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
+            <option value="">-- Seleccione --</option>
+            <option th:each="ta : ${tiposAudDB}" th:value="${ta.nombre}" th:text="${ta.nombre}"></option>
+            <th:block th:if="${mapeosNuevos != null and mapeosNuevos.containsKey('TIPO_AUDIENCIA')}">
+              <option th:each="n : ${mapeosNuevos['TIPO_AUDIENCIA']}" th:value="${n.nuevoValor}" th:text="${n.nuevoValor + ' (Nuevo)'}"></option>
+            </th:block>
+          </select>
         </div>
+        
+        <!-- JERARQUÍA PARA FILTRADO -->
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Gerencia</label>
+          <select id="aud-gerencia" name="gerencia" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
+            <option value="">-- Seleccione --</option>
+            <option th:each="g : ${gerenciasDB}" th:value="${g.nombre}" th:data-id="${g.id}" th:text="${g.nombre}"></option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Materia</label>
+          <select id="aud-materia" name="materia" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm" disabled>
+            <option value="">-- Seleccione gerencia --</option>
+          </select>
+        </div>
+
         <div class="col-span-2">
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Abogado Compareciente</label>
-          <input type="text" id="aud-compareciente" name="abogadoCompareciente" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"/>
+          <select id="aud-compareciente" name="abogadoCompareciente" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm" disabled>
+            <option value="">-- Primero selecciona una materia --</option>
+          </select>
         </div>
         <div class="col-span-2">
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Abogado Responsable</label>
-          <input type="text" id="aud-responsable" name="abogadoResponsable" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"/>
+          <select id="aud-responsable" name="abogadoResponsable" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm" disabled>
+            <option value="">-- Primero selecciona una materia --</option>
+          </select>
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Sala / Lugar</label>
           <input type="text" id="aud-sala" name="sala" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm" placeholder="Ej. Sala 3 de Juicios Orales"/>
         </div>
         <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Sede</label>
-          <input type="text" id="aud-sede" name="sede" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"/>
+          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Estado / Sede</label>
+          <select id="aud-sede" name="sede" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
+            <option value="">-- Seleccione estado --</option>
+            <option th:each="s : ${sedesDB}" th:value="${s.nombre}" th:text="${s.nombre}"></option>
+          </select>
         </div>
-        <div>
+        <div class="col-span-2">
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Órgano Jurisdiccional</label>
-          <input type="text" id="aud-organo" name="organoJurisdiccional" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"/>
+          <select id="aud-organo" name="organoJurisdiccional" class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
+            <option value="">-- Seleccione --</option>
+            <option th:each="o : ${organosDB}" th:value="${o.nombre}" th:text="${o.nombre}"></option>
+            <th:block th:if="${mapeosNuevos != null and mapeosNuevos.containsKey('ORGANO')}">
+              <option th:each="n : ${mapeosNuevos['ORGANO']}" th:value="${n.nuevoValor}" th:text="${n.nuevoValor + ' (Nuevo)'}"></option>
+            </th:block>
+          </select>
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Modalidad</label>

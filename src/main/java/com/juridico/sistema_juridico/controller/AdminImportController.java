@@ -34,6 +34,7 @@ public class AdminImportController {
     @Autowired private TipoAudienciaRepository tipoAudienciaRepository;
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private CatPrioridadRepository catPrioridadRepository;
+    @Autowired private EstadoRepository estadoRepository;
 
     @GetMapping
     public String mostrarWizard(Model model) {
@@ -51,40 +52,47 @@ public class AdminImportController {
             model.addAttribute("pasoActual", loteActivo.getPasoActual());
 
             // Dependiendo del paso, mandamos información a la vista
-            switch (loteActivo.getPasoActual()) {
-               case 1:
-                    // Forzamos la extracción
-                    loteMigracionService.extraerCatalogosDeLote(loteActivo.getId());
-                    
-                    // Agrupamos
-                    List<CatalogoMigracion> todosCatalogos = catalogoMigracionRepository.findAll().stream().filter(c-> c.getLote().getId().equals(loteActivo.getId())).collect(Collectors.toList());
-                    Map<String, List<CatalogoMigracion>> catalogosAgrupados = todosCatalogos.stream()
-                        .collect(Collectors.groupingBy(CatalogoMigracion::getTipoCatalogo));
-                    
-                    model.addAttribute("catalogosAgrupados", catalogosAgrupados);
+            if (loteActivo.getPasoActual() == 1) {
+                loteMigracionService.extraerCatalogosDeLote(loteActivo.getId());
+            }
 
-                    // Catálogos Oficiales para los Selects
-                    model.addAttribute("gerenciasDB", gerenciaRepository.findAll());
-                    model.addAttribute("materiasDB", materiaRepository.findAll());
-                    model.addAttribute("organosDB", organoRepository.findAll());
-                    model.addAttribute("tiposAudDB", tipoAudienciaRepository.findAll());
-                    
-                    model.addAttribute("usuariosDB", usuarioRepository.findAll()); 
+            // Obtenemos los mapeos de este lote
+            List<CatalogoMigracion> todosCatalogos = catalogoMigracionRepository.findAll().stream()
+                .filter(c -> c.getLote().getId().equals(loteActivo.getId()))
+                .collect(Collectors.toList());
+            
+            Map<String, List<CatalogoMigracion>> catalogosAgrupados = todosCatalogos.stream()
+                .collect(Collectors.groupingBy(CatalogoMigracion::getTipoCatalogo));
+
+            // Filtramos solo los que se marcaron como "NUEVO" para mostrarlos en los selects de pasos posteriores
+            Map<String, List<CatalogoMigracion>> mapeosNuevos = todosCatalogos.stream()
+                .filter(c -> "NUEVO".equals(c.getEstatus()))
+                .collect(Collectors.groupingBy(CatalogoMigracion::getTipoCatalogo));
+            
+            model.addAttribute("mapeosNuevos", mapeosNuevos);
+
+            // Catálogos Oficiales siempre disponibles para los pasos de edición
+            model.addAttribute("gerenciasDB", gerenciaRepository.findAll());
+            model.addAttribute("materiasDB", materiaRepository.findAll());
+            model.addAttribute("organosDB", organoRepository.findAll());
+            model.addAttribute("tiposAudDB", tipoAudienciaRepository.findAll());
+            model.addAttribute("usuariosDB", usuarioRepository.findAll());
+            model.addAttribute("prioridadesDB", catPrioridadRepository.findAll());
+            model.addAttribute("sedesDB", estadoRepository.findAll());
+            model.addAttribute("etapas", EtapaProcesal.values());
+
+            switch (loteActivo.getPasoActual()) {
+                case 1:
+                    model.addAttribute("catalogosAgrupados", catalogosAgrupados);
                     break;
                 case 2:
-                    // Obtenemos el resumen de expedientes que detectó el sistema
                     model.addAttribute("expedientesResumen", loteMigracionService.obtenerResumenExpedientes(loteActivo.getId()));
-                    model.addAttribute("prioridadesDB", catPrioridadRepository.findAll());
-                    model.addAttribute("etapas", EtapaProcesal.values());
                     break;
                 case 3:
-                    // Extraemos el resumen de las audiencias
                     model.addAttribute("audienciasResumen", loteMigracionService.obtenerResumenAudiencias(loteActivo.getId()));
                     break;
                 case 4:
-                    // Extraemos el resumen de los términos
                     model.addAttribute("terminosResumen", loteMigracionService.obtenerResumenTerminos(loteActivo.getId()));
-                    model.addAttribute("prioridadesDB", catPrioridadRepository.findAll());
                     break;
             }
         }
@@ -197,5 +205,34 @@ public class AdminImportController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    // --- API ENDPOINTS PARA FILTRADO DINÁMICO ---
+    
+    @GetMapping("/api/materias-por-gerencia/{gerenciaId}")
+    @ResponseBody
+    public List<Map<String, Object>> getMateriasByGerencia(@PathVariable Integer gerenciaId) {
+        return materiaRepository.findAll().stream()
+                .filter(m -> m.getGerencia().getId().equals(gerenciaId))
+                .map(m -> Map.of("id", (Object)m.getId(), "nombre", m.getNombre()))
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/api/usuarios-por-materia/{materiaId}")
+    @ResponseBody
+    public List<Map<String, Object>> getUsuariosByMateria(@PathVariable Integer materiaId) {
+        return usuarioRepository.findAll().stream()
+                .filter(u -> u.getMaterias().stream().anyMatch(m -> m.getId().equals(materiaId)))
+                .map(u -> Map.of("id", (Object)u.getId(), "nombre", u.getNombreCompleto()))
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/api/usuarios-por-gerencia/{gerenciaId}")
+    @ResponseBody
+    public List<Map<String, Object>> getUsuariosByGerencia(@PathVariable Integer gerenciaId) {
+        return usuarioRepository.findAll().stream()
+                .filter(u -> u.getGerencia() != null && u.getGerencia().getId().equals(gerenciaId))
+                .map(u -> Map.of("id", (Object)u.getId(), "nombre", u.getNombreCompleto()))
+                .collect(Collectors.toList());
     }
 }
