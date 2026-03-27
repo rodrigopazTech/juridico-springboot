@@ -11,6 +11,9 @@ public interface CatalogoMigracionRepository extends JpaRepository<CatalogoMigra
     // Para traer los catálogos vinculados a un lote
     List<CatalogoMigracion> findByLoteId(Long loteId);
 
+    // Para traer catálogos de un tipo específico en un lote
+    List<CatalogoMigracion> findByLoteIdAndTipoCatalogo(Long loteId, String tipoCatalogo);
+
     // Para revisar si un catálogo ya se guardó en este lote y no duplicarlo en la Etapa 1
     boolean existsByLoteIdAndTipoCatalogoAndValorOriginal(Long loteId, String tipoCatalogo, String valorOriginal);
 }

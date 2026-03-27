@@ -33,6 +33,10 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -52,6 +56,7 @@ public class LoteMigracionService {
     @Autowired private OrganoJurisdiccionalRepository organoRepository;
     @Autowired private TipoAudienciaRepository tipoAudienciaRepository;
     @Autowired private CatPrioridadRepository catPrioridadRepository;
+    @Autowired private EstadoRepository estadoRepository;
     @Autowired private PasswordEncoder passwordEncoder;
 
 
@@ -140,6 +145,11 @@ public class LoteMigracionService {
         List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
         LoteMigracion lote = loteRepository.findById(loteId).orElseThrow();
 
+        // 1.5 Limpiamos catálogos anteriores que estén PENDIENTES para evitar basura de extracciones viejas (como Órganos)
+        catalogoRepository.findByLoteId(loteId).stream()
+            .filter(c -> "PENDIENTE".equals(c.getEstatus()))
+            .forEach(c -> catalogoRepository.delete(c));
+
         // 2. Cache en memoria para evitar N+1
         java.util.Set<String> cacheMapeo = new java.util.HashSet<>();
 
@@ -153,11 +163,20 @@ public class LoteMigracionService {
                     guardarCatalogoUnico(lote, "GERENCIA", json.get("gerencia").asText(), cacheMapeo);
                 }
                 if (json.has("materia") && !json.get("materia").isNull()) {
-                    guardarCatalogoUnico(lote, "MATERIA", json.get("materia").asText(), cacheMapeo);
+                    String matStr = json.get("materia").asText();
+                    guardarCatalogoUnico(lote, "MATERIA", matStr, cacheMapeo);
+                    
+                    // INTELIGENCIA: Si la materia coincide con el sistema, inferimos la Gerencia automáticamente
+                    materiaRepository.findByNombreIgnoreCase(matStr).ifPresent(m -> {
+                        if (m.getGerencia() != null) {
+                            guardarCatalogoUnico(lote, "GERENCIA", m.getGerencia().getNombre(), cacheMapeo);
+                        }
+                    });
                 }
-                if (json.has("organoJurisdiccional") && !json.get("organoJurisdiccional").isNull()) {
-                    guardarCatalogoUnico(lote, "ORGANO", json.get("organoJurisdiccional").asText(), cacheMapeo);
+                if (json.has("sede") && !json.get("sede").isNull()) {
+                    guardarCatalogoUnico(lote, "SEDE", json.get("sede").asText(), cacheMapeo);
                 }
+                // Órgano Jurisdiccional se maneja directamente en la etapa 2, no lo extraemos aquí
                 if (json.has("tipoAudiencia") && !json.get("tipoAudiencia").isNull()) {
                     guardarCatalogoUnico(lote, "TIPO_AUDIENCIA", json.get("tipoAudiencia").asText(), cacheMapeo);
                 }
@@ -171,18 +190,87 @@ public class LoteMigracionService {
                 // Ignorar JSON malformados en esta etapa
             }
         }
+        
+        // Al terminar la extracción, intentamos auto-mapear lo que coincida exactamente con la DB
+        // Hemos terminado la extracción. Los catálogos ya están en la DB (o en caché).
+
+        intentarAutoMapeo(loteId);
+    }
+
+    @Transactional
+    public void intentarAutoMapeo(Long loteId) {
+        List<CatalogoMigracion> pendientes = catalogoRepository.findByLoteId(loteId).stream()
+            .filter(c -> c.getIdMapeado() == null && "PENDIENTE".equals(c.getEstatus()))
+            .toList();
+
+        for (CatalogoMigracion c : pendientes) {
+            String valor = c.getValorOriginal().trim();
+            if (valor.isEmpty()) continue;
+
+            switch (c.getTipoCatalogo()) {
+                case "GERENCIA":
+                    gerenciaRepository.findByNombreIgnoreCase(valor).ifPresent(g -> {
+                        c.setIdMapeado(g.getId().longValue());
+                        c.setEstatus("MAPEADO");
+                    });
+                    break;
+                case "MATERIA":
+                    materiaRepository.findByNombreIgnoreCase(valor).ifPresent(m -> {
+                        c.setIdMapeado(m.getId().longValue());
+                        c.setEstatus("MAPEADO");
+                    });
+                    break;
+                case "SEDE":
+                    estadoRepository.findAll().stream()
+                        .filter(e -> e.getNombre().equalsIgnoreCase(valor))
+                        .findFirst().ifPresent(e -> {
+                            c.setIdMapeado(e.getId().longValue());
+                            c.setEstatus("MAPEADO");
+                        });
+                    break;
+                case "ORGANO":
+                    organoRepository.findByNombreIgnoreCase(valor).ifPresent(o -> {
+                        c.setIdMapeado(o.getId().longValue());
+                        c.setEstatus("MAPEADO");
+                    });
+                    break;
+                case "TIPO_AUDIENCIA":
+                    tipoAudienciaRepository.findByNombreIgnoreCase(valor).ifPresent(t -> {
+                        c.setIdMapeado(t.getId().longValue());
+                        c.setEstatus("MAPEADO");
+                    });
+                    break;
+                case "USUARIO":
+                    usuarioRepository.findAll().stream()
+                        .filter(u -> u.getNombreCompleto().equalsIgnoreCase(valor))
+                        .findFirst().ifPresent(u -> {
+                            c.setIdMapeado(u.getId().longValue());
+                            c.setEstatus("MAPEADO");
+                        });
+                    break;
+            }
+            if (c.getIdMapeado() != null) {
+                catalogoRepository.save(c);
+            }
+        }
     }
 
     private void guardarCatalogoUnico(LoteMigracion lote, String tipo, String valor, java.util.Set<String> cache) {
         String valorLimpio = valor.trim();
         if (valorLimpio.isEmpty()) return;
 
-        // Validar caché primero
-        String cacheKey = tipo + "___" + valorLimpio.toLowerCase();
+        // Normalización agresiva para el caché (ignorar acentos, espacios múltiples y case)
+        String valorNormalizado = normalizeValue(valorLimpio);
+        String cacheKey = tipo + "___" + valorNormalizado;
+        
         if (cache.contains(cacheKey)) return;
 
-        // Validar en BDD si no está en la caché
-        if (!catalogoRepository.existsByLoteIdAndTipoCatalogoAndValorOriginal(lote.getId(), tipo, valorLimpio)) {
+        // Validar en BDD si ya existe algo con la misma normalización para este lote/tipo
+        java.util.List<CatalogoMigracion> existentes = catalogoRepository.findByLoteIdAndTipoCatalogo(lote.getId(), tipo);
+        boolean yaExisteSimiliar = existentes.stream()
+            .anyMatch(c -> normalizeValue(c.getValorOriginal()).equals(valorNormalizado));
+        
+        if (!yaExisteSimiliar) {
             CatalogoMigracion cat = new CatalogoMigracion();
             cat.setLote(lote);
             cat.setTipoCatalogo(tipo);
@@ -191,8 +279,16 @@ public class LoteMigracionService {
             catalogoRepository.save(cat);
         }
         
-        // Agregar al caché una vez verificado para no volver a consultarlo en la base
         cache.add(cacheKey);
+    }
+
+    private String normalizeValue(String value) {
+        if (value == null) return "";
+        // Quitar acentos y diacríticos
+        String normalized = java.text.Normalizer.normalize(value, java.text.Normalizer.Form.NFD);
+        normalized = normalized.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+        // Lowercase, quitar espacios extra y trim
+        return normalized.toLowerCase().replaceAll("\\s+", " ").trim();
     }
 
     @Transactional
@@ -263,7 +359,6 @@ public class LoteMigracionService {
                 if (!json.has("materia") || json.get("materia").asText().trim().isEmpty()) { camposFaltantes.add("Materia"); critico = true; }
                 if (!json.has("gerencia") || json.get("gerencia").asText().trim().isEmpty()) { camposFaltantes.add("Gerencia"); critico = true; }
                 if (!json.has("descripcion") || json.get("descripcion").asText().trim().isEmpty()) { camposFaltantes.add("Descripción"); }
-                if (!json.has("abogadoResponsable") || json.get("abogadoResponsable").asText().trim().isEmpty()) { camposFaltantes.add("Abogado"); }
             } catch (Exception e) { critico = true; }
 
             map.put("faltantes", camposFaltantes);
@@ -272,17 +367,30 @@ public class LoteMigracionService {
             
             // Expose registroId of the first record for AJAX editing
             map.put("registroId", entry.getValue().get(0).getId());
-            try {
-                JsonNode jsonPrimero = objectMapper.readTree(entry.getValue().get(0).getPayloadJson());
-                map.put("partes", jsonPrimero.has("partes") ? jsonPrimero.get("partes").asText() : "");
-                map.put("sede", jsonPrimero.has("sede") ? jsonPrimero.get("sede").asText() : "");
-                map.put("gerencia", jsonPrimero.has("gerencia") ? jsonPrimero.get("gerencia").asText() : "");
-                map.put("materia", jsonPrimero.has("materia") ? jsonPrimero.get("materia").asText() : "");
-                map.put("organo", jsonPrimero.has("organoJurisdiccional") ? jsonPrimero.get("organoJurisdiccional").asText() : "");
-                map.put("abogado", jsonPrimero.has("abogadoResponsable") ? jsonPrimero.get("abogadoResponsable").asText() : "");
-                map.put("descripcion", jsonPrimero.has("descripcion") ? jsonPrimero.get("descripcion").asText() : "");
-            } catch (Exception ignored) {}
 
+            // --- LÓGICA DE VALORES MÁS REPETIDOS (MODA) ---
+            String partesModa = findMostRepeated(entry.getValue(), "partes", "");
+            String sedeModa = findMostRepeated(entry.getValue(), "sede", "");
+            String gerenciaModa = findMostRepeated(entry.getValue(), "gerencia", "");
+            String materiaModa = findMostRepeated(entry.getValue(), "materia", "");
+            String organoModa = findMostRepeated(entry.getValue(), "organoJurisdiccional", "");
+            String abogadoModa = findMostRepeated(entry.getValue(), "abogadoResponsable", "");
+            String descModa = findMostRepeated(entry.getValue(), "descripcion", "Expediente migrado.");
+
+            map.put("partes", partesModa);
+            map.put("sede", sedeModa);
+            map.put("gerencia", gerenciaModa);
+            map.put("materia", materiaModa);
+            map.put("organo", organoModa);
+            map.put("abogado", abogadoModa);
+            map.put("descripcion", descModa);
+
+            // --- RESOLUCIÓN DE IDs PARA EL MODAL ---
+            // Buscamos si el valor de la moda ya fue mapeado en la Etapa 1
+            map.put("gerenciaId", buscarIdMapeado(loteId, "GERENCIA", gerenciaModa));
+            map.put("materiaId", buscarIdMapeado(loteId, "MATERIA", materiaModa));
+            map.put("sedeId", buscarIdMapeado(loteId, "SEDE", sedeModa));
+            
             resumen.add(map);
         }
         return resumen;
@@ -392,191 +500,202 @@ public class LoteMigracionService {
 
     @Transactional
     public void inyectarLoteOficial(Long loteId) {
+        Map<String, CatalogoMigracion> lookup = new HashMap<>();
         try {
             LoteMigracion lote = loteRepository.findById(loteId).orElseThrow();
-        List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
-        List<CatalogoMigracion> catalogosMap = catalogoRepository.findByLoteId(loteId);
+            List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
+            List<CatalogoMigracion> catalogosMap = catalogoRepository.findByLoteId(loteId);
 
-        java.util.Map<String, CatalogoMigracion> lookup = new java.util.HashMap<>();
-        for (CatalogoMigracion c : catalogosMap) {
-            lookup.put(c.getTipoCatalogo() + "___" + c.getValorOriginal().toLowerCase(), c);
-        }
+            for (CatalogoMigracion c : catalogosMap) {
+                lookup.put(c.getTipoCatalogo() + "___" + c.getValorOriginal().toLowerCase(), c);
+            }
 
-        java.util.Map<String, List<RegistroMigracion>> expedientesAgrupados = registros.stream()
-            .collect(java.util.stream.Collectors.groupingBy(
-                r -> r.getNumeroExpedienteExtraido() != null && !r.getNumeroExpedienteExtraido().trim().isEmpty() ? r.getNumeroExpedienteExtraido() : "SIN_NUMERO"
-            ));
+            // --- PRE-PROCESAMIENTO: Crear entidades nuevas marcadas en la Etapa 1 ---
+            crearEntidadesNuevas(catalogosMap);
 
-        for (java.util.Map.Entry<String, List<RegistroMigracion>> entry : expedientesAgrupados.entrySet()) {
-            String numExp = entry.getKey();
-            List<RegistroMigracion> expRegistros = entry.getValue();
+            java.util.Map<String, List<RegistroMigracion>> expedientesAgrupados = registros.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                    r -> r.getNumeroExpedienteExtraido() != null && !r.getNumeroExpedienteExtraido().trim().isEmpty() ? r.getNumeroExpedienteExtraido() : "SIN_NUMERO"
+                ));
 
-            Expediente expediente = expedienteRepository.findByNumeroIgnoreCase(numExp).orElse(null);
+            for (java.util.Map.Entry<String, List<RegistroMigracion>> entry : expedientesAgrupados.entrySet()) {
+                String numExp = entry.getKey();
+                List<RegistroMigracion> expRegistros = entry.getValue();
 
-            if (expediente == null) {
-                expediente = new Expediente();
-                String numeroAsignado = numExp.equals("SIN_NUMERO") ? ("S/N-" + java.util.UUID.randomUUID().toString().substring(0,8)) : numExp;
-                if (numeroAsignado.length() > 50) numeroAsignado = numeroAsignado.substring(0, 50);
-                expediente.setNumero(numeroAsignado);
-                expediente.setDescripcion("Migrado desde sistema histórico - Pendiente de completar por el abogado responsable.");
-                
+                Expediente expediente = expedienteRepository.findByNumeroIgnoreCase(numExp).orElse(null);
+
+                if (expediente == null) {
+                    expediente = new Expediente();
+                    String numeroAsignado = numExp.equals("SIN_NUMERO") ? ("S/N-" + java.util.UUID.randomUUID().toString().substring(0,8)) : numExp;
+                    if (numeroAsignado.length() > 50) numeroAsignado = numeroAsignado.substring(0, 50);
+                    expediente.setNumero(numeroAsignado);
+                    expediente.setDescripcion("Migrado desde sistema histórico - Pendiente de completar por el abogado responsable.");
+                    
+                    for (RegistroMigracion r : expRegistros) {
+                        try {
+                            JsonNode json = objectMapper.readTree(r.getPayloadJson());
+                            
+                            if (expediente.getGerencia() == null && json.has("gerencia") && !json.get("gerencia").isNull()) {
+                                Gerencia g = resolveGerencia(json.get("gerencia").asText(), lookup);
+                                if (g != null) expediente.setGerencia(g);
+                            }
+                            if (expediente.getMateria() == null && json.has("materia")) {
+                                Materia m = resolveMateria(json.get("materia").asText(), lookup, expediente.getGerencia());
+                                if (m != null) expediente.setMateria(m);
+                            }
+                            if (expediente.getOrganoJurisdiccional() == null && json.has("organoJurisdiccional")) {
+                                OrganoJurisdiccional o = resolveOrgano(json.get("organoJurisdiccional").asText(), lookup);
+                                if (o != null) expediente.setOrganoJurisdiccional(o);
+                            }
+                            if (expediente.getPartes() == null && json.has("partes") && !json.get("partes").isNull()) {
+                                expediente.setPartes(json.get("partes").asText());
+                            }
+                            if (expediente.getAbogadoResponsable() == null && json.has("abogadoResponsable")) {
+                                String nombreAbog = json.get("abogadoResponsable").asText();
+                                Usuario u = resolveUsuario(nombreAbog, lookup, expediente.getGerencia(), loteId);
+                                if (u != null) {
+                                    expediente.setAbogadoResponsable(u);
+                                } else {
+                                    if (nombreAbog.length() > 200) nombreAbog = nombreAbog.substring(0, 200);
+                                    expediente.setAbogadoResponsableNombre(nombreAbog);
+                                }
+                            }
+                            if (expediente.getSede() == null && json.has("sede") && !json.get("sede").isNull()) {
+                                String sedeOriginal = json.get("sede").asText();
+                                CatalogoMigracion catSede = lookup.get("SEDE___" + sedeOriginal.toLowerCase());
+                                if (catSede != null && catSede.getIdMapeado() != null) {
+                                    java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.Estado> estadoOpt = estadoRepository.findById(catSede.getIdMapeado().intValue());
+                                    if (estadoOpt.isPresent()) {
+                                        expediente.setSede(estadoOpt.get().getNombre());
+                                    }
+                                } else {
+                                    if (sedeOriginal.length() > 150) sedeOriginal = sedeOriginal.substring(0, 150);
+                                    expediente.setSede(sedeOriginal);
+                                }
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                    
+                    if (expediente.getMateria() == null) {
+                        expediente.setMateria(getFallbackMateria());
+                    }
+                    
+                    if (expediente.getGerencia() == null) {
+                        expediente.setGerencia(getFallbackGerencia());
+                    }
+
+                    expediente = expedienteRepository.save(expediente);
+                }
+
                 for (RegistroMigracion r : expRegistros) {
                     try {
                         JsonNode json = objectMapper.readTree(r.getPayloadJson());
-                        
-                        if (expediente.getMateria() == null && json.has("materia")) {
-                            Materia m = resolveMateria(json.get("materia").asText(), lookup);
-                            if (m != null) expediente.setMateria(m);
-                        }
-                        if (expediente.getGerencia() == null && json.has("gerencia") && !json.get("gerencia").isNull()) {
-                            Gerencia g = resolveGerencia(json.get("gerencia").asText(), lookup);
-                            if (g != null) expediente.setGerencia(g);
-                        }
-                        if (expediente.getOrganoJurisdiccional() == null && json.has("organoJurisdiccional")) {
-                            OrganoJurisdiccional o = resolveOrgano(json.get("organoJurisdiccional").asText(), lookup);
-                            if (o != null) expediente.setOrganoJurisdiccional(o);
-                        }
-                        if (expediente.getPartes() == null && json.has("partes") && !json.get("partes").isNull()) {
-                            expediente.setPartes(json.get("partes").asText());
-                        }
-                        if (expediente.getAbogadoResponsable() == null && json.has("abogadoResponsable")) {
-                            String nombreAbog = json.get("abogadoResponsable").asText();
-                            Usuario u = resolveUsuario(nombreAbog, lookup, expediente.getGerencia(), loteId);
-                            if (u != null) {
-                                expediente.setAbogadoResponsable(u);
-                            } else {
-                                if (nombreAbog.length() > 200) nombreAbog = nombreAbog.substring(0, 200);
-                                expediente.setAbogadoResponsableNombre(nombreAbog);
+                        if ("TERMINO".equals(r.getTipoDato())) {
+                            Termino termino = new Termino();
+                            termino.setExpediente(expediente);
+                            termino.setAsunto(json.has("prestacion") ? json.get("prestacion").asText() : (json.has("asunto") ? json.get("asunto").asText() : "Sin actuación"));
+
+                            LocalDate fechaVenc = parseDate(json.get("fechaVencimiento"));
+                            LocalDate fechaIng = parseDate(json.get("fechaIngreso"));
+                            termino.setFechaVencimiento(fechaVenc);
+                            termino.setFechaIngreso(fechaIng);
+
+                            // Estatus automático basado en fecha de vencimiento
+                            termino.setEstatusTermino(
+                                fechaVenc.isBefore(LocalDate.now()) ? EstatusTermino.CONCLUIDO : EstatusTermino.PROYECTISTA
+                            );
+
+                            // Resolver prioridad desde catálogo
+                            String prioridadStr = json.has("prioridad") ? json.get("prioridad").asText("Media") : "Media";
+                            CatPrioridad prioridad = catPrioridadRepository.findByNombreIgnoreCase(prioridadStr)
+                                .orElseGet(() -> catPrioridadRepository.findByNombreIgnoreCase("Media").orElse(null));
+                            termino.setPrioridad(prioridad);
+
+                            String acuseStr = json.has("acuse") ? json.get("acuse").asText() : "";
+                            if (acuseStr.length() > 500) acuseStr = acuseStr.substring(0, 500);
+                            termino.setAcuse(acuseStr);
+
+                            String acuseNombreStr = json.has("archivoWord") ? json.get("archivoWord").asText() : (json.has("acuseNombre") ? json.get("acuseNombre").asText() : "");
+                            if (acuseNombreStr.length() > 500) acuseNombreStr = acuseNombreStr.substring(0, 500);
+                            termino.setAcuseNombre(acuseNombreStr);
+
+                            termino.setObservaciones(json.has("observaciones") ? json.get("observaciones").asText() : "");
+                            termino.setCreatedAt(java.time.LocalDateTime.now());
+                            termino.setUpdatedAt(java.time.LocalDateTime.now());
+
+                            if (json.has("abogadoResponsable")) {
+                                Usuario u = resolveUsuario(json.get("abogadoResponsable").asText(), lookup, expediente.getGerencia(), loteId);
+                                if (u != null) termino.setAbogadoResponsable(u);
                             }
+
+                            terminoRepository.save(termino);
+
+                        } else if ("AUDIENCIA".equals(r.getTipoDato())) {
+                            Audiencia audiencia = new Audiencia();
+                            audiencia.setExpediente(expediente);
+
+                            LocalDate fechaAud = parseDate(json.get("fechaAudiencia"));
+                            audiencia.setFechaAudiencia(fechaAud);
+                            audiencia.setHoraAudiencia(parseTime(json.get("horaAudiencia")));
+
+                            // Estatus automático basado en la fecha de audiencia
+                            audiencia.setEstatusAudiencia(
+                                fechaAud.isBefore(LocalDate.now()) ? EstatusAudiencia.CONCLUIDA : EstatusAudiencia.PENDIENTE
+                            );
+
+                            // Sala y lugar (campo correcto: 'sala', no 'sede')
+                            String salaStr = json.has("sala") ? json.get("sala").asText() : (json.has("salaLugar") ? json.get("salaLugar").asText() : "");
+                            audiencia.setSalaLugar(salaStr);
+
+                            // Modalidad virtual
+                            boolean esVirtual = false;
+                            if (json.has("esEnLinea")) {
+                                String esEnLineaVal = json.get("esEnLinea").asText("").toLowerCase();
+                                esVirtual = esEnLineaVal.equals("true") || esEnLineaVal.equals("1") || esEnLineaVal.equals("si") || esEnLineaVal.equals("sí");
+                            } else if (json.has("esVirtual")) {
+                                esVirtual = json.get("esVirtual").asBoolean(false);
+                            }
+                            audiencia.setEsVirtual(esVirtual);
+
+                            // Enlace de reunión
+                            if (json.has("enlaceReunion") && !json.get("enlaceReunion").isNull()) {
+                                audiencia.setUrlReunion(json.get("enlaceReunion").asText());
+                            } else if (json.has("urlReunion") && !json.get("urlReunion").isNull()) {
+                                audiencia.setUrlReunion(json.get("urlReunion").asText());
+                            }
+
+                            String actaStr = json.has("actaDocumento") ? json.get("actaDocumento").asText() : "";
+                            if (actaStr.length() > 500) actaStr = actaStr.substring(0, 500);
+                            audiencia.setActaDocumento(actaStr);
+                            audiencia.setObservaciones(json.has("observaciones") ? json.get("observaciones").asText() : "");
+
+                            if (json.has("tipoAudiencia")) {
+                                TipoAudiencia ta = resolveTipoAudiencia(json.get("tipoAudiencia").asText(), lookup);
+                                if (ta != null) audiencia.setTipoAudiencia(ta);
+                            }
+
+                            if (json.has("abogadoCompareciente")) {
+                                Usuario u = resolveUsuario(json.get("abogadoCompareciente").asText(), lookup, expediente.getGerencia(), loteId);
+                                if (u != null) audiencia.setAbogadoComparece(u);
+                            }
+
+                            audiencia.setCreatedAt(java.time.LocalDateTime.now());
+                            audiencia.setUpdatedAt(java.time.LocalDateTime.now());
+                            audienciaRepository.save(audiencia);
                         }
-                        if (expediente.getSede() == null && json.has("sede") && !json.get("sede").isNull()) {
-                            String sedeStr = json.get("sede").asText();
-                            if (sedeStr.length() > 150) sedeStr = sedeStr.substring(0, 150);
-                            expediente.setSede(sedeStr);
-                        }
-                    } catch (Exception ignored) {}
-                }
-                
-                if (expediente.getMateria() == null) {
-                    expediente.setMateria(getFallbackMateria());
-                }
-                
-                if (expediente.getGerencia() == null) {
-                    expediente.setGerencia(getFallbackGerencia());
-                }
-
-                expediente = expedienteRepository.save(expediente);
-            }
-
-            for (RegistroMigracion r : expRegistros) {
-                try {
-                    JsonNode json = objectMapper.readTree(r.getPayloadJson());
-                    if ("TERMINO".equals(r.getTipoDato())) {
-                        Termino termino = new Termino();
-                        termino.setExpediente(expediente);
-                        termino.setAsunto(json.has("prestacion") ? json.get("prestacion").asText() : (json.has("asunto") ? json.get("asunto").asText() : "Sin actuación"));
-
-                        LocalDate fechaVenc = parseDate(json.get("fechaVencimiento"));
-                        LocalDate fechaIng = parseDate(json.get("fechaIngreso"));
-                        termino.setFechaVencimiento(fechaVenc);
-                        termino.setFechaIngreso(fechaIng);
-
-                        // Estatus automático basado en fecha de vencimiento
-                        termino.setEstatusTermino(
-                            fechaVenc.isBefore(LocalDate.now()) ? EstatusTermino.CONCLUIDO : EstatusTermino.PROYECTISTA
-                        );
-
-                        // Resolver prioridad desde catálogo
-                        String prioridadStr = json.has("prioridad") ? json.get("prioridad").asText("Media") : "Media";
-                        CatPrioridad prioridad = catPrioridadRepository.findByNombreIgnoreCase(prioridadStr)
-                            .orElseGet(() -> catPrioridadRepository.findByNombreIgnoreCase("Media").orElse(null));
-                        termino.setPrioridad(prioridad);
-
-                        String acuseStr = json.has("acuse") ? json.get("acuse").asText() : "";
-                        if (acuseStr.length() > 500) acuseStr = acuseStr.substring(0, 500);
-                        termino.setAcuse(acuseStr);
-
-                        String acuseNombreStr = json.has("archivoWord") ? json.get("archivoWord").asText() : (json.has("acuseNombre") ? json.get("acuseNombre").asText() : "");
-                        if (acuseNombreStr.length() > 500) acuseNombreStr = acuseNombreStr.substring(0, 500);
-                        termino.setAcuseNombre(acuseNombreStr);
-
-                        termino.setObservaciones(json.has("observaciones") ? json.get("observaciones").asText() : "");
-                        termino.setCreatedAt(java.time.LocalDateTime.now());
-                        termino.setUpdatedAt(java.time.LocalDateTime.now());
-
-                        if (json.has("abogadoResponsable")) {
-                            Usuario u = resolveUsuario(json.get("abogadoResponsable").asText(), lookup, expediente.getGerencia(), loteId);
-                            if (u != null) termino.setAbogadoResponsable(u);
-                        }
-
-                        terminoRepository.save(termino);
-
-                    } else if ("AUDIENCIA".equals(r.getTipoDato())) {
-                        Audiencia audiencia = new Audiencia();
-                        audiencia.setExpediente(expediente);
-
-                        LocalDate fechaAud = parseDate(json.get("fechaAudiencia"));
-                        audiencia.setFechaAudiencia(fechaAud);
-                        audiencia.setHoraAudiencia(parseTime(json.get("horaAudiencia")));
-
-                        // Estatus automático basado en la fecha de audiencia
-                        audiencia.setEstatusAudiencia(
-                            fechaAud.isBefore(LocalDate.now()) ? EstatusAudiencia.CONCLUIDA : EstatusAudiencia.PENDIENTE
-                        );
-
-                        // Sala y lugar (campo correcto: 'sala', no 'sede')
-                        String salaStr = json.has("sala") ? json.get("sala").asText() : (json.has("salaLugar") ? json.get("salaLugar").asText() : "");
-                        audiencia.setSalaLugar(salaStr);
-
-                        // Modalidad virtual
-                        boolean esVirtual = false;
-                        if (json.has("esEnLinea")) {
-                            String esEnLineaVal = json.get("esEnLinea").asText("").toLowerCase();
-                            esVirtual = esEnLineaVal.equals("true") || esEnLineaVal.equals("1") || esEnLineaVal.equals("si") || esEnLineaVal.equals("sí");
-                        } else if (json.has("esVirtual")) {
-                            esVirtual = json.get("esVirtual").asBoolean(false);
-                        }
-                        audiencia.setEsVirtual(esVirtual);
-
-                        // Enlace de reunión
-                        if (json.has("enlaceReunion") && !json.get("enlaceReunion").isNull()) {
-                            audiencia.setUrlReunion(json.get("enlaceReunion").asText());
-                        } else if (json.has("urlReunion") && !json.get("urlReunion").isNull()) {
-                            audiencia.setUrlReunion(json.get("urlReunion").asText());
-                        }
-
-                        String actaStr = json.has("actaDocumento") ? json.get("actaDocumento").asText() : "";
-                        if (actaStr.length() > 500) actaStr = actaStr.substring(0, 500);
-                        audiencia.setActaDocumento(actaStr);
-                        audiencia.setObservaciones(json.has("observaciones") ? json.get("observaciones").asText() : "");
-
-                        if (json.has("tipoAudiencia")) {
-                            TipoAudiencia ta = resolveTipoAudiencia(json.get("tipoAudiencia").asText(), lookup);
-                            if (ta != null) audiencia.setTipoAudiencia(ta);
-                        }
-
-                        if (json.has("abogadoCompareciente")) {
-                            Usuario u = resolveUsuario(json.get("abogadoCompareciente").asText(), lookup, expediente.getGerencia(), loteId);
-                            if (u != null) audiencia.setAbogadoComparece(u);
-                        }
-
-                        audiencia.setCreatedAt(java.time.LocalDateTime.now());
-                        audiencia.setUpdatedAt(java.time.LocalDateTime.now());
-                        audienciaRepository.save(audiencia);
+                    } catch (Exception e) {
+                        System.err.println("Error procesando registro: " + r.getId() + " - " + e.getMessage());
                     }
-                } catch (Exception e) {
-                    System.err.println("Error procesando registro: " + r.getId() + " - " + e.getMessage());
-                }
 
-                r.setEstatus("PROCESADO");
-                r.setProcessedAt(java.time.LocalDateTime.now());
+                    r.setEstatus("PROCESADO");
+                    r.setProcessedAt(java.time.LocalDateTime.now());
+                }
             }
-        }
-        
-        lote.setEstatus("COMPLETADO");
-        lote.setPasoActual(5);
-        loteRepository.save(lote);
-        registroRepository.saveAll(registros);
+            
+            lote.setEstatus("COMPLETADO");
+            lote.setPasoActual(5);
+            loteRepository.save(lote);
+            registroRepository.saveAll(registros);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Error inyectando lote: " + e.getMessage(), e);
@@ -598,7 +717,7 @@ public class LoteMigracionService {
         });
     }
 
-    private Materia resolveMateria(String original, java.util.Map<String, CatalogoMigracion> lookup) {
+    private Materia resolveMateria(String original, java.util.Map<String, CatalogoMigracion> lookup, Gerencia gerenciaContexto) {
         if (original == null || original.trim().isEmpty()) return null;
         String key = "MATERIA___" + original.trim().toLowerCase();
         CatalogoMigracion c = lookup.get(key);
@@ -611,7 +730,10 @@ public class LoteMigracionService {
                 final String searchName = nombreFinal;
                 Materia existente = materiaRepository.findByNombreIgnoreCase(searchName).orElse(null);
                 if (existente == null) {
-                    Materia m = new Materia(); m.setNombre(searchName); m.setActivo(true);
+                    Materia m = new Materia(); 
+                    m.setNombre(searchName); 
+                    m.setActivo(true);
+                    m.setGerencia(gerenciaContexto != null ? gerenciaContexto : getFallbackGerencia());
                     existente = materiaRepository.save(m);
                 }
                 c.setIdMapeado(existente.getId().longValue());
@@ -742,7 +864,7 @@ public class LoteMigracionService {
         Gerencia gerenciaFinal = gerenciaExpediente != null ? gerenciaExpediente : getFallbackGerencia();
 
         // 5. Escanear todos los registros del lote para encontrar las materias reales de este abogado
-        java.util.Set<Materia> materiasAbogado = obtenerMateriasDeAbogado(nombreCompleto, loteId, lookup);
+        java.util.Set<Materia> materiasAbogado = obtenerMateriasDeAbogado(nombreCompleto, loteId, lookup, gerenciaFinal);
         // Si no se encontraron materias, no asignar ninguna (el admin puede asignarlas después)
         if (materiasAbogado.isEmpty()) {
             System.out.println(">>> Migracion: No se encontraron materias en los registros para: " + nombreCompleto);
@@ -770,7 +892,7 @@ public class LoteMigracionService {
      * Escanea todos los registros del lote buscando las materias asociadas a un abogado.
      * Busca en los campos abogadoResponsable y abogadoCompareciente, y extrae el campo "materia".
      */
-    private java.util.Set<Materia> obtenerMateriasDeAbogado(String nombreAbogado, Long loteId, java.util.Map<String, CatalogoMigracion> lookup) {
+    private java.util.Set<Materia> obtenerMateriasDeAbogado(String nombreAbogado, Long loteId, java.util.Map<String, CatalogoMigracion> lookup, Gerencia gerenciaContexto) {
         java.util.Set<Materia> materias = new java.util.HashSet<>();
         List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
 
@@ -788,13 +910,57 @@ public class LoteMigracionService {
                 if (esDeEsteAbogado && json.has("materia") && !json.get("materia").isNull()) {
                     String materiaTexto = json.get("materia").asText().trim();
                     if (!materiaTexto.isEmpty()) {
-                        Materia m = resolveMateria(materiaTexto, lookup);
+                        Materia m = resolveMateria(materiaTexto, lookup, gerenciaContexto);
                         if (m != null) materias.add(m);
                     }
                 }
             } catch (Exception ignored) {}
         }
         return materias;
+    }
+
+    private Long buscarIdMapeado(Long loteId, String tipo, String valorOriginal) {
+        if (valorOriginal == null || valorOriginal.isEmpty()) return null;
+        String valorNormalizado = normalizeValue(valorOriginal);
+        return catalogoRepository.findByLoteIdAndTipoCatalogo(loteId, tipo).stream()
+            .filter(c -> normalizeValue(c.getValorOriginal()).equals(valorNormalizado))
+            .map(CatalogoMigracion::getIdMapeado)
+            .filter(java.util.Objects::nonNull)
+            .findFirst()
+            .orElse(null);
+    }
+
+    @Transactional
+    public void crearEntidadesNuevas(List<CatalogoMigracion> catalogos) {
+        for (CatalogoMigracion cat : catalogos) {
+            if ("NUEVO".equals(cat.getEstatus()) && cat.getNuevoValor() != null) {
+                String valor = cat.getNuevoValor();
+                switch (cat.getTipoCatalogo()) {
+                    case "SEDE":
+                        if (!estadoRepository.findByNombreIgnoreCase(valor).isPresent()) {
+                            com.juridico.sistema_juridico.Entity.catalogo.Estado e = new com.juridico.sistema_juridico.Entity.catalogo.Estado();
+                            e.setNombre(valor);
+                            e = estadoRepository.save(e);
+                            cat.setIdMapeado(e.getId().longValue());
+                            cat.setEstatus("MAPEADO");
+                            catalogoRepository.save(cat);
+                        }
+                        break;
+                    case "GERENCIA":
+                        if (!gerenciaRepository.findByNombreIgnoreCase(valor).isPresent()) {
+                            Gerencia g = new Gerencia();
+                            g.setNombre(valor);
+                            g = gerenciaRepository.save(g);
+                            cat.setIdMapeado(g.getId().longValue());
+                            cat.setEstatus("MAPEADO");
+                            catalogoRepository.save(cat);
+                        }
+                        break;
+                    // Materia y otros requieren más contexto (como gerencia_id),
+                    // por ahora nos enfocamos en SEDE y GERENCIA que son raíz.
+                }
+            }
+        }
     }
 
     private LocalDate parseDate(JsonNode dateNode) {
@@ -804,6 +970,28 @@ public class LoteMigracionService {
         } catch (DateTimeParseException e) {
             return LocalDate.now();
         }
+    }
+
+    /**
+     * Encuentra el valor más repetido (moda) para un campo en el JSON de una lista de registros.
+     */
+    private String findMostRepeated(List<RegistroMigracion> registros, String fieldName, String defaultValue) {
+        java.util.Map<String, Long> counts = new java.util.HashMap<>();
+        for (RegistroMigracion r : registros) {
+            try {
+                JsonNode json = objectMapper.readTree(r.getPayloadJson());
+                if (json.has(fieldName) && !json.get(fieldName).isNull()) {
+                    String val = json.get(fieldName).asText().trim();
+                    if (!val.isEmpty()) {
+                        counts.put(val, counts.getOrDefault(val, 0L) + 1);
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+        return counts.entrySet().stream()
+            .max(java.util.Map.Entry.comparingByValue())
+            .map(java.util.Map.Entry::getKey)
+            .orElse(defaultValue);
     }
 
     private LocalTime parseTime(JsonNode timeNode) {

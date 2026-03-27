@@ -83,30 +83,20 @@ public class MigrationApiController {
         }
 
         java.util.List<Map<String, Object>> listaFinal = new java.util.ArrayList<>();
-        String gerenciaFinal = "Gerencia de Asuntos Laborales"; // Default
 
         if (body instanceof Map) {
             Map<String, Object> map = (Map<String, Object>) body;
-            if (map.isEmpty()) return ResponseEntity.badRequest().body(Map.of("error", "Map vacío"));
-            
-            // Caso 1: { "Gerencia X": [ ... ] }
-            String firstKey = map.keySet().iterator().next();
-            Object value = map.get(firstKey);
-            if (value instanceof java.util.List) {
-                gerenciaFinal = firstKey;
-                listaFinal = (java.util.List<Map<String, Object>>) value;
-            } else {
-                // Caso 2: Es un objeto individual {...} mandado al endpoint de lote
-                listaFinal.add(map);
-            }
+            listaFinal.add(map);
         } else if (body instanceof java.util.List) {
-            // Caso 3: Es una lista simple [ {...}, {...} ]
             listaFinal = (java.util.List<Map<String, Object>>) body;
         }
 
         int count = 0;
         for (Map<String, Object> item : listaFinal) {
-            item.putIfAbsent("gerencia", gerenciaFinal);
+            // Aseguramos que Gerencia nunca esté vacía para que aparezca la pestaña en la Etapa 1
+            if (!item.containsKey("gerencia") || item.get("gerencia") == null || item.get("gerencia").toString().trim().isEmpty()) {
+                item.put("gerencia", "POR DEFINIR");
+            }
             String numExp = item.containsKey("numeroExpediente") && item.get("numeroExpediente") != null
                     ? item.get("numeroExpediente").toString()
                     : "SIN_NUMERO";
@@ -117,7 +107,7 @@ public class MigrationApiController {
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "registros", count,
-                "mensaje", String.format("%d términos procesados (Gerencia: %s)", count, gerenciaFinal)
+                "mensaje", String.format("%d términos procesados y enviados al asistente.", count)
         ));
     }
 
@@ -137,30 +127,20 @@ public class MigrationApiController {
         }
 
         java.util.List<Map<String, Object>> listaFinal = new java.util.ArrayList<>();
-        String gerenciaFinal = "Gerencia de Asuntos Laborales"; // Default
 
         if (body instanceof Map) {
             Map<String, Object> map = (Map<String, Object>) body;
-            if (map.isEmpty()) return ResponseEntity.badRequest().body(Map.of("error", "Map vacío"));
-
-            // Caso 1: { "Gerencia X": [ ... ] }
-            String firstKey = map.keySet().iterator().next();
-            Object value = map.get(firstKey);
-            if (value instanceof java.util.List) {
-                gerenciaFinal = firstKey;
-                listaFinal = (java.util.List<Map<String, Object>>) value;
-            } else {
-                // Caso 2: Es un objeto individual {...}
-                listaFinal.add(map);
-            }
+            listaFinal.add(map);
         } else if (body instanceof java.util.List) {
-            // Caso 3: Es una lista simple [ {...}, {...} ]
             listaFinal = (java.util.List<Map<String, Object>>) body;
         }
 
         int count = 0;
         for (Map<String, Object> item : listaFinal) {
-            item.putIfAbsent("gerencia", gerenciaFinal);
+            // Aseguramos que Gerencia nunca esté vacía para que aparezca la pestaña en la Etapa 1
+            if (!item.containsKey("gerencia") || item.get("gerencia") == null || item.get("gerencia").toString().trim().isEmpty()) {
+                item.put("gerencia", "POR DEFINIR");
+            }
             String numExp = item.containsKey("numeroExpediente") && item.get("numeroExpediente") != null
                     ? item.get("numeroExpediente").toString()
                     : "SIN_NUMERO";
@@ -171,7 +151,7 @@ public class MigrationApiController {
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "registros", count,
-                "mensaje", String.format("%d audiencias procesadas (Gerencia: %s)", count, gerenciaFinal)
+                "mensaje", String.format("%d audiencias procesadas y enviadas al asistente.", count)
         ));
     }
 }

@@ -88,7 +88,11 @@
                 th:data-registro-id="${exp.registroId}" th:data-numero-expediente="${exp.numeroExpediente}"
                 th:data-partes="${exp.partes}" th:data-materia="${exp.materia}" th:data-gerencia="${exp.gerencia}"
                 th:data-organo="${exp.organo}" th:data-abogado="${exp.abogado}" th:data-descripcion="${exp.descripcion}"
-                th:data-sede="${exp.sede}" title="Editar expediente">
+                th:data-sede="${exp.sede}" 
+                th:data-gerencia-id="${exp.gerenciaId}" 
+                th:data-materia-id="${exp.materiaId}" 
+                th:data-sede-id="${exp.sedeId}"
+                title="Editar expediente">
                 <i class="fas fa-edit"></i>
               </button>
             </td>
@@ -167,7 +171,7 @@
           </select>
         </div>
 
-        <div>
+        <div class="col-span-2">
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Órgano Jurisdiccional</label>
           <select id="exp-organo" name="organoJurisdiccional"
             class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
@@ -179,38 +183,16 @@
             </th:block>
           </select>
         </div>
-        <div>
+        <div class="col-span-2">
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Estado / Sede <span class="text-red-500">*</span></label>
           <select id="exp-sede" name="sede"
             class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"
             required>
             <option value="">-- Seleccione estado --</option>
-            <option th:each="s : ${sedesDB}" th:value="${s.nombre}" th:text="${s.nombre}"></option>
+            <option th:each="s : ${sedesDB}" th:value="${s.nombre}" th:data-id="${s.id}" th:text="${s.nombre}"></option>
           </select>
         </div>
 
-        <div class="col-span-2">
-          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Abogado Responsable</label>
-          <select id="exp-abogado" name="abogadoResponsable"
-            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm" disabled>
-            <option value="">-- Primero selecciona una materia --</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Prioridad</label>
-          <select id="exp-prioridad" name="prioridad"
-            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
-            <option value="Media">Media</option>
-            <option th:each="p : ${prioridadesDB}" th:value="${p.nombre}" th:text="${p.nombre}"></option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Etapa Procesal</label>
-          <select id="exp-etapa" name="etapaProcesal"
-            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
-            <option th:each="e : ${etapas}" th:value="${e}" th:text="${e}"></option>
-          </select>
-        </div>
         <div class="col-span-2">
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Descripción</label>
           <textarea id="exp-descripcion" name="descripcion" rows="3"

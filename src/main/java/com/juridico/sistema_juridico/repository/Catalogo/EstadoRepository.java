@@ -9,4 +9,6 @@ public interface EstadoRepository extends JpaRepository<Estado, Integer> {
     // Para que salgan ordenados alfabéticamente en el select
     @Cacheable("estados")
     List<Estado> findAllByOrderByNombreAsc();
+
+    java.util.Optional<Estado> findByNombreIgnoreCase(String nombre);
 }

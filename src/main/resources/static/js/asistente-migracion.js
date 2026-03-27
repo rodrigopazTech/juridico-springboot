@@ -93,6 +93,39 @@ function inicializarMapeo() {
     }, true);
 
     // ==========================================
+    // FILTRO DE GERENCIA PARA MATERIAS (ETAPA 1)
+    // ==========================================
+    document.querySelectorAll('.materia-gerencia-filter').forEach(filter => {
+        filter.addEventListener('change', function () {
+            const gerenciaId = this.value;
+            const targetId = this.getAttribute('data-target');
+            const selectEl = document.getElementById(targetId);
+            
+            if (selectEl && selectEl.tomselect) {
+                const ts = selectEl.tomselect;
+                ts.clear();
+                
+                const originalOptions = Array.from(selectEl.querySelectorAll('option'));
+                ts.clearOptions();
+                
+                originalOptions.forEach(opt => {
+                    const parentGroup = opt.closest('optgroup');
+                    const gId = parentGroup ? parentGroup.getAttribute('data-gerencia-id') : null;
+                    
+                    if (!gerenciaId || gId === gerenciaId || opt.value === "") {
+                        ts.addOption({
+                            value: opt.value,
+                            text: opt.text
+                        });
+                    }
+                });
+                ts.refreshOptions(false);
+                console.log("Filtrado completado para:", targetId);
+            }
+        });
+    });
+
+    // ==========================================
     // BOTÓN: EDITAR TEXTO DETECTADO (lápiz)
     // ==========================================
     document.querySelectorAll('.btn-editar-texto').forEach(btn => {
@@ -279,7 +312,6 @@ function inicializarMapeo() {
                     const container = document.getElementById('mapeo-container-' + catId);
                     if (!container || container.classList.contains('hidden')) return; // Ya tiene acción
 
-                    // Revisar si el select tiene un valor seleccionado
                     const selectEl = document.getElementById('select-' + catId);
                     const tieneValor = selectEl && selectEl.tomselect
                         ? selectEl.tomselect.getValue() !== ''
@@ -365,13 +397,12 @@ async function cargarMaterias(gerenciaId, targetSelect, selectedValue = '') {
         const materias = await resp.json();
         let html = '<option value="">-- Seleccione Materia --</option>';
         materias.forEach(m => {
-            const selected = (m.nombre === selectedValue) ? 'selected' : '';
+            const isSelected = (m.nombre === selectedValue || m.id == selectedValue);
+            const selected = isSelected ? 'selected' : '';
             html += `<option value="${m.nombre}" data-id="${m.id}" ${selected}>${m.nombre}</option>`;
         });
         targetSelect.innerHTML = html;
         targetSelect.disabled = false;
-
-        // Si hay un valor seleccionado, disparar cambio para cargar abogados
         if (selectedValue) {
             targetSelect.dispatchEvent(new Event('change'));
         }
@@ -391,13 +422,40 @@ async function cargarAbogados(materiaId, targetSelect, selectedValue = '') {
         const usuarios = await resp.json();
         let html = '<option value="">-- Seleccione Abogado --</option>';
         usuarios.forEach(u => {
-            const selected = (u.nombre === selectedValue) ? 'selected' : '';
-            html += `<option value="${u.nombre}" ${selected}>${u.nombre}</option>`;
+            const isSelected = (u.nombre === selectedValue || u.id == selectedValue);
+            const selected = isSelected ? 'selected' : '';
+            html += `<option value="${u.nombre}" data-id="${u.id}" ${selected}>${u.nombre}</option>`;
         });
         targetSelect.innerHTML = html;
         targetSelect.disabled = false;
     } catch (e) {
         console.error("Error cargando abogados:", e);
+    }
+}
+
+function seleccionarOpcionPorIdONombre(selectEl, id, nombre) {
+    if (!selectEl) return;
+    let found = false;
+    if (id) {
+        for (let i = 0; i < selectEl.options.length; i++) {
+            if (selectEl.options[i].getAttribute('data-id') == id) {
+                selectEl.selectedIndex = i;
+                found = true;
+                break;
+            }
+        }
+    }
+    if (!found && nombre) {
+        for (let i = 0; i < selectEl.options.length; i++) {
+            if (selectEl.options[i].value === nombre || selectEl.options[i].text === nombre) {
+                selectEl.selectedIndex = i;
+                found = true;
+                break;
+            }
+        }
+    }
+    if (found) {
+        selectEl.dispatchEvent(new Event('change'));
     }
 }
 
@@ -422,8 +480,6 @@ function setupHierarchicalSelects(prefix) {
         materiaSel.addEventListener('change', function () {
             const selectedOption = this.options[this.selectedIndex];
             const materiaId = selectedOption ? selectedOption.getAttribute('data-id') : null;
-
-            // Si hay dos abogados (Compareciente y Responsable en Audiencias)
             const abogados = document.querySelectorAll(`[id^="${prefix}-"][id$="abogado"], [id^="${prefix}-"][id$="responsable"], [id^="${prefix}-"][id$="compareciente"]`);
             abogados.forEach(sel => {
                 if (sel.id !== `${prefix}-materia` && sel.id !== `${prefix}-gerencia`) {
@@ -434,7 +490,6 @@ function setupHierarchicalSelects(prefix) {
     }
 }
 
-// Inicializar jerarquías
 document.addEventListener('DOMContentLoaded', () => {
     setupHierarchicalSelects('exp');
     setupHierarchicalSelects('aud');
@@ -451,32 +506,23 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
         document.getElementById('exp-numero').value = d.numeroExpediente || '';
         document.getElementById('exp-partes').value = d.partes || '';
         document.getElementById('exp-organo').value = d.organo || '';
-        document.getElementById('exp-sede').value = d.sede || '';
         document.getElementById('exp-descripcion').value = d.descripcion || '';
-        document.getElementById('exp-prioridad').value = d.prioridad || 'Media';
-        document.getElementById('exp-etapa').value = d.etapaProcesal || 'TRAMITE';
 
-        // Cargar jerarquía
         const gerenciaSel = document.getElementById('exp-gerencia');
-        gerenciaSel.value = d.gerencia || '';
+        const materiaSel = document.getElementById('exp-materia');
+        const sedeSel = document.getElementById('exp-sede');
+        
+        seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia);
+        seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede);
 
-        if (gerenciaSel.value && gerenciaSel.selectedIndex >= 0) {
-            const gerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
-            await cargarMaterias(gerenciaId, document.getElementById('exp-materia'), d.materia);
-
-            const materiaSel = document.getElementById('exp-materia');
-            if (materiaSel.value && materiaSel.selectedIndex >= 0) {
-                const materiaId = materiaSel.options[materiaSel.selectedIndex].getAttribute('data-id');
-                await cargarAbogados(materiaId, document.getElementById('exp-abogado'), d.abogado);
-            }
-        } else {
-            document.getElementById('exp-materia').disabled = true;
-            document.getElementById('exp-abogado').disabled = true;
+        const activeGerenciaId = gerenciaSel && gerenciaSel.selectedIndex >= 0 ? 
+                                gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id') : null;
+        if (activeGerenciaId) {
+            await cargarMaterias(activeGerenciaId, materiaSel, d.materiaId || d.materia);
         }
 
         const modal = document.getElementById('modal-editar-expediente');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
+        modal.classList.remove('hidden'); modal.classList.add('flex');
     });
 });
 ['cerrar-modal-exp', 'cancelar-modal-exp'].forEach(id => {
@@ -500,32 +546,27 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
         document.getElementById('aud-fecha').value = d.fechaAudiencia || '';
         document.getElementById('aud-hora').value = d.horaAudiencia || '';
         document.getElementById('aud-tipo').value = d.tipoAudiencia || '';
-        document.getElementById('aud-sede').value = d.sede || '';
         document.getElementById('aud-organo').value = d.organoJurisdiccional || '';
 
-        // Jerarquía
         const gerenciaSel = document.getElementById('aud-gerencia');
-        gerenciaSel.value = d.gerencia || '';
-        if (gerenciaSel.value && gerenciaSel.selectedIndex >= 0) {
-            const gerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
-            await cargarMaterias(gerenciaId, document.getElementById('aud-materia'), d.materia);
+        const materiaSel = document.getElementById('aud-materia');
+        const sedeSel = document.getElementById('aud-sede');
 
-            const materiaSel = document.getElementById('aud-materia');
-            if (materiaSel.value && materiaSel.selectedIndex >= 0) {
-                const materiaId = materiaSel.options[materiaSel.selectedIndex].getAttribute('data-id');
-                await cargarAbogados(materiaId, document.getElementById('aud-responsable'), d.abogadoResponsable);
-                await cargarAbogados(materiaId, document.getElementById('aud-compareciente'), d.abogadoCompareciente);
+        seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia);
+        seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede);
+
+        if (gerenciaSel && gerenciaSel.selectedIndex >= 0) {
+            const activeGerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
+            await cargarMaterias(activeGerenciaId, materiaSel, d.materiaId || d.materia);
+            if (materiaSel && materiaSel.selectedIndex >= 0) {
+                const activeMateriaId = materiaSel.options[materiaSel.selectedIndex].getAttribute('data-id');
+                await cargarAbogados(activeMateriaId, document.getElementById('aud-responsable'), d.abogadoId || d.abogadoResponsable);
+                await cargarAbogados(activeMateriaId, document.getElementById('aud-compareciente'), d.abogadoId || d.abogadoCompareciente);
             }
-        } else {
-            document.getElementById('aud-materia').disabled = true;
-            document.getElementById('aud-responsable').disabled = true;
-            document.getElementById('aud-compareciente').disabled = true;
         }
 
-        // Sala / Lugar
         const audSala = document.getElementById('aud-sala');
         if (audSala) audSala.value = d.sala || '';
-        // Modalidad: esEnLinea/esVirtual
         const esVirtual = d.esEnLinea === 'true' || d.esVirtual === 'true';
         const rdPresencial = document.getElementById('aud-presencial');
         const rdVirtual = document.getElementById('aud-virtual');
@@ -537,6 +578,7 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
         if (urlGroup) urlGroup.classList.toggle('hidden', !esVirtual);
         const audUrl = document.getElementById('aud-url');
         if (audUrl) audUrl.value = d.enlaceReunion || '';
+
         const modal = document.getElementById('modal-editar-audiencia');
         modal.classList.remove('hidden'); modal.classList.add('flex');
     });
@@ -563,25 +605,23 @@ document.querySelectorAll('.btn-editar-termino').forEach(btn => {
         document.getElementById('term-fecha').value = d.fechaVencimiento || '';
         document.getElementById('term-fecha-ingreso').value = d.fechaIngreso || '';
         document.getElementById('term-prioridad').value = d.prioridad || 'Media';
-        document.getElementById('term-sede').value = d.sede || '';
         document.getElementById('term-organo').value = d.organo || '';
         document.getElementById('term-observaciones').value = d.observaciones || '';
 
-        // Jerarquía
         const gerenciaSel = document.getElementById('term-gerencia');
-        gerenciaSel.value = d.gerencia || '';
-        if (gerenciaSel.value && gerenciaSel.selectedIndex >= 0) {
-            const gerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
-            await cargarMaterias(gerenciaId, document.getElementById('term-materia'), d.materia);
+        const materiaSel = document.getElementById('term-materia');
+        const sedeSel = document.getElementById('term-sede');
 
-            const materiaSel = document.getElementById('term-materia');
-            if (materiaSel.value && materiaSel.selectedIndex >= 0) {
-                const materiaId = materiaSel.options[materiaSel.selectedIndex].getAttribute('data-id');
-                await cargarAbogados(materiaId, document.getElementById('term-abogado'), d.abogadoResponsable);
+        seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia);
+        seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede);
+
+        if (gerenciaSel && gerenciaSel.selectedIndex >= 0) {
+            const activeGerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
+            await cargarMaterias(activeGerenciaId, materiaSel, d.materiaId || d.materia);
+            if (materiaSel && materiaSel.selectedIndex >= 0) {
+                const activeMateriaId = materiaSel.options[materiaSel.selectedIndex].getAttribute('data-id');
+                await cargarAbogados(activeMateriaId, document.getElementById('term-abogado'), d.abogadoId || d.abogadoResponsable);
             }
-        } else {
-            document.getElementById('term-materia').disabled = true;
-            document.getElementById('term-abogado').disabled = true;
         }
 
         const modal = document.getElementById('modal-editar-termino');
