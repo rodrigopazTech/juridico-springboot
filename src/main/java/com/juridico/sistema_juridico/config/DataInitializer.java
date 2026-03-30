@@ -268,12 +268,14 @@ public class DataInitializer implements CommandLineRunner {
                                         "Jalisco", "Michoacán", "Morelos", "Nayarit", "Nuevo León", "Oaxaca",
                                         "Puebla", "Querétaro", "Quintana Roo", "San Luis Potosí", "Sinaloa",
                                         "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz", "Yucatán",
-                                        "Zacatecas");
+                                        "Zacatecas",
+                                        // --- VALORES AGREGADOS PARA MIGRACIONES ---
+                                        "Central", "Varios", "Sede Central", "Sede Norte");
 
                         List<Estado> listaEstados = new ArrayList<>();
                         for (String nombre : estadosMexico) {
                                 listaEstados.add(Estado.builder().nombre(nombre).build());
-                        }
+                        }       
                         estadoRepository.saveAll(listaEstados);
                         System.out.println("✅ Catálogo de Estados cargado.");
                 }

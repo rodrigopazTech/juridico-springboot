@@ -100,18 +100,18 @@ function inicializarMapeo() {
             const gerenciaId = this.value;
             const targetId = this.getAttribute('data-target');
             const selectEl = document.getElementById(targetId);
-            
+
             if (selectEl && selectEl.tomselect) {
                 const ts = selectEl.tomselect;
                 ts.clear();
-                
+
                 const originalOptions = Array.from(selectEl.querySelectorAll('option'));
                 ts.clearOptions();
-                
+
                 originalOptions.forEach(opt => {
                     const parentGroup = opt.closest('optgroup');
                     const gId = parentGroup ? parentGroup.getAttribute('data-gerencia-id') : null;
-                    
+
                     if (!gerenciaId || gId === gerenciaId || opt.value === "") {
                         ts.addOption({
                             value: opt.value,
@@ -433,7 +433,7 @@ async function cargarAbogados(materiaId, targetSelect, selectedValue = '') {
     }
 }
 
-function seleccionarOpcionPorIdONombre(selectEl, id, nombre) {
+function seleccionarOpcionPorIdONombre(selectEl, id, nombre, triggerChange = true) {
     if (!selectEl) return;
     let found = false;
     if (id) {
@@ -454,9 +454,11 @@ function seleccionarOpcionPorIdONombre(selectEl, id, nombre) {
             }
         }
     }
-    if (found) {
+    // FIX: Controlamos el trigger del evento para evitar "Race Conditions" en los Modales
+    if (found && triggerChange) {
         selectEl.dispatchEvent(new Event('change'));
     }
+    return found;
 }
 
 function setupHierarchicalSelects(prefix) {
@@ -511,14 +513,20 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
         const gerenciaSel = document.getElementById('exp-gerencia');
         const materiaSel = document.getElementById('exp-materia');
         const sedeSel = document.getElementById('exp-sede');
-        
-        seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia);
-        seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede);
 
-        const activeGerenciaId = gerenciaSel && gerenciaSel.selectedIndex >= 0 ? 
-                                gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id') : null;
+        seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede, false);
+
+        // Pasamos "false" para no romper la cascada asíncrona
+        seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia, false);
+
+        const activeGerenciaId = gerenciaSel && gerenciaSel.selectedIndex > 0 ?
+            gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id') : null;
         if (activeGerenciaId) {
             await cargarMaterias(activeGerenciaId, materiaSel, d.materiaId || d.materia);
+        } else if (d.materia) {
+            // Respaldo de inyección directa si no hay gerencia
+            materiaSel.innerHTML = `<option value="${d.materia}" selected>${d.materia}</option>`;
+            materiaSel.disabled = false;
         }
 
         const modal = document.getElementById('modal-editar-expediente');
@@ -552,16 +560,35 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
         const materiaSel = document.getElementById('aud-materia');
         const sedeSel = document.getElementById('aud-sede');
 
-        seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia);
-        seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede);
+        seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede, false);
 
-        if (gerenciaSel && gerenciaSel.selectedIndex >= 0) {
+        // Pasamos "false" para control absoluto de los tiempos de carga
+        seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia, false);
+
+        if (gerenciaSel && gerenciaSel.selectedIndex > 0) {
             const activeGerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
             await cargarMaterias(activeGerenciaId, materiaSel, d.materiaId || d.materia);
-            if (materiaSel && materiaSel.selectedIndex >= 0) {
+
+            if (materiaSel && materiaSel.selectedIndex > 0) {
                 const activeMateriaId = materiaSel.options[materiaSel.selectedIndex].getAttribute('data-id');
                 await cargarAbogados(activeMateriaId, document.getElementById('aud-responsable'), d.abogadoId || d.abogadoResponsable);
                 await cargarAbogados(activeMateriaId, document.getElementById('aud-compareciente'), d.abogadoId || d.abogadoCompareciente);
+            }
+        } else {
+            // Respaldo por si el JSON viene tan incompleto que falla el cascade
+            if (d.materia) {
+                materiaSel.innerHTML = `<option value="${d.materia}" selected>${d.materia}</option>`;
+                materiaSel.disabled = false;
+            }
+            if (d.abogadoResponsable) {
+                const resp = document.getElementById('aud-responsable');
+                resp.innerHTML = `<option value="${d.abogadoResponsable}" selected>${d.abogadoResponsable}</option>`;
+                resp.disabled = false;
+            }
+            if (d.abogadoCompareciente) {
+                const comp = document.getElementById('aud-compareciente');
+                comp.innerHTML = `<option value="${d.abogadoCompareciente}" selected>${d.abogadoCompareciente}</option>`;
+                comp.disabled = false;
             }
         }
 
@@ -612,15 +639,25 @@ document.querySelectorAll('.btn-editar-termino').forEach(btn => {
         const materiaSel = document.getElementById('term-materia');
         const sedeSel = document.getElementById('term-sede');
 
-        seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia);
-        seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede);
+        seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede, false);
+        seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia, false);
 
-        if (gerenciaSel && gerenciaSel.selectedIndex >= 0) {
+        if (gerenciaSel && gerenciaSel.selectedIndex > 0) {
             const activeGerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
             await cargarMaterias(activeGerenciaId, materiaSel, d.materiaId || d.materia);
-            if (materiaSel && materiaSel.selectedIndex >= 0) {
+            if (materiaSel && materiaSel.selectedIndex > 0) {
                 const activeMateriaId = materiaSel.options[materiaSel.selectedIndex].getAttribute('data-id');
                 await cargarAbogados(activeMateriaId, document.getElementById('term-abogado'), d.abogadoId || d.abogadoResponsable);
+            }
+        } else {
+            if (d.materia) {
+                materiaSel.innerHTML = `<option value="${d.materia}" selected>${d.materia}</option>`;
+                materiaSel.disabled = false;
+            }
+            if (d.abogadoResponsable) {
+                const resp = document.getElementById('term-abogado');
+                resp.innerHTML = `<option value="${d.abogadoResponsable}" selected>${d.abogadoResponsable}</option>`;
+                resp.disabled = false;
             }
         }
 

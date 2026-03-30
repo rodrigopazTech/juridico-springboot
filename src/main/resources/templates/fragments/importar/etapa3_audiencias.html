@@ -74,7 +74,8 @@
                 th:data-hora-audiencia="${aud.hora}" th:data-abogado-compareciente="${aud.compareciente}"
                 th:data-abogado-responsable="${aud.abogadoResponsable}" th:data-sede="${aud.sede}"
                 th:data-organo-jurisdiccional="${aud.organo}" th:data-es-en-linea="${aud.esEnLinea}"
-                th:data-enlace-reunion="${aud.enlaceReunion}" title="Editar audiencia">
+                th:data-enlace-reunion="${aud.enlaceReunion}" th:data-gerencia="${aud.gerencia}"
+                th:data-materia="${aud.materia}" title="Editar audiencia">
                 <i class="fas fa-edit"></i>
               </button>
             </td>
@@ -101,7 +102,6 @@
     </div>
   </div>
 
-  <!-- MODAL EDITAR AUDIENCIA -->
   <div id="modal-editar-audiencia" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-y-auto max-h-[90vh]">
       <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
@@ -140,7 +140,6 @@
           </select>
         </div>
 
-        <!-- JERARQUÍA PARA FILTRADO -->
         <div>
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Gerencia</label>
           <select id="aud-gerencia" name="gerencia"
@@ -175,13 +174,8 @@
             <option value="">-- Primero selecciona una materia --</option>
           </select>
         </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Sala / Lugar</label>
-          <input type="text" id="aud-sala" name="sala"
-            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"
-            placeholder="Ej. Sala 3 de Juicios Orales" />
-        </div>
-        <div>
+
+        <div class="col-span-2">
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Estado / Sede</label>
           <select id="aud-sede" name="sede"
             class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
