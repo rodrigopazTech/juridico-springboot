@@ -196,10 +196,9 @@ function cargarAbogadosPosibles(idPreseleccionado = null) {
                     option.text = `⭐ ${a.nombre} (Titular)`;
                     option.style.fontWeight = 'bold';
 
-                    // LÓGICA DE AUTO-SELECCIÓN (ROD-146):
-                    // Si NO estamos editando (idPreseleccionado es null)
-                    // Y el usuario que está creando es el propio Titular
-                    if (!idPreseleccionado && String(a.id) === String(currentUserId)) {
+                    // LÓGICA DE AUTO-SELECCIÓN (ROD-146 Mejorado):
+                    // Si estamos creando (idPreseleccionado es null), sugerimos siempre al Titular
+                    if (!idPreseleccionado && a.esTitular) {
                         option.selected = true;
                     }
                     titularEncontrado = true;

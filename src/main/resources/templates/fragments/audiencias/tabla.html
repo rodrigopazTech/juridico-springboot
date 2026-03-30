@@ -64,8 +64,10 @@
             <div class="col-span-2 py-4 lg:px-4 border-b lg:border-b-0 lg:border-r border-gray-50">
                 <div class="flex flex-col">
                     <span class="text-xs font-bold text-gray-700 line-clamp-2"
-                        th:text="${a.abogadoComparece?.nombreCompleto ?: 'Sin asignar'}">Ana Gómez</span>
-                    <span class="text-[10px] text-gray-400 font-medium">Asistente</span>
+                        th:text="${a.abogadoComparece?.nombreCompleto ?: (a.expediente?.abogadoResponsable?.nombreCompleto ?: 'Sin asignar')}">Ana
+                        Gómez</span>
+                    <span class="text-[10px] text-gray-400 font-medium"
+                        th:text="${a.abogadoComparece != null ? 'Asistente' : 'Responsable'}">Asistente</span>
                 </div>
             </div>
 
