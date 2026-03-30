@@ -376,14 +376,15 @@ function cargarHistorialAbogado(idUsuario) {
                                 <i class="fas fa-edit text-sm"></i>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between gap-2">
+                                <div class="flex justify-between items-start">
                                     <p class="text-sm font-bold text-slate-800 truncate">${act.accion}</p>
-                                    <span class="text-[10px] text-gray-400 whitespace-nowrap">${act.fecha}</span>
+                                    <span class="text-[10px] text-slate-400 whitespace-nowrap ml-2">${act.fecha}</span>
                                 </div>
                                 <p class="text-xs text-slate-600 mt-1">${act.detalles}</p>
-                                <div class="mt-2 flex items-center text-[10px] text-gob-verde font-medium">
-                                    <i class="fas fa-file-alt mr-1"></i> Exp: ${act.expediente}
-                                </div>
+                                ${act.expediente !== 'General' ? `
+                                <p class="text-xs font-medium text-gob-guinda flex items-center gap-1 mt-2">
+                                    <i class="fas fa-file-alt"></i> Exp: ${act.expediente}
+                                </p>` : ''}
                             </div>
                         </div>
                     `;

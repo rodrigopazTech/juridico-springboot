@@ -201,20 +201,53 @@ public class AbogadosController {
         return org.springframework.http.ResponseEntity.ok(agenda);
     }
 
+    @Autowired
+    private com.juridico.sistema_juridico.repository.Usuarios.ActividadUsuarioRepository actividadUsuarioRepository;
+
     @GetMapping("/api/{id}/historial")
     @ResponseBody
     public org.springframework.http.ResponseEntity<List<Map<String, Object>>> obtenerHistorialReal(
             @PathVariable("id") Integer id) {
 
-        List<ActividadExpediente> actividades = actividadRepository.findTop15ByUsuarioIdOrExpedienteAbogadoResponsableIdOrderByFechaRegistroDesc(id, id);
-        List<Map<String, Object>> response = actividades.stream().map(act -> {
+        // 1. Obtener actividades de expedientes (donde es actor exclusivamente)
+        List<ActividadExpediente> actExp = actividadRepository.findTop15ByUsuarioIdOrderByFechaRegistroDesc(id);
+        
+        // 2. Obtener actividades generales del sistema (login/logout)
+        List<com.juridico.sistema_juridico.Entity.usuario.ActividadUsuario> actUs = actividadUsuarioRepository.findTop15ByUsuarioIdOrderByFechaRegistroDesc(id);
+
+        // 3. Combinar y mapear a un formato común
+        List<Map<String, Object>> listaCombinada = new ArrayList<>();
+
+        for (ActividadExpediente act : actExp) {
             Map<String, Object> map = new HashMap<>();
             map.put("accion", act.getTitulo());
             map.put("detalles", act.getDescripcion());
-            map.put("expediente", act.getExpediente() != null ? act.getExpediente().getNumero() : "General");
+            map.put("expediente", act.getExpediente() != null ? act.getExpediente().getNumero() : "N/A");
             map.put("fecha", act.getFechaRegistro() != null ? act.getFechaRegistro().format(dateTimeFormatter) : "-");
-            return map;
-        }).collect(Collectors.toList());
+            map.put("_raw_date", act.getFechaRegistro());
+            listaCombinada.add(map);
+        }
+
+        for (com.juridico.sistema_juridico.Entity.usuario.ActividadUsuario act : actUs) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("accion", act.getTitulo());
+            map.put("detalles", act.getDescripcion());
+            map.put("expediente", "General"); // Para el frontend
+            map.put("fecha", act.getFechaRegistro() != null ? act.getFechaRegistro().format(dateTimeFormatter) : "-");
+            map.put("_raw_date", act.getFechaRegistro());
+            listaCombinada.add(map);
+        }
+
+        // 4. Ordenar la lista combinada por fecha descendente y limitar a 15
+        listaCombinada.sort((m1, m2) -> {
+            java.time.LocalDateTime d1 = (java.time.LocalDateTime) m1.get("_raw_date");
+            java.time.LocalDateTime d2 = (java.time.LocalDateTime) m2.get("_raw_date");
+            if (d1 == null) return 1;
+            if (d2 == null) return -1;
+            return d2.compareTo(d1);
+        });
+
+        List<Map<String, Object>> response = listaCombinada.stream().limit(15).collect(Collectors.toList());
 
         return org.springframework.http.ResponseEntity.ok(response);
     }

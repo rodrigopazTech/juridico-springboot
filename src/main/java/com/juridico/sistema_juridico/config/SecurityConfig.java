@@ -25,15 +25,21 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final ForcePasswordChangeFilter forcePasswordChangeFilter;
+    private final com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository usuarioRepository;
+    private final com.juridico.sistema_juridico.service.AuditoriaService auditoriaService;
 
     public SecurityConfig(CustomUserDetailsService userDetailsService,
             JwtAuthenticationFilter jwtAuthenticationFilter,
             JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-            ForcePasswordChangeFilter forcePasswordChangeFilter) {
+            ForcePasswordChangeFilter forcePasswordChangeFilter,
+            com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository usuarioRepository,
+            com.juridico.sistema_juridico.service.AuditoriaService auditoriaService) {
         this.userDetailsService = userDetailsService;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.forcePasswordChangeFilter = forcePasswordChangeFilter;
+        this.usuarioRepository = usuarioRepository;
+        this.auditoriaService = auditoriaService;
     }
 
     @Bean
@@ -80,11 +86,25 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/")
                         .loginProcessingUrl("/perform_login")
-                        .defaultSuccessUrl("/dashboard", true)
+                        .successHandler((request, response, authentication) -> {
+                            String email = authentication.getName();
+                            usuarioRepository.findByEmail(email).ifPresent(u -> {
+                                auditoriaService.registrarActividadGeneral(u, "Inicio de Sesión", "El usuario ha ingresado al sistema.", "CLOCK");
+                            });
+                            response.sendRedirect("/dashboard");
+                        })
                         .failureUrl("/?error=true")
                         .permitAll())
                 .logout(logout -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                        .addLogoutHandler((request, response, authentication) -> {
+                            if (authentication != null) {
+                                String email = authentication.getName();
+                                usuarioRepository.findByEmail(email).ifPresent(u -> {
+                                    auditoriaService.registrarActividadGeneral(u, "Cierre de Sesión", "El usuario ha salido del sistema.", "CLOCK");
+                                });
+                            }
+                        })
                         .logoutSuccessUrl("/?logout")
                         .deleteCookies("JSESSIONID")
                         .permitAll())

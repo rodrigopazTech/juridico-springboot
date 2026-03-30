@@ -65,18 +65,21 @@
 
                 <div id="container-tabla-casos"
                     class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hidden">
-                    <table class="w-full text-sm text-left text-gray-500">
-                        <thead class="text-xs text-gray-400 uppercase bg-gob-verde text-white font-bold tracking-wider">
-                            <tr>
-                                <th class="px-6 py-4">Caso / Asunto</th>
-                                <th class="px-6 py-4">Cliente / Contraparte</th>
-                                <th class="px-6 py-4">Estado</th>
-                                <th class="px-6 py-4 text-right">Próx. Audiencia</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-casos" class="divide-y divide-gray-100">
-                        </tbody>
-                    </table>
+                    <div class="max-h-[400px] overflow-y-auto scrollbar-thin">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead
+                                class="text-xs text-gray-400 uppercase bg-gob-verde text-white font-bold tracking-wider sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-6 py-4">Caso / Asunto</th>
+                                    <th class="px-6 py-4">Cliente / Contraparte</th>
+                                    <th class="px-6 py-4">Estado</th>
+                                    <th class="px-6 py-4 text-right">Próx. Audiencia</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-casos" class="divide-y divide-gray-100">
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div id="empty-casos"
@@ -98,17 +101,20 @@
 
                 <div id="container-tabla-terminos"
                     class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hidden">
-                    <table class="w-full text-sm text-left text-gray-500">
-                        <thead class="text-xs text-white uppercase bg-gob-verde font-bold tracking-wider">
-                            <tr>
-                                <th class="px-6 py-4">Tipo</th>
-                                <th class="px-6 py-4">Descripción</th>
-                                <th class="px-6 py-4">Vencimiento / Fecha</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-terminos" class="divide-y divide-gray-100">
-                        </tbody>
-                    </table>
+                    <div class="max-h-[400px] overflow-y-auto scrollbar-thin">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead
+                                class="text-xs text-white uppercase bg-gob-verde font-bold tracking-wider sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-6 py-4">Tipo</th>
+                                    <th class="px-6 py-4">Descripción</th>
+                                    <th class="px-6 py-4">Vencimiento / Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-terminos" class="divide-y divide-gray-100">
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div id="empty-terminos"
@@ -128,7 +134,8 @@
                     <p class="text-sm text-gray-500 font-medium">Cargando actividad reciente...</p>
                 </div>
 
-                <div id="container-historial" class="space-y-4 hidden">
+                <div id="container-historial"
+                    class="space-y-4 hidden max-h-[500px] overflow-y-auto scrollbar-thin pr-2">
                     <!-- Aquí se inyectará el historial -->
                 </div>
 
