@@ -196,10 +196,9 @@ function cargarAbogadosPosibles(idPreseleccionado = null) {
                     option.text = `⭐ ${a.nombre} (Titular)`;
                     option.style.fontWeight = 'bold';
 
-                    // LÓGICA DE AUTO-SELECCIÓN (ROD-146):
-                    // Si NO estamos editando (idPreseleccionado es null)
-                    // Y el usuario que está creando es el propio Titular
-                    if (!idPreseleccionado && String(a.id) === String(currentUserId)) {
+                    // LÓGICA DE AUTO-SELECCIÓN (ROD-146 Mejorado):
+                    // Si estamos creando (idPreseleccionado es null), sugerimos siempre al Titular
+                    if (!idPreseleccionado && a.esTitular) {
                         option.selected = true;
                     }
                     titularEncontrado = true;
@@ -295,14 +294,31 @@ function initMiniCalendar() {
     const prevBtn = document.getElementById('miniPrev');
     const nextBtn = document.getElementById('miniNext');
 
+    // Sincronizar con el estado del servidor
+    const hdnMes = document.getElementById('hdnMesActual');
+    const hdnAnio = document.getElementById('hdnAnioActual');
+    if (hdnMes && hdnAnio) {
+        miniCalendarState.currentDate = new Date(parseInt(hdnAnio.value), parseInt(hdnMes.value) - 1, 1);
+    }
+
+    // Si hay un keyword que es fecha, marcarla como seleccionada
+    const urlParams = new URLSearchParams(window.location.search);
+    const keyword = urlParams.get('keyword');
+    if (keyword && keyword.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const parts = keyword.split('-');
+        miniCalendarState.selectedDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    }
+
     if (prevBtn && nextBtn) {
         prevBtn.onclick = () => {
-            miniCalendarState.currentDate.setMonth(miniCalendarState.currentDate.getMonth() - 1);
-            renderMiniCalendar();
+            const date = miniCalendarState.currentDate;
+            date.setMonth(date.getMonth() - 1);
+            window.location.href = `/audiencias?mes=${date.getMonth() + 1}&anio=${date.getFullYear()}`;
         };
         nextBtn.onclick = () => {
-            miniCalendarState.currentDate.setMonth(miniCalendarState.currentDate.getMonth() + 1);
-            renderMiniCalendar();
+            const date = miniCalendarState.currentDate;
+            date.setMonth(date.getMonth() + 1);
+            window.location.href = `/audiencias?mes=${date.getMonth() + 1}&anio=${date.getFullYear()}`;
         };
     }
 
@@ -340,24 +356,21 @@ function renderMiniCalendar() {
         const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
         if (isToday) cell.classList.add('mini-day-today');
 
-        const isSelected = day === miniCalendarState.selectedDate.getDate() && 
-                             month === miniCalendarState.selectedDate.getMonth() && 
-                             year === miniCalendarState.selectedDate.getFullYear();
-        if (isSelected) cell.classList.add('mini-day-selected');
+        // Lógica de Selección (Fondo Guinda Sólido)
+        const isSelected = day === miniCalendarState.selectedDate.getDate() &&
+            month === miniCalendarState.selectedDate.getMonth() &&
+            year === miniCalendarState.selectedDate.getFullYear();
+        if (isSelected) {
+            cell.classList.add('mini-day-selected');
+        }
 
         cell.onclick = () => {
-            miniCalendarState.selectedDate = new Date(year, month, day);
-            
-            // Actualizar visualmente
-            renderMiniCalendar();
-            
-            // Filtrar la tabla de audiencias por esta fecha
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            console.log("Filtrar por fecha:", dateStr);
-            
-            // Redirigir con el filtro de fecha (backend lo maneja como keyword o keyword de fecha)
             const url = new URL(window.location.href);
             url.searchParams.set('keyword', dateStr);
+            // También mantenemos el mes/anio para que el calendario no brinque
+            url.searchParams.set('mes', month + 1);
+            url.searchParams.set('anio', year);
             window.location.href = url.toString();
         };
 
@@ -368,4 +381,54 @@ function renderMiniCalendar() {
 // Iniciar componentes al cargar
 document.addEventListener('DOMContentLoaded', () => {
     initMiniCalendar();
-});
+    initSearchBar();
+});
+
+function initSearchBar() {
+    const input = document.getElementById('input-search-audiencias');
+    const btnClear = document.getElementById('btn-clear-search');
+    const form = document.getElementById('form-search-audiencias');
+
+    if (!input || !form) return;
+
+    // A. Mostrar/Ocultar botón X según el contenido
+    input.addEventListener('input', function () {
+        if (btnClear) {
+            if (this.value.trim() !== "") {
+                btnClear.classList.remove('hidden');
+            } else {
+                btnClear.classList.add('hidden');
+            }
+        }
+    });
+
+    // B. Manejar tecla ENTER (Búsqueda Servidor)
+    input.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            form.submit();
+        }
+    });
+
+    // C. Manejar Botón Limpiar (X)
+    if (btnClear) {
+        btnClear.onclick = () => {
+            input.value = '';
+            // Al limpiar, quitamos también los parámetros de mes/anio si queremos volver a "Hoy"
+            // o simplemente enviamos el form para quitar el keyword.
+            // Para volver al "Estado Original", lo mejor es redirigir a la URL base de audiencias.
+            window.location.href = '/audiencias';
+        };
+    }
+
+    // D. Detección de "Borrado Total" por teclado
+    input.addEventListener('keyup', function (e) {
+        if (this.value.trim() === "" && (e.key === 'Backspace' || e.key === 'Delete')) {
+            // Si el usuario borra todo y ya había una búsqueda (keyword en URL), recargamos
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('keyword')) {
+                window.location.href = '/audiencias';
+            }
+        }
+    });
+}

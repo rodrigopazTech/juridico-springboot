@@ -89,7 +89,9 @@ public class AudienciasController {
             @RequestParam(value = "materia", required = false) String materia,
             @RequestParam(value = "estatus", required = false) EstatusAudiencia estatus,
             @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
-            @RequestParam(value = "periodo", required = false) PeriodoFiltro periodo) {
+            @RequestParam(value = "periodo", required = false) PeriodoFiltro periodo,
+            @RequestParam(value = "mes", required = false) Integer mes,
+            @RequestParam(value = "anio", required = false) Integer anio) {
 
         if (keyword != null && keyword.contains("?keyword=")) {
             // Nos quedamos solo con lo que esté después del último igual (=)
@@ -121,17 +123,29 @@ public class AudienciasController {
         LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
         LocalDate fechaFin = LocalDate.of(2100, 12, 31);
 
-        if (periodo != null) {
+        String searchKeyword = keyword;
+        if (keyword != null && keyword.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            // 1. Prioridad: Fecha exacta desde mini-calendario
+            LocalDate fecha = LocalDate.parse(keyword);
+            fechaInicio = fecha;
+            fechaFin = fecha;
+            searchKeyword = null; // No buscar la fecha como texto en otros campos
+        } else if (periodo != null) {
+            // 2. Periodos relativos (Hoy, Semana, Mes actual)
             LocalDate[] rango = periodo.calcularRango();
             fechaInicio = rango[0];
             fechaFin = rango[1];
+        } else if (mes != null && anio != null) {
+            // 3. Navegación por mes en mini-calendario
+            fechaInicio = LocalDate.of(anio, mes, 1);
+            fechaFin = fechaInicio.withDayOfMonth(fechaInicio.lengthOfMonth());
         }
 
         // 4. CONSULTA
         Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaAudiencia").ascending());
 
         Page<Audiencia> audiencias = audienciaRepository.buscarConFiltros(
-                id, keyword, tipo, gerencia, materia, estatus,
+                id, searchKeyword, tipo, gerencia, materia, estatus,
                 abogadoId, fechaInicio, fechaFin,
                 filtroUsuarioId, filtroGerenciaId, filtroMateriaIds,
                 pageable);
@@ -140,6 +154,8 @@ public class AudienciasController {
         model.addAttribute("pageTitle", "Gestión de Audiencias");
         model.addAttribute("activePage", "audiencias");
         model.addAttribute("paramPeriodo", periodo != null ? periodo.name() : null);
+        model.addAttribute("mesActual", mes != null ? mes : LocalDate.now().getMonthValue());
+        model.addAttribute("anioActual", anio != null ? anio : LocalDate.now().getYear());
 
         // 5. DROPDOWN INTELIGENTE (MODO ANTI-FANTASMA)
         List<Expediente> expedientesParaDropdown;

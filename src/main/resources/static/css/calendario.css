@@ -50,8 +50,13 @@
   accent-color: #B38E5D;
 }
 
-.modal { display: none; }
-.modal.flex { display: flex; }
+.modal {
+  display: none;
+}
+
+.modal.flex {
+  display: flex;
+}
 
 /* =========================================
    ESTILOS ESPECÍFICOS DEL CALENDARIO
@@ -148,17 +153,20 @@
 /* Colores semánticos para eventos */
 .event-audiencia,
 .evento-audiencia {
-  background-color: #691228; /* Gob Guinda */
+  background-color: #691228;
+  /* Gob Guinda */
 }
 
 .event-termino,
 .evento-termino {
-  background-color: #13322B; /* Gob Verde */
+  background-color: #13322B;
+  /* Gob Verde */
 }
 
 .event-recordatorio,
 .evento-recordatorio {
-  background-color: #98774C; /* Color personalizado */
+  background-color: #98774C;
+  /* Color personalizado */
 }
 
 /* Badge para tipo de evento en modal */
@@ -212,6 +220,7 @@
     opacity: 0;
     transform: translate3d(0, -20px, 0);
   }
+
   to {
     opacity: 1;
     transform: translate3d(0, 0, 0);
@@ -266,7 +275,7 @@ body {
   display: contents;
 }
 
-#weekDays > div {
+#weekDays>div {
   flex: 1;
   min-width: 0;
 }
@@ -380,7 +389,18 @@ body {
 .mini-day-selected {
   background-color: #691228 !important;
   color: white !important;
-  font-weight: 700;
+  font-weight: 800;
+  box-shadow: 0 4px 6px -1px rgba(105, 18, 40, 0.3);
+}
+
+.mini-day-selected.mini-has-events::after {
+  background-color: #B38E5D;
+  /* Punto dorado si hay eventos en un día seleccionado guinda */
+}
+
+/* Remover el punto de selección previo si ya no se usa en JS */
+.mini-selection-dot {
+  display: none;
 }
 
 .mini-has-events::after {

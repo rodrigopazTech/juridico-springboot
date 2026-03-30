@@ -8,6 +8,7 @@
     <script th:src="@{/js/tailwind.config.js}"></script>
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" th:href="@{/css/calendario.css}">
 </head>
 
 <body class="bg-gray-100 text-gray-800 font-sans overflow-x-hidden">
@@ -30,33 +31,15 @@
                 <aside class="col-span-12 lg:col-span-3 space-y-6">
                     <div th:replace="~{fragments/audiencias/mini-calendar :: mini-calendar}"></div>
 
-                    <!-- Tarjeta de Resumen Rápido -->
+                    <!-- Tarjeta de Filtros -->
                     <div
-                        class="bg-gob-guinda text-white p-6 rounded-2xl shadow-lg shadow-gob-guinda/10 relative overflow-hidden">
-                        <div class="relative z-10" th:if="${!audiencias.empty}">
-                            <p class="text-[10px] font-bold uppercase tracking-wider opacity-80 mb-1">Próxima Audiencia
-                            </p>
-                            <h4 class="text-lg font-bold leading-tight mb-3 truncate"
-                                th:text="${audiencias.content[0].tipoAudiencia?.nombre ?: 'Audiencia'}">Revisión de
-                                Contrato</h4>
-                            <div class="flex items-center gap-2 text-xs opacity-90">
-                                <i class="fas fa-clock"></i>
-                                <span
-                                    th:text="${#temporals.format(audiencias.content[0].fechaAudiencia, 'dd/MM/yyyy') + ' - ' + audiencias.content[0].horaAudiencia}">Mañana,
-                                    10:00 AM</span>
-                            </div>
-                            <div class="mt-4">
-                                <a th:href="@{/expedientes/{id}(id=${audiencias.content[0].expediente?.id})}"
-                                    class="text-[10px] font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg backdrop-blur-sm transition-all inline-block">
-                                    Ver Expediente
-                                </a>
-                            </div>
+                        class="bg-gob-guinda text-white p-6 rounded-2xl shadow-lg shadow-gob-guinda/10 relative overflow-hidden flex flex-col gap-6">
+
+                        <!-- SECCIÓN DE FILTROS -->
+                        <div class="relative z-10">
+                            <div th:replace="~{fragments/audiencias/barra-filtros :: filtros}"></div>
                         </div>
-                        <div class="relative z-10" th:if="${audiencias.empty}">
-                            <p class="text-[10px] font-bold uppercase tracking-wider opacity-80 mb-1">Agenda Libre</p>
-                            <h4 class="text-lg font-bold leading-tight mb-3">Sin audiencias pendientes</h4>
-                            <p class="text-[10px] opacity-70">¡Buen trabajo! No tienes compromisos próximos.</p>
-                        </div>
+
                         <i class="fas fa-gavel absolute -right-4 -bottom-4 text-white/10 text-7xl rotate-12"></i>
                     </div>
                 </aside>
@@ -120,9 +103,8 @@
                             <h2 class="text-lg font-bold text-gray-800">Listado de Audiencias</h2>
                             <div th:replace="~{fragments/audiencias/barra-busqueda :: barra}"></div>
                         </div>
-                        <div class="p-6">
-                            <div th:replace="~{fragments/audiencias/barra-filtros :: filtros}"></div>
-                            <div class="mt-6">
+                        <div class="p-6 pt-0">
+                            <div class="mt-0">
                                 <div th:replace="~{fragments/audiencias/tabla :: tabla}"></div>
                             </div>
                         </div>
@@ -144,6 +126,9 @@
     <script th:src="@{/js/realtime-search.js}"></script>
 
     <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
+    <!-- Estado del Mini-Calendario para JS -->
+    <input type="hidden" id="hdnMesActual" th:value="${mesActual}">
+    <input type="hidden" id="hdnAnioActual" th:value="${anioActual}">
 </body>
 
 </html>
