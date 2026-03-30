@@ -118,16 +118,16 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
 
     // --- 4. CONTEO PARA DASHBOARD KPIs ---
     // Conteo por abogado individual (solo términos activos)
-    @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.abogadoResponsable.id = :abogadoId AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
+    @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE (e.abogadoResponsable.id = :abogadoId OR t.abogadoResponsable.id = :abogadoId) AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
     long countActivosByAbogadoId(@Param("abogadoId") Integer abogadoId);
 
-    @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.abogadoResponsable.id = :abogadoId AND e.materia.id = :materiaId AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
+    @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE (e.abogadoResponsable.id = :abogadoId OR t.abogadoResponsable.id = :abogadoId) AND e.materia.id = :materiaId AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
     long countActivosByAbogadoIdAndMateriaId(@Param("abogadoId") Integer abogadoId, @Param("materiaId") Integer materiaId);
 
-    @Query("SELECT t.prioridad.nombre, COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.abogadoResponsable.id = :abogadoId AND t.prioridad IS NOT NULL AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO) GROUP BY t.prioridad.nombre")
+    @Query("SELECT t.prioridad.nombre, COUNT(t) FROM Termino t JOIN t.expediente e WHERE (e.abogadoResponsable.id = :abogadoId OR t.abogadoResponsable.id = :abogadoId) AND t.prioridad IS NOT NULL AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO) GROUP BY t.prioridad.nombre")
     List<Object[]> contarTerminosPorPrioridadYAbogado(@Param("abogadoId") Integer abogadoId);
 
-    @Query("SELECT t.prioridad.nombre, COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.abogadoResponsable.id = :abogadoId AND e.materia.id = :materiaId AND t.prioridad IS NOT NULL AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO) GROUP BY t.prioridad.nombre")
+    @Query("SELECT t.prioridad.nombre, COUNT(t) FROM Termino t JOIN t.expediente e WHERE (e.abogadoResponsable.id = :abogadoId OR t.abogadoResponsable.id = :abogadoId) AND e.materia.id = :materiaId AND t.prioridad IS NOT NULL AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO) GROUP BY t.prioridad.nombre")
     List<Object[]> contarTerminosPorPrioridadYAbogadoYMateria(@Param("abogadoId") Integer abogadoId, @Param("materiaId") Integer materiaId);
 
     // Conteo por gerencia individual (solo términos activos - excluidos concluidos/presentados)
@@ -204,4 +204,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("fin") LocalDate fin,
             @Param("materiaIds") List<Integer> materiaIds,
             Pageable pageable);
+
+    @Query("SELECT t FROM Termino t WHERE t.abogadoResponsable.id = :usuarioId OR t.expediente.abogadoResponsable.id = :usuarioId")
+    List<Termino> findByUsuarioId(@Param("usuarioId") Integer usuarioId);
 }

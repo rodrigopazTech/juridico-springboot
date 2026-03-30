@@ -4,8 +4,10 @@ import com.juridico.sistema_juridico.Entity.expediente.ActividadExpediente;
 import com.juridico.sistema_juridico.Entity.expediente.BitacoraDato;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.usuario.ActividadUsuario;
 import com.juridico.sistema_juridico.repository.Expediente.ActividadExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Expediente.BitacoraDatoRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.ActividadUsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,7 @@ public class AuditoriaService {
 
         private final ActividadExpedienteRepository actividadRepository;
         private final BitacoraDatoRepository bitacoraDatoRepository;
+        private final ActividadUsuarioRepository actividadUsuarioRepository;
 
         /**
          * Registra una actividad general en el historial del expediente.
@@ -37,6 +40,21 @@ public class AuditoriaService {
                                 .fechaRegistro(LocalDateTime.now())
                                 .build();
                 actividadRepository.save(actividad);
+        }
+
+        /**
+         * Registra una actividad no vinculada a un expediente (ej. Login/Logout).
+         */
+        @Transactional
+        public void registrarActividadGeneral(Usuario usuario, String titulo, String descripcion, String tipoIcono) {
+                ActividadUsuario actividad = ActividadUsuario.builder()
+                                .titulo(titulo)
+                                .descripcion(descripcion)
+                                .tipoIcono(tipoIcono)
+                                .usuario(usuario)
+                                .fechaRegistro(LocalDateTime.now())
+                                .build();
+                actividadUsuarioRepository.save(actividad);
         }
 
         /**
