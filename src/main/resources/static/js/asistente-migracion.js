@@ -433,32 +433,48 @@ async function cargarAbogados(materiaId, targetSelect, selectedValue = '') {
     }
 }
 
+// ==========================================
+// LÓGICA DE SELECTORES JERÁRQUICOS Y MATCHING INTELIGENTE
+// ==========================================
 function seleccionarOpcionPorIdONombre(selectEl, id, nombre, triggerChange = true) {
-    if (!selectEl) return;
+    if (!selectEl) return false;
     let found = false;
-    if (id) {
+
+    // 1. Limpieza de datos (Evitamos strings "null" o "undefined")
+    const cleanId = (id && id !== 'null' && id !== 'undefined' && id !== '') ? id.toString() : null;
+    const cleanNombre = (nombre && nombre !== 'null' && nombre !== 'undefined' && nombre !== '') ? nombre.toString().trim().toLowerCase() : null;
+
+    // 2. Intentar buscar por ID
+    if (cleanId) {
         for (let i = 0; i < selectEl.options.length; i++) {
-            if (selectEl.options[i].getAttribute('data-id') == id) {
+            if (selectEl.options[i].getAttribute('data-id') == cleanId) {
                 selectEl.selectedIndex = i;
                 found = true;
                 break;
             }
         }
     }
-    if (!found && nombre) {
+
+    // 3. Intentar buscar por Texto (Ignorando mayúsculas y espacios extra)
+    if (!found && cleanNombre) {
         for (let i = 0; i < selectEl.options.length; i++) {
-            if (selectEl.options[i].value === nombre || selectEl.options[i].text === nombre) {
+            const optVal = selectEl.options[i].value.trim().toLowerCase();
+            const optText = selectEl.options[i].text.trim().toLowerCase();
+
+            if (optVal === cleanNombre || optText === cleanNombre) {
                 selectEl.selectedIndex = i;
                 found = true;
                 break;
             }
         }
     }
-    // FIX: Controlamos el trigger del evento para evitar "Race Conditions" en los Modales
+
+    // 4. Disparar el evento solo si se requiere (Evita Race Conditions)
     if (found && triggerChange) {
         selectEl.dispatchEvent(new Event('change'));
     }
-    return found;
+
+    return found; // Retornamos si tuvimos éxito
 }
 
 function setupHierarchicalSelects(prefix) {
@@ -516,17 +532,21 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
 
         seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede, false);
 
-        // Pasamos "false" para no romper la cascada asíncrona
-        seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia, false);
+        // Intentamos autoseleccionar la gerencia
+        const foundGerencia = seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia, false);
 
-        const activeGerenciaId = gerenciaSel && gerenciaSel.selectedIndex > 0 ?
-            gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id') : null;
-        if (activeGerenciaId) {
+        if (foundGerencia) {
+            const activeGerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
             await cargarMaterias(activeGerenciaId, materiaSel, d.materiaId || d.materia);
-        } else if (d.materia) {
-            // Respaldo de inyección directa si no hay gerencia
-            materiaSel.innerHTML = `<option value="${d.materia}" selected>${d.materia}</option>`;
-            materiaSel.disabled = false;
+        } else {
+            // RED DE SEGURIDAD: Inyectar datos si falló el match de catálogo
+            if (d.gerencia && d.gerencia !== 'null' && d.gerencia !== 'undefined' && d.gerencia.trim() !== '') {
+                gerenciaSel.innerHTML = `<option value="${d.gerencia}" selected>${d.gerencia}</option>`;
+            }
+            if (d.materia && d.materia !== 'null' && d.materia !== 'undefined' && d.materia.trim() !== '') {
+                materiaSel.innerHTML = `<option value="${d.materia}" selected>${d.materia}</option>`;
+                materiaSel.disabled = false;
+            }
         }
 
         const modal = document.getElementById('modal-editar-expediente');
@@ -562,10 +582,9 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
 
         seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede, false);
 
-        // Pasamos "false" para control absoluto de los tiempos de carga
-        seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia, false);
+        const foundGerencia = seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia, false);
 
-        if (gerenciaSel && gerenciaSel.selectedIndex > 0) {
+        if (foundGerencia && gerenciaSel.selectedIndex > 0) {
             const activeGerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
             await cargarMaterias(activeGerenciaId, materiaSel, d.materiaId || d.materia);
 
@@ -575,17 +594,20 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
                 await cargarAbogados(activeMateriaId, document.getElementById('aud-compareciente'), d.abogadoId || d.abogadoCompareciente);
             }
         } else {
-            // Respaldo por si el JSON viene tan incompleto que falla el cascade
-            if (d.materia) {
+            // RED DE SEGURIDAD EXTREMA
+            if (d.gerencia && d.gerencia !== 'null' && d.gerencia !== 'undefined' && d.gerencia.trim() !== '') {
+                gerenciaSel.innerHTML = `<option value="${d.gerencia}" selected>${d.gerencia}</option>`;
+            }
+            if (d.materia && d.materia !== 'null' && d.materia !== 'undefined' && d.materia.trim() !== '') {
                 materiaSel.innerHTML = `<option value="${d.materia}" selected>${d.materia}</option>`;
                 materiaSel.disabled = false;
             }
-            if (d.abogadoResponsable) {
+            if (d.abogadoResponsable && d.abogadoResponsable !== 'null' && d.abogadoResponsable !== 'undefined' && d.abogadoResponsable.trim() !== '') {
                 const resp = document.getElementById('aud-responsable');
                 resp.innerHTML = `<option value="${d.abogadoResponsable}" selected>${d.abogadoResponsable}</option>`;
                 resp.disabled = false;
             }
-            if (d.abogadoCompareciente) {
+            if (d.abogadoCompareciente && d.abogadoCompareciente !== 'null' && d.abogadoCompareciente !== 'undefined' && d.abogadoCompareciente.trim() !== '') {
                 const comp = document.getElementById('aud-compareciente');
                 comp.innerHTML = `<option value="${d.abogadoCompareciente}" selected>${d.abogadoCompareciente}</option>`;
                 comp.disabled = false;
@@ -640,9 +662,10 @@ document.querySelectorAll('.btn-editar-termino').forEach(btn => {
         const sedeSel = document.getElementById('term-sede');
 
         seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede, false);
-        seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia, false);
 
-        if (gerenciaSel && gerenciaSel.selectedIndex > 0) {
+        const foundGerencia = seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia, false);
+
+        if (foundGerencia && gerenciaSel.selectedIndex > 0) {
             const activeGerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
             await cargarMaterias(activeGerenciaId, materiaSel, d.materiaId || d.materia);
             if (materiaSel && materiaSel.selectedIndex > 0) {
@@ -650,11 +673,15 @@ document.querySelectorAll('.btn-editar-termino').forEach(btn => {
                 await cargarAbogados(activeMateriaId, document.getElementById('term-abogado'), d.abogadoId || d.abogadoResponsable);
             }
         } else {
-            if (d.materia) {
+            // RED DE SEGURIDAD EXTREMA
+            if (d.gerencia && d.gerencia !== 'null' && d.gerencia !== 'undefined' && d.gerencia.trim() !== '') {
+                gerenciaSel.innerHTML = `<option value="${d.gerencia}" selected>${d.gerencia}</option>`;
+            }
+            if (d.materia && d.materia !== 'null' && d.materia !== 'undefined' && d.materia.trim() !== '') {
                 materiaSel.innerHTML = `<option value="${d.materia}" selected>${d.materia}</option>`;
                 materiaSel.disabled = false;
             }
-            if (d.abogadoResponsable) {
+            if (d.abogadoResponsable && d.abogadoResponsable !== 'null' && d.abogadoResponsable !== 'undefined' && d.abogadoResponsable.trim() !== '') {
                 const resp = document.getElementById('term-abogado');
                 resp.innerHTML = `<option value="${d.abogadoResponsable}" selected>${d.abogadoResponsable}</option>`;
                 resp.disabled = false;

@@ -159,8 +159,12 @@
                     JsonNode json = objectMapper.readTree(reg.getPayloadJson());
                     
                     // 4. Extraemos y guardamos usando el caché local
+                    // LIMPIEZA AGRESIVA: Ignoramos cualquier texto que contenga "DEFINIR"
                     if (json.has("gerencia") && !json.get("gerencia").isNull()) {
-                        guardarCatalogoUnico(lote, "GERENCIA", json.get("gerencia").asText(), cacheMapeo);
+                        String gerStr = json.get("gerencia").asText().trim();
+                        if (!gerStr.toUpperCase().contains("DEFINIR") && !gerStr.isEmpty()) {
+                            guardarCatalogoUnico(lote, "GERENCIA", gerStr, cacheMapeo);
+                        }
                     }
                     if (json.has("materia") && !json.get("materia").isNull()) {
                         String matStr = json.get("materia").asText();
@@ -382,6 +386,18 @@
                 String abogadoModa = findMostRepeated(entry.getValue(), "abogadoResponsable", "");
                 String descModa = findMostRepeated(entry.getValue(), "descripcion", "Expediente migrado.");
 
+                // LIMPIEZA AGRESIVA de basura antes de procesar
+                if (gerenciaModa != null && gerenciaModa.toUpperCase().contains("DEFINIR")) gerenciaModa = "";
+                if (materiaModa != null && materiaModa.toUpperCase().contains("DEFINIR")) materiaModa = "";
+
+                // INTELIGENCIA MEJORADA: Inferir gerencia buscando la materia directamente en la Base de Datos
+                if ((gerenciaModa == null || gerenciaModa.isEmpty()) && materiaModa != null && !materiaModa.isEmpty()) {
+                    java.util.Optional<Materia> matOpt = materiaRepository.findByNombreIgnoreCase(materiaModa.trim());
+                    if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
+                        gerenciaModa = matOpt.get().getGerencia().getNombre();
+                    }
+                }
+
                 map.put("partes", partesModa);
                 map.put("sede", sedeModa);
                 map.put("gerencia", gerenciaModa);
@@ -395,15 +411,20 @@
                 Long materiaId = buscarIdMapeado(loteId, "MATERIA", materiaModa);
                 Long gerenciaId = buscarIdMapeado(loteId, "GERENCIA", gerenciaModa);
                 
-                // INTELIGENCIA: Si la gerenciaId es nula pero sí tenemos una materiaId mapeada,
-                // inferimos la Gerencia desde la Materia para que los selects en cascada no se rompan.
+    // Limpiamos la basura del JSON antes de mandarla al frontend
+                if (gerenciaModa.equalsIgnoreCase("POR DEFINIR")) gerenciaModa = "";
+
+                // INTELIGENCIA: Si la gerenciaId es nula pero sí tenemos una materiaId mapeada...
                 if (gerenciaId == null && materiaId != null) {
                     java.util.Optional<Materia> matOpt = materiaRepository.findById(materiaId.intValue());
                     if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
                         gerenciaId = matOpt.get().getGerencia().getId().longValue();
+                        // FIX: Actualizamos también el texto para que el Select de Javascript lo encuentre
+                        gerenciaModa = matOpt.get().getGerencia().getNombre(); 
                     }
                 }
-
+                
+                map.put("gerencia", gerenciaModa); // Aseguramos que se mande el texto limpio/inferido
                 map.put("gerenciaId", gerenciaId);
                 map.put("materiaId", materiaId);
                 map.put("sedeId", buscarIdMapeado(loteId, "SEDE", sedeModa));
@@ -417,10 +438,7 @@
     // =========================================================
 
     public java.util.List<java.util.Map<String, Object>> obtenerResumenAudiencias(Long loteId) {
-        // Traemos los registros de AUDIENCIA
         List<RegistroMigracion> registros = registroRepository.findByLoteIdAndTipoDatoAndEstatusNot(loteId, "AUDIENCIA", "RECHAZADO");
-        
-        // NUEVO: Traemos TODOS los registros para poder inferir la gerencia y materia desde el Expediente padre
         List<RegistroMigracion> todosLosRegistros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
         
         java.util.List<java.util.Map<String, Object>> resumen = new java.util.ArrayList<>();
@@ -432,52 +450,88 @@
                 
                 String numExp = reg.getNumeroExpedienteExtraido() != null ? reg.getNumeroExpedienteExtraido() : "";
                 
+                // --- Agregamos ID y Numero de Expediente ---
                 map.put("id", reg.getId());
                 map.put("numeroExpediente", numExp);
-                map.put("tipoAudiencia", json.has("tipoAudiencia") ? json.get("tipoAudiencia").asText() : "Sin especificar");
+
+                // 1. Extraemos los valores en variables primero
+                String tipoAud = json.has("tipoAudiencia") ? json.get("tipoAudiencia").asText() : "Sin especificar";
+                String comp = json.has("abogadoCompareciente") ? json.get("abogadoCompareciente").asText() : "";
+                String resp = json.has("abogadoResponsable") ? json.get("abogadoResponsable").asText() : "";
+                String sedeVal = json.has("sede") ? json.get("sede").asText() : "";
+                String organoVal = json.has("organoJurisdiccional") ? json.get("organoJurisdiccional").asText() : "";
+
+                // 2. Guardamos los textos
+                map.put("tipoAudiencia", tipoAud);
                 map.put("fecha", json.has("fechaAudiencia") ? json.get("fechaAudiencia").asText() : "Sin fecha");
                 map.put("hora", json.has("horaAudiencia") ? json.get("horaAudiencia").asText() : "--:--");
-                map.put("compareciente", json.has("abogadoCompareciente") ? json.get("abogadoCompareciente").asText() : "");
-                map.put("abogadoResponsable", json.has("abogadoResponsable") ? json.get("abogadoResponsable").asText() : "");
-                map.put("sede", json.has("sede") ? json.get("sede").asText() : "");
+                map.put("compareciente", comp);
+                map.put("abogadoCompareciente", comp);
+                map.put("abogadoResponsable", resp);
+                map.put("sede", sedeVal);
                 map.put("sala", json.has("sala") ? json.get("sala").asText() : "");
-                map.put("organo", json.has("organoJurisdiccional") ? json.get("organoJurisdiccional").asText() : "");
+                map.put("organo", organoVal);
                 map.put("partes", json.has("partes") ? json.get("partes").asText() : "");
-                
+
+                // 3. RESOLUCIÓN DE IDs PARA LOS SELECTS DEL MODAL
+                map.put("abogadoComparecienteId", buscarIdMapeado(loteId, "USUARIO", comp));
+                map.put("abogadoResponsableId", buscarIdMapeado(loteId, "USUARIO", resp));
+                map.put("sedeId", buscarIdMapeado(loteId, "SEDE", sedeVal));
+                map.put("organoId", buscarIdMapeado(loteId, "ORGANO", organoVal));
+                map.put("tipoAudienciaId", buscarIdMapeado(loteId, "TIPO_AUDIENCIA", tipoAud));
+
                 map.put("esEnLinea", json.has("esEnLinea") ? json.get("esEnLinea").asText() : (json.has("esVirtual") ? json.get("esVirtual").asText() : "false"));
                 map.put("enlaceReunion", json.has("enlaceReunion") ? json.get("enlaceReunion").asText() : (json.has("urlReunion") ? json.get("urlReunion").asText() : ""));
                 
                 // --- INTELIGENCIA DE HERENCIA ---
-                String gerenciaAsignada = json.has("gerencia") && !json.get("gerencia").isNull() ? json.get("gerencia").asText() : "";
-                String materiaAsignada = json.has("materia") && !json.get("materia").isNull() ? json.get("materia").asText() : "";
+                String gerenciaAsignada = json.has("gerencia") && !json.get("gerencia").isNull() ? json.get("gerencia").asText().trim() : "";
+                String materiaAsignada = json.has("materia") && !json.get("materia").isNull() ? json.get("materia").asText().trim() : "";
                 
-                // Si el JSON de la audiencia viene sin gerencia/materia, lo buscamos en su expediente padre
+                // Limpieza INMEDIATA de basura
+                if (gerenciaAsignada.toUpperCase().contains("DEFINIR")) gerenciaAsignada = "";
+                if (materiaAsignada.toUpperCase().contains("DEFINIR")) materiaAsignada = "";
+                
+                // Si viene vacío, lo heredamos del expediente padre
                 if (gerenciaAsignada.isEmpty() || materiaAsignada.isEmpty()) {
                     List<RegistroMigracion> contextoExpediente = todosLosRegistros.stream()
                         .filter(r -> r.getNumeroExpedienteExtraido() != null && r.getNumeroExpedienteExtraido().equals(numExp))
                         .toList();
                     
-                    if (gerenciaAsignada.isEmpty()) gerenciaAsignada = findMostRepeated(contextoExpediente, "gerencia", "");
-                    if (materiaAsignada.isEmpty()) materiaAsignada = findMostRepeated(contextoExpediente, "materia", "");
-                }
-                
-                // Auto-mapeo final: Si la gerencia sigue vacía, pero tenemos materia, la inferimos
-                if (gerenciaAsignada.isEmpty() && !materiaAsignada.isEmpty()) {
-                    Long materiaId = buscarIdMapeado(loteId, "MATERIA", materiaAsignada);
-                    if (materiaId != null) {
-                        java.util.Optional<Materia> matOpt = materiaRepository.findById(materiaId.intValue());
-                        if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
-                            gerenciaAsignada = matOpt.get().getGerencia().getNombre();
-                        }
+                    if (gerenciaAsignada.isEmpty()) {
+                        gerenciaAsignada = findMostRepeated(contextoExpediente, "gerencia", "");
+                        if (gerenciaAsignada.toUpperCase().contains("DEFINIR")) gerenciaAsignada = ""; 
+                    }
+                    if (materiaAsignada.isEmpty()) {
+                        materiaAsignada = findMostRepeated(contextoExpediente, "materia", "");
+                        if (materiaAsignada.toUpperCase().contains("DEFINIR")) materiaAsignada = ""; 
                     }
                 }
                 
-                map.put("gerencia", gerenciaAsignada);
-                map.put("materia", materiaAsignada);
+                // INTELIGENCIA: Si la gerencia sigue vacía, inferirla basándonos en la materia real
+                if (gerenciaAsignada.isEmpty() && !materiaAsignada.isEmpty()) {
+                    java.util.Optional<Materia> matOpt = materiaRepository.findByNombreIgnoreCase(materiaAsignada);
+                    if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
+                        gerenciaAsignada = matOpt.get().getGerencia().getNombre();
+                    }
+                }
                 
+                // Extraer el ID exacto para el Frontend
+                Long gerenciaId = null;
+                if (!gerenciaAsignada.isEmpty()) {
+                    final String searchGer = gerenciaAsignada;
+                    gerenciaId = gerenciaRepository.findAll().stream()
+                        .filter(g -> g.getNombre().equalsIgnoreCase(searchGer))
+                        .findFirst().map(g -> g.getId().longValue()).orElse(null);
+                }
+                
+                map.put("gerencia", gerenciaAsignada);
+                map.put("gerenciaId", gerenciaId);
+                map.put("materia", materiaAsignada);
+                map.put("materiaId", buscarIdMapeado(loteId, "MATERIA", materiaAsignada));
+                    
                 resumen.add(map);
             } catch (Exception e) {
-                // Ignorar errores de parseo individuales
+                // Ignorar errores de parseo individuales (Aquí se cierra correctamente el catch)
             }
         }
         

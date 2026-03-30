@@ -36,7 +36,7 @@
                 </option>
             </select>
 
-            <select sec:authorize="hasAnyAuthority('DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')"
+            <select sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')"
                 name="abogadoId" onchange="this.form.submit()"
                 class="w-full border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none bg-white text-gray-700 transition-all hover:border-gray-300">
                 <option value="">Abogado: Todos</option>
@@ -44,7 +44,7 @@
                     th:selected="${paramAbogadoId != null and paramAbogadoId.toString() == a.id.toString()}"></option>
             </select>
 
-            <select sec:authorize="hasAnyAuthority('DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')"
+            <select sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')"
                 name="materiaId" onchange="this.form.submit()"
                 class="w-full border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none bg-white text-gray-700 transition-all hover:border-gray-300">
                 <option value="">Materia: Todas</option>
@@ -52,7 +52,7 @@
                     th:selected="${paramMateriaId != null and paramMateriaId.toString() == m.id.toString()}"></option>
             </select>
 
-            <select sec:authorize="hasAnyAuthority('DIRECCION', 'SUBDIRECCION')" name="gerenciaId"
+            <select sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION')" name="gerenciaId"
                 onchange="this.form.submit()"
                 class="w-full border border-gray-300 rounded p-2 text-sm focus:border-gob-guinda outline-none bg-white text-gray-700 transition-all hover:border-gray-300">
                 <option value="">Gerencia: Todas</option>
