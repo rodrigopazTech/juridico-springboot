@@ -222,4 +222,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         @Param("filtroUsuarioId") Integer filtroUsuarioId,
                         @Param("filtroGerenciaId") Integer filtroGerenciaId,
                         @Param("filtroMateriaIds") List<Integer> filtroMateriaIds);
+
+        @Query("SELECT a FROM Audiencia a WHERE a.abogadoComparece.id = :usuarioId OR a.expediente.abogadoResponsable.id = :usuarioId")
+        List<Audiencia> findByUsuarioId(@Param("usuarioId") Integer usuarioId);
 }

@@ -18,9 +18,25 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
+import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
+import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
+import com.juridico.sistema_juridico.repository.Expediente.ActividadExpedienteRepository;
+import com.juridico.sistema_juridico.Entity.expediente.Expediente;
+import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
+import com.juridico.sistema_juridico.Entity.procesal.Termino;
+import com.juridico.sistema_juridico.Entity.expediente.ActividadExpediente;
+
 import java.util.stream.Collectors;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
+import java.time.format.DateTimeFormatter;
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.Comparator;
 
 @Controller
 @RequestMapping("/abogados")
@@ -30,6 +46,17 @@ public class AbogadosController {
     private UsuarioService usuarioService;
     @Autowired
     private UsuarioRepository usuarioRepository;
+    @Autowired
+    private ExpedienteRepository expedienteRepository;
+    @Autowired
+    private AudienciaRepository audienciaRepository;
+    @Autowired
+    private TerminoRepository terminoRepository;
+    @Autowired
+    private ActividadExpedienteRepository actividadRepository;
+
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a");
 
     @GetMapping
     public String index(Model model, @RequestParam(value = "page", defaultValue = "0") int page) {
@@ -100,46 +127,95 @@ public class AbogadosController {
 
     @GetMapping("/api/{id}/casos")
     @ResponseBody
-    public org.springframework.http.ResponseEntity<List<java.util.Map<String, Object>>> obtenerCasosMock(
+    public org.springframework.http.ResponseEntity<List<Map<String, Object>>> obtenerCasosReal(
             @PathVariable("id") Integer id) {
 
-        List<java.util.Map<String, Object>> casosMock = new java.util.ArrayList<>();
+        List<Expediente> expedientes = expedienteRepository.findAllByAbogadoResponsableId(id);
+        List<Map<String, Object>> response = expedientes.stream().map(e -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("numero", e.getNumero());
+            map.put("asunto", e.getDescripcion() != null ? (e.getDescripcion().length() > 50 ? e.getDescripcion().substring(0, 47) + "..." : e.getDescripcion()) : "Sin asunto");
+            map.put("cliente", e.getPartes() != null ? e.getPartes() : "No especificado");
+            map.put("estatus", e.getEtapaProcesal() != null ? e.getEtapaProcesal().toString() : "N/A");
+            map.put("fecha", e.getCreatedAt() != null ? e.getCreatedAt().format(dateFormatter) : "-");
+            return map;
+        }).collect(Collectors.toList());
 
-        // Simulamos que si el ID es par tiene datos, si es impar no tiene (para probar
-        // estados vacíos)
-        if (id % 2 == 0) {
-            casosMock.add(java.util.Map.of(
-                    "numero", "C-2023-015", "asunto", "Adquisición TechCorp",
-                    "cliente", "Innovate Solutions", "estatus", "Activo", "fecha", "25/10/2024"));
-            casosMock.add(java.util.Map.of(
-                    "numero", "C-2023-021", "asunto", "Patente de Software",
-                    "cliente", "Quantum Leap Inc.", "estatus", "Activo", "fecha", "15/11/2024"));
-            casosMock.add(java.util.Map.of(
-                    "numero", "C-2022-108", "asunto", "Litigio Contractual",
-                    "cliente", "Global Logistics", "estatus", "En Espera", "fecha", "-"));
-            casosMock.add(java.util.Map.of(
-                    "numero", "C-2021-095", "asunto", "Reestructuración Fiscal",
-                    "cliente", "Alpha Investments", "estatus", "Cerrado", "fecha", "-"));
-        }
-
-        return org.springframework.http.ResponseEntity.ok(casosMock);
+        return org.springframework.http.ResponseEntity.ok(response);
     }
 
     @GetMapping("/api/{id}/agenda")
     @ResponseBody
-    public org.springframework.http.ResponseEntity<List<java.util.Map<String, Object>>> obtenerAgendaMock(
+    public org.springframework.http.ResponseEntity<List<Map<String, Object>>> obtenerAgendaReal(
             @PathVariable("id") Integer id) {
 
-        List<java.util.Map<String, Object>> agendaMock = new java.util.ArrayList<>();
+        List<Map<String, Object>> agenda = new ArrayList<>();
 
-        if (id % 2 == 0) {
-            agendaMock.add(java.util.Map.of(
-                    "tipo", "Audiencia", "descripcion", "Desahogo de pruebas (C-2023-015)", "fecha",
-                    "25/10/2024 10:00 AM"));
-            agendaMock.add(java.util.Map.of(
-                    "tipo", "Término", "descripcion", "Presentación de alegatos", "fecha", "30/10/2024 23:59 PM"));
+        // Cargar Audiencias
+        List<Audiencia> audiencias = audienciaRepository.findByUsuarioId(id);
+        for (Audiencia a : audiencias) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("tipo", "Audiencia");
+            item.put("descripcion", (a.getTipoAudiencia() != null ? a.getTipoAudiencia().getNombre() : "Audiencia") + 
+                                   " - Exp: " + (a.getExpediente() != null ? a.getExpediente().getNumero() : "S/N"));
+            
+            String fechaStr = "";
+            if (a.getFechaAudiencia() != null) {
+                fechaStr = a.getFechaAudiencia().format(dateFormatter);
+                if (a.getHoraAudiencia() != null) {
+                    fechaStr += " " + a.getHoraAudiencia().toString();
+                }
+            }
+            item.put("fecha", fechaStr);
+            item.put("estatus", a.getEstatusAudiencia() != null ? a.getEstatusAudiencia().toString() : "PENDIENTE");
+            item.put("_raw_date", a.getFechaAudiencia());
+            agenda.add(item);
         }
 
-        return org.springframework.http.ResponseEntity.ok(agendaMock);
+        // Cargar Términos
+        List<Termino> terminos = terminoRepository.findByUsuarioId(id);
+        for (Termino t : terminos) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("tipo", "Término");
+            item.put("descripcion", (t.getAsunto() != null ? t.getAsunto() : "Término") + 
+                                   " - Exp: " + (t.getExpediente() != null ? t.getExpediente().getNumero() : "S/N"));
+            item.put("fecha", t.getFechaVencimiento() != null ? t.getFechaVencimiento().format(dateFormatter) : "-");
+            item.put("estatus", t.getEstatusTermino() != null ? t.getEstatusTermino().toString() : "ACTIVO");
+            // Guardamos la fecha cruda para ordenar
+            item.put("_raw_date", t.getFechaVencimiento());
+            agenda.add(item);
+        }
+
+        // Ordenar por fecha (más reciente/próximo primero o cronológico)
+        agenda.sort((m1, m2) -> {
+            Object d1 = m1.get("_raw_date");
+            Object d2 = m2.get("_raw_date");
+            if (d1 == null) return 1;
+            if (d2 == null) return -1;
+            if (d1 instanceof java.time.LocalDate && d2 instanceof java.time.LocalDate) {
+                return ((java.time.LocalDate) d1).compareTo((java.time.LocalDate) d2);
+            }
+            return 0;
+        });
+
+        return org.springframework.http.ResponseEntity.ok(agenda);
+    }
+
+    @GetMapping("/api/{id}/historial")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<List<Map<String, Object>>> obtenerHistorialReal(
+            @PathVariable("id") Integer id) {
+
+        List<ActividadExpediente> actividades = actividadRepository.findTop15ByUsuarioIdOrExpedienteAbogadoResponsableIdOrderByFechaRegistroDesc(id, id);
+        List<Map<String, Object>> response = actividades.stream().map(act -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("accion", act.getTitulo());
+            map.put("detalles", act.getDescripcion());
+            map.put("expediente", act.getExpediente() != null ? act.getExpediente().getNumero() : "General");
+            map.put("fecha", act.getFechaRegistro() != null ? act.getFechaRegistro().format(dateTimeFormatter) : "-");
+            return map;
+        }).collect(Collectors.toList());
+
+        return org.springframework.http.ResponseEntity.ok(response);
     }
 }

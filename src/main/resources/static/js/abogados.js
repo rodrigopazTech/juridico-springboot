@@ -278,6 +278,8 @@ function cambiarTabAbogado(tabName) {
         cargarCasosAbogado(usuarioSeleccionadoId);
     } else if (tabName === 'terminos') {
         cargarAgendaAbogado(usuarioSeleccionadoId);
+    } else if (tabName === 'historial') {
+        cargarHistorialAbogado(usuarioSeleccionadoId);
     }
 }
 
@@ -296,18 +298,21 @@ function cargarCasosAbogado(idUsuario) {
             } else {
                 tbody.innerHTML = '';
                 data.forEach(caso => {
-                    // Colores del estatus
-                    let estatusClass = caso.estatus === 'Activo' ? 'bg-green-100 text-green-800' :
-                        caso.estatus === 'En Espera' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-200 text-gray-700';
+                    // Colores del estatus basados en EtapaProcesal enum
+                    let estatusClass = 'bg-gray-100 text-gray-800';
+                    if (caso.estatus === 'TRAMITE') estatusClass = 'bg-blue-100 text-blue-800';
+                    else if (caso.estatus === 'LAUDO') estatusClass = 'bg-yellow-100 text-yellow-800';
+                    else if (caso.estatus === 'FIRME') estatusClass = 'bg-green-100 text-green-800';
+                    else if (caso.estatus === 'CONCLUIDO') estatusClass = 'bg-gray-200 text-gray-700';
 
                     tbody.innerHTML += `
-                        <tr class="hover:bg-gob-verde transition-colors">
+                        <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100">
                             <td class="px-6 py-4">
                                 <p class="font-bold text-slate-800">${caso.numero}</p>
-                                <p class="text-xs text-slate-500">${caso.asunto}</p>
+                                <p class="text-xs text-slate-500 truncate max-w-xs" title="${caso.asunto}">${caso.asunto}</p>
                             </td>
                             <td class="px-6 py-4 text-slate-700 font-medium">${caso.cliente}</td>
-                            <td class="px-6 py-4"><span class="${estatusClass} text-xs font-bold px-2.5 py-1 rounded-md border border-black/5">${caso.estatus}</span></td>
+                            <td class="px-6 py-4"><span class="${estatusClass} text-[10px] font-bold px-2 py-0.5 rounded border border-black/5">${caso.estatus}</span></td>
                             <td class="px-6 py-4 text-right text-slate-600 font-medium">${caso.fecha}</td>
                         </tr>
                     `;
@@ -333,15 +338,57 @@ function cargarAgendaAbogado(idUsuario) {
                 tbody.innerHTML = '';
                 data.forEach(item => {
                     let icon = item.tipo === 'Audiencia' ? '<i class="fas fa-gavel text-gob-oro mr-2"></i>' : '<i class="fas fa-hourglass-half text-gob-guinda mr-2"></i>';
+                    let typeBadge = item.tipo === 'Audiencia' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800';
+
                     tbody.innerHTML += `
-                        <tr class="hover:bg-gob-verde transition-colors">
-                            <td class="px-6 py-4 font-bold text-slate-800">${icon} ${item.tipo}</td>
-                            <td class="px-6 py-4 text-slate-600">${item.descripcion}</td>
-                            <td class="px-6 py-4 font-medium text-red-600">${item.fecha}</td>
+                        <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                            <td class="px-6 py-4 font-bold text-slate-800">
+                                <span class="${typeBadge} px-2 py-1 rounded text-[10px] uppercase tracking-wider border border-current/10">${icon} ${item.tipo}</span>
+                            </td>
+                            <td class="px-6 py-4 text-slate-600 text-sm">${item.descripcion}</td>
+                            <td class="px-6 py-4 font-bold text-gob-guinda text-sm">${item.fecha}</td>
                         </tr>
                     `;
                 });
                 document.getElementById('container-tabla-terminos').classList.remove('hidden');
+            }
+        }).catch(err => console.error(err));
+}
+
+function cargarHistorialAbogado(idUsuario) {
+    const container = document.getElementById('container-historial');
+    document.getElementById('container-historial').classList.add('hidden');
+    document.getElementById('empty-historial').classList.add('hidden');
+    document.getElementById('loading-historial').classList.remove('hidden');
+
+    fetch(`/abogados/api/${idUsuario}/historial`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loading-historial').classList.add('hidden');
+            if (data.length === 0) {
+                document.getElementById('empty-historial').classList.remove('hidden');
+            } else {
+                container.innerHTML = '';
+                data.forEach(act => {
+                    container.innerHTML += `
+                        <div class="flex gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex-shrink-0 w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gob-guinda border border-gray-100">
+                                <i class="fas fa-edit text-sm"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="text-sm font-bold text-slate-800 truncate">${act.accion}</p>
+                                    <span class="text-[10px] text-gray-400 whitespace-nowrap">${act.fecha}</span>
+                                </div>
+                                <p class="text-xs text-slate-600 mt-1">${act.detalles}</p>
+                                <div class="mt-2 flex items-center text-[10px] text-gob-verde font-medium">
+                                    <i class="fas fa-file-alt mr-1"></i> Exp: ${act.expediente}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.classList.remove('hidden');
             }
         }).catch(err => console.error(err));
 }
