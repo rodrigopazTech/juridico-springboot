@@ -25,48 +25,48 @@
       <table class="min-w-full divide-y divide-gray-200 text-sm text-left whitespace-nowrap">
         <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-xs tracking-wider">
           <tr>
-            <th scope="col" class="px-5 py-3 sticky left-0 bg-gray-100 z-10">Expediente</th>
-            <th scope="col" class="px-5 py-3">Fecha y Hora</th>
-            <th scope="col" class="px-5 py-3">Tipo de Audiencia</th>
-            <th scope="col" class="px-5 py-3">Compareciente</th>
-            <th scope="col" class="px-5 py-3">Responsable</th>
-            <th scope="col" class="px-5 py-3">Sede</th>
-            <th scope="col" class="px-5 py-3 text-center">Acción</th>
+            <th scope="col" class="px-3 py-3 sticky left-0 bg-gray-100 z-10 w-24">Expediente</th>
+            <th scope="col" class="px-3 py-3">Fecha/Hora</th>
+            <th scope="col" class="px-3 py-3">Tipo Aud</th>
+            <th scope="col" class="px-3 py-3">Compareciente</th>
+            <th scope="col" class="px-3 py-3">Responsable</th>
+            <th scope="col" class="px-3 py-3">Sede</th>
+            <th scope="col" class="px-3 py-3 text-center w-16">Acción</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           <tr th:each="aud : ${audienciasResumen}" class="hover:bg-gray-50 transition">
-            <td class="px-5 py-3 sticky left-0 bg-white z-10 max-w-[180px]">
+            <td class="px-3 py-3 sticky left-0 bg-white z-10 max-w-[110px]">
               <span class="block truncate font-bold text-gob-guinda" th:text="${aud.numeroExpediente}"
                 th:title="${aud.numeroExpediente}">
               </span>
             </td>
-            <td class="px-5 py-3">
-              <div class="flex items-center text-gray-900 font-medium">
-                <i class="far fa-calendar text-gob-oro mr-2"></i>
+            <td class="px-3 py-3 whitespace-nowrap">
+              <div class="flex items-center text-gray-900 font-medium text-xs">
+                <i class="far fa-calendar text-gob-oro mr-1"></i>
                 <span th:text="${aud.fecha}"></span>
-                <span class="mx-2 text-gray-300">|</span>
+                <span class="mx-1 text-gray-300">|</span>
                 <i class="far fa-clock text-gray-400 mr-1"></i>
                 <span th:text="${aud.hora}"></span>
               </div>
             </td>
-            <td class="px-5 py-3 max-w-[160px]">
+            <td class="px-3 py-3 max-w-[130px]">
               <span
                 class="block truncate bg-gray-100 text-gray-800 px-2 py-0.5 rounded-md text-xs font-bold border border-gray-200"
                 th:text="${aud.tipoAudiencia}" th:title="${aud.tipoAudiencia}"></span>
             </td>
-            <td class="px-5 py-3 max-w-[160px]">
-              <span class="block truncate text-gray-600" th:text="${aud.compareciente}" th:title="${aud.compareciente}">
+            <td class="px-3 py-3 max-w-[130px]">
+              <span class="block truncate text-gray-600 text-xs" th:text="${aud.compareciente}" th:title="${aud.compareciente}">
               </span>
             </td>
-            <td class="px-5 py-3 max-w-[160px]">
-              <span class="block truncate text-gray-600" th:text="${aud.abogadoResponsable}"
+            <td class="px-3 py-3 max-w-[130px]">
+              <span class="block truncate text-gray-600 text-xs" th:text="${aud.abogadoResponsable}"
                 th:title="${aud.abogadoResponsable}"></span>
             </td>
-            <td class="px-5 py-3">
-              <span class="text-gray-500 text-xs" th:text="${aud.sede}"></span>
+            <td class="px-3 py-3 max-w-[130px]">
+              <span class="block truncate text-gray-500 text-xs" th:text="${aud.sede}" th:title="${aud.sede}"></span>
             </td>
-            <td class="px-5 py-3 text-center">
+            <td class="px-3 py-3 text-center">
               <button type="button"
                 class="btn-editar-audiencia text-gob-oro hover:text-[#a37e46] transition font-bold text-sm"
                 th:data-registro-id="${aud.id}" th:data-numero-expediente="${aud.numeroExpediente}"

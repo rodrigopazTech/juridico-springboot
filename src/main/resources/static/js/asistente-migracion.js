@@ -40,6 +40,13 @@ function inicializarAsistente() {
             this.classList.add("border-gob-oro", "text-gob-oro", "font-bold");
             this.classList.remove("border-transparent", "text-gray-500");
             tPanel.classList.remove("hidden");
+
+            const btnCrear = document.getElementById('btn-crear-todos-nuevos');
+            if (btnCrear) {
+                btnCrear.innerHTML = '<i class="fas fa-plus-square mr-2"></i> Crear Vacíos como Nuevos (Sección)';
+                btnCrear.classList.remove('bg-amber-100', 'border-amber-400', 'text-amber-800', 'active-toggle');
+                btnCrear.classList.add('bg-gray-100', 'border-gray-300', 'text-gray-700');
+            }
         });
     });
 }
@@ -300,17 +307,17 @@ function inicializarMapeo() {
     // ==========================================
     const btnCrearTodos = document.getElementById('btn-crear-todos-nuevos');
     if (btnCrearTodos) {
-        let todosNuevos = false; // Estado del toggle
+        btnCrearTodos.addEventListener('click', function (e) {
+            e.preventDefault();
+            const isActivating = !this.classList.contains('active-toggle');
+            const activePanel = document.querySelector('.tab-panel:not(.hidden)');
+            if (!activePanel) return;
 
-        btnCrearTodos.addEventListener('click', function () {
-            todosNuevos = !todosNuevos;
-
-            if (todosNuevos) {
-                // ACTIVAR: Solo marcar como nuevo los que NO tienen un valor asignado
-                document.querySelectorAll('.btn-marcar-nuevo').forEach(b => {
+            if (isActivating) {
+                activePanel.querySelectorAll('.btn-marcar-nuevo').forEach(b => {
                     const catId = b.getAttribute('data-cat-id');
                     const container = document.getElementById('mapeo-container-' + catId);
-                    if (!container || container.classList.contains('hidden')) return; // Ya tiene acción
+                    if (!container || container.classList.contains('hidden')) return; 
 
                     const selectEl = document.getElementById('select-' + catId);
                     const tieneValor = selectEl && selectEl.tomselect
@@ -318,16 +325,15 @@ function inicializarMapeo() {
                         : (selectEl && selectEl.value !== '');
 
                     if (!tieneValor) {
-                        b.click(); // Solo aplicar a los vacíos
+                        b.click(); 
                     }
                 });
 
-                this.innerHTML = '<i class="fas fa-undo mr-2"></i> Restaurar Vacíos';
-                this.classList.add('bg-amber-100', 'border-amber-400', 'text-amber-800');
+                this.innerHTML = '<i class="fas fa-undo mr-2"></i> Deshacer Nuevos (Sección)';
+                this.classList.add('bg-amber-100', 'border-amber-400', 'text-amber-800', 'active-toggle');
                 this.classList.remove('bg-gray-100', 'border-gray-300', 'text-gray-700');
             } else {
-                // DESACTIVAR: Deshacer todos los que se marcaron como nuevo
-                document.querySelectorAll('.btn-deshacer-nuevo').forEach(b => {
+                activePanel.querySelectorAll('.btn-deshacer-nuevo').forEach(b => {
                     const catId = b.getAttribute('data-cat-id');
                     const badge = document.getElementById('nuevo-badge-' + catId);
                     if (badge && !badge.classList.contains('hidden')) {
@@ -335,8 +341,8 @@ function inicializarMapeo() {
                     }
                 });
 
-                this.innerHTML = '<i class="fas fa-plus-square mr-2"></i> Crear TODOS como Nuevos';
-                this.classList.remove('bg-amber-100', 'border-amber-400', 'text-amber-800');
+                this.innerHTML = '<i class="fas fa-plus-square mr-2"></i> Crear Vacíos como Nuevos (Sección)';
+                this.classList.remove('bg-amber-100', 'border-amber-400', 'text-amber-800', 'active-toggle');
                 this.classList.add('bg-gray-100', 'border-gray-300', 'text-gray-700');
             }
         });

@@ -44,11 +44,11 @@
               <span class="block truncate text-gray-800 font-medium" th:text="${term.actuacion}"
                 th:title="${term.actuacion}"></span>
             </td>
-            <td class="px-5 py-3">
-              <span class="bg-red-50 text-red-700 border border-red-200 px-2.5 py-1 rounded-md text-xs font-bold">
-                <i class="far fa-calendar-times mr-1"></i>
-                <span th:text="${term.fechaVencimiento}"></span>
-              </span>
+            <td class="px-5 py-3 max-w-[250px]">
+              <div class="bg-red-50 text-red-700 border border-red-200 px-2.5 py-1 rounded-md text-xs font-bold flex items-center" th:title="${term.fechaVencimiento}">
+                <i class="far fa-calendar-times mr-1 flex-shrink-0"></i>
+                <span class="truncate" th:text="${term.fechaVencimiento}"></span>
+              </div>
             </td>
             <td class="px-5 py-3 max-w-[180px]">
               <span class="block truncate text-gray-600" th:text="${term.abogado}" th:title="${term.abogado}"></span>
