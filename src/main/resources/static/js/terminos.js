@@ -5,6 +5,7 @@
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log("Sistema de Terminos Cargado");
+    initMiniCalendar();
 });
 
 // --- MENÚS DESPLEGABLES ---
@@ -244,5 +245,103 @@ function abrirModalConcluir(idTermino) {
     if (inputId && modal) {
         inputId.value = idTermino;
         modal.classList.remove('hidden');
+    }
+}
+
+// ==========================================
+// 📅 LÓGICA DEL MINI-CALENDARIO (TÉRMINOS)
+// ==========================================
+
+const miniCalendarState = {
+    currentDate: new Date(),
+    selectedDate: new Date(),
+    names: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
+    events: []
+};
+
+function initMiniCalendar() {
+    const prevBtn = document.getElementById('miniPrev');
+    const nextBtn = document.getElementById('miniNext');
+
+    // Sincronizar con el estado del servidor
+    const hdnMes = document.getElementById('hdnMesActual');
+    const hdnAnio = document.getElementById('hdnAnioActual');
+    if (hdnMes && hdnAnio) {
+        miniCalendarState.currentDate = new Date(parseInt(hdnAnio.value), parseInt(hdnMes.value) - 1, 1);
+    }
+
+    // Si hay un keyword que es fecha, marcarla como seleccionada
+    const urlParams = new URLSearchParams(window.location.search);
+    const keyword = urlParams.get('keyword');
+    if (keyword && keyword.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const parts = keyword.split('-');
+        miniCalendarState.selectedDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    }
+
+    if (prevBtn && nextBtn) {
+        prevBtn.onclick = () => {
+            const date = miniCalendarState.currentDate;
+            date.setMonth(date.getMonth() - 1);
+            window.location.href = `/terminos?mes=${date.getMonth() + 1}&anio=${date.getFullYear()}`;
+        };
+        nextBtn.onclick = () => {
+            const date = miniCalendarState.currentDate;
+            date.setMonth(date.getMonth() + 1);
+            window.location.href = `/terminos?mes=${date.getMonth() + 1}&anio=${date.getFullYear()}`;
+        };
+    }
+
+    renderMiniCalendar();
+}
+
+function renderMiniCalendar() {
+    const grid = document.getElementById('miniCalendarGrid');
+    const monthLabel = document.getElementById('miniCalendarMonth');
+    if (!grid || !monthLabel) return;
+
+    grid.innerHTML = '';
+    const year = miniCalendarState.currentDate.getFullYear();
+    const month = miniCalendarState.currentDate.getMonth();
+
+    monthLabel.innerText = `${miniCalendarState.names[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // Celdas vacías
+    for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'mini-day-cell mini-empty';
+        grid.appendChild(emptyCell);
+    }
+
+    // Días del mes
+    const today = new Date();
+    for (let day = 1; day <= daysInMonth; day++) {
+        const cell = document.createElement('div');
+        cell.className = 'mini-day-cell';
+        cell.innerText = day;
+
+        const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+        if (isToday) cell.classList.add('mini-day-today');
+
+        // Lógica de Selección (Fondo Guinda Sólido)
+        const isSelected = day === miniCalendarState.selectedDate.getDate() &&
+            month === miniCalendarState.selectedDate.getMonth() &&
+            year === miniCalendarState.selectedDate.getFullYear();
+        if (isSelected) {
+            cell.classList.add('mini-day-selected');
+        }
+
+        cell.onclick = () => {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const url = new URL(window.location.href);
+            url.searchParams.set('keyword', dateStr);
+            url.searchParams.set('mes', month + 1);
+            url.searchParams.set('anio', year);
+            window.location.href = url.toString();
+        };
+
+        grid.appendChild(cell);
     }
 }

@@ -29,7 +29,10 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "AND (:estatus IS NULL OR :estatus = '' OR t.estatusTermino = :estatus) " +
            "AND (:prioridadId IS NULL OR t.prioridad.id = :prioridadId) " +
            "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
-           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId)") // <--- NUEVO FILTRO
+           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
+           "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
+           "AND (:id IS NULL OR t.id = :id) " +
+           "AND (t.fechaVencimiento BETWEEN :fechaInicio AND :fechaFin)")
     List<Termino> listarParaExcel(
             @Param("id") Integer id,
             @Param("keyword") String keyword,
@@ -53,7 +56,10 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "AND (:estatus IS NULL OR :estatus = '' OR t.estatusTermino = :estatus) " +
            "AND (:prioridadId IS NULL OR t.prioridad.id = :prioridadId) " +
            "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
-           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId)")
+           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
+           "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
+           "AND (:id IS NULL OR t.id = :id) " +
+           "AND (t.fechaVencimiento >= :fechaInicio AND t.fechaVencimiento <= :fechaFin)")
     Page<Termino> buscarConFiltros(
             @Param("id") Integer id,
             @Param("keyword") String keyword,
@@ -173,7 +179,8 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
             "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
             "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
-            "AND (:id IS NULL OR t.id = :id)")
+            "AND (:id IS NULL OR t.id = :id) " +
+            "AND (t.fechaVencimiento >= :fechaInicio AND t.fechaVencimiento <= :fechaFin)")
     Page<Termino> buscarPorMultiplesEstatus(
             @Param("id") Integer id,
             @Param("keyword") String keyword,
@@ -182,6 +189,8 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("abogadoId") Integer abogadoId,
             @Param("gerenciaId") Integer gerenciaId,
             @Param("materiaId") Integer materiaId,
+            @Param("fechaInicio") LocalDate fechaInicio,
+            @Param("fechaFin") LocalDate fechaFin,
             Pageable pageable);
 
     // Conteo total términos activos (sin filtro)
