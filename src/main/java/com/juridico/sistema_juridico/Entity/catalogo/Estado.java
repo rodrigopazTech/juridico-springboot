@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
+
 @Entity
 @Data
 @Builder
@@ -13,6 +15,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Table(name = "cat_estados")
 public class Estado {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "gerencia_id")
+    private Gerencia gerencia;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;

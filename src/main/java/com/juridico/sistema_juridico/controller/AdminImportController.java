@@ -211,28 +211,65 @@ public class AdminImportController {
     
     @GetMapping("/api/materias-por-gerencia/{gerenciaId}")
     @ResponseBody
-    public List<Map<String, Object>> getMateriasByGerencia(@PathVariable Integer gerenciaId) {
-        return materiaRepository.findAll().stream()
-                .filter(m -> m.getGerencia().getId().equals(gerenciaId))
+    public List<Map<String, Object>> getMateriasByGerencia(@PathVariable Integer gerenciaId, @RequestParam(required = false) Long loteId) {
+        List<Map<String, Object>> res = new java.util.ArrayList<>(materiaRepository.findAll().stream()
+                .filter(m -> m.getGerencia() != null && m.getGerencia().getId().equals(gerenciaId))
                 .map(m -> Map.of("id", (Object)m.getId(), "nombre", m.getNombre()))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
+        if (loteId != null) {
+            catalogoMigracionRepository.findByLoteId(loteId).stream()
+                .filter(c -> "MATERIA".equals(c.getTipoCatalogo()) && "NUEVO".equals(c.getEstatus()))
+                .forEach(c -> res.add(Map.of("id", c.getNuevoValor(), "nombre", c.getNuevoValor()))); // using name as id since it's unpersisted
+        }
+        return res;
     }
 
     @GetMapping("/api/usuarios-por-materia/{materiaId}")
     @ResponseBody
-    public List<Map<String, Object>> getUsuariosByMateria(@PathVariable Integer materiaId) {
-        return usuarioRepository.findAll().stream()
-                .filter(u -> u.getMaterias().stream().anyMatch(m -> m.getId().equals(materiaId)))
-                .map(u -> Map.of("id", (Object)u.getId(), "nombre", u.getNombreCompleto()))
-                .collect(Collectors.toList());
+    public List<Map<String, Object>> getUsuariosByMateria(@PathVariable("materiaId") String materiaVal, @RequestParam(required = false) Long loteId) {
+        List<Map<String, Object>> res = new java.util.ArrayList<>();
+        try {
+            Integer matId = Integer.parseInt(materiaVal);
+            res.addAll(usuarioRepository.findAll().stream()
+                    .filter(u -> u.getMaterias().stream().anyMatch(m -> m.getId().equals(matId)))
+                    .map(u -> Map.of("id", (Object)u.getId(), "nombre", u.getNombreCompleto()))
+                    .collect(Collectors.toList()));
+        } catch(NumberFormatException e) {
+            // materiaVal is a string (a NEW materia), so we just return ALL db users for now, 
+            // plus the new ones, because we can't filter by a non-existent materia ID.
+            res.addAll(usuarioRepository.findAll().stream()
+                    .map(u -> Map.of("id", (Object)u.getId(), "nombre", u.getNombreCompleto()))
+                    .collect(Collectors.toList()));
+        }
+        
+        if (loteId != null) {
+            catalogoMigracionRepository.findByLoteId(loteId).stream()
+                .filter(c -> "USUARIO".equals(c.getTipoCatalogo()) && "NUEVO".equals(c.getEstatus()))
+                .forEach(c -> res.add(Map.of("id", c.getNuevoValor(), "nombre", c.getNuevoValor())));
+        }
+        return res;
     }
 
     @GetMapping("/api/usuarios-por-gerencia/{gerenciaId}")
     @ResponseBody
-    public List<Map<String, Object>> getUsuariosByGerencia(@PathVariable Integer gerenciaId) {
-        return usuarioRepository.findAll().stream()
-                .filter(u -> u.getGerencia() != null && u.getGerencia().getId().equals(gerenciaId))
-                .map(u -> Map.of("id", (Object)u.getId(), "nombre", u.getNombreCompleto()))
-                .collect(Collectors.toList());
+    public List<Map<String, Object>> getUsuariosByGerencia(@PathVariable("gerenciaId") String gerenciaVal, @RequestParam(required = false) Long loteId) {
+        List<Map<String, Object>> res = new java.util.ArrayList<>();
+        try {
+            Integer gerId = Integer.parseInt(gerenciaVal);
+            res.addAll(usuarioRepository.findAll().stream()
+                    .filter(u -> u.getGerencia() != null && u.getGerencia().getId().equals(gerId))
+                    .map(u -> Map.of("id", (Object)u.getId(), "nombre", u.getNombreCompleto()))
+                    .collect(Collectors.toList()));
+        } catch(NumberFormatException e) {
+            res.addAll(usuarioRepository.findAll().stream()
+                    .map(u -> Map.of("id", (Object)u.getId(), "nombre", u.getNombreCompleto()))
+                    .collect(Collectors.toList()));
+        }
+        if (loteId != null) {
+            catalogoMigracionRepository.findByLoteId(loteId).stream()
+                .filter(c -> "USUARIO".equals(c.getTipoCatalogo()) && "NUEVO".equals(c.getEstatus()))
+                .forEach(c -> res.add(Map.of("id", c.getNuevoValor(), "nombre", c.getNuevoValor())));
+        }
+        return res;
     }
 }

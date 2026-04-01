@@ -140,22 +140,24 @@
           </select>
         </div>
 
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Gerencia</label>
-          <select id="aud-gerencia" name="gerencia"
-            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
-            <option value="">-- Seleccione --</option>
-            <option th:each="g : ${gerenciasDB}" th:value="${g.nombre}" th:data-id="${g.id}" th:text="${g.nombre}">
-            </option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Materia</label>
-          <select id="aud-materia" name="materia"
-            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"
-            disabled>
-            <option value="">-- Seleccione gerencia --</option>
-          </select>
+        <div class="hidden">
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Gerencia</label>
+            <select id="aud-gerencia" name="gerencia"
+              class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
+              <option value="">-- Seleccione --</option>
+              <option th:each="g : ${gerenciasDB}" th:value="${g.nombre}" th:data-id="${g.id}" th:text="${g.nombre}">
+              </option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Materia</label>
+            <select id="aud-materia" name="materia"
+              class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"
+              disabled>
+              <option value="">-- Seleccione gerencia --</option>
+            </select>
+          </div>
         </div>
 
         <div class="col-span-2">
@@ -183,18 +185,7 @@
             <option th:each="s : ${sedesDB}" th:value="${s.nombre}" th:data-id="${s.id}" th:text="${s.nombre}"></option>
           </select>
         </div>
-        <div class="col-span-2">
-          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Órgano Jurisdiccional</label>
-          <select id="aud-organo" name="organoJurisdiccional"
-            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
-            <option value="">-- Seleccione --</option>
-            <option th:each="o : ${organosDB}" th:value="${o.nombre}" th:text="${o.nombre}"></option>
-            <th:block th:if="${mapeosNuevos != null and mapeosNuevos.containsKey('ORGANO')}">
-              <option th:each="n : ${mapeosNuevos['ORGANO']}" th:value="${n.nuevoValor}"
-                th:text="${n.nuevoValor + ' (Nuevo)'}"></option>
-            </th:block>
-          </select>
-        </div>
+
         <div>
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Modalidad</label>
           <div class="flex items-center gap-4 mt-2">

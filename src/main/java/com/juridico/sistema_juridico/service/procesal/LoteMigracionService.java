@@ -651,7 +651,7 @@
                                     }
                                 }
                                 if (expediente.getOrganoJurisdiccional() == null && json.has("organoJurisdiccional")) {
-                                    OrganoJurisdiccional o = resolveOrgano(json.get("organoJurisdiccional").asText(), lookup);
+                                    OrganoJurisdiccional o = resolveOrgano(json.get("organoJurisdiccional").asText(), lookup, expediente.getGerencia());
                                     if (o != null) expediente.setOrganoJurisdiccional(o);
                                 }
                                 if (expediente.getPartes() == null && json.has("partes") && !json.get("partes").isNull()) {
@@ -691,6 +691,7 @@
                                         if (estadoExistente == null) {
                                             com.juridico.sistema_juridico.Entity.catalogo.Estado nuevoEstado = new com.juridico.sistema_juridico.Entity.catalogo.Estado();
                                             nuevoEstado.setNombre(searchSede);
+                                            nuevoEstado.setGerencia(expediente.getGerencia() != null ? expediente.getGerencia() : getFallbackGerencia());
                                             estadoExistente = estadoRepository.save(nuevoEstado);
                                         }
                                         
@@ -794,7 +795,7 @@
                                 audiencia.setObservaciones(json.has("observaciones") ? json.get("observaciones").asText() : "");
 
                                 if (json.has("tipoAudiencia")) {
-                                    TipoAudiencia ta = resolveTipoAudiencia(json.get("tipoAudiencia").asText(), lookup);
+                                    TipoAudiencia ta = resolveTipoAudiencia(json.get("tipoAudiencia").asText(), lookup, expediente.getGerencia());
                                     if (ta != null) audiencia.setTipoAudiencia(ta);
                                 }
 
@@ -896,7 +897,7 @@
                     .filter(g -> g.getNombre().equalsIgnoreCase(original.trim()))
                     .findFirst().orElse(null);
         }
-        private OrganoJurisdiccional resolveOrgano(String original, java.util.Map<String, CatalogoMigracion> lookup) {
+        private OrganoJurisdiccional resolveOrgano(String original, java.util.Map<String, CatalogoMigracion> lookup, Gerencia gerenciaContexto) {
             if (original == null || original.trim().isEmpty()) return null;
             String key = "ORGANO___" + original.trim().toLowerCase();
             CatalogoMigracion c = lookup.get(key);
@@ -909,7 +910,10 @@
                     final String searchName = nombreFinal;
                     OrganoJurisdiccional existente = organoRepository.findByNombreIgnoreCase(searchName).orElse(null);
                     if (existente == null) {
-                        OrganoJurisdiccional o = new OrganoJurisdiccional(); o.setNombre(searchName); o.setActivo(true);
+                        OrganoJurisdiccional o = new OrganoJurisdiccional(); 
+                        o.setNombre(searchName); 
+                        o.setActivo(true);
+                        o.setGerencia(gerenciaContexto != null ? gerenciaContexto : getFallbackGerencia());
                         existente = organoRepository.save(o);
                     }
                     c.setIdMapeado(existente.getId().longValue());
@@ -921,7 +925,7 @@
             return organoRepository.findByNombreIgnoreCase(original.trim()).orElse(null);
         }
 
-        private TipoAudiencia resolveTipoAudiencia(String original, java.util.Map<String, CatalogoMigracion> lookup) {
+        private TipoAudiencia resolveTipoAudiencia(String original, java.util.Map<String, CatalogoMigracion> lookup, Gerencia gerenciaContexto) {
             if (original == null || original.trim().isEmpty()) return null;
             String key = "TIPO_AUDIENCIA___" + original.trim().toLowerCase();
             CatalogoMigracion c = lookup.get(key);
@@ -934,7 +938,10 @@
                     final String searchName = nombreFinal;
                     TipoAudiencia existente = tipoAudienciaRepository.findByNombreIgnoreCase(searchName).orElse(null);
                     if (existente == null) {
-                        TipoAudiencia t = new TipoAudiencia(); t.setNombre(searchName); t.setActivo(true);
+                        TipoAudiencia t = new TipoAudiencia(); 
+                        t.setNombre(searchName); 
+                        t.setActivo(true);
+                        t.setGerencia(gerenciaContexto != null ? gerenciaContexto : getFallbackGerencia());
                         existente = tipoAudienciaRepository.save(t);
                     }
                     c.setIdMapeado(existente.getId().longValue());

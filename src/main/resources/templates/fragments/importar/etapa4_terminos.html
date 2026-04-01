@@ -134,23 +134,25 @@
           <input type="date" id="term-fecha-ingreso" name="fechaIngreso"
             class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm" />
         </div>
-        <!-- JERARQUÍA PARA FILTRADO -->
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Gerencia</label>
-          <select id="term-gerencia" name="gerencia"
-            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
-            <option value="">-- Seleccione --</option>
-            <option th:each="g : ${gerenciasDB}" th:value="${g.nombre}" th:data-id="${g.id}" th:text="${g.nombre}">
-            </option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Materia</label>
-          <select id="term-materia" name="materia"
-            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"
-            disabled>
-            <option value="">-- Seleccione gerencia --</option>
-          </select>
+        <!-- JERARQUÍA PARA FILTRADO (OCULTO) -->
+        <div class="hidden">
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Gerencia</label>
+            <select id="term-gerencia" name="gerencia"
+              class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
+              <option value="">-- Seleccione --</option>
+              <option th:each="g : ${gerenciasDB}" th:value="${g.nombre}" th:data-id="${g.id}" th:text="${g.nombre}">
+              </option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Materia</label>
+            <select id="term-materia" name="materia"
+              class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"
+              disabled>
+              <option value="">-- Seleccione gerencia --</option>
+            </select>
+          </div>
         </div>
 
         <div>
@@ -160,14 +162,7 @@
             <option th:each="p : ${prioridadesDB}" th:value="${p.nombre}" th:text="${p.nombre}"></option>
           </select>
         </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Estado / Sede</label>
-          <select id="term-sede" name="sede"
-            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
-            <option value="">-- Seleccione estado --</option>
-            <option th:each="s : ${sedesDB}" th:value="${s.nombre}" th:data-id="${s.id}" th:text="${s.nombre}"></option>
-          </select>
-        </div>
+
 
         <div class="col-span-2">
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Abogado Responsable</label>
@@ -178,18 +173,7 @@
           </select>
         </div>
 
-        <div class="col-span-2">
-          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Órgano Jurisdiccional</label>
-          <select id="term-organo" name="organoJurisdiccional"
-            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
-            <option value="">-- Seleccione --</option>
-            <option th:each="o : ${organosDB}" th:value="${o.nombre}" th:text="${o.nombre}"></option>
-            <th:block th:if="${mapeosNuevos != null and mapeosNuevos.containsKey('ORGANO')}">
-              <option th:each="n : ${mapeosNuevos['ORGANO']}" th:value="${n.nuevoValor}"
-                th:text="${n.nuevoValor + ' (Nuevo)'}"></option>
-            </th:block>
-          </select>
-        </div>
+
         <div class="col-span-2">
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Observaciones</label>
           <textarea id="term-observaciones" name="observaciones" rows="2"

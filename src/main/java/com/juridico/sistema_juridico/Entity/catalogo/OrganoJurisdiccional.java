@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 
+import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 @Data
 @Builder
 @NoArgsConstructor
@@ -11,6 +12,11 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "organos_jurisdiccionales")
 public class OrganoJurisdiccional {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "gerencia_id")
+    private Gerencia gerencia;
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
