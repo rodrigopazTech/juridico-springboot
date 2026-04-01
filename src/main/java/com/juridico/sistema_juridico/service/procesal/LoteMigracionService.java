@@ -130,9 +130,20 @@
         // 5. Cancelar todo el lote (Mandar a la papelera)
         @Transactional
         public void cancelarLote(Long loteId) {
-            LoteMigracion lote = loteRepository.findById(loteId).orElseThrow(() -> new RuntimeException("Lote no encontrado"));
-            lote.setEstatus("RECHAZADO");
-            loteRepository.save(lote);
+            LoteMigracion loteActual = loteRepository.findById(loteId).orElse(null);
+            if (loteActual != null) {
+                loteActual.setEstatus("RECHAZADO");
+                loteRepository.save(loteActual);
+            }
+            
+            // LIMPIEZA ADICIONAL: Rechazamos TODOS los lotes pendientes 
+            // para garantizar que la pantalla vuelva al inicio ("Esperando Datos Nuevos")
+            // y no brinque automáticamente a otro lote que n8n haya enviado en background.
+            List<LoteMigracion> pendientes = loteRepository.findByEstatus("PENDIENTE");
+            for (LoteMigracion p : pendientes) {
+                p.setEstatus("RECHAZADO");
+            }
+            loteRepository.saveAll(pendientes);
         }
 
         // =========================================================
@@ -821,6 +832,17 @@
                 lote.setPasoActual(5);
                 loteRepository.save(lote);
                 registroRepository.saveAll(registros);
+
+                // LIMPIEZA ADICIONAL: Rechazamos TODOS los demás lotes pendientes
+                // para garantizar que la pantalla vuelva al inicio ("Esperando Datos Nuevos")
+                // y el usuario no sea enviado inmediatamente a procesar ruido acumulado por peticiones repetitivas.
+                List<LoteMigracion> pendientes = loteRepository.findByEstatus("PENDIENTE");
+                for (LoteMigracion p : pendientes) {
+                    if (!p.getId().equals(loteId)) {
+                        p.setEstatus("RECHAZADO");
+                    }
+                }
+                loteRepository.saveAll(pendientes);
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new RuntimeException("Error inyectando lote: " + e.getMessage(), e);

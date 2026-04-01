@@ -126,6 +126,33 @@
             if (err) Swal.fire("Atención", err, "error");
         });
     </script>
+
+    <script th:if="${modo == 'INICIO'}">
+        document.addEventListener("DOMContentLoaded", function() {
+            // Polling cada 5 segundos para detectar nuevos lotes entrantes p. ej. de n8n
+            setInterval(async () => {
+                try {
+                    const resp = await fetch('/admin/importar/api/estado-lote');
+                    if (resp.ok) {
+                        const json = await resp.json();
+                        if (json.hayLotePendiente) {
+                            Swal.fire({
+                                title: '¡Lote Detectado!',
+                                text: 'Se ha recibido un nuevo lote de datos en tránsito.',
+                                icon: 'info',
+                                showConfirmButton: false,
+                                timer: 2000
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        }
+                    }
+                } catch(e) {
+                    console.log("Error consultando estado del lote", e);
+                }
+            }, 5000);
+        });
+    </script>
 </body>
 
 </html>

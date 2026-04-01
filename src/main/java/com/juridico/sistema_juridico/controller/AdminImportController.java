@@ -272,4 +272,12 @@ public class AdminImportController {
         }
         return res;
     }
+
+    @GetMapping("/api/estado-lote")
+    @ResponseBody
+    public Map<String, Boolean> checkEstadoLote() {
+        LoteMigracion loteActivo = loteMigracionService.obtenerLoteActivoOpcional();
+        boolean hayLote = loteActivo != null && "PENDIENTE".equals(loteActivo.getEstatus());
+        return Map.of("hayLotePendiente", hayLote);
+    }
 }

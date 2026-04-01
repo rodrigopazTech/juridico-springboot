@@ -10,4 +10,7 @@ public interface LoteMigracionRepository extends JpaRepository<LoteMigracion, Lo
     
     // Busca si hay un lote de trabajo a medias (Para recuperar el progreso)
     Optional<LoteMigracion> findFirstByEstatusOrderByFechaCreacionDesc(String estatus);
+
+    // Trae todos los lotes de un estatus
+    java.util.List<LoteMigracion> findByEstatus(String estatus);
 }
