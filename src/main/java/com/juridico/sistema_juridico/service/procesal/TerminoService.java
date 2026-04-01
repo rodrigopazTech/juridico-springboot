@@ -81,6 +81,7 @@ public class TerminoService {
                 .orElseThrow(() -> new RuntimeException("Término no encontrado"));
 
         termino.setEstatusTermino(EstatusTermino.PRESENTADO);
+        termino.setFechaPresentacion(LocalDate.now());
         terminoRepository.save(termino);
 
         // Lógica de Histórico: Creamos el registro en la tabla de presentados

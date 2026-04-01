@@ -97,7 +97,10 @@ public class AgendaService {
         LocalDate inicio = baseDate;
         LocalDate fin = baseDate;
 
-        if ("semana".equals(filtro)) {
+        if ("todos".equals(filtro)) {
+            inicio = LocalDate.of(1900, 1, 1);
+            fin = LocalDate.of(2100, 12, 31);
+        } else if ("semana".equals(filtro)) {
             inicio = baseDate.with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
             fin = baseDate.with(TemporalAdjusters.nextOrSame(java.time.DayOfWeek.SUNDAY));
         } else if ("mes".equals(filtro)) {
@@ -112,7 +115,7 @@ public class AgendaService {
             inicio = LocalDate.of(year, 1, 1);
             fin = LocalDate.of(year, 12, 31);
         }
-        // "hoy" es el default
+        // "hoy", etc
 
         return new LocalDate[] { inicio, fin };
     }

@@ -283,20 +283,29 @@ public class TerminosController {
     private List<EstatusTermino> getEtapasAsignadasPorRol(RolUsuario rol) {
         if (rol == null)
             return new ArrayList<>();
+        List<EstatusTermino> etapas = new ArrayList<>();
         switch (rol) {
             case ABOGADO:
-                return Arrays.asList(EstatusTermino.PROYECTISTA, EstatusTermino.LIBERADO);
+                etapas.addAll(Arrays.asList(EstatusTermino.PROYECTISTA, EstatusTermino.LIBERADO));
+                break;
             case JEFE_DEPTO:
-                return Collections.singletonList(EstatusTermino.REVISION);
+                etapas.add(EstatusTermino.REVISION);
+                break;
             case GERENTE:
-                return Collections.singletonList(EstatusTermino.GERENCIA);
+                etapas.add(EstatusTermino.GERENCIA);
+                break;
             case DIRECCION:
-                return Collections.singletonList(EstatusTermino.DIRECCION);
+                etapas.add(EstatusTermino.DIRECCION);
+                break;
             case SUBDIRECCION:
-                return Arrays.asList(EstatusTermino.DIRECCION, EstatusTermino.PRESENTADO, EstatusTermino.CONCLUIDO);
-            default:
-                return new ArrayList<>();
+                etapas.addAll(Arrays.asList(EstatusTermino.DIRECCION, EstatusTermino.PRESENTADO, EstatusTermino.CONCLUIDO));
+                break;
         }
+        // Para que NO se "borren" de la lista principal, anadimos CONCLUIDO siempre
+        if (!etapas.contains(EstatusTermino.CONCLUIDO)) {
+            etapas.add(EstatusTermino.CONCLUIDO);
+        }
+        return etapas;
     }
 
     @PostMapping("/guardar")

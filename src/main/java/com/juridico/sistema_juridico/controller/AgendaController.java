@@ -17,7 +17,7 @@ public class AgendaController {
 
     @GetMapping
     public String index(Model model,
-            @RequestParam(defaultValue = "hoy") String filtro,
+            @RequestParam(defaultValue = "mes") String filtro,
             @RequestParam(required = false) String mes,
             @RequestParam(required = false) Integer anio,
             @RequestParam(defaultValue = "audiencias") String tab,
