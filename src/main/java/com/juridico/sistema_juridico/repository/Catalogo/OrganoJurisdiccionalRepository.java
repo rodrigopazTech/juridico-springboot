@@ -16,6 +16,7 @@ public interface OrganoJurisdiccionalRepository extends JpaRepository<OrganoJuri
     List<OrganoJurisdiccional> findByActivoTrue();
 
     java.util.Optional<OrganoJurisdiccional> findByNombreIgnoreCase(String nombre);
-
     List<OrganoJurisdiccional> findByGerenciaIdAndActivoTrue(Integer gerenciaId);
+
+    java.util.Optional<OrganoJurisdiccional> findByNombreIgnoreCaseAndGerenciaId(String nombre, Integer gerenciaId);
 }

@@ -207,4 +207,6 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
 
     @Query("SELECT t FROM Termino t WHERE t.abogadoResponsable.id = :usuarioId OR t.expediente.abogadoResponsable.id = :usuarioId")
     List<Termino> findByUsuarioId(@Param("usuarioId") Integer usuarioId);
+
+    List<Termino> findByExpedienteAndAsuntoAndFechaVencimiento(com.juridico.sistema_juridico.Entity.expediente.Expediente expediente, String asunto, LocalDate fechaVencimiento);
 }

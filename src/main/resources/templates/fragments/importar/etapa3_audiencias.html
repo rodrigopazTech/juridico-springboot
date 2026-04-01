@@ -35,7 +35,7 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr th:each="aud : ${audienciasResumen}" class="hover:bg-gray-50 transition">
+          <tr th:each="aud : ${audienciasResumen}" th:id="${'row-' + aud.id}" class="hover:bg-gray-50 transition">
             <td class="px-3 py-3 sticky left-0 bg-white z-10 max-w-[110px]">
               <span class="block truncate font-bold text-gob-guinda" th:text="${aud.numeroExpediente}"
                 th:title="${aud.numeroExpediente}">
@@ -130,17 +130,14 @@
         <div class="col-span-2">
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Tipo de Audiencia</label>
           <select id="aud-tipo" name="tipoAudiencia"
-            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
-            <option value="">-- Seleccione --</option>
-            <option th:each="ta : ${tiposAudDB}" th:value="${ta.nombre}" th:text="${ta.nombre}"></option>
-            <th:block th:if="${mapeosNuevos != null and mapeosNuevos.containsKey('TIPO_AUDIENCIA')}">
-              <option th:each="n : ${mapeosNuevos['TIPO_AUDIENCIA']}" th:value="${n.nuevoValor}"
-                th:text="${n.nuevoValor + ' (Nuevo)'}"></option>
-            </th:block>
+            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"
+            disabled>
+            <option value="">-- Primero selecciona una gerencia --</option>
           </select>
         </div>
 
-        <div class="hidden">
+        <!-- JERARQUÍA PARA FILTRADO -->
+        <div class="col-span-2 grid grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Gerencia</label>
             <select id="aud-gerencia" name="gerencia"
@@ -183,6 +180,10 @@
             class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
             <option value="">-- Seleccione estado --</option>
             <option th:each="s : ${sedesDB}" th:value="${s.nombre}" th:data-id="${s.id}" th:text="${s.nombre}"></option>
+            <th:block th:if="${mapeosNuevos != null and mapeosNuevos.containsKey('SEDE')}">
+              <option th:each="n : ${mapeosNuevos['SEDE']}" th:value="${n.nuevoValor}"
+                th:text="${n.nuevoValor + ' (Nuevo)'}"></option>
+            </th:block>
           </select>
         </div>
 

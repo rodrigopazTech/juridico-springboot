@@ -27,7 +27,7 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr th:each="exp : ${expedientesResumen}" class="hover:bg-gray-50 transition">
+          <tr th:each="exp : ${expedientesResumen}" th:id="${'row-' + exp.registroId}" class="hover:bg-gray-50 transition">
             <td class="px-5 py-3 sticky left-0 bg-white z-10 max-w-[180px]">
               <span class="block truncate font-bold text-gob-guinda" th:text="${exp.numeroExpediente}"
                 th:title="${exp.numeroExpediente}">
@@ -174,13 +174,9 @@
         <div class="col-span-2">
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Órgano Jurisdiccional</label>
           <select id="exp-organo" name="organoJurisdiccional"
-            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
-            <option value="">-- Seleccione --</option>
-            <option th:each="o : ${organosDB}" th:value="${o.nombre}" th:text="${o.nombre}"></option>
-            <th:block th:if="${mapeosNuevos != null and mapeosNuevos.containsKey('ORGANO')}">
-              <option th:each="n : ${mapeosNuevos['ORGANO']}" th:value="${n.nuevoValor}"
-                th:text="${n.nuevoValor + ' (Nuevo)'}"></option>
-            </th:block>
+            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"
+            disabled>
+            <option value="">-- Primero selecciona una gerencia --</option>
           </select>
         </div>
         <div class="col-span-2">
@@ -190,6 +186,10 @@
             required>
             <option value="">-- Seleccione estado --</option>
             <option th:each="s : ${sedesDB}" th:value="${s.nombre}" th:data-id="${s.id}" th:text="${s.nombre}"></option>
+            <th:block th:if="${mapeosNuevos != null and mapeosNuevos.containsKey('SEDE')}">
+              <option th:each="n : ${mapeosNuevos['SEDE']}" th:value="${n.nuevoValor}"
+                th:text="${n.nuevoValor + ' (Nuevo)'}"></option>
+            </th:block>
           </select>
         </div>
 

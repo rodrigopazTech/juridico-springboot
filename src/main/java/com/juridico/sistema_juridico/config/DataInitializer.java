@@ -192,61 +192,10 @@ public class DataInitializer implements CommandLineRunner {
                         System.out.println("✅ Usuarios de prueba creados.");
                 }
 
-                // 4. ÓRGANOS JURISDICCIONALES (¡LISTA AMPLIADA!)
+                // 4. ÓRGANOS JURISDICCIONALES (Vacío para alimentarse de migraciones)
                 if (organoRepository.count() == 0) {
                         List<String> nombresOrganos = List.of(
-                                        "Primera Sala del Tribunal Federal de Conciliación y Arbitraje",
-                                        "Segunda Sala del Tribunal Federal de Conciliación y Arbitraje",
-                                        "Tercera Sala del Tribunal Federal de Conciliación y Arbitraje",
-                                        "Cuarta Sala del Tribunal Federal de Conciliación y Arbitraje",
-                                        "Quinta Sala del Tribunal Federal de Conciliación y Arbitraje",
-                                        "Sexta Sala del Tribunal Federal de Conciliación y Arbitraje",
-                                        "Séptima Sala del Tribunal Federal de Conciliación y Arbitraje",
-                                        "Octava Sala del Tribunal Federal de Conciliación y Arbitraje",
-                                        "Tribunal Federal de Conciliación y Arbitraje",
-                                        "Junta Especial Número Dos de la Federal de Conciliación y Arbitraje",
-                                        "Junta Especial Número Cinco de la Federal de Conciliación y Arbitraje",
-                                        "Junta Especial Número Doce de la Federal de Conciliación y Arbitraje",
-                                        "Junta Especial Número Doce Bis de la Federal de Conciliación y Arbitraje",
-                                        "Junta Especial Número Treinta y Cuatro de la Federal de Conciliación y Arbitraje",
-                                        "Segundo Tribunal Colegiado en Materia de Trabajo del Primer Circuito",
-                                        "Tercer Tribunal Colegiado en Materia de Trabajo del Primer Circuito",
-                                        "Cuarto Tribunal Colegiado en Materia de Trabajo del Primer Circuito",
-                                        "Quinto Tribunal Colegiado en Materia de Trabajo del Primer Circuito",
-                                        "Sexto Tribunal Colegiado en Materia de Trabajo",
-                                        "Séptimo Tribunal Colegiado en Materia de Trabajo",
-                                        "Octavo Tribunal Colegiado en Materia de Trabajo del Primer Circuito",
-                                        "Noveno Tribunal Colegiado en Materia de Trabajo",
-                                        "Décimo Primer Tribunal Colegiado en Materia de Trabajo",
-                                        "Décimo Tercer Tribunal Colegiado en Materia de Trabajo",
-                                        "Décimo Cuarto Tribunal Colegiado en Materia de Trabajo",
-                                        "Décimo Quinto Tribunal Colegiado en Materia de Trabajo",
-                                        "Décimo Sexto Tribunal Colegiado en Materia de Trabajo",
-                                        "Décimo Séptimo Tribunal Federal de Asuntos Individuales",
-                                        "Juzgado Primero de Distrito en Materia de Trabajo",
-                                        "Juzgado Segundo de Distrito en Materia de Trabajo",
-                                        "Juzgado Tercero de Distrito en Materia de Trabajo",
-                                        "Juzgado Séptimo de Distrito en Materia de Trabajo",
-                                        "Juzgado Octavo de Distrito en Materia de Trabajo",
-                                        "Juzgado de Distrito en Materia de Trabajo en la Ciudad de México",
-                                        "Centro de Justicia Penal Federal con residencia en Almoloya de Juárez",
-                                        "Centro de Justicia Penal Federal con sede en Reclusorio Sur",
-                                        "Centro de Justicia Penal Federal en Guanajuato",
-                                        "Centro de Justicia Penal en Colima",
-                                        "Centro de Justicia Penal en Morelia, Michoacán",
-                                        "Dirección de Funcionarios Conciliadores",
-                                        "Unidad de Conciliadores del Tribunal Federal de Conciliación y Arbitraje",
-                                        "Centro de Conciliación Laboral",
-                                        "Órgano Interno de Control en FINABIEN",
-                                        "OIC de FINABIEN",
-                                        "Fiscalía General de la República",
-                                        "Fiscalía Especializada en Delitos de Violencia contra las Mujeres",
-                                        "Tribunal de Juicios adscrito a la Fiscalía en Michoacán",
-                                        "Sala de Audiencia en la Fiscalía de Chihuahua",
-                                        "Juzgado de Control y Tribunal de Enjuiciamiento del Distrito Judicial de Pichucalco",
-                                        "Mecanismo Alternativo de Mediación",
-                                        "Órgano Especializado de Mecanismos Alternativos de Solución de Controversias de la FGR",
-                                        // --- EL COMODÍN PARA LOS PENDIENTES ---
+                                        // --- SE LLENARÁN AUTOMÁTICAMENTE DESDE LA MIGRACIÓN ---
                                         "POR DEFINIR / EN TURNO");
 
                         List<OrganoJurisdiccional> organos = new ArrayList<>();
@@ -268,14 +217,12 @@ public class DataInitializer implements CommandLineRunner {
                                         "Jalisco", "Michoacán", "Morelos", "Nayarit", "Nuevo León", "Oaxaca",
                                         "Puebla", "Querétaro", "Quintana Roo", "San Luis Potosí", "Sinaloa",
                                         "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz", "Yucatán",
-                                        "Zacatecas",
-                                        // --- VALORES AGREGADOS PARA MIGRACIONES ---
-                                        "Central", "Varios", "Sede Central", "Sede Norte");
+                                        "Zacatecas");
 
                         List<Estado> listaEstados = new ArrayList<>();
                         for (String nombre : estadosMexico) {
                                 listaEstados.add(Estado.builder().nombre(nombre).build());
-                        }       
+                        }
                         estadoRepository.saveAll(listaEstados);
                         System.out.println("✅ Catálogo de Estados cargado.");
                 }

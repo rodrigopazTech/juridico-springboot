@@ -12,6 +12,7 @@ public interface TipoAudienciaRepository extends JpaRepository<TipoAudiencia, In
     List<TipoAudiencia> findByActivoTrue();
 
     java.util.Optional<TipoAudiencia> findByNombreIgnoreCase(String nombre);
-    
     List<TipoAudiencia> findByGerenciaIdAndActivoTrue(Integer gerenciaId);
+    
+    java.util.Optional<TipoAudiencia> findByNombreIgnoreCaseAndGerenciaId(String nombre, Integer gerenciaId);
 }

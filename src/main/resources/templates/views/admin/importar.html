@@ -129,16 +129,19 @@
 
     <script th:if="${modo == 'INICIO'}">
         document.addEventListener("DOMContentLoaded", function() {
-            // Polling cada 5 segundos para detectar nuevos lotes entrantes p. ej. de n8n
+            // Polling cada 5 segundos para detectar nuevos lotes entrantes
             setInterval(async () => {
                 try {
                     const resp = await fetch('/admin/importar/api/estado-lote');
                     if (resp.ok) {
                         const json = await resp.json();
-                        if (json.hayLotePendiente) {
+                        const lastLoteShown = localStorage.getItem('last_lote_detected');
+                        
+                        if (json.hayLotePendiente && json.loteId && json.loteId.toString() !== lastLoteShown) {
+                            localStorage.setItem('last_lote_detected', json.loteId.toString());
                             Swal.fire({
                                 title: '¡Lote Detectado!',
-                                text: 'Se ha recibido un nuevo lote de datos en tránsito.',
+                                text: 'Se ha recibido un nuevo lote de datos (' + json.totalRegistros + ' registros).',
                                 icon: 'info',
                                 showConfirmButton: false,
                                 timer: 2000

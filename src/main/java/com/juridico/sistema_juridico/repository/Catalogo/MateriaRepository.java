@@ -17,5 +17,7 @@ public interface MateriaRepository extends JpaRepository<Materia, Integer> {
     Optional<Materia> findByNombreAndGerenciaId(String nombre, Integer gerenciaId);
     
     Optional<Materia> findByNombreIgnoreCase(String nombre);
+    
+    Optional<Materia> findByNombreIgnoreCaseAndGerenciaId(String nombre, Integer gerenciaId);
 }
 

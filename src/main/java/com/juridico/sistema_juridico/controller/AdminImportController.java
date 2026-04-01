@@ -19,6 +19,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -28,6 +29,7 @@ public class AdminImportController {
 
     @Autowired private LoteMigracionService loteMigracionService;
     @Autowired private CatalogoMigracionRepository catalogoMigracionRepository;
+    @Autowired private com.juridico.sistema_juridico.repository.procesal.RegistroMigracionRepository registroRepository;
     @Autowired private GerenciaRepository gerenciaRepository;
     @Autowired private MateriaRepository materiaRepository;
     @Autowired private OrganoJurisdiccionalRepository organoRepository;
@@ -235,13 +237,8 @@ public class AdminImportController {
                     .map(u -> Map.of("id", (Object)u.getId(), "nombre", u.getNombreCompleto()))
                     .collect(Collectors.toList()));
         } catch(NumberFormatException e) {
-            // materiaVal is a string (a NEW materia), so we just return ALL db users for now, 
-            // plus the new ones, because we can't filter by a non-existent materia ID.
-            res.addAll(usuarioRepository.findAll().stream()
-                    .map(u -> Map.of("id", (Object)u.getId(), "nombre", u.getNombreCompleto()))
-                    .collect(Collectors.toList()));
+            // materiaVal is a string (a NEW materia), so we just return NEW ones further down
         }
-        
         if (loteId != null) {
             catalogoMigracionRepository.findByLoteId(loteId).stream()
                 .filter(c -> "USUARIO".equals(c.getTipoCatalogo()) && "NUEVO".equals(c.getEstatus()))
@@ -261,9 +258,7 @@ public class AdminImportController {
                     .map(u -> Map.of("id", (Object)u.getId(), "nombre", u.getNombreCompleto()))
                     .collect(Collectors.toList()));
         } catch(NumberFormatException e) {
-            res.addAll(usuarioRepository.findAll().stream()
-                    .map(u -> Map.of("id", (Object)u.getId(), "nombre", u.getNombreCompleto()))
-                    .collect(Collectors.toList()));
+            // gerenciaVal is a string (a NEW gerencia), no db results possible yet
         }
         if (loteId != null) {
             catalogoMigracionRepository.findByLoteId(loteId).stream()
@@ -273,11 +268,60 @@ public class AdminImportController {
         return res;
     }
 
+    @GetMapping("/api/organos-por-gerencia/{gerenciaId}")
+    @ResponseBody
+    public List<Map<String, Object>> getOrganosByGerencia(@PathVariable("gerenciaId") String gerenciaVal, @RequestParam(required = false) Long loteId) {
+        List<Map<String, Object>> res = new java.util.ArrayList<>();
+        try {
+            Integer gerId = Integer.parseInt(gerenciaVal);
+            res.addAll(organoRepository.findByGerenciaIdAndActivoTrue(gerId).stream()
+                    .map(o -> Map.of("id", (Object)o.getId(), "nombre", o.getNombre()))
+                    .collect(Collectors.toList()));
+        } catch(NumberFormatException e) {
+            // gerenciaVal is a string (a NEW gerencia), no db results possible yet
+        }
+        
+        if (loteId != null) {
+            catalogoMigracionRepository.findByLoteId(loteId).stream()
+                .filter(c -> "ORGANO".equals(c.getTipoCatalogo()) && "NUEVO".equals(c.getEstatus()))
+                .forEach(c -> res.add(Map.of("id", c.getNuevoValor(), "nombre", c.getNuevoValor())));
+        }
+        return res;
+    }
+
+    @GetMapping("/api/tipos-audiencia-por-gerencia/{gerenciaId}")
+    @ResponseBody
+    public List<Map<String, Object>> getTiposAudienciaByGerencia(@PathVariable("gerenciaId") String gerenciaVal, @RequestParam(required = false) Long loteId) {
+        List<Map<String, Object>> res = new java.util.ArrayList<>();
+        try {
+            Integer gerId = Integer.parseInt(gerenciaVal);
+            res.addAll(tipoAudienciaRepository.findByGerenciaIdAndActivoTrue(gerId).stream()
+                    .map(t -> Map.of("id", (Object)t.getId(), "nombre", t.getNombre()))
+                    .collect(Collectors.toList()));
+        } catch(NumberFormatException e) {
+            // gerenciaVal is a string (a NEW gerencia), no db results possible yet
+        }
+        
+        if (loteId != null) {
+            catalogoMigracionRepository.findByLoteId(loteId).stream()
+                .filter(c -> "TIPO_AUDIENCIA".equals(c.getTipoCatalogo()) && "NUEVO".equals(c.getEstatus()))
+                .forEach(c -> res.add(Map.of("id", c.getNuevoValor(), "nombre", c.getNuevoValor())));
+        }
+        return res;
+    }
+
     @GetMapping("/api/estado-lote")
     @ResponseBody
-    public Map<String, Boolean> checkEstadoLote() {
+    public Map<String, Object> checkEstadoLote() {
         LoteMigracion loteActivo = loteMigracionService.obtenerLoteActivoOpcional();
         boolean hayLote = loteActivo != null && "PENDIENTE".equals(loteActivo.getEstatus());
-        return Map.of("hayLotePendiente", hayLote);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("hayLotePendiente", hayLote);
+        if (hayLote) {
+            response.put("loteId", loteActivo.getId());
+            response.put("totalRegistros", registroRepository.countByLoteId(loteActivo.getId()));
+        }
+        return response;
     }
 }

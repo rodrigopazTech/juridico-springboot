@@ -86,11 +86,20 @@
         public void registrarDatoEnLote(String tipoDato, Object requestObjeto, String numeroExpediente) {
             try {
                 LoteMigracion loteActivo = obtenerOCrearLoteActivo();
+                String jsonStr = objectMapper.writeValueAsString(requestObjeto);
                 
+                // PREVENCIÓN DE DUPLICADOS EXACTOS EN EL MISMO LOTE
+                boolean duplicado = registroRepository.findByLoteIdAndEstatusNot(loteActivo.getId(), "RECHAZADO").stream()
+                    .anyMatch(r -> r.getPayloadJson().equals(jsonStr) && 
+                              ( (r.getNumeroExpedienteExtraido() == null && numeroExpediente == null) || 
+                                (r.getNumeroExpedienteExtraido() != null && r.getNumeroExpedienteExtraido().equals(numeroExpediente)) ));
+                
+                if (duplicado) return; // Si es un duplicado exacto del mismo expediente en el mismo lote, ignoramos.
+
                 RegistroMigracion registro = new RegistroMigracion();
                 registro.setLote(loteActivo);
-                registro.setTipoDato(tipoDato); // "EXPEDIENTE", "TERMINO" o "AUDIENCIA"
-                registro.setPayloadJson(objectMapper.writeValueAsString(requestObjeto)); // Convertimos a JSON texto
+                registro.setTipoDato(tipoDato); 
+                registro.setPayloadJson(jsonStr); 
                 registro.setNumeroExpedienteExtraido(numeroExpediente);
                 registro.setEstatus("PENDIENTE");
                 
@@ -727,12 +736,21 @@
                         try {
                             JsonNode json = objectMapper.readTree(r.getPayloadJson());
                             if ("TERMINO".equals(r.getTipoDato())) {
-                                Termino termino = new Termino();
-                                termino.setExpediente(expediente);
-                                termino.setAsunto(json.has("prestacion") ? json.get("prestacion").asText() : (json.has("asunto") ? json.get("asunto").asText() : "Sin actuación"));
-
+                                String asuntoVal = json.has("prestacion") ? json.get("prestacion").asText() : (json.has("asunto") ? json.get("asunto").asText() : "Sin actuación");
+                                if (asuntoVal.length() > 500) asuntoVal = asuntoVal.substring(0, 500);
                                 LocalDate fechaVenc = parseDate(json.get("fechaVencimiento"));
                                 LocalDate fechaIng = parseDate(json.get("fechaIngreso"));
+
+                                // PREVENCIÓN DE DUPLICADOS PARA TÉRMINO
+                                List<Termino> tExistentes = terminoRepository.findByExpedienteAndAsuntoAndFechaVencimiento(expediente, asuntoVal, fechaVenc);
+                                if (!tExistentes.isEmpty()) {
+                                    System.out.println("Omitiendo término duplicado para expediente " + expediente.getNumero() + ": " + asuntoVal);
+                                    continue; 
+                                }
+
+                                Termino termino = new Termino();
+                                termino.setExpediente(expediente);
+                                termino.setAsunto(asuntoVal);
                                 termino.setFechaVencimiento(fechaVenc);
                                 termino.setFechaIngreso(fechaIng);
 
@@ -767,12 +785,20 @@
                                 terminoRepository.save(termino);
 
                             } else if ("AUDIENCIA".equals(r.getTipoDato())) {
+                                LocalDate fechaAud = parseDate(json.get("fechaAudiencia"));
+                                LocalTime horaAud = parseTime(json.get("horaAudiencia"));
+
+                                // --- PREVENCIÓN DE DUPLICADOS PARA AUDIENCIA ---
+                                List<Audiencia> aExistentes = audienciaRepository.findByExpedienteAndFechaAudienciaAndHoraAudiencia(expediente, fechaAud, horaAud);
+                                if (!aExistentes.isEmpty()) {
+                                    System.out.println("Omitiendo audiencia duplicada para expediente " + expediente.getNumero() + " el " + fechaAud);
+                                    continue;
+                                }
+
                                 Audiencia audiencia = new Audiencia();
                                 audiencia.setExpediente(expediente);
-
-                                LocalDate fechaAud = parseDate(json.get("fechaAudiencia"));
                                 audiencia.setFechaAudiencia(fechaAud);
-                                audiencia.setHoraAudiencia(parseTime(json.get("horaAudiencia")));
+                                audiencia.setHoraAudiencia(horaAud);
 
                                 // Estatus automático basado en la fecha de audiencia
                                 audiencia.setEstatusAudiencia(
@@ -833,16 +859,14 @@
                 loteRepository.save(lote);
                 registroRepository.saveAll(registros);
 
-                // LIMPIEZA ADICIONAL: Rechazamos TODOS los demás lotes pendientes
-                // para garantizar que la pantalla vuelva al inicio ("Esperando Datos Nuevos")
-                // y el usuario no sea enviado inmediatamente a procesar ruido acumulado por peticiones repetitivas.
-                List<LoteMigracion> pendientes = loteRepository.findByEstatus("PENDIENTE");
-                for (LoteMigracion p : pendientes) {
-                    if (!p.getId().equals(loteId)) {
-                        p.setEstatus("RECHAZADO");
+                // LIMPIEZA: Si hay otros lotes PENDIENTES (por ruido de n8n), los cancelamos
+                List<LoteMigracion> otrosLotes = loteRepository.findByEstatus("PENDIENTE");
+                for (LoteMigracion otro : otrosLotes) {
+                    if (!otro.getId().equals(loteId)) {
+                        otro.setEstatus("RECHAZADO");
                     }
                 }
-                loteRepository.saveAll(pendientes);
+                loteRepository.saveAll(otrosLotes);
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new RuntimeException("Error inyectando lote: " + e.getMessage(), e);
@@ -875,7 +899,8 @@
                     if (nombreFinal.length() > 100) nombreFinal = nombreFinal.substring(0, 100);
 
                     final String searchName = nombreFinal;
-                    Materia existente = materiaRepository.findByNombreIgnoreCase(searchName).orElse(null);
+                    Integer gerenciaId = (gerenciaContexto != null) ? gerenciaContexto.getId() : getFallbackGerencia().getId();
+                    Materia existente = materiaRepository.findByNombreIgnoreCaseAndGerenciaId(searchName, gerenciaId).orElse(null);
                     if (existente == null) {
                         Materia m = new Materia(); 
                         m.setNombre(searchName); 
@@ -888,7 +913,9 @@
                     return existente;
                 }
             }
-            // Fallback: buscar directamente en la DB por nombre
+            if (gerenciaContexto != null) {
+                return materiaRepository.findByNombreIgnoreCaseAndGerenciaId(original.trim(), gerenciaContexto.getId()).orElse(null);
+            }
             return materiaRepository.findByNombreIgnoreCase(original.trim()).orElse(null);
         }
         private Gerencia resolveGerencia(String original, java.util.Map<String, CatalogoMigracion> lookup) {
@@ -928,9 +955,13 @@
                 if (c.getNuevoValor() != null) {
                     String nombreFinal = c.getNuevoValor();
                     if (nombreFinal.length() > 100) nombreFinal = nombreFinal.substring(0, 100);
-
                     final String searchName = nombreFinal;
-                    OrganoJurisdiccional existente = organoRepository.findByNombreIgnoreCase(searchName).orElse(null);
+                    OrganoJurisdiccional existente = null;
+                    if (gerenciaContexto != null) {
+                        existente = organoRepository.findByNombreIgnoreCaseAndGerenciaId(searchName, gerenciaContexto.getId()).orElse(null);
+                    } else {
+                        existente = organoRepository.findByNombreIgnoreCase(searchName).orElse(null);
+                    }
                     if (existente == null) {
                         OrganoJurisdiccional o = new OrganoJurisdiccional(); 
                         o.setNombre(searchName); 
@@ -943,7 +974,9 @@
                     return existente;
                 }
             }
-            // Fallback: buscar directamente en la DB por nombre
+            if (gerenciaContexto != null) {
+                return organoRepository.findByNombreIgnoreCaseAndGerenciaId(original.trim(), gerenciaContexto.getId()).orElse(null);
+            }
             return organoRepository.findByNombreIgnoreCase(original.trim()).orElse(null);
         }
 
@@ -956,9 +989,13 @@
                 if (c.getNuevoValor() != null) {
                     String nombreFinal = c.getNuevoValor();
                     if (nombreFinal.length() > 100) nombreFinal = nombreFinal.substring(0, 100);
-
                     final String searchName = nombreFinal;
-                    TipoAudiencia existente = tipoAudienciaRepository.findByNombreIgnoreCase(searchName).orElse(null);
+                    TipoAudiencia existente = null;
+                    if (gerenciaContexto != null) {
+                        existente = tipoAudienciaRepository.findByNombreIgnoreCaseAndGerenciaId(searchName, gerenciaContexto.getId()).orElse(null);
+                    } else {
+                        existente = tipoAudienciaRepository.findByNombreIgnoreCase(searchName).orElse(null);
+                    }
                     if (existente == null) {
                         TipoAudiencia t = new TipoAudiencia(); 
                         t.setNombre(searchName); 
@@ -971,7 +1008,9 @@
                     return existente;
                 }
             }
-            // Fallback: buscar directamente en la DB por nombre
+            if (gerenciaContexto != null) {
+                return tipoAudienciaRepository.findByNombreIgnoreCaseAndGerenciaId(original.trim(), gerenciaContexto.getId()).orElse(null);
+            }
             return tipoAudienciaRepository.findByNombreIgnoreCase(original.trim()).orElse(null);
         }
 

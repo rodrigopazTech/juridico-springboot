@@ -10,6 +10,8 @@ public interface RegistroMigracionRepository extends JpaRepository<RegistroMigra
     
     // Trae los registros de un lote que NO estén en la papelera (RECHAZADO)
     List<RegistroMigracion> findByLoteIdAndEstatusNot(Long loteId, String estatusExcluido);
+    
+    long countByLoteId(Long loteId);
 
     // Trae los registros de un lote filtrados por tipo (TERMINO o AUDIENCIA)
     List<RegistroMigracion> findByLoteIdAndTipoDatoAndEstatusNot(Long loteId, String tipoDato, String estatusExcluido);

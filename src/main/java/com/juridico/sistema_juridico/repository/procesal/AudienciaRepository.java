@@ -225,4 +225,6 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
 
         @Query("SELECT a FROM Audiencia a WHERE a.abogadoComparece.id = :usuarioId OR a.expediente.abogadoResponsable.id = :usuarioId")
         List<Audiencia> findByUsuarioId(@Param("usuarioId") Integer usuarioId);
+
+        List<Audiencia> findByExpedienteAndFechaAudienciaAndHoraAudiencia(com.juridico.sistema_juridico.Entity.expediente.Expediente expediente, java.time.LocalDate fechaAudiencia, java.time.LocalTime horaAudiencia);
 }

@@ -367,13 +367,70 @@ function confirmarInyeccion() {
 // AJAX HELPER: enviar formulario al backend
 // ==========================================
 async function guardarEdicionRegistro(formEl) {
-    const data = new URLSearchParams(new FormData(formEl));
+    const formData = new FormData(formEl);
+    const data = new URLSearchParams(formData);
+    const registroId = formData.get('registroId');
+    
     try {
         const resp = await fetch('/admin/importar/editar-registro', { method: 'POST', body: data });
         const json = await resp.json();
+        
         if (resp.ok && json.status === 'ok') {
-            Swal.fire({ icon: 'success', title: '¡Guardado!', text: json.mensaje, timer: 1500, showConfirmButton: false })
-                .then(() => location.reload());
+            Swal.fire({ icon: 'success', title: '¡Guardado!', text: json.mensaje, timer: 1200, showConfirmButton: false });
+            
+            // Cerrar el modal actual (identificando cuál está abierto)
+            const openModal = document.querySelector('.fixed.flex:not(.hidden)');
+            if (openModal) {
+                openModal.classList.add('hidden');
+                openModal.classList.remove('flex');
+            }
+
+            // ACTUALIZAR LA FILA EN TIEMPO REAL (SIN RELOAD)
+            const row = document.getElementById('row-' + registroId);
+            if (row) {
+                // Buscamos el botón de editar en esa fila para actualizar sus data-attributes
+                const btn = row.querySelector('.btn-editar-registro');
+                if (btn) {
+                    formData.forEach((value, key) => {
+                        // CamelCase to kebab-case (e.g. numeroExpediente -> data-numero-expediente)
+                        const attrName = 'data-' + key.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+                        btn.setAttribute(attrName, value);
+                    });
+                    
+                    // Si se cambiaron Gerencia o Materia, actualizar IDs para consistencia
+                    if (json.gerenciaId) btn.setAttribute('data-gerencia-id', json.gerenciaId);
+                    if (json.materiaId) btn.setAttribute('data-materia-id', json.materiaId);
+                }
+
+                // Actualizar visualmente las celdas de la fila (específico por etapa)
+                // Etapa 2: Expedientes
+                const expNum = row.querySelector('.text-gob-guinda');
+                if (expNum && formData.has('numeroExpediente')) expNum.innerText = formData.get('numeroExpediente');
+                
+                const partes = row.querySelector('.text-gray-700');
+                if (partes && formData.has('partes')) partes.innerText = formData.get('partes');
+                
+                const materiaSpan = row.querySelector('.text-gray-800.font-semibold');
+                const gerenciaSpan = row.querySelector('.text-gray-400.text-\\[10px\\]');
+                if (materiaSpan && formData.has('materia')) materiaSpan.innerText = formData.get('materia');
+                if (gerenciaSpan && formData.has('gerencia')) gerenciaSpan.innerText = formData.get('gerencia');
+
+                // Etapa 3: Audiencias
+                const audFecha = row.querySelector('.far.fa-calendar + span');
+                const audHora = row.querySelector('.far.fa-clock + span');
+                if (audFecha && formData.has('fechaAudiencia')) audFecha.innerText = formData.get('fechaAudiencia');
+                if (audHora && formData.has('horaAudiencia')) audHora.innerText = formData.get('horaAudiencia');
+
+                // Etapa 4: Términos
+                const termAsunto = row.querySelector('.text-gray-800.font-medium');
+                const termFecha = row.querySelector('.fa-calendar-times + span');
+                if (termAsunto && formData.has('actuacion')) termAsunto.innerText = formData.get('actuacion');
+                if (termFecha && formData.has('fechaVencimiento')) termFecha.innerText = formData.get('fechaVencimiento');
+                
+                // Efecto visual de actualización
+                row.classList.add('bg-green-50');
+                setTimeout(() => row.classList.remove('bg-green-50'), 2000);
+            }
         } else {
             Swal.fire({ icon: 'error', title: 'Error', text: json.error || 'No se pudo guardar.' });
         }
@@ -437,6 +494,54 @@ async function cargarAbogados(materiaId, targetSelect, selectedValue = '') {
     }
 }
 
+async function cargarOrganos(gerenciaId, targetSelect, selectedValue = '') {
+    if (!gerenciaId) {
+        targetSelect.innerHTML = '<option value="">-- Primero selecciona una gerencia --</option>';
+        targetSelect.disabled = true;
+        return;
+    }
+    try {
+        const loteIdInput = document.querySelector('input[name="loteId"]');
+        const loteParam = loteIdInput ? `?loteId=${loteIdInput.value}` : '';
+        const resp = await fetch(`/admin/importar/api/organos-por-gerencia/${gerenciaId}${loteParam}`);
+        const organos = await resp.json();
+        let html = '<option value="">-- Seleccione Órgano Jurisdiccional --</option>';
+        organos.forEach(o => {
+            const isSelected = (o.nombre === selectedValue || o.id == selectedValue);
+            const selected = isSelected ? 'selected' : '';
+            html += `<option value="${o.nombre}" data-id="${o.id}" ${selected}>${o.nombre}</option>`;
+        });
+        targetSelect.innerHTML = html;
+        targetSelect.disabled = false;
+    } catch (e) {
+        console.error("Error cargando órganos:", e);
+    }
+}
+
+async function cargarTiposAudiencia(gerenciaId, targetSelect, selectedValue = '') {
+    if (!gerenciaId) {
+        targetSelect.innerHTML = '<option value="">-- Primero selecciona una gerencia --</option>';
+        targetSelect.disabled = true;
+        return;
+    }
+    try {
+        const loteIdInput = document.querySelector('input[name="loteId"]');
+        const loteParam = loteIdInput ? `?loteId=${loteIdInput.value}` : '';
+        const resp = await fetch(`/admin/importar/api/tipos-audiencia-por-gerencia/${gerenciaId}${loteParam}`);
+        const tipos = await resp.json();
+        let html = '<option value="">-- Seleccione Tipo de Audiencia --</option>';
+        tipos.forEach(t => {
+            const isSelected = (t.nombre === selectedValue || t.id == selectedValue);
+            const selected = isSelected ? 'selected' : '';
+            html += `<option value="${t.nombre}" data-id="${t.id}" ${selected}>${t.nombre}</option>`;
+        });
+        targetSelect.innerHTML = html;
+        targetSelect.disabled = false;
+    } catch (e) {
+        console.error("Error cargando tipos de audiencia:", e);
+    }
+}
+
 // ==========================================
 // LÓGICA DE SELECTORES JERÁRQUICOS Y MATCHING INTELIGENTE
 // ==========================================
@@ -486,11 +591,21 @@ function setupHierarchicalSelects(prefix) {
     const materiaSel = document.getElementById(`${prefix}-materia`);
     const abogadoSel = document.getElementById(`${prefix}-abogado`) || document.getElementById(`${prefix}-responsable`) || document.getElementById(`${prefix}-compareciente`);
 
-    if (gerenciaSel && materiaSel) {
+    if (gerenciaSel) {
         gerenciaSel.addEventListener('change', function () {
             const selectedOption = this.options[this.selectedIndex];
             const gerenciaId = selectedOption ? selectedOption.getAttribute('data-id') : null;
-            cargarMaterias(gerenciaId, materiaSel);
+            
+            if (materiaSel) {
+                cargarMaterias(gerenciaId, materiaSel);
+            }
+            
+            const organos = document.querySelectorAll(`[id^="${prefix}-"][id$="organo"]`);
+            organos.forEach(sel => cargarOrganos(gerenciaId, sel));
+            
+            const tiposAud = document.querySelectorAll(`[id^="${prefix}-"][id$="tipo"]`);
+            tiposAud.forEach(sel => cargarTiposAudiencia(gerenciaId, sel));
+            
             if (abogadoSel) {
                 abogadoSel.innerHTML = '<option value="">-- Primero selecciona una materia --</option>';
                 abogadoSel.disabled = true;
@@ -549,14 +664,16 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
         if (foundGerencia && gerenciaSel.selectedIndex > 0) {
             const activeGerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
             await cargarMaterias(activeGerenciaId, materiaSel, d.materiaId || d.materia);
+            
+            const expOrgano = document.getElementById('exp-organo');
+            if (expOrgano) await cargarOrganos(activeGerenciaId, expOrgano, d.organoId || d.organo);
         } else {
             // RED DE SEGURIDAD: Inyectar datos si falló el match de catálogo
             if (d.gerencia && d.gerencia !== 'null' && d.gerencia !== 'undefined' && d.gerencia.trim() !== '') {
-                gerenciaSel.innerHTML += `<option value="${d.gerencia}" selected>${d.gerencia}</option>`;
-            }
-            if (d.materia && d.materia !== 'null' && d.materia !== 'undefined' && d.materia.trim() !== '') {
-                materiaSel.innerHTML = `<option value="">-- Seleccione Materia --</option><option value="${d.materia}" selected>${d.materia}</option>`;
-                materiaSel.disabled = false;
+                gerenciaSel.innerHTML += `<option value="${d.gerencia}" data-id="${d.gerencia}" selected>${d.gerencia}</option>`;
+                await cargarMaterias(d.gerencia, materiaSel, d.materiaId || d.materia);
+                const expOrgano = document.getElementById('exp-organo');
+                if (expOrgano) await cargarOrganos(d.gerencia, expOrgano, d.organoId || d.organo);
             }
         }
 
@@ -610,6 +727,12 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
             const activeGerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
             await cargarMaterias(activeGerenciaId, materiaSel, d.materiaId || d.materia);
 
+            const audOrgano = document.getElementById('aud-organo');
+            if (audOrgano) await cargarOrganos(activeGerenciaId, audOrgano, d.organoJurisdiccionalId || d.organoJurisdiccional);
+
+            const audTipo = document.getElementById('aud-tipo');
+            if (audTipo) await cargarTiposAudiencia(activeGerenciaId, audTipo, d.tipoAudienciaId || d.tipoAudiencia);
+
             if (materiaSel && materiaSel.selectedIndex > 0) {
                 const activeMateriaId = materiaSel.options[materiaSel.selectedIndex].getAttribute('data-id');
                 await cargarAbogados(activeMateriaId, document.getElementById('aud-responsable'), d.abogadoId || d.abogadoResponsable);
@@ -618,11 +741,14 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
         } else {
             // RED DE SEGURIDAD EXTREMA
             if (d.gerencia && d.gerencia !== 'null' && d.gerencia !== 'undefined' && d.gerencia.trim() !== '') {
-                gerenciaSel.innerHTML += `<option value="${d.gerencia}" selected>${d.gerencia}</option>`;
-            }
-            if (d.materia && d.materia !== 'null' && d.materia !== 'undefined' && d.materia.trim() !== '') {
-                materiaSel.innerHTML = `<option value="">-- Seleccione Materia --</option><option value="${d.materia}" selected>${d.materia}</option>`;
-                materiaSel.disabled = false;
+                gerenciaSel.innerHTML += `<option value="${d.gerencia}" data-id="${d.gerencia}" selected>${d.gerencia}</option>`;
+                await cargarMaterias(d.gerencia, materiaSel, d.materiaId || d.materia);
+
+                const audOrgano = document.getElementById('aud-organo');
+                if (audOrgano) await cargarOrganos(d.gerencia, audOrgano, d.organoJurisdiccionalId || d.organoJurisdiccional);
+
+                const audTipo = document.getElementById('aud-tipo');
+                if (audTipo) await cargarTiposAudiencia(d.gerencia, audTipo, d.tipoAudienciaId || d.tipoAudiencia);
             }
             if (d.abogadoResponsable && d.abogadoResponsable !== 'null' && d.abogadoResponsable !== 'undefined' && d.abogadoResponsable.trim() !== '') {
                 const resp = document.getElementById('aud-responsable');
@@ -699,6 +825,10 @@ document.querySelectorAll('.btn-editar-termino').forEach(btn => {
         if (foundGerencia && gerenciaSel.selectedIndex > 0) {
             const activeGerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
             await cargarMaterias(activeGerenciaId, materiaSel, d.materiaId || d.materia);
+
+            const termOrgano = document.getElementById('term-organo');
+            if (termOrgano) await cargarOrganos(activeGerenciaId, termOrgano, d.organoId || d.organo);
+
             if (materiaSel && materiaSel.selectedIndex > 0) {
                 const activeMateriaId = materiaSel.options[materiaSel.selectedIndex].getAttribute('data-id');
                 await cargarAbogados(activeMateriaId, document.getElementById('term-abogado'), d.abogadoId || d.abogadoResponsable);
@@ -706,11 +836,11 @@ document.querySelectorAll('.btn-editar-termino').forEach(btn => {
         } else {
             // RED DE SEGURIDAD EXTREMA
             if (d.gerencia && d.gerencia !== 'null' && d.gerencia !== 'undefined' && d.gerencia.trim() !== '') {
-                gerenciaSel.innerHTML += `<option value="${d.gerencia}" selected>${d.gerencia}</option>`;
-            }
-            if (d.materia && d.materia !== 'null' && d.materia !== 'undefined' && d.materia.trim() !== '') {
-                materiaSel.innerHTML = `<option value="">-- Seleccione Materia --</option><option value="${d.materia}" selected>${d.materia}</option>`;
-                materiaSel.disabled = false;
+                gerenciaSel.innerHTML += `<option value="${d.gerencia}" data-id="${d.gerencia}" selected>${d.gerencia}</option>`;
+                await cargarMaterias(d.gerencia, materiaSel, d.materiaId || d.materia);
+
+                const termOrgano = document.getElementById('term-organo');
+                if (termOrgano) await cargarOrganos(d.gerencia, termOrgano, d.organoId || d.organo);
             }
             if (d.abogadoResponsable && d.abogadoResponsable !== 'null' && d.abogadoResponsable !== 'undefined' && d.abogadoResponsable.trim() !== '') {
                 const resp = document.getElementById('term-abogado');

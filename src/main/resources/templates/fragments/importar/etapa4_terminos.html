@@ -34,7 +34,7 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr th:each="term : ${terminosResumen}" class="hover:bg-gray-50 transition">
+          <tr th:each="term : ${terminosResumen}" th:id="${'row-' + term.id}" class="hover:bg-gray-50 transition">
             <td class="px-5 py-3 sticky left-0 bg-white z-10 max-w-[180px]">
               <span class="block truncate font-bold text-gob-guinda" th:text="${term.numeroExpediente}"
                 th:title="${term.numeroExpediente}">
@@ -134,8 +134,8 @@
           <input type="date" id="term-fecha-ingreso" name="fechaIngreso"
             class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm" />
         </div>
-        <!-- JERARQUÍA PARA FILTRADO (OCULTO) -->
-        <div class="hidden">
+        <!-- JERARQUÍA PARA FILTRADO -->
+        <div class="col-span-2 grid grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Gerencia</label>
             <select id="term-gerencia" name="gerencia"
