@@ -10,7 +10,6 @@
                         <th class="px-4 py-3 bg-gray-50">Prioridad</th>
                         <th class="px-4 py-3 bg-gray-50">Actuación</th>
                         <th class="px-4 py-3 bg-gray-50">Abogado</th>
-                        <th class="px-4 py-3 bg-gray-50">Estatus</th>
                         <th class="px-4 py-3 text-right bg-gray-50">Acciones</th>
                     </tr>
                 </thead>
@@ -67,14 +66,6 @@
 
                             <td class="px-4 py-3"
                                 th:text="${t.abogadoResponsable?.nombreCompleto ?: (t.expediente?.abogadoResponsable?.nombreCompleto ?: 'Sin Asignar')}">
-                            </td>
-
-                            <td class="px-4 py-3">
-                                <span class="px-2 py-1 rounded text-xs font-bold border"
-                                    th:text="${t.estatusTermino?.descripcion}"
-                                    th:classappend="${t.estatusTermino?.name() == 'CONCLUIDO' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-blue-50 text-blue-800 border-blue-200'}">
-                                    Proyectista
-                                </span>
                             </td>
 
                             <td class="px-4 py-3 text-right relative">
