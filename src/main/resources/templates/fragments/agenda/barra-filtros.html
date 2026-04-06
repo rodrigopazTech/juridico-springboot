@@ -15,18 +15,16 @@
         </div>
 
         <div class="space-y-3">
-            <!-- Rango de Fechas - Inicio -->
-            <div class="space-y-1">
-                <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Fecha Inicio</label>
-                <input type="date" name="fechaInicio" th:value="${paramFechaInicio}" onchange="this.form.submit()"
+            <!-- Gerencia (Condicional) -->
+            <div sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION')" class="space-y-1">
+                <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Gerencia</label>
+                <select name="gerenciaId" onchange="this.form.submit()"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
-            </div>
-
-            <!-- Rango de Fechas - Fin -->
-            <div class="space-y-1">
-                <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Fecha Fin</label>
-                <input type="date" name="fechaFin" th:value="${paramFechaFin}" onchange="this.form.submit()"
-                    class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
+                    <option value="" class="text-gray-800">Todas las gerencias</option>
+                    <option th:each="g : ${listaGerencias}" th:value="${g.id}" th:text="${g.nombre}"
+                        th:selected="${paramGerenciaId != null and paramGerenciaId.toString() == g.id.toString()}"
+                        class="text-gray-800"></option>
+                </select>
             </div>
 
             <!-- Materia (Condicional) -->
@@ -42,16 +40,18 @@
                 </select>
             </div>
 
-            <!-- Gerencia (Condicional) -->
-            <div sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION')" class="space-y-1">
-                <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Gerencia</label>
-                <select name="gerenciaId" onchange="this.form.submit()"
-                    class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
-                    <option value="" class="text-gray-800">Todas las gerencias</option>
-                    <option th:each="g : ${listaGerencias}" th:value="${g.id}" th:text="${g.nombre}"
-                        th:selected="${paramGerenciaId != null and paramGerenciaId.toString() == g.id.toString()}"
-                        class="text-gray-800"></option>
-                </select>
+            <!-- Periodo (Rango de Fechas Horizontal) -->
+            <div class="space-y-1">
+                <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Periodo</label>
+                <div class="flex items-center gap-2">
+                    <input type="date" name="fechaInicio" th:value="${paramFechaInicio}" onchange="this.form.submit()"
+                        class="w-full bg-white/10 border border-white/10 rounded-xl px-2 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer"
+                        title="Fecha Inicio">
+                    <span class="text-white/50 font-bold">-</span>
+                    <input type="date" name="fechaFin" th:value="${paramFechaFin}" onchange="this.form.submit()"
+                        class="w-full bg-white/10 border border-white/10 rounded-xl px-2 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer"
+                        title="Fecha Fin">
+                </div>
             </div>
         </div>
     </form>
