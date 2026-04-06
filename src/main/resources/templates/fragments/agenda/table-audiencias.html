@@ -34,7 +34,12 @@
                             th:text="${a.tipoAudiencia.nombre}">Tipo</span>
                     </td>
 
-                    <td class="px-6 py-4 truncate max-w-xs" th:text="${a.expediente.partes}">Partes</td>
+                    <td class="px-6 py-4 w-56">
+                        <div class="line-clamp-2 whitespace-normal break-words text-sm" th:text="${a.expediente.partes}"
+                            th:title="${a.expediente.partes}">
+                            Partes
+                        </div>
+                    </td>
 
                     <td class="px-6 py-4 text-center">
                         <div class="flex justify-center gap-3">
