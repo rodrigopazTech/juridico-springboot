@@ -140,6 +140,24 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
     @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.gerencia.id = :gerenciaId AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
     long countByExpedienteGerenciaIdAndActivo(@Param("gerenciaId") Long gerenciaId);
 
+    @Query("SELECT t FROM Termino t " +
+           "LEFT JOIN t.expediente e " +
+           "WHERE t.estatusTermino IN :estatusList " +
+           "AND t.fechaPresentacion >= :fechaInicio AND t.fechaPresentacion <= :fechaFin " +
+           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
+           "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
+           "AND (:filtroRoleGerenciaId IS NULL OR e.gerencia.id = :filtroRoleGerenciaId) " +
+           "AND ((:filtroRoleMateriaIds) IS NULL OR e.materia.id IN (:filtroRoleMateriaIds))")
+    Page<Termino> buscarParaHistorial(
+            @Param("estatusList") List<EstatusTermino> estatusList,
+            @Param("fechaInicio") LocalDate fechaInicio,
+            @Param("fechaFin") LocalDate fechaFin,
+            @Param("gerenciaId") Integer gerenciaId,
+            @Param("materiaId") Integer materiaId,
+            @Param("filtroRoleGerenciaId") Integer filtroRoleGerenciaId,
+            @Param("filtroRoleMateriaIds") List<Integer> filtroRoleMateriaIds,
+            Pageable pageable);
+
     // Conteo por lista de gerencias (solo términos activos)
     @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.gerencia.id IN :gerenciaIds AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
     long countByExpedienteGerenciaIdInAndActivo(@Param("gerenciaIds") List<Long> gerenciaIds);

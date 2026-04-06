@@ -5,7 +5,6 @@
                 <thead
                     class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200 sticky top-0 z-10 shadow-sm">
                     <tr>
-                        <th class="px-4 py-3 w-8 bg-gray-50"></th>
                         <th class="px-4 py-3 bg-gray-50">Vencimiento</th>
                         <th class="px-4 py-3 bg-gray-50">Expediente</th>
                         <th class="px-4 py-3 bg-gray-50">Prioridad</th>
@@ -22,13 +21,6 @@
 
                     <th:block th:each="t : ${terminos}">
                         <tr class="border-b hover:bg-gray-50 transition relative">
-                            <td class="px-4 py-3 text-center">
-                                <button th:onclick="'toggleTimeline(' + ${t.id} + ')'"
-                                    class="text-gray-400 hover:text-gob-guinda transition-transform duration-200 transform focus:outline-none"
-                                    th:id="'btn-expand-' + ${t.id}">
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                            </td>
 
                             <td class="px-4 py-3 font-bold text-gray-800">
                                 <div class="flex items-center gap-2" th:title="${t.diasRestantesTexto}">
@@ -181,51 +173,6 @@
                                         <i class="fas fa-trash-alt mr-3 w-4 text-center text-red-400"></i> Eliminar
                                     </button>
                                 </div>
-                            </td>
-                        </tr>
-
-                        <tr th:id="'timeline-' + ${t.id}"
-                            class="hidden bg-gray-50/80 border-b border-gray-100 transition-all duration-300 ease-in-out">
-                            <td colspan="8" class="px-8 py-6">
-                                <div class="relative flex items-center justify-between w-full max-w-4xl mx-auto">
-                                    <div
-                                        class="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 z-0 rounded">
-                                    </div>
-                                    <div class="absolute top-1/2 left-0 h-1 bg-gob-guinda -translate-y-1/2 z-0 rounded transition-all duration-1000"
-                                        th:style="'width: ' + ${(ordenEtapas.get(t.estatusTermino) - 1) * 16.66} + '%'">
-                                    </div>
-
-                                    <th:block
-                                        th:each="paso, stat : ${T(com.juridico.sistema_juridico.Entity.enums.EstatusTermino).values()}">
-                                        <div th:with="pasoIndex=${stat.count}, actualIndex=${ordenEtapas.get(t.estatusTermino)}"
-                                            class="relative z-10 flex flex-col items-center group">
-                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all duration-300"
-                                                th:classappend="${pasoIndex < actualIndex ? 'bg-gob-guinda border-gob-guinda text-white' : 
-                                                              (pasoIndex == actualIndex ? 'bg-white border-gob-guinda text-gob-guinda ring-4 ring-gob-guinda/20' : 
-                                                              'bg-white border-gray-300 text-gray-300')}">
-                                                <i th:if="${pasoIndex < actualIndex}" class="fas fa-check"></i>
-                                                <span th:if="${pasoIndex >= actualIndex}" th:text="${pasoIndex}"></span>
-                                            </div>
-                                            <span
-                                                class="absolute top-10 text-[10px] font-bold uppercase tracking-wide w-24 text-center transition-colors duration-300"
-                                                th:classappend="${pasoIndex <= actualIndex ? 'text-gob-guinda' : 'text-gray-400'}"
-                                                th:text="${paso.descripcion}"></span>
-                                        </div>
-                                    </th:block>
-                                </div>
-
-                                <!-- Observaciones -->
-                                <div th:if="${t.observaciones != null and !#strings.isEmpty(t.observaciones)}"
-                                    class="mt-8 bg-white border border-yellow-200 rounded-lg p-4 shadow-sm relative text-left">
-                                    <div
-                                        class="absolute -top-3 left-4 bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-1 rounded border border-yellow-200 shadow-sm flex items-center gap-1">
-                                        <i class="fas fa-sticky-note"></i> Notas internas
-                                    </div>
-                                    <p class="text-xs text-gray-700 whitespace-pre-wrap mt-1"
-                                        th:text="${t.observaciones}">
-                                    </p>
-                                </div>
-
                             </td>
                         </tr>
                     </th:block>
