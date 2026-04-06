@@ -140,17 +140,7 @@
 
                     <!-- BLOQUE PENDIENTE -->
                     <div th:if="${cat.idMapeado == null}">
-                      <!-- Filtro de Gerencia (Solo para Materias) -->
-                       <div th:if="${grupo.key == 'MATERIA'}" class="mb-3 p-2 bg-gob-guinda/5 rounded-lg border border-gob-oro/20 flex flex-col gap-2">
-                          <label class="text-[10px] font-bold text-gob-guinda uppercase flex items-center gap-1">
-                              <i class="fas fa-filter text-[8px]"></i> 1. Primero selecciona Gerencia:
-                          </label>
-                          <select class="materia-gerencia-filter w-full bg-white border-gob-oro/30 rounded-md text-xs py-1.5 px-2 focus:ring-gob-oro focus:border-gob-oro" 
-                                  th:data-target="'select-' + ${cat.id}">
-                              <option value="">-- Elige una Gerencia --</option>
-                              <option th:each="g : ${gerenciasDB}" th:value="${g.id}" th:text="${g.nombre}"></option>
-                          </select>
-                      </div>
+                      <!-- Eliminado Filtro de Gerencia manual. El backend lo asociará automáticamente. -->
 
                       <div class="flex items-center gap-2" th:id="'mapeo-container-' + ${cat.id}">
                         <div class="flex-grow select-wrapper">
@@ -173,11 +163,19 @@
                         </th:block>
                         
                         <th:block th:if="${grupo.key == 'ORGANO'}">
-                          <option th:each="bd : ${organosDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                          <optgroup th:each="g : ${gerenciasDB}" th:label="${g.nombre}" th:data-gerencia-id="${g.id}">
+                            <option th:each="bd : ${organosDB}" th:if="${bd.gerencia != null and bd.gerencia.id == g.id}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                          </optgroup>
+                          <!-- Órganos sin gerencia asignada -->
+                          <optgroup label="Sin Gerencia Asignada">
+                            <option th:each="bd : ${organosDB}" th:if="${bd.gerencia == null}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                          </optgroup>
                         </th:block>
                         
                         <th:block th:if="${grupo.key == 'TIPO_AUDIENCIA'}">
-                          <option th:each="bd : ${tiposAudDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                          <optgroup th:each="g : ${gerenciasDB}" th:label="${g.nombre}" th:data-gerencia-id="${g.id}">
+                            <option th:each="bd : ${tiposAudDB}" th:if="${bd.gerencia != null and bd.gerencia.id == g.id}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                          </optgroup>
                         </th:block>
                         
                         <th:block th:if="${grupo.key == 'SEDE'}">

@@ -41,7 +41,7 @@
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Gerencia*</label>
 
-                    <select id="select-gerencia-exp" onchange="cargarMateriasExpediente()"
+                    <select id="select-gerencia-exp" onchange="cargarMateriasExpediente(); cargarOrganosExpediente();"
                         class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white disabled:bg-gray-100 disabled:text-gray-500"
                         required th:disabled="${rolActual.name() == 'GERENTE'}"
                         th:name="${rolActual.name() == 'GERENTE' ? '' : 'gerencia.id'}">
@@ -77,10 +77,9 @@
                 </div>
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Órgano Jurisdiccional*</label>
-                    <select name="organoJurisdiccional.id" required
-                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
-                        <option value="">Selecciona órgano...</option>
-                        <option th:each="org : ${organos}" th:value="${org.id}" th:text="${org.nombre}"></option>
+                    <select name="organoJurisdiccional.id" id="select-organo-exp" required
+                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-gray-50" disabled>
+                        <option value="">Primero selecciona una gerencia...</option>
                     </select>
                 </div>
             </div>

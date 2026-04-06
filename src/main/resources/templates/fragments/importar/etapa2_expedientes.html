@@ -91,6 +91,7 @@
                 th:data-sede="${exp.sede}" 
                 th:data-gerencia-id="${exp.gerenciaId}" 
                 th:data-materia-id="${exp.materiaId}" 
+                th:data-organo-id="${exp.organoId}" 
                 th:data-sede-id="${exp.sedeId}"
                 title="Editar expediente">
                 <i class="fas fa-edit"></i>
@@ -157,7 +158,7 @@
             <option value="">-- Seleccione --</option>
             <option th:each="g : ${gerenciasDB}" th:value="${g.nombre}" th:data-id="${g.id}" th:text="${g.nombre}"></option>
             <th:block th:if="${mapeosNuevos != null and mapeosNuevos.containsKey('GERENCIA')}">
-              <option th:each="n : ${mapeosNuevos['GERENCIA']}" th:value="${n.nuevoValor}"
+              <option th:each="n : ${mapeosNuevos['GERENCIA']}" th:value="${n.nuevoValor}" th:data-id="${n.nuevoValor}"
                 th:text="${n.nuevoValor + ' (Nuevo)'}"></option>
             </th:block>
           </select>

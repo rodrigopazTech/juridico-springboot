@@ -165,10 +165,12 @@
             List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
             LoteMigracion lote = loteRepository.findById(loteId).orElseThrow();
 
-            // 1.5 Limpiamos catálogos anteriores que estén PENDIENTES para evitar basura de extracciones viejas (como Órganos)
+            // COMENTADO: No borramos los pendientes para permitir extracción incremental y evitar retrabajos pesados
+            /*
             catalogoRepository.findByLoteId(loteId).stream()
                 .filter(c -> "PENDIENTE".equals(c.getEstatus()))
                 .forEach(c -> catalogoRepository.delete(c));
+            */
 
             // 2. Cache en memoria para evitar N+1
             java.util.Set<String> cacheMapeo = new java.util.HashSet<>();
@@ -203,7 +205,15 @@
                     
                     // NUEVO: Ahora sí extraemos el Órgano Jurisdiccional para la Etapa 1
                     if (json.has("organoJurisdiccional") && !json.get("organoJurisdiccional").isNull()) {
-                        guardarCatalogoUnico(lote, "ORGANO", json.get("organoJurisdiccional").asText(), cacheMapeo);
+                        String orgStr = json.get("organoJurisdiccional").asText().trim();
+                        guardarCatalogoUnico(lote, "ORGANO", orgStr, cacheMapeo);
+                        
+                        // INTELIGENCIA: Inferir Gerencia desde el Órgano si coincide exacto
+                        organoRepository.findByNombreIgnoreCase(orgStr).ifPresent(o -> {
+                            if (o.getGerencia() != null) {
+                                guardarCatalogoUnico(lote, "GERENCIA", o.getGerencia().getNombre(), cacheMapeo);
+                            }
+                        });
                     }
 
                     if (json.has("tipoAudiencia") && !json.get("tipoAudiencia").isNull()) {
@@ -232,22 +242,57 @@
                 .filter(c -> c.getIdMapeado() == null && "PENDIENTE".equals(c.getEstatus()))
                 .toList();
 
+            if (pendientes.isEmpty()) return;
+
+            // --- PASO 1: MAPEAR GERENCIAS PRIMERO (Para establecer contexto) ---
             for (CatalogoMigracion c : pendientes) {
+                if (!"GERENCIA".equals(c.getTipoCatalogo())) continue;
+                
+                String valor = c.getValorOriginal().trim();
+                String searchFinal = (valor.length() > 100) ? valor.substring(0, 100) : valor;
+                
+                gerenciaRepository.findByNombreIgnoreCase(searchFinal).ifPresent(g -> {
+                    c.setIdMapeado(g.getId().longValue());
+                    c.setEstatus("MAPEADO");
+                    catalogoRepository.save(c);
+                });
+            }
+
+            // --- ACTUALIZAR CONTEXTO DE GERENCIA ---
+            Gerencia gerenciaLote = null;
+            CatalogoMigracion gerCat = catalogoRepository.findByLoteId(loteId).stream()
+                .filter(c -> c.getTipoCatalogo().equals("GERENCIA") && (c.getIdMapeado() != null || "MAPEADO".equals(c.getEstatus())))
+                .findFirst().orElse(null);
+            
+            if (gerCat != null && gerCat.getIdMapeado() != null) {
+                gerenciaLote = gerenciaRepository.findById(gerCat.getIdMapeado().intValue()).orElse(null);
+            } else if (gerCat != null) {
+                gerenciaLote = gerenciaRepository.findByNombreIgnoreCase(gerCat.getValorOriginal().trim()).orElse(null);
+            }
+
+            final Gerencia finalGerencia = gerenciaLote;
+
+            // --- PASO 2: MAPEAR EL RESTO CON CONTEXTO ---
+            for (CatalogoMigracion c : pendientes) {
+                if ("GERENCIA".equals(c.getTipoCatalogo()) || "MAPEADO".equals(c.getEstatus())) continue;
+                
                 String valor = c.getValorOriginal().trim();
                 if (valor.isEmpty()) continue;
+                final String searchFinal = (valor.length() > 100) ? valor.substring(0, 100) : valor;
 
                 switch (c.getTipoCatalogo()) {
-                    case "GERENCIA":
-                        gerenciaRepository.findByNombreIgnoreCase(valor).ifPresent(g -> {
-                            c.setIdMapeado(g.getId().longValue());
-                            c.setEstatus("MAPEADO");
-                        });
-                        break;
                     case "MATERIA":
-                        materiaRepository.findByNombreIgnoreCase(valor).ifPresent(m -> {
-                            c.setIdMapeado(m.getId().longValue());
-                            c.setEstatus("MAPEADO");
-                        });
+                        if (finalGerencia != null) {
+                            materiaRepository.findByNombreIgnoreCaseAndGerenciaId(searchFinal, finalGerencia.getId()).ifPresent(m -> {
+                                c.setIdMapeado(m.getId().longValue());
+                                c.setEstatus("MAPEADO");
+                            });
+                        } else {
+                            materiaRepository.findByNombreIgnoreCase(searchFinal).ifPresent(m -> {
+                                c.setIdMapeado(m.getId().longValue());
+                                c.setEstatus("MAPEADO");
+                            });
+                        }
                         break;
                     case "SEDE":
                         estadoRepository.findAll().stream()
@@ -258,20 +303,34 @@
                             });
                         break;
                     case "ORGANO":
-                        organoRepository.findByNombreIgnoreCase(valor).ifPresent(o -> {
-                            c.setIdMapeado(o.getId().longValue());
-                            c.setEstatus("MAPEADO");
-                        });
+                        if (finalGerencia != null) {
+                            organoRepository.findByNombreIgnoreCaseAndGerenciaId(searchFinal, finalGerencia.getId()).ifPresent(o -> {
+                                c.setIdMapeado(o.getId().longValue());
+                                c.setEstatus("MAPEADO");
+                            });
+                        } else {
+                            organoRepository.findByNombreIgnoreCase(searchFinal).ifPresent(o -> {
+                                c.setIdMapeado(o.getId().longValue());
+                                c.setEstatus("MAPEADO");
+                            });
+                        }
                         break;
                     case "TIPO_AUDIENCIA":
-                        tipoAudienciaRepository.findByNombreIgnoreCase(valor).ifPresent(t -> {
-                            c.setIdMapeado(t.getId().longValue());
-                            c.setEstatus("MAPEADO");
-                        });
+                        if (finalGerencia != null) {
+                            tipoAudienciaRepository.findByNombreIgnoreCaseAndGerenciaId(searchFinal, finalGerencia.getId()).ifPresent(t -> {
+                                c.setIdMapeado(t.getId().longValue());
+                                c.setEstatus("MAPEADO");
+                            });
+                        } else {
+                            tipoAudienciaRepository.findByNombreIgnoreCase(searchFinal).ifPresent(t -> {
+                                c.setIdMapeado(t.getId().longValue());
+                                c.setEstatus("MAPEADO");
+                            });
+                        }
                         break;
                     case "USUARIO":
                         usuarioRepository.findAll().stream()
-                            .filter(u -> u.getNombreCompleto().equalsIgnoreCase(valor))
+                            .filter(u -> u.getNombreCompleto().equalsIgnoreCase(valor) || u.getNombreCompleto().equalsIgnoreCase(searchFinal))
                             .findFirst().ifPresent(u -> {
                                 c.setIdMapeado(u.getId().longValue());
                                 c.setEstatus("MAPEADO");
@@ -410,11 +469,17 @@
                 if (gerenciaModa != null && gerenciaModa.toUpperCase().contains("DEFINIR")) gerenciaModa = "";
                 if (materiaModa != null && materiaModa.toUpperCase().contains("DEFINIR")) materiaModa = "";
 
-                // INTELIGENCIA MEJORADA: Inferir gerencia buscando la materia directamente en la Base de Datos
+                // INTELIGENCIA MEJORADA: Inferir gerencia buscando la materia o el órgano directamente en la Base de Datos
                 if ((gerenciaModa == null || gerenciaModa.isEmpty()) && materiaModa != null && !materiaModa.isEmpty()) {
                     java.util.Optional<Materia> matOpt = materiaRepository.findByNombreIgnoreCase(materiaModa.trim());
                     if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
                         gerenciaModa = matOpt.get().getGerencia().getNombre();
+                    }
+                }
+                if ((gerenciaModa == null || gerenciaModa.isEmpty()) && organoModa != null && !organoModa.isEmpty()) {
+                    java.util.Optional<OrganoJurisdiccional> orgOpt = organoRepository.findByNombreIgnoreCase(organoModa.trim());
+                    if (orgOpt.isPresent() && orgOpt.get().getGerencia() != null) {
+                        gerenciaModa = orgOpt.get().getGerencia().getNombre();
                     }
                 }
 
@@ -430,11 +495,12 @@
                 // Buscamos si el valor de la moda ya fue mapeado en la Etapa 1
                 Long materiaId = buscarIdMapeado(loteId, "MATERIA", materiaModa);
                 Long gerenciaId = buscarIdMapeado(loteId, "GERENCIA", gerenciaModa);
+                Long organoId = buscarIdMapeado(loteId, "ORGANO", organoModa);
                 
     // Limpiamos la basura del JSON antes de mandarla al frontend
                 if (gerenciaModa.equalsIgnoreCase("POR DEFINIR")) gerenciaModa = "";
 
-                // INTELIGENCIA: Si la gerenciaId es nula pero sí tenemos una materiaId mapeada...
+                // INTELIGENCIA: Si la gerenciaId es nula pero sí tenemos una materiaId u organoId mapeada...
                 if (gerenciaId == null && materiaId != null) {
                     java.util.Optional<Materia> matOpt = materiaRepository.findById(materiaId.intValue());
                     if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
@@ -443,10 +509,18 @@
                         gerenciaModa = matOpt.get().getGerencia().getNombre(); 
                     }
                 }
+                if (gerenciaId == null && organoId != null) {
+                    java.util.Optional<OrganoJurisdiccional> orgOpt = organoRepository.findById(organoId.intValue());
+                    if (orgOpt.isPresent() && orgOpt.get().getGerencia() != null) {
+                        gerenciaId = orgOpt.get().getGerencia().getId().longValue();
+                        gerenciaModa = orgOpt.get().getGerencia().getNombre(); 
+                    }
+                }
                 
                 map.put("gerencia", gerenciaModa); // Aseguramos que se mande el texto limpio/inferido
                 map.put("gerenciaId", gerenciaId);
                 map.put("materiaId", materiaId);
+                map.put("organoId", organoId);
                 map.put("sedeId", buscarIdMapeado(loteId, "SEDE", sedeModa));
                 
                 resumen.add(map);

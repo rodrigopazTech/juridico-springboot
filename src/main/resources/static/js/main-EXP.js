@@ -101,6 +101,52 @@ function cargarMateriasExpediente(arg1 = '', arg2 = '', arg3 = '', materiaIdSele
         });
 }
 
+function cargarOrganosExpediente(arg1 = '', arg2 = '', organoIdSeleccionado = null) {
+    let gerId, orgId;
+    if (arg2 === '') {
+        const suffix = arg1;
+        gerId = 'select-gerencia-exp' + suffix;
+        orgId = 'select-organo-exp' + suffix;
+    } else {
+        gerId = arg1;
+        orgId = arg2;
+    }
+
+    const gerenciaEl = document.getElementById(gerId);
+    const selectOrgano = document.getElementById(orgId);
+
+    if (!gerenciaEl || !selectOrgano) return Promise.resolve();
+
+    const gerenciaId = gerenciaEl.value;
+
+    selectOrgano.innerHTML = '<option value="">Cargando órganos...</option>';
+    selectOrgano.disabled = true;
+    selectOrgano.classList.add('bg-gray-50');
+
+    if (!gerenciaId) {
+        selectOrgano.innerHTML = '<option value="">Primero selecciona una gerencia...</option>';
+        return Promise.resolve();
+    }
+
+    return fetch(`/admin/importar/api/organos-por-gerencia/${gerenciaId}`)
+        .then(res => res.json())
+        .then(organos => {
+            selectOrgano.innerHTML = '<option value="">Selecciona órgano...</option>';
+            organos.forEach(o => {
+                const selected = (organoIdSeleccionado && o.id == organoIdSeleccionado) ? 'selected' : '';
+                selectOrgano.innerHTML += `<option value="${o.id}" ${selected}>${o.nombre}</option>`;
+            });
+
+            selectOrgano.disabled = false;
+            selectOrgano.classList.remove('bg-gray-50');
+            return organos;
+        })
+        .catch(error => {
+            console.error("Error al cargar organos:", error);
+            selectOrgano.innerHTML = '<option value="">Error al cargar órganos</option>';
+        });
+}
+
 function cargarAbogadosExpediente(arg1 = '', arg2 = '', arg3 = '', abogadoIdSeleccionado = null) {
     let gerId, matId, abogId;
 
@@ -162,8 +208,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Si existe el select y ya tiene un valor (porque Thymeleaf lo pre-seleccionó)
     const materiaSelect = document.getElementById('select-materia-exp');
     if (gerenciaSelect && gerenciaSelect.value && materiaSelect && !materiaSelect.value) {
-        console.log("Gerencia pre-detectada, cargando materias...");
+        console.log("Gerencia pre-detectada, cargando materias y órganos...");
         cargarMateriasExpediente();
+        cargarOrganosExpediente();
     }
 
     // Inicializar selectores de Etiquetas (Tags)

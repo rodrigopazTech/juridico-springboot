@@ -143,8 +143,11 @@
             <select id="aud-gerencia" name="gerencia"
               class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
               <option value="">-- Seleccione --</option>
-              <option th:each="g : ${gerenciasDB}" th:value="${g.nombre}" th:data-id="${g.id}" th:text="${g.nombre}">
-              </option>
+              <option th:each="g : ${gerenciasDB}" th:value="${g.nombre}" th:data-id="${g.id}" th:text="${g.nombre}"></option>
+              <th:block th:if="${mapeosNuevos != null and mapeosNuevos.containsKey('GERENCIA')}">
+                <option th:each="n : ${mapeosNuevos['GERENCIA']}" th:value="${n.nuevoValor}" th:data-id="${n.nuevoValor}"
+                  th:text="${n.nuevoValor + ' (Nuevo)'}"></option>
+              </th:block>
             </select>
           </div>
           <div>
@@ -181,7 +184,7 @@
             <option value="">-- Seleccione estado --</option>
             <option th:each="s : ${sedesDB}" th:value="${s.nombre}" th:data-id="${s.id}" th:text="${s.nombre}"></option>
             <th:block th:if="${mapeosNuevos != null and mapeosNuevos.containsKey('SEDE')}">
-              <option th:each="n : ${mapeosNuevos['SEDE']}" th:value="${n.nuevoValor}"
+              <option th:each="n : ${mapeosNuevos['SEDE']}" th:value="${n.nuevoValor}" th:data-id="${n.nuevoValor}"
                 th:text="${n.nuevoValor + ' (Nuevo)'}"></option>
             </th:block>
           </select>
