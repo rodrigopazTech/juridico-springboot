@@ -29,7 +29,10 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "AND (:estatus IS NULL OR :estatus = '' OR t.estatusTermino = :estatus) " +
            "AND (:prioridadId IS NULL OR t.prioridad.id = :prioridadId) " +
            "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
-           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId)") // <--- NUEVO FILTRO
+           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
+           "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
+           "AND (:id IS NULL OR t.id = :id) " +
+           "AND (t.fechaVencimiento BETWEEN :fechaInicio AND :fechaFin)")
     List<Termino> listarParaExcel(
             @Param("id") Integer id,
             @Param("keyword") String keyword,
@@ -53,7 +56,10 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "AND (:estatus IS NULL OR :estatus = '' OR t.estatusTermino = :estatus) " +
            "AND (:prioridadId IS NULL OR t.prioridad.id = :prioridadId) " +
            "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
-           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId)")
+           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
+           "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
+           "AND (:id IS NULL OR t.id = :id) " +
+           "AND (t.fechaVencimiento >= :fechaInicio AND t.fechaVencimiento <= :fechaFin)")
     Page<Termino> buscarConFiltros(
             @Param("id") Integer id,
             @Param("keyword") String keyword,
@@ -134,6 +140,24 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
     @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.gerencia.id = :gerenciaId AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
     long countByExpedienteGerenciaIdAndActivo(@Param("gerenciaId") Long gerenciaId);
 
+    @Query("SELECT t FROM Termino t " +
+           "LEFT JOIN t.expediente e " +
+           "WHERE t.estatusTermino IN :estatusList " +
+           "AND t.fechaPresentacion >= :fechaInicio AND t.fechaPresentacion <= :fechaFin " +
+           "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
+           "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
+           "AND (:filtroRoleGerenciaId IS NULL OR e.gerencia.id = :filtroRoleGerenciaId) " +
+           "AND ((:filtroRoleMateriaIds) IS NULL OR e.materia.id IN (:filtroRoleMateriaIds))")
+    Page<Termino> buscarParaHistorial(
+            @Param("estatusList") List<EstatusTermino> estatusList,
+            @Param("fechaInicio") LocalDate fechaInicio,
+            @Param("fechaFin") LocalDate fechaFin,
+            @Param("gerenciaId") Integer gerenciaId,
+            @Param("materiaId") Integer materiaId,
+            @Param("filtroRoleGerenciaId") Integer filtroRoleGerenciaId,
+            @Param("filtroRoleMateriaIds") List<Integer> filtroRoleMateriaIds,
+            Pageable pageable);
+
     // Conteo por lista de gerencias (solo términos activos)
     @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.gerencia.id IN :gerenciaIds AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
     long countByExpedienteGerenciaIdInAndActivo(@Param("gerenciaIds") List<Long> gerenciaIds);
@@ -173,7 +197,8 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
             "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
             "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
-            "AND (:id IS NULL OR t.id = :id)")
+            "AND (:id IS NULL OR t.id = :id) " +
+            "AND (t.fechaVencimiento >= :fechaInicio AND t.fechaVencimiento <= :fechaFin)")
     Page<Termino> buscarPorMultiplesEstatus(
             @Param("id") Integer id,
             @Param("keyword") String keyword,
@@ -182,6 +207,8 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("abogadoId") Integer abogadoId,
             @Param("gerenciaId") Integer gerenciaId,
             @Param("materiaId") Integer materiaId,
+            @Param("fechaInicio") LocalDate fechaInicio,
+            @Param("fechaFin") LocalDate fechaFin,
             Pageable pageable);
 
     // Conteo total términos activos (sin filtro)

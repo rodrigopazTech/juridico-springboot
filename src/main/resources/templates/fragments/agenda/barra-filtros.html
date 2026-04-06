@@ -1,0 +1,58 @@
+<div th:fragment="filtros" class="space-y-4">
+    <form id="form-filtros" th:action="@{/agenda}" method="get" class="space-y-4">
+        <!-- Preserve current tab -->
+        <input type="hidden" name="tab" th:value="${activeTab}">
+
+        <!-- Encabezado de Filtros en Sidebar -->
+        <div class="flex justify-between items-center pb-2 border-b border-white/10">
+            <h3 class="text-[11px] font-bold text-gob-oro uppercase tracking-widest">
+                <i class="fas fa-filter mr-1"></i> Filtros Historial
+            </h3>
+            <a th:href="@{/agenda(tab=${activeTab})}"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-gob-oro hover:text-gob-guinda text-[9px] font-bold text-gob-oro transition-all border border-white/20 shadow-sm group">
+                <i class="fas fa-broom text-[10px] group-hover:text-gob-guinda transition-colors"></i> LIMPIAR
+            </a>
+        </div>
+
+        <div class="space-y-3">
+            <!-- Rango de Fechas - Inicio -->
+            <div class="space-y-1">
+                <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Fecha Inicio</label>
+                <input type="date" name="fechaInicio" th:value="${paramFechaInicio}" onchange="this.form.submit()"
+                    class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
+            </div>
+
+            <!-- Rango de Fechas - Fin -->
+            <div class="space-y-1">
+                <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Fecha Fin</label>
+                <input type="date" name="fechaFin" th:value="${paramFechaFin}" onchange="this.form.submit()"
+                    class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
+            </div>
+
+            <!-- Materia (Condicional) -->
+            <div sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')"
+                class="space-y-1">
+                <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Materia</label>
+                <select name="materiaId" onchange="this.form.submit()"
+                    class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
+                    <option value="" class="text-gray-800">Todas las materias</option>
+                    <option th:each="m : ${listaMaterias}" th:value="${m.id}" th:text="${m.nombre}"
+                        th:selected="${paramMateriaId != null and paramMateriaId.toString() == m.id.toString()}"
+                        class="text-gray-800"></option>
+                </select>
+            </div>
+
+            <!-- Gerencia (Condicional) -->
+            <div sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION')" class="space-y-1">
+                <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Gerencia</label>
+                <select name="gerenciaId" onchange="this.form.submit()"
+                    class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
+                    <option value="" class="text-gray-800">Todas las gerencias</option>
+                    <option th:each="g : ${listaGerencias}" th:value="${g.id}" th:text="${g.nombre}"
+                        th:selected="${paramGerenciaId != null and paramGerenciaId.toString() == g.id.toString()}"
+                        class="text-gray-800"></option>
+                </select>
+            </div>
+        </div>
+    </form>
+</div>

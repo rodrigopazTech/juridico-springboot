@@ -120,7 +120,9 @@ public class TerminosController {
             @RequestParam(required = false) Integer abogadoId,
             @RequestParam(required = false) Integer gerenciaId,
             @RequestParam(required = false) Integer materiaId,
-            @RequestParam(required = false) PeriodoFiltro periodo) {
+            @RequestParam(required = false) PeriodoFiltro periodo,
+            @RequestParam(required = false) Integer mes,
+            @RequestParam(required = false) Integer anio) {
 
         // --- 1. LIMPIEZA DE URL (Fix Notificaciones) ---
         if (keyword != null && keyword.contains("?keyword=")) {
@@ -146,14 +148,34 @@ public class TerminosController {
         LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
         LocalDate fechaFin = LocalDate.of(2100, 12, 31);
 
-        if (periodo != null) {
+        String searchKeyword = keyword;
+        if (keyword != null && keyword.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            LocalDate fecha = LocalDate.parse(keyword);
+            fechaInicio = fecha;
+            fechaFin = fecha;
+            searchKeyword = null;
+        } else if (periodo != null) {
             LocalDate[] rango = periodo.calcularRango();
             fechaInicio = rango[0];
             fechaFin = rango[1];
         }
 
+        // Obtener mes y año de la request (pueden requerir ser agregados a los parámetros del endpoint)
+        // El frontend pasará mes y anio como param en la URL
+        Integer mesActualParam = null;
+        Integer anioActualParam = null;
+
+        boolean isTextSearch = searchKeyword != null && !searchKeyword.trim().isEmpty();
+        boolean isExactDate = keyword != null && keyword.matches("\\d{4}-\\d{2}-\\d{2}");
+
+        if (mes != null && anio != null && !isTextSearch && !isExactDate && periodo == null) {
+            java.time.YearMonth ym = java.time.YearMonth.of(anio, mes);
+            fechaInicio = ym.atDay(1);
+            fechaFin = ym.atEndOfMonth();
+        }
+
         Page<Termino> paginaTerminos = terminoRepository.buscarConFiltros(
-                id, keyword, estatus, prioridadId,
+                id, searchKeyword, estatus, prioridadId,
                 filtroAbogadoSeguro, filtroGerenciaSeguro,
                 fechaInicio, fechaFin,
                 materiaId,
@@ -232,6 +254,8 @@ public class TerminosController {
         model.addAttribute("paramGerenciaId", filtroGerenciaSeguro);
         model.addAttribute("paramMateriaId", materiaId);
         model.addAttribute("paramPeriodo", periodo != null ? periodo.name() : null);
+        if (mes != null) model.addAttribute("mesActual", mes);
+        if (anio != null) model.addAttribute("anioActual", anio);
 
         // --- 6. CONTEOS PARA LA LÍNEA DE TIEMPO (NUEVO) ---
         List<Object[]> rawCounts = terminoRepository.contarPorEtapaConFiltros(
@@ -258,6 +282,8 @@ public class TerminosController {
         model.addAttribute("totalesEnProceso", totalesEnProceso);
         model.addAttribute("pageTitle", "Términos");
         model.addAttribute("activePage", "terminos");
+        model.addAttribute("mesActual", mes != null ? mes : LocalDate.now().getMonthValue());
+        model.addAttribute("anioActual", anio != null ? anio : LocalDate.now().getYear());
 
         // --- 7. ETAPAS ASIGNADAS AL ROL (REFINADO CON MÚLTIPLES ETAPAS) ---
         List<EstatusTermino> etapasAsignadas = getEtapasAsignadasPorRol(usuarioActual.getRol());
@@ -272,7 +298,8 @@ public class TerminosController {
             // rol si no hay estatus seleccionado
             model.addAttribute("etapasDefault", etapasAsignadas); // Para que la UI sepa cuáles son las default
             paginaTerminos = terminoRepository.buscarPorMultiplesEstatus(
-                    id, keyword, etapasAsignadas, prioridadId, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId,
+                    id, searchKeyword, etapasAsignadas, prioridadId, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId,
+                    fechaInicio, fechaFin,
                     pageable);
             model.addAttribute("terminos", paginaTerminos);
         }
@@ -283,20 +310,29 @@ public class TerminosController {
     private List<EstatusTermino> getEtapasAsignadasPorRol(RolUsuario rol) {
         if (rol == null)
             return new ArrayList<>();
+        List<EstatusTermino> etapas = new ArrayList<>();
         switch (rol) {
             case ABOGADO:
-                return Arrays.asList(EstatusTermino.PROYECTISTA, EstatusTermino.LIBERADO);
+                etapas.addAll(Arrays.asList(EstatusTermino.PROYECTISTA, EstatusTermino.LIBERADO));
+                break;
             case JEFE_DEPTO:
-                return Collections.singletonList(EstatusTermino.REVISION);
+                etapas.add(EstatusTermino.REVISION);
+                break;
             case GERENTE:
-                return Collections.singletonList(EstatusTermino.GERENCIA);
+                etapas.add(EstatusTermino.GERENCIA);
+                break;
             case DIRECCION:
-                return Collections.singletonList(EstatusTermino.DIRECCION);
+                etapas.add(EstatusTermino.DIRECCION);
+                break;
             case SUBDIRECCION:
-                return Arrays.asList(EstatusTermino.DIRECCION, EstatusTermino.PRESENTADO, EstatusTermino.CONCLUIDO);
-            default:
-                return new ArrayList<>();
+                etapas.addAll(Arrays.asList(EstatusTermino.DIRECCION, EstatusTermino.PRESENTADO, EstatusTermino.CONCLUIDO));
+                break;
         }
+        // Para que NO se "borren" de la lista principal, anadimos CONCLUIDO siempre
+        if (!etapas.contains(EstatusTermino.CONCLUIDO)) {
+            etapas.add(EstatusTermino.CONCLUIDO);
+        }
+        return etapas;
     }
 
     @PostMapping("/guardar")
