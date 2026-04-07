@@ -149,19 +149,22 @@
             class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm" />
         </div>
         
-        <!-- JERARQUÍA: GERENCIA -> MATERIA -->
+        <!-- JERARQUÍA: GERENCIA (Bloqueada al lote) -> MATERIA -->
         <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Gerencia <span class="text-red-500">*</span></label>
-          <select id="exp-gerencia" name="gerencia"
-            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"
-            required>
-            <option value="">-- Seleccione --</option>
-            <option th:each="g : ${gerenciasDB}" th:value="${g.nombre}" th:data-id="${g.id}" th:text="${g.nombre}"></option>
-            <th:block th:if="${mapeosNuevos != null and mapeosNuevos.containsKey('GERENCIA')}">
-              <option th:each="n : ${mapeosNuevos['GERENCIA']}" th:value="${n.nuevoValor}" th:data-id="${n.nuevoValor}"
-                th:text="${n.nuevoValor + ' (Nuevo)'}"></option>
-            </th:block>
-          </select>
+          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">
+            Gerencia
+            <span class="ml-1 text-gray-400 text-[10px] font-normal normal-case">(determinada por el lote)</span>
+          </label>
+          <!-- Visualización bloqueada -->
+          <div id="exp-gerencia-display"
+            class="border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 w-full text-sm text-gray-600 flex items-center gap-2"
+            title="La gerencia se determina automáticamente por las materias del lote">
+            <i class="fas fa-lock text-gray-400 text-xs"></i>
+            <span id="exp-gerencia-label">Cargando...</span>
+          </div>
+          <!-- Inputs ocultos que transportan los valores al JS -->
+          <input type="hidden" id="exp-gerencia" name="gerencia" />
+          <input type="hidden" id="exp-gerencia-id" />
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Materia <span class="text-red-500">*</span></label>

@@ -370,67 +370,131 @@ async function guardarEdicionRegistro(formEl) {
     const formData = new FormData(formEl);
     const data = new URLSearchParams(formData);
     const registroId = formData.get('registroId');
+
+    // Detectar a qué etapa pertenece el formulario
+    const esAudiencia = formData.has('fechaAudiencia');
+    const esTermino   = formData.has('fechaVencimiento') && !formData.has('fechaAudiencia');
+    const esExpediente = !esAudiencia && !esTermino;
     
     try {
         const resp = await fetch('/admin/importar/editar-registro', { method: 'POST', body: data });
         const json = await resp.json();
         
         if (resp.ok && json.status === 'ok') {
-            Swal.fire({ icon: 'success', title: '¡Guardado!', text: json.mensaje, timer: 1200, showConfirmButton: false });
-            
-            // Cerrar el modal actual (identificando cuál está abierto)
+
+            // 1. Cerrar el modal INMEDIATAMENTE
             const openModal = document.querySelector('.fixed.flex:not(.hidden)');
-            if (openModal) {
-                openModal.classList.add('hidden');
-                openModal.classList.remove('flex');
+            if (openModal) { openModal.classList.add('hidden'); openModal.classList.remove('flex'); }
+
+            // 2. Mostrar toast de éxito
+            Swal.fire({ icon: 'success', title: '¡Guardado!', text: json.mensaje, timer: 1200, showConfirmButton: false });
+
+            // 3. Actualizar fila en tiempo real
+            const row = document.getElementById('row-' + registroId);
+            if (!row) return;
+
+            // Actualizar data-attributes del botón de editar
+            const btnEditar = row.querySelector('[class*="btn-editar"]');
+            if (btnEditar) {
+                formData.forEach((value, key) => {
+                    const attrName = 'data-' + key.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+                    btnEditar.setAttribute(attrName, value);
+                });
+                if (json.gerenciaId) btnEditar.setAttribute('data-gerencia-id', json.gerenciaId);
+                if (json.materiaId)  btnEditar.setAttribute('data-materia-id',  json.materiaId);
             }
 
-            // ACTUALIZAR LA FILA EN TIEMPO REAL (SIN RELOAD)
-            const row = document.getElementById('row-' + registroId);
-            if (row) {
-                // Buscamos el botón de editar en esa fila para actualizar sus data-attributes
-                const btn = row.querySelector('.btn-editar-registro');
-                if (btn) {
-                    formData.forEach((value, key) => {
-                        // CamelCase to kebab-case (e.g. numeroExpediente -> data-numero-expediente)
-                        const attrName = 'data-' + key.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
-                        btn.setAttribute(attrName, value);
-                    });
-                    
-                    // Si se cambiaron Gerencia o Materia, actualizar IDs para consistencia
-                    if (json.gerenciaId) btn.setAttribute('data-gerencia-id', json.gerenciaId);
-                    if (json.materiaId) btn.setAttribute('data-materia-id', json.materiaId);
+            if (esExpediente) {
+                // ============================================
+                // ETAPA 2: Expedientes
+                // ============================================
+                const expNum = row.querySelector('td:first-child .font-bold');
+                if (expNum && formData.has('numeroExpediente'))
+                    expNum.innerText = formData.get('numeroExpediente');
+
+                const partesSpan = row.querySelector('td:nth-child(2) span');
+                if (partesSpan && formData.has('partes'))
+                    partesSpan.innerText = formData.get('partes');
+
+                const cellMG = row.querySelector('td:nth-child(3) .flex-col');
+                if (cellMG) {
+                    const spMs = cellMG.querySelectorAll('span');
+                    if (spMs[0] && formData.has('materia'))  spMs[0].innerText = formData.get('materia');
+                    if (spMs[1] && formData.has('gerencia')) spMs[1].innerText = formData.get('gerencia');
                 }
 
-                // Actualizar visualmente las celdas de la fila (específico por etapa)
-                // Etapa 2: Expedientes
-                const expNum = row.querySelector('.text-gob-guinda');
-                if (expNum && formData.has('numeroExpediente')) expNum.innerText = formData.get('numeroExpediente');
-                
-                const partes = row.querySelector('.text-gray-700');
-                if (partes && formData.has('partes')) partes.innerText = formData.get('partes');
-                
-                const materiaSpan = row.querySelector('.text-gray-800.font-semibold');
-                const gerenciaSpan = row.querySelector('.text-gray-400.text-\\[10px\\]');
-                if (materiaSpan && formData.has('materia')) materiaSpan.innerText = formData.get('materia');
-                if (gerenciaSpan && formData.has('gerencia')) gerenciaSpan.innerText = formData.get('gerencia');
+                // Recalcular badges de validación
+                const numVal = formData.get('numeroExpediente') || '';
+                const matVal = formData.get('materia') || '';
+                const gerVal = formData.get('gerencia') || '';
+                const faltantes = [];
+                if (!numVal || numVal.startsWith('SIN_NUMERO')) faltantes.push('Número de Expediente');
+                if (!matVal || matVal === 'Por asignar')        faltantes.push('Materia');
+                if (!gerVal)                                    faltantes.push('Gerencia');
 
-                // Etapa 3: Audiencias
-                const audFecha = row.querySelector('.far.fa-calendar + span');
-                const audHora = row.querySelector('.far.fa-clock + span');
-                if (audFecha && formData.has('fechaAudiencia')) audFecha.innerText = formData.get('fechaAudiencia');
-                if (audHora && formData.has('horaAudiencia')) audHora.innerText = formData.get('horaAudiencia');
+                const validacionTd = row.querySelector('td:nth-child(5)');
+                const estadoTd     = row.querySelector('td:nth-child(6)');
+                if (validacionTd) {
+                    validacionTd.innerHTML = faltantes.length === 0
+                        ? '<span class="text-[10px] text-green-600"><i class="fas fa-check mr-1"></i>Completo</span>'
+                        : '<div class="flex flex-wrap gap-1">' + faltantes.map(f => {
+                            const esCrit = ['Número de Expediente','Materia','Gerencia'].includes(f);
+                            const cls = esCrit ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700';
+                            return `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter ${cls}">FALTA ${f}</span>`;
+                          }).join('') + '</div>';
+                }
+                if (estadoTd) {
+                    if (faltantes.length === 0) {
+                        estadoTd.innerHTML = '<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"><i class="fas fa-heartbeat mr-1"></i>Óptimo</span>';
+                    } else {
+                        const esCrit = faltantes.some(f => ['Número de Expediente','Materia','Gerencia'].includes(f));
+                        estadoTd.innerHTML = esCrit
+                            ? '<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"><i class="fas fa-skull-crossbones mr-1"></i>Crítico</span>'
+                            : '<span class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"><i class="fas fa-exclamation-triangle mr-1"></i>Incompleto</span>';
+                    }
+                }
 
-                // Etapa 4: Términos
-                const termAsunto = row.querySelector('.text-gray-800.font-medium');
-                const termFecha = row.querySelector('.fa-calendar-times + span');
-                if (termAsunto && formData.has('actuacion')) termAsunto.innerText = formData.get('actuacion');
-                if (termFecha && formData.has('fechaVencimiento')) termFecha.innerText = formData.get('fechaVencimiento');
-                
-                // Efecto visual de actualización
-                row.classList.add('bg-green-50');
-                setTimeout(() => row.classList.remove('bg-green-50'), 2000);
+            } else if (esAudiencia) {
+                // ============================================
+                // ETAPA 3: Audiencias
+                // ============================================
+                const fhDiv = row.querySelector('td:nth-child(2) .flex');
+                if (fhDiv) {
+                    const sp = fhDiv.querySelectorAll('span');
+                    if (sp[0] && formData.has('fechaAudiencia')) sp[0].innerText = formData.get('fechaAudiencia');
+                    if (sp[2] && formData.has('horaAudiencia'))  sp[2].innerText = formData.get('horaAudiencia');
+                }
+                const audTipo = row.querySelector('td:nth-child(3) span');
+                if (audTipo && formData.has('tipoAudiencia'))        audTipo.innerText = formData.get('tipoAudiencia');
+                const audComp = row.querySelector('td:nth-child(4) span');
+                if (audComp && formData.has('abogadoCompareciente')) audComp.innerText = formData.get('abogadoCompareciente');
+                const audResp = row.querySelector('td:nth-child(5) span');
+                if (audResp && formData.has('abogadoResponsable'))   audResp.innerText = formData.get('abogadoResponsable');
+
+            } else if (esTermino) {
+                // ============================================
+                // ETAPA 4: Términos
+                // ============================================
+                const termAct = row.querySelector('td:nth-child(2) span');
+                if (termAct && formData.has('actuacion'))            termAct.innerText = formData.get('actuacion');
+                const termFec = row.querySelector('td:nth-child(3) span.truncate');
+                if (termFec && formData.has('fechaVencimiento'))     termFec.innerText = formData.get('fechaVencimiento');
+                const termAbog = row.querySelector('td:nth-child(4) span');
+                if (termAbog && formData.has('abogadoResponsable'))  termAbog.innerText = formData.get('abogadoResponsable');
             }
+
+            // ANIMACIÓN HIGHLIGHT — cada TD por compatibilidad con sticky
+            row.querySelectorAll('td').forEach(td => {
+                td.style.transition = 'background-color 0.35s ease';
+                td.style.backgroundColor = '#f0fdf4';
+            });
+            setTimeout(() => {
+                row.querySelectorAll('td').forEach(td => {
+                    td.style.transition = 'background-color 1.4s ease';
+                    td.style.backgroundColor = '';
+                });
+            }, 2000);
+
         } else {
             Swal.fire({ icon: 'error', title: 'Error', text: json.error || 'No se pudo guardar.' });
         }
@@ -443,6 +507,16 @@ async function guardarEdicionRegistro(formEl) {
 // LÓGICA DE SELECTORES JERÁRQUICOS
 // ==========================================
 
+// CACHÉ EN MEMORIA para evitar peticiones repetidas al servidor
+const _apiCache = new Map();
+async function fetchCached(url) {
+    if (_apiCache.has(url)) return _apiCache.get(url);
+    const resp = await fetch(url);
+    const data = await resp.json();
+    _apiCache.set(url, data);
+    return data;
+}
+
 async function cargarMaterias(gerenciaId, targetSelect, selectedValue = '') {
     if (!gerenciaId) {
         targetSelect.innerHTML = '<option value="">-- Primero selecciona una gerencia --</option>';
@@ -452,8 +526,7 @@ async function cargarMaterias(gerenciaId, targetSelect, selectedValue = '') {
     try {
         const loteIdInput = document.querySelector('input[name="loteId"]');
         const loteParam = loteIdInput ? `?loteId=${loteIdInput.value}` : '';
-        const resp = await fetch(`/admin/importar/api/materias-por-gerencia/${gerenciaId}${loteParam}`);
-        const materias = await resp.json();
+        const materias = await fetchCached(`/admin/importar/api/materias-por-gerencia/${gerenciaId}${loteParam}`);
         let html = '<option value="">-- Seleccione Materia --</option>';
         materias.forEach(m => {
             const isSelected = (m.nombre === selectedValue || m.id == selectedValue);
@@ -479,8 +552,7 @@ async function cargarAbogados(materiaId, targetSelect, selectedValue = '') {
     try {
         const loteIdInput = document.querySelector('input[name="loteId"]');
         const loteParam = loteIdInput ? `?loteId=${loteIdInput.value}` : '';
-        const resp = await fetch(`/admin/importar/api/usuarios-por-materia/${materiaId}${loteParam}`);
-        const usuarios = await resp.json();
+        const usuarios = await fetchCached(`/admin/importar/api/usuarios-por-materia/${materiaId}${loteParam}`);
         let html = '<option value="">-- Seleccione Abogado --</option>';
         usuarios.forEach(u => {
             const isSelected = (u.nombre === selectedValue || u.id == selectedValue);
@@ -503,8 +575,7 @@ async function cargarOrganos(gerenciaId, targetSelect, selectedValue = '') {
     try {
         const loteIdInput = document.querySelector('input[name="loteId"]');
         const loteParam = loteIdInput ? `?loteId=${loteIdInput.value}` : '';
-        const resp = await fetch(`/admin/importar/api/organos-por-gerencia/${gerenciaId}${loteParam}`);
-        const organos = await resp.json();
+        const organos = await fetchCached(`/admin/importar/api/organos-por-gerencia/${gerenciaId}${loteParam}`);
         let html = '<option value="">-- Seleccione Órgano Jurisdiccional --</option>';
         organos.forEach(o => {
             const isSelected = (o.nombre === selectedValue || o.id == selectedValue);
@@ -527,8 +598,7 @@ async function cargarTiposAudiencia(gerenciaId, targetSelect, selectedValue = ''
     try {
         const loteIdInput = document.querySelector('input[name="loteId"]');
         const loteParam = loteIdInput ? `?loteId=${loteIdInput.value}` : '';
-        const resp = await fetch(`/admin/importar/api/tipos-audiencia-por-gerencia/${gerenciaId}${loteParam}`);
-        const tipos = await resp.json();
+        const tipos = await fetchCached(`/admin/importar/api/tipos-audiencia-por-gerencia/${gerenciaId}${loteParam}`);
         let html = '<option value="">-- Seleccione Tipo de Audiencia --</option>';
         tipos.forEach(t => {
             const isSelected = (t.nombre === selectedValue || t.id == selectedValue);
@@ -640,13 +710,12 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
         // RESET FORM PRE-LOAD
         const formExp = document.getElementById('form-editar-expediente');
         if (formExp) formExp.reset();
-        document.getElementById('exp-gerencia').selectedIndex = 0;
-        document.getElementById('exp-materia').innerHTML = '<option value="">-- Primero selecciona una gerencia --</option>';
+
+        document.getElementById('exp-materia').innerHTML = '<option value="">-- Cargando... --</option>';
         document.getElementById('exp-materia').disabled = true;
-        
         const expOrgReset = document.getElementById('exp-organo');
         if (expOrgReset) {
-            expOrgReset.innerHTML = '<option value="">-- Primero selecciona una gerencia --</option>';
+            expOrgReset.innerHTML = '<option value="">-- Cargando... --</option>';
             expOrgReset.disabled = true;
         }
 
@@ -656,29 +725,34 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
         document.getElementById('exp-partes').value = d.partes || '';
         document.getElementById('exp-descripcion').value = d.descripcion || '';
 
-        const gerenciaSel = document.getElementById('exp-gerencia');
-        const materiaSel = document.getElementById('exp-materia');
         const sedeSel = document.getElementById('exp-sede');
-
         seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede, false);
 
-        // Intentamos autoseleccionar la gerencia
-        const foundGerencia = seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia, false);
+        // ---- GERENCIA BLOQUEADA ----
+        // La gerencia se toma del dataset y se muestra en el campo visual, no en un select.
+        const gerenciaNombre = (d.gerencia && d.gerencia !== 'null' && d.gerencia.trim() !== '') ? d.gerencia.trim() : 'Sin gerencia definida';
+        const gerenciaId     = (d.gerenciaId && d.gerenciaId !== 'null' && d.gerenciaId.trim() !== '') ? d.gerenciaId.trim() : d.gerencia?.trim();
 
-        if (foundGerencia && gerenciaSel.selectedIndex > 0) {
-            const activeGerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
-            await cargarMaterias(activeGerenciaId, materiaSel, d.materiaId || d.materia);
-            
-            const expOrgano = document.getElementById('exp-organo');
-            if (expOrgano) await cargarOrganos(activeGerenciaId, expOrgano, d.organoId || d.organo);
+        // Mostrar en el campo visual
+        const labelEl = document.getElementById('exp-gerencia-label');
+        if (labelEl) labelEl.textContent = gerenciaNombre;
+
+        // Guardar en los inputs ocultos para que el formulario los envíe / el JS los lea
+        const hiddenGer = document.getElementById('exp-gerencia');
+        if (hiddenGer) hiddenGer.value = gerenciaNombre;
+        const hiddenGerId = document.getElementById('exp-gerencia-id');
+        if (hiddenGerId) hiddenGerId.value = gerenciaId || '';
+
+        const materiaSel = document.getElementById('exp-materia');
+
+        // Cargar materias y organos usando la gerencia anclada
+        if (gerenciaId) {
+            await Promise.all([
+                cargarMaterias(gerenciaId, materiaSel, d.materiaId || d.materia),
+                cargarOrganos(gerenciaId, expOrgReset, d.organoId || d.organo)
+            ]);
         } else {
-            // RED DE SEGURIDAD: Inyectar datos si falló el match de catálogo
-            if (d.gerencia && d.gerencia !== 'null' && d.gerencia !== 'undefined' && d.gerencia.trim() !== '') {
-                gerenciaSel.innerHTML += `<option value="${d.gerencia}" data-id="${d.gerencia}" selected>${d.gerencia}</option>`;
-                await cargarMaterias(d.gerencia, materiaSel, d.materiaId || d.materia);
-                const expOrgano = document.getElementById('exp-organo');
-                if (expOrgano) await cargarOrganos(d.gerencia, expOrgano, d.organoId || d.organo);
-            }
+            materiaSel.innerHTML = '<option value="">-- Sin gerencia detectada. Ajusta los catálogos --</option>';
         }
 
         const modal = document.getElementById('modal-editar-expediente');
