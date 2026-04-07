@@ -382,9 +382,13 @@ async function guardarEdicionRegistro(formEl) {
         
         if (resp.ok && json.status === 'ok') {
 
-            // 1. Cerrar el modal INMEDIATAMENTE
-            const openModal = document.querySelector('.fixed.flex:not(.hidden)');
-            if (openModal) { openModal.classList.add('hidden'); openModal.classList.remove('flex'); }
+            // 1. Cerrar el modal INMEDIATAMENTE — buscar por relación directa con el formulario
+            const formParent = formEl.closest('[id^="modal-"]');
+            if (formParent) { formParent.classList.add('hidden'); formParent.classList.remove('flex'); } else {
+                // Fallback por selector
+                const openModal = document.querySelector('[id^="modal-"].flex:not(.hidden)');
+                if (openModal) { openModal.classList.add('hidden'); openModal.classList.remove('flex'); }
+            }
 
             // 2. Mostrar toast de éxito
             Swal.fire({ icon: 'success', title: '¡Guardado!', text: json.mensaje, timer: 1200, showConfirmButton: false });
@@ -457,6 +461,7 @@ async function guardarEdicionRegistro(formEl) {
             } else if (esAudiencia) {
                 // ============================================
                 // ETAPA 3: Audiencias
+                // Columnas: 1=Exp, 2=Fecha/Hora, 3=Tipo, 4=Compareciente, 5=Responsable, 6=Sede, 7=Acción
                 // ============================================
                 const fhDiv = row.querySelector('td:nth-child(2) .flex');
                 if (fhDiv) {
@@ -470,18 +475,39 @@ async function guardarEdicionRegistro(formEl) {
                 if (audComp && formData.has('abogadoCompareciente')) audComp.innerText = formData.get('abogadoCompareciente');
                 const audResp = row.querySelector('td:nth-child(5) span');
                 if (audResp && formData.has('abogadoResponsable'))   audResp.innerText = formData.get('abogadoResponsable');
+                // Sede está en la 6ª columna
+                const audSede = row.querySelector('td:nth-child(6) span');
+                if (audSede && formData.has('sede'))                  audSede.innerText = formData.get('sede');
 
             } else if (esTermino) {
                 // ============================================
                 // ETAPA 4: Términos
+                // Columnas: 1=Exp, 2=Actuación, 3=Vencimiento, 4=Abogado, 5=Prioridad, 6=Acción
+                // OJO: el campo del form se llama 'asunto' (no 'actuacion')
                 // ============================================
                 const termAct = row.querySelector('td:nth-child(2) span');
-                if (termAct && formData.has('actuacion'))            termAct.innerText = formData.get('actuacion');
+                // El form envía 'asunto' según el HTML del modal
+                const actuacionVal = formData.get('asunto') || formData.get('actuacion') || '';
+                if (termAct && actuacionVal) termAct.innerText = actuacionVal;
+
                 const termFec = row.querySelector('td:nth-child(3) span.truncate');
                 if (termFec && formData.has('fechaVencimiento'))     termFec.innerText = formData.get('fechaVencimiento');
+
                 const termAbog = row.querySelector('td:nth-child(4) span');
                 if (termAbog && formData.has('abogadoResponsable'))  termAbog.innerText = formData.get('abogadoResponsable');
-            }
+
+                // Prioridad — actualizar texto Y clases de color
+                const termPrioSpan = row.querySelector('td:nth-child(5) span');
+                const prioVal = formData.get('prioridad') || '';
+                if (termPrioSpan && prioVal) {
+                    termPrioSpan.innerText = prioVal;
+                    termPrioSpan.className = 'text-xs font-bold px-2 py-0.5 rounded-full ';
+                    if (prioVal === 'Alta')       termPrioSpan.className += 'bg-red-100 text-red-700';
+                    else if (prioVal === 'Baja')  termPrioSpan.className += 'bg-gray-100 text-gray-600';
+                    else                         termPrioSpan.className += 'bg-yellow-100 text-yellow-700';
+                }
+
+            } // fin if/else etapas
 
             // ANIMACIÓN HIGHLIGHT — cada TD por compatibilidad con sticky
             row.querySelectorAll('td').forEach(td => {
@@ -809,8 +835,6 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
             await cargarAbogados(activeMateriaId, document.getElementById('aud-compareciente'), d.abogadoComparecienteId || d.abogadoCompareciente || d.abogadoId);
         }
 
-        const audSala = document.getElementById('aud-sala');
-        if (audSala) audSala.value = d.sala || '';
         const esVirtual = d.esEnLinea === 'true' || d.esVirtual === 'true';
         const rdPresencial = document.getElementById('aud-presencial');
         const rdVirtual = document.getElementById('aud-virtual');

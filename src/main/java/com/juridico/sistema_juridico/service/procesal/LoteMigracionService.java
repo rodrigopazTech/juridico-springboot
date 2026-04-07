@@ -478,21 +478,17 @@
                 map.put("totalAudiencias", totalAudiencias);
                 map.put("totalRegistros", entry.getValue().size());
 
-                // --- LÓGICA DE SEMÁFORO (VALIDACIÓN) ---
+                // --- LÓGICA DE SEMÁFORO (VALIDACIÓN) --- se mueve al final para usar el valor ya resuelto
+                // (placeholder, se llena más abajo con el valor real)
                 List<String> camposFaltantes = new java.util.ArrayList<>();
                 boolean critico = false;
 
-                // Validamos sobre el primer registro que encontremos del expediente (donde usualmente vienen los datos generales)
                 try {
                     JsonNode json = objectMapper.readTree(entry.getValue().get(0).getPayloadJson());
-                    
                     if (numExp.equals("SIN_NUMERO")) { camposFaltantes.add("Número de Expediente"); critico = true; }
-                    if (!json.has("materia") || json.get("materia").asText().trim().isEmpty()) { camposFaltantes.add("Materia"); critico = true; }
-                    if (!json.has("gerencia") || json.get("gerencia").asText().trim().isEmpty()) { camposFaltantes.add("Gerencia"); critico = true; }
-                    if (!json.has("descripcion") || json.get("descripcion").asText().trim().isEmpty()) { camposFaltantes.add("Descripción"); }
                 } catch (Exception e) { critico = true; }
 
-                map.put("faltantes", camposFaltantes);
+                map.put("faltantes", camposFaltantes); // se actualiza más adelante
                 map.put("esCritico", critico);
                 map.put("estaListo", camposFaltantes.isEmpty());
                 
@@ -559,6 +555,20 @@
                 map.put("organo", organoModa);
                 map.put("abogado", abogadoModa);
                 map.put("descripcion", descModa);
+
+                // --- VALIDACIÓN con valores ya resueltos (post-catálogo) ---
+                if (materiaModa == null || materiaModa.isEmpty() || materiaModa.equals("Por asignar")) {
+                    if (!camposFaltantes.contains("Materia")) { camposFaltantes.add("Materia"); critico = true; }
+                }
+                if (gerenciaModa == null || gerenciaModa.isEmpty()) {
+                    if (!camposFaltantes.contains("Gerencia")) { camposFaltantes.add("Gerencia"); critico = true; }
+                }
+                if (descModa == null || descModa.isEmpty() || descModa.equals("Expediente migrado.")) {
+                    if (!camposFaltantes.contains("Descripción")) { camposFaltantes.add("Descripción"); }
+                }
+                map.put("faltantes", camposFaltantes);
+                map.put("esCritico", critico);
+                map.put("estaListo", camposFaltantes.isEmpty());
 
     // --- RESOLUCIÓN DE IDs PARA EL MODAL ---
                 // Buscamos si el valor de la moda ya fue mapeado en la Etapa 1
