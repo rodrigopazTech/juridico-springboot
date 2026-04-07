@@ -188,17 +188,25 @@
                             guardarCatalogoUnico(lote, "GERENCIA", gerStr, cacheMapeo);
                         }
                     }
+                    
                     if (json.has("materia") && !json.get("materia").isNull()) {
-                        String matStr = json.get("materia").asText();
-                        guardarCatalogoUnico(lote, "MATERIA", matStr, cacheMapeo);
-                        
-                        // INTELIGENCIA: Si la materia coincide con el sistema, inferimos la Gerencia automáticamente
-                        materiaRepository.findByNombreIgnoreCase(matStr).ifPresent(m -> {
-                            if (m.getGerencia() != null) {
-                                guardarCatalogoUnico(lote, "GERENCIA", m.getGerencia().getNombre(), cacheMapeo);
-                            }
-                        });
+                        String matStr = json.get("materia").asText().trim();
+                        if (!matStr.toUpperCase().contains("DEFINIR") && !matStr.isEmpty()) {
+                            guardarCatalogoUnico(lote, "MATERIA", matStr, cacheMapeo);
+                            
+                            // INTELIGENCIA: Si la materia coincide con el sistema, inferimos la Gerencia automáticamente
+                            materiaRepository.findByNombreIgnoreCase(matStr).ifPresent(m -> {
+                                if (m.getGerencia() != null) {
+                                    guardarCatalogoUnico(lote, "GERENCIA", m.getGerencia().getNombre(), cacheMapeo);
+                                }
+                            });
+                        } else {
+                            guardarCatalogoUnico(lote, "MATERIA", "Por asignar", cacheMapeo);
+                        }
+                    } else {
+                        guardarCatalogoUnico(lote, "MATERIA", "Por asignar", cacheMapeo);
                     }
+                    
                     if (json.has("sede") && !json.get("sede").isNull()) {
                         guardarCatalogoUnico(lote, "SEDE", json.get("sede").asText(), cacheMapeo);
                     }
@@ -413,13 +421,48 @@
         // ETAPA 2: LÓGICA DE EXPEDIENTES
         // =========================================================
 
+    // --- CACHING DE ALTO RENDIMIENTO ---
+    private java.util.concurrent.ConcurrentHashMap<Long, java.util.List<java.util.Map<String, Object>>> cacheResumenExpedientes = new java.util.concurrent.ConcurrentHashMap<>();
+    private java.util.concurrent.ConcurrentHashMap<Long, java.util.List<java.util.Map<String, Object>>> cacheResumenAudiencias = new java.util.concurrent.ConcurrentHashMap<>();
+    private java.util.concurrent.ConcurrentHashMap<Long, java.util.List<java.util.Map<String, Object>>> cacheResumenTerminos = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public void limpiarCacheLote(Long loteId) {
+        cacheResumenExpedientes.remove(loteId);
+        cacheResumenAudiencias.remove(loteId);
+        cacheResumenTerminos.remove(loteId);
+    }
+
     public java.util.List<java.util.Map<String, Object>> obtenerResumenExpedientes(Long loteId) {
+            if (cacheResumenExpedientes.containsKey(loteId)) return cacheResumenExpedientes.get(loteId);
+            
             List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
             
             java.util.Map<String, List<RegistroMigracion>> agrupados = registros.stream()
                 .collect(java.util.stream.Collectors.groupingBy(
                     r -> r.getNumeroExpedienteExtraido() != null ? r.getNumeroExpedienteExtraido() : "SIN_NUMERO"
                 ));
+
+            // --- INFERIR GERENCIA GLOBAL DEL LOTE ---
+            String gerenciaGlobal = findMostRepeated(registros, "gerencia", "");
+            if (gerenciaGlobal.toUpperCase().contains("DEFINIR")) gerenciaGlobal = "";
+            
+            if (gerenciaGlobal.isEmpty()) {
+                String materiaGlobal = findMostRepeated(registros, "materia", "");
+                if (!materiaGlobal.isEmpty() && !materiaGlobal.toUpperCase().contains("DEFINIR") && !materiaGlobal.equals("Por asignar")) {
+                    Long matMapId = buscarIdMapeado(loteId, "MATERIA", materiaGlobal);
+                    if (matMapId != null) {
+                        java.util.Optional<Materia> matOpt = materiaRepository.findById(matMapId.intValue());
+                        if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
+                            gerenciaGlobal = matOpt.get().getGerencia().getNombre();
+                        }
+                    } else {
+                        java.util.Optional<Materia> matOpt = materiaRepository.findByNombreIgnoreCase(materiaGlobal.trim());
+                        if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
+                            gerenciaGlobal = matOpt.get().getGerencia().getNombre();
+                        }
+                    }
+                }
+            }
 
             java.util.List<java.util.Map<String, Object>> resumen = new java.util.ArrayList<>();
             
@@ -469,19 +512,45 @@
                 if (gerenciaModa != null && gerenciaModa.toUpperCase().contains("DEFINIR")) gerenciaModa = "";
                 if (materiaModa != null && materiaModa.toUpperCase().contains("DEFINIR")) materiaModa = "";
 
-                // INTELIGENCIA MEJORADA: Inferir gerencia buscando la materia o el órgano directamente en la Base de Datos
-                if ((gerenciaModa == null || gerenciaModa.isEmpty()) && materiaModa != null && !materiaModa.isEmpty()) {
-                    java.util.Optional<Materia> matOpt = materiaRepository.findByNombreIgnoreCase(materiaModa.trim());
-                    if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
-                        gerenciaModa = matOpt.get().getGerencia().getNombre();
+                // INTELIGENCIA MEJORADA: Inferir gerencia buscando la materia o el órgano DIRECTAMENTE DE LOS CATÁLOGOS MAPEADOS
+                if ((gerenciaModa == null || gerenciaModa.isEmpty()) && materiaModa != null && !materiaModa.isEmpty() && !materiaModa.equals("Por asignar")) {
+                    Long matMapId = buscarIdMapeado(loteId, "MATERIA", materiaModa);
+                    if (matMapId != null) {
+                        java.util.Optional<Materia> matOpt = materiaRepository.findById(matMapId.intValue());
+                        if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
+                            gerenciaModa = matOpt.get().getGerencia().getNombre();
+                        }
+                    } else {
+                        // Respaldo
+                        java.util.Optional<Materia> matOpt = materiaRepository.findByNombreIgnoreCase(materiaModa.trim());
+                        if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
+                            gerenciaModa = matOpt.get().getGerencia().getNombre();
+                        }
                     }
                 }
+                
                 if ((gerenciaModa == null || gerenciaModa.isEmpty()) && organoModa != null && !organoModa.isEmpty()) {
-                    java.util.Optional<OrganoJurisdiccional> orgOpt = organoRepository.findByNombreIgnoreCase(organoModa.trim());
-                    if (orgOpt.isPresent() && orgOpt.get().getGerencia() != null) {
-                        gerenciaModa = orgOpt.get().getGerencia().getNombre();
+                    Long orgMapId = buscarIdMapeado(loteId, "ORGANO", organoModa);
+                    if (orgMapId != null) {
+                        java.util.Optional<OrganoJurisdiccional> orgOpt = organoRepository.findById(orgMapId.intValue());
+                        if (orgOpt.isPresent() && orgOpt.get().getGerencia() != null) {
+                            gerenciaModa = orgOpt.get().getGerencia().getNombre();
+                        }
+                    } else {
+                        java.util.Optional<OrganoJurisdiccional> orgOpt = organoRepository.findByNombreIgnoreCase(organoModa.trim());
+                        if (orgOpt.isPresent() && orgOpt.get().getGerencia() != null) {
+                            gerenciaModa = orgOpt.get().getGerencia().getNombre();
+                        }
                     }
                 }
+                
+                // ANCLAR A GERENCIA GLOBAL
+                if (gerenciaModa == null || gerenciaModa.isEmpty()) {
+                    gerenciaModa = gerenciaGlobal;
+                }
+                
+                // Reemplazo para mantener la cascada funcional sin forzar en gerencia
+                if (materiaModa == null || materiaModa.isEmpty()) materiaModa = "Por asignar";
 
                 map.put("partes", partesModa);
                 map.put("sede", sedeModa);
@@ -532,8 +601,32 @@
     // =========================================================
 
     public java.util.List<java.util.Map<String, Object>> obtenerResumenAudiencias(Long loteId) {
+        if (cacheResumenAudiencias.containsKey(loteId)) return cacheResumenAudiencias.get(loteId);
+        
         List<RegistroMigracion> registros = registroRepository.findByLoteIdAndTipoDatoAndEstatusNot(loteId, "AUDIENCIA", "RECHAZADO");
         List<RegistroMigracion> todosLosRegistros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
+        
+        // --- INFERIR GERENCIA GLOBAL DEL LOTE ---
+        String gerenciaGlobal = findMostRepeated(todosLosRegistros, "gerencia", "");
+        if (gerenciaGlobal.toUpperCase().contains("DEFINIR")) gerenciaGlobal = "";
+        
+        if (gerenciaGlobal.isEmpty()) {
+            String materiaGlobal = findMostRepeated(todosLosRegistros, "materia", "");
+            if (!materiaGlobal.isEmpty() && !materiaGlobal.toUpperCase().contains("DEFINIR") && !materiaGlobal.equals("Por asignar")) {
+                Long matMapId = buscarIdMapeado(loteId, "MATERIA", materiaGlobal);
+                if (matMapId != null) {
+                    java.util.Optional<Materia> matOpt = materiaRepository.findById(matMapId.intValue());
+                    if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
+                        gerenciaGlobal = matOpt.get().getGerencia().getNombre();
+                    }
+                } else {
+                    java.util.Optional<Materia> matOpt = materiaRepository.findByNombreIgnoreCase(materiaGlobal.trim());
+                    if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
+                        gerenciaGlobal = matOpt.get().getGerencia().getNombre();
+                    }
+                }
+            }
+        }
         
         java.util.List<java.util.Map<String, Object>> resumen = new java.util.ArrayList<>();
         
@@ -576,6 +669,7 @@
 
                 map.put("esEnLinea", json.has("esEnLinea") ? json.get("esEnLinea").asText() : (json.has("esVirtual") ? json.get("esVirtual").asText() : "false"));
                 map.put("enlaceReunion", json.has("enlaceReunion") ? json.get("enlaceReunion").asText() : (json.has("urlReunion") ? json.get("urlReunion").asText() : ""));
+                map.put("observaciones", json.has("observaciones") ? json.get("observaciones").asText() : "");
                 
                 // --- INTELIGENCIA DE HERENCIA ---
                 String gerenciaAsignada = json.has("gerencia") && !json.get("gerencia").isNull() ? json.get("gerencia").asText().trim() : "";
@@ -601,13 +695,29 @@
                     }
                 }
                 
-                // INTELIGENCIA: Si la gerencia sigue vacía, inferirla basándonos en la materia real
-                if (gerenciaAsignada.isEmpty() && !materiaAsignada.isEmpty()) {
-                    java.util.Optional<Materia> matOpt = materiaRepository.findByNombreIgnoreCase(materiaAsignada);
-                    if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
-                        gerenciaAsignada = matOpt.get().getGerencia().getNombre();
+                // INTELIGENCIA: Si la gerencia sigue vacía, inferirla basándonos en la materia real MAPEADA
+                if (gerenciaAsignada.isEmpty() && !materiaAsignada.isEmpty() && !materiaAsignada.equals("Por asignar")) {
+                    Long matMapId = buscarIdMapeado(loteId, "MATERIA", materiaAsignada);
+                    if (matMapId != null) {
+                        java.util.Optional<Materia> matOpt = materiaRepository.findById(matMapId.intValue());
+                        if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
+                            gerenciaAsignada = matOpt.get().getGerencia().getNombre();
+                        }
+                    } else {
+                        java.util.Optional<Materia> matOpt = materiaRepository.findByNombreIgnoreCase(materiaAsignada);
+                        if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
+                            gerenciaAsignada = matOpt.get().getGerencia().getNombre();
+                        }
                     }
                 }
+                
+                // ANCLAR A GERENCIA GLOBAL
+                if (gerenciaAsignada == null || gerenciaAsignada.isEmpty()) {
+                    gerenciaAsignada = gerenciaGlobal;
+                }
+                
+                // Reemplazo para mantener la cascada funcional
+                if (materiaAsignada == null || materiaAsignada.isEmpty()) materiaAsignada = "Por asignar";
                 
                 // Extraer el ID exacto para el Frontend
                 Long gerenciaId = null;
@@ -629,6 +739,7 @@
             }
         }
         
+        cacheResumenAudiencias.put(loteId, resumen);
         return resumen;
     }
         // =========================================================
@@ -636,7 +747,33 @@
         // =========================================================
 
         public java.util.List<java.util.Map<String, Object>> obtenerResumenTerminos(Long loteId) {
+            if (cacheResumenTerminos.containsKey(loteId)) return cacheResumenTerminos.get(loteId);
+
             List<RegistroMigracion> registros = registroRepository.findByLoteIdAndTipoDatoAndEstatusNot(loteId, "TERMINO", "RECHAZADO");
+            List<RegistroMigracion> todosLosRegistros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
+            
+            // --- INFERIR GERENCIA GLOBAL DEL LOTE ---
+            String gerenciaGlobal = findMostRepeated(todosLosRegistros, "gerencia", "");
+            if (gerenciaGlobal.toUpperCase().contains("DEFINIR")) gerenciaGlobal = "";
+            
+            if (gerenciaGlobal.isEmpty()) {
+                String materiaGlobal = findMostRepeated(todosLosRegistros, "materia", "");
+                if (!materiaGlobal.isEmpty() && !materiaGlobal.toUpperCase().contains("DEFINIR") && !materiaGlobal.equals("Por asignar")) {
+                    Long matMapId = buscarIdMapeado(loteId, "MATERIA", materiaGlobal);
+                    if (matMapId != null) {
+                        java.util.Optional<Materia> matOpt = materiaRepository.findById(matMapId.intValue());
+                        if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
+                            gerenciaGlobal = matOpt.get().getGerencia().getNombre();
+                        }
+                    } else {
+                        java.util.Optional<Materia> matOpt = materiaRepository.findByNombreIgnoreCase(materiaGlobal.trim());
+                        if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
+                            gerenciaGlobal = matOpt.get().getGerencia().getNombre();
+                        }
+                    }
+                }
+            }
+            
             java.util.List<java.util.Map<String, Object>> resumen = new java.util.ArrayList<>();
             
             for (RegistroMigracion reg : registros) {
@@ -644,16 +781,81 @@
                     JsonNode json = objectMapper.readTree(reg.getPayloadJson());
                     java.util.Map<String, Object> map = new java.util.HashMap<>();
                     
+                    String numExp = reg.getNumeroExpedienteExtraido() != null ? reg.getNumeroExpedienteExtraido() : "";
+                    
                     map.put("id", reg.getId());
-                    map.put("numeroExpediente", reg.getNumeroExpedienteExtraido());
+                    map.put("numeroExpediente", numExp);
                     map.put("actuacion", json.has("asunto") ? json.get("asunto").asText() : (json.has("actuacion") ? json.get("actuacion").asText() : (json.has("prestacion") ? json.get("prestacion").asText() : "Sin actuación")));
                     map.put("fechaVencimiento", json.has("fechaVencimiento") ? json.get("fechaVencimiento").asText() : "Sin fecha");
                     map.put("abogado", json.has("abogadoResponsable") ? json.get("abogadoResponsable").asText() : "N/A");
                     map.put("prioridad", json.has("prioridad") ? json.get("prioridad").asText() : "Media");
                     map.put("observaciones", json.has("observaciones") ? json.get("observaciones").asText() : "");
-                    
-                    // Nuevo campo para el modal de edición
                     map.put("fechaIngreso", json.has("fechaIngreso") ? json.get("fechaIngreso").asText() : "");
+                    
+                    String sedeVal = json.has("sede") ? json.get("sede").asText() : "";
+                    String organoVal = json.has("organoJurisdiccional") ? json.get("organoJurisdiccional").asText() : "";
+                    map.put("sede", sedeVal);
+                    map.put("organo", organoVal);
+                    
+                    // --- HERENCIA: Inferir gerencia y materia del expediente padre ---
+                    String gerenciaAsignada = json.has("gerencia") && !json.get("gerencia").isNull() ? json.get("gerencia").asText().trim() : "";
+                    String materiaAsignada = json.has("materia") && !json.get("materia").isNull() ? json.get("materia").asText().trim() : "";
+                    String abogadoVal = json.has("abogadoResponsable") ? json.get("abogadoResponsable").asText() : "";
+                    
+                    if (gerenciaAsignada.toUpperCase().contains("DEFINIR")) gerenciaAsignada = "";
+                    if (materiaAsignada.toUpperCase().contains("DEFINIR")) materiaAsignada = "";
+                    
+                    if (gerenciaAsignada.isEmpty() || materiaAsignada.isEmpty()) {
+                        List<RegistroMigracion> contextoExpediente = todosLosRegistros.stream()
+                            .filter(r -> r.getNumeroExpedienteExtraido() != null && r.getNumeroExpedienteExtraido().equals(numExp))
+                            .toList();
+                        if (gerenciaAsignada.isEmpty()) {
+                            gerenciaAsignada = findMostRepeated(contextoExpediente, "gerencia", "");
+                            if (gerenciaAsignada.toUpperCase().contains("DEFINIR")) gerenciaAsignada = "";
+                        }
+                        if (materiaAsignada.isEmpty()) {
+                            materiaAsignada = findMostRepeated(contextoExpediente, "materia", "");
+                            if (materiaAsignada.toUpperCase().contains("DEFINIR")) materiaAsignada = "";
+                        }
+                    }
+                    
+                    if (gerenciaAsignada.isEmpty() && !materiaAsignada.isEmpty() && !materiaAsignada.equals("Por asignar")) {
+                        Long matMapId = buscarIdMapeado(loteId, "MATERIA", materiaAsignada);
+                        if (matMapId != null) {
+                            java.util.Optional<Materia> matOpt = materiaRepository.findById(matMapId.intValue());
+                            if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
+                                gerenciaAsignada = matOpt.get().getGerencia().getNombre();
+                            }
+                        } else {
+                            java.util.Optional<Materia> matOpt = materiaRepository.findByNombreIgnoreCase(materiaAsignada);
+                            if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
+                                gerenciaAsignada = matOpt.get().getGerencia().getNombre();
+                            }
+                        }
+                    }
+                    
+                    // ANCLAR A GERENCIA GLOBAL
+                    if (gerenciaAsignada == null || gerenciaAsignada.isEmpty()) {
+                        gerenciaAsignada = gerenciaGlobal;
+                    }
+                    
+                    // Reemplazo para mantener la cascada funcional
+                    if (materiaAsignada == null || materiaAsignada.isEmpty()) materiaAsignada = "Por asignar";
+                    
+                    Long gerenciaId = null;
+                    if (!gerenciaAsignada.isEmpty()) {
+                        final String searchGer = gerenciaAsignada;
+                        gerenciaId = gerenciaRepository.findAll().stream()
+                            .filter(g -> g.getNombre().equalsIgnoreCase(searchGer))
+                            .findFirst().map(g -> g.getId().longValue()).orElse(null);
+                    }
+                    
+                    map.put("gerencia", gerenciaAsignada);
+                    map.put("gerenciaId", gerenciaId);
+                    map.put("materia", materiaAsignada);
+                    map.put("materiaId", buscarIdMapeado(loteId, "MATERIA", materiaAsignada));
+                    map.put("sedeId", buscarIdMapeado(loteId, "SEDE", sedeVal));
+                    map.put("abogadoId", buscarIdMapeado(loteId, "USUARIO", abogadoVal));
                     
                     resumen.add(map);
                 } catch (Exception e) { }
@@ -925,13 +1127,13 @@
 
                         r.setEstatus("PROCESADO");
                         r.setProcessedAt(java.time.LocalDateTime.now());
+                        registroRepository.save(r);
                     }
                 }
                 
                 lote.setEstatus("COMPLETADO");
                 lote.setPasoActual(5);
                 loteRepository.save(lote);
-                registroRepository.saveAll(registros);
 
                 // LIMPIEZA: Si hay otros lotes PENDIENTES (por ruido de n8n), los cancelamos
                 List<LoteMigracion> otrosLotes = loteRepository.findByEstatus("PENDIENTE");
@@ -1030,12 +1232,10 @@
                     String nombreFinal = c.getNuevoValor();
                     if (nombreFinal.length() > 100) nombreFinal = nombreFinal.substring(0, 100);
                     final String searchName = nombreFinal;
-                    OrganoJurisdiccional existente = null;
-                    if (gerenciaContexto != null) {
-                        existente = organoRepository.findByNombreIgnoreCaseAndGerenciaId(searchName, gerenciaContexto.getId()).orElse(null);
-                    } else {
-                        existente = organoRepository.findByNombreIgnoreCase(searchName).orElse(null);
-                    }
+                    
+                    // IMPORTANTE: Primero buscar global para respetar la restricción UNIQUE del sistema
+                    OrganoJurisdiccional existente = organoRepository.findByNombreIgnoreCase(searchName).orElse(null);
+                    
                     if (existente == null) {
                         OrganoJurisdiccional o = new OrganoJurisdiccional(); 
                         o.setNombre(searchName); 
@@ -1047,9 +1247,6 @@
                     c.setNuevoValor(null);
                     return existente;
                 }
-            }
-            if (gerenciaContexto != null) {
-                return organoRepository.findByNombreIgnoreCaseAndGerenciaId(original.trim(), gerenciaContexto.getId()).orElse(null);
             }
             return organoRepository.findByNombreIgnoreCase(original.trim()).orElse(null);
         }
@@ -1064,12 +1261,10 @@
                     String nombreFinal = c.getNuevoValor();
                     if (nombreFinal.length() > 100) nombreFinal = nombreFinal.substring(0, 100);
                     final String searchName = nombreFinal;
-                    TipoAudiencia existente = null;
-                    if (gerenciaContexto != null) {
-                        existente = tipoAudienciaRepository.findByNombreIgnoreCaseAndGerenciaId(searchName, gerenciaContexto.getId()).orElse(null);
-                    } else {
-                        existente = tipoAudienciaRepository.findByNombreIgnoreCase(searchName).orElse(null);
-                    }
+
+                    // IMPORTANTE: Buscar global para evitar DataIntegrityViolation por unique constraint
+                    TipoAudiencia existente = tipoAudienciaRepository.findByNombreIgnoreCase(searchName).orElse(null);
+                    
                     if (existente == null) {
                         TipoAudiencia t = new TipoAudiencia(); 
                         t.setNombre(searchName); 
@@ -1081,9 +1276,6 @@
                     c.setNuevoValor(null);
                     return existente;
                 }
-            }
-            if (gerenciaContexto != null) {
-                return tipoAudienciaRepository.findByNombreIgnoreCaseAndGerenciaId(original.trim(), gerenciaContexto.getId()).orElse(null);
             }
             return tipoAudienciaRepository.findByNombreIgnoreCase(original.trim()).orElse(null);
         }

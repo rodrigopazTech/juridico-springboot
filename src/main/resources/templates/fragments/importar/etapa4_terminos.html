@@ -64,7 +64,12 @@
                 th:data-registro-id="${term.id}" th:data-numero-expediente="${term.numeroExpediente}"
                 th:data-actuacion="${term.actuacion}" th:data-fecha-vencimiento="${term.fechaVencimiento}"
                 th:data-abogado-responsable="${term.abogado}" th:data-observaciones="${term.observaciones}"
-                th:data-fecha-ingreso="${term.fechaIngreso}" title="Editar término">
+                th:data-fecha-ingreso="${term.fechaIngreso}" th:data-prioridad="${term.prioridad}"
+                th:data-sede="${term.sede}" th:data-organo="${term.organo}"
+                th:data-gerencia="${term.gerencia}" th:data-materia="${term.materia}"
+                th:data-gerencia-id="${term.gerenciaId}" th:data-materia-id="${term.materiaId}"
+                th:data-sede-id="${term.sedeId}" th:data-abogado-id="${term.abogadoId}"
+                title="Editar término">
                 <i class="fas fa-edit"></i>
               </button>
             </td>
@@ -134,29 +139,7 @@
           <input type="date" id="term-fecha-ingreso" name="fechaIngreso"
             class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm" />
         </div>
-        <!-- JERARQUÍA PARA FILTRADO -->
-        <div class="col-span-2 grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Gerencia</label>
-            <select id="term-gerencia" name="gerencia"
-              class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
-              <option value="">-- Seleccione --</option>
-              <option th:each="g : ${gerenciasDB}" th:value="${g.nombre}" th:data-id="${g.id}" th:text="${g.nombre}"></option>
-              <th:block th:if="${mapeosNuevos != null and mapeosNuevos.containsKey('GERENCIA')}">
-                <option th:each="n : ${mapeosNuevos['GERENCIA']}" th:value="${n.nuevoValor}" th:data-id="${n.nuevoValor}"
-                  th:text="${n.nuevoValor + ' (Nuevo)'}"></option>
-              </th:block>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Materia</label>
-            <select id="term-materia" name="materia"
-              class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"
-              disabled>
-              <option value="">-- Seleccione gerencia --</option>
-            </select>
-          </div>
-        </div>
+        <!-- CAMPOS REDUNDANTES DE JERARQUÍA ELIMINADOS SEGÚN SOLICITUD DEL USUARIO -->
 
         <div>
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Prioridad</label>

@@ -56,7 +56,8 @@
                 th:text="${aud.tipoAudiencia}" th:title="${aud.tipoAudiencia}"></span>
             </td>
             <td class="px-3 py-3 max-w-[130px]">
-              <span class="block truncate text-gray-600 text-xs" th:text="${aud.compareciente}" th:title="${aud.compareciente}">
+              <span class="block truncate text-gray-600 text-xs" th:text="${aud.compareciente}"
+                th:title="${aud.compareciente}">
               </span>
             </td>
             <td class="px-3 py-3 max-w-[130px]">
@@ -75,7 +76,12 @@
                 th:data-abogado-responsable="${aud.abogadoResponsable}" th:data-sede="${aud.sede}"
                 th:data-organo-jurisdiccional="${aud.organo}" th:data-es-en-linea="${aud.esEnLinea}"
                 th:data-enlace-reunion="${aud.enlaceReunion}" th:data-gerencia="${aud.gerencia}"
-                th:data-materia="${aud.materia}" title="Editar audiencia">
+                th:data-materia="${aud.materia}" th:data-sala="${aud.sala}" th:data-gerencia-id="${aud.gerenciaId}"
+                th:data-materia-id="${aud.materiaId}" th:data-tipo-audiencia-id="${aud.tipoAudienciaId}"
+                th:data-abogado-responsable-id="${aud.abogadoResponsableId}"
+                th:data-abogado-compareciente-id="${aud.abogadoComparecienteId}" th:data-sede-id="${aud.sedeId}"
+                th:data-organo-id="${aud.organoId}" th:data-observaciones="${aud.observaciones}"
+                title="Editar audiencia">
                 <i class="fas fa-edit"></i>
               </button>
             </td>
@@ -127,6 +133,14 @@
           <input type="time" id="aud-hora" name="horaAudiencia"
             class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm" />
         </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Sala</label>
+          <input type="text" id="aud-sala" name="sala"
+            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"
+            placeholder="Ej. Sala A" />
+        </div>
+
         <div class="col-span-2">
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Tipo de Audiencia</label>
           <select id="aud-tipo" name="tipoAudiencia"
@@ -136,30 +150,7 @@
           </select>
         </div>
 
-        <!-- JERARQUÍA PARA FILTRADO -->
-        <div class="col-span-2 grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Gerencia</label>
-            <select id="aud-gerencia" name="gerencia"
-              class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm">
-              <option value="">-- Seleccione --</option>
-              <option th:each="g : ${gerenciasDB}" th:value="${g.nombre}" th:data-id="${g.id}" th:text="${g.nombre}"></option>
-              <th:block th:if="${mapeosNuevos != null and mapeosNuevos.containsKey('GERENCIA')}">
-                <option th:each="n : ${mapeosNuevos['GERENCIA']}" th:value="${n.nuevoValor}" th:data-id="${n.nuevoValor}"
-                  th:text="${n.nuevoValor + ' (Nuevo)'}"></option>
-              </th:block>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Materia</label>
-            <select id="aud-materia" name="materia"
-              class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"
-              disabled>
-              <option value="">-- Seleccione gerencia --</option>
-            </select>
-          </div>
-        </div>
-
+        <!-- CAMPOS REDUNDANTES DE JERARQUÍA ELIMINADOS SEGÚN SOLICITUD DEL USUARIO -->
         <div class="col-span-2">
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Abogado Compareciente</label>
           <select id="aud-compareciente" name="abogadoCompareciente"
@@ -211,6 +202,11 @@
           <input type="text" id="aud-url" name="enlaceReunion"
             class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"
             placeholder="https://..." />
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Observaciones</label>
+          <textarea id="aud-observaciones" name="observaciones" rows="2"
+            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"></textarea>
         </div>
         <div class="col-span-2 flex justify-end gap-3 pt-2 border-t border-gray-100">
           <button type="button" id="cancelar-modal-aud"

@@ -629,8 +629,7 @@ function setupHierarchicalSelects(prefix) {
 
 document.addEventListener('DOMContentLoaded', () => {
     setupHierarchicalSelects('exp');
-    setupHierarchicalSelects('aud');
-    setupHierarchicalSelects('term');
+    // aud y term ya no tienen selects jerárquicos en sus modales
 });
 
 // ==========================================
@@ -644,12 +643,17 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
         document.getElementById('exp-gerencia').selectedIndex = 0;
         document.getElementById('exp-materia').innerHTML = '<option value="">-- Primero selecciona una gerencia --</option>';
         document.getElementById('exp-materia').disabled = true;
+        
+        const expOrgReset = document.getElementById('exp-organo');
+        if (expOrgReset) {
+            expOrgReset.innerHTML = '<option value="">-- Primero selecciona una gerencia --</option>';
+            expOrgReset.disabled = true;
+        }
 
         const d = this.dataset;
         document.getElementById('exp-registro-id').value = d.registroId;
         document.getElementById('exp-numero').value = d.numeroExpediente || '';
         document.getElementById('exp-partes').value = d.partes || '';
-        document.getElementById('exp-organo').value = d.organo || '';
         document.getElementById('exp-descripcion').value = d.descripcion || '';
 
         const gerenciaSel = document.getElementById('exp-gerencia');
@@ -699,67 +703,36 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
         // RESET FORM PRE-LOAD
         const formAud = document.getElementById('form-editar-audiencia');
         if (formAud) formAud.reset();
-        document.getElementById('aud-gerencia').selectedIndex = 0;
-        document.getElementById('aud-materia').innerHTML = '<option value="">-- Primero selecciona una gerencia --</option>';
-        document.getElementById('aud-materia').disabled = true;
-        document.getElementById('aud-responsable').innerHTML = '<option value="">-- Primero selecciona una materia --</option>';
-        document.getElementById('aud-responsable').disabled = true;
-        document.getElementById('aud-compareciente').innerHTML = '<option value="">-- Primero selecciona una materia --</option>';
-        document.getElementById('aud-compareciente').disabled = true;
+        ['aud-tipo', 'aud-responsable', 'aud-compareciente'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.innerHTML = '<option value="">-- Cargando opciones... --</option>';
+                el.disabled = true;
+            }
+        });
 
         const d = this.dataset;
         document.getElementById('aud-registro-id').value = d.registroId;
         document.getElementById('aud-numero').value = d.numeroExpediente || '';
         document.getElementById('aud-fecha').value = d.fechaAudiencia || '';
         document.getElementById('aud-hora').value = d.horaAudiencia || '';
-        document.getElementById('aud-tipo').value = d.tipoAudiencia || '';
-        if (document.getElementById('aud-organo')) document.getElementById('aud-organo').value = d.organoJurisdiccional || '';
+        document.getElementById('aud-observaciones').value = d.observaciones || '';
 
-        const gerenciaSel = document.getElementById('aud-gerencia');
-        const materiaSel = document.getElementById('aud-materia');
         const sedeSel = document.getElementById('aud-sede');
-
         seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede, false);
 
-        const foundGerencia = seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia, false);
+        // Optimizado: usar variables de dataset en lugar de <select>s para Etapa 3
+        const activeGerenciaId = d.gerenciaId || d.gerencia;
+        const activeMateriaId = d.materiaId || d.materia;
 
-        if (foundGerencia && gerenciaSel.selectedIndex > 0) {
-            const activeGerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
-            await cargarMaterias(activeGerenciaId, materiaSel, d.materiaId || d.materia);
-
-            const audOrgano = document.getElementById('aud-organo');
-            if (audOrgano) await cargarOrganos(activeGerenciaId, audOrgano, d.organoJurisdiccionalId || d.organoJurisdiccional);
-
+        if (activeGerenciaId) {
             const audTipo = document.getElementById('aud-tipo');
             if (audTipo) await cargarTiposAudiencia(activeGerenciaId, audTipo, d.tipoAudienciaId || d.tipoAudiencia);
+        }
 
-            if (materiaSel && materiaSel.selectedIndex > 0) {
-                const activeMateriaId = materiaSel.options[materiaSel.selectedIndex].getAttribute('data-id');
-                await cargarAbogados(activeMateriaId, document.getElementById('aud-responsable'), d.abogadoId || d.abogadoResponsable);
-                await cargarAbogados(activeMateriaId, document.getElementById('aud-compareciente'), d.abogadoId || d.abogadoCompareciente);
-            }
-        } else {
-            // RED DE SEGURIDAD EXTREMA
-            if (d.gerencia && d.gerencia !== 'null' && d.gerencia !== 'undefined' && d.gerencia.trim() !== '') {
-                gerenciaSel.innerHTML += `<option value="${d.gerencia}" data-id="${d.gerencia}" selected>${d.gerencia}</option>`;
-                await cargarMaterias(d.gerencia, materiaSel, d.materiaId || d.materia);
-
-                const audOrgano = document.getElementById('aud-organo');
-                if (audOrgano) await cargarOrganos(d.gerencia, audOrgano, d.organoJurisdiccionalId || d.organoJurisdiccional);
-
-                const audTipo = document.getElementById('aud-tipo');
-                if (audTipo) await cargarTiposAudiencia(d.gerencia, audTipo, d.tipoAudienciaId || d.tipoAudiencia);
-            }
-            if (d.abogadoResponsable && d.abogadoResponsable !== 'null' && d.abogadoResponsable !== 'undefined' && d.abogadoResponsable.trim() !== '') {
-                const resp = document.getElementById('aud-responsable');
-                resp.innerHTML = `<option value="${d.abogadoResponsable}" selected>${d.abogadoResponsable}</option>`;
-                resp.disabled = false;
-            }
-            if (d.abogadoCompareciente && d.abogadoCompareciente !== 'null' && d.abogadoCompareciente !== 'undefined' && d.abogadoCompareciente.trim() !== '') {
-                const comp = document.getElementById('aud-compareciente');
-                comp.innerHTML = `<option value="${d.abogadoCompareciente}" selected>${d.abogadoCompareciente}</option>`;
-                comp.disabled = false;
-            }
+        if (activeMateriaId) {
+            await cargarAbogados(activeMateriaId, document.getElementById('aud-responsable'), d.abogadoResponsableId || d.abogadoResponsable || d.abogadoId);
+            await cargarAbogados(activeMateriaId, document.getElementById('aud-compareciente'), d.abogadoComparecienteId || d.abogadoCompareciente || d.abogadoId);
         }
 
         const audSala = document.getElementById('aud-sala');
@@ -798,10 +771,8 @@ document.querySelectorAll('.btn-editar-termino').forEach(btn => {
         // RESET FORM PRE-LOAD
         const formTerm = document.getElementById('form-editar-termino');
         if (formTerm) formTerm.reset();
-        document.getElementById('term-gerencia').selectedIndex = 0;
-        document.getElementById('term-materia').innerHTML = '<option value="">-- Primero selecciona una gerencia --</option>';
-        document.getElementById('term-materia').disabled = true;
-        document.getElementById('term-abogado').innerHTML = '<option value="">-- Primero selecciona una materia --</option>';
+
+        document.getElementById('term-abogado').innerHTML = '<option value="">-- Cargando opciones... --</option>';
         document.getElementById('term-abogado').disabled = true;
 
         const d = this.dataset;
@@ -811,42 +782,16 @@ document.querySelectorAll('.btn-editar-termino').forEach(btn => {
         document.getElementById('term-fecha').value = d.fechaVencimiento || '';
         document.getElementById('term-fecha-ingreso').value = d.fechaIngreso || '';
         document.getElementById('term-prioridad').value = d.prioridad || 'Media';
-        if (document.getElementById('term-organo')) document.getElementById('term-organo').value = d.organo || '';
         document.getElementById('term-observaciones').value = d.observaciones || '';
 
-        const gerenciaSel = document.getElementById('term-gerencia');
-        const materiaSel = document.getElementById('term-materia');
         const sedeSel = document.getElementById('term-sede');
+        if (sedeSel) seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede, false);
 
-        seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede, false);
+        // Optimizado: usar variables de dataset en lugar de <select>s para Etapa 4
+        const activeMateriaId = d.materiaId || d.materia;
 
-        const foundGerencia = seleccionarOpcionPorIdONombre(gerenciaSel, d.gerenciaId, d.gerencia, false);
-
-        if (foundGerencia && gerenciaSel.selectedIndex > 0) {
-            const activeGerenciaId = gerenciaSel.options[gerenciaSel.selectedIndex].getAttribute('data-id');
-            await cargarMaterias(activeGerenciaId, materiaSel, d.materiaId || d.materia);
-
-            const termOrgano = document.getElementById('term-organo');
-            if (termOrgano) await cargarOrganos(activeGerenciaId, termOrgano, d.organoId || d.organo);
-
-            if (materiaSel && materiaSel.selectedIndex > 0) {
-                const activeMateriaId = materiaSel.options[materiaSel.selectedIndex].getAttribute('data-id');
-                await cargarAbogados(activeMateriaId, document.getElementById('term-abogado'), d.abogadoId || d.abogadoResponsable);
-            }
-        } else {
-            // RED DE SEGURIDAD EXTREMA
-            if (d.gerencia && d.gerencia !== 'null' && d.gerencia !== 'undefined' && d.gerencia.trim() !== '') {
-                gerenciaSel.innerHTML += `<option value="${d.gerencia}" data-id="${d.gerencia}" selected>${d.gerencia}</option>`;
-                await cargarMaterias(d.gerencia, materiaSel, d.materiaId || d.materia);
-
-                const termOrgano = document.getElementById('term-organo');
-                if (termOrgano) await cargarOrganos(d.gerencia, termOrgano, d.organoId || d.organo);
-            }
-            if (d.abogadoResponsable && d.abogadoResponsable !== 'null' && d.abogadoResponsable !== 'undefined' && d.abogadoResponsable.trim() !== '') {
-                const resp = document.getElementById('term-abogado');
-                resp.innerHTML = `<option value="${d.abogadoResponsable}" selected>${d.abogadoResponsable}</option>`;
-                resp.disabled = false;
-            }
+        if (activeMateriaId) {
+            await cargarAbogados(activeMateriaId, document.getElementById('term-abogado'), d.abogadoId || d.abogadoResponsable);
         }
 
         const modal = document.getElementById('modal-editar-termino');

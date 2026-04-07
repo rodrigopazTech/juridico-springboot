@@ -203,6 +203,13 @@ public class AdminImportController {
         try {
             campos.remove("registroId"); // quitar el propio id de los campos a editar
             loteMigracionService.editarRegistro(registroId, campos);
+            
+            // LIMPIAR CACHE PARA REFLEJAR CAMBIOS AL INSTANTE
+            com.juridico.sistema_juridico.Entity.procesal.RegistroMigracion reg = registroRepository.findById(registroId).orElse(null);
+            if (reg != null && reg.getLote() != null) {
+                loteMigracionService.limpiarCacheLote(reg.getLote().getId());
+            }
+            
             return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Registro actualizado correctamente."));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
@@ -211,17 +218,56 @@ public class AdminImportController {
 
     // --- API ENDPOINTS PARA FILTRADO DINÁMICO ---
     
+    private boolean perteneceAGerencia(String tipoCatalogo, String valorOriginal, String gerenciaVal, List<Map<String, Object>> resumenExp, List<Map<String, Object>> resumenAud) {
+        if (resumenExp == null) return true;
+        
+        Long gerId = null;
+        try { gerId = Long.parseLong(gerenciaVal); } catch (NumberFormatException e) {}
+        
+        for (Map<String, Object> req : resumenExp) {
+            String valorRelevante = null;
+            if (tipoCatalogo.equals("MATERIA")) valorRelevante = (String) req.get("materia");
+            if (tipoCatalogo.equals("ORGANO")) valorRelevante = (String) req.get("organo");
+            
+            if (valorRelevante != null && valorRelevante.trim().equalsIgnoreCase(valorOriginal.trim())) {
+                if (gerId != null && req.get("gerenciaId") != null && req.get("gerenciaId").toString().equals(gerId.toString())) return true;
+                if (gerId == null && req.get("gerencia") != null && req.get("gerencia").toString().equalsIgnoreCase(gerenciaVal)) return true;
+            }
+        }
+        
+        if (resumenAud != null && (tipoCatalogo.equals("TIPO_AUDIENCIA") || tipoCatalogo.equals("ORGANO"))) {
+            for (Map<String, Object> req : resumenAud) {
+                String valorRelevante = null;
+                if (tipoCatalogo.equals("TIPO_AUDIENCIA")) valorRelevante = (String) req.get("tipoAudiencia");
+                if (tipoCatalogo.equals("ORGANO")) valorRelevante = (String) req.get("organo");
+                
+                if (valorRelevante != null && valorRelevante.trim().equalsIgnoreCase(valorOriginal.trim())) {
+                    if (gerId != null && req.get("gerenciaId") != null && req.get("gerenciaId").toString().equals(gerId.toString())) return true;
+                    if (gerId == null && req.get("gerencia") != null && req.get("gerencia").toString().equalsIgnoreCase(gerenciaVal)) return true;
+                }
+            }
+        }
+        return false;
+    }
+
     @GetMapping("/api/materias-por-gerencia/{gerenciaId}")
     @ResponseBody
-    public List<Map<String, Object>> getMateriasByGerencia(@PathVariable Integer gerenciaId, @RequestParam(required = false) Long loteId) {
-        List<Map<String, Object>> res = new java.util.ArrayList<>(materiaRepository.findAll().stream()
-                .filter(m -> m.getGerencia() != null && m.getGerencia().getId().equals(gerenciaId))
+    public List<Map<String, Object>> getMateriasByGerencia(@PathVariable("gerenciaId") String gerenciaVal, @RequestParam(required = false) Long loteId) {
+        List<Map<String, Object>> res = new java.util.ArrayList<>();
+        try {
+            Integer gerId = Integer.parseInt(gerenciaVal);
+            res.addAll(materiaRepository.findAll().stream()
+                .filter(m -> m.getGerencia() != null && m.getGerencia().getId().equals(gerId) && m.getActivo())
                 .map(m -> Map.of("id", (Object)m.getId(), "nombre", m.getNombre()))
                 .collect(Collectors.toList()));
+        } catch(NumberFormatException e) { }
+        
         if (loteId != null) {
+            List<Map<String, Object>> resExp = loteMigracionService.obtenerResumenExpedientes(loteId);
             catalogoMigracionRepository.findByLoteId(loteId).stream()
                 .filter(c -> "MATERIA".equals(c.getTipoCatalogo()) && "NUEVO".equals(c.getEstatus()))
-                .forEach(c -> res.add(Map.of("id", c.getNuevoValor(), "nombre", c.getNuevoValor()))); // using name as id since it's unpersisted
+                .filter(c -> perteneceAGerencia("MATERIA", c.getValorOriginal(), gerenciaVal, resExp, null))
+                .forEach(c -> res.add(Map.of("id", c.getNuevoValor(), "nombre", c.getNuevoValor())));
         }
         return res;
     }
@@ -280,10 +326,12 @@ public class AdminImportController {
         } catch(NumberFormatException e) {
             // gerenciaVal is a string (a NEW gerencia), no db results possible yet
         }
-        
         if (loteId != null) {
+            List<Map<String, Object>> resExp = loteMigracionService.obtenerResumenExpedientes(loteId);
+            List<Map<String, Object>> resAud = loteMigracionService.obtenerResumenAudiencias(loteId);
             catalogoMigracionRepository.findByLoteId(loteId).stream()
                 .filter(c -> "ORGANO".equals(c.getTipoCatalogo()) && "NUEVO".equals(c.getEstatus()))
+                .filter(c -> perteneceAGerencia("ORGANO", c.getValorOriginal(), gerenciaVal, resExp, resAud))
                 .forEach(c -> res.add(Map.of("id", c.getNuevoValor(), "nombre", c.getNuevoValor())));
         }
         return res;
@@ -303,8 +351,11 @@ public class AdminImportController {
         }
         
         if (loteId != null) {
+            List<Map<String, Object>> resExp = loteMigracionService.obtenerResumenExpedientes(loteId);
+            List<Map<String, Object>> resAud = loteMigracionService.obtenerResumenAudiencias(loteId);
             catalogoMigracionRepository.findByLoteId(loteId).stream()
                 .filter(c -> "TIPO_AUDIENCIA".equals(c.getTipoCatalogo()) && "NUEVO".equals(c.getEstatus()))
+                .filter(c -> perteneceAGerencia("TIPO_AUDIENCIA", c.getValorOriginal(), gerenciaVal, resExp, resAud))
                 .forEach(c -> res.add(Map.of("id", c.getNuevoValor(), "nombre", c.getNuevoValor())));
         }
         return res;
