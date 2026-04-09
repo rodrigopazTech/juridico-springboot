@@ -7,6 +7,8 @@ import com.juridico.sistema_juridico.service.procesal.LoteMigracionService;
 import com.juridico.sistema_juridico.repository.procesal.CatalogoMigracionRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.*;
 import com.juridico.sistema_juridico.repository.Usuarios.*;
+import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -374,5 +376,94 @@ public class AdminImportController {
             response.put("totalRegistros", registroRepository.countByLoteId(loteActivo.getId()));
         }
         return response;
+    }
+
+    /**
+     * Retorna TODOS los abogados activos con sus IDs de materias asignadas.
+     * El frontend usa esto para saber si el abogado seleccionado pertenece
+     * a la materia elegida, sin restringir la lista mostrada al usuario.
+     */
+    @GetMapping("/api/todos-abogados")
+    @ResponseBody
+    public List<Map<String, Object>> getTodosAbogados(@RequestParam(required = false) Long loteId) {
+        List<Map<String, Object>> res = new java.util.ArrayList<>();
+        
+        // 1. Abogados existentes en la BD
+        res.addAll(usuarioRepository.findAll().stream()
+            .filter(u -> u.getActivo() != null && u.getActivo())
+            .map(u -> {
+                List<Integer> materiaIds = u.getMaterias().stream()
+                    .map(m -> m.getId())
+                    .collect(Collectors.toList());
+                Map<String, Object> m = new HashMap<>();
+                m.put("id",        u.getId());
+                m.put("nombre",    u.getNombreCompleto());
+                m.put("gerenciaId", u.getGerencia() != null ? u.getGerencia().getId() : null);
+                m.put("materiaIds", materiaIds);
+                return m;
+            })
+            .collect(Collectors.toList()));
+            
+        // 2. Abogados "NUEVO" del catálogo de migración
+        if (loteId != null) {
+            catalogoMigracionRepository.findByLoteId(loteId).stream()
+                .filter(c -> "USUARIO".equals(c.getTipoCatalogo()) && "NUEVO".equals(c.getEstatus()) && c.getNuevoValor() != null)
+                .forEach(c -> {
+                    String nombreNuevo = c.getNuevoValor();
+                    List<Integer> materiaIdsInf = loteMigracionService.getMateriasInferredForAbogadoNuevos(loteId, nombreNuevo);
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("id", nombreNuevo); // ID será su nombre en formato string
+                    m.put("nombre", nombreNuevo);
+                    m.put("gerenciaId", null); // Los nuevos no tienen gerencia hasta el final
+                    m.put("materiaIds", materiaIdsInf);
+                    res.add(m);
+                });
+        }
+        
+        return res;
+    }
+
+    /**
+     * Asigna una materia adicional a un abogado existente.
+     * Se llama cuando el usuario confirma asignar una materia "ajena" al abogado.
+     */
+    @PostMapping("/api/asignar-materia-abogado")
+    @ResponseBody
+    public ResponseEntity<?> asignarMateriaAbogado(
+            @RequestParam("abogadoId") String abogadoIdStr,
+            @RequestParam("materiaId") Integer materiaId) {
+        try {
+            Integer abogadoId;
+            try {
+                abogadoId = Integer.parseInt(abogadoIdStr);
+            } catch (NumberFormatException e) {
+                // Es un abogado NUEVO en proceso de migración (ID es un String como "Juan Perez")
+                return ResponseEntity.ok(Map.of(
+                    "status", "ok",
+                    "mensaje", "La materia será asignada automáticamente en la inyección para: " + abogadoIdStr
+                ));
+            }
+
+            Usuario usuario =
+                usuarioRepository.findById(abogadoId)
+                    .orElseThrow(() -> new RuntimeException("Abogado no encontrado con id: " + abogadoId));
+            Materia materia =
+                materiaRepository.findById(materiaId)
+                    .orElseThrow(() -> new RuntimeException("Materia no encontrada con id: " + materiaId));
+
+            // Añadir solo si no la tiene ya
+            boolean yaAsignada = usuario.getMaterias().stream()
+                .anyMatch(m -> m.getId().equals(materiaId));
+            if (!yaAsignada) {
+                usuario.getMaterias().add(materia);
+                usuarioRepository.save(usuario);
+            }
+            return ResponseEntity.ok(Map.of(
+                "status", "ok",
+                "mensaje", "Materia \"" + materia.getNombre() + "\" asignada a " + usuario.getNombreCompleto()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
     }
 }

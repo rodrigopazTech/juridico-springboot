@@ -373,13 +373,13 @@ async function guardarEdicionRegistro(formEl) {
 
     // Detectar a qué etapa pertenece el formulario
     const esAudiencia = formData.has('fechaAudiencia');
-    const esTermino   = formData.has('fechaVencimiento') && !formData.has('fechaAudiencia');
+    const esTermino = formData.has('fechaVencimiento') && !formData.has('fechaAudiencia');
     const esExpediente = !esAudiencia && !esTermino;
-    
+
     try {
         const resp = await fetch('/admin/importar/editar-registro', { method: 'POST', body: data });
         const json = await resp.json();
-        
+
         if (resp.ok && json.status === 'ok') {
 
             // 1. Cerrar el modal INMEDIATAMENTE — buscar por relación directa con el formulario
@@ -405,7 +405,7 @@ async function guardarEdicionRegistro(formEl) {
                     btnEditar.setAttribute(attrName, value);
                 });
                 if (json.gerenciaId) btnEditar.setAttribute('data-gerencia-id', json.gerenciaId);
-                if (json.materiaId)  btnEditar.setAttribute('data-materia-id',  json.materiaId);
+                if (json.materiaId) btnEditar.setAttribute('data-materia-id', json.materiaId);
             }
 
             if (esExpediente) {
@@ -423,7 +423,7 @@ async function guardarEdicionRegistro(formEl) {
                 const cellMG = row.querySelector('td:nth-child(3) .flex-col');
                 if (cellMG) {
                     const spMs = cellMG.querySelectorAll('span');
-                    if (spMs[0] && formData.has('materia'))  spMs[0].innerText = formData.get('materia');
+                    if (spMs[0] && formData.has('materia')) spMs[0].innerText = formData.get('materia');
                     if (spMs[1] && formData.has('gerencia')) spMs[1].innerText = formData.get('gerencia');
                 }
 
@@ -433,25 +433,25 @@ async function guardarEdicionRegistro(formEl) {
                 const gerVal = formData.get('gerencia') || '';
                 const faltantes = [];
                 if (!numVal || numVal.startsWith('SIN_NUMERO')) faltantes.push('Número de Expediente');
-                if (!matVal || matVal === 'Por asignar')        faltantes.push('Materia');
-                if (!gerVal)                                    faltantes.push('Gerencia');
+                if (!matVal || matVal === 'Por asignar') faltantes.push('Materia');
+                if (!gerVal) faltantes.push('Gerencia');
 
                 const validacionTd = row.querySelector('td:nth-child(5)');
-                const estadoTd     = row.querySelector('td:nth-child(6)');
+                const estadoTd = row.querySelector('td:nth-child(6)');
                 if (validacionTd) {
                     validacionTd.innerHTML = faltantes.length === 0
                         ? '<span class="text-[10px] text-green-600"><i class="fas fa-check mr-1"></i>Completo</span>'
                         : '<div class="flex flex-wrap gap-1">' + faltantes.map(f => {
-                            const esCrit = ['Número de Expediente','Materia','Gerencia'].includes(f);
+                            const esCrit = ['Número de Expediente', 'Materia', 'Gerencia'].includes(f);
                             const cls = esCrit ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700';
                             return `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter ${cls}">FALTA ${f}</span>`;
-                          }).join('') + '</div>';
+                        }).join('') + '</div>';
                 }
                 if (estadoTd) {
                     if (faltantes.length === 0) {
                         estadoTd.innerHTML = '<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"><i class="fas fa-heartbeat mr-1"></i>Óptimo</span>';
                     } else {
-                        const esCrit = faltantes.some(f => ['Número de Expediente','Materia','Gerencia'].includes(f));
+                        const esCrit = faltantes.some(f => ['Número de Expediente', 'Materia', 'Gerencia'].includes(f));
                         estadoTd.innerHTML = esCrit
                             ? '<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"><i class="fas fa-skull-crossbones mr-1"></i>Crítico</span>'
                             : '<span class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"><i class="fas fa-exclamation-triangle mr-1"></i>Incompleto</span>';
@@ -467,17 +467,17 @@ async function guardarEdicionRegistro(formEl) {
                 if (fhDiv) {
                     const sp = fhDiv.querySelectorAll('span');
                     if (sp[0] && formData.has('fechaAudiencia')) sp[0].innerText = formData.get('fechaAudiencia');
-                    if (sp[2] && formData.has('horaAudiencia'))  sp[2].innerText = formData.get('horaAudiencia');
+                    if (sp[2] && formData.has('horaAudiencia')) sp[2].innerText = formData.get('horaAudiencia');
                 }
                 const audTipo = row.querySelector('td:nth-child(3) span');
-                if (audTipo && formData.has('tipoAudiencia'))        audTipo.innerText = formData.get('tipoAudiencia');
+                if (audTipo && formData.has('tipoAudiencia')) audTipo.innerText = formData.get('tipoAudiencia');
                 const audComp = row.querySelector('td:nth-child(4) span');
                 if (audComp && formData.has('abogadoCompareciente')) audComp.innerText = formData.get('abogadoCompareciente');
                 const audResp = row.querySelector('td:nth-child(5) span');
-                if (audResp && formData.has('abogadoResponsable'))   audResp.innerText = formData.get('abogadoResponsable');
+                if (audResp && formData.has('abogadoResponsable')) audResp.innerText = formData.get('abogadoResponsable');
                 // Sede está en la 6ª columna
                 const audSede = row.querySelector('td:nth-child(6) span');
-                if (audSede && formData.has('sede'))                  audSede.innerText = formData.get('sede');
+                if (audSede && formData.has('sede')) audSede.innerText = formData.get('sede');
 
             } else if (esTermino) {
                 // ============================================
@@ -491,10 +491,10 @@ async function guardarEdicionRegistro(formEl) {
                 if (termAct && actuacionVal) termAct.innerText = actuacionVal;
 
                 const termFec = row.querySelector('td:nth-child(3) span.truncate');
-                if (termFec && formData.has('fechaVencimiento'))     termFec.innerText = formData.get('fechaVencimiento');
+                if (termFec && formData.has('fechaVencimiento')) termFec.innerText = formData.get('fechaVencimiento');
 
                 const termAbog = row.querySelector('td:nth-child(4) span');
-                if (termAbog && formData.has('abogadoResponsable'))  termAbog.innerText = formData.get('abogadoResponsable');
+                if (termAbog && formData.has('abogadoResponsable')) termAbog.innerText = formData.get('abogadoResponsable');
 
                 // Prioridad — actualizar texto Y clases de color
                 const termPrioSpan = row.querySelector('td:nth-child(5) span');
@@ -502,9 +502,9 @@ async function guardarEdicionRegistro(formEl) {
                 if (termPrioSpan && prioVal) {
                     termPrioSpan.innerText = prioVal;
                     termPrioSpan.className = 'text-xs font-bold px-2 py-0.5 rounded-full ';
-                    if (prioVal === 'Alta')       termPrioSpan.className += 'bg-red-100 text-red-700';
-                    else if (prioVal === 'Baja')  termPrioSpan.className += 'bg-gray-100 text-gray-600';
-                    else                         termPrioSpan.className += 'bg-yellow-100 text-yellow-700';
+                    if (prioVal === 'Alta') termPrioSpan.className += 'bg-red-100 text-red-700';
+                    else if (prioVal === 'Baja') termPrioSpan.className += 'bg-gray-100 text-gray-600';
+                    else termPrioSpan.className += 'bg-yellow-100 text-yellow-700';
                 }
 
             } // fin if/else etapas
@@ -589,6 +589,30 @@ async function cargarAbogados(materiaId, targetSelect, selectedValue = '') {
         targetSelect.disabled = false;
     } catch (e) {
         console.error("Error cargando abogados:", e);
+    }
+}
+
+/**
+ * Carga TODOS los abogados activos en el select (sin filtrar por materia).
+ * Incluye data-materia-ids y data-gerencia-id para la validación al guardar.
+ */
+async function cargarTodosAbogados(targetSelect, selectedValue = '') {
+    try {
+        const loteIdInput = document.querySelector('input[name="loteId"]');
+        const loteParam = loteIdInput ? `?loteId=${loteIdInput.value}` : '';
+        const todos = await fetchCached(`/admin/importar/api/todos-abogados${loteParam}`);
+        let html = '<option value="">-- Seleccione Abogado --</option>';
+        todos.forEach(u => {
+            const isSelected = (u.nombre === selectedValue || u.id == selectedValue);
+            const selected = isSelected ? 'selected' : '';
+            const materiaIds = (u.materiaIds || []).join(',');
+            html += `<option value="${u.nombre}" data-id="${u.id}" data-materia-ids="${materiaIds}" data-gerencia-id="${u.gerenciaId || ''}" ${selected}>${u.nombre}</option>`;
+        });
+        targetSelect.innerHTML = html;
+        targetSelect.disabled = false;
+    } catch (e) {
+        console.error('Error cargando todos los abogados:', e);
+        targetSelect.innerHTML = '<option value="">-- Error al cargar abogados --</option>';
     }
 }
 
@@ -691,17 +715,17 @@ function setupHierarchicalSelects(prefix) {
         gerenciaSel.addEventListener('change', function () {
             const selectedOption = this.options[this.selectedIndex];
             const gerenciaId = selectedOption ? selectedOption.getAttribute('data-id') : null;
-            
+
             if (materiaSel) {
                 cargarMaterias(gerenciaId, materiaSel);
             }
-            
+
             const organos = document.querySelectorAll(`[id^="${prefix}-"][id$="organo"]`);
             organos.forEach(sel => cargarOrganos(gerenciaId, sel));
-            
+
             const tiposAud = document.querySelectorAll(`[id^="${prefix}-"][id$="tipo"]`);
             tiposAud.forEach(sel => cargarTiposAudiencia(gerenciaId, sel));
-            
+
             if (abogadoSel) {
                 abogadoSel.innerHTML = '<option value="">-- Primero selecciona una materia --</option>';
                 abogadoSel.disabled = true;
@@ -715,7 +739,8 @@ function setupHierarchicalSelects(prefix) {
             const materiaId = selectedOption ? selectedOption.getAttribute('data-id') : null;
             const abogados = document.querySelectorAll(`[id^="${prefix}-"][id$="abogado"], [id^="${prefix}-"][id$="responsable"], [id^="${prefix}-"][id$="compareciente"]`);
             abogados.forEach(sel => {
-                if (sel.id !== `${prefix}-materia` && sel.id !== `${prefix}-gerencia`) {
+                // Excluimos 'exp-abogado' porque ahora muestra TODOS los abogados
+                if (sel.id !== `${prefix}-materia` && sel.id !== `${prefix}-gerencia` && sel.id !== 'exp-abogado') {
                     cargarAbogados(materiaId, sel);
                 }
             });
@@ -744,6 +769,11 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
             expOrgReset.innerHTML = '<option value="">-- Cargando... --</option>';
             expOrgReset.disabled = true;
         }
+        const expAbogReset = document.getElementById('exp-abogado');
+        if (expAbogReset) {
+            expAbogReset.innerHTML = '<option value="">-- Cargando... --</option>';
+            expAbogReset.disabled = true;
+        }
 
         const d = this.dataset;
         document.getElementById('exp-registro-id').value = d.registroId;
@@ -757,7 +787,7 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
         // ---- GERENCIA BLOQUEADA ----
         // La gerencia se toma del dataset y se muestra en el campo visual, no en un select.
         const gerenciaNombre = (d.gerencia && d.gerencia !== 'null' && d.gerencia.trim() !== '') ? d.gerencia.trim() : 'Sin gerencia definida';
-        const gerenciaId     = (d.gerenciaId && d.gerenciaId !== 'null' && d.gerenciaId.trim() !== '') ? d.gerenciaId.trim() : d.gerencia?.trim();
+        const gerenciaId = (d.gerenciaId && d.gerenciaId !== 'null' && d.gerenciaId.trim() !== '') ? d.gerenciaId.trim() : d.gerencia?.trim();
 
         // Mostrar en el campo visual
         const labelEl = document.getElementById('exp-gerencia-label');
@@ -770,6 +800,7 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
         if (hiddenGerId) hiddenGerId.value = gerenciaId || '';
 
         const materiaSel = document.getElementById('exp-materia');
+        const abogadoSel = document.getElementById('exp-abogado');
 
         // Cargar materias y organos usando la gerencia anclada
         if (gerenciaId) {
@@ -779,6 +810,11 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
             ]);
         } else {
             materiaSel.innerHTML = '<option value="">-- Sin gerencia detectada. Ajusta los catálogos --</option>';
+        }
+
+        // Cargar TODOS los abogados (sin filtro de materia) y pre-seleccionar el actual
+        if (abogadoSel) {
+            await cargarTodosAbogados(abogadoSel, d.abogadoId || d.abogado);
         }
 
         const modal = document.getElementById('modal-editar-expediente');
@@ -793,7 +829,69 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
     });
 });
 const formExp = document.getElementById('form-editar-expediente');
-if (formExp) formExp.addEventListener('submit', function (e) { e.preventDefault(); guardarEdicionRegistro(this); });
+if (formExp) {
+    formExp.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const abogadoSel = document.getElementById('exp-abogado');
+        const materiaSel = document.getElementById('exp-materia');
+
+        const abogadoOpt = abogadoSel ? abogadoSel.options[abogadoSel.selectedIndex] : null;
+        const materiaOpt = materiaSel ? materiaSel.options[materiaSel.selectedIndex] : null;
+
+        const abogadoId = abogadoOpt ? abogadoOpt.getAttribute('data-id') : null;
+        const abogadoNom = abogadoOpt ? abogadoOpt.text : '';
+        const materiaId = materiaOpt ? materiaOpt.getAttribute('data-id') : null;
+        const materiaNom = materiaOpt ? materiaOpt.text : '';
+
+        // Dejar que abogadoId sea String por defecto, pero parsear materiaId
+        const materiaIdNum = parseInt(materiaId);
+
+        if (abogadoOpt && abogadoOpt.value && abogadoId && !isNaN(materiaIdNum)) {
+            // Obtener las materias del abogado desde el data-attribute (ya cargadas en el option)
+            const materiaIdsStr = abogadoOpt.getAttribute('data-materia-ids') || '';
+            const materiaIds = materiaIdsStr ? materiaIdsStr.split(',').map(id => parseInt(id)) : [];
+            const perteneceAMateria = materiaIds.includes(materiaIdNum);
+
+            if (!perteneceAMateria) {
+                // El abogado NO pertenece a esta materia → mostrar confirmación
+                const result = await Swal.fire({
+                    icon: 'warning',
+                    title: 'Abogado fuera de materia',
+                    html: `<div class="text-center text-sm text-gray-700 space-y-2">
+                        <p><strong>${abogadoNom}</strong> no pertenece actualmente a la materia <strong>${materiaNom}</strong>.</p>
+                        <p>¿Desea asignarle esta materia al abogado para continuar?</p>
+                        <p class="text-xs text-blue-700 mt-2"><i class="fas fa-info-circle mr-1"></i>El abogado conservará sus materias actuales; solo se le añadirá esta nueva.</p>
+                    </div>`,
+                    showCancelButton: true,
+                    confirmButtonColor: '#7b1c2e',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: '<i class="fas fa-user-plus mr-1"></i> Sí, asignar materia y guardar',
+                    cancelButtonText: 'Cancelar'
+                });
+
+                if (!result.isConfirmed) return; // Usuario canceló → no guardar
+
+                // Asignar la materia al abogado antes de guardar
+                try {
+                    const params = new URLSearchParams({ abogadoId: abogadoId, materiaId: materiaIdNum });
+                    const resp = await fetch('/admin/importar/api/asignar-materia-abogado', { method: 'POST', body: params });
+                    const json = await resp.json();
+                    if (!resp.ok) throw new Error(json.error || 'Error al asignar materia');
+                    // Limpiar caché para que la próxima carga refleje el cambio
+                    _apiCache.clear();
+                } catch (err) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo asignar la materia: ' + err.message });
+                    return;
+                }
+            }
+        }
+
+        // Todo validado → guardar el expediente normalmente
+        guardarEdicionRegistro(this);
+    });
+}
+
 
 // ==========================================
 // MODALES: ETAPA 3 - AUDIENCIAS

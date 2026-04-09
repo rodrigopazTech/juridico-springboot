@@ -601,6 +601,7 @@
                 map.put("materiaId", materiaId);
                 map.put("organoId", organoId);
                 map.put("sedeId", buscarIdMapeado(loteId, "SEDE", sedeModa));
+                map.put("abogadoId", buscarIdMapeado(loteId, "USUARIO", abogadoModa));
                 
                 resumen.add(map);
             }
@@ -1167,16 +1168,42 @@
         }
 
         private Materia getFallbackMateria() {
-            return materiaRepository.findAll().stream().findFirst().orElseGet(() -> {
-                Materia m = new Materia(); m.setNombre("Sin Materia"); m.setActivo(true);
-                m.setGerencia(getFallbackGerencia());
-                return materiaRepository.save(m);
-            });
+            // Buscamos o creamos una materia específica llamada "Por Asignar" para no
+            // contaminar expedientes con una materia real (ej: "Civil") cuando la original
+            // era desconocida o no fue mapeada.
+            String NOMBRE_FALLBACK = "Por Asignar";
+            Gerencia gerenciaFallback = getFallbackGerencia();
+            Materia existente = materiaRepository
+                .findByNombreIgnoreCaseAndGerenciaId(NOMBRE_FALLBACK, gerenciaFallback.getId())
+                .orElse(null);
+            if (existente == null) {
+                existente = materiaRepository.findByNombreIgnoreCase(NOMBRE_FALLBACK).orElse(null);
+            }
+            if (existente == null) {
+                Materia m = new Materia();  
+                m.setNombre(NOMBRE_FALLBACK);
+                m.setActivo(true);
+                m.setGerencia(gerenciaFallback);
+                existente = materiaRepository.save(m);
+            }
+            return existente;
         }
 
         private Materia resolveMateria(String original, java.util.Map<String, CatalogoMigracion> lookup, Gerencia gerenciaContexto) {
             if (original == null || original.trim().isEmpty()) return null;
-            String key = "MATERIA___" + original.trim().toLowerCase();
+
+            // Si el valor es un marcador de "sin asignar", no buscamos una materia real.
+            // Retornamos null para que el código superior use getFallbackMateria(),
+            // que crea/reutiliza la materia especial "Por Asignar".
+            String trimmed = original.trim();
+            if (trimmed.equalsIgnoreCase("Por asignar")
+                    || trimmed.equalsIgnoreCase("Por definir")
+                    || trimmed.toUpperCase().contains("DEFINIR")
+                    || trimmed.toUpperCase().contains("POR ASIGNAR")) {
+                return null;
+            }
+
+            String key = "MATERIA___" + trimmed.toLowerCase();
             CatalogoMigracion c = lookup.get(key);
             if (c != null) {
                 if (c.getIdMapeado() != null) return materiaRepository.findById(c.getIdMapeado().intValue()).orElse(null);
@@ -1360,6 +1387,14 @@
          * Escanea todos los registros del lote buscando las materias asociadas a un abogado.
          * Busca en los campos abogadoResponsable y abogadoCompareciente, y extrae el campo "materia".
          */
+        public List<Integer> getMateriasInferredForAbogadoNuevos(Long loteId, String nombreAbogado) {
+            Map<String, CatalogoMigracion> lookup = new java.util.HashMap<>();
+            catalogoRepository.findByLoteId(loteId).forEach(c -> 
+                lookup.put(c.getTipoCatalogo() + "_" + c.getValorOriginal().trim().toLowerCase(), c)
+            );
+            return obtenerMateriasDeAbogado(nombreAbogado, loteId, lookup, null).stream().map(m -> m.getId()).collect(Collectors.toList());
+        }
+
         private java.util.Set<Materia> obtenerMateriasDeAbogado(String nombreAbogado, Long loteId, java.util.Map<String, CatalogoMigracion> lookup, Gerencia gerenciaContexto) {
             java.util.Set<Materia> materias = new java.util.HashSet<>();
             List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
@@ -1386,6 +1421,7 @@
             }
             return materias;
         }
+
 
         private Long buscarIdMapeado(Long loteId, String tipo, String valorOriginal) {
             if (valorOriginal == null || valorOriginal.isEmpty()) return null;

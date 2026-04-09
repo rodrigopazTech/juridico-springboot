@@ -85,18 +85,18 @@ public class TerminosController {
     static {
         PERMISOS_ETAPAS.put(EstatusTermino.PROYECTISTA,
                 Arrays.asList(RolUsuario.ABOGADO, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO,
-                        RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
+                        RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION, RolUsuario.ADMIN));
         PERMISOS_ETAPAS.put(EstatusTermino.REVISION,
                 Arrays.asList(RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE, RolUsuario.DIRECCION,
-                        RolUsuario.SUBDIRECCION));
+                        RolUsuario.SUBDIRECCION, RolUsuario.ADMIN));
         PERMISOS_ETAPAS.put(EstatusTermino.GERENCIA,
-                Arrays.asList(RolUsuario.GERENTE, RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
-        PERMISOS_ETAPAS.put(EstatusTermino.DIRECCION, Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
+                Arrays.asList(RolUsuario.GERENTE, RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION, RolUsuario.ADMIN));
+        PERMISOS_ETAPAS.put(EstatusTermino.DIRECCION, Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION, RolUsuario.ADMIN));
         PERMISOS_ETAPAS.put(EstatusTermino.LIBERADO,
                 Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE,
-                        RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
+                        RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION, RolUsuario.ADMIN));
         PERMISOS_ETAPAS.put(EstatusTermino.PRESENTADO, Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION,
-                RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO));
+                RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ADMIN));
     }
 
     private static final Map<EstatusTermino, Integer> ORDEN_ETAPAS = new HashMap<>();
@@ -316,16 +316,19 @@ public class TerminosController {
                 etapas.addAll(Arrays.asList(EstatusTermino.PROYECTISTA, EstatusTermino.LIBERADO));
                 break;
             case JEFE_DEPTO:
-                etapas.add(EstatusTermino.REVISION);
+                etapas.addAll(Arrays.asList(EstatusTermino.REVISION, EstatusTermino.PRESENTADO));
                 break;
             case GERENTE:
-                etapas.add(EstatusTermino.GERENCIA);
+                etapas.addAll(Arrays.asList(EstatusTermino.GERENCIA, EstatusTermino.PRESENTADO));
                 break;
             case DIRECCION:
-                etapas.add(EstatusTermino.DIRECCION);
+                etapas.addAll(Arrays.asList(EstatusTermino.DIRECCION, EstatusTermino.PRESENTADO));
                 break;
             case SUBDIRECCION:
                 etapas.addAll(Arrays.asList(EstatusTermino.DIRECCION, EstatusTermino.PRESENTADO, EstatusTermino.CONCLUIDO));
+                break;
+            case ADMIN:
+                etapas.addAll(Arrays.asList(EstatusTermino.values()));
                 break;
         }
         // Para que NO se "borren" de la lista principal, anadimos CONCLUIDO siempre
@@ -640,7 +643,7 @@ public class TerminosController {
                 // No avanzamos la etapa automáticamente, permitimos que el usuario lo haga
                 // manualmente
                 // para validar la existencia del campo acuseNombre
-                termino.setAcuse(nombreAcuse);
+                termino.setAcuseNombre(nombreAcuse);
                 if (observaciones != null) {
                     termino.setObservaciones(observaciones);
                 }
