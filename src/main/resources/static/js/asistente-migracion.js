@@ -905,7 +905,6 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
             const el = document.getElementById(id);
             if (el) {
                 el.innerHTML = '<option value="">-- Cargando opciones... --</option>';
-                el.disabled = true;
             }
         });
 
@@ -928,14 +927,12 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
             if (audTipo) await cargarTiposAudiencia(activeGerenciaId, audTipo, d.tipoAudienciaId || d.tipoAudiencia);
         }
 
-        if (activeMateriaId) {
-            await cargarAbogados(activeMateriaId, document.getElementById('aud-responsable'), d.abogadoResponsableId || d.abogadoResponsable || d.abogadoId);
-            await cargarAbogados(activeMateriaId, document.getElementById('aud-compareciente'), d.abogadoComparecienteId || d.abogadoCompareciente || d.abogadoId);
-            
-            // Bloquear abogados según solicitud de consistencia de datos
-            document.getElementById('aud-responsable').disabled = true;
-            document.getElementById('aud-compareciente').disabled = true;
-        }
+        // Cargar todos los abogados para que no dependa de si hay materia o no.
+        await cargarTodosAbogados(document.getElementById('aud-responsable'), d.abogadoResponsableId || d.abogadoResponsable || d.abogadoId);
+        await cargarTodosAbogados(document.getElementById('aud-compareciente'), d.abogadoComparecienteId || d.abogadoCompareciente || d.abogadoId);
+        
+        // Bloquear solo el responsable, el compareciente sí se puede editar
+        document.getElementById('aud-responsable').disabled = true;
 
         const esVirtual = d.esEnLinea === 'true' || d.esVirtual === 'true';
         const rdPresencial = document.getElementById('aud-presencial');
@@ -990,12 +987,10 @@ document.querySelectorAll('.btn-editar-termino').forEach(btn => {
         // Optimizado: usar variables de dataset en lugar de <select>s para Etapa 4
         const activeMateriaId = d.materiaId || d.materia;
 
-        if (activeMateriaId) {
-            await cargarAbogados(activeMateriaId, document.getElementById('term-abogado'), d.abogadoId || d.abogadoResponsable);
-            
-            // Bloquear abogado responsable según solicitud de consistencia de datos
-            document.getElementById('term-abogado').disabled = true;
-        }
+        // Cargar todos los abogados independientes de la materia
+        await cargarTodosAbogados(document.getElementById('term-abogado'), d.abogadoId || d.abogadoResponsable);
+        // Bloquear abogado responsable según solicitud de consistencia de datos
+        document.getElementById('term-abogado').disabled = true;
 
         const modal = document.getElementById('modal-editar-termino');
         modal.classList.remove('hidden'); modal.classList.add('flex');
