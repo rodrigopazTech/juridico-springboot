@@ -931,6 +931,10 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
         if (activeMateriaId) {
             await cargarAbogados(activeMateriaId, document.getElementById('aud-responsable'), d.abogadoResponsableId || d.abogadoResponsable || d.abogadoId);
             await cargarAbogados(activeMateriaId, document.getElementById('aud-compareciente'), d.abogadoComparecienteId || d.abogadoCompareciente || d.abogadoId);
+            
+            // Bloquear abogados según solicitud de consistencia de datos
+            document.getElementById('aud-responsable').disabled = true;
+            document.getElementById('aud-compareciente').disabled = true;
         }
 
         const esVirtual = d.esEnLinea === 'true' || d.esVirtual === 'true';
@@ -988,6 +992,9 @@ document.querySelectorAll('.btn-editar-termino').forEach(btn => {
 
         if (activeMateriaId) {
             await cargarAbogados(activeMateriaId, document.getElementById('term-abogado'), d.abogadoId || d.abogadoResponsable);
+            
+            // Bloquear abogado responsable según solicitud de consistencia de datos
+            document.getElementById('term-abogado').disabled = true;
         }
 
         const modal = document.getElementById('modal-editar-termino');
