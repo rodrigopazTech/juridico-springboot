@@ -9,6 +9,7 @@ import com.juridico.sistema_juridico.repository.Catalogo.*;
 import com.juridico.sistema_juridico.repository.Usuarios.*;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
+import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -87,7 +88,19 @@ public class AdminImportController {
 
             switch (loteActivo.getPasoActual()) {
                 case 1:
+                    // Calcular gerencias activas en este lote para filtrar los optgroups
+                    List<Integer> gerenciaIds = todosCatalogos.stream()
+                        .filter(c -> "GERENCIA".equals(c.getTipoCatalogo()) && c.getIdMapeado() != null)
+                        .map(c -> Integer.valueOf(c.getIdMapeado().toString()))
+                        .distinct()
+                        .collect(Collectors.toList());
+                    
+                    List<Gerencia> gerenciasActivasLote = gerenciaIds.isEmpty() 
+                        ? gerenciaRepository.findAll() 
+                        : gerenciaRepository.findAllById(gerenciaIds);
+
                     model.addAttribute("catalogosAgrupados", catalogosAgrupados);
+                    model.addAttribute("gerenciasActivasLote", gerenciasActivasLote);
                     break;
                 case 2:
                     model.addAttribute("expedientesResumen", loteMigracionService.obtenerResumenExpedientes(loteActivo.getId()));

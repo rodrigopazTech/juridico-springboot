@@ -157,13 +157,13 @@
                         </th:block>
                         
                         <th:block th:if="${grupo.key == 'MATERIA'}">
-                          <optgroup th:each="g : ${gerenciasDB}" th:label="${g.nombre}" th:data-gerencia-id="${g.id}">
+                          <optgroup th:each="g : ${gerenciasActivasLote}" th:label="${g.nombre}" th:data-gerencia-id="${g.id}">
                             <option th:each="bd : ${g.materias}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
                           </optgroup>
                         </th:block>
                         
                         <th:block th:if="${grupo.key == 'ORGANO'}">
-                          <optgroup th:each="g : ${gerenciasDB}" th:label="${g.nombre}" th:data-gerencia-id="${g.id}">
+                          <optgroup th:each="g : ${gerenciasActivasLote}" th:label="${g.nombre}" th:data-gerencia-id="${g.id}">
                             <option th:each="bd : ${organosDB}" th:if="${bd.gerencia != null and bd.gerencia.id == g.id}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
                           </optgroup>
                           <!-- Órganos sin gerencia asignada -->
@@ -173,7 +173,7 @@
                         </th:block>
                         
                         <th:block th:if="${grupo.key == 'TIPO_AUDIENCIA'}">
-                          <optgroup th:each="g : ${gerenciasDB}" th:label="${g.nombre}" th:data-gerencia-id="${g.id}">
+                          <optgroup th:each="g : ${gerenciasActivasLote}" th:label="${g.nombre}" th:data-gerencia-id="${g.id}">
                             <option th:each="bd : ${tiposAudDB}" th:if="${bd.gerencia != null and bd.gerencia.id == g.id}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
                           </optgroup>
                         </th:block>
