@@ -40,6 +40,7 @@ public class AdminImportController {
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private CatPrioridadRepository catPrioridadRepository;
     @Autowired private EstadoRepository estadoRepository;
+    @Autowired private com.juridico.sistema_juridico.repository.procesal.LoteMigracionRepository loteRepository;
 
     @GetMapping
     public String mostrarWizard(Model model) {
@@ -59,6 +60,15 @@ public class AdminImportController {
             // Dependiendo del paso, mandamos información a la vista
             if (loteActivo.getPasoActual() == 1) {
                 loteMigracionService.extraerCatalogosDeLote(loteActivo.getId());
+                boolean necesitaGlobal = loteMigracionService.requiereGerenciaGlobal(loteActivo.getId());
+
+                if (necesitaGlobal && loteActivo.getGerenciaGlobal() == null) {
+                    model.addAttribute("requiereGerenciaGlobal", true);
+                    model.addAttribute("todasGerencias", gerenciaRepository.findAll());
+                    return "views/admin/importar";
+                } else {
+                    model.addAttribute("requiereGerenciaGlobal", false);
+                }
             }
 
             // Obtenemos los mapeos de este lote
@@ -140,6 +150,38 @@ public class AdminImportController {
         loteMigracionService.retrocederPaso(loteId);
         return "redirect:/admin/importar";
     }
+
+    // Configurar gerencia global del lote
+    @PostMapping("/guardar-gerencia-global")
+    public String guardarGerenciaGlobal(@RequestParam("loteId") Long loteId, @RequestParam("gerenciaId") Integer gerenciaId, RedirectAttributes redirectAttributes) {
+        com.juridico.sistema_juridico.Entity.procesal.LoteMigracion lote = loteMigracionService.obtenerOCrearLoteActivo();
+        if (lote.getId().equals(loteId)) {
+            Gerencia gerencia = gerenciaRepository.findById(gerenciaId).orElse(null);
+            lote.setGerenciaGlobal(gerencia);
+            loteRepository.save(lote);
+            
+            if (gerencia != null) {
+                // Verificar si ya existe este catálogo de gerencia (puede pasar si la vista se recarga o si json tiene un campo con el mismo nombre)
+                boolean yaExiste = catalogoMigracionRepository.findAll().stream()
+                    .anyMatch(c -> c.getLote().getId().equals(loteId) && "GERENCIA".equals(c.getTipoCatalogo()) 
+                                && c.getValorOriginal().equalsIgnoreCase(gerencia.getNombre()));
+                
+                if (!yaExiste) {
+                    // Crear el registro en CatalogoMigracion para que aparezca en la Etapa 1
+                    CatalogoMigracion cat = new CatalogoMigracion();
+                    cat.setLote(lote);
+                    cat.setTipoCatalogo("GERENCIA");
+                    cat.setValorOriginal(gerencia.getNombre());
+                    cat.setIdMapeado(gerencia.getId().longValue());
+                    cat.setEstatus("MAPEADO");
+                    catalogoMigracionRepository.save(cat);
+                }
+            }
+            
+            redirectAttributes.addFlashAttribute("mensaje", "Gerencia del lote establecida correctamente.");
+        }
+        return "redirect:/admin/importar";
+    }
     
     // Navegación del Wizard: Mandar a Papelera
     @PostMapping("/cancelar")
@@ -184,7 +226,15 @@ public class AdminImportController {
     // Procesar la confirmación de la Etapa 2
     @PostMapping("/validar-expedientes")
     public String validarExpedientes(@RequestParam("loteId") Long loteId, RedirectAttributes redirectAttributes) {
-        // En un futuro aquí podrías excluir expedientes que el usuario no quiera migrar
+        
+        // VERIFICACIÓN: Impedir el paso si hay expedientes críticos (sin materia)
+        boolean hayCriticos = loteMigracionService.obtenerResumenExpedientes(loteId).stream()
+                .anyMatch(exp -> Boolean.TRUE.equals(exp.get("esCritico")));
+        if (hayCriticos) {
+            redirectAttributes.addFlashAttribute("error", "No puedes avanzar. Hay expedientes sin Materia o con errores críticos. Debes asignarles una materia primero.");
+            return "redirect:/admin/importar";
+        }
+        
         loteMigracionService.avanzarPaso(loteId);
         redirectAttributes.addFlashAttribute("mensaje", "Expedientes validados correctamente. Pasando a revisión de Audiencias.");
         return "redirect:/admin/importar";

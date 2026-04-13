@@ -201,10 +201,10 @@
                                 }
                             });
                         } else {
-                            guardarCatalogoUnico(lote, "MATERIA", "Por asignar", cacheMapeo);
+                            // No creamos catálogo para "Por asignar" para forzar asignación en Etapa 2
                         }
                     } else {
-                        guardarCatalogoUnico(lote, "MATERIA", "Por asignar", cacheMapeo);
+                        // No creamos catálogo para "Por asignar"
                     }
                     
                     if (json.has("sede") && !json.get("sede").isNull()) {
@@ -242,6 +242,22 @@
             // Hemos terminado la extracción. Los catálogos ya están en la DB (o en caché).
 
             intentarAutoMapeo(loteId);
+        }
+
+        public boolean requiereGerenciaGlobal(Long loteId) {
+            List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
+            boolean todosSinMateria = true;
+            for (RegistroMigracion reg : registros) {
+                try {
+                    com.fasterxml.jackson.databind.JsonNode json = objectMapper.readTree(reg.getPayloadJson());
+                    boolean hasMateria = json.has("materia") && !json.get("materia").isNull() && !json.get("materia").asText().trim().isEmpty() && !json.get("materia").asText().toUpperCase().contains("DEFINIR");
+                    if (hasMateria) {
+                        todosSinMateria = false;
+                        break;
+                    }
+                } catch (Exception e) {}
+            }
+            return !registros.isEmpty() && todosSinMateria;
         }
 
         @Transactional
@@ -581,7 +597,7 @@
 
                 // INTELIGENCIA: Si la gerenciaId es nula pero sí tenemos una materiaId u organoId mapeada...
                 if (gerenciaId == null && materiaId != null) {
-                    java.util.Optional<Materia> matOpt = materiaRepository.findById(materiaId.intValue());
+                    java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.Materia> matOpt = materiaRepository.findById(materiaId.intValue());
                     if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
                         gerenciaId = matOpt.get().getGerencia().getId().longValue();
                         // FIX: Actualizamos también el texto para que el Select de Javascript lo encuentre
@@ -589,11 +605,17 @@
                     }
                 }
                 if (gerenciaId == null && organoId != null) {
-                    java.util.Optional<OrganoJurisdiccional> orgOpt = organoRepository.findById(organoId.intValue());
+                    java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional> orgOpt = organoRepository.findById(organoId.intValue());
                     if (orgOpt.isPresent() && orgOpt.get().getGerencia() != null) {
                         gerenciaId = orgOpt.get().getGerencia().getId().longValue();
                         gerenciaModa = orgOpt.get().getGerencia().getNombre(); 
                     }
+                }
+                
+                // BACKUP FINAL: Si gerenciaId sigue siendo nula tras toda la inferencia, tomar el ID de la Global (si existe)
+                LoteMigracion loteActual = loteRepository.findById(loteId).orElse(null);
+                if (gerenciaId == null && loteActual != null && loteActual.getGerenciaGlobal() != null) {
+                    gerenciaId = loteActual.getGerenciaGlobal().getId().longValue();
                 }
                 
                 map.put("gerencia", gerenciaModa); // Aseguramos que se mande el texto limpio/inferido

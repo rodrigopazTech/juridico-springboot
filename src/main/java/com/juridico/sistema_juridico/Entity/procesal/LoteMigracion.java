@@ -29,6 +29,10 @@ public class LoteMigracion {
     @Column(nullable = false, length = 20)
     private String estatus = "PENDIENTE";
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "gerencia_global_id")
+    private com.juridico.sistema_juridico.Entity.catalogo.Gerencia gerenciaGlobal;
+
     @PrePersist
     protected void onCreate() {
         this.fechaCreacion = LocalDateTime.now();
