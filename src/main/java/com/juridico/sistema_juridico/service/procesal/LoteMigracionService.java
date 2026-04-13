@@ -458,10 +458,14 @@
                     r -> r.getNumeroExpedienteExtraido() != null ? r.getNumeroExpedienteExtraido() : "SIN_NUMERO"
                 ));
 
-            // --- INFERIR GERENCIA GLOBAL DEL LOTE ---
-            String gerenciaGlobal = findMostRepeated(registros, "gerencia", "");
-            if (gerenciaGlobal.toUpperCase().contains("DEFINIR")) gerenciaGlobal = "";
+            LoteMigracion lote = loteRepository.findById(loteId).orElse(null);
+            String gerenciaGlobal = (lote != null && lote.getGerenciaGlobal() != null) ? lote.getGerenciaGlobal().getNombre() : "";
             
+            if (gerenciaGlobal.isEmpty()) {
+                gerenciaGlobal = findMostRepeated(registros, "gerencia", "");
+                if (gerenciaGlobal.toUpperCase().contains("DEFINIR")) gerenciaGlobal = "";
+            }
+
             if (gerenciaGlobal.isEmpty()) {
                 String materiaGlobal = findMostRepeated(registros, "materia", "");
                 if (!materiaGlobal.isEmpty() && !materiaGlobal.toUpperCase().contains("DEFINIR") && !materiaGlobal.equals("Por asignar")) {
@@ -639,9 +643,13 @@
         List<RegistroMigracion> registros = registroRepository.findByLoteIdAndTipoDatoAndEstatusNot(loteId, "AUDIENCIA", "RECHAZADO");
         List<RegistroMigracion> todosLosRegistros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
         
-        // --- INFERIR GERENCIA GLOBAL DEL LOTE ---
-        String gerenciaGlobal = findMostRepeated(todosLosRegistros, "gerencia", "");
-        if (gerenciaGlobal.toUpperCase().contains("DEFINIR")) gerenciaGlobal = "";
+        LoteMigracion lote = loteRepository.findById(loteId).orElse(null);
+        String gerenciaGlobal = (lote != null && lote.getGerenciaGlobal() != null) ? lote.getGerenciaGlobal().getNombre() : "";
+        
+        if (gerenciaGlobal.isEmpty()) {
+            gerenciaGlobal = findMostRepeated(todosLosRegistros, "gerencia", "");
+            if (gerenciaGlobal.toUpperCase().contains("DEFINIR")) gerenciaGlobal = "";
+        }
         
         if (gerenciaGlobal.isEmpty()) {
             String materiaGlobal = findMostRepeated(todosLosRegistros, "materia", "");
@@ -785,9 +793,13 @@
             List<RegistroMigracion> registros = registroRepository.findByLoteIdAndTipoDatoAndEstatusNot(loteId, "TERMINO", "RECHAZADO");
             List<RegistroMigracion> todosLosRegistros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
             
-            // --- INFERIR GERENCIA GLOBAL DEL LOTE ---
-            String gerenciaGlobal = findMostRepeated(todosLosRegistros, "gerencia", "");
-            if (gerenciaGlobal.toUpperCase().contains("DEFINIR")) gerenciaGlobal = "";
+            LoteMigracion lote = loteRepository.findById(loteId).orElse(null);
+            String gerenciaGlobal = (lote != null && lote.getGerenciaGlobal() != null) ? lote.getGerenciaGlobal().getNombre() : "";
+            
+            if (gerenciaGlobal.isEmpty()) {
+                gerenciaGlobal = findMostRepeated(todosLosRegistros, "gerencia", "");
+                if (gerenciaGlobal.toUpperCase().contains("DEFINIR")) gerenciaGlobal = "";
+            }
             
             if (gerenciaGlobal.isEmpty()) {
                 String materiaGlobal = findMostRepeated(todosLosRegistros, "materia", "");

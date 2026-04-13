@@ -307,6 +307,7 @@ function inicializarMapeo() {
 
             if (todosNuevos) {
                 // ACTIVAR: Solo marcar como nuevo los que NO tienen un valor asignado
+                let count = 0;
                 document.querySelectorAll('.btn-marcar-nuevo').forEach(b => {
                     const catId = b.getAttribute('data-cat-id');
                     const container = document.getElementById('mapeo-container-' + catId);
@@ -319,7 +320,18 @@ function inicializarMapeo() {
 
                     if (!tieneValor) {
                         b.click(); // Solo aplicar a los vacíos
+                        count++;
                     }
+                });
+
+                Swal.fire({
+                    icon: count > 0 ? 'success' : 'info',
+                    title: count > 0 ? '¡Listo!' : 'Sin cambios',
+                    text: count > 0 ? `Se han marcado ${count} elementos vacíos como nuevos en todas las pestañas.` : 'No se encontraron elementos vacíos en ninguna pestaña.',
+                    timer: 2500,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
                 });
 
                 this.innerHTML = '<i class="fas fa-undo mr-2"></i> Restaurar Vacíos';
@@ -327,17 +339,78 @@ function inicializarMapeo() {
                 this.classList.remove('bg-gray-100', 'border-gray-300', 'text-gray-700');
             } else {
                 // DESACTIVAR: Deshacer todos los que se marcaron como nuevo
+                let countUndo = 0;
                 document.querySelectorAll('.btn-deshacer-nuevo').forEach(b => {
                     const catId = b.getAttribute('data-cat-id');
                     const badge = document.getElementById('nuevo-badge-' + catId);
                     if (badge && !badge.classList.contains('hidden')) {
                         b.click();
+                        countUndo++;
                     }
                 });
+
+                if (countUndo > 0) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Restaurado',
+                        text: `Se han restaurado ${countUndo} elementos en el lote.`,
+                        timer: 2000,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
+                    });
+                }
 
                 this.innerHTML = '<i class="fas fa-plus-square mr-2"></i> Crear TODOS como Nuevos';
                 this.classList.remove('bg-amber-100', 'border-amber-400', 'text-amber-800');
                 this.classList.add('bg-gray-100', 'border-gray-300', 'text-gray-700');
+            }
+        });
+    }
+
+    // ==========================================
+    // VALIDACIÓN GLOBAL AL ENVIAR FORMULARIO
+    // ==========================================
+    const formMapeo = document.querySelector('form[action*="mapear-catalogos"]');
+    if (formMapeo) {
+        formMapeo.addEventListener('submit', function (e) {
+            // Verificar si hay campos requeridos vacíos que NO estén ocultos (es decir, que no tengan acción de nuevo/descartar)
+            const containersPendientes = Array.from(document.querySelectorAll('[id^="mapeo-container-"]:not(.hidden)'));
+
+            let erroresCount = 0;
+            let categoriasConErrores = new Set();
+
+            containersPendientes.forEach(container => {
+                const selectEl = container.querySelector('select');
+                if (selectEl) {
+                    const val = selectEl.tomselect ? selectEl.tomselect.getValue() : selectEl.value;
+                    if (!val) {
+                        erroresCount++;
+                        // Intentar hallar el nombre del panel (pestaña) para avisar dónde buscar
+                        const panel = container.closest('.tab-panel');
+                        if (panel) {
+                            const tabBtn = document.querySelector(`button[data-target="${panel.id}"]`);
+                            if (tabBtn) {
+                                // Limpiamos el texto (ej. "Gerencias (2)" -> "Gerencias")
+                                let labelText = tabBtn.innerText.replace(/\(\d+\)/, '').trim();
+                                categoriasConErrores.add(labelText);
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (erroresCount > 0) {
+                e.preventDefault();
+                const listaCategorias = Array.from(categoriasConErrores).join(', ');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Faltan datos por homologar',
+                    html: `Aún tienes <b>${erroresCount}</b> elemento(s) pendiente(s) de mapear.<br><br>` +
+                        `Revisa las pestañas: <span class="text-gob-guinda font-bold">${listaCategorias}</span>.<br><br>` +
+                        `Debes seleccionar un valor oficial o marcarlos como nuevos con el botón <i class="fas fa-plus"></i>.`,
+                    confirmButtonColor: '#1a3c34'
+                });
             }
         });
     }
