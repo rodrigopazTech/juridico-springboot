@@ -1,12 +1,11 @@
 package com.juridico.sistema_juridico.controller;
 
-import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
-import com.juridico.sistema_juridico.Entity.catalogo.Materia;
-import com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional;
-import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
+import com.juridico.sistema_juridico.Entity.catalogo.*;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.service.UsuarioService;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,47 +13,119 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/catalogos")
 public class CatalogosController {
 
-    @Autowired
-    private UsuarioService usuarioService;
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    @Autowired private UsuarioService usuarioService;
+    @Autowired private UsuarioRepository usuarioRepository;
+    @Autowired private GerenciaRepository gerenciaRepository;
+    @Autowired private OrganoJurisdiccionalRepository organoRepository;
+    @Autowired private TipoAudienciaRepository tipoAudienciaRepository;
+    @Autowired private MateriaRepository materiaRepository;
+    @Autowired private EstadoRepository estadoRepository;
 
+    // ===============================================================
+    // VISTA PRINCIPAL
+    // ===============================================================
     @GetMapping
-    public String index(Model model,
-            @RequestParam(value = "pageGerencias", defaultValue = "0") int pageGerencias,
-            @RequestParam(value = "pageOrganos", defaultValue = "0") int pageOrganos,
-            @RequestParam(value = "pageTiposAudiencia", defaultValue = "0") int pageTiposAudiencia) {
+    public String index(Model model, @RequestParam(value = "gerenciaId", required = false) Integer gerenciaId) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuarioActual = usuarioRepository.findByEmail(email).orElseThrow();
+        RolUsuario rol = usuarioActual.getRol();
 
-        Page<Gerencia> gerenciasPage = usuarioService
-                .listarGerenciasPaginadas(PageRequest.of(pageGerencias, 10, Sort.by("nombre").ascending()));
-        Page<OrganoJurisdiccional> organosPage = usuarioService
-                .listarOrganosPaginados(PageRequest.of(pageOrganos, 10, Sort.by("nombre").ascending()));
-        Page<TipoAudiencia> tiposAudienciaPage = usuarioService
-                .listarTiposAudienciaPaginados(PageRequest.of(pageTiposAudiencia, 10, Sort.by("nombre").ascending()));
+        // --- Determinar qué gerencias puede ver ---
+        boolean esNivelAlto = (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION);
+        boolean esGerente = (rol == RolUsuario.GERENTE || rol == RolUsuario.JEFE_DEPTO);
+        boolean esAbogado = (rol == RolUsuario.ABOGADO);
 
-        model.addAttribute("listaGerencias", gerenciasPage);
-        model.addAttribute("listaOrganos", organosPage);
-        model.addAttribute("listaTiposAudiencia", tiposAudienciaPage);
+        // Puede realizar acciones? (Admin, Dir, SubDir, Gerente, JefeDepto)
+        boolean puedeEditar = !esAbogado;
+
+        List<Gerencia> gerenciasDisponibles;
+        Gerencia gerenciaSeleccionada = null;
+
+        if (esNivelAlto) {
+            gerenciasDisponibles = gerenciaRepository.findAll();
+        } else {
+            // Gerente, Jefe o Abogado: Solo su gerencia
+            Gerencia miGerencia = usuarioActual.getGerencia();
+            if (miGerencia != null) {
+                gerenciasDisponibles = List.of(miGerencia);
+                gerenciaId = miGerencia.getId(); // Forzar selección a su gerencia
+            } else {
+                gerenciasDisponibles = List.of();
+            }
+        }
+
+        // Si se seleccionó una gerencia (o fue forzada)
+        if (gerenciaId != null) {
+            gerenciaSeleccionada = gerenciaRepository.findById(gerenciaId).orElse(null);
+        } else if (!gerenciasDisponibles.isEmpty()) {
+            // Auto-seleccionar la primera gerencia
+            gerenciaSeleccionada = gerenciasDisponibles.get(0);
+        }
+
+        // --- Cargar catálogos filtrados por la gerencia seleccionada ---
+        List<OrganoJurisdiccional> organos = new ArrayList<>();
+        List<TipoAudiencia> tiposAudiencia = new ArrayList<>();
+        List<Usuario> abogados = new ArrayList<>();
+        List<Estado> sedes = new ArrayList<>();
+
+        if (gerenciaSeleccionada != null) {
+            organos = organoRepository.findByGerenciaId(gerenciaSeleccionada.getId());
+            // Incluir órganos sin gerencia asignada
+            organos.addAll(organoRepository.findByGerenciaIsNull());
+            // Eliminar duplicados por id
+            organos = organos.stream()
+                .collect(Collectors.collectingAndThen(
+                    Collectors.toMap(OrganoJurisdiccional::getId, o -> o, (a, b) -> a),
+                    m -> new ArrayList<>(m.values())
+                ));
+            organos.sort(Comparator.comparing(OrganoJurisdiccional::getNombre, String.CASE_INSENSITIVE_ORDER));
+
+            tiposAudiencia = tipoAudienciaRepository.findByGerenciaId(gerenciaSeleccionada.getId());
+            // Incluir tipos sin gerencia asignada (globales)
+            tiposAudiencia.addAll(tipoAudienciaRepository.findByGerenciaIsNull());
+            tiposAudiencia = tiposAudiencia.stream()
+                .collect(Collectors.collectingAndThen(
+                    Collectors.toMap(TipoAudiencia::getId, t -> t, (a, b) -> a),
+                    m -> new ArrayList<>(m.values())
+                ));
+            tiposAudiencia.sort(Comparator.comparing(TipoAudiencia::getNombre, String.CASE_INSENSITIVE_ORDER));
+
+            final Integer gIdFinal = gerenciaSeleccionada.getId();
+            abogados = usuarioRepository.findAll().stream()
+                .filter(u -> u.getGerencia() != null && u.getGerencia().getId().equals(gIdFinal))
+                .sorted(Comparator.comparing(Usuario::getNombreCompleto, String.CASE_INSENSITIVE_ORDER))
+                .collect(Collectors.toList());
+
+            sedes = estadoRepository.findByGerenciaId(gerenciaSeleccionada.getId());
+            // Incluir sedes sin gerencia
+            sedes.addAll(estadoRepository.findByGerenciaIsNull());
+            sedes = sedes.stream()
+                .collect(Collectors.collectingAndThen(
+                    Collectors.toMap(Estado::getId, e -> e, (a, b) -> a),
+                    m -> new ArrayList<>(m.values())
+                ));
+            sedes.sort(Comparator.comparing(Estado::getNombre, String.CASE_INSENSITIVE_ORDER));
+        }
+
         model.addAttribute("usuarioActual", usuarioActual);
-
-        model.addAttribute("nuevaGerencia", new Gerencia());
-        model.addAttribute("nuevoOrgano", new OrganoJurisdiccional());
-        model.addAttribute("nuevoTipoAudiencia", new TipoAudiencia());
+        model.addAttribute("esNivelAlto", esNivelAlto);
+        model.addAttribute("puedeEditar", puedeEditar);
+        model.addAttribute("gerenciasDisponibles", gerenciasDisponibles);
+        model.addAttribute("gerenciaSeleccionada", gerenciaSeleccionada);
+        model.addAttribute("listaOrganos", organos);
+        model.addAttribute("listaTiposAudiencia", tiposAudiencia);
+        model.addAttribute("listaAbogados", abogados);
+        model.addAttribute("listaSedes", sedes);
 
         model.addAttribute("pageTitle", "Catálogos Generales");
         model.addAttribute("activePage", "catalogos");
@@ -62,78 +133,182 @@ public class CatalogosController {
         return "views/catalogos/index";
     }
 
+    // ===============================================================
+    // CRUD - ÓRGANOS JURISDICCIONALES
+    // ===============================================================
+    @PostMapping("/organos/guardar")
+    @ResponseBody
+    public ResponseEntity<?> guardarOrgano(@RequestBody Map<String, String> payload) {
+        try {
+            String nombre = payload.get("nombre");
+            String idStr = payload.get("id");
+            String gerenciaIdStr = payload.get("gerenciaId");
+
+            if (nombre == null || nombre.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "El nombre es obligatorio."));
+            }
+
+            OrganoJurisdiccional organo;
+            if (idStr != null && !idStr.isEmpty()) {
+                organo = usuarioService.buscarOrganoPorId(Integer.parseInt(idStr));
+                organo.setNombre(nombre.trim());
+            } else {
+                organo = new OrganoJurisdiccional();
+                organo.setNombre(nombre.trim());
+                organo.setActivo(true);
+                if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
+                    organo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                }
+            }
+
+            usuarioService.guardarOrgano(organo);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Órgano guardado correctamente."));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/organos/eliminar/{id}")
+    @ResponseBody
+    public ResponseEntity<?> eliminarOrgano(@PathVariable("id") Integer id) {
+        try {
+            usuarioService.eliminarOrgano(id);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Órgano eliminado correctamente."));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo eliminar: " + e.getMessage()));
+        }
+    }
+
+    // ===============================================================
+    // CRUD - TIPOS DE AUDIENCIA
+    // ===============================================================
+    @PostMapping("/tipos-audiencia/guardar")
+    @ResponseBody
+    public ResponseEntity<?> guardarTipoAudiencia(@RequestBody Map<String, String> payload) {
+        try {
+            String nombre = payload.get("nombre");
+            String idStr = payload.get("id");
+            String gerenciaIdStr = payload.get("gerenciaId");
+
+            if (nombre == null || nombre.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "El nombre es obligatorio."));
+            }
+
+            TipoAudiencia tipo;
+            if (idStr != null && !idStr.isEmpty()) {
+                tipo = usuarioService.buscarTipoAudienciaPorId(Integer.parseInt(idStr));
+                tipo.setNombre(nombre.trim());
+            } else {
+                tipo = new TipoAudiencia();
+                tipo.setNombre(nombre.trim());
+                tipo.setActivo(true);
+                if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
+                    tipo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                }
+            }
+
+            usuarioService.guardarTipoAudiencia(tipo);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Tipo de Audiencia guardado correctamente."));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/tipos-audiencia/eliminar/{id}")
+    @ResponseBody
+    public ResponseEntity<?> eliminarTipoAudiencia(@PathVariable("id") Integer id) {
+        try {
+            usuarioService.eliminarTipoAudiencia(id);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Tipo de Audiencia eliminado correctamente."));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo eliminar: " + e.getMessage()));
+        }
+    }
+
+    // ===============================================================
+    // CRUD - SEDES/ESTADOS
+    // ===============================================================
+    @PostMapping("/sedes/guardar")
+    @ResponseBody
+    public ResponseEntity<?> guardarSede(@RequestBody Map<String, String> payload) {
+        try {
+            String nombre = payload.get("nombre");
+            String idStr = payload.get("id");
+            String gerenciaIdStr = payload.get("gerenciaId");
+
+            if (nombre == null || nombre.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "El nombre es obligatorio."));
+            }
+
+            Estado estado;
+            if (idStr != null && !idStr.isEmpty()) {
+                estado = estadoRepository.findById(Integer.parseInt(idStr))
+                    .orElseThrow(() -> new RuntimeException("Sede no encontrada."));
+                estado.setNombre(nombre.trim());
+            } else {
+                estado = new Estado();
+                estado.setNombre(nombre.trim());
+                if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
+                    estado.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                }
+            }
+
+            estadoRepository.save(estado);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Sede/Estado guardado correctamente."));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/sedes/eliminar/{id}")
+    @ResponseBody
+    public ResponseEntity<?> eliminarSede(@PathVariable("id") Integer id) {
+        try {
+            estadoRepository.deleteById(id);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Sede/Estado eliminado correctamente."));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo eliminar: " + e.getMessage()));
+        }
+    }
+
+    // ===============================================================
+    // CRUD - GERENCIAS (conservado para admin)
+    // ===============================================================
     @PostMapping("/gerencias/guardar")
     public String guardarGerencia(@ModelAttribute Gerencia gerencia, RedirectAttributes redirectAttrs) {
         usuarioService.guardarGerencia(gerencia);
         redirectAttrs.addFlashAttribute("mensaje", "Gerencia guardada.");
         redirectAttrs.addFlashAttribute("tipo", "success");
-        return "redirect:/catalogos?tab=gerencias";
-    }
-
-    @PostMapping("/organos/guardar")
-    public String guardarOrgano(@ModelAttribute OrganoJurisdiccional organo, RedirectAttributes redirectAttrs) {
-        usuarioService.guardarOrgano(organo);
-        redirectAttrs.addFlashAttribute("mensaje", "Órgano guardado.");
-        redirectAttrs.addFlashAttribute("tipo", "success");
-        return "redirect:/catalogos?tab=organos";
-    }
-
-    @PostMapping("/tipos-audiencia/guardar")
-    public String guardarTipoAudiencia(@ModelAttribute TipoAudiencia tipo, RedirectAttributes redirectAttrs) {
-        usuarioService.guardarTipoAudiencia(tipo);
-        redirectAttrs.addFlashAttribute("mensaje", "Tipo de Audiencia guardado.");
-        redirectAttrs.addFlashAttribute("tipo", "success");
-        return "redirect:/catalogos?tab=tipos-audiencia";
+        return "redirect:/catalogos?gerenciaId=" + gerencia.getId();
     }
 
     @GetMapping("/gerencias/toggle/{id}")
-    public String toggleGerencia(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
+    public String toggleGerencia(@PathVariable("id") Integer id) {
         Gerencia g = usuarioService.buscarGerenciaPorId(id);
         g.setActivo(!g.getActivo());
         usuarioService.guardarGerencia(g);
-        return "redirect:/catalogos?tab=gerencias";
+        return "redirect:/catalogos?gerenciaId=" + id;
     }
 
     @GetMapping("/organos/toggle/{id}")
-    public String toggleOrgano(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
+    public String toggleOrgano(@PathVariable("id") Integer id) {
         OrganoJurisdiccional o = usuarioService.buscarOrganoPorId(id);
         o.setActivo(!o.getActivo());
         usuarioService.guardarOrgano(o);
-        return "redirect:/catalogos?tab=organos";
+        Integer gId = o.getGerencia() != null ? o.getGerencia().getId() : null;
+        return "redirect:/catalogos" + (gId != null ? "?gerenciaId=" + gId : "");
     }
 
     @GetMapping("/tipos-audiencia/toggle/{id}")
-    public String toggleTipoAudiencia(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
+    public String toggleTipoAudiencia(@PathVariable("id") Integer id) {
         TipoAudiencia t = usuarioService.buscarTipoAudienciaPorId(id);
         t.setActivo(!t.getActivo());
         usuarioService.guardarTipoAudiencia(t);
-        return "redirect:/catalogos?tab=tipos-audiencia";
+        Integer gId = t.getGerencia() != null ? t.getGerencia().getId() : null;
+        return "redirect:/catalogos" + (gId != null ? "?gerenciaId=" + gId : "");
     }
 
-    @GetMapping("/organos/eliminar/{id}")
-    public String eliminarOrgano(@PathVariable("id") Integer id) {
-        usuarioService.eliminarOrgano(id);
-        return "redirect:/catalogos?tab=organos";
-    }
-
-    @GetMapping("/tipos-audiencia/eliminar/{id}")
-    public String eliminarTipoAudiencia(@PathVariable("id") Integer id) {
-        usuarioService.eliminarTipoAudiencia(id);
-        return "redirect:/catalogos?tab=tipos-audiencia";
-    }
-
-    // --- API JSON MATERIAS ---
-    @GetMapping("/api/materias-por-gerencia/{id}")
-    @ResponseBody
-    public ResponseEntity<List<Materia>> getMateriasJson(@PathVariable("id") Integer id) {
-        try {
-            Gerencia gerencia = usuarioService.buscarGerenciaPorId(id);
-            return ResponseEntity.ok(new ArrayList<>(gerencia.getMaterias()));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
-    }
-
+    // --- API JSON MATERIAS (Conservado) ---
     @GetMapping("/gerencias/{id}/materias")
     public String obtenerMateriasGerencia(@PathVariable("id") Integer id, Model model) {
         Gerencia gerencia = usuarioService.buscarGerenciaPorId(id);

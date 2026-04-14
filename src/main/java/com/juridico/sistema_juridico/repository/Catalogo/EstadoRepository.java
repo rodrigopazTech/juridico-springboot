@@ -13,4 +13,5 @@ public interface EstadoRepository extends JpaRepository<Estado, Integer> {
     java.util.Optional<Estado> findByNombreIgnoreCase(String nombre);
     
     List<Estado> findByGerenciaId(Integer gerenciaId);
+    List<Estado> findByGerenciaIsNull();
 }

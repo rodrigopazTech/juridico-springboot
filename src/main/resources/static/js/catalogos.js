@@ -1,138 +1,262 @@
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("Catálogos cargados");
-});
+/**
+ * catalogos.js - Catálogos Generales (CRUD completo con AJAX)
+ */
 
+// ====================================================================
+// TAB SYSTEM
+// ====================================================================
 function cambiarTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(el => {
-        el.classList.add('hidden'); el.classList.remove('block');
+    // Ocultar todos los paneles
+    document.querySelectorAll('.tab-panel').forEach(p => {
+        p.classList.add('hidden');
+        p.classList.remove('animate-fade-slide');
     });
-    document.getElementById('tab-' + tabName).classList.remove('hidden');
-    document.getElementById('tab-' + tabName).classList.add('block');
 
-    document.querySelectorAll('[id^="card-"]').forEach(card => {
-        card.classList.remove('border-gob-oro', 'bg-gray-50');
-        card.classList.add('border-transparent', 'bg-white');
+    // Desactivar todos los botones
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('tab-active', 'border-gob-guinda', 'text-gob-guinda');
+        b.classList.add('border-transparent');
     });
-    const activeCard = document.getElementById('card-' + tabName);
-    if (activeCard) {
-        activeCard.classList.remove('border-transparent', 'bg-white');
-        activeCard.classList.add('border-gob-oro', 'bg-gray-50');
+
+    // Mostrar panel activo
+    const panel = document.getElementById('panel-' + tabName);
+    if (panel) {
+        panel.classList.remove('hidden');
+        // Trigger animation
+        void panel.offsetWidth;
+        panel.classList.add('animate-fade-slide');
     }
+
+    // Activar botón
+    const btn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+    if (btn) {
+        btn.classList.add('tab-active', 'border-gob-guinda', 'text-gob-guinda');
+        btn.classList.remove('border-transparent');
+    }
+
+    // Guardar en URL
+    const url = new URL(window.location);
+    url.searchParams.set('tab', tabName);
+    window.history.replaceState({}, '', url);
 }
 
-// === GERENCIAS ===
-function abrirModalGerencia() {
-    document.getElementById('titulo-modal-gerencia').innerHTML = '<i class="fas fa-building mr-2"></i> Nueva Gerencia';
-    document.getElementById('input-gerencia-id').value = '';
-    document.getElementById('input-gerencia-nombre').value = '';
-    document.getElementById('input-gerencia-desc').value = '';
-    document.getElementById('input-gerencia-activo').checked = true;
-    document.getElementById('modal-gerencia').classList.remove('hidden'); document.getElementById('modal-gerencia').classList.add('flex');
+// ====================================================================
+// MODAL UNIVERSAL
+// ====================================================================
+const TIPOS_CONFIG = {
+    'organo': {
+        titulo: 'Órgano Jurisdiccional',
+        icono: 'fa-landmark',
+        urlGuardar: '/catalogos/organos/guardar',
+        urlEliminar: '/catalogos/organos/eliminar/',
+        placeholder: 'Ej. Juzgado 1° de Distrito en Materia Civil'
+    },
+    'tipo-audiencia': {
+        titulo: 'Tipo de Audiencia',
+        icono: 'fa-gavel',
+        urlGuardar: '/catalogos/tipos-audiencia/guardar',
+        urlEliminar: '/catalogos/tipos-audiencia/eliminar/',
+        placeholder: 'Ej. Conciliación y Arbitraje'
+    },
+    'sede': {
+        titulo: 'Sede / Estado',
+        icono: 'fa-map-marker-alt',
+        urlGuardar: '/catalogos/sedes/guardar',
+        urlEliminar: '/catalogos/sedes/eliminar/',
+        placeholder: 'Ej. Ciudad de México'
+    }
+};
+
+function abrirModalNuevo(tipo) {
+    const cfg = TIPOS_CONFIG[tipo];
+    if (!cfg) return;
+
+    document.getElementById('modal-titulo').innerHTML = `<i class="fas fa-plus-circle mr-2 text-gob-oro"></i> Nuevo ${cfg.titulo}`;
+    document.getElementById('modal-icono').className = 'fas ' + cfg.icono;
+    document.getElementById('modal-nombre').placeholder = cfg.placeholder;
+    document.getElementById('modal-nombre').value = '';
+    document.getElementById('modal-item-id').value = '';
+    document.getElementById('modal-tipo').value = tipo;
+
+    const modal = document.getElementById('modal-catalogo');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    setTimeout(() => document.getElementById('modal-nombre').focus(), 200);
 }
 
-function editarGerencia(id, n, d, a) {
-    abrirModalGerencia();
-    document.getElementById('titulo-modal-gerencia').innerHTML = '<i class="fas fa-edit mr-2"></i> Editar Gerencia';
-    document.getElementById('input-gerencia-id').value = id;
-    document.getElementById('input-gerencia-nombre').value = n;
-    document.getElementById('input-gerencia-desc').value = d;
-    document.getElementById('input-gerencia-activo').checked = (a === 'true' || a === true);
+function editarItem(tipo, btn) {
+    const cfg = TIPOS_CONFIG[tipo];
+    if (!cfg) return;
+
+    const id = btn.dataset.id;
+    const nombre = btn.dataset.nombre;
+
+    document.getElementById('modal-titulo').innerHTML = `<i class="fas fa-edit mr-2 text-gob-oro"></i> Editar ${cfg.titulo}`;
+    document.getElementById('modal-icono').className = 'fas ' + cfg.icono;
+    document.getElementById('modal-nombre').placeholder = cfg.placeholder;
+    document.getElementById('modal-nombre').value = nombre;
+    document.getElementById('modal-item-id').value = id;
+    document.getElementById('modal-tipo').value = tipo;
+
+    const modal = document.getElementById('modal-catalogo');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    setTimeout(() => document.getElementById('modal-nombre').focus(), 200);
 }
 
-// === ÓRGANOS ===
-function abrirModalOrgano() {
-    document.getElementById('titulo-modal-organo').innerHTML = '<i class="fas fa-university mr-2"></i> Nuevo Órgano';
-    document.getElementById('input-organo-id').value = '';
-    document.getElementById('input-organo-nombre').value = '';
-    document.getElementById('input-organo-sede').value = '';
-    document.getElementById('modal-organo').classList.remove('hidden'); document.getElementById('modal-organo').classList.add('flex');
+function cerrarModal() {
+    const modal = document.getElementById('modal-catalogo');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
 }
 
-function editarOrgano(id, n, t, s, a) {
-    abrirModalOrgano();
-    document.getElementById('titulo-modal-organo').innerHTML = '<i class="fas fa-edit mr-2"></i> Editar Órgano';
-    document.getElementById('input-organo-id').value = id;
-    document.getElementById('input-organo-nombre').value = n;
-    document.getElementById('select-organo-tipo').value = t;
-    document.getElementById('input-organo-sede').value = s;
-    document.getElementById('check-organo-activo').checked = (a === 'true' || a === true);
-}
+function guardarItem() {
+    const tipo = document.getElementById('modal-tipo').value;
+    const cfg = TIPOS_CONFIG[tipo];
+    if (!cfg) return;
 
-// === TIPOS AUDIENCIA ===
-function abrirModalTipoAudiencia() {
-    document.getElementById('titulo-modal-tipo-audiencia').innerHTML = '<i class="fas fa-calendar-alt mr-2"></i> Nuevo Tipo';
-    document.getElementById('input-tipo-audiencia-id').value = '';
-    document.getElementById('input-tipo-audiencia-nombre').value = '';
-    document.getElementById('modal-tipo-audiencia').classList.remove('hidden'); document.getElementById('modal-tipo-audiencia').classList.add('flex');
-}
+    const nombre = document.getElementById('modal-nombre').value.trim();
+    const id = document.getElementById('modal-item-id').value;
+    const gerenciaId = document.getElementById('gerencia-id-actual')?.value || '';
 
-function editarTipoAudiencia(id, n, a) {
-    abrirModalTipoAudiencia();
-    document.getElementById('titulo-modal-tipo-audiencia').innerHTML = '<i class="fas fa-edit mr-2"></i> Editar Tipo';
-    document.getElementById('input-tipo-audiencia-id').value = id;
-    document.getElementById('input-tipo-audiencia-nombre').value = n;
-    document.getElementById('check-tipo-audiencia-activo').checked = (a === 'true' || a === true);
-}
+    if (!nombre) {
+        Swal.fire({ icon: 'warning', title: 'Campo vacío', text: 'El nombre es obligatorio.', confirmButtonColor: '#9D2449' });
+        return;
+    }
 
-// === MATERIAS ===
-function verMaterias(gerenciaId, nombre) {
-    document.getElementById('hidden-gerencia-id').value = gerenciaId;
-    document.getElementById('subtitulo-gerencia').textContent = 'Gerencia: ' + nombre;
-    document.getElementById('modal-materias').classList.remove('hidden'); document.getElementById('modal-materias').classList.add('flex');
-    cargarListaMaterias(gerenciaId);
-}
+    const body = { nombre: nombre, gerenciaId: gerenciaId };
+    if (id) body.id = id;
 
-function cargarListaMaterias(gerenciaId) {
-    const cont = document.getElementById('contenedor-lista-materias');
-    cont.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin"></i></div>';
-    fetch(`/catalogos/gerencias/${gerenciaId}/materias`)
-        .then(res => res.text()).then(html => cont.innerHTML = html);
-}
-
-function guardarMateriaJS() {
-    const gerenciaId = document.getElementById('hidden-gerencia-id').value;
-    const nombre = document.getElementById('input-nueva-materia').value;
-    if (!nombre) return;
-    fetch('/catalogos/gerencias/materias/guardar', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre: nombre, gerencia: { id: gerenciaId }, activo: true })
-    }).then(res => {
-        if (res.ok) { document.getElementById('input-nueva-materia').value = ''; cargarListaMaterias(gerenciaId); }
+    fetch(cfg.urlGuardar, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            Swal.fire({
+                icon: 'success',
+                title: id ? 'Actualizado' : 'Creado',
+                text: data.mensaje,
+                confirmButtonColor: '#9D2449',
+                timer: 1500,
+                showConfirmButton: false
+            });
+            cerrarModal();
+            setTimeout(() => location.reload(), 800);
+        } else {
+            Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'Error desconocido.', confirmButtonColor: '#9D2449' });
+        }
+    })
+    .catch(err => {
+        Swal.fire({ icon: 'error', title: 'Error de conexión', text: err.message, confirmButtonColor: '#9D2449' });
     });
 }
 
-function eliminarMateriaJS(id, gId) {
-    if (!confirm("¿Eliminar materia?")) return;
-    fetch(`/catalogos/gerencias/materias/eliminar/${id}`, { method: 'DELETE' })
-        .then(res => { if (res.ok) cargarListaMaterias(gId); else alert("Error"); });
+// ====================================================================
+// ELIMINAR
+// ====================================================================
+function eliminarItem(tipo, btn) {
+    const cfg = TIPOS_CONFIG[tipo];
+    if (!cfg) return;
+
+    const id = btn.dataset.id;
+    const nombre = btn.dataset.nombre;
+
+    Swal.fire({
+        title: '¿Eliminar este registro?',
+        html: `<p class="text-sm text-gray-600">Se eliminará <strong>"${nombre}"</strong> de todo el sistema.<br>Esta acción no se puede deshacer.</p>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#DC2626',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: '<i class="fas fa-trash-alt mr-1"></i> Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then(result => {
+        if (result.isConfirmed) {
+            fetch(cfg.urlEliminar + id, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'ok') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Eliminado',
+                            text: data.mensaje,
+                            confirmButtonColor: '#9D2449',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        // Remover la fila visualmente
+                        const row = btn.closest('tr');
+                        if (row) {
+                            row.style.transition = 'all 0.3s ease';
+                            row.style.opacity = '0';
+                            row.style.transform = 'translateX(20px)';
+                            setTimeout(() => row.remove(), 300);
+                        }
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'No se pudo eliminar.', confirmButtonColor: '#9D2449' });
+                    }
+                })
+                .catch(err => {
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo conectar con el servidor.', confirmButtonColor: '#9D2449' });
+                });
+        }
+    });
 }
 
-function cerrarModalMaterias() {
-    document.getElementById('modal-materias').classList.add('hidden'); document.getElementById('modal-materias').classList.remove('flex');
+// ====================================================================
+// BUSCADORES
+// ====================================================================
+function setupSearch(inputId, tbodyId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.addEventListener('keyup', function () {
+        const filter = this.value.toLowerCase();
+        const rows = document.getElementById(tbodyId)?.getElementsByTagName('tr') || [];
+        for (let r of rows) {
+            r.style.display = r.textContent.toLowerCase().indexOf(filter) > -1 ? '' : 'none';
+        }
+    });
 }
 
-// === TOGGLES ===
-function confirmarCambioEstatusCatalogo(id, tipo) {
-    let url = `/catalogos/${tipo}s/toggle/${id}`;
-    if (tipo === 'gerencia') url = `/catalogos/gerencias/toggle/${id}`;
-    if (tipo === 'tipo-audiencia') url = `/catalogos/tipos-audiencia/toggle/${id}`;
-
-    Swal.fire({ title: '¿Cambiar estatus?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#9D2449', confirmButtonText: 'Sí' })
-        .then((result) => { if (result.isConfirmed) window.location.href = url; });
-}
-
-// === INICIO ===
+// ====================================================================
+// INICIALIZACIÓN
+// ====================================================================
 document.addEventListener('DOMContentLoaded', () => {
+    // Inicializar tabs
     const params = new URLSearchParams(window.location.search);
-    cambiarTab(params.get('tab') || 'gerencias');
-    ['gerencias', 'organos', 'tipos-audiencia'].forEach(tipo => {
-        const input = document.getElementById(`input-search-${tipo}`);
-        if (input) {
-            input.addEventListener('keyup', function () {
-                const filter = this.value.toLowerCase();
-                const rows = document.getElementById(`tabla-${tipo}-body`).getElementsByTagName('tr');
-                for (let r of rows) r.style.display = r.textContent.toLowerCase().indexOf(filter) > -1 ? "" : "none";
-            });
+    cambiarTab(params.get('tab') || 'organos');
+
+    // Listeners para tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => cambiarTab(btn.dataset.tab));
+    });
+
+    // Buscadores
+    setupSearch('search-organos', 'tbody-organos');
+    setupSearch('search-tipos-audiencia', 'tbody-tipos-audiencia');
+    setupSearch('search-abogados', 'tbody-abogados');
+    setupSearch('search-sedes', 'tbody-sedes');
+
+    // Cerrar modal con Escape
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') cerrarModal();
+    });
+
+    // Cerrar modal clic fuera
+    document.getElementById('modal-catalogo')?.addEventListener('click', e => {
+        if (e.target === e.currentTarget) cerrarModal();
+    });
+
+    // Enter en modal guarda
+    document.getElementById('modal-nombre')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            guardarItem();
         }
     });
 });
