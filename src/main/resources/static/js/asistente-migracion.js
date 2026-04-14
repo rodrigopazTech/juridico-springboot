@@ -1,3 +1,110 @@
+// ============================================================
+// SPINNER GLOBAL DE CARGA — Migración Inteligente
+// Inyecta CSS + DOM dinámicamente, sin archivos externos extra.
+// ============================================================
+(function _initSpinner() {
+    // 1. Inyectar estilos CSS (solo una vez)
+    if (document.getElementById('mig-spinner-style')) return;
+    const style = document.createElement('style');
+    style.id = 'mig-spinner-style';
+    style.textContent = `
+        #mig-spinner-overlay {
+            position: fixed; inset: 0; z-index: 99999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(3px);
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.18s ease;
+        }
+        #mig-spinner-overlay.visible {
+            opacity: 1; pointer-events: all;
+        }
+        .mig-spinner-ring {
+            width: 52px; height: 52px;
+            border: 5px solid rgba(255,255,255,0.25);
+            border-top-color: #c9a227;
+            border-radius: 50%;
+            animation: mig-spin 0.72s linear infinite;
+        }
+        @keyframes mig-spin { to { transform: rotate(360deg); } }
+        .mig-spinner-label {
+            margin-top: 14px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+    `;
+    document.head.appendChild(style);
+
+    // 2. Crear el elemento overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'mig-spinner-overlay';
+    overlay.innerHTML = `
+        <div class="mig-spinner-ring"></div>
+        <span class="mig-spinner-label" id="mig-spinner-label">Procesando...</span>
+    `;
+    document.body.appendChild(overlay);
+})();
+
+/**
+ * Muestra el spinner de carga global con un texto opcional.
+ * @param {string} [label='Procesando...'] Texto debajo del spinner
+ */
+function showSpinner(label = 'Procesando...') {
+    const overlay = document.getElementById('mig-spinner-overlay');
+    const labelEl = document.getElementById('mig-spinner-label');
+    if (!overlay) return;
+    if (labelEl) labelEl.textContent = label;
+    overlay.classList.add('visible');
+}
+
+/** Oculta el spinner de carga global. */
+function hideSpinner() {
+    const overlay = document.getElementById('mig-spinner-overlay');
+    if (overlay) overlay.classList.remove('visible');
+}
+
+// ============================================================
+// HOOK EN FORMULARIOS DE NAVEGACIÓN DE ETAPA
+// Al hacer submit en formularios de avanzar/retroceder/mapear/
+// inyectar, mostramos el spinner con texto de contexto.
+// Usamos delegación sobre el documento para capturar cualquier form
+// dinámico (Thymeleaf fragments).
+// ============================================================
+document.addEventListener('submit', function (e) {
+    const form = e.target;
+    if (!form || form.tagName !== 'FORM') return;
+    const action = form.getAttribute('action') || '';
+
+    // Solo interceptamos los forms de navegación de migración (no los modales AJAX)
+    if (action.includes('/admin/importar/')) {
+        // Los forms de edición AJAX son manejados por guardarEdicionRegistro → no tienen action
+        // Aquí sólo capturamos los forms con action explícito (avanzar, retroceder, mapear, inyectar, etc.)
+        if (action.includes('mapear-catalogos')) {
+            showSpinner('Guardando mapeo de catálogos...');
+        } else if (action.includes('validar-expedientes')) {
+            showSpinner('Validando expedientes...');
+        } else if (action.includes('validar-audiencias')) {
+            showSpinner('Validando audiencias...');
+        } else if (action.includes('avanzar')) {
+            showSpinner('Avanzando a la siguiente etapa...');
+        } else if (action.includes('retroceder')) {
+            showSpinner('Regresando a la etapa anterior...');
+        } else if (action.includes('inyectar')) {
+            showSpinner('Inyectando datos a la base oficial...');
+        } else if (action.includes('guardar-gerencia-global')) {
+            showSpinner('Guardando gerencia del lote...');
+        } else if (action.includes('cancelar')) {
+            showSpinner('Cancelando lote de migración...');
+        } else {
+            showSpinner('Procesando...');
+        }
+    }
+}, true); // capture=true para atrapar antes de cualquier otro handler
+
 function inicializarAsistente() {
     // ==========================================
     // LÓGICA DE PESTAÑAS (TABS) PARA LA ETAPA 1
@@ -449,9 +556,11 @@ async function guardarEdicionRegistro(formEl) {
     const esTermino = formData.has('fechaVencimiento') && !formData.has('fechaAudiencia');
     const esExpediente = !esAudiencia && !esTermino;
 
+    showSpinner('Guardando cambios...');
     try {
         const resp = await fetch('/admin/importar/editar-registro', { method: 'POST', body: data });
         const json = await resp.json();
+        hideSpinner();
 
         if (resp.ok && json.status === 'ok') {
 
@@ -598,6 +707,7 @@ async function guardarEdicionRegistro(formEl) {
             Swal.fire({ icon: 'error', title: 'Error', text: json.error || 'No se pudo guardar.' });
         }
     } catch (e) {
+        hideSpinner();
         Swal.fire({ icon: 'error', title: 'Error de conexión', text: e.message });
     }
 }
@@ -951,7 +1061,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 document.querySelectorAll('.btn-editar-registro').forEach(btn => {
     btn.addEventListener('click', async function () {
-        // Esperar a que el batch de catálogos esté listo (normalmente ya está)
+        // Mostrar spinner mientras se espera el batch de catálogos
+        showSpinner('Abriendo editor...');
         await esperarBatch();
 
         // RESET FORM PRE-LOAD
@@ -999,6 +1110,7 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
         }
 
         const modal = document.getElementById('modal-editar-expediente');
+        hideSpinner();
         modal.classList.remove('hidden'); modal.classList.add('flex');
     });
 });
@@ -1080,7 +1192,8 @@ if (formExp) {
 // ==========================================
 document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
     btn.addEventListener('click', async function () {
-        // Esperar a que el batch de catálogos esté listo
+        // Mostrar spinner mientras se espera el batch de catálogos
+        showSpinner('Abriendo editor...');
         await esperarBatch();
 
         // RESET FORM PRE-LOAD
@@ -1124,6 +1237,7 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
         if (audUrl) audUrl.value = d.enlaceReunion || '';
 
         const modal = document.getElementById('modal-editar-audiencia');
+        hideSpinner();
         modal.classList.remove('hidden'); modal.classList.add('flex');
     });
 });
@@ -1142,7 +1256,8 @@ if (formAud) formAud.addEventListener('submit', function (e) { e.preventDefault(
 // ==========================================
 document.querySelectorAll('.btn-editar-termino').forEach(btn => {
     btn.addEventListener('click', async function () {
-        // Esperar a que el batch de catálogos esté listo
+        // Mostrar spinner mientras se espera el batch de catálogos
+        showSpinner('Abriendo editor...');
         await esperarBatch();
 
         // RESET FORM PRE-LOAD
@@ -1167,6 +1282,7 @@ document.querySelectorAll('.btn-editar-termino').forEach(btn => {
         document.getElementById('term-abogado').disabled = true;
 
         const modal = document.getElementById('modal-editar-termino');
+        hideSpinner();
         modal.classList.remove('hidden'); modal.classList.add('flex');
     });
 });
