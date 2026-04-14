@@ -606,7 +606,10 @@ async function guardarEdicionRegistro(formEl) {
 // LÓGICA DE SELECTORES JERÁRQUICOS
 // ==========================================
 
-// CACHÉ EN MEMORIA para evitar peticiones repetidas al servidor
+// ==========================================
+// CACHÉ GLOBAL + BATCH PRE-LOAD DE CATÁLOGOS
+// ==========================================
+// _apiCache: caché de respuestas HTTP individuales (fallback)
 const _apiCache = new Map();
 async function fetchCached(url) {
     if (_apiCache.has(url)) return _apiCache.get(url);
@@ -616,6 +619,88 @@ async function fetchCached(url) {
     return data;
 }
 
+// _catalogosBatch: catálogos completos pre-cargados en paralelo al entrar a la página.
+// Estructura:
+//   _catalogosBatch.abogados       → Array de todos los abogados
+//   _catalogosBatch.materias       → Map<gerenciaId, Array>
+//   _catalogosBatch.organos        → Map<gerenciaId, Array>
+//   _catalogosBatch.tiposAudiencia → Map<gerenciaId, Array>
+window._catalogosBatch = null;
+window._catalogosBatchPromise = null;
+
+/**
+ * Inicia la pre-carga en paralelo de TODOS los catálogos necesarios.
+ * Se llama UNA SOLA VEZ al cargar la página (DOMContentLoaded).
+ * Los modales esperan a que esta promesa se resuelva → primer modal ~igual de rápido que los demás.
+ */
+function preCatalogosBatch() {
+    const loteIdInput = document.querySelector('input[name="loteId"]');
+    if (!loteIdInput) return; // No hay lote activo (p.ej. página de INICIO)
+    const loteId = loteIdInput.value;
+    const loteParam = `?loteId=${loteId}`;
+
+    // Recolectar todas las gerencias únicas que están en la página
+    const gerenciaIds = new Set();
+    document.querySelectorAll('[data-gerencia-id]').forEach(el => {
+        const gid = el.getAttribute('data-gerencia-id');
+        if (gid && gid !== 'null' && gid !== '' && gid !== 'undefined') gerenciaIds.add(gid);
+    });
+
+    const peticiones = [];
+
+    // 1. Abogados (global, sin filtro)
+    peticiones.push(
+        fetchCached(`/admin/importar/api/todos-abogados${loteParam}`)
+            .then(data => { if (!window._catalogosBatch) window._catalogosBatch = {}; window._catalogosBatch.abogados = data; })
+    );
+
+    // 2. Materias, Órganos y Tipos de Audiencia agrupados por gerencia
+    gerenciaIds.forEach(gid => {
+        peticiones.push(
+            fetchCached(`/admin/importar/api/materias-por-gerencia/${gid}${loteParam}`)
+                .then(data => {
+                    if (!window._catalogosBatch) window._catalogosBatch = {};
+                    if (!window._catalogosBatch.materias) window._catalogosBatch.materias = {};
+                    window._catalogosBatch.materias[gid] = data;
+                })
+        );
+        peticiones.push(
+            fetchCached(`/admin/importar/api/organos-por-gerencia/${gid}${loteParam}`)
+                .then(data => {
+                    if (!window._catalogosBatch) window._catalogosBatch = {};
+                    if (!window._catalogosBatch.organos) window._catalogosBatch.organos = {};
+                    window._catalogosBatch.organos[gid] = data;
+                })
+        );
+        peticiones.push(
+            fetchCached(`/admin/importar/api/tipos-audiencia-por-gerencia/${gid}${loteParam}`)
+                .then(data => {
+                    if (!window._catalogosBatch) window._catalogosBatch = {};
+                    if (!window._catalogosBatch.tiposAudiencia) window._catalogosBatch.tiposAudiencia = {};
+                    window._catalogosBatch.tiposAudiencia[gid] = data;
+                })
+        );
+    });
+
+    window._catalogosBatchPromise = Promise.all(peticiones).then(() => {
+        console.log('[MigracionBatch] Catálogos pre-cargados:', {
+            abogados: (window._catalogosBatch?.abogados || []).length,
+            gerencias: gerenciaIds.size
+        });
+    }).catch(e => console.error('[MigracionBatch] Error pre-cargando catálogos:', e));
+}
+
+/** Esperar a que el batch esté listo antes de abrir un modal. */
+async function esperarBatch() {
+    if (window._catalogosBatchPromise) await window._catalogosBatchPromise;
+}
+
+// ==========================================
+// FUNCIONES DE CARGA DE SELECTS
+// Ahora usan primero _catalogosBatch (memoria local)
+// y solo hacen fetch si el dato no está pre-cargado.
+// ==========================================
+
 async function cargarMaterias(gerenciaId, targetSelect, selectedValue = '') {
     if (!gerenciaId) {
         targetSelect.innerHTML = '<option value="">-- Primero selecciona una gerencia --</option>';
@@ -623,22 +708,30 @@ async function cargarMaterias(gerenciaId, targetSelect, selectedValue = '') {
         return;
     }
     try {
-        const loteIdInput = document.querySelector('input[name="loteId"]');
-        const loteParam = loteIdInput ? `?loteId=${loteIdInput.value}` : '';
-        const materias = await fetchCached(`/admin/importar/api/materias-por-gerencia/${gerenciaId}${loteParam}`);
+        let materias;
+        // Intentar leer del batch pre-cargado primero
+        if (window._catalogosBatch?.materias?.[gerenciaId]) {
+            materias = window._catalogosBatch.materias[gerenciaId];
+        } else {
+            // Fallback: petición individual (p.ej. si el usuario cambió de gerencia)
+            const loteIdInput = document.querySelector('input[name="loteId"]');
+            const loteParam = loteIdInput ? `?loteId=${loteIdInput.value}` : '';
+            materias = await fetchCached(`/admin/importar/api/materias-por-gerencia/${gerenciaId}${loteParam}`);
+            // Guardar en batch para futuras llamadas
+            if (!window._catalogosBatch) window._catalogosBatch = {};
+            if (!window._catalogosBatch.materias) window._catalogosBatch.materias = {};
+            window._catalogosBatch.materias[gerenciaId] = materias;
+        }
         let html = '<option value="">-- Seleccione Materia --</option>';
         materias.forEach(m => {
             const isSelected = (m.nombre === selectedValue || m.id == selectedValue);
-            const selected = isSelected ? 'selected' : '';
-            html += `<option value="${m.nombre}" data-id="${m.id}" ${selected}>${m.nombre}</option>`;
+            html += `<option value="${m.nombre}" data-id="${m.id}" ${isSelected ? 'selected' : ''}>${m.nombre}</option>`;
         });
         targetSelect.innerHTML = html;
         targetSelect.disabled = false;
-        if (selectedValue) {
-            targetSelect.dispatchEvent(new Event('change'));
-        }
+        if (selectedValue) targetSelect.dispatchEvent(new Event('change'));
     } catch (e) {
-        console.error("Error cargando materias:", e);
+        console.error('Error cargando materias:', e);
     }
 }
 
@@ -655,38 +748,47 @@ async function cargarAbogados(materiaId, targetSelect, selectedValue = '') {
         let html = '<option value="">-- Seleccione Abogado --</option>';
         usuarios.forEach(u => {
             const isSelected = (u.nombre === selectedValue || u.id == selectedValue);
-            const selected = isSelected ? 'selected' : '';
-            html += `<option value="${u.nombre}" data-id="${u.id}" ${selected}>${u.nombre}</option>`;
+            html += `<option value="${u.nombre}" data-id="${u.id}" ${isSelected ? 'selected' : ''}>${u.nombre}</option>`;
         });
         targetSelect.innerHTML = html;
         targetSelect.disabled = false;
     } catch (e) {
-        console.error("Error cargando abogados:", e);
+        console.error('Error cargando abogados:', e);
     }
 }
 
 /**
  * Carga TODOS los abogados activos en el select (sin filtrar por materia).
- * Incluye data-materia-ids y data-gerencia-id para la validación al guardar.
+ * Lee primero del batch pre-cargado → instantáneo desde el segundo modal.
  */
-async function cargarTodosAbogados(targetSelect, selectedValue = '') {
-    try {
-        const loteIdInput = document.querySelector('input[name="loteId"]');
-        const loteParam = loteIdInput ? `?loteId=${loteIdInput.value}` : '';
-        const todos = await fetchCached(`/admin/importar/api/todos-abogados${loteParam}`);
-        let html = '<option value="">-- Seleccione Abogado --</option>';
-        todos.forEach(u => {
-            const isSelected = (u.nombre === selectedValue || u.id == selectedValue);
-            const selected = isSelected ? 'selected' : '';
-            const materiaIds = (u.materiaIds || []).join(',');
-            html += `<option value="${u.nombre}" data-id="${u.id}" data-materia-ids="${materiaIds}" data-gerencia-id="${u.gerenciaId || ''}" ${selected}>${u.nombre}</option>`;
-        });
-        targetSelect.innerHTML = html;
-        targetSelect.disabled = false;
-    } catch (e) {
+function cargarTodosAbogados(targetSelect, selectedValue = '') {
+    // Leer del batch si ya está disponible (síncrono)
+    if (window._catalogosBatch?.abogados) {
+        _rellenarSelectAbogados(targetSelect, window._catalogosBatch.abogados, selectedValue);
+        return Promise.resolve();
+    }
+    // Fallback asíncrono si el batch aún no llegó
+    const loteIdInput = document.querySelector('input[name="loteId"]');
+    const loteParam = loteIdInput ? `?loteId=${loteIdInput.value}` : '';
+    return fetchCached(`/admin/importar/api/todos-abogados${loteParam}`).then(todos => {
+        if (!window._catalogosBatch) window._catalogosBatch = {};
+        window._catalogosBatch.abogados = todos;
+        _rellenarSelectAbogados(targetSelect, todos, selectedValue);
+    }).catch(e => {
         console.error('Error cargando todos los abogados:', e);
         targetSelect.innerHTML = '<option value="">-- Error al cargar abogados --</option>';
-    }
+    });
+}
+
+function _rellenarSelectAbogados(targetSelect, todos, selectedValue) {
+    let html = '<option value="">-- Seleccione Abogado --</option>';
+    todos.forEach(u => {
+        const isSelected = (u.nombre === selectedValue || u.id == selectedValue);
+        const materiaIds = (u.materiaIds || []).join(',');
+        html += `<option value="${u.nombre}" data-id="${u.id}" data-materia-ids="${materiaIds}" data-gerencia-id="${u.gerenciaId || ''}" ${isSelected ? 'selected' : ''}>${u.nombre}</option>`;
+    });
+    targetSelect.innerHTML = html;
+    targetSelect.disabled = false;
 }
 
 async function cargarOrganos(gerenciaId, targetSelect, selectedValue = '') {
@@ -696,19 +798,26 @@ async function cargarOrganos(gerenciaId, targetSelect, selectedValue = '') {
         return;
     }
     try {
-        const loteIdInput = document.querySelector('input[name="loteId"]');
-        const loteParam = loteIdInput ? `?loteId=${loteIdInput.value}` : '';
-        const organos = await fetchCached(`/admin/importar/api/organos-por-gerencia/${gerenciaId}${loteParam}`);
+        let organos;
+        if (window._catalogosBatch?.organos?.[gerenciaId]) {
+            organos = window._catalogosBatch.organos[gerenciaId];
+        } else {
+            const loteIdInput = document.querySelector('input[name="loteId"]');
+            const loteParam = loteIdInput ? `?loteId=${loteIdInput.value}` : '';
+            organos = await fetchCached(`/admin/importar/api/organos-por-gerencia/${gerenciaId}${loteParam}`);
+            if (!window._catalogosBatch) window._catalogosBatch = {};
+            if (!window._catalogosBatch.organos) window._catalogosBatch.organos = {};
+            window._catalogosBatch.organos[gerenciaId] = organos;
+        }
         let html = '<option value="">-- Seleccione Órgano Jurisdiccional --</option>';
         organos.forEach(o => {
             const isSelected = (o.nombre === selectedValue || o.id == selectedValue);
-            const selected = isSelected ? 'selected' : '';
-            html += `<option value="${o.nombre}" data-id="${o.id}" ${selected}>${o.nombre}</option>`;
+            html += `<option value="${o.nombre}" data-id="${o.id}" ${isSelected ? 'selected' : ''}>${o.nombre}</option>`;
         });
         targetSelect.innerHTML = html;
         targetSelect.disabled = false;
     } catch (e) {
-        console.error("Error cargando órganos:", e);
+        console.error('Error cargando órganos:', e);
     }
 }
 
@@ -719,19 +828,26 @@ async function cargarTiposAudiencia(gerenciaId, targetSelect, selectedValue = ''
         return;
     }
     try {
-        const loteIdInput = document.querySelector('input[name="loteId"]');
-        const loteParam = loteIdInput ? `?loteId=${loteIdInput.value}` : '';
-        const tipos = await fetchCached(`/admin/importar/api/tipos-audiencia-por-gerencia/${gerenciaId}${loteParam}`);
+        let tipos;
+        if (window._catalogosBatch?.tiposAudiencia?.[gerenciaId]) {
+            tipos = window._catalogosBatch.tiposAudiencia[gerenciaId];
+        } else {
+            const loteIdInput = document.querySelector('input[name="loteId"]');
+            const loteParam = loteIdInput ? `?loteId=${loteIdInput.value}` : '';
+            tipos = await fetchCached(`/admin/importar/api/tipos-audiencia-por-gerencia/${gerenciaId}${loteParam}`);
+            if (!window._catalogosBatch) window._catalogosBatch = {};
+            if (!window._catalogosBatch.tiposAudiencia) window._catalogosBatch.tiposAudiencia = {};
+            window._catalogosBatch.tiposAudiencia[gerenciaId] = tipos;
+        }
         let html = '<option value="">-- Seleccione Tipo de Audiencia --</option>';
         tipos.forEach(t => {
             const isSelected = (t.nombre === selectedValue || t.id == selectedValue);
-            const selected = isSelected ? 'selected' : '';
-            html += `<option value="${t.nombre}" data-id="${t.id}" ${selected}>${t.nombre}</option>`;
+            html += `<option value="${t.nombre}" data-id="${t.id}" ${isSelected ? 'selected' : ''}>${t.nombre}</option>`;
         });
         targetSelect.innerHTML = html;
         targetSelect.disabled = false;
     } catch (e) {
-        console.error("Error cargando tipos de audiencia:", e);
+        console.error('Error cargando tipos de audiencia:', e);
     }
 }
 
@@ -823,30 +939,24 @@ function setupHierarchicalSelects(prefix) {
 
 document.addEventListener('DOMContentLoaded', () => {
     setupHierarchicalSelects('exp');
+    // Iniciar pre-carga de catálogos en paralelo en background
+    // así el primer modal ya tiene los datos listos (o casi).
+    preCatalogosBatch();
     // aud y term ya no tienen selects jerárquicos en sus modales
 });
+
 
 // ==========================================
 // MODALES: ETAPA 2 - EXPEDIENTES
 // ==========================================
 document.querySelectorAll('.btn-editar-registro').forEach(btn => {
     btn.addEventListener('click', async function () {
+        // Esperar a que el batch de catálogos esté listo (normalmente ya está)
+        await esperarBatch();
+
         // RESET FORM PRE-LOAD
         const formExp = document.getElementById('form-editar-expediente');
         if (formExp) formExp.reset();
-
-        document.getElementById('exp-materia').innerHTML = '<option value="">-- Cargando... --</option>';
-        document.getElementById('exp-materia').disabled = true;
-        const expOrgReset = document.getElementById('exp-organo');
-        if (expOrgReset) {
-            expOrgReset.innerHTML = '<option value="">-- Cargando... --</option>';
-            expOrgReset.disabled = true;
-        }
-        const expAbogReset = document.getElementById('exp-abogado');
-        if (expAbogReset) {
-            expAbogReset.innerHTML = '<option value="">-- Cargando... --</option>';
-            expAbogReset.disabled = true;
-        }
 
         const d = this.dataset;
         document.getElementById('exp-registro-id').value = d.registroId;
@@ -858,24 +968,22 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
         seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede, false);
 
         // ---- GERENCIA BLOQUEADA ----
-        // La gerencia se toma del dataset y se muestra en el campo visual, no en un select.
         const gerenciaNombre = (d.gerencia && d.gerencia !== 'null' && d.gerencia.trim() !== '') ? d.gerencia.trim() : 'Sin gerencia definida';
         const gerenciaId = (d.gerenciaId && d.gerenciaId !== 'null' && d.gerenciaId.trim() !== '') ? d.gerenciaId.trim() : d.gerencia?.trim();
 
-        // Mostrar en el campo visual
         const labelEl = document.getElementById('exp-gerencia-label');
         if (labelEl) labelEl.textContent = gerenciaNombre;
 
-        // Guardar en los inputs ocultos para que el formulario los envíe / el JS los lea
         const hiddenGer = document.getElementById('exp-gerencia');
         if (hiddenGer) hiddenGer.value = gerenciaNombre;
         const hiddenGerId = document.getElementById('exp-gerencia-id');
         if (hiddenGerId) hiddenGerId.value = gerenciaId || '';
 
         const materiaSel = document.getElementById('exp-materia');
+        const expOrgReset = document.getElementById('exp-organo');
         const abogadoSel = document.getElementById('exp-abogado');
 
-        // Cargar materias y organos usando la gerencia anclada
+        // Cargar materias y organos (desde batch → instantáneo)
         if (gerenciaId) {
             await Promise.all([
                 cargarMaterias(gerenciaId, materiaSel, d.materiaId || d.materia),
@@ -885,7 +993,7 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
             materiaSel.innerHTML = '<option value="">-- Sin gerencia detectada. Ajusta los catálogos --</option>';
         }
 
-        // Cargar TODOS los abogados (sin filtro de materia) y pre-seleccionar el actual
+        // Cargar TODOS los abogados (desde batch → instantáneo)
         if (abogadoSel) {
             await cargarTodosAbogados(abogadoSel, d.abogadoId || d.abogado);
         }
@@ -894,6 +1002,7 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
         modal.classList.remove('hidden'); modal.classList.add('flex');
     });
 });
+
 ['cerrar-modal-exp', 'cancelar-modal-exp'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('click', () => {
@@ -971,15 +1080,12 @@ if (formExp) {
 // ==========================================
 document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
     btn.addEventListener('click', async function () {
+        // Esperar a que el batch de catálogos esté listo
+        await esperarBatch();
+
         // RESET FORM PRE-LOAD
         const formAud = document.getElementById('form-editar-audiencia');
         if (formAud) formAud.reset();
-        ['aud-tipo', 'aud-responsable', 'aud-compareciente'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.innerHTML = '<option value="">-- Cargando opciones... --</option>';
-            }
-        });
 
         const d = this.dataset;
         document.getElementById('aud-registro-id').value = d.registroId;
@@ -991,20 +1097,18 @@ document.querySelectorAll('.btn-editar-audiencia').forEach(btn => {
         const sedeSel = document.getElementById('aud-sede');
         seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede, false);
 
-        // Optimizado: usar variables de dataset en lugar de <select>s para Etapa 3
         const activeGerenciaId = d.gerenciaId || d.gerencia;
-        const activeMateriaId = d.materiaId || d.materia;
 
         if (activeGerenciaId) {
             const audTipo = document.getElementById('aud-tipo');
             if (audTipo) await cargarTiposAudiencia(activeGerenciaId, audTipo, d.tipoAudienciaId || d.tipoAudiencia);
         }
 
-        // Cargar todos los abogados para que no dependa de si hay materia o no.
+        // Cargar todos los abogados (desde batch → instantáneo)
         await cargarTodosAbogados(document.getElementById('aud-responsable'), d.abogadoResponsableId || d.abogadoResponsable || d.abogadoId);
         await cargarTodosAbogados(document.getElementById('aud-compareciente'), d.abogadoComparecienteId || d.abogadoCompareciente || d.abogadoId);
-        
-        // Bloquear solo el responsable, el compareciente sí se puede editar
+
+        // Bloquear solo el responsable
         document.getElementById('aud-responsable').disabled = true;
 
         const esVirtual = d.esEnLinea === 'true' || d.esVirtual === 'true';
@@ -1038,12 +1142,12 @@ if (formAud) formAud.addEventListener('submit', function (e) { e.preventDefault(
 // ==========================================
 document.querySelectorAll('.btn-editar-termino').forEach(btn => {
     btn.addEventListener('click', async function () {
+        // Esperar a que el batch de catálogos esté listo
+        await esperarBatch();
+
         // RESET FORM PRE-LOAD
         const formTerm = document.getElementById('form-editar-termino');
         if (formTerm) formTerm.reset();
-
-        document.getElementById('term-abogado').innerHTML = '<option value="">-- Cargando opciones... --</option>';
-        document.getElementById('term-abogado').disabled = true;
 
         const d = this.dataset;
         document.getElementById('term-registro-id').value = d.registroId;
@@ -1057,10 +1161,7 @@ document.querySelectorAll('.btn-editar-termino').forEach(btn => {
         const sedeSel = document.getElementById('term-sede');
         if (sedeSel) seleccionarOpcionPorIdONombre(sedeSel, d.sedeId, d.sede, false);
 
-        // Optimizado: usar variables de dataset en lugar de <select>s para Etapa 4
-        const activeMateriaId = d.materiaId || d.materia;
-
-        // Cargar todos los abogados independientes de la materia
+        // Cargar todos los abogados (desde batch → instantáneo)
         await cargarTodosAbogados(document.getElementById('term-abogado'), d.abogadoId || d.abogadoResponsable);
         // Bloquear abogado responsable según solicitud de consistencia de datos
         document.getElementById('term-abogado').disabled = true;
