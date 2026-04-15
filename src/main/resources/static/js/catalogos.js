@@ -64,6 +64,13 @@ const TIPOS_CONFIG = {
         urlGuardar: '/catalogos/sedes/guardar',
         urlEliminar: '/catalogos/sedes/eliminar/',
         placeholder: 'Ej. Ciudad de México'
+    },
+    'materia': {
+        titulo: 'Materia',
+        icono: 'fa-balance-scale',
+        urlGuardar: '/catalogos/materias/guardar',
+        urlEliminar: '/catalogos/materias/eliminar/',
+        placeholder: 'Ej. Civil, Penal'
     }
 };
 

@@ -24,6 +24,15 @@ public class Estado {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     
+    @Column(name = "created_at")
+    private java.time.LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) createdAt = java.time.LocalDateTime.now();
+    }
+
+    
     @Column(unique = true)
     private String nombre; // Ej: "Ciudad de México", "Jalisco"
     

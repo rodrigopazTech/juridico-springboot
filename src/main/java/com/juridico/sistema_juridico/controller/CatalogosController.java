@@ -78,6 +78,7 @@ public class CatalogosController {
         List<TipoAudiencia> tiposAudiencia = new ArrayList<>();
         List<Usuario> abogados = new ArrayList<>();
         List<Estado> sedes = new ArrayList<>();
+        List<Materia> materias = new ArrayList<>();
 
         if (gerenciaSeleccionada != null) {
             organos = organoRepository.findByGerenciaIdAndActivoTrue(gerenciaSeleccionada.getId());
@@ -116,6 +117,8 @@ public class CatalogosController {
                     m -> new ArrayList<>(m.values())
                 ));
             sedes.sort(Comparator.comparing(Estado::getNombre, String.CASE_INSENSITIVE_ORDER));
+            
+            materias = materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(gerenciaSeleccionada.getId());
         }
 
         model.addAttribute("usuarioActual", usuarioActual);
@@ -127,7 +130,9 @@ public class CatalogosController {
         model.addAttribute("listaTiposAudiencia", tiposAudiencia);
         model.addAttribute("listaAbogados", abogados);
         model.addAttribute("listaSedes", sedes);
-        model.addAttribute("listaMaterias", materiaRepository.findByActivoTrueOrderByNombreAsc());
+        model.addAttribute("listaMaterias", materias);
+        
+        model.addAttribute("fechaLimiteNuevo", java.time.LocalDateTime.now().minusDays(7));
 
         model.addAttribute("pageTitle", "Catálogos Generales");
         model.addAttribute("activePage", "catalogos");
@@ -340,6 +345,71 @@ public class CatalogosController {
         redirectAttrs.addFlashAttribute("mensaje", "Gerencia guardada.");
         redirectAttrs.addFlashAttribute("tipo", "success");
         return "redirect:/catalogos?gerenciaId=" + gerencia.getId();
+    }
+
+    // ===============================================================
+    // CRUD - MATERIAS
+    // ===============================================================
+    @PostMapping("/materias/guardar")
+    @ResponseBody
+    public ResponseEntity<?> guardarMateriaCat(@RequestBody Map<String, String> payload) {
+        try {
+            String nombre = payload.get("nombre");
+            String idStr = payload.get("id");
+            String gerenciaIdStr = payload.get("gerenciaId");
+
+            if (nombre == null || nombre.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "El nombre es obligatorio."));
+            }
+
+            Materia materia;
+            if (idStr != null && !idStr.isEmpty()) {
+                // EDICIÓN
+                materia = materiaRepository.findById(Integer.parseInt(idStr))
+                    .orElseThrow(() -> new RuntimeException("Materia no encontrada."));
+                materia.setNombre(nombre.trim());
+            } else {
+                // CREACIÓN: buscar si existe inactiva
+                materia = materiaRepository.findByNombreIgnoreCase(nombre.trim())
+                    .filter(m -> Boolean.FALSE.equals(m.getActivo()))
+                    .orElse(null);
+
+                if (materia != null) {
+                    materia.setActivo(true);
+                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
+                        materia.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                    }
+                } else {
+                    materia = new Materia();
+                    materia.setNombre(nombre.trim());
+                    materia.setActivo(true);
+                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
+                        materia.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                    }
+                }
+            }
+
+            materiaRepository.save(materia);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Materia guardada correctamente."));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/materias/eliminar/{id}")
+    @ResponseBody
+    public ResponseEntity<?> eliminarMateriaCat(@PathVariable("id") Integer id) {
+        try {
+            materiaRepository.deleteById(id);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Materia eliminada correctamente."));
+        } catch (DataIntegrityViolationException e) {
+            Materia m = materiaRepository.findById(id).orElseThrow();
+            m.setActivo(false);
+            materiaRepository.save(m);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "La materia estaba en uso. Ha sido ocultada del catálogo."));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo eliminar: " + e.getMessage()));
+        }
     }
 
     @GetMapping("/gerencias/toggle/{id}")

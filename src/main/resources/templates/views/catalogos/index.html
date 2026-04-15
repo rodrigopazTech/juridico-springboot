@@ -51,7 +51,8 @@
             <h1 class="text-3xl font-bold text-gob-guinda flex items-center justify-center gap-3">
                 <i class="fas fa-cogs text-gob-oro"></i> Catálogos Generales
             </h1>
-            <p class="text-base text-gray-500 mt-2 max-w-2xl">Gestiona los catálogos del sistema organizados por gerencia.</p>
+            <p class="text-base text-gray-500 mt-2 max-w-2xl">Gestiona los catálogos del sistema organizados por
+                gerencia.</p>
         </div>
 
         <!-- ====== SELECTOR DE GERENCIA ====== -->
@@ -83,38 +84,7 @@
             <!-- Tabs de catálogos -->
             <div class="border-b border-gray-200 mb-8">
                 <ul class="flex flex-wrap justify-center -mb-px text-sm font-medium" id="tab-nav">
-                    <li class="mr-1">
-                        <button type="button" data-tab="organos"
-                            class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
-                            <i class="fas fa-landmark"></i> Órganos Jurisdiccionales
-                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
-                                th:text="${#lists.size(listaOrganos)}">0</span>
-                        </button>
-                    </li>
-                    <li class="mr-1">
-                        <button type="button" data-tab="tipos-audiencia"
-                            class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
-                            <i class="fas fa-gavel"></i> Tipos de Audiencia
-                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
-                                th:text="${#lists.size(listaTiposAudiencia)}">0</span>
-                        </button>
-                    </li>
-                    <li class="mr-1">
-                        <button type="button" data-tab="abogados"
-                            class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
-                            <i class="fas fa-users"></i> Usuarios/Abogados
-                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
-                                th:text="${#lists.size(listaAbogados)}">0</span>
-                        </button>
-                    </li>
-                    <li class="mr-1">
-                        <button type="button" data-tab="sedes"
-                            class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
-                            <i class="fas fa-map-marker-alt"></i> Sedes/Estados
-                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
-                                th:text="${#lists.size(listaSedes)}">0</span>
-                        </button>
-                    </li>
+
                     <li class="mr-1">
                         <button type="button" data-tab="materias"
                             class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
@@ -123,6 +93,44 @@
                                 th:text="${#lists.size(listaMaterias)}">0</span>
                         </button>
                     </li>
+
+                    <li class="mr-1">
+                        <button type="button" data-tab="organos"
+                            class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            <i class="fas fa-landmark"></i> Órganos Jurisdiccionales
+                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
+                                th:text="${#lists.size(listaOrganos)}">0</span>
+                        </button>
+                    </li>
+
+                    <li class="mr-1">
+                        <button type="button" data-tab="tipos-audiencia"
+                            class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            <i class="fas fa-gavel"></i> Tipos de Audiencia
+                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
+                                th:text="${#lists.size(listaTiposAudiencia)}">0</span>
+                        </button>
+                    </li>
+
+                    <li class="mr-1">
+                        <button type="button" data-tab="sedes"
+                            class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            <i class="fas fa-map-marker-alt"></i> Sedes/Estados
+                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
+                                th:text="${#lists.size(listaSedes)}">0</span>
+                        </button>
+                    </li>
+
+                    <li class="mr-1">
+                        <button type="button" data-tab="abogados"
+                            class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            <i class="fas fa-users"></i> Usuarios/Abogados
+                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
+                                th:text="${#lists.size(listaAbogados)}">0</span>
+                        </button>
+                    </li>
+
+
                 </ul>
             </div>
 
@@ -130,314 +138,322 @@
             <input type="hidden" id="gerencia-id-actual" th:value="${gerenciaSeleccionada.id}" />
             <input type="hidden" id="puede-editar" th:value="${puedeEditar}" />
 
-            <!-- ===================== TAB: ÓRGANOS ===================== -->
-            <div id="panel-organos" class="tab-panel hidden">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div
-                        class="px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 bg-gray-50/50">
-                        <h3 class="text-lg font-bold text-gob-gris flex items-center gap-2">
-                            <i class="fas fa-landmark text-blue-500"></i> Órganos Jurisdiccionales
-                        </h3>
-                        <div class="flex gap-2 items-center">
-                            <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i
-                                        class="fas fa-search text-xs"></i></span>
-                                <input type="text" id="search-organos" placeholder="Buscar..."
-                                    class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-52 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all">
-                            </div>
-                            <button th:if="${puedeEditar}" onclick="abrirModalNuevo('organo')"
-                                class="bg-gob-guinda text-white px-4 py-2 rounded-lg text-sm hover:bg-opacity-90 shadow-sm transition-all flex items-center gap-2">
-                                <i class="fas fa-plus"></i> Nuevo
-                            </button>
-                        </div>
-                    </div>
-                    <table class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="px-6 py-3 font-bold">Nombre</th>
-                                <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-organos" class="divide-y divide-gray-100">
-                            <tr th:each="o : ${listaOrganos}" class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <span class="font-semibold text-gray-800" th:text="${o.nombre}">Nombre</span>
-                                    <span th:if="${o.gerencia == null}"
-                                        class="ml-2 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">GLOBAL</span>
-                                </td>
-                                <td th:if="${puedeEditar}" class="px-6 py-4 text-center">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <button th:data-id="${o.id}" th:data-nombre="${o.nombre}"
-                                            onclick="editarItem('organo', this)"
-                                            class="text-gob-oro hover:text-gob-guinda transition-colors p-1.5 rounded-lg hover:bg-gob-oro/10"
-                                            title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button th:if="${o.gerencia != null}" th:data-id="${o.id}"
-                                            th:data-nombre="${o.nombre}" onclick="eliminarItem('organo', this)"
-                                            class="text-red-400 hover:text-red-600 transition-colors p-1.5 rounded-lg hover:bg-red-50"
-                                            title="Eliminar">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                        <button th:if="${o.gerencia == null}"
-                                            class="text-gray-300 cursor-not-allowed p-1.5 rounded-lg"
-                                            title="No se pueden eliminar datos globales">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(listaOrganos)}">
-                                <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
-                                    <i class="fas fa-folder-open text-2xl mb-2 block"></i>
-                                    No hay órganos jurisdiccionales registrados en esta gerencia.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <div class="max-w-5xl mx-auto">
 
-            <!-- ===================== TAB: TIPOS AUDIENCIA ===================== -->
-            <div id="panel-tipos-audiencia" class="tab-panel hidden">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div
-                        class="px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 bg-gray-50/50">
-                        <h3 class="text-lg font-bold text-gob-gris flex items-center gap-2">
-                            <i class="fas fa-gavel text-amber-500"></i> Tipos de Audiencia
-                        </h3>
-                        <div class="flex gap-2 items-center">
-                            <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i
-                                        class="fas fa-search text-xs"></i></span>
-                                <input type="text" id="search-tipos-audiencia" placeholder="Buscar..."
-                                    class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-52 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all">
-                            </div>
-                            <button th:if="${puedeEditar}" onclick="abrirModalNuevo('tipo-audiencia')"
-                                class="bg-gob-guinda text-white px-4 py-2 rounded-lg text-sm hover:bg-opacity-90 shadow-sm transition-all flex items-center gap-2">
-                                <i class="fas fa-plus"></i> Nuevo
-                            </button>
-                        </div>
-                    </div>
-                    <table class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="px-6 py-3 font-bold">Nombre</th>
-                                <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-tipos-audiencia" class="divide-y divide-gray-100">
-                            <tr th:each="t : ${listaTiposAudiencia}" class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <span class="font-semibold text-gray-800" th:text="${t.nombre}">Nombre</span>
-                                    <span th:if="${t.gerencia == null}"
-                                        class="ml-2 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">GLOBAL</span>
-                                </td>
-                                <td th:if="${puedeEditar}" class="px-6 py-4 text-center">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <button th:data-id="${t.id}" th:data-nombre="${t.nombre}"
-                                            onclick="editarItem('tipo-audiencia', this)"
-                                            class="text-gob-oro hover:text-gob-guinda transition-colors p-1.5 rounded-lg hover:bg-gob-oro/10"
-                                            title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button th:if="${t.gerencia != null}" th:data-id="${t.id}"
-                                            th:data-nombre="${t.nombre}" onclick="eliminarItem('tipo-audiencia', this)"
-                                            class="text-red-400 hover:text-red-600 transition-colors p-1.5 rounded-lg hover:bg-red-50"
-                                            title="Eliminar">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                        <button th:if="${t.gerencia == null}"
-                                            class="text-gray-300 cursor-not-allowed p-1.5 rounded-lg"
-                                            title="No se pueden eliminar datos globales">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(listaTiposAudiencia)}">
-                                <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
-                                    <i class="fas fa-folder-open text-2xl mb-2 block"></i>
-                                    No hay tipos de audiencia registrados.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- ===================== TAB: ABOGADOS ===================== -->
-            <div id="panel-abogados" class="tab-panel hidden">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div
-                        class="px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 bg-gray-50/50">
-                        <h3 class="text-lg font-bold text-gob-gris flex items-center gap-2">
-                            <i class="fas fa-users text-green-500"></i> Usuarios / Abogados
-                        </h3>
-                        <div class="flex gap-2 items-center">
-                            <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i
-                                        class="fas fa-search text-xs"></i></span>
-                                <input type="text" id="search-abogados" placeholder="Buscar..."
-                                    class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-52 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all">
+                <!-- ===================== TAB: MATERIAS ===================== -->
+                <div id="panel-materias" class="tab-panel hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div
+                            class="px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 bg-gray-50/50">
+                            <h3 class="text-lg font-bold text-gob-gris flex items-center gap-2">
+                                <i class="fas fa-balance-scale text-purple-500"></i> Materias
+                            </h3>
+                            <div class="flex gap-2 items-center">
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i
+                                            class="fas fa-search text-xs"></i></span>
+                                    <input type="text" id="search-materias" placeholder="Buscar..."
+                                        class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-52 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all">
+                                </div>
+                                <button th:if="${puedeEditar}" onclick="abrirModalNuevo('materia')"
+                                    class="bg-gob-guinda text-white px-4 py-2 rounded-lg text-sm hover:bg-opacity-90 shadow-sm transition-all flex items-center gap-2">
+                                    <i class="fas fa-plus"></i> Nueva
+                                </button>
                             </div>
                         </div>
-                    </div>
-                    <div class="px-4 py-2 bg-blue-50 border-b border-blue-100 text-xs text-blue-600">
-                        <i class="fas fa-info-circle mr-1"></i> Para gestionar usuarios completos, usa la sección de <a
-                            href="/usuarios" class="underline font-bold hover:text-blue-800">Usuarios</a>.
-                    </div>
-                    <table class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="px-6 py-3 font-bold">Nombre</th>
-                                <th class="px-6 py-3 font-bold text-center w-36">Rol</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-abogados" class="divide-y divide-gray-100">
-                            <tr th:each="u : ${listaAbogados}" class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 bg-gob-guinda/10 text-gob-guinda rounded-full flex items-center justify-center text-xs font-bold"
-                                            th:text="${#strings.substring(u.nombreCompleto, 0, 1)}">A</div>
-                                        <div>
-                                            <span class="font-semibold text-gray-800"
-                                                th:text="${u.nombreCompleto}">Nombre</span>
-                                            <div class="text-xs text-gray-400" th:text="${u.email}">email</div>
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-6 py-3 font-bold">Nombre</th>
+                                    <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-materias" class="divide-y divide-gray-100">
+                                <tr th:each="m : ${listaMaterias}" class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <span class="font-semibold text-gray-800" th:text="${m.nombre}">Nombre</span>
+                                        <span th:if="${m.createdAt != null and m.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
+                                    </td>
+                                    <td th:if="${puedeEditar}" class="px-6 py-4 text-center">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <button th:data-id="${m.id}" th:data-nombre="${m.nombre}"
+                                                onclick="editarItem('materia', this)"
+                                                class="text-gob-oro hover:text-gob-guinda transition-colors p-1.5 rounded-lg hover:bg-gob-oro/10"
+                                                title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button th:data-id="${m.id}"
+                                                th:data-nombre="${m.nombre}" onclick="eliminarItem('materia', this)"
+                                                class="text-red-400 hover:text-red-600 transition-colors p-1.5 rounded-lg hover:bg-red-50"
+                                                title="Eliminar">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
                                         </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <span class="text-xs px-2 py-1 rounded-full font-bold"
-                                        th:classappend="${u.rol.name() == 'GERENTE' ? 'bg-purple-100 text-purple-700' : 
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(listaMaterias)}">
+                                    <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
+                                        <i class="fas fa-folder-open text-2xl mb-2 block"></i>
+                                        No hay materias registradas en el sistema.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+
+                <!-- ===================== TAB: ÓRGANOS ===================== -->
+                <div id="panel-organos" class="tab-panel hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div
+                            class="px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 bg-gray-50/50">
+                            <h3 class="text-lg font-bold text-gob-gris flex items-center gap-2">
+                                <i class="fas fa-landmark text-blue-500"></i> Órganos Jurisdiccionales
+                            </h3>
+                            <div class="flex gap-2 items-center">
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i
+                                            class="fas fa-search text-xs"></i></span>
+                                    <input type="text" id="search-organos" placeholder="Buscar..."
+                                        class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-52 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all">
+                                </div>
+                                <button th:if="${puedeEditar}" onclick="abrirModalNuevo('organo')"
+                                    class="bg-gob-guinda text-white px-4 py-2 rounded-lg text-sm hover:bg-opacity-90 shadow-sm transition-all flex items-center gap-2">
+                                    <i class="fas fa-plus"></i> Nuevo
+                                </button>
+                            </div>
+                        </div>
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-6 py-3 font-bold">Nombre</th>
+                                    <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-organos" class="divide-y divide-gray-100">
+                                <tr th:each="o : ${listaOrganos}" class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <span class="font-semibold text-gray-800" th:text="${o.nombre}">Nombre</span>
+                                        <span th:if="${o.createdAt != null and o.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
+                                    </td>
+                                    <td th:if="${puedeEditar}" class="px-6 py-4 text-center">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <button th:data-id="${o.id}" th:data-nombre="${o.nombre}"
+                                                onclick="editarItem('organo', this)"
+                                                class="text-gob-oro hover:text-gob-guinda transition-colors p-1.5 rounded-lg hover:bg-gob-oro/10"
+                                                title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button th:data-id="${o.id}"
+                                                th:data-nombre="${o.nombre}" onclick="eliminarItem('organo', this)"
+                                                class="text-red-400 hover:text-red-600 transition-colors p-1.5 rounded-lg hover:bg-red-50"
+                                                title="Eliminar">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(listaOrganos)}">
+                                    <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
+                                        <i class="fas fa-folder-open text-2xl mb-2 block"></i>
+                                        No hay órganos jurisdiccionales registrados en esta gerencia.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ===================== TAB: TIPOS AUDIENCIA ===================== -->
+                <div id="panel-tipos-audiencia" class="tab-panel hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div
+                            class="px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 bg-gray-50/50">
+                            <h3 class="text-lg font-bold text-gob-gris flex items-center gap-2">
+                                <i class="fas fa-gavel text-amber-500"></i> Tipos de Audiencia
+                            </h3>
+                            <div class="flex gap-2 items-center">
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i
+                                            class="fas fa-search text-xs"></i></span>
+                                    <input type="text" id="search-tipos-audiencia" placeholder="Buscar..."
+                                        class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-52 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all">
+                                </div>
+                                <button th:if="${puedeEditar}" onclick="abrirModalNuevo('tipo-audiencia')"
+                                    class="bg-gob-guinda text-white px-4 py-2 rounded-lg text-sm hover:bg-opacity-90 shadow-sm transition-all flex items-center gap-2">
+                                    <i class="fas fa-plus"></i> Nuevo
+                                </button>
+                            </div>
+                        </div>
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-6 py-3 font-bold">Nombre</th>
+                                    <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-tipos-audiencia" class="divide-y divide-gray-100">
+                                <tr th:each="t : ${listaTiposAudiencia}" class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <span class="font-semibold text-gray-800" th:text="${t.nombre}">Nombre</span>
+                                        <span th:if="${t.createdAt != null and t.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
+                                    </td>
+                                    <td th:if="${puedeEditar}" class="px-6 py-4 text-center">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <button th:data-id="${t.id}" th:data-nombre="${t.nombre}"
+                                                onclick="editarItem('tipo-audiencia', this)"
+                                                class="text-gob-oro hover:text-gob-guinda transition-colors p-1.5 rounded-lg hover:bg-gob-oro/10"
+                                                title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button th:data-id="${t.id}"
+                                                th:data-nombre="${t.nombre}"
+                                                onclick="eliminarItem('tipo-audiencia', this)"
+                                                class="text-red-400 hover:text-red-600 transition-colors p-1.5 rounded-lg hover:bg-red-50"
+                                                title="Eliminar">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(listaTiposAudiencia)}">
+                                    <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
+                                        <i class="fas fa-folder-open text-2xl mb-2 block"></i>
+                                        No hay tipos de audiencia registrados.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ===================== TAB: ABOGADOS ===================== -->
+                <div id="panel-abogados" class="tab-panel hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div
+                            class="px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 bg-gray-50/50">
+                            <h3 class="text-lg font-bold text-gob-gris flex items-center gap-2">
+                                <i class="fas fa-users text-green-500"></i> Usuarios / Abogados
+                            </h3>
+                            <div class="flex gap-2 items-center">
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i
+                                            class="fas fa-search text-xs"></i></span>
+                                    <input type="text" id="search-abogados" placeholder="Buscar..."
+                                        class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-52 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="px-4 py-2 bg-blue-50 border-b border-blue-100 text-xs text-blue-600">
+                            <i class="fas fa-info-circle mr-1"></i> Para gestionar usuarios completos, usa la sección de
+                            <a href="/usuarios" class="underline font-bold hover:text-blue-800">Usuarios</a>.
+                        </div>
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-6 py-3 font-bold">Nombre</th>
+                                    <th class="px-6 py-3 font-bold text-center w-36">Rol</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-abogados" class="divide-y divide-gray-100">
+                                <tr th:each="u : ${listaAbogados}" class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 bg-gob-guinda/10 text-gob-guinda rounded-full flex items-center justify-center text-xs font-bold"
+                                                th:text="${#strings.substring(u.nombreCompleto, 0, 1)}">A</div>
+                                            <div>
+                                                <span class="font-semibold text-gray-800"
+                                                    th:text="${u.nombreCompleto}">Nombre</span>
+                                                <div class="text-xs text-gray-400" th:text="${u.email}">email</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <span class="text-xs px-2 py-1 rounded-full font-bold"
+                                            th:classappend="${u.rol.name() == 'GERENTE' ? 'bg-purple-100 text-purple-700' : 
                                                            (u.rol.name() == 'JEFE_DEPTO' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700')}"
-                                        th:text="${u.rol.name()}">ROL</span>
-                                </td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(listaAbogados)}">
-                                <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
-                                    <i class="fas fa-folder-open text-2xl mb-2 block"></i>
-                                    No hay usuarios asignados a esta gerencia.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- ===================== TAB: SEDES ===================== -->
-            <div id="panel-sedes" class="tab-panel hidden">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div
-                        class="px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 bg-gray-50/50">
-                        <h3 class="text-lg font-bold text-gob-gris flex items-center gap-2">
-                            <i class="fas fa-map-marker-alt text-red-500"></i> Sedes / Estados
-                        </h3>
-                        <div class="flex gap-2 items-center">
-                            <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i
-                                        class="fas fa-search text-xs"></i></span>
-                                <input type="text" id="search-sedes" placeholder="Buscar..."
-                                    class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-52 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all">
-                            </div>
-                            <button th:if="${puedeEditar}" onclick="abrirModalNuevo('sede')"
-                                class="bg-gob-guinda text-white px-4 py-2 rounded-lg text-sm hover:bg-opacity-90 shadow-sm transition-all flex items-center gap-2">
-                                <i class="fas fa-plus"></i> Nueva
-                            </button>
-                        </div>
+                                            th:text="${u.rol.name()}">ROL</span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(listaAbogados)}">
+                                    <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
+                                        <i class="fas fa-folder-open text-2xl mb-2 block"></i>
+                                        No hay usuarios asignados a esta gerencia.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <table class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="px-6 py-3 font-bold">Nombre</th>
-                                <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-sedes" class="divide-y divide-gray-100">
-                            <tr th:each="s : ${listaSedes}" class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <span class="font-semibold text-gray-800" th:text="${s.nombre}">Nombre</span>
-                                    <span th:if="${s.gerencia == null}"
-                                        class="ml-2 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">GLOBAL</span>
-                                </td>
-                                <td th:if="${puedeEditar}" class="px-6 py-4 text-center">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <button th:data-id="${s.id}" th:data-nombre="${s.nombre}"
-                                            onclick="editarItem('sede', this)"
-                                            class="text-gob-oro hover:text-gob-guinda transition-colors p-1.5 rounded-lg hover:bg-gob-oro/10"
-                                            title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button th:if="${s.gerencia != null}" th:data-id="${s.id}"
-                                            th:data-nombre="${s.nombre}" onclick="eliminarItem('sede', this)"
-                                            class="text-red-400 hover:text-red-600 transition-colors p-1.5 rounded-lg hover:bg-red-50"
-                                            title="Eliminar">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                        <button th:if="${s.gerencia == null}"
-                                            class="text-gray-300 cursor-not-allowed p-1.5 rounded-lg"
-                                            title="No se pueden eliminar datos globales">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(listaSedes)}">
-                                <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
-                                    <i class="fas fa-folder-open text-2xl mb-2 block"></i>
-                                    No hay sedes/estados registrados.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
                 </div>
-            </div>
 
-            <!-- ===================== TAB: MATERIAS ===================== -->
-            <div id="panel-materias" class="tab-panel hidden">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div
-                        class="px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 bg-gray-50/50">
-                        <h3 class="text-lg font-bold text-gob-gris flex items-center gap-2">
-                            <i class="fas fa-balance-scale text-purple-500"></i> Materias
-                        </h3>
-                        <div class="flex gap-2 items-center">
-                            <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i
-                                        class="fas fa-search text-xs"></i></span>
-                                <input type="text" id="search-materias" placeholder="Buscar..."
-                                    class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-52 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all">
+                <!-- ===================== TAB: SEDES ===================== -->
+                <div id="panel-sedes" class="tab-panel hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div
+                            class="px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 bg-gray-50/50">
+                            <h3 class="text-lg font-bold text-gob-gris flex items-center gap-2">
+                                <i class="fas fa-map-marker-alt text-red-500"></i> Sedes / Estados
+                            </h3>
+                            <div class="flex gap-2 items-center">
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i
+                                            class="fas fa-search text-xs"></i></span>
+                                    <input type="text" id="search-sedes" placeholder="Buscar..."
+                                        class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-52 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all">
+                                </div>
+                                <button th:if="${puedeEditar}" onclick="abrirModalNuevo('sede')"
+                                    class="bg-gob-guinda text-white px-4 py-2 rounded-lg text-sm hover:bg-opacity-90 shadow-sm transition-all flex items-center gap-2">
+                                    <i class="fas fa-plus"></i> Nueva
+                                </button>
                             </div>
                         </div>
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-6 py-3 font-bold">Nombre</th>
+                                    <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-sedes" class="divide-y divide-gray-100">
+                                <tr th:each="s : ${listaSedes}" class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <span class="font-semibold text-gray-800" th:text="${s.nombre}">Nombre</span>
+                                        <span th:if="${s.createdAt != null and s.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
+                                    </td>
+                                    <td th:if="${puedeEditar}" class="px-6 py-4 text-center">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <button th:data-id="${s.id}" th:data-nombre="${s.nombre}"
+                                                onclick="editarItem('sede', this)"
+                                                class="text-gob-oro hover:text-gob-guinda transition-colors p-1.5 rounded-lg hover:bg-gob-oro/10"
+                                                title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button th:data-id="${s.id}"
+                                                th:data-nombre="${s.nombre}" onclick="eliminarItem('sede', this)"
+                                                class="text-red-400 hover:text-red-600 transition-colors p-1.5 rounded-lg hover:bg-red-50"
+                                                title="Eliminar">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(listaSedes)}">
+                                    <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
+                                        <i class="fas fa-folder-open text-2xl mb-2 block"></i>
+                                        No hay sedes/estados registrados.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="px-4 py-2 bg-purple-50 border-b border-purple-100 text-xs text-purple-600">
-                        <i class="fas fa-info-circle mr-1"></i> Las materias son datos globales gestionados automáticamente por el sistema. No pueden editarse desde aquí.
-                    </div>
-                    <table class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="px-6 py-3 font-bold">Nombre</th>
-                                <th class="px-6 py-3 font-bold">Descripción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-materias" class="divide-y divide-gray-100">
-                            <tr th:each="m : ${listaMaterias}" class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <span class="font-semibold text-gray-800" th:text="${m.nombre}">Nombre</span>
-                                    <span class="ml-2 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">GLOBAL</span>
-                                </td>
-                                <td class="px-6 py-4 text-gray-500 text-xs italic" th:text="${m.descripcion != null ? m.descripcion : '—'}">—</td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(listaMaterias)}">
-                                <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
-                                    <i class="fas fa-folder-open text-2xl mb-2 block"></i>
-                                    No hay materias registradas en el sistema.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
                 </div>
-            </div>
+
+            </div> <!-- End max-w-5xl -->
 
         </div>
 
