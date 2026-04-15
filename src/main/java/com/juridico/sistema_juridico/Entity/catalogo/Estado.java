@@ -26,4 +26,7 @@ public class Estado {
     
     @Column(unique = true)
     private String nombre; // Ej: "Ciudad de México", "Jalisco"
+    
+    @Builder.Default
+    private Boolean activo = true;
 }

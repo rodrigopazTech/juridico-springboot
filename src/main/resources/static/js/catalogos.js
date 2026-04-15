@@ -241,6 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSearch('search-tipos-audiencia', 'tbody-tipos-audiencia');
     setupSearch('search-abogados', 'tbody-abogados');
     setupSearch('search-sedes', 'tbody-sedes');
+    setupSearch('search-materias', 'tbody-materias');
 
     // Cerrar modal con Escape
     document.addEventListener('keydown', e => {

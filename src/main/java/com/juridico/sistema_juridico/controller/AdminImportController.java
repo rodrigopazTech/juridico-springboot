@@ -86,14 +86,14 @@ public class AdminImportController {
             
             model.addAttribute("mapeosNuevos", mapeosNuevos);
 
-            // Catálogos Oficiales siempre disponibles para los pasos de edición
+            // Catálogos Oficiales — solo valores activos disponibles para nuevas inserciones
             model.addAttribute("gerenciasDB", gerenciaRepository.findAll());
-            model.addAttribute("materiasDB", materiaRepository.findAll());
-            model.addAttribute("organosDB", organoRepository.findAll());
-            model.addAttribute("tiposAudDB", tipoAudienciaRepository.findAll());
+            model.addAttribute("materiasDB", materiaRepository.findByActivoTrueOrderByNombreAsc());
+            model.addAttribute("organosDB", organoRepository.findByActivoTrue());
+            model.addAttribute("tiposAudDB", tipoAudienciaRepository.findByActivoTrue());
             model.addAttribute("usuariosDB", usuarioRepository.findAll());
             model.addAttribute("prioridadesDB", catPrioridadRepository.findAll());
-            model.addAttribute("sedesDB", estadoRepository.findAll());
+            model.addAttribute("sedesDB", estadoRepository.findByActivoTrue());
             model.addAttribute("etapas", EtapaProcesal.values());
 
             switch (loteActivo.getPasoActual()) {

@@ -325,7 +325,7 @@
                         }
                         break;
                     case "SEDE":
-                        estadoRepository.findAll().stream()
+                        estadoRepository.findByActivoTrue().stream()
                             .filter(e -> e.getNombre().equalsIgnoreCase(valor))
                             .findFirst().ifPresent(e -> {
                                 c.setIdMapeado(e.getId().longValue());
@@ -335,39 +335,47 @@
                     case "ORGANO":
                         if (finalGerencia != null) {
                             java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional> opt = organoRepository.findByNombreIgnoreCaseAndGerenciaId(searchFinal, finalGerencia.getId());
-                            if (opt.isPresent()) {
+                            if (opt.isPresent() && Boolean.TRUE.equals(opt.get().getActivo())) {
                                 c.setIdMapeado(opt.get().getId().longValue());
                                 c.setEstatus("MAPEADO");
                             } else {
-                                organoRepository.findByNombreIgnoreCase(searchFinal).ifPresent(o -> {
+                                organoRepository.findByNombreIgnoreCase(searchFinal)
+                                    .filter(o -> Boolean.TRUE.equals(o.getActivo()))
+                                    .ifPresent(o -> {
+                                        c.setIdMapeado(o.getId().longValue());
+                                        c.setEstatus("MAPEADO");
+                                    });
+                            }
+                        } else {
+                            organoRepository.findByNombreIgnoreCase(searchFinal)
+                                .filter(o -> Boolean.TRUE.equals(o.getActivo()))
+                                .ifPresent(o -> {
                                     c.setIdMapeado(o.getId().longValue());
                                     c.setEstatus("MAPEADO");
                                 });
-                            }
-                        } else {
-                            organoRepository.findByNombreIgnoreCase(searchFinal).ifPresent(o -> {
-                                c.setIdMapeado(o.getId().longValue());
-                                c.setEstatus("MAPEADO");
-                            });
                         }
                         break;
                     case "TIPO_AUDIENCIA":
                         if (finalGerencia != null) {
                             java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia> opt = tipoAudienciaRepository.findByNombreIgnoreCaseAndGerenciaId(searchFinal, finalGerencia.getId());
-                            if (opt.isPresent()) {
+                            if (opt.isPresent() && Boolean.TRUE.equals(opt.get().getActivo())) {
                                 c.setIdMapeado(opt.get().getId().longValue());
                                 c.setEstatus("MAPEADO");
                             } else {
-                                tipoAudienciaRepository.findByNombreIgnoreCase(searchFinal).ifPresent(t -> {
+                                tipoAudienciaRepository.findByNombreIgnoreCase(searchFinal)
+                                    .filter(t -> Boolean.TRUE.equals(t.getActivo()))
+                                    .ifPresent(t -> {
+                                        c.setIdMapeado(t.getId().longValue());
+                                        c.setEstatus("MAPEADO");
+                                    });
+                            }
+                        } else {
+                            tipoAudienciaRepository.findByNombreIgnoreCase(searchFinal)
+                                .filter(t -> Boolean.TRUE.equals(t.getActivo()))
+                                .ifPresent(t -> {
                                     c.setIdMapeado(t.getId().longValue());
                                     c.setEstatus("MAPEADO");
                                 });
-                            }
-                        } else {
-                            tipoAudienciaRepository.findByNombreIgnoreCase(searchFinal).ifPresent(t -> {
-                                c.setIdMapeado(t.getId().longValue());
-                                c.setEstatus("MAPEADO");
-                            });
                         }
                         break;
                     case "USUARIO":

@@ -14,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -79,9 +80,9 @@ public class CatalogosController {
         List<Estado> sedes = new ArrayList<>();
 
         if (gerenciaSeleccionada != null) {
-            organos = organoRepository.findByGerenciaId(gerenciaSeleccionada.getId());
+            organos = organoRepository.findByGerenciaIdAndActivoTrue(gerenciaSeleccionada.getId());
             // Incluir órganos sin gerencia asignada
-            organos.addAll(organoRepository.findByGerenciaIsNull());
+            organos.addAll(organoRepository.findByGerenciaIsNullAndActivoTrue());
             // Eliminar duplicados por id
             organos = organos.stream()
                 .collect(Collectors.collectingAndThen(
@@ -90,9 +91,9 @@ public class CatalogosController {
                 ));
             organos.sort(Comparator.comparing(OrganoJurisdiccional::getNombre, String.CASE_INSENSITIVE_ORDER));
 
-            tiposAudiencia = tipoAudienciaRepository.findByGerenciaId(gerenciaSeleccionada.getId());
+            tiposAudiencia = tipoAudienciaRepository.findByGerenciaIdAndActivoTrue(gerenciaSeleccionada.getId());
             // Incluir tipos sin gerencia asignada (globales)
-            tiposAudiencia.addAll(tipoAudienciaRepository.findByGerenciaIsNull());
+            tiposAudiencia.addAll(tipoAudienciaRepository.findByGerenciaIsNullAndActivoTrue());
             tiposAudiencia = tiposAudiencia.stream()
                 .collect(Collectors.collectingAndThen(
                     Collectors.toMap(TipoAudiencia::getId, t -> t, (a, b) -> a),
@@ -106,9 +107,9 @@ public class CatalogosController {
                 .sorted(Comparator.comparing(Usuario::getNombreCompleto, String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toList());
 
-            sedes = estadoRepository.findByGerenciaId(gerenciaSeleccionada.getId());
+            sedes = estadoRepository.findByGerenciaIdAndActivoTrue(gerenciaSeleccionada.getId());
             // Incluir sedes sin gerencia
-            sedes.addAll(estadoRepository.findByGerenciaIsNull());
+            sedes.addAll(estadoRepository.findByGerenciaIsNullAndActivoTrue());
             sedes = sedes.stream()
                 .collect(Collectors.collectingAndThen(
                     Collectors.toMap(Estado::getId, e -> e, (a, b) -> a),
@@ -126,6 +127,7 @@ public class CatalogosController {
         model.addAttribute("listaTiposAudiencia", tiposAudiencia);
         model.addAttribute("listaAbogados", abogados);
         model.addAttribute("listaSedes", sedes);
+        model.addAttribute("listaMaterias", materiaRepository.findByActivoTrueOrderByNombreAsc());
 
         model.addAttribute("pageTitle", "Catálogos Generales");
         model.addAttribute("activePage", "catalogos");
@@ -150,14 +152,28 @@ public class CatalogosController {
 
             OrganoJurisdiccional organo;
             if (idStr != null && !idStr.isEmpty()) {
+                // EDICIÓN
                 organo = usuarioService.buscarOrganoPorId(Integer.parseInt(idStr));
                 organo.setNombre(nombre.trim());
             } else {
-                organo = new OrganoJurisdiccional();
-                organo.setNombre(nombre.trim());
-                organo.setActivo(true);
-                if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
-                    organo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                // CREACIÓN: buscar si ya existe uno inactivo con el mismo nombre
+                organo = organoRepository.findByNombreIgnoreCase(nombre.trim())
+                    .filter(o -> Boolean.FALSE.equals(o.getActivo()))
+                    .orElse(null);
+
+                if (organo != null) {
+                    // Reactivar el existente
+                    organo.setActivo(true);
+                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
+                        organo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                    }
+                } else {
+                    organo = new OrganoJurisdiccional();
+                    organo.setNombre(nombre.trim());
+                    organo.setActivo(true);
+                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
+                        organo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                    }
                 }
             }
 
@@ -174,6 +190,11 @@ public class CatalogosController {
         try {
             usuarioService.eliminarOrgano(id);
             return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Órgano eliminado correctamente."));
+        } catch (DataIntegrityViolationException e) {
+            OrganoJurisdiccional o = usuarioService.buscarOrganoPorId(id);
+            o.setActivo(false);
+            organoRepository.save(o);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "El valor estaba en uso. Ha sido ocultado del catálogo."));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo eliminar: " + e.getMessage()));
         }
@@ -196,14 +217,28 @@ public class CatalogosController {
 
             TipoAudiencia tipo;
             if (idStr != null && !idStr.isEmpty()) {
+                // EDICIÓN
                 tipo = usuarioService.buscarTipoAudienciaPorId(Integer.parseInt(idStr));
                 tipo.setNombre(nombre.trim());
             } else {
-                tipo = new TipoAudiencia();
-                tipo.setNombre(nombre.trim());
-                tipo.setActivo(true);
-                if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
-                    tipo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                // CREACIÓN: buscar si ya existe uno inactivo con el mismo nombre
+                tipo = tipoAudienciaRepository.findByNombreIgnoreCase(nombre.trim())
+                    .filter(t -> Boolean.FALSE.equals(t.getActivo()))
+                    .orElse(null);
+
+                if (tipo != null) {
+                    // Reactivar el existente
+                    tipo.setActivo(true);
+                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
+                        tipo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                    }
+                } else {
+                    tipo = new TipoAudiencia();
+                    tipo.setNombre(nombre.trim());
+                    tipo.setActivo(true);
+                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
+                        tipo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                    }
                 }
             }
 
@@ -220,6 +255,11 @@ public class CatalogosController {
         try {
             usuarioService.eliminarTipoAudiencia(id);
             return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Tipo de Audiencia eliminado correctamente."));
+        } catch (DataIntegrityViolationException e) {
+            TipoAudiencia t = usuarioService.buscarTipoAudienciaPorId(id);
+            t.setActivo(false);
+            tipoAudienciaRepository.save(t);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "El valor estaba en uso. Ha sido ocultado del catálogo."));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo eliminar: " + e.getMessage()));
         }
@@ -242,14 +282,29 @@ public class CatalogosController {
 
             Estado estado;
             if (idStr != null && !idStr.isEmpty()) {
+                // EDICIÓN
                 estado = estadoRepository.findById(Integer.parseInt(idStr))
                     .orElseThrow(() -> new RuntimeException("Sede no encontrada."));
                 estado.setNombre(nombre.trim());
             } else {
-                estado = new Estado();
-                estado.setNombre(nombre.trim());
-                if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
-                    estado.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                // CREACIÓN: buscar si ya existe uno inactivo con el mismo nombre
+                estado = estadoRepository.findByNombreIgnoreCase(nombre.trim())
+                    .filter(e -> Boolean.FALSE.equals(e.getActivo()))
+                    .orElse(null);
+
+                if (estado != null) {
+                    // Reactivar el existente
+                    estado.setActivo(true);
+                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
+                        estado.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                    }
+                } else {
+                    estado = new Estado();
+                    estado.setNombre(nombre.trim());
+                    estado.setActivo(true);
+                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
+                        estado.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                    }
                 }
             }
 
@@ -266,6 +321,11 @@ public class CatalogosController {
         try {
             estadoRepository.deleteById(id);
             return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Sede/Estado eliminado correctamente."));
+        } catch (DataIntegrityViolationException e) {
+            Estado s = estadoRepository.findById(id).orElseThrow();
+            s.setActivo(false);
+            estadoRepository.save(s);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "El valor estaba en uso. Ha sido ocultado del catálogo."));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo eliminar: " + e.getMessage()));
         }

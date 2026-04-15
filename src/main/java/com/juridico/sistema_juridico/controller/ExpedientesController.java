@@ -168,10 +168,10 @@ public class ExpedientesController {
         model.addAttribute("gerencias", gerenciaRepository.findAll());
         model.addAttribute("materias", materiaRepository.findAll());
 
-        model.addAttribute("organos", organoRepository.findAll());
+        model.addAttribute("organos", organoRepository.findByActivoTrue());
         model.addAttribute("usuarios", usuarioRepository.findAll());
         model.addAttribute("prioridades", catPrioridadRepository.findAll());
-        model.addAttribute("estados", estadoRepository.findAllByOrderByNombreAsc());
+        model.addAttribute("estados", estadoRepository.findAllByActivoTrueOrderByNombreAsc());
         model.addAttribute("etiquetas", etiquetaRepository.findAll());
         model.addAttribute("usuarioActual", usuario);
 
@@ -454,13 +454,13 @@ public class ExpedientesController {
 
         model.addAttribute("gerencias", gerenciaRepository.findAll());
 
-        model.addAttribute("organos", organoRepository.findAll());
+        model.addAttribute("organos", organoRepository.findByActivoTrue());
         model.addAttribute("usuarios", usuarioRepository.findAll());
         model.addAttribute("prioridades", catPrioridadRepository.findAll());
-        model.addAttribute("estados", estadoRepository.findAll());
+        model.addAttribute("estados", estadoRepository.findByActivoTrue());
         model.addAttribute("etapas", EtapaProcesal.values());
-        model.addAttribute("materias", materiaRepository.findAll());
-        model.addAttribute("tipos", tipoAudienciaRepository.findAll());
+        model.addAttribute("materias", materiaRepository.findByActivoTrueOrderByNombreAsc());
+        model.addAttribute("tipos", tipoAudienciaRepository.findByActivoTrue());
         model.addAttribute("pageTitle", "Detalle del Expediente");
         model.addAttribute("activePage", "expedientes");
 

@@ -195,11 +195,11 @@ public class AudienciasController {
         }
         model.addAttribute("expedientesList", expedientesParaDropdown);
 
-        // Listas generales
-        model.addAttribute("listaTiposAudiencia", tipoAudienciaRepository.findAll());
+        // Listas generales — solo valores activos
+        model.addAttribute("listaTiposAudiencia", tipoAudienciaRepository.findByActivoTrue());
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
-        model.addAttribute("listaMaterias", materiaRepository.findAll());
-        model.addAttribute("tipos", tipoAudienciaRepository.findAll());
+        model.addAttribute("listaMaterias", materiaRepository.findByActivoTrueOrderByNombreAsc());
+        model.addAttribute("tipos", tipoAudienciaRepository.findByActivoTrue());
 
         // --- FILTRO DE ABOGADOS EN MODAL ---
         // (Aunque esto no estaba en el requerimiento del fantasma, lo alineamos para
