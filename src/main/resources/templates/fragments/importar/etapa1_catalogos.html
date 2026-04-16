@@ -7,10 +7,8 @@
       Empareja los textos detectados con los catálogos y cuentas oficiales del sistema.
     </p>
 
-    <div
-      th:if="${#maps.isEmpty(catalogosAgrupados)}"
-      class="text-center p-8 bg-green-50 rounded-xl border border-green-200"
-    >
+    <div th:if="${#maps.isEmpty(catalogosAgrupados)}"
+      class="text-center p-8 bg-green-50 rounded-xl border border-green-200">
       <i class="fas fa-check-circle text-4xl text-gob-verde mb-3"></i>
       <h3 class="font-bold text-lg text-green-800">
         No se detectaron catálogos sucios.
@@ -21,49 +19,64 @@
       <form th:action="@{/admin/importar/mapear-catalogos}" method="post" class="mt-5">
         <input type="hidden" name="loteId" th:value="${lote.id}" />
         <button type="submit"
-          class="bg-gob-oro text-white px-8 py-3 rounded-xl font-bold shadow hover:bg-[#a37e46] transition">
+          class="bg-gob-verde text-white px-8 py-3 rounded-xl font-bold shadow hover:bg-[#132c26] transition">
           Continuar a Expedientes <i class="fas fa-arrow-right ml-2"></i>
         </button>
       </form>
     </div>
 
-    <form
-      th:action="@{/admin/importar/mapear-catalogos}"
-      method="post"
-      th:if="${not #maps.isEmpty(catalogosAgrupados)}"
-    >
+    <form th:action="@{/admin/importar/mapear-catalogos}" method="post"
+      th:if="${not #maps.isEmpty(catalogosAgrupados)}">
       <input type="hidden" name="loteId" th:value="${lote.id}" />
 
       <div class="border-b border-gray-200 mb-6">
         <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="tab-lista">
           <li class="mr-2" th:if="${catalogosAgrupados.containsKey('GERENCIA')}">
-            <button type="button" class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300" data-target="tab-gerencia">
-              <i class="fas fa-building mr-2"></i> Gerencias (<span th:text="${#lists.size(catalogosAgrupados['GERENCIA'])}"></span>)
+            <button type="button"
+              class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300"
+              data-target="tab-gerencia">
+              <i class="fas fa-building mr-2"></i> Gerencias (<span
+                th:text="${#lists.size(catalogosAgrupados['GERENCIA'])}"></span>)
             </button>
           </li>
           <li class="mr-2" th:if="${catalogosAgrupados.containsKey('MATERIA')}">
-            <button type="button" class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300" data-target="tab-materia">
-              <i class="fas fa-balance-scale mr-2"></i> Materias (<span th:text="${#lists.size(catalogosAgrupados['MATERIA'])}"></span>)
+            <button type="button"
+              class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300"
+              data-target="tab-materia">
+              <i class="fas fa-balance-scale mr-2"></i> Materias (<span
+                th:text="${#lists.size(catalogosAgrupados['MATERIA'])}"></span>)
             </button>
           </li>
           <li class="mr-2" th:if="${catalogosAgrupados.containsKey('ORGANO')}">
-            <button type="button" class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300" data-target="tab-organo">
-              <i class="fas fa-landmark mr-2"></i> Órganos Jurisd. (<span th:text="${#lists.size(catalogosAgrupados['ORGANO'])}"></span>)
+            <button type="button"
+              class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300"
+              data-target="tab-organo">
+              <i class="fas fa-landmark mr-2"></i> Órganos Jurisd. (<span
+                th:text="${#lists.size(catalogosAgrupados['ORGANO'])}"></span>)
             </button>
           </li>
           <li class="mr-2" th:if="${catalogosAgrupados.containsKey('TIPO_AUDIENCIA')}">
-            <button type="button" class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300" data-target="tab-tipo_audiencia">
-              <i class="fas fa-gavel mr-2"></i> Tipos de Audiencia (<span th:text="${#lists.size(catalogosAgrupados['TIPO_AUDIENCIA'])}"></span>)
+            <button type="button"
+              class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300"
+              data-target="tab-tipo_audiencia">
+              <i class="fas fa-gavel mr-2"></i> Tipos de Audiencia (<span
+                th:text="${#lists.size(catalogosAgrupados['TIPO_AUDIENCIA'])}"></span>)
             </button>
           </li>
           <li class="mr-2" th:if="${catalogosAgrupados.containsKey('USUARIO')}">
-            <button type="button" class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300" data-target="tab-usuario">
-              <i class="fas fa-users mr-2"></i> Usuarios/Abogados (<span th:text="${#lists.size(catalogosAgrupados['USUARIO'])}"></span>)
+            <button type="button"
+              class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300"
+              data-target="tab-usuario">
+              <i class="fas fa-users mr-2"></i> Usuarios/Abogados (<span
+                th:text="${#lists.size(catalogosAgrupados['USUARIO'])}"></span>)
             </button>
           </li>
           <li class="mr-2" th:if="${catalogosAgrupados.containsKey('SEDE')}">
-            <button type="button" class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300" data-target="tab-sede">
-              <i class="fas fa-map-marker-alt mr-2"></i> Sedes/Estados (<span th:text="${#lists.size(catalogosAgrupados['SEDE'])}"></span>)
+            <button type="button"
+              class="inline-block p-4 border-b-2 rounded-t-lg tab-btn border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300"
+              data-target="tab-sede">
+              <i class="fas fa-map-marker-alt mr-2"></i> Sedes/Estados (<span
+                th:text="${#lists.size(catalogosAgrupados['SEDE'])}"></span>)
             </button>
           </li>
         </ul>
@@ -71,10 +84,8 @@
 
       <div id="tab-contenedores" class="min-h-[300px]">
         <th:block th:each="grupo : ${catalogosAgrupados}">
-          <div
-            th:id="'tab-' + ${#strings.toLowerCase(grupo.key)}"
-            class="tab-panel hidden bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-          >
+          <div th:id="'tab-' + ${#strings.toLowerCase(grupo.key)}"
+            class="tab-panel hidden bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
               <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-xs tracking-wider">
                 <tr>
@@ -83,55 +94,58 @@
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr th:each="cat : ${grupo.value}" class="hover:bg-gray-50 transition" 
-                    th:id="'fila-' + ${cat.id}"
-                    th:classappend="${cat.idMapeado != null ? 'bg-green-50' : ''}">
-                  
+                <tr th:each="cat : ${grupo.value}" class="hover:bg-gray-50 transition" th:id="'fila-' + ${cat.id}"
+                  th:classappend="${cat.idMapeado != null ? 'bg-green-50' : ''}">
+
                   <td class="px-6 py-4">
                     <!-- Texto original (visible por defecto) -->
                     <div class="flex items-center gap-2" th:id="'texto-display-' + ${cat.id}">
-                      <span class="font-bold text-base" 
-                            th:classappend="${cat.idMapeado != null ? 'text-green-700' : 'text-gob-guinda'}"
-                            th:text="${cat.valorOriginal}" th:id="'texto-valor-' + ${cat.id}"></span>
-                      
+                      <span class="font-bold text-base"
+                        th:classappend="${cat.idMapeado != null ? 'text-green-700' : 'text-gob-guinda'}"
+                        th:text="${cat.valorOriginal}" th:id="'texto-valor-' + ${cat.id}"></span>
+
                       <!-- Indicador verde para ya-mapeados (Badge izquierdo) -->
-                      <span th:if="${cat.idMapeado != null}" 
-                            class="flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-tight">
+                      <span th:if="${cat.idMapeado != null}"
+                        class="flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-tight">
                         <i class="fas fa-check-circle text-[10px]"></i> Ya registrado
                       </span>
 
-                      <button type="button" class="btn-editar-texto text-gray-400 hover:text-gob-oro transition text-sm" 
-                              th:data-cat-id="${cat.id}" th:data-original-val="${cat.valorOriginal}" title="Editar texto detectado"
-                              th:if="${cat.idMapeado == null}">
-                          <i class="fas fa-pencil-alt"></i>
+                      <button type="button" class="btn-editar-texto text-gray-400 hover:text-gob-oro transition text-sm"
+                        th:data-cat-id="${cat.id}" th:data-original-val="${cat.valorOriginal}"
+                        title="Editar texto detectado" th:if="${cat.idMapeado == null}">
+                        <i class="fas fa-pencil-alt"></i>
                       </button>
                     </div>
                     <!-- Input de edición (oculto por defecto) -->
                     <div class="hidden items-center gap-2" th:id="'texto-edit-' + ${cat.id}">
-                      <input type="text" th:value="${cat.valorOriginal}" 
-                             class="border border-gob-oro rounded px-3 py-1.5 text-sm w-full focus:ring-gob-oro focus:border-gob-oro"
-                             th:id="'texto-input-' + ${cat.id}" />
-                      <button type="button" class="btn-confirmar-edit text-green-600 hover:text-green-800 transition text-base" 
-                              th:data-cat-id="${cat.id}" title="Confirmar">
-                          <i class="fas fa-check"></i>
+                      <input type="text" th:value="${cat.valorOriginal}"
+                        class="border border-gob-oro rounded px-3 py-1.5 text-sm w-full focus:ring-gob-oro focus:border-gob-oro"
+                        th:id="'texto-input-' + ${cat.id}" />
+                      <button type="button"
+                        class="btn-confirmar-edit text-green-600 hover:text-green-800 transition text-base"
+                        th:data-cat-id="${cat.id}" title="Confirmar">
+                        <i class="fas fa-check"></i>
                       </button>
-                      <button type="button" class="btn-cancelar-edit text-red-500 hover:text-red-700 transition text-base" 
-                              th:data-cat-id="${cat.id}" title="Cancelar">
-                          <i class="fas fa-times"></i>
+                      <button type="button"
+                        class="btn-cancelar-edit text-red-500 hover:text-red-700 transition text-base"
+                        th:data-cat-id="${cat.id}" title="Cancelar">
+                        <i class="fas fa-times"></i>
                       </button>
                     </div>
                   </td>
-                  
+
                   <td class="px-6 py-4">
                     <!-- Si ya está mapeado, mostrar solo el badge y el input hidden con el valor ya guardado -->
                     <!-- BLOQUE YA MAPEADO (VERDE) -->
                     <div th:if="${cat.idMapeado != null}">
-                      <div class="bg-green-50 border-2 border-green-200 rounded-xl px-4 py-3 flex items-center justify-between group shadow-sm">
+                      <div
+                        class="bg-green-50 border-2 border-green-200 rounded-xl px-4 py-3 flex items-center justify-between group shadow-sm">
                         <div class="flex items-center gap-3 text-green-700">
                           <i class="fas fa-check-circle text-xl animate-pulse"></i>
                           <div>
                             <div class="font-bold text-sm">✓ Datos homologados</div>
-                            <div class="text-[10px] opacity-80 uppercase tracking-widest font-bold">Auto-detectado en el sistema</div>
+                            <div class="text-[10px] opacity-80 uppercase tracking-widest font-bold">Auto-detectado en el
+                              sistema</div>
                           </div>
                         </div>
                         <input type="hidden" th:name="'cat_' + ${cat.id}" th:value="${cat.idMapeado}" />
@@ -144,79 +158,93 @@
 
                       <div class="flex items-center gap-2" th:id="'mapeo-container-' + ${cat.id}">
                         <div class="flex-grow select-wrapper">
-                          <select
-                            th:name="'cat_' + ${cat.id}"
-                            th:id="'select-' + ${cat.id}"
+                          <select th:name="'cat_' + ${cat.id}" th:id="'select-' + ${cat.id}"
                             class="searchable-select w-full border-gray-300 rounded-md shadow-sm focus:border-gob-oro focus:ring-gob-oro text-sm bg-white cursor-pointer"
-                            required
-                          >
+                            required>
                             <option value="">-- No definido --</option>
 
-                        <th:block th:if="${grupo.key == 'GERENCIA'}">
-                          <option th:each="bd : ${gerenciasDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
-                        </th:block>
-                        
-                        <th:block th:if="${grupo.key == 'MATERIA'}">
-                          <optgroup th:each="g : ${gerenciasActivasLote}" th:label="${g.nombre}" th:data-gerencia-id="${g.id}">
-                            <option th:each="bd : ${g.materias}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
-                          </optgroup>
-                        </th:block>
-                        
-                        <th:block th:if="${grupo.key == 'ORGANO'}">
-                          <optgroup th:each="g : ${gerenciasActivasLote}" th:label="${g.nombre}" th:data-gerencia-id="${g.id}">
-                            <option th:each="bd : ${organosDB}" th:if="${bd.gerencia != null and bd.gerencia.id == g.id}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
-                          </optgroup>
-                          <!-- Órganos sin gerencia asignada -->
-                          <optgroup label="Sin Gerencia Asignada">
-                            <option th:each="bd : ${organosDB}" th:if="${bd.gerencia == null}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
-                          </optgroup>
-                        </th:block>
-                        
-                        <th:block th:if="${grupo.key == 'TIPO_AUDIENCIA'}">
-                          <optgroup th:each="g : ${gerenciasActivasLote}" th:label="${g.nombre}" th:data-gerencia-id="${g.id}">
-                            <option th:each="bd : ${tiposAudDB}" th:if="${bd.gerencia != null and bd.gerencia.id == g.id}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
-                          </optgroup>
-                        </th:block>
-                        
-                        <th:block th:if="${grupo.key == 'SEDE'}">
-                          <option th:each="bd : ${sedesDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
-                        </th:block>
+                            <th:block th:if="${grupo.key == 'GERENCIA'}">
+                              <option th:each="bd : ${gerenciasDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                            </th:block>
 
-                        <th:block th:if="${grupo.key == 'USUARIO'}">
-                          <option th:each="bd : ${usuariosDB}" th:value="${bd.id}" th:text="${bd.nombreCompleto}"></option>
-                        </th:block>
+                            <th:block th:if="${grupo.key == 'MATERIA'}">
+                              <optgroup th:each="g : ${gerenciasActivasLote}" th:label="${g.nombre}"
+                                th:data-gerencia-id="${g.id}">
+                                <option th:each="bd : ${g.materias}" th:value="${bd.id}" th:text="${bd.nombre}">
+                                </option>
+                              </optgroup>
+                            </th:block>
+
+                            <th:block th:if="${grupo.key == 'ORGANO'}">
+                              <optgroup th:each="g : ${gerenciasActivasLote}" th:label="${g.nombre}"
+                                th:data-gerencia-id="${g.id}">
+                                <option th:each="bd : ${organosDB}"
+                                  th:if="${bd.gerencia != null and bd.gerencia.id == g.id}" th:value="${bd.id}"
+                                  th:text="${bd.nombre}"></option>
+                              </optgroup>
+                              <!-- Órganos sin gerencia asignada -->
+                              <optgroup label="Sin Gerencia Asignada">
+                                <option th:each="bd : ${organosDB}" th:if="${bd.gerencia == null}" th:value="${bd.id}"
+                                  th:text="${bd.nombre}"></option>
+                              </optgroup>
+                            </th:block>
+
+                            <th:block th:if="${grupo.key == 'TIPO_AUDIENCIA'}">
+                              <optgroup th:each="g : ${gerenciasActivasLote}" th:label="${g.nombre}"
+                                th:data-gerencia-id="${g.id}">
+                                <option th:each="bd : ${tiposAudDB}"
+                                  th:if="${bd.gerencia != null and bd.gerencia.id == g.id}" th:value="${bd.id}"
+                                  th:text="${bd.nombre}"></option>
+                              </optgroup>
+                            </th:block>
+
+                            <th:block th:if="${grupo.key == 'SEDE'}">
+                              <option th:each="bd : ${sedesDB}" th:value="${bd.id}" th:text="${bd.nombre}"></option>
+                            </th:block>
+
+                            <th:block th:if="${grupo.key == 'USUARIO'}">
+                              <option th:each="bd : ${usuariosDB}" th:value="${bd.id}" th:text="${bd.nombreCompleto}">
+                              </option>
+                            </th:block>
                           </select>
                         </div>
-                        <button type="button" class="btn-marcar-nuevo border-2 border-gob-verde text-gob-verde hover:bg-gob-verde hover:text-white p-2 rounded-lg transition flex-shrink-0" 
-                                th:data-cat-id="${cat.id}" th:data-original-val="${cat.valorOriginal}" title="Crear como nuevo">
-                            <i class="fas fa-plus"></i>
+                        <button type="button"
+                          class="btn-marcar-nuevo border-2 border-gob-verde text-gob-verde hover:bg-gob-verde hover:text-white p-2 rounded-lg transition flex-shrink-0"
+                          th:data-cat-id="${cat.id}" th:data-original-val="${cat.valorOriginal}"
+                          title="Crear como nuevo">
+                          <i class="fas fa-plus"></i>
                         </button>
-                        <button type="button" class="btn-descartar border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white p-2 rounded-lg transition flex-shrink-0" 
-                                th:data-cat-id="${cat.id}" title="Descartar este valor">
-                            <i class="fas fa-minus"></i>
+                        <button type="button"
+                          class="btn-descartar border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white p-2 rounded-lg transition flex-shrink-0"
+                          th:data-cat-id="${cat.id}" title="Descartar este valor">
+                          <i class="fas fa-minus"></i>
                         </button>
                       </div>
 
                       <!-- Badge: SE CREARÁ COMO NUEVO -->
                       <div class="hidden gap-2 items-center w-full" th:id="'nuevo-badge-' + ${cat.id}">
-                          <div class="bg-green-100 text-green-800 border-green-300 px-3 py-2 rounded font-bold w-full text-center flex-grow flex items-center justify-center">
-                              <i class="fas fa-plus-circle mr-2"></i> SE CREARÁ COMO NUEVO
-                          </div>
-                          <button type="button" class="btn-deshacer-nuevo bg-gray-200 text-gray-700 px-3 py-2 rounded shadow hover:bg-gray-300 transition flex-shrink-0" 
-                                  th:data-cat-id="${cat.id}" title="Deshacer">
-                              <i class="fas fa-undo"></i>
-                          </button>
+                        <div
+                          class="bg-green-100 text-green-800 border-green-300 px-3 py-2 rounded font-bold w-full text-center flex-grow flex items-center justify-center">
+                          <i class="fas fa-plus-circle mr-2"></i> SE CREARÁ COMO NUEVO
+                        </div>
+                        <button type="button"
+                          class="btn-deshacer-nuevo bg-gray-200 text-gray-700 px-3 py-2 rounded shadow hover:bg-gray-300 transition flex-shrink-0"
+                          th:data-cat-id="${cat.id}" title="Deshacer">
+                          <i class="fas fa-undo"></i>
+                        </button>
                       </div>
 
                       <!-- Badge: DESCARTADO -->
                       <div class="hidden gap-2 items-center w-full" th:id="'descartado-badge-' + ${cat.id}">
-                          <div class="bg-red-100 text-red-700 border-red-300 px-3 py-2 rounded font-bold w-full text-center flex-grow flex items-center justify-center">
-                              <i class="fas fa-ban mr-2"></i> DESCARTADO
-                          </div>
-                          <button type="button" class="btn-deshacer-descartado bg-gray-200 text-gray-700 px-3 py-2 rounded shadow hover:bg-gray-300 transition flex-shrink-0" 
-                                  th:data-cat-id="${cat.id}" title="Restaurar">
-                              <i class="fas fa-undo"></i>
-                          </button>
+                        <div
+                          class="bg-red-100 text-red-700 border-red-300 px-3 py-2 rounded font-bold w-full text-center flex-grow flex items-center justify-center">
+                          <i class="fas fa-ban mr-2"></i> DESCARTADO
+                        </div>
+                        <button type="button"
+                          class="btn-deshacer-descartado bg-gray-200 text-gray-700 px-3 py-2 rounded shadow hover:bg-gray-300 transition flex-shrink-0"
+                          th:data-cat-id="${cat.id}" title="Restaurar">
+                          <i class="fas fa-undo"></i>
+                        </button>
                       </div>
                     </div>
                   </td>
@@ -228,13 +256,12 @@
       </div>
 
       <div class="mt-8 flex justify-between items-center border-t border-gray-200 pt-5">
-        <button type="button" id="btn-crear-todos-nuevos" class="bg-gray-100 text-gray-700 border border-gray-300 px-6 py-3 rounded-xl font-bold shadow-sm hover:bg-gray-200 transition">
+        <button type="button" id="btn-crear-todos-nuevos"
+          class="bg-gray-100 text-gray-700 border border-gray-300 px-6 py-3 rounded-xl font-bold shadow-sm hover:bg-gray-200 transition">
           <i class="fas fa-plus-square mr-2"></i> Crear TODOS como Nuevos
         </button>
-        <button
-          type="submit"
-          class="bg-gob-oro text-white px-8 py-3 rounded-xl font-bold shadow hover:bg-[#a37e46] transition"
-        >
+        <button type="submit"
+          class="bg-gob-guinda text-white px-8 py-3 rounded-xl font-bold shadow hover:bg-gob-guindaDark transition">
           Guardar TODOS los Mapeos y Continuar
           <i class="fas fa-arrow-right ml-2"></i>
         </button>

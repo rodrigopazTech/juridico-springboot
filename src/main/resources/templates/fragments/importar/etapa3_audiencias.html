@@ -101,7 +101,7 @@
       <form th:action="@{/admin/importar/validar-audiencias}" method="post">
         <input type="hidden" name="loteId" th:value="${lote.id}" />
         <button type="submit"
-          class="bg-gob-oro text-white px-8 py-3 rounded-xl font-bold shadow hover:bg-[#a37e46] transition">
+          class="bg-gob-guinda text-white px-8 py-3 rounded-xl font-bold shadow hover:bg-gob-guindaDark transition">
           Aprobar Audiencias y Continuar <i class="fas fa-arrow-right ml-2"></i>
         </button>
       </form>
@@ -122,7 +122,8 @@
           <input type="text" id="aud-numero" name="numeroExpediente"
             class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-gob-oro focus:border-gob-oro text-sm"
             readonly />
-          <p class="text-[10px] text-gray-400 mt-1"><i class="fas fa-info-circle mr-1"></i>Para cambiar el expediente, regrese a la etapa de Expedientes.</p>
+          <p class="text-[10px] text-gray-400 mt-1"><i class="fas fa-info-circle mr-1"></i>Para cambiar el expediente,
+            regrese a la etapa de Expedientes.</p>
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Fecha de Audiencia</label>
@@ -159,7 +160,8 @@
             disabled>
             <option value="">-- Primero selecciona una materia --</option>
           </select>
-          <p class="text-[10px] text-gray-400 mt-1"><i class="fas fa-info-circle mr-1"></i>El abogado responsable se define globalmente en la etapa de Expedientes.</p>
+          <p class="text-[10px] text-gray-400 mt-1"><i class="fas fa-info-circle mr-1"></i>El abogado responsable se
+            define globalmente en la etapa de Expedientes.</p>
         </div>
 
         <div class="col-span-2">

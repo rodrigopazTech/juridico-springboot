@@ -540,6 +540,7 @@
                 
                 // Expose registroId of the first record for AJAX editing
                 map.put("registroId", entry.getValue().get(0).getId());
+                map.put("yaExiste", !numExp.equals("SIN_NUMERO") && expedienteRepository.existsByNumero(numExp));
 
                 // --- LÓGICA DE VALORES MÁS REPETIDOS (MODA) ---
                 String partesModa = findMostRepeated(entry.getValue(), "partes", "");

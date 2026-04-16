@@ -22,8 +22,7 @@
     <main class="p-4 sm:ml-64 min-h-screen" style="padding-top: 100px !important;">
         <div class="p-4">
 
-            <div
-                class="mb-6 flex flex-col items-center justify-center border-b border-gray-200 pb-4 text-center">
+            <div class="mb-6 flex flex-col items-center justify-center border-b border-gray-200 pb-4 text-center">
                 <div>
                     <h1 class="text-3xl font-bold text-gob-verde font-headings">
                         <i class="fas fa-magic text-gob-oro mr-2"></i> Asistente de Migración ETL
@@ -95,18 +94,25 @@
                             <div class="text-center py-10">
                                 <i class="fas fa-sitemap text-6xl text-gob-oro mb-4"></i>
                                 <h2 class="text-2xl font-bold text-gob-guinda mb-2">Selección de Gerencia Global</h2>
-                                <p class="text-gray-600 mb-8 max-w-xl mx-auto">Para procesar este lote correctamente, debes clasificarlo dentro de una Gerencia. Esto ayudará a inferir automáticamente opciones faltantes (como materias) en la Etapa 2.</p>
-                                
-                                <form th:action="@{/admin/importar/guardar-gerencia-global}" method="post" class="max-w-md mx-auto bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                <p class="text-gray-600 mb-8 max-w-xl mx-auto">Para procesar este lote correctamente,
+                                    debes clasificarlo dentro de una Gerencia. Esto ayudará a inferir automáticamente
+                                    opciones faltantes (como materias) en la Etapa 2.</p>
+
+                                <form th:action="@{/admin/importar/guardar-gerencia-global}" method="post"
+                                    class="max-w-md mx-auto bg-gray-50 p-6 rounded-xl border border-gray-200">
                                     <input type="hidden" name="loteId" th:value="${lote.id}">
                                     <div class="mb-4 text-left">
-                                        <label class="block text-sm font-bold text-gray-700 mb-2">Gerencia a la que pertenece este lote:</label>
-                                        <select name="gerenciaId" required class="w-full border-gray-300 rounded-lg p-3 text-gray-700 focus:ring-gob-oro focus:border-gob-oro">
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Gerencia a la que
+                                            pertenece este lote:</label>
+                                        <select name="gerenciaId" required
+                                            class="w-full border-gray-300 rounded-lg p-3 text-gray-700 focus:ring-gob-oro focus:border-gob-oro">
                                             <option value="">-- Seleccione la Gerencia --</option>
-                                            <option th:each="g : ${todasGerencias}" th:value="${g.id}" th:text="${g.nombre}"></option>
+                                            <option th:each="g : ${todasGerencias}" th:value="${g.id}"
+                                                th:text="${g.nombre}"></option>
                                         </select>
                                     </div>
-                                    <button type="submit" class="w-full bg-gob-verde text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition">
+                                    <button type="submit"
+                                        class="w-full bg-gob-verde text-white font-bold py-3 px-4 rounded-lg hover:bg-gob-verde-oscuro transition">
                                         Guardar y Continuar a Catálogos <i class="fas fa-arrow-right ml-2"></i>
                                     </button>
                                 </form>
@@ -126,10 +132,9 @@
                 </div>
 
                 <div class="flex justify-start mt-6">
-                    <form th:action="@{/admin/importar/cancelar}" method="post"
-                        onsubmit="return confirm('¿Estás seguro de cancelar todo el lote y mandarlo a la papelera?');">
+                    <form id="form-cancelar-lote" th:action="@{/admin/importar/cancelar}" method="post">
                         <input type="hidden" name="loteId" th:value="${lote.id}">
-                        <button type="submit"
+                        <button type="button" onclick="confirmarDescartarLote()"
                             class="text-red-600 font-bold hover:underline px-4 py-2 hover:bg-red-50 rounded-lg transition">
                             <i class="fas fa-trash-alt mr-1"></i> Descartar Lote y Cancelar Migración
                         </button>
@@ -143,16 +148,47 @@
     <script th:src="@{/js/asistente-migracion.js(v=2)}"></script>
 
     <script th:inline="javascript">
+        function confirmarDescartarLote() {
+            Swal.fire({
+                title: '¿Descartar Lote?',
+                text: "Todo el progreso actual se perderá y el lote se mandará a la papelera.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#691228',
+                cancelButtonColor: '#13322B',
+                confirmButtonText: 'Sí, descartar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('form-cancelar-lote').submit();
+                }
+            });
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             var msj = /*[[${mensaje}]]*/ null;
             var err = /*[[${error}]]*/ null;
-            if (msj) Swal.fire("¡Aviso!", msj, "success");
-            if (err) Swal.fire("Atención", err, "error");
+            if (msj) {
+                Swal.fire({
+                    title: "¡Aviso!",
+                    text: msj,
+                    icon: "success",
+                    confirmButtonColor: "#691228"
+                });
+            }
+            if (err) {
+                Swal.fire({
+                    title: "Atención",
+                    text: err,
+                    icon: "error",
+                    confirmButtonColor: "#691228"
+                });
+            }
         });
     </script>
 
     <script th:if="${modo == 'INICIO'}">
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             // Polling cada 5 segundos para detectar nuevos lotes entrantes
             setInterval(async () => {
                 try {
@@ -160,7 +196,7 @@
                     if (resp.ok) {
                         const json = await resp.json();
                         const lastLoteShown = localStorage.getItem('last_lote_detected');
-                        
+
                         if (json.hayLotePendiente && json.loteId && json.loteId.toString() !== lastLoteShown) {
                             localStorage.setItem('last_lote_detected', json.loteId.toString());
                             Swal.fire({
@@ -174,7 +210,7 @@
                             });
                         }
                     }
-                } catch(e) {
+                } catch (e) {
                     console.log("Error consultando estado del lote", e);
                 }
             }, 5000);
