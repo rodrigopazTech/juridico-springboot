@@ -57,6 +57,9 @@ function abrirModalAudiencia() {
     const radioPresencial = document.querySelector('input[name="esVirtual"][value="false"]');
     if (radioPresencial) radioPresencial.checked = true;
 
+    // Ejecutar filtrado de tipos de audiencia vacío
+    cargarAbogadosPosibles();
+
     document.getElementById('modal-audiencia').classList.remove('hidden');
 }
 
@@ -155,6 +158,39 @@ function cargarAbogadosPosibles(idPreseleccionado = null) {
     if (!expSelect || !abogadoSelect) return;
 
     const expId = expSelect.value;
+    
+    // Filtrar Tipos de Audiencia por Gerencia
+    const tipoSelect = document.getElementById('input-tipo');
+    if (tipoSelect) {
+        const selectedOption = expSelect.options[expSelect.selectedIndex];
+        const gerenciaId = selectedOption ? selectedOption.getAttribute('data-gerencia-id') : null;
+        
+        Array.from(tipoSelect.options).forEach(opt => {
+            if (opt.value === "") return; // Option disabled selected
+            const optGerenciaId = opt.getAttribute('data-gerencia-id');
+            
+            // Si no hay gerencia seleccionada (no hay expediente), ocultar todos
+            if (!gerenciaId) {
+                opt.style.display = 'none';
+                opt.hidden = true;
+            } 
+            // Si hay gerenciaId, mostrar solo los que tengan la misma
+            else if (!optGerenciaId || optGerenciaId === gerenciaId) {
+                opt.style.display = '';
+                opt.hidden = false;
+            } else {
+                opt.style.display = 'none';
+                opt.hidden = true;
+            }
+        });
+        
+        // Si el tipo actual está oculto, resetear
+        const currentTipo = tipoSelect.options[tipoSelect.selectedIndex];
+        if (currentTipo && currentTipo.hidden) {
+            tipoSelect.value = '';
+        }
+    }
+
     if (!expId) {
         abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
         return;
