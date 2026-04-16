@@ -18,17 +18,17 @@
       
       <!-- SECCIÓN 1: EXPEDIENTES NUEVOS -->
       <h2 id="accordion-nuevos-heading">
-        <button type="button" class="flex items-center justify-between w-full p-5 font-bold text-gray-700 bg-gray-50 border-b border-gray-200 focus:ring-4 focus:ring-gray-100 hover:bg-gray-100 gap-3" data-accordion-target="#accordion-nuevos-body" aria-expanded="true" aria-controls="accordion-nuevos-body">
+        <button type="button" class="flex items-center justify-between w-full p-5 font-bold text-gray-700 bg-gray-50 border-b border-gray-200 focus:ring-4 focus:ring-gray-100 hover:bg-gray-100 gap-3" data-accordion-target="#accordion-nuevos-body" aria-expanded="false" aria-controls="accordion-nuevos-body">
           <span class="flex items-center gap-2">
             <i class="fas fa-plus-circle text-green-600"></i> Expedientes Nuevos
             <span class="bg-green-100 text-green-800 text-xs font-medium ms-2 px-2.5 py-0.5 rounded-full" th:text="${#lists.toList(expedientesResumen).?[!yaExiste].size()}">0</span>
           </span>
-          <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0 transition-transform" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+          <svg data-accordion-icon class="w-3 h-3 shrink-0 transition-transform" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
           </svg>
         </button>
       </h2>
-      <div id="accordion-nuevos-body" class="" aria-labelledby="accordion-nuevos-heading">
+      <div id="accordion-nuevos-body" class="hidden" aria-labelledby="accordion-nuevos-heading">
         <div class="div-tabla p-0 border-b border-gray-200">
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 text-sm text-left whitespace-nowrap">

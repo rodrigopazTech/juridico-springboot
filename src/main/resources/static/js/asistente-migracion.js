@@ -576,7 +576,9 @@ async function guardarEdicionRegistro(formEl) {
             Swal.fire({ icon: 'success', title: '¡Guardado!', text: json.mensaje, timer: 1200, showConfirmButton: false });
 
             // 3. Actualizar fila en tiempo real
-            const row = document.getElementById('row-' + registroId);
+            let row = document.getElementById('row-' + registroId);
+            if (!row) row = document.getElementById('row-nuevo-' + registroId);
+            if (!row) row = document.getElementById('row-existente-' + registroId);
             if (!row) return;
 
             // Actualizar data-attributes del botón de editar
