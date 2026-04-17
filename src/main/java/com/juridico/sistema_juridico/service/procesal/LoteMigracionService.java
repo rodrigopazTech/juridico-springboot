@@ -622,6 +622,8 @@
                 Long materiaId = buscarIdMapeado(loteId, "MATERIA", materiaModa);
                 Long gerenciaId = buscarIdMapeado(loteId, "GERENCIA", gerenciaModa);
                 Long organoId = buscarIdMapeado(loteId, "ORGANO", organoModa);
+                Long sedeId = buscarIdMapeado(loteId, "SEDE", sedeModa);
+                Long abogadoId = buscarIdMapeado(loteId, "USUARIO", abogadoModa);
                 
     // Limpiamos la basura del JSON antes de mandarla al frontend
                 if (gerenciaModa.equalsIgnoreCase("POR DEFINIR")) gerenciaModa = "";
@@ -631,7 +633,6 @@
                     java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.Materia> matOpt = materiaRepository.findById(materiaId.intValue());
                     if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
                         gerenciaId = matOpt.get().getGerencia().getId().longValue();
-                        // FIX: Actualizamos también el texto para que el Select de Javascript lo encuentre
                         gerenciaModa = matOpt.get().getGerencia().getNombre(); 
                     }
                 }
@@ -648,13 +649,40 @@
                 if (gerenciaId == null && loteActual != null && loteActual.getGerenciaGlobal() != null) {
                     gerenciaId = loteActual.getGerenciaGlobal().getId().longValue();
                 }
+
+                // REEMPLAZAR NOMBRES CON DATOS OFICIALES MAPEADOS
+                if (materiaId != null) {
+                    java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.Materia> m = materiaRepository.findById(materiaId.intValue());
+                    if (m.isPresent()) materiaModa = m.get().getNombre();
+                }
+                if (gerenciaId != null) {
+                    java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.Gerencia> g = gerenciaRepository.findById(gerenciaId.intValue());
+                    if (g.isPresent()) gerenciaModa = g.get().getNombre();
+                }
+                if (organoId != null) {
+                    java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional> o = organoRepository.findById(organoId.intValue());
+                    if (o.isPresent()) organoModa = o.get().getNombre();
+                }
+                if (sedeId != null) {
+                    java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.Estado> s = estadoRepository.findById(sedeId.intValue());
+                    if (s.isPresent()) sedeModa = s.get().getNombre();
+                }
+                if (abogadoId != null) {
+                    java.util.Optional<com.juridico.sistema_juridico.Entity.usuario.Usuario> u = usuarioRepository.findById(abogadoId.intValue());
+                    if (u.isPresent()) abogadoModa = u.get().getNombreCompleto();
+                }
+                
+                map.put("materia", materiaModa);
+                map.put("organo", organoModa);
+                map.put("sede", sedeModa);
+                map.put("abogado", abogadoModa);
                 
                 map.put("gerencia", gerenciaModa); // Aseguramos que se mande el texto limpio/inferido
                 map.put("gerenciaId", gerenciaId);
                 map.put("materiaId", materiaId);
                 map.put("organoId", organoId);
-                map.put("sedeId", buscarIdMapeado(loteId, "SEDE", sedeModa));
-                map.put("abogadoId", buscarIdMapeado(loteId, "USUARIO", abogadoModa));
+                map.put("sedeId", sedeId);
+                map.put("abogadoId", abogadoId);
                 
                 resumen.add(map);
             }
@@ -729,11 +757,48 @@
                 map.put("partes", json.has("partes") ? json.get("partes").asText() : "");
 
                 // 3. RESOLUCIÓN DE IDs PARA LOS SELECTS DEL MODAL
-                map.put("abogadoComparecienteId", buscarIdMapeado(loteId, "USUARIO", comp));
-                map.put("abogadoResponsableId", buscarIdMapeado(loteId, "USUARIO", resp));
-                map.put("sedeId", buscarIdMapeado(loteId, "SEDE", sedeVal));
-                map.put("organoId", buscarIdMapeado(loteId, "ORGANO", organoVal));
-                map.put("tipoAudienciaId", buscarIdMapeado(loteId, "TIPO_AUDIENCIA", tipoAud));
+                Long abogadoComparecienteId = buscarIdMapeado(loteId, "USUARIO", comp);
+                Long abogadoResponsableId = buscarIdMapeado(loteId, "USUARIO", resp);
+                Long sedeId = buscarIdMapeado(loteId, "SEDE", sedeVal);
+                Long organoId = buscarIdMapeado(loteId, "ORGANO", organoVal);
+                Long tipoAudienciaId = buscarIdMapeado(loteId, "TIPO_AUDIENCIA", tipoAud);
+
+                // REEMPLAZAR TEXTOS CON OFICIALES
+                if (abogadoComparecienteId != null) {
+                    java.util.Optional<com.juridico.sistema_juridico.Entity.usuario.Usuario> u = usuarioRepository.findById(abogadoComparecienteId.intValue());
+                    if (u.isPresent()) comp = u.get().getNombreCompleto();
+                }
+                if (abogadoResponsableId != null) {
+                    java.util.Optional<com.juridico.sistema_juridico.Entity.usuario.Usuario> u = usuarioRepository.findById(abogadoResponsableId.intValue());
+                    if (u.isPresent()) resp = u.get().getNombreCompleto();
+                }
+                if (sedeId != null) {
+                    java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.Estado> s = estadoRepository.findById(sedeId.intValue());
+                    if (s.isPresent()) sedeVal = s.get().getNombre();
+                }
+                if (organoId != null) {
+                    java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional> o = organoRepository.findById(organoId.intValue());
+                    if (o.isPresent()) organoVal = o.get().getNombre();
+                }
+                if (tipoAudienciaId != null) {
+                    java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia> t = tipoAudienciaRepository.findById(tipoAudienciaId.intValue());
+                    if (t.isPresent()) tipoAud = t.get().getNombre();
+                }
+
+                // Guardar/reescribir en mapa para la vista HTML
+                map.put("compareciente", comp);
+                map.put("abogadoCompareciente", comp);
+                map.put("abogadoResponsable", resp);
+                map.put("sede", sedeVal);
+                map.put("organo", organoVal);
+                map.put("tipoAudiencia", tipoAud);
+
+                // Guardar los IDs en el mapa
+                map.put("abogadoComparecienteId", abogadoComparecienteId);
+                map.put("abogadoResponsableId", abogadoResponsableId);
+                map.put("sedeId", sedeId);
+                map.put("organoId", organoId);
+                map.put("tipoAudienciaId", tipoAudienciaId);
 
                 map.put("esEnLinea", json.has("esEnLinea") ? json.get("esEnLinea").asText() : (json.has("esVirtual") ? json.get("esVirtual").asText() : "false"));
                 map.put("enlaceReunion", json.has("enlaceReunion") ? json.get("enlaceReunion").asText() : (json.has("urlReunion") ? json.get("urlReunion").asText() : ""));
@@ -922,12 +987,32 @@
                             .findFirst().map(g -> g.getId().longValue()).orElse(null);
                     }
                     
+                    Long materiaId = buscarIdMapeado(loteId, "MATERIA", materiaAsignada);
+                    Long sedeId = buscarIdMapeado(loteId, "SEDE", sedeVal);
+                    Long abogadoId = buscarIdMapeado(loteId, "USUARIO", abogadoVal);
+
+                    // REEMPLAZAR TEXTOS CON OFICIALES
+                    if (materiaId != null) {
+                        java.util.Optional<Materia> m = materiaRepository.findById(materiaId.intValue());
+                        if (m.isPresent()) materiaAsignada = m.get().getNombre();
+                    }
+                    if (sedeId != null) {
+                        java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.Estado> s = estadoRepository.findById(sedeId.intValue());
+                        if (s.isPresent()) sedeVal = s.get().getNombre();
+                    }
+                    if (abogadoId != null) {
+                        java.util.Optional<com.juridico.sistema_juridico.Entity.usuario.Usuario> u = usuarioRepository.findById(abogadoId.intValue());
+                        if (u.isPresent()) abogadoVal = u.get().getNombreCompleto();
+                        map.put("abogado", abogadoVal); // Update the map because it used the raw value on map.put("abogado") earlier
+                    }
+
                     map.put("gerencia", gerenciaAsignada);
                     map.put("gerenciaId", gerenciaId);
                     map.put("materia", materiaAsignada);
-                    map.put("materiaId", buscarIdMapeado(loteId, "MATERIA", materiaAsignada));
-                    map.put("sedeId", buscarIdMapeado(loteId, "SEDE", sedeVal));
-                    map.put("abogadoId", buscarIdMapeado(loteId, "USUARIO", abogadoVal));
+                    map.put("materiaId", materiaId);
+                    map.put("sede", sedeVal); // just in case the UI uses 'sede'
+                    map.put("sedeId", sedeId);
+                    map.put("abogadoId", abogadoId);
                     
                     resumen.add(map);
                 } catch (Exception e) { }
