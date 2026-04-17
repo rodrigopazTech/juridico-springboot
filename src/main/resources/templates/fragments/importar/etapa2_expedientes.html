@@ -47,6 +47,9 @@
                 <tr th:each="exp : ${expedientesResumen}" th:if="${!exp.yaExiste}" th:id="${'row-nuevo-' + exp.registroId}" class="hover:bg-gray-50 transition">
                   <td class="px-5 py-3 sticky left-0 bg-white z-10 max-w-[180px]">
                     <span class="block truncate font-bold text-gob-guinda" th:text="${exp.numeroExpediente}" th:title="${exp.numeroExpediente}"></span>
+                    <span th:if="${exp.esVariante}" class="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700 border border-amber-300 uppercase tracking-tight">
+                      <i class="fas fa-code-branch mr-0.5"></i> Variante
+                    </span>
                   </td>
                   <td class="px-5 py-3 max-w-[200px]">
                     <span class="block truncate text-gray-700" th:text="${exp.partes}" th:title="${exp.partes}"></span>
@@ -138,6 +141,9 @@
                   <td class="px-5 py-3 sticky left-0 bg-white hover:bg-blue-50 z-10 max-w-[180px]">
                     <span class="block truncate font-bold text-gob-guinda" th:text="${exp.numeroExpediente}" th:title="${exp.numeroExpediente}"></span>
                     <span class="text-[9px] uppercase font-bold text-blue-600 tracking-wider">Ya en sistema</span>
+                    <span th:if="${exp.esVariante}" class="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700 border border-amber-300 uppercase tracking-tight">
+                      <i class="fas fa-code-branch mr-0.5"></i> Variante
+                    </span>
                   </td>
                   <td class="px-5 py-3 max-w-[200px]">
                     <span class="block truncate text-gray-700" th:text="${exp.partes}" th:title="${exp.partes}"></span>

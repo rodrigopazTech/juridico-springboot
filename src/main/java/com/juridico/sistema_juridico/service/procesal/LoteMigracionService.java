@@ -479,10 +479,64 @@
             
             List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
             
-            java.util.Map<String, List<RegistroMigracion>> agrupados = registros.stream()
-                .collect(java.util.stream.Collectors.groupingBy(
-                    r -> r.getNumeroExpedienteExtraido() != null ? r.getNumeroExpedienteExtraido() : "SIN_NUMERO"
-                ));
+            // Agrupación inteligente: mismo número de expediente + mismos campos clave = duplicado exacto (1 entrada).
+        // Mismo número de expediente + datos distintos = variantes separadas (N entradas).
+        // Se usa un índice de variante para diferenciar registros con igual número pero distintos datos relevantes.
+        java.util.Map<String, List<RegistroMigracion>> agrupados = new java.util.LinkedHashMap<>();
+
+        // Pre-agrupar por número de expediente
+        java.util.Map<String, List<RegistroMigracion>> porNumero = registros.stream()
+            .collect(java.util.stream.Collectors.groupingBy(
+                r -> r.getNumeroExpedienteExtraido() != null ? r.getNumeroExpedienteExtraido() : "SIN_NUMERO",
+                java.util.LinkedHashMap::new,
+                java.util.stream.Collectors.toList()
+            ));
+
+        for (java.util.Map.Entry<String, List<RegistroMigracion>> entry : porNumero.entrySet()) {
+            String numExp = entry.getKey();
+            List<RegistroMigracion> grupo = entry.getValue();
+
+            if (grupo.size() == 1) {
+                // Caso simple: solo un registro con ese número
+                agrupados.put(numExp, grupo);
+            } else {
+                // Varios registros con el mismo número — necesitamos saber si son variantes distintas o duplicados exactos
+                // Extraemos los campos clave de cada registro para comparar
+                java.util.List<String> firmasVistas = new java.util.ArrayList<>();
+                java.util.Map<String, List<RegistroMigracion>> variantesDelNumero = new java.util.LinkedHashMap<>();
+
+                for (RegistroMigracion reg : grupo) {
+                    String firma;
+                    try {
+                        com.fasterxml.jackson.databind.JsonNode jn = objectMapper.readTree(reg.getPayloadJson());
+                        // La "firma" son los campos que realmente identifican un expediente como distinto
+                        String partes  = jn.has("partes")   ? jn.get("partes").asText("") : "";
+                        String materia = jn.has("materia")  ? jn.get("materia").asText("") : "";
+                        String organo  = jn.has("organoJurisdiccional") ? jn.get("organoJurisdiccional").asText("") : "";
+                        String desc    = jn.has("descripcion") ? jn.get("descripcion").asText("") : "";
+                        firma = (partes + "|" + materia + "|" + organo + "|" + desc).toLowerCase().trim();
+                    } catch (Exception e) {
+                        firma = reg.getPayloadJson(); // fallback: JSON completo
+                    }
+
+                    // ¿Ya existe una variante con esta misma firma? → es duplicado exacto, lo ignoramos
+                    if (firmasVistas.contains(firma)) continue;
+                    firmasVistas.add(firma);
+
+                    // Asignar a una clave única: si hay más de una variante, añadimos sufijo
+                    String clave = numExp;
+                    if (variantesDelNumero.containsKey(clave)) {
+                        int idx = 2;
+                        while (variantesDelNumero.containsKey(numExp + "__v" + idx)) idx++;
+                        clave = numExp + "__v" + idx;
+                    }
+                    List<RegistroMigracion> listaVariante = new java.util.ArrayList<>();
+                    listaVariante.add(reg);
+                    variantesDelNumero.put(clave, listaVariante);
+                }
+                agrupados.putAll(variantesDelNumero);
+            }
+        }
 
             LoteMigracion lote = loteRepository.findById(loteId).orElse(null);
             String gerenciaGlobal = (lote != null && lote.getGerenciaGlobal() != null) ? lote.getGerenciaGlobal().getNombre() : "";
@@ -514,8 +568,14 @@
             
             for (java.util.Map.Entry<String, List<RegistroMigracion>> entry : agrupados.entrySet()) {
                 java.util.Map<String, Object> map = new java.util.HashMap<>();
-                String numExp = entry.getKey();
+                String claveInterna = entry.getKey();
+                // El número visible siempre es el número real (sin el sufijo __vN de variante)
+                String numExp = claveInterna.contains("__v") 
+                    ? claveInterna.substring(0, claveInterna.lastIndexOf("__v")) 
+                    : claveInterna;
+                boolean esVariante = claveInterna.contains("__v");
                 map.put("numeroExpediente", numExp);
+                map.put("esVariante", esVariante); // Para mostrar badge "VARIANTE" en la tabla
                 
                 long totalTerminos = entry.getValue().stream().filter(r -> "TERMINO".equals(r.getTipoDato())).count();
                 long totalAudiencias = entry.getValue().stream().filter(r -> "AUDIENCIA".equals(r.getTipoDato())).count();
@@ -1066,23 +1126,81 @@
                 // --- PRE-PROCESAMIENTO: Crear entidades nuevas marcadas en la Etapa 1 ---
                 crearEntidadesNuevas(catalogosMap);
 
-                java.util.Map<String, List<RegistroMigracion>> expedientesAgrupados = registros.stream()
+                // --- AGRUPACIÓN CON DETECCIÓN DE VARIANTES (Igual que en Resumen) ---
+                java.util.Map<String, List<RegistroMigracion>> expedientesAgrupados = new java.util.LinkedHashMap<>();
+                java.util.Map<String, List<RegistroMigracion>> porNumero = registros.stream()
                     .collect(java.util.stream.Collectors.groupingBy(
-                        r -> r.getNumeroExpedienteExtraido() != null && !r.getNumeroExpedienteExtraido().trim().isEmpty() ? r.getNumeroExpedienteExtraido() : "SIN_NUMERO"
+                        r -> r.getNumeroExpedienteExtraido() != null && !r.getNumeroExpedienteExtraido().trim().isEmpty() ? r.getNumeroExpedienteExtraido().trim() : "SIN_NUMERO",
+                        java.util.LinkedHashMap::new,
+                        java.util.stream.Collectors.toList()
                     ));
 
-                for (java.util.Map.Entry<String, List<RegistroMigracion>> entry : expedientesAgrupados.entrySet()) {
-                    String numExp = entry.getKey();
-                    List<RegistroMigracion> expRegistros = entry.getValue();
+                for (java.util.Map.Entry<String, List<RegistroMigracion>> entry : porNumero.entrySet()) {
+                    String cleanNum = entry.getKey();
+                    List<RegistroMigracion> grupo = entry.getValue();
+                    if (grupo.size() <= 1) {
+                        expedientesAgrupados.put(cleanNum, grupo);
+                    } else {
+                        java.util.List<String> firmasVistas = new java.util.ArrayList<>();
+                        java.util.Map<String, List<RegistroMigracion>> variantes = new java.util.LinkedHashMap<>();
+                        for (RegistroMigracion reg : grupo) {
+                            String firma;
+                            try {
+                                JsonNode jn = objectMapper.readTree(reg.getPayloadJson());
+                                String p = jn.has("partes") ? jn.get("partes").asText("") : "";
+                                String m = jn.has("materia") ? jn.get("materia").asText("") : "";
+                                String o = jn.has("organoJurisdiccional") ? jn.get("organoJurisdiccional").asText("") : "";
+                                String d = jn.has("descripcion") ? jn.get("descripcion").asText("") : "";
+                                firma = (p + "|" + m + "|" + o + "|" + d).toLowerCase().trim();
+                            } catch (Exception e) { firma = reg.getPayloadJson(); }
+                            
+                            if (firmasVistas.contains(firma)) continue;
+                            firmasVistas.add(firma);
+                            
+                            String clave = cleanNum;
+                            if (variantes.containsKey(clave)) {
+                                int idx = 2;
+                                while (variantes.containsKey(cleanNum + "__v" + idx)) idx++;
+                                clave = cleanNum + "__v" + idx;
+                            }
+                            List<RegistroMigracion> list = new java.util.ArrayList<>();
+                            list.add(reg);
+                            variantes.put(clave, list);
+                        }
+                        expedientesAgrupados.putAll(variantes);
+                    }
+                }
 
-                    Expediente expediente = expedienteRepository.findByNumeroIgnoreCase(numExp).orElse(null);
+                for (java.util.Map.Entry<String, List<RegistroMigracion>> entry : expedientesAgrupados.entrySet()) {
+                    String claveInterna = entry.getKey();
+                    List<RegistroMigracion> expRegistros = entry.getValue();
+                    
+                    // Extraer número real
+                    String baseNum = claveInterna.contains("__v") 
+                        ? claveInterna.substring(0, claveInterna.lastIndexOf("__v")) 
+                        : claveInterna;
+
+                    // Si es SIN_NUMERO, generamos uno único con UUID
+                    String numeroFinal = baseNum;
+                    if (baseNum.equals("SIN_NUMERO")) {
+                        numeroFinal = "S/N-" + java.util.UUID.randomUUID().toString().substring(0, 8);
+                    } else if (claveInterna.contains("__v")) {
+                        // Suffix para variantes de números reales para evitar colisión UNIQUE
+                        numeroFinal = baseNum + "-V" + claveInterna.substring(claveInterna.lastIndexOf("__v") + 3);
+                    }
+
+                    // Buscar si ya existe para decidir si Crear o Actualizar
+                    Expediente expediente = expedienteRepository.findByNumeroIgnoreCase(numeroFinal).orElse(null);
+                    
+                    // Si el número base existe pero no es SIN_NUMERO, y no es variante, lo actualizamos.
+                    // Pero si es variante (__v2) y el numeroFinal (con sufijo) no existe, será null y creará uno nuevo.
+
 
                     if (expediente == null) {
                         expediente = new Expediente();
-                        String numeroAsignado = numExp.equals("SIN_NUMERO") ? ("S/N-" + java.util.UUID.randomUUID().toString().substring(0,8)) : numExp;
-                        if (numeroAsignado.length() > 50) numeroAsignado = numeroAsignado.substring(0, 50);
-                        expediente.setNumero(numeroAsignado);
+                        expediente.setNumero(numeroFinal);
                         expediente.setDescripcion("Migrado desde sistema histórico - Pendiente de completar por el abogado responsable.");
+
                         
                         for (RegistroMigracion r : expRegistros) {
                             try {
