@@ -289,8 +289,7 @@ public class AdminImportController {
 
     // --- API ENDPOINTS PARA FILTRADO DINÁMICO ---
 
-    
-    private boolean perteneceAGerencia(String tipoCatalogo, String valorOriginal, String gerenciaVal, List<Map<String, Object>> resumenExp, List<Map<String, Object>> resumenAud) {
+    private boolean perteneceAGerencia(String tipoCatalogo, String valorOriginal, String nuevoValor, String gerenciaVal, List<Map<String, Object>> resumenExp, List<Map<String, Object>> resumenAud) {
         if (resumenExp == null) return true;
         
         Long gerId = null;
@@ -301,7 +300,8 @@ public class AdminImportController {
             if (tipoCatalogo.equals("MATERIA")) valorRelevante = (String) req.get("materia");
             if (tipoCatalogo.equals("ORGANO")) valorRelevante = (String) req.get("organo");
             
-            if (valorRelevante != null && valorRelevante.trim().equalsIgnoreCase(valorOriginal.trim())) {
+            if (valorRelevante != null && (valorRelevante.trim().equalsIgnoreCase(valorOriginal.trim()) || 
+                (nuevoValor != null && valorRelevante.trim().equalsIgnoreCase(nuevoValor.trim())))) {
                 if (gerId != null && req.get("gerenciaId") != null && req.get("gerenciaId").toString().equals(gerId.toString())) return true;
                 if (gerId == null && req.get("gerencia") != null && req.get("gerencia").toString().equalsIgnoreCase(gerenciaVal)) return true;
             }
@@ -313,7 +313,8 @@ public class AdminImportController {
                 if (tipoCatalogo.equals("TIPO_AUDIENCIA")) valorRelevante = (String) req.get("tipoAudiencia");
                 if (tipoCatalogo.equals("ORGANO")) valorRelevante = (String) req.get("organo");
                 
-                if (valorRelevante != null && valorRelevante.trim().equalsIgnoreCase(valorOriginal.trim())) {
+                if (valorRelevante != null && (valorRelevante.trim().equalsIgnoreCase(valorOriginal.trim()) || 
+                    (nuevoValor != null && valorRelevante.trim().equalsIgnoreCase(nuevoValor.trim())))) {
                     if (gerId != null && req.get("gerenciaId") != null && req.get("gerenciaId").toString().equals(gerId.toString())) return true;
                     if (gerId == null && req.get("gerencia") != null && req.get("gerencia").toString().equalsIgnoreCase(gerenciaVal)) return true;
                 }
@@ -338,7 +339,7 @@ public class AdminImportController {
             List<Map<String, Object>> resExp = loteMigracionService.obtenerResumenExpedientes(loteId);
             catalogoMigracionRepository.findByLoteId(loteId).stream()
                 .filter(c -> "MATERIA".equals(c.getTipoCatalogo()) && "NUEVO".equals(c.getEstatus()))
-                .filter(c -> perteneceAGerencia("MATERIA", c.getValorOriginal(), gerenciaVal, resExp, null))
+                .filter(c -> perteneceAGerencia("MATERIA", c.getValorOriginal(), c.getNuevoValor(), gerenciaVal, resExp, null))
                 .forEach(c -> res.add(Map.of("id", c.getNuevoValor(), "nombre", c.getNuevoValor())));
         }
         return res;
@@ -403,7 +404,7 @@ public class AdminImportController {
             List<Map<String, Object>> resAud = loteMigracionService.obtenerResumenAudiencias(loteId);
             catalogoMigracionRepository.findByLoteId(loteId).stream()
                 .filter(c -> "ORGANO".equals(c.getTipoCatalogo()) && "NUEVO".equals(c.getEstatus()))
-                .filter(c -> perteneceAGerencia("ORGANO", c.getValorOriginal(), gerenciaVal, resExp, resAud))
+                .filter(c -> perteneceAGerencia("ORGANO", c.getValorOriginal(), c.getNuevoValor(), gerenciaVal, resExp, resAud))
                 .forEach(c -> res.add(Map.of("id", c.getNuevoValor(), "nombre", c.getNuevoValor())));
         }
         return res;
@@ -427,7 +428,7 @@ public class AdminImportController {
             List<Map<String, Object>> resAud = loteMigracionService.obtenerResumenAudiencias(loteId);
             catalogoMigracionRepository.findByLoteId(loteId).stream()
                 .filter(c -> "TIPO_AUDIENCIA".equals(c.getTipoCatalogo()) && "NUEVO".equals(c.getEstatus()))
-                .filter(c -> perteneceAGerencia("TIPO_AUDIENCIA", c.getValorOriginal(), gerenciaVal, resExp, resAud))
+                .filter(c -> perteneceAGerencia("TIPO_AUDIENCIA", c.getValorOriginal(), c.getNuevoValor(), gerenciaVal, resExp, resAud))
                 .forEach(c -> res.add(Map.of("id", c.getNuevoValor(), "nombre", c.getNuevoValor())));
         }
         return res;

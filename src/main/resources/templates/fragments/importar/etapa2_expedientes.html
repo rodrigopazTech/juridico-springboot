@@ -320,7 +320,7 @@
             <option value="">-- Seleccione estado --</option>
             <option th:each="s : ${sedesDB}" th:value="${s.nombre}" th:data-id="${s.id}" th:text="${s.nombre}"></option>
             <th:block th:if="${mapeosNuevos != null and mapeosNuevos.containsKey('SEDE')}">
-              <option th:each="n : ${mapeosNuevos['SEDE']}" th:value="${n.nuevoValor}"
+              <option th:each="n : ${mapeosNuevos['SEDE']}" th:value="${n.nuevoValor}" th:data-id="${n.nuevoValor}"
                 th:text="${n.nuevoValor + ' (Nuevo)'}"></option>
             </th:block>
           </select>

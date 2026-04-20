@@ -156,7 +156,8 @@
                     <div th:if="${cat.idMapeado == null}">
                       <!-- Eliminado Filtro de Gerencia manual. El backend lo asociará automáticamente. -->
 
-                      <div class="flex items-center gap-2" th:id="'mapeo-container-' + ${cat.id}">
+                      <div class="flex items-center gap-2" th:id="'mapeo-container-' + ${cat.id}"
+                           th:classappend="${cat.estatus == 'NUEVO' or cat.estatus == 'DESCARTADO'} ? 'hidden' : ''">
                         <div class="flex-grow select-wrapper">
                           <select th:name="'cat_' + ${cat.id}" th:id="'select-' + ${cat.id}"
                             class="searchable-select w-full border-gray-300 rounded-md shadow-sm focus:border-gob-oro focus:ring-gob-oro text-sm bg-white cursor-pointer"
@@ -222,11 +223,13 @@
                       </div>
 
                       <!-- Badge: SE CREARÁ COMO NUEVO -->
-                      <div class="hidden gap-2 items-center w-full" th:id="'nuevo-badge-' + ${cat.id}">
+                      <div class="gap-2 items-center w-full" th:id="'nuevo-badge-' + ${cat.id}"
+                           th:classappend="${cat.estatus == 'NUEVO'} ? 'flex' : 'hidden'">
                         <div
                           class="bg-green-100 text-green-800 border-green-300 px-3 py-2 rounded font-bold w-full text-center flex-grow flex items-center justify-center">
                           <i class="fas fa-plus-circle mr-2"></i> SE CREARÁ COMO NUEVO
                         </div>
+                        <input th:if="${cat.estatus == 'NUEVO'}" type="hidden" th:id="'hidden-nuevo-' + ${cat.id}" th:name="'cat_' + ${cat.id}" th:value="'NEW_' + ${cat.nuevoValor != null ? cat.nuevoValor : cat.valorOriginal}" />
                         <button type="button"
                           class="btn-deshacer-nuevo bg-gray-200 text-gray-700 px-3 py-2 rounded shadow hover:bg-gray-300 transition flex-shrink-0"
                           th:data-cat-id="${cat.id}" title="Deshacer">
@@ -235,11 +238,13 @@
                       </div>
 
                       <!-- Badge: DESCARTADO -->
-                      <div class="hidden gap-2 items-center w-full" th:id="'descartado-badge-' + ${cat.id}">
+                      <div class="gap-2 items-center w-full" th:id="'descartado-badge-' + ${cat.id}"
+                           th:classappend="${cat.estatus == 'DESCARTADO'} ? 'flex' : 'hidden'">
                         <div
                           class="bg-red-100 text-red-700 border-red-300 px-3 py-2 rounded font-bold w-full text-center flex-grow flex items-center justify-center">
                           <i class="fas fa-ban mr-2"></i> DESCARTADO
                         </div>
+                        <input th:if="${cat.estatus == 'DESCARTADO'}" type="hidden" th:id="'hidden-skip-' + ${cat.id}" th:name="'cat_' + ${cat.id}" value="SKIP" />
                         <button type="button"
                           class="btn-deshacer-descartado bg-gray-200 text-gray-700 px-3 py-2 rounded shadow hover:bg-gray-300 transition flex-shrink-0"
                           th:data-cat-id="${cat.id}" title="Restaurar">

@@ -454,9 +454,54 @@
                     }
                 }
             });
+            invalidateCaches(loteId);
             
             // Al terminar de guardar, avanzamos automáticamente a la Etapa 2
             avanzarPaso(loteId);
+        }
+        
+        public void invalidateCaches(Long loteId) {
+            cacheResumenExpedientes.remove(loteId);
+            cacheResumenAudiencias.remove(loteId);
+            cacheResumenTerminos.remove(loteId);
+        }
+        
+        @Transactional
+        public void actualizarValorEnPayloads(Long loteId, String tipoCatalogo, String oldValor, String nuevoValor) {
+            if (oldValor == null || oldValor.trim().isEmpty() || oldValor.equals(nuevoValor)) return;
+            List<RegistroMigracion> regs = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
+            List<String> campos = new java.util.ArrayList<>();
+            switch(tipoCatalogo) {
+                case "GERENCIA": campos.add("gerencia"); break;
+                case "MATERIA": campos.add("materia"); break;
+                case "SEDE": campos.add("sede"); campos.add("estado"); break;
+                case "ORGANO": campos.add("organoJurisdiccional"); campos.add("sala"); break;
+                case "TIPO_AUDIENCIA": campos.add("tipoAudiencia"); break;
+                case "USUARIO": 
+                    campos.add("abogadoResponsable"); 
+                    campos.add("abogadoCompareciente"); 
+                    campos.add("abogado"); 
+                    break;
+            }
+            
+            for (RegistroMigracion reg : regs) {
+                try {
+                    com.fasterxml.jackson.databind.node.ObjectNode json = 
+                        (com.fasterxml.jackson.databind.node.ObjectNode) objectMapper.readTree(reg.getPayloadJson());
+                    boolean changed = false;
+                    for (String c : campos) {
+                        if (json.has(c) && json.get(c).asText().trim().equalsIgnoreCase(oldValor.trim())) {
+                            json.put(c, nuevoValor);
+                            changed = true;
+                        }
+                    }
+                    if (changed) {
+                        reg.setPayloadJson(json.toString());
+                        registroRepository.save(reg);
+                    }
+                } catch (Exception e) {}
+            }
+            invalidateCaches(loteId);
         }
 
         // =========================================================
@@ -714,22 +759,37 @@
                 if (materiaId != null) {
                     java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.Materia> m = materiaRepository.findById(materiaId.intValue());
                     if (m.isPresent()) materiaModa = m.get().getNombre();
+                } else {
+                    String nuevo = buscarNuevoValorMapeado(loteId, "MATERIA", materiaModa);
+                    if (nuevo != null) materiaModa = nuevo;
                 }
                 if (gerenciaId != null) {
                     java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.Gerencia> g = gerenciaRepository.findById(gerenciaId.intValue());
                     if (g.isPresent()) gerenciaModa = g.get().getNombre();
+                } else {
+                    String nuevo = buscarNuevoValorMapeado(loteId, "GERENCIA", gerenciaModa);
+                    if (nuevo != null) gerenciaModa = nuevo;
                 }
                 if (organoId != null) {
                     java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional> o = organoRepository.findById(organoId.intValue());
                     if (o.isPresent()) organoModa = o.get().getNombre();
+                } else {
+                    String nuevo = buscarNuevoValorMapeado(loteId, "ORGANO", organoModa);
+                    if (nuevo != null) organoModa = nuevo;
                 }
                 if (sedeId != null) {
                     java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.Estado> s = estadoRepository.findById(sedeId.intValue());
                     if (s.isPresent()) sedeModa = s.get().getNombre();
+                } else {
+                    String nuevo = buscarNuevoValorMapeado(loteId, "SEDE", sedeModa);
+                    if (nuevo != null) sedeModa = nuevo;
                 }
                 if (abogadoId != null) {
                     java.util.Optional<com.juridico.sistema_juridico.Entity.usuario.Usuario> u = usuarioRepository.findById(abogadoId.intValue());
                     if (u.isPresent()) abogadoModa = u.get().getNombreCompleto();
+                } else {
+                    String nuevo = buscarNuevoValorMapeado(loteId, "USUARIO", abogadoModa);
+                    if (nuevo != null) abogadoModa = nuevo;
                 }
                 
                 map.put("materia", materiaModa);
@@ -827,22 +887,37 @@
                 if (abogadoComparecienteId != null) {
                     java.util.Optional<com.juridico.sistema_juridico.Entity.usuario.Usuario> u = usuarioRepository.findById(abogadoComparecienteId.intValue());
                     if (u.isPresent()) comp = u.get().getNombreCompleto();
+                } else {
+                    String nuevo = buscarNuevoValorMapeado(loteId, "USUARIO", comp);
+                    if (nuevo != null) comp = nuevo;
                 }
                 if (abogadoResponsableId != null) {
                     java.util.Optional<com.juridico.sistema_juridico.Entity.usuario.Usuario> u = usuarioRepository.findById(abogadoResponsableId.intValue());
                     if (u.isPresent()) resp = u.get().getNombreCompleto();
+                } else {
+                    String nuevo = buscarNuevoValorMapeado(loteId, "USUARIO", resp);
+                    if (nuevo != null) resp = nuevo;
                 }
                 if (sedeId != null) {
                     java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.Estado> s = estadoRepository.findById(sedeId.intValue());
                     if (s.isPresent()) sedeVal = s.get().getNombre();
+                } else {
+                    String nuevo = buscarNuevoValorMapeado(loteId, "SEDE", sedeVal);
+                    if (nuevo != null) sedeVal = nuevo;
                 }
                 if (organoId != null) {
                     java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional> o = organoRepository.findById(organoId.intValue());
                     if (o.isPresent()) organoVal = o.get().getNombre();
+                } else {
+                    String nuevo = buscarNuevoValorMapeado(loteId, "ORGANO", organoVal);
+                    if (nuevo != null) organoVal = nuevo;
                 }
                 if (tipoAudienciaId != null) {
                     java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia> t = tipoAudienciaRepository.findById(tipoAudienciaId.intValue());
                     if (t.isPresent()) tipoAud = t.get().getNombre();
+                } else {
+                    String nuevo = buscarNuevoValorMapeado(loteId, "TIPO_AUDIENCIA", tipoAud);
+                    if (nuevo != null) tipoAud = nuevo;
                 }
 
                 // Guardar/reescribir en mapa para la vista HTML
@@ -919,12 +994,25 @@
                     gerenciaId = gerenciaRepository.findAll().stream()
                         .filter(g -> g.getNombre().equalsIgnoreCase(searchGer))
                         .findFirst().map(g -> g.getId().longValue()).orElse(null);
+                    if (gerenciaId == null) {
+                        String nuevoG = buscarNuevoValorMapeado(loteId, "GERENCIA", gerenciaAsignada);
+                        if (nuevoG != null) gerenciaAsignada = nuevoG;
+                    }
+                }
+                
+                Long materiaId = buscarIdMapeado(loteId, "MATERIA", materiaAsignada);
+                if (materiaId != null) {
+                    java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.Materia> m = materiaRepository.findById(materiaId.intValue());
+                    if (m.isPresent()) materiaAsignada = m.get().getNombre();
+                } else {
+                    String nuevoM = buscarNuevoValorMapeado(loteId, "MATERIA", materiaAsignada);
+                    if (nuevoM != null) materiaAsignada = nuevoM;
                 }
                 
                 map.put("gerencia", gerenciaAsignada);
                 map.put("gerenciaId", gerenciaId);
                 map.put("materia", materiaAsignada);
-                map.put("materiaId", buscarIdMapeado(loteId, "MATERIA", materiaAsignada));
+                map.put("materiaId", materiaId);
                     
                 resumen.add(map);
             } catch (Exception e) {
@@ -1045,6 +1133,10 @@
                         gerenciaId = gerenciaRepository.findAll().stream()
                             .filter(g -> g.getNombre().equalsIgnoreCase(searchGer))
                             .findFirst().map(g -> g.getId().longValue()).orElse(null);
+                        if (gerenciaId == null) {
+                            String nuevoG = buscarNuevoValorMapeado(loteId, "GERENCIA", gerenciaAsignada);
+                            if (nuevoG != null) gerenciaAsignada = nuevoG;
+                        }
                     }
                     
                     Long materiaId = buscarIdMapeado(loteId, "MATERIA", materiaAsignada);
@@ -1055,15 +1147,27 @@
                     if (materiaId != null) {
                         java.util.Optional<Materia> m = materiaRepository.findById(materiaId.intValue());
                         if (m.isPresent()) materiaAsignada = m.get().getNombre();
+                    } else {
+                        String nuevo = buscarNuevoValorMapeado(loteId, "MATERIA", materiaAsignada);
+                        if (nuevo != null) materiaAsignada = nuevo;
                     }
                     if (sedeId != null) {
                         java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.Estado> s = estadoRepository.findById(sedeId.intValue());
                         if (s.isPresent()) sedeVal = s.get().getNombre();
+                    } else {
+                        String nuevo = buscarNuevoValorMapeado(loteId, "SEDE", sedeVal);
+                        if (nuevo != null) sedeVal = nuevo;
                     }
                     if (abogadoId != null) {
                         java.util.Optional<com.juridico.sistema_juridico.Entity.usuario.Usuario> u = usuarioRepository.findById(abogadoId.intValue());
                         if (u.isPresent()) abogadoVal = u.get().getNombreCompleto();
                         map.put("abogado", abogadoVal); // Update the map because it used the raw value on map.put("abogado") earlier
+                    } else {
+                        String nuevo = buscarNuevoValorMapeado(loteId, "USUARIO", abogadoVal);
+                        if (nuevo != null) {
+                            abogadoVal = nuevo;
+                            map.put("abogado", abogadoVal);
+                        }
                     }
 
                     map.put("gerencia", gerenciaAsignada);
@@ -1106,6 +1210,40 @@
                 
                 reg.setPayloadJson(objectMapper.writeValueAsString(json));
                 registroRepository.save(reg);
+
+                // --- CASCADA DE ACTUALIZACIONES ---
+                if ("EXPEDIENTE".equals(reg.getTipoDato()) && reg.getNumeroExpedienteExtraido() != null && !reg.getNumeroExpedienteExtraido().trim().isEmpty()) {
+                    List<RegistroMigracion> hijos = registroRepository.findByLoteIdAndNumeroExpedienteExtraidoAndEstatusNot(
+                        reg.getLote().getId(), reg.getNumeroExpedienteExtraido(), "RECHAZADO"
+                    );
+                    for (RegistroMigracion hijo : hijos) {
+                        if (hijo.getId().equals(reg.getId())) continue;
+                        boolean hijoChanged = false;
+                        com.fasterxml.jackson.databind.node.ObjectNode hijoJson = 
+                            (com.fasterxml.jackson.databind.node.ObjectNode) objectMapper.readTree(hijo.getPayloadJson());
+                            
+                        // Si actualizamos abogadoResponsable, replicarlo
+                        if (campos.containsKey("abogadoResponsable")) {
+                            String nuevoAbogado = campos.get("abogadoResponsable");
+                            if (hijoJson.has("abogadoResponsable")) { hijoJson.put("abogadoResponsable", nuevoAbogado); hijoChanged = true; }
+                            if (hijoJson.has("abogadoCompareciente")) { hijoJson.put("abogadoCompareciente", nuevoAbogado); hijoChanged = true; }
+                            if (hijoJson.has("abogado")) { hijoJson.put("abogado", nuevoAbogado); hijoChanged = true; }
+                        }
+                        
+                        // Replicar jerarquías generales
+                        if (campos.containsKey("gerencia") && hijoJson.has("gerencia")) { hijoJson.put("gerencia", campos.get("gerencia")); hijoChanged = true; }
+                        if (campos.containsKey("materia") && hijoJson.has("materia")) { hijoJson.put("materia", campos.get("materia")); hijoChanged = true; }
+                        if (campos.containsKey("organoJurisdiccional") && hijoJson.has("organoJurisdiccional")) { hijoJson.put("organoJurisdiccional", campos.get("organoJurisdiccional")); hijoChanged = true; }
+                        if (campos.containsKey("sede") && hijoJson.has("sede")) { hijoJson.put("sede", campos.get("sede")); hijoChanged = true; }
+                        
+                        if (hijoChanged) {
+                            hijo.setPayloadJson(objectMapper.writeValueAsString(hijoJson));
+                            registroRepository.save(hijo);
+                        }
+                    }
+                }
+
+                invalidateCaches(reg.getLote().getId());
             } catch (Exception e) {
                 throw new RuntimeException("Error al editar registro: " + e.getMessage(), e);
             }
@@ -1469,6 +1607,11 @@
 
             String key = "MATERIA___" + trimmed.toLowerCase();
             CatalogoMigracion c = lookup.get(key);
+            if (c == null) {
+                c = lookup.values().stream()
+                    .filter(cat -> "MATERIA".equals(cat.getTipoCatalogo()) && "NUEVO".equals(cat.getEstatus()) && trimmed.equalsIgnoreCase(cat.getNuevoValor()))
+                    .findFirst().orElse(null);
+            }
             if (c != null) {
                 if (c.getIdMapeado() != null) return materiaRepository.findById(c.getIdMapeado().intValue()).orElse(null);
                 if (c.getNuevoValor() != null) {
@@ -1489,6 +1632,9 @@
                     c.setNuevoValor(null);
                     return existente;
                 }
+                if ("DESCARTADO".equals(c.getEstatus())) {
+                    return null;
+                }
             }
             if (gerenciaContexto != null) {
                 return materiaRepository.findByNombreIgnoreCaseAndGerenciaId(original.trim(), gerenciaContexto.getId()).orElse(null);
@@ -1499,6 +1645,11 @@
             if (original == null || original.trim().isEmpty()) return null;
             String key = "GERENCIA___" + original.trim().toLowerCase();
             CatalogoMigracion c = lookup.get(key);
+            if (c == null) {
+                c = lookup.values().stream()
+                    .filter(cat -> "GERENCIA".equals(cat.getTipoCatalogo()) && "NUEVO".equals(cat.getEstatus()) && original.trim().equalsIgnoreCase(cat.getNuevoValor()))
+                    .findFirst().orElse(null);
+            }
             if (c != null) {
                 if (c.getIdMapeado() != null) return gerenciaRepository.findById(c.getIdMapeado().intValue()).orElse(null);
                 if (c.getNuevoValor() != null) {
@@ -1517,6 +1668,9 @@
                     c.setNuevoValor(null);
                     return existente;
                 }
+                if ("DESCARTADO".equals(c.getEstatus())) {
+                    return null;
+                }
             }
             // Fallback: Si no está en el mapa de mapeos, buscar directamente en la DB por nombre
             return gerenciaRepository.findAll().stream()
@@ -1527,6 +1681,11 @@
             if (original == null || original.trim().isEmpty()) return null;
             String key = "ORGANO___" + original.trim().toLowerCase();
             CatalogoMigracion c = lookup.get(key);
+            if (c == null) {
+                c = lookup.values().stream()
+                    .filter(cat -> "ORGANO".equals(cat.getTipoCatalogo()) && "NUEVO".equals(cat.getEstatus()) && original.trim().equalsIgnoreCase(cat.getNuevoValor()))
+                    .findFirst().orElse(null);
+            }
             if (c != null) {
                 if (c.getIdMapeado() != null) return organoRepository.findById(c.getIdMapeado().intValue()).orElse(null);
                 if (c.getNuevoValor() != null) {
@@ -1548,6 +1707,9 @@
                     c.setNuevoValor(null);
                     return existente;
                 }
+                if ("DESCARTADO".equals(c.getEstatus())) {
+                    return null;
+                }
             }
             return organoRepository.findByNombreIgnoreCase(original.trim()).orElse(null);
         }
@@ -1556,6 +1718,11 @@
             if (original == null || original.trim().isEmpty()) return null;
             String key = "TIPO_AUDIENCIA___" + original.trim().toLowerCase();
             CatalogoMigracion c = lookup.get(key);
+            if (c == null) {
+                c = lookup.values().stream()
+                    .filter(cat -> "TIPO_AUDIENCIA".equals(cat.getTipoCatalogo()) && "NUEVO".equals(cat.getEstatus()) && original.trim().equalsIgnoreCase(cat.getNuevoValor()))
+                    .findFirst().orElse(null);
+            }
             if (c != null) {
                 if (c.getIdMapeado() != null) return tipoAudienciaRepository.findById(c.getIdMapeado().intValue()).orElse(null);
                 if (c.getNuevoValor() != null) {
@@ -1577,6 +1744,9 @@
                     c.setNuevoValor(null);
                     return existente;
                 }
+                if ("DESCARTADO".equals(c.getEstatus())) {
+                    return null;
+                }
             }
             return tipoAudienciaRepository.findByNombreIgnoreCase(original.trim()).orElse(null);
         }
@@ -1584,11 +1754,23 @@
         private Usuario resolveUsuario(String original, java.util.Map<String, CatalogoMigracion> lookup, Gerencia gerencia, Long loteId) {
             if (original == null || original.trim().isEmpty()) return null;
             CatalogoMigracion c = lookup.get("USUARIO___" + original.trim().toLowerCase());
-            if (c != null && c.getIdMapeado() != null) {
-                return usuarioRepository.findById(c.getIdMapeado().intValue()).orElse(null);
+            if (c == null) {
+                c = lookup.values().stream()
+                    .filter(cat -> "USUARIO".equals(cat.getTipoCatalogo()) && "NUEVO".equals(cat.getEstatus()) && original.trim().equalsIgnoreCase(cat.getNuevoValor()))
+                    .findFirst().orElse(null);
             }
-            // Si no hay mapeo, buscar por nombre o crear uno nuevo
-            return crearOEncontrarAbogado(original.trim(), gerencia, loteId, lookup);
+            
+            String finalAbogadoName = original.trim();
+            if (c != null) {
+                if (c.getIdMapeado() != null) return usuarioRepository.findById(c.getIdMapeado().intValue()).orElse(null);
+                if ("DESCARTADO".equals(c.getEstatus())) return null;
+                
+                if (c.getNuevoValor() != null && !c.getNuevoValor().trim().isEmpty()) {
+                    finalAbogadoName = c.getNuevoValor().trim();
+                }
+            }
+            // Si no hay mapeo, buscar por nombre final (heredado de edición manual en Catálogo o DB cruda)
+            return crearOEncontrarAbogado(finalAbogadoName, gerencia, loteId, lookup);
         }
 
         private Usuario crearOEncontrarAbogado(String nombreCompleto, Gerencia gerenciaExpediente, Long loteId, java.util.Map<String, CatalogoMigracion> lookup) {
@@ -1687,9 +1869,19 @@
         }
 
 
-        private Long buscarIdMapeado(Long loteId, String tipo, String valorOriginal) {
-            if (valorOriginal == null || valorOriginal.isEmpty()) return null;
-            String valorNormalizado = normalizeValue(valorOriginal);
+        private String buscarNuevoValorMapeado(Long loteId, String tipo, String originalValor) {
+        if (originalValor == null) return null;
+        return catalogoRepository.findByLoteId(loteId).stream()
+                .filter(c -> c.getTipoCatalogo().equals(tipo) && "NUEVO".equals(c.getEstatus()) && (c.getValorOriginal() != null &&  c.getValorOriginal().trim().equalsIgnoreCase(originalValor.trim())))
+                .map(CatalogoMigracion::getNuevoValor)
+                .filter(java.util.Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private Long buscarIdMapeado(Long loteId, String tipo, String originalValor) {
+            if (originalValor == null || originalValor.isEmpty()) return null;
+            String valorNormalizado = normalizeValue(originalValor);
             return catalogoRepository.findByLoteIdAndTipoCatalogo(loteId, tipo).stream()
                 .filter(c -> normalizeValue(c.getValorOriginal()).equals(valorNormalizado))
                 .map(CatalogoMigracion::getIdMapeado)
