@@ -532,8 +532,8 @@ function confirmarInyeccion() {
         text: "Se generarán los expedientes y se enviarán notificaciones a los abogados.",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#1a3c34',
-        cancelButtonColor: '#d33',
+        confirmButtonColor: '#16332cff',
+        cancelButtonColor: '#7b1c2e',
         confirmButtonText: 'Sí, ¡Inyectar ahora!',
         cancelButtonText: 'Revisar de nuevo'
     }).then((result) => {
@@ -1055,7 +1055,97 @@ document.addEventListener('DOMContentLoaded', () => {
     // así el primer modal ya tiene los datos listos (o casi).
     preCatalogosBatch();
     // aud y term ya no tienen selects jerárquicos en sus modales
+
+    // Inicializar buscadores predictivos de expedientes
+    inicializarAutocompleteExpediente('exp-numero');
+    inicializarAutocompleteExpediente('aud-numero');
+    inicializarAutocompleteExpediente('term-numero');
 });
+
+/**
+ * Inicializa la búsqueda predictiva (autocomplete) en un campo de Número de Expediente.
+ * @param {string} inputId ID del input de texto
+ */
+function inicializarAutocompleteExpediente(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+
+    // Deshabilitar el autocompletado nativo del navegador para que no se encime
+    input.setAttribute('autocomplete', 'off');
+
+    // Crear dinámicamente el contenedor de resultados si no existe
+    let resultsDiv = document.getElementById(inputId + '-results');
+    if (!resultsDiv) {
+        resultsDiv = document.createElement('div');
+        resultsDiv.id = inputId + '-results';
+        resultsDiv.className = 'absolute z-[100000] w-full bg-white border border-gray-200 rounded-lg shadow-xl mt-1 hidden overflow-hidden max-h-48 overflow-y-auto';
+
+        // Asegurar que el contenedor padre tenga posicionamiento relativo para el absolute
+        if (input.parentNode) {
+            input.parentNode.style.position = 'relative';
+            input.parentNode.appendChild(resultsDiv);
+        }
+    }
+
+    let timeout = null;
+
+    input.addEventListener('input', function () {
+        const term = this.value.trim();
+        clearTimeout(timeout);
+
+        if (term.length < 2) {
+            resultsDiv.classList.add('hidden');
+            return;
+        }
+
+        timeout = setTimeout(async () => {
+            const loteIdInput = document.querySelector('input[name="loteId"]');
+            const loteId = loteIdInput ? loteIdInput.value : null;
+            if (!loteId) return;
+
+            try {
+                const resp = await fetch(`/admin/importar/api/buscar-expedientes-similares?term=${encodeURIComponent(term)}&loteId=${loteId}`);
+                if (!resp.ok) return;
+                const data = await resp.json();
+
+                if (data && data.length > 0) {
+                    resultsDiv.innerHTML = data.map(num => `
+                        <div class="px-4 py-2 hover:bg-gob-oro/10 cursor-pointer text-sm border-b border-gray-50 last:border-0" data-val="${num}">
+                            <i class="fas fa-file-alt mr-2 text-gob-oro/60"></i><span class="font-medium">${num}</span>
+                        </div>
+                    `).join('');
+                    resultsDiv.classList.remove('hidden');
+
+                    // Evento click en cada resultado
+                    resultsDiv.querySelectorAll('[data-val]').forEach(item => {
+                        item.addEventListener('click', function () {
+                            input.value = this.getAttribute('data-val');
+                            resultsDiv.classList.add('hidden');
+                        });
+                    });
+                } else {
+                    resultsDiv.classList.add('hidden');
+                }
+            } catch (e) {
+                console.error('Error buscando expedientes:', e);
+            }
+        }, 300);
+    });
+
+    // Cerrar si se hace clic fuera
+    document.addEventListener('click', function (e) {
+        if (!input.contains(e.target) && !resultsDiv.contains(e.target)) {
+            resultsDiv.classList.add('hidden');
+        }
+    });
+
+    // Cerrar con Escape
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            resultsDiv.classList.add('hidden');
+        }
+    });
+}
 
 
 // ==========================================

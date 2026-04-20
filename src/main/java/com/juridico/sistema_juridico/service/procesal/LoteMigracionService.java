@@ -1771,4 +1771,31 @@
                 return LocalTime.of(0, 0);
             }
         }
+    
+    public List<String> buscarExpedientesSimilares(String term, Long loteId) {
+        List<String> resultados = new ArrayList<>();
+        if (term == null || term.length() < 2) return resultados;
+
+        // 1. Buscar en BD Oficial (Top 10)
+        resultados.addAll(expedienteRepository.findTop10ByNumeroContainingIgnoreCase(term).stream()
+            .map(Expediente::getNumero)
+            .collect(Collectors.toList()));
+
+        // 2. Buscar en el Lote Actual (Registros no procesados aún)
+        List<RegistroMigracion> lotesRaw = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
+        List<String> loteResults = lotesRaw.stream()
+            .map(RegistroMigracion::getNumeroExpedienteExtraido)
+            .filter(n -> n != null && n.toLowerCase().contains(term.toLowerCase()))
+            .distinct()
+            .limit(10)
+            .collect(Collectors.toList());
+        
+        for (String num : loteResults) {
+            if (!resultados.contains(num)) {
+                resultados.add(num);
+            }
+        }
+
+        return resultados;
     }
+}

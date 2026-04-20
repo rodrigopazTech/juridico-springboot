@@ -281,7 +281,14 @@ public class AdminImportController {
         }
     }
 
+    @GetMapping("/api/buscar-expedientes-similares")
+    @ResponseBody
+    public List<String> buscarExpedientesSimilares(@RequestParam("term") String term, @RequestParam("loteId") Long loteId) {
+        return loteMigracionService.buscarExpedientesSimilares(term, loteId);
+    }
+
     // --- API ENDPOINTS PARA FILTRADO DINÁMICO ---
+
     
     private boolean perteneceAGerencia(String tipoCatalogo, String valorOriginal, String gerenciaVal, List<Map<String, Object>> resumenExp, List<Map<String, Object>> resumenAud) {
         if (resumenExp == null) return true;

@@ -24,6 +24,9 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
 
         boolean existsByNumero(String numero);
 
+        List<Expediente> findTop10ByNumeroContainingIgnoreCase(String numero);
+
+
         // ==========================================
         // 🔐 BÚSQUEDA CON SEGURIDAD (HEAD)
         // ==========================================
