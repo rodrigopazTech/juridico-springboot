@@ -485,10 +485,12 @@ public class AdminImportController {
                     // ya que los registros del lote contienen el nombre original, no el editado.
                     String nombreParaBuscar = c.getValorOriginal() != null ? c.getValorOriginal() : nombreNuevo;
                     List<Integer> materiaIdsInf = loteMigracionService.getMateriasInferredForAbogadoNuevos(loteId, nombreParaBuscar);
+                    // Inferir gerencia desde las materias del abogado en el lote
+                    Long gerenciaIdInf = loteMigracionService.getGerenciaIdInferredForAbogado(loteId, nombreParaBuscar);
                     Map<String, Object> m = new HashMap<>();
                     m.put("id", nombreNuevo); // ID será su nombre editado en formato string
                     m.put("nombre", nombreNuevo);
-                    m.put("gerenciaId", null); // Los nuevos no tienen gerencia hasta el final
+                    m.put("gerenciaId", gerenciaIdInf); // Gerencia inferida desde las materias del lote
                     m.put("materiaIds", materiaIdsInf);
                     res.add(m);
                 });

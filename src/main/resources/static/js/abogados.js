@@ -131,7 +131,7 @@ function cargarMateriasDeGerencia() {
     lista.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
     contenedor.classList.remove('hidden');
 
-    fetch(`/catalogos/api/materias-por-gerencia/${gerenciaId}`)
+    fetch(`/usuarios/api/materias-por-gerencia/${gerenciaId}`)
         .then(res => res.json())
         .then(materias => {
             lista.innerHTML = '';

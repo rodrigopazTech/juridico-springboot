@@ -1245,49 +1245,102 @@ if (formExp) {
         // Los abogados "nuevos" de migración tienen ID de texto (ej: "Sergio Flores") → saltar validación.
         const abogadoEsNumerico = abogadoId && !isNaN(parseInt(abogadoId));
 
-        if (abogadoOpt && abogadoOpt.value && abogadoEsNumerico && !isNaN(materiaIdNum)) {
-            // Obtener las materias del abogado desde el data-attribute.
-            // El caché se invalida al abrir el modal, así que estos datos son siempre frescos.
-            const materiaIdsStr = abogadoOpt.getAttribute('data-materia-ids') || '';
-            const materiaIds = materiaIdsStr ? materiaIdsStr.split(',').map(id => parseInt(id)).filter(id => !isNaN(id)) : [];
+        // ── VALIDACIÓN 1: GERENCIA ────────────────────────────────────────────────
+        // Se ejecuta para TODOS los abogados (numéricos y nuevos de migración),
+        // siempre que tengamos data-gerencia-id en el option y gerencia-id en el expediente.
+        if (abogadoOpt && abogadoOpt.value) {
+            const abogadoGerenciaId = abogadoOpt.getAttribute('data-gerencia-id') || '';
+            const expGerenciaId = document.getElementById('exp-gerencia-id')?.value || '';
 
-            // Verificación directa: el abogado debe tener esta materia asignada.
-            const perteneceAMateria = materiaIds.includes(materiaIdNum);
-
-            if (!perteneceAMateria) {
-
-                // El abogado NO pertenece a esta materia → mostrar confirmación
-                const result = await Swal.fire({
+            if (abogadoGerenciaId && expGerenciaId && abogadoGerenciaId !== expGerenciaId) {
+                const resultGer = await Swal.fire({
                     icon: 'warning',
-                    title: 'Abogado fuera de materia',
+                    title: 'Gerencia diferente',
                     html: `<div class="text-center text-sm text-gray-700 space-y-2">
-                        <p><strong>${abogadoNom}</strong> no pertenece actualmente a la materia <strong>${materiaNom}</strong>.</p>
-                        <p>¿Desea asignarle esta materia al abogado para continuar?</p>
-                        <p class="text-xs text-blue-700 mt-2"><i class="fas fa-info-circle mr-1"></i>El abogado conservará sus materias actuales; solo se le añadirá esta nueva.</p>
+                        <p><strong>${abogadoNom}</strong> pertenece a una gerencia diferente a la del expediente.</p>
+                        <p class="text-xs text-blue-600"><i class="fas fa-info-circle mr-1"></i>Esto puede causar inconsistencias. ¿Desea continuar de todas formas?</p>
                     </div>`,
                     showCancelButton: true,
                     confirmButtonColor: '#7b1c2e',
                     cancelButtonColor: '#6b7280',
-                    confirmButtonText: '<i class="fas fa-user-plus mr-1"></i> Sí, asignar materia y guardar',
+                    confirmButtonText: '<i class="fas fa-check mr-1"></i> Sí, continuar',
                     cancelButtonText: 'Cancelar'
                 });
+                if (!resultGer.isConfirmed) return; // Usuario canceló
+            }
+        }
 
-                if (!result.isConfirmed) return; // Usuario canceló → no guardar
+        // ── VALIDACIÓN 2: MATERIA ─────────────────────────────────────────────────
+        // Se ejecuta para TODOS los abogados (numéricos Y NUEVO de migración) siempre
+        // que tengamos data-materia-ids poblado y una materiaId del expediente.
+        if (abogadoOpt && abogadoOpt.value && !isNaN(materiaIdNum)) {
+            const materiaIdsStr = abogadoOpt.getAttribute('data-materia-ids') || '';
+            const materiaIds = materiaIdsStr
+                ? materiaIdsStr.split(',').map(id => parseInt(id)).filter(id => !isNaN(id))
+                : [];
 
-                // Asignar la materia al abogado antes de guardar
-                try {
-                    const params = new URLSearchParams({ abogadoId: abogadoId, materiaId: materiaIdNum });
-                    const resp = await fetch('/admin/importar/api/asignar-materia-abogado', { method: 'POST', body: params });
-                    const json = await resp.json();
-                    if (!resp.ok) throw new Error(json.error || 'Error al asignar materia');
-                    // Limpiar caché para que la próxima carga refleje el cambio
-                    _apiCache.clear();
-                } catch (err) {
-                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo asignar la materia: ' + err.message });
-                    return;
+            // Solo validar si tenemos materias conocidas (inferidas o reales).
+            // Si materiaIds está vacío, no podemos saber → no bloqueamos.
+            if (materiaIds.length > 0) {
+                const perteneceAMateria = materiaIds.includes(materiaIdNum);
+
+                if (!perteneceAMateria) {
+                    if (abogadoEsNumerico) {
+                        // ── Abogado existente en BD: ofrecer asignar materia real ──
+                        const result = await Swal.fire({
+                            icon: 'warning',
+                            title: 'Abogado fuera de materia',
+                            html: `<div class="text-center text-sm text-gray-700 space-y-2">
+                                <p><strong>${abogadoNom}</strong> no pertenece actualmente a la materia <strong>${materiaNom}</strong>.</p>
+                                <p>¿Desea asignarle esta materia al abogado para continuar?</p>
+                                <p class="text-xs text-blue-700 mt-2"><i class="fas fa-info-circle mr-1"></i>El abogado conservará sus materias actuales; solo se le añadirá esta nueva.</p>
+                            </div>`,
+                            showCancelButton: true,
+                            confirmButtonColor: '#7b1c2e',
+                            cancelButtonColor: '#6b7280',
+                            confirmButtonText: '<i class="fas fa-user-plus mr-1"></i> Sí, asignar materia y guardar',
+                            cancelButtonText: 'Cancelar'
+                        });
+
+                        if (!result.isConfirmed) return;
+
+                        // Asignar la materia al abogado antes de guardar
+                        try {
+                            const params = new URLSearchParams({ abogadoId: abogadoId, materiaId: materiaIdNum });
+                            const resp = await fetch('/admin/importar/api/asignar-materia-abogado', { method: 'POST', body: params });
+                            const json = await resp.json();
+                            if (!resp.ok) throw new Error(json.error || 'Error al asignar materia');
+                            _apiCache.clear();
+                        } catch (err) {
+                            Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo asignar la materia: ' + err.message });
+                            return;
+                        }
+
+                    } else {
+                        // ── Abogado NUEVO (aún no en BD): aviso informativo, sin API call ──
+                        const resultNuevo = await Swal.fire({
+                            icon: 'info',
+                            title: 'Materia fuera del perfil del abogado',
+                            html: `<div class="text-center text-sm text-gray-700 space-y-2">
+                                <p><strong>${abogadoNom}</strong> no tiene registrada la materia <strong>${materiaNom}</strong> en este lote.</p>
+                                <p class="text-xs text-amber-700 mt-2"><i class="fas fa-clock mr-1"></i>Este abogado aún no está insertado en el sistema. La materia <strong>${materiaNom}</strong> se le asignará automáticamente al insertarse.</p>
+                                <p class="text-xs text-gray-500 mt-1">¿Desea continuar de todas formas?</p>
+                            </div>`,
+                            showCancelButton: true,
+                            confirmButtonColor: '#7b1c2e',
+                            cancelButtonColor: '#6b7280',
+                            confirmButtonText: '<i class="fas fa-check mr-1"></i> Sí, continuar',
+                            cancelButtonText: 'Cancelar'
+                        });
+
+                        if (!resultNuevo.isConfirmed) return;
+                        // Nota: al insertarse este abogado en el paso final de migración,
+                        // el sistema le asignará las materias del lote automáticamente.
+                    }
                 }
             }
         }
+
 
         // Todo validado → guardar el expediente normalmente
         guardarEdicionRegistro(this);

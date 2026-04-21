@@ -1841,6 +1841,23 @@
             return obtenerMateriasDeAbogado(nombreAbogado, loteId, lookup, null).stream().map(m -> m.getId()).collect(Collectors.toList());
         }
 
+        /**
+         * Infiere la gerenciaId de un abogado del lote, derivándola de sus materias inferidas.
+         * Útil para abogados "NUEVO" que aún no existen en BD.
+         */
+        public Long getGerenciaIdInferredForAbogado(Long loteId, String valorOriginal) {
+            if (valorOriginal == null || valorOriginal.isBlank()) return null;
+            Map<String, CatalogoMigracion> lookup = new java.util.HashMap<>();
+            catalogoRepository.findByLoteId(loteId).forEach(c ->
+                lookup.put(c.getTipoCatalogo() + "_" + c.getValorOriginal().trim().toLowerCase(), c)
+            );
+            return obtenerMateriasDeAbogado(valorOriginal, loteId, lookup, null).stream()
+                .filter(m -> m.getGerencia() != null)
+                .map(m -> m.getGerencia().getId().longValue())
+                .findFirst()
+                .orElse(null);
+        }
+
         private java.util.Set<Materia> obtenerMateriasDeAbogado(String nombreAbogado, Long loteId, java.util.Map<String, CatalogoMigracion> lookup, Gerencia gerenciaContexto) {
             java.util.Set<Materia> materias = new java.util.HashSet<>();
             List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
