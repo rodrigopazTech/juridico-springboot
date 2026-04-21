@@ -102,8 +102,12 @@ public class UsuarioService {
                 existente.getMaterias().clear();
             } else {
                 existente.setGerencia(usuario.getGerencia());
-                existente.getMaterias().clear();
-                existente.getMaterias().addAll(materiasSeleccionadas);
+                // Solo actualizar materias si el formulario envió una lista explícita
+                // (materiasIds != null). Si es null, conservar las materias existentes.
+                if (materiasIds != null) {
+                    existente.getMaterias().clear();
+                    existente.getMaterias().addAll(materiasSeleccionadas);
+                }
             }
 
             existente.setActivo(usuario.getActivo());

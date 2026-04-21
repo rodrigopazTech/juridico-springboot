@@ -481,15 +481,45 @@ public class AdminImportController {
                 .filter(c -> "USUARIO".equals(c.getTipoCatalogo()) && "NUEVO".equals(c.getEstatus()) && c.getNuevoValor() != null)
                 .forEach(c -> {
                     String nombreNuevo = c.getNuevoValor();
-                    List<Integer> materiaIdsInf = loteMigracionService.getMateriasInferredForAbogadoNuevos(loteId, nombreNuevo);
+                    // CLAVE: usar valorOriginal (nombre como vino del JSON) para inferir materias,
+                    // ya que los registros del lote contienen el nombre original, no el editado.
+                    String nombreParaBuscar = c.getValorOriginal() != null ? c.getValorOriginal() : nombreNuevo;
+                    List<Integer> materiaIdsInf = loteMigracionService.getMateriasInferredForAbogadoNuevos(loteId, nombreParaBuscar);
                     Map<String, Object> m = new HashMap<>();
-                    m.put("id", nombreNuevo); // ID será su nombre en formato string
+                    m.put("id", nombreNuevo); // ID será su nombre editado en formato string
                     m.put("nombre", nombreNuevo);
                     m.put("gerenciaId", null); // Los nuevos no tienen gerencia hasta el final
                     m.put("materiaIds", materiaIdsInf);
                     res.add(m);
                 });
+            
+            // 3. Abogados "MAPEADO" a un usuario existente: combinar materias DB + inferidas del lote
+            catalogoMigracionRepository.findByLoteId(loteId).stream()
+                .filter(c -> "USUARIO".equals(c.getTipoCatalogo()) 
+                          && "MAPEADO".equals(c.getEstatus()) 
+                          && c.getIdMapeado() != null)
+                .forEach(c -> {
+                    // Si la entrada ya está en res como usuario existente, enriquecemos sus materiaIds
+                    Long idMapeado = c.getIdMapeado();
+                    String nombreParaBuscar = c.getValorOriginal() != null ? c.getValorOriginal() : "";
+                    List<Integer> materiasInferidas = loteMigracionService.getMateriasInferredForAbogadoNuevos(loteId, nombreParaBuscar);
+                    
+                    if (!materiasInferidas.isEmpty()) {
+                        // Enriquecer la entrada existente en res con las materias inferidas del lote
+                        res.stream()
+                            .filter(entry -> idMapeado.intValue() == Integer.parseInt(String.valueOf(entry.get("id"))))
+                            .findFirst()
+                            .ifPresent(entry -> {
+                                @SuppressWarnings("unchecked")
+                                List<Integer> existentes = (List<Integer>) entry.get("materiaIds");
+                                java.util.Set<Integer> combinadas = new java.util.HashSet<>(existentes);
+                                combinadas.addAll(materiasInferidas);
+                                entry.put("materiaIds", new java.util.ArrayList<>(combinadas));
+                            });
+                    }
+                });
         }
+
         
         return res;
     }

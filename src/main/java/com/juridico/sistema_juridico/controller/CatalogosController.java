@@ -30,6 +30,7 @@ public class CatalogosController {
     @Autowired private TipoAudienciaRepository tipoAudienciaRepository;
     @Autowired private MateriaRepository materiaRepository;
     @Autowired private EstadoRepository estadoRepository;
+    @Autowired private com.juridico.sistema_juridico.service.CatalogosSyncService syncService;
 
     // ===============================================================
     // VISTA PRINCIPAL
@@ -183,6 +184,7 @@ public class CatalogosController {
             }
 
             usuarioService.guardarOrgano(organo);
+            syncService.sincronizarNombreOrgano(organo);
             return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Órgano guardado correctamente."));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
@@ -313,7 +315,15 @@ public class CatalogosController {
                 }
             }
 
+            String nombreViejo = (idStr != null && !idStr.isEmpty()) ? 
+                estadoRepository.findById(Integer.parseInt(idStr)).map(Estado::getNombre).orElse(null) : null;
+
             estadoRepository.save(estado);
+            
+            if (nombreViejo != null && !nombreViejo.equals(estado.getNombre())) {
+                syncService.sincronizarNombreSede(nombreViejo, estado.getNombre());
+            }
+            
             return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Sede/Estado guardado correctamente."));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));

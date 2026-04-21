@@ -1196,8 +1196,16 @@ document.querySelectorAll('.btn-editar-registro').forEach(btn => {
             materiaSel.innerHTML = '<option value="">-- Sin gerencia detectada. Ajusta los catálogos --</option>';
         }
 
-        // Cargar TODOS los abogados (desde batch → instantáneo)
+        // Cargar TODOS los abogados (limpiar caché primero para obtener materias actualizadas)
         if (abogadoSel) {
+            // Invalidar caché de abogados para que los materiaIds reflejen cambios recientes
+            if (window._catalogosBatch) window._catalogosBatch.abogados = null;
+            const todosAbogadosUrl = (() => {
+                const loteIdInput = document.querySelector('input[name="loteId"]');
+                const loteParam = loteIdInput ? `?loteId=${loteIdInput.value}` : '';
+                return `/admin/importar/api/todos-abogados${loteParam}`;
+            })();
+            _apiCache.delete(todosAbogadosUrl);
             await cargarTodosAbogados(abogadoSel, d.abogadoId || d.abogado);
         }
 
@@ -1233,13 +1241,21 @@ if (formExp) {
         // Dejar que abogadoId sea String por defecto, pero parsear materiaId
         const materiaIdNum = parseInt(materiaId);
 
-        if (abogadoOpt && abogadoOpt.value && abogadoId && !isNaN(materiaIdNum)) {
-            // Obtener las materias del abogado desde el data-attribute (ya cargadas en el option)
+        // Solo validar si el abogado es un usuario real con ID numérico.
+        // Los abogados "nuevos" de migración tienen ID de texto (ej: "Sergio Flores") → saltar validación.
+        const abogadoEsNumerico = abogadoId && !isNaN(parseInt(abogadoId));
+
+        if (abogadoOpt && abogadoOpt.value && abogadoEsNumerico && !isNaN(materiaIdNum)) {
+            // Obtener las materias del abogado desde el data-attribute.
+            // El caché se invalida al abrir el modal, así que estos datos son siempre frescos.
             const materiaIdsStr = abogadoOpt.getAttribute('data-materia-ids') || '';
-            const materiaIds = materiaIdsStr ? materiaIdsStr.split(',').map(id => parseInt(id)) : [];
+            const materiaIds = materiaIdsStr ? materiaIdsStr.split(',').map(id => parseInt(id)).filter(id => !isNaN(id)) : [];
+
+            // Verificación directa: el abogado debe tener esta materia asignada.
             const perteneceAMateria = materiaIds.includes(materiaIdNum);
 
             if (!perteneceAMateria) {
+
                 // El abogado NO pertenece a esta materia → mostrar confirmación
                 const result = await Swal.fire({
                     icon: 'warning',

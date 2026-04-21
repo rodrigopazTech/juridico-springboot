@@ -54,6 +54,8 @@ public class AbogadosController {
     private TerminoRepository terminoRepository;
     @Autowired
     private ActividadExpedienteRepository actividadRepository;
+    @Autowired
+    private com.juridico.sistema_juridico.service.CatalogosSyncService syncService;
 
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a");
@@ -96,6 +98,7 @@ public class AbogadosController {
             @RequestParam(value = "materiasIds", required = false) List<Integer> materiasIds,
             RedirectAttributes redirectAttrs) {
         usuarioService.guardarUsuario(usuario, materiasIds);
+        syncService.sincronizarNombreUsuario(usuario);
         redirectAttrs.addFlashAttribute("mensaje", "Abogado guardado correctamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
         return "redirect:/abogados";
