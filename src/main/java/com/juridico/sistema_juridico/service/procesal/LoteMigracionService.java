@@ -161,18 +161,27 @@
         
         @Transactional
         public void extraerCatalogosDeLote(Long loteId) {
-            // 1. Traemos todos los registros crudos del lote (que no estén en la papelera)
+            // 1. Limpieza de catálogos "sombra" (duplicados PENDIENTES generados porque el valor fue actualizado en los payloads)
+            List<CatalogoMigracion> todosCatalogos = catalogoRepository.findByLoteId(loteId);
+            for (CatalogoMigracion cat : todosCatalogos) {
+                if ("PENDIENTE".equals(cat.getEstatus())) {
+                    String valNormal = normalizeValue(cat.getValorOriginal());
+                    boolean esSombra = todosCatalogos.stream().anyMatch(otro -> 
+                        !otro.getId().equals(cat.getId()) &&
+                        (normalizeValue(otro.getNuevoValor()).equals(valNormal) || 
+                         (otro.getIdMapeado() != null && normalizeValue(obtenerNombreEntidad(otro.getTipoCatalogo(), otro.getIdMapeado())).equals(valNormal)))
+                    );
+                    if (esSombra) {
+                        catalogoRepository.delete(cat);
+                    }
+                }
+            }
+
+            // 2. Traemos todos los registros crudos del lote (que no estén en la papelera)
             List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
             LoteMigracion lote = loteRepository.findById(loteId).orElseThrow();
 
-            // COMENTADO: No borramos los pendientes para permitir extracción incremental y evitar retrabajos pesados
-            /*
-            catalogoRepository.findByLoteId(loteId).stream()
-                .filter(c -> "PENDIENTE".equals(c.getEstatus()))
-                .forEach(c -> catalogoRepository.delete(c));
-            */
-
-            // 2. Cache en memoria para evitar N+1
+            // 3. Cache en memoria para evitar N+1
             java.util.Set<String> cacheMapeo = new java.util.HashSet<>();
 
             for (RegistroMigracion reg : registros) {
@@ -406,7 +415,12 @@
             // Validar en BDD si ya existe algo con la misma normalización para este lote/tipo
             java.util.List<CatalogoMigracion> existentes = catalogoRepository.findByLoteIdAndTipoCatalogo(lote.getId(), tipo);
             boolean yaExisteSimiliar = existentes.stream()
-                .anyMatch(c -> normalizeValue(c.getValorOriginal()).equals(valorNormalizado));
+                .anyMatch(c -> {
+                    String normOriginal = normalizeValue(c.getValorOriginal());
+                    String normNuevo = normalizeValue(c.getNuevoValor());
+                    String normMapeado = c.getIdMapeado() != null ? normalizeValue(obtenerNombreEntidad(tipo, c.getIdMapeado())) : "";
+                    return normOriginal.equals(valorNormalizado) || normNuevo.equals(valorNormalizado) || normMapeado.equals(valorNormalizado);
+                });
             
             if (!yaExisteSimiliar) {
                 CatalogoMigracion cat = new CatalogoMigracion();
@@ -540,80 +554,71 @@
         // ETAPA 2: LÓGICA DE EXPEDIENTES
         // =========================================================
 
-    // --- CACHING DE ALTO RENDIMIENTO ---
-    private java.util.concurrent.ConcurrentHashMap<Long, java.util.List<java.util.Map<String, Object>>> cacheResumenExpedientes = new java.util.concurrent.ConcurrentHashMap<>();
-    private java.util.concurrent.ConcurrentHashMap<Long, java.util.List<java.util.Map<String, Object>>> cacheResumenAudiencias = new java.util.concurrent.ConcurrentHashMap<>();
-    private java.util.concurrent.ConcurrentHashMap<Long, java.util.List<java.util.Map<String, Object>>> cacheResumenTerminos = new java.util.concurrent.ConcurrentHashMap<>();
+        // --- CACHING DE ALTO RENDIMIENTO ---
+        private java.util.concurrent.ConcurrentHashMap<Long, java.util.List<java.util.Map<String, Object>>> cacheResumenExpedientes = new java.util.concurrent.ConcurrentHashMap<>();
+        private java.util.concurrent.ConcurrentHashMap<Long, java.util.List<java.util.Map<String, Object>>> cacheResumenAudiencias = new java.util.concurrent.ConcurrentHashMap<>();
+        private java.util.concurrent.ConcurrentHashMap<Long, java.util.List<java.util.Map<String, Object>>> cacheResumenTerminos = new java.util.concurrent.ConcurrentHashMap<>();
 
-    public void limpiarCacheLote(Long loteId) {
-        cacheResumenExpedientes.remove(loteId);
-        cacheResumenAudiencias.remove(loteId);
-        cacheResumenTerminos.remove(loteId);
-    }
+        public void limpiarCacheLote(Long loteId) {
+            cacheResumenExpedientes.remove(loteId);
+            cacheResumenAudiencias.remove(loteId);
+            cacheResumenTerminos.remove(loteId);
+        }
 
-    public java.util.List<java.util.Map<String, Object>> obtenerResumenExpedientes(Long loteId) {
+        private java.util.Map<String, List<RegistroMigracion>> agruparRegistros(List<RegistroMigracion> registros) {
+            java.util.Map<String, List<RegistroMigracion>> expedientesAgrupados = new java.util.LinkedHashMap<>();
+            java.util.Map<String, List<RegistroMigracion>> porNumero = registros.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                    r -> r.getNumeroExpedienteExtraido() != null && !r.getNumeroExpedienteExtraido().trim().isEmpty() 
+                         ? r.getNumeroExpedienteExtraido().trim() : "SIN_NUMERO",
+                    java.util.LinkedHashMap::new,
+                    java.util.stream.Collectors.toList()
+                ));
+
+            for (java.util.Map.Entry<String, List<RegistroMigracion>> entry : porNumero.entrySet()) {
+                String cleanNum = entry.getKey();
+                List<RegistroMigracion> grupo = entry.getValue();
+
+                boolean esSinNumero = cleanNum.equals("SIN_NUMERO") || cleanNum.equalsIgnoreCase("S/N") || cleanNum.equalsIgnoreCase("S/n") || cleanNum.toUpperCase().contains("POR ASIGNAR");
+
+                if (!esSinNumero) {
+                    expedientesAgrupados.put(cleanNum, grupo);
+                } else {
+                    for (RegistroMigracion reg : grupo) {
+                        String firma;
+                        try {
+                            JsonNode jn = objectMapper.readTree(reg.getPayloadJson());
+                            String p = jn.has("partes") ? jn.get("partes").asText("") : "";
+                            String m = jn.has("materia") ? jn.get("materia").asText("") : "";
+                            String o = jn.has("organoJurisdiccional") ? jn.get("organoJurisdiccional").asText("") : "";
+                            firma = (p + "|" + m + "|" + o).toLowerCase().trim();
+                        } catch (Exception e) { firma = reg.getPayloadJson(); }
+                        
+                        String targetKey = "S/N-" + String.format("%06x", firma.hashCode() & 0xFFFFFF).toUpperCase();
+                        expedientesAgrupados.computeIfAbsent(targetKey, k -> new java.util.ArrayList<>()).add(reg);
+                    }
+                }
+            }
+            return expedientesAgrupados;
+        }
+
+        private LocalDate extractLatestDate(RegistroMigracion reg) {
+            try {
+                JsonNode json = objectMapper.readTree(reg.getPayloadJson());
+                LocalDate d = null;
+                if (json.has("fechaVencimiento") && !json.get("fechaVencimiento").isNull()) d = parseDate(json.get("fechaVencimiento"));
+                if (d == null && json.has("fechaAudiencia") && !json.get("fechaAudiencia").isNull()) d = parseDate(json.get("fechaAudiencia"));
+                if (d == null && json.has("fechaIngreso") && !json.get("fechaIngreso").isNull()) d = parseDate(json.get("fechaIngreso"));
+                return d != null ? d : LocalDate.MIN;
+            } catch (Exception e) { return LocalDate.MIN; }
+        }
+
+        public java.util.List<java.util.Map<String, Object>> obtenerResumenExpedientes(Long loteId) {
             if (cacheResumenExpedientes.containsKey(loteId)) return cacheResumenExpedientes.get(loteId);
             
             List<RegistroMigracion> registros = registroRepository.findByLoteIdAndEstatusNot(loteId, "RECHAZADO");
             
-            // Agrupación inteligente: mismo número de expediente + mismos campos clave = duplicado exacto (1 entrada).
-        // Mismo número de expediente + datos distintos = variantes separadas (N entradas).
-        // Se usa un índice de variante para diferenciar registros con igual número pero distintos datos relevantes.
-        java.util.Map<String, List<RegistroMigracion>> agrupados = new java.util.LinkedHashMap<>();
-
-        // Pre-agrupar por número de expediente
-        java.util.Map<String, List<RegistroMigracion>> porNumero = registros.stream()
-            .collect(java.util.stream.Collectors.groupingBy(
-                r -> r.getNumeroExpedienteExtraido() != null ? r.getNumeroExpedienteExtraido() : "SIN_NUMERO",
-                java.util.LinkedHashMap::new,
-                java.util.stream.Collectors.toList()
-            ));
-
-        for (java.util.Map.Entry<String, List<RegistroMigracion>> entry : porNumero.entrySet()) {
-            String numExp = entry.getKey();
-            List<RegistroMigracion> grupo = entry.getValue();
-
-            if (grupo.size() == 1) {
-                // Caso simple: solo un registro con ese número
-                agrupados.put(numExp, grupo);
-            } else {
-                // Varios registros con el mismo número — necesitamos saber si son variantes distintas o duplicados exactos
-                // Extraemos los campos clave de cada registro para comparar
-                java.util.List<String> firmasVistas = new java.util.ArrayList<>();
-                java.util.Map<String, List<RegistroMigracion>> variantesDelNumero = new java.util.LinkedHashMap<>();
-
-                for (RegistroMigracion reg : grupo) {
-                    String firma;
-                    try {
-                        com.fasterxml.jackson.databind.JsonNode jn = objectMapper.readTree(reg.getPayloadJson());
-                        // La "firma" son los campos que realmente identifican un expediente como distinto
-                        String partes  = jn.has("partes")   ? jn.get("partes").asText("") : "";
-                        String materia = jn.has("materia")  ? jn.get("materia").asText("") : "";
-                        String organo  = jn.has("organoJurisdiccional") ? jn.get("organoJurisdiccional").asText("") : "";
-                        String desc    = jn.has("descripcion") ? jn.get("descripcion").asText("") : "";
-                        firma = (partes + "|" + materia + "|" + organo + "|" + desc).toLowerCase().trim();
-                    } catch (Exception e) {
-                        firma = reg.getPayloadJson(); // fallback: JSON completo
-                    }
-
-                    // ¿Ya existe una variante con esta misma firma? → es duplicado exacto, lo ignoramos
-                    if (firmasVistas.contains(firma)) continue;
-                    firmasVistas.add(firma);
-
-                    // Asignar a una clave única: si hay más de una variante, añadimos sufijo
-                    String clave = numExp;
-                    if (variantesDelNumero.containsKey(clave)) {
-                        int idx = 2;
-                        while (variantesDelNumero.containsKey(numExp + "__v" + idx)) idx++;
-                        clave = numExp + "__v" + idx;
-                    }
-                    List<RegistroMigracion> listaVariante = new java.util.ArrayList<>();
-                    listaVariante.add(reg);
-                    variantesDelNumero.put(clave, listaVariante);
-                }
-                agrupados.putAll(variantesDelNumero);
-            }
-        }
+            java.util.Map<String, List<RegistroMigracion>> agrupados = agruparRegistros(registros);
 
             LoteMigracion lote = loteRepository.findById(loteId).orElse(null);
             String gerenciaGlobal = (lote != null && lote.getGerenciaGlobal() != null) ? lote.getGerenciaGlobal().getNombre() : "";
@@ -645,14 +650,10 @@
             
             for (java.util.Map.Entry<String, List<RegistroMigracion>> entry : agrupados.entrySet()) {
                 java.util.Map<String, Object> map = new java.util.HashMap<>();
-                String claveInterna = entry.getKey();
-                // El número visible siempre es el número real (sin el sufijo __vN de variante)
-                String numExp = claveInterna.contains("__v") 
-                    ? claveInterna.substring(0, claveInterna.lastIndexOf("__v")) 
-                    : claveInterna;
-                boolean esVariante = claveInterna.contains("__v");
+                String numExp = entry.getKey();
+                boolean esVariante = false; // Las variantes se eliminaron mediante agruparRegistros
                 map.put("numeroExpediente", numExp);
-                map.put("esVariante", esVariante); // Para mostrar badge "VARIANTE" en la tabla
+                map.put("esVariante", esVariante);
                 
                 long totalTerminos = entry.getValue().stream().filter(r -> "TERMINO".equals(r.getTipoDato())).count();
                 long totalAudiencias = entry.getValue().stream().filter(r -> "AUDIENCIA".equals(r.getTipoDato())).count();
@@ -661,32 +662,48 @@
                 map.put("totalAudiencias", totalAudiencias);
                 map.put("totalRegistros", entry.getValue().size());
 
-                // --- LÓGICA DE SEMÁFORO (VALIDACIÓN) --- se mueve al final para usar el valor ya resuelto
-                // (placeholder, se llena más abajo con el valor real)
                 List<String> camposFaltantes = new java.util.ArrayList<>();
                 boolean critico = false;
 
                 try {
-                    JsonNode json = objectMapper.readTree(entry.getValue().get(0).getPayloadJson());
                     if (numExp.equals("SIN_NUMERO")) { camposFaltantes.add("Número de Expediente"); critico = true; }
                 } catch (Exception e) { critico = true; }
 
-                map.put("faltantes", camposFaltantes); // se actualiza más adelante
+                map.put("faltantes", camposFaltantes);
                 map.put("esCritico", critico);
                 map.put("estaListo", camposFaltantes.isEmpty());
                 
-                // Expose registroId of the first record for AJAX editing
                 map.put("registroId", entry.getValue().get(0).getId());
-                map.put("yaExiste", !numExp.equals("SIN_NUMERO") && expedienteRepository.existsByNumero(numExp));
+                map.put("yaExiste", !numExp.startsWith("S/N") && !numExp.equals("SIN_NUMERO") && expedienteRepository.existsByNumero(numExp));
 
-                // --- LÓGICA DE VALORES MÁS REPETIDOS (MODA) ---
-                String partesModa = findMostRepeated(entry.getValue(), "partes", "");
-                String sedeModa = findMostRepeated(entry.getValue(), "sede", "");
-                String gerenciaModa = findMostRepeated(entry.getValue(), "gerencia", "");
-                String materiaModa = findMostRepeated(entry.getValue(), "materia", "");
-                String organoModa = findMostRepeated(entry.getValue(), "organoJurisdiccional", "");
-                String abogadoModa = findMostRepeated(entry.getValue(), "abogadoResponsable", "");
-                String descModa = findMostRepeated(entry.getValue(), "descripcion", "Expediente migrado.");
+                // --- LÓGICA DE REGISTRO MÁS RECIENTE ---
+                RegistroMigracion masReciente = entry.getValue().stream()
+                    .max((r1, r2) -> extractLatestDate(r1).compareTo(extractLatestDate(r2)))
+                    .orElse(entry.getValue().get(0));
+
+                JsonNode masRecJson = null;
+                try { masRecJson = objectMapper.readTree(masReciente.getPayloadJson()); } catch (Exception e) {}
+
+                String partesModa = masRecJson != null && masRecJson.hasNonNull("partes") && !masRecJson.get("partes").asText("").trim().isEmpty() 
+                    ? masRecJson.get("partes").asText("") : findMostRepeated(entry.getValue(), "partes", "");
+                    
+                String sedeModa = masRecJson != null && masRecJson.hasNonNull("sede") && !masRecJson.get("sede").asText("").trim().isEmpty() 
+                    ? masRecJson.get("sede").asText("") : findMostRepeated(entry.getValue(), "sede", "");
+                    
+                String gerenciaModa = masRecJson != null && masRecJson.hasNonNull("gerencia") && !masRecJson.get("gerencia").asText("").trim().isEmpty() 
+                    ? masRecJson.get("gerencia").asText("") : findMostRepeated(entry.getValue(), "gerencia", "");
+                    
+                String materiaModa = masRecJson != null && masRecJson.hasNonNull("materia") && !masRecJson.get("materia").asText("").trim().isEmpty() 
+                    ? masRecJson.get("materia").asText("") : findMostRepeated(entry.getValue(), "materia", "");
+                    
+                String organoModa = masRecJson != null && masRecJson.hasNonNull("organoJurisdiccional") && !masRecJson.get("organoJurisdiccional").asText("").trim().isEmpty() 
+                    ? masRecJson.get("organoJurisdiccional").asText("") : findMostRepeated(entry.getValue(), "organoJurisdiccional", "");
+                    
+                String abogadoModa = masRecJson != null && masRecJson.hasNonNull("abogadoResponsable") && !masRecJson.get("abogadoResponsable").asText("").trim().isEmpty() 
+                    ? masRecJson.get("abogadoResponsable").asText("") : findMostRepeated(entry.getValue(), "abogadoResponsable", "");
+                    
+                String descModa = masRecJson != null && masRecJson.hasNonNull("descripcion") && !masRecJson.get("descripcion").asText("").trim().isEmpty() 
+                    ? masRecJson.get("descripcion").asText("") : findMostRepeated(entry.getValue(), "descripcion", "Expediente migrado.");
 
                 // LIMPIEZA AGRESIVA de basura antes de procesar
                 if (gerenciaModa != null && gerenciaModa.toUpperCase().contains("DEFINIR")) gerenciaModa = "";
@@ -1296,83 +1313,38 @@
                 // --- PRE-PROCESAMIENTO: Crear entidades nuevas marcadas en la Etapa 1 ---
                 crearEntidadesNuevas(catalogosMap);
 
-                // --- AGRUPACIÓN CON DETECCIÓN DE VARIANTES (Igual que en Resumen) ---
-                java.util.Map<String, List<RegistroMigracion>> expedientesAgrupados = new java.util.LinkedHashMap<>();
-                java.util.Map<String, List<RegistroMigracion>> porNumero = registros.stream()
-                    .collect(java.util.stream.Collectors.groupingBy(
-                        r -> r.getNumeroExpedienteExtraido() != null && !r.getNumeroExpedienteExtraido().trim().isEmpty() ? r.getNumeroExpedienteExtraido().trim() : "SIN_NUMERO",
-                        java.util.LinkedHashMap::new,
-                        java.util.stream.Collectors.toList()
-                    ));
-
-                for (java.util.Map.Entry<String, List<RegistroMigracion>> entry : porNumero.entrySet()) {
-                    String cleanNum = entry.getKey();
-                    List<RegistroMigracion> grupo = entry.getValue();
-                    if (grupo.size() <= 1) {
-                        expedientesAgrupados.put(cleanNum, grupo);
-                    } else {
-                        java.util.List<String> firmasVistas = new java.util.ArrayList<>();
-                        java.util.Map<String, List<RegistroMigracion>> variantes = new java.util.LinkedHashMap<>();
-                        for (RegistroMigracion reg : grupo) {
-                            String firma;
-                            try {
-                                JsonNode jn = objectMapper.readTree(reg.getPayloadJson());
-                                String p = jn.has("partes") ? jn.get("partes").asText("") : "";
-                                String m = jn.has("materia") ? jn.get("materia").asText("") : "";
-                                String o = jn.has("organoJurisdiccional") ? jn.get("organoJurisdiccional").asText("") : "";
-                                String d = jn.has("descripcion") ? jn.get("descripcion").asText("") : "";
-                                firma = (p + "|" + m + "|" + o + "|" + d).toLowerCase().trim();
-                            } catch (Exception e) { firma = reg.getPayloadJson(); }
-                            
-                            if (firmasVistas.contains(firma)) continue;
-                            firmasVistas.add(firma);
-                            
-                            String clave = cleanNum;
-                            if (variantes.containsKey(clave)) {
-                                int idx = 2;
-                                while (variantes.containsKey(cleanNum + "__v" + idx)) idx++;
-                                clave = cleanNum + "__v" + idx;
-                            }
-                            List<RegistroMigracion> list = new java.util.ArrayList<>();
-                            list.add(reg);
-                            variantes.put(clave, list);
-                        }
-                        expedientesAgrupados.putAll(variantes);
-                    }
-                }
+                // --- AGRUPACIÓN ---
+                java.util.Map<String, List<RegistroMigracion>> expedientesAgrupados = agruparRegistros(registros);
 
                 for (java.util.Map.Entry<String, List<RegistroMigracion>> entry : expedientesAgrupados.entrySet()) {
-                    String claveInterna = entry.getKey();
+                    String baseNum = entry.getKey();
                     List<RegistroMigracion> expRegistros = entry.getValue();
                     
-                    // Extraer número real
-                    String baseNum = claveInterna.contains("__v") 
-                        ? claveInterna.substring(0, claveInterna.lastIndexOf("__v")) 
-                        : claveInterna;
-
-                    // Si es SIN_NUMERO, generamos uno único con UUID
                     String numeroFinal = baseNum;
-                    if (baseNum.equals("SIN_NUMERO")) {
-                        numeroFinal = "S/N-" + java.util.UUID.randomUUID().toString().substring(0, 8);
-                    } else if (claveInterna.contains("__v")) {
-                        // Suffix para variantes de números reales para evitar colisión UNIQUE
-                        numeroFinal = baseNum + "-V" + claveInterna.substring(claveInterna.lastIndexOf("__v") + 3);
-                    }
 
                     // Buscar si ya existe para decidir si Crear o Actualizar
                     Expediente expediente = expedienteRepository.findByNumeroIgnoreCase(numeroFinal).orElse(null);
                     
-                    // Si el número base existe pero no es SIN_NUMERO, y no es variante, lo actualizamos.
-                    // Pero si es variante (__v2) y el numeroFinal (con sufijo) no existe, será null y creará uno nuevo.
-
-
                     if (expediente == null) {
                         expediente = new Expediente();
                         expediente.setNumero(numeroFinal);
                         expediente.setDescripcion("Migrado desde sistema histórico - Pendiente de completar por el abogado responsable.");
 
+                        // Extraer valores iniciales del registro más reciente para asegurar mayor calidad
+                        RegistroMigracion masReciente = expRegistros.stream()
+                            .max((r1, r2) -> extractLatestDate(r1).compareTo(extractLatestDate(r2)))
+                            .orElse(expRegistros.get(0));
+                        // El bucle original asigna en base a todos, pero con la lógica más reciente es mejor inicializar
+                        // con el más reciente, y luego rellenar vacíos si es necesario del resto.
                         
-                        for (RegistroMigracion r : expRegistros) {
+                        // Movemos el 'masReciente' al inicio de la lista para que actúe como prioridad
+                        java.util.List<RegistroMigracion> ordenados = new java.util.ArrayList<>();
+                        ordenados.add(masReciente);
+                        for (RegistroMigracion xr : expRegistros) {
+                            if (!xr.getId().equals(masReciente.getId())) ordenados.add(xr);
+                        }
+
+                        for (RegistroMigracion r : ordenados) {
                             try {
                                 JsonNode json = objectMapper.readTree(r.getPayloadJson());
                                 
@@ -1391,14 +1363,14 @@
                                         }
                                     }
                                 }
-                                if (expediente.getOrganoJurisdiccional() == null && json.has("organoJurisdiccional")) {
+                                if (expediente.getOrganoJurisdiccional() == null && json.has("organoJurisdiccional") && !json.get("organoJurisdiccional").isNull()) {
                                     OrganoJurisdiccional o = resolveOrgano(json.get("organoJurisdiccional").asText(), lookup, expediente.getGerencia());
                                     if (o != null) expediente.setOrganoJurisdiccional(o);
                                 }
                                 if (expediente.getPartes() == null && json.has("partes") && !json.get("partes").isNull()) {
                                     expediente.setPartes(json.get("partes").asText());
                                 }
-                                if (expediente.getAbogadoResponsable() == null && json.has("abogadoResponsable")) {
+                                if (expediente.getAbogadoResponsable() == null && json.has("abogadoResponsable") && !json.get("abogadoResponsable").isNull()) {
                                     String nombreAbog = json.get("abogadoResponsable").asText();
                                     Usuario u = resolveUsuario(nombreAbog, lookup, expediente.getGerencia(), loteId);
                                     if (u != null) {
