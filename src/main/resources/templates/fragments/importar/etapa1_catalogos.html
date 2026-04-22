@@ -102,7 +102,7 @@
                     <div class="flex items-center gap-2" th:id="'texto-display-' + ${cat.id}">
                       <span class="font-bold text-base"
                         th:classappend="${cat.idMapeado != null ? 'text-green-700' : 'text-gob-guinda'}"
-                        th:text="${cat.valorOriginal}" th:id="'texto-valor-' + ${cat.id}"></span>
+                        th:text="${cat.nuevoValor != null and cat.idMapeado == null ? cat.nuevoValor : cat.valorOriginal}" th:id="'texto-valor-' + ${cat.id}"></span>
 
                       <!-- Indicador verde para ya-mapeados (Badge izquierdo) -->
                       <span th:if="${cat.idMapeado != null}"
@@ -110,15 +110,21 @@
                         <i class="fas fa-check-circle text-[10px]"></i> Ya registrado
                       </span>
 
+                      <!-- Indicador azul para texto editado manualmente (NUEVO por lápiz) -->
+                      <span th:if="${cat.estatus == 'NUEVO' and cat.idMapeado == null and cat.nuevoValor != null}"
+                        class="flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-tight">
+                        <i class="fas fa-pen text-[10px]"></i> Editado
+                      </span>
+
                       <button type="button" class="btn-editar-texto text-gray-400 hover:text-gob-oro transition text-sm"
-                        th:data-cat-id="${cat.id}" th:data-original-val="${cat.valorOriginal}"
+                        th:data-cat-id="${cat.id}" th:data-original-val="${cat.nuevoValor != null and cat.idMapeado == null ? cat.nuevoValor : cat.valorOriginal}"
                         title="Editar texto detectado" th:if="${cat.idMapeado == null}">
                         <i class="fas fa-pencil-alt"></i>
                       </button>
                     </div>
                     <!-- Input de edición (oculto por defecto) -->
                     <div class="hidden items-center gap-2" th:id="'texto-edit-' + ${cat.id}">
-                      <input type="text" th:value="${cat.valorOriginal}"
+                      <input type="text" th:value="${cat.nuevoValor != null and cat.idMapeado == null ? cat.nuevoValor : cat.valorOriginal}"
                         class="border border-gob-oro rounded px-3 py-1.5 text-sm w-full focus:ring-gob-oro focus:border-gob-oro"
                         th:id="'texto-input-' + ${cat.id}" />
                       <button type="button"
@@ -161,6 +167,7 @@
                         <div class="flex-grow select-wrapper">
                           <select th:name="'cat_' + ${cat.id}" th:id="'select-' + ${cat.id}"
                             class="searchable-select w-full border-gray-300 rounded-md shadow-sm focus:border-gob-oro focus:ring-gob-oro text-sm bg-white cursor-pointer"
+                            th:disabled="${cat.estatus == 'NUEVO' or cat.estatus == 'DESCARTADO'}"
                             required>
                             <option value="">-- No definido --</option>
 

@@ -431,6 +431,8 @@
 
         @Transactional
         public void guardarMapeoCatalogos(Long loteId, java.util.Map<String, String> formData) {
+            java.util.List<Runnable> payloadUpdates = new java.util.ArrayList<>();
+
             // Leemos todo el formulario HTML que manda el usuario
             formData.forEach((key, value) -> {
                 if (key.startsWith("cat_") && value != null && !value.isEmpty()) {
@@ -438,6 +440,9 @@
                     CatalogoMigracion cat = catalogoRepository.findById(catalogoMigracionId).orElse(null);
                     
                     if (cat != null) {
+                        String oldValor = cat.getValorOriginal();
+                        String nuevoValorParaPayload = null;
+
                         if (value.equals("SKIP")) {
                             // El usuario descartó este valor
                             cat.setEstatus("DESCARTADO");
@@ -445,19 +450,46 @@
                             // El usuario decidió crear uno nuevo
                             cat.setNuevoValor(value.replace("NEW_", ""));
                             cat.setEstatus("NUEVO");
+                            nuevoValorParaPayload = cat.getNuevoValor();
                         } else {
                             // El usuario lo emparejó con uno existente
                             cat.setIdMapeado(Long.parseLong(value));
                             cat.setEstatus("MAPEADO");
+                            nuevoValorParaPayload = obtenerNombreEntidad(cat.getTipoCatalogo(), cat.getIdMapeado());
                         }
                         catalogoRepository.save(cat);
+
+                        if (nuevoValorParaPayload != null) {
+                            String fTipo = cat.getTipoCatalogo();
+                            String fNuevo = nuevoValorParaPayload;
+                            payloadUpdates.add(() -> actualizarValorEnPayloads(loteId, fTipo, oldValor, fNuevo));
+                        }
                     }
                 }
             });
+
+            // Aplicar reemplazos en el payload original
+            for (Runnable update : payloadUpdates) {
+                update.run();
+            }
+
             invalidateCaches(loteId);
             
             // Al terminar de guardar, avanzamos automáticamente a la Etapa 2
             avanzarPaso(loteId);
+        }
+
+        private String obtenerNombreEntidad(String tipoCatalogo, Long id) {
+            if (id == null) return null;
+            switch(tipoCatalogo) {
+                case "GERENCIA": return gerenciaRepository.findById(id.intValue()).map(com.juridico.sistema_juridico.Entity.catalogo.Gerencia::getNombre).orElse(null);
+                case "MATERIA": return materiaRepository.findById(id.intValue()).map(com.juridico.sistema_juridico.Entity.catalogo.Materia::getNombre).orElse(null);
+                case "SEDE": return estadoRepository.findById(id.intValue()).map(com.juridico.sistema_juridico.Entity.catalogo.Estado::getNombre).orElse(null);
+                case "ORGANO": return organoRepository.findById(id.intValue()).map(com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional::getNombre).orElse(null);
+                case "TIPO_AUDIENCIA": return tipoAudienciaRepository.findById(id.intValue()).map(com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia::getNombre).orElse(null);
+                case "USUARIO": return usuarioRepository.findAll().stream().filter(u -> u.getId().equals(id)).findFirst().map(com.juridico.sistema_juridico.Entity.usuario.Usuario::getNombreCompleto).orElse(null);
+            }
+            return null;
         }
         
         public void invalidateCaches(Long loteId) {
@@ -1780,7 +1812,29 @@
             List<Usuario> existentes = usuarioRepository.findAll().stream()
                 .filter(u -> u.getNombreCompleto().equalsIgnoreCase(nombreCompleto))
                 .toList();
-            if (!existentes.isEmpty()) return existentes.get(0);
+            if (!existentes.isEmpty()) {
+                Usuario abogadoExistente = existentes.get(0);
+                // BUG FIX: Asignar materias adicionales inferidas del lote al abogado existente
+                // (preservando las que ya tenía, solo añadiendo las nuevas)
+                Gerencia gerenciaFinalExistente = abogadoExistente.getGerencia() != null
+                    ? abogadoExistente.getGerencia()
+                    : (gerenciaExpediente != null ? gerenciaExpediente : getFallbackGerencia());
+                java.util.Set<Materia> materiasLote = obtenerMateriasDeAbogado(nombreCompleto, loteId, lookup, gerenciaFinalExistente);
+                boolean actualizado = false;
+                for (Materia m : materiasLote) {
+                    boolean yaLaTiene = abogadoExistente.getMaterias().stream()
+                        .anyMatch(ex -> ex.getId().equals(m.getId()));
+                    if (!yaLaTiene) {
+                        abogadoExistente.getMaterias().add(m);
+                        actualizado = true;
+                        System.out.println(">>> Migracion: Añadida materia '" + m.getNombre() + "' al abogado existente: " + nombreCompleto);
+                    }
+                }
+                if (actualizado) {
+                    usuarioRepository.save(abogadoExistente);
+                }
+                return abogadoExistente;
+            }
 
             // 2. Generar email único a partir del nombre: "juan.perez@juridico.com"
             String emailBase = nombreCompleto.trim().toLowerCase()
@@ -1834,11 +1888,25 @@
          * Busca en los campos abogadoResponsable y abogadoCompareciente, y extrae el campo "materia".
          */
         public List<Integer> getMateriasInferredForAbogadoNuevos(Long loteId, String nombreAbogado) {
+            List<CatalogoMigracion> catalogos = catalogoRepository.findByLoteId(loteId);
+
             Map<String, CatalogoMigracion> lookup = new java.util.HashMap<>();
-            catalogoRepository.findByLoteId(loteId).forEach(c -> 
+            catalogos.forEach(c ->
                 lookup.put(c.getTipoCatalogo() + "_" + c.getValorOriginal().trim().toLowerCase(), c)
             );
-            return obtenerMateriasDeAbogado(nombreAbogado, loteId, lookup, null).stream().map(m -> m.getId()).collect(Collectors.toList());
+
+            // Si el nombreAbogado es un nuevoValor editado en Stage 1, resolver al valorOriginal
+            // para buscar correctamente en los registros del JSON (que preservan el nombre original).
+            String nombreParaBuscar = resolverNombreOriginal(catalogos, nombreAbogado);
+
+            // Buscar también por el nombre tal cual (por si el payload ya fue actualizado al nuevoValor)
+            java.util.Set<Materia> materiasOrig = obtenerMateriasDeAbogado(nombreParaBuscar, loteId, lookup, null);
+            if (!nombreParaBuscar.equalsIgnoreCase(nombreAbogado)) {
+                // Combinar con búsqueda directa por nuevoValor (registros editados en Stage 2)
+                materiasOrig.addAll(obtenerMateriasDeAbogado(nombreAbogado, loteId, lookup, null));
+            }
+
+            return materiasOrig.stream().map(m -> m.getId()).collect(Collectors.toList());
         }
 
         /**
@@ -1847,15 +1915,43 @@
          */
         public Long getGerenciaIdInferredForAbogado(Long loteId, String valorOriginal) {
             if (valorOriginal == null || valorOriginal.isBlank()) return null;
+            List<CatalogoMigracion> catalogos = catalogoRepository.findByLoteId(loteId);
+
             Map<String, CatalogoMigracion> lookup = new java.util.HashMap<>();
-            catalogoRepository.findByLoteId(loteId).forEach(c ->
+            catalogos.forEach(c ->
                 lookup.put(c.getTipoCatalogo() + "_" + c.getValorOriginal().trim().toLowerCase(), c)
             );
-            return obtenerMateriasDeAbogado(valorOriginal, loteId, lookup, null).stream()
+
+            // Resolver nuevoValor → valorOriginal si aplica
+            String nombreParaBuscar = resolverNombreOriginal(catalogos, valorOriginal);
+
+            java.util.Set<Materia> materias = obtenerMateriasDeAbogado(nombreParaBuscar, loteId, lookup, null);
+            if (!nombreParaBuscar.equalsIgnoreCase(valorOriginal)) {
+                materias.addAll(obtenerMateriasDeAbogado(valorOriginal, loteId, lookup, null));
+            }
+
+            return materias.stream()
                 .filter(m -> m.getGerencia() != null)
                 .map(m -> m.getGerencia().getId().longValue())
                 .findFirst()
                 .orElse(null);
+        }
+
+        /**
+         * Dado un nombre que puede ser un nuevoValor editado, lo resuelve al valorOriginal
+         * si existe una entrada USUARIO en el catálogo con ese nuevoValor.
+         * Así la búsqueda en los registros JSON siempre usa el nombre original del batch.
+         */
+        private String resolverNombreOriginal(List<CatalogoMigracion> catalogos, String nombreBuscado) {
+            if (nombreBuscado == null) return "";
+            return catalogos.stream()
+                .filter(c -> "USUARIO".equals(c.getTipoCatalogo())
+                        && c.getNuevoValor() != null
+                        && c.getNuevoValor().trim().equalsIgnoreCase(nombreBuscado.trim())
+                        && c.getValorOriginal() != null)
+                .map(CatalogoMigracion::getValorOriginal)
+                .findFirst()
+                .orElse(nombreBuscado); // fallback: usar el nombre tal cual
         }
 
         private java.util.Set<Materia> obtenerMateriasDeAbogado(String nombreAbogado, Long loteId, java.util.Map<String, CatalogoMigracion> lookup, Gerencia gerenciaContexto) {

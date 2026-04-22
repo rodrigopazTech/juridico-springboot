@@ -287,6 +287,33 @@ public class AdminImportController {
         return loteMigracionService.buscarExpedientesSimilares(term, loteId);
     }
 
+    /**
+     * Persiste el texto editado ("lápiz") de un catálogo en la Etapa 1.
+     * Actualiza el nuevoValor del CatalogoMigracion y lo marca como NUEVO,
+     * de modo que al regresar a Etapa 1 el valor editado persiste.
+     */
+    @PostMapping("/api/actualizar-catalogo-texto")
+    @ResponseBody
+    public ResponseEntity<?> actualizarCatalogoTexto(
+            @RequestParam("catId") Long catId,
+            @RequestParam("nuevoTexto") String nuevoTexto) {
+        try {
+            CatalogoMigracion cat = catalogoMigracionRepository.findById(catId)
+                .orElseThrow(() -> new RuntimeException("Catálogo no encontrado: " + catId));
+            String textoLimpio = nuevoTexto.trim();
+            if (textoLimpio.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "El texto no puede estar vacío"));
+            }
+            cat.setNuevoValor(textoLimpio);
+            cat.setEstatus("NUEVO");
+            cat.setIdMapeado(null); // limpiar mapeo anterior si lo había
+            catalogoMigracionRepository.save(cat);
+            return ResponseEntity.ok(Map.of("status", "ok", "catId", catId, "nuevoTexto", textoLimpio));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     // --- API ENDPOINTS PARA FILTRADO DINÁMICO ---
 
     private boolean perteneceAGerencia(String tipoCatalogo, String valorOriginal, String nuevoValor, String gerenciaVal, List<Map<String, Object>> resumenExp, List<Map<String, Object>> resumenAud) {

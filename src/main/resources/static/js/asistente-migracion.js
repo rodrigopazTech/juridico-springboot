@@ -251,22 +251,68 @@ function inicializarMapeo() {
 
     // Confirmar edición del texto
     document.querySelectorAll('.btn-confirmar-edit').forEach(btn => {
-        btn.addEventListener('click', function () {
+        btn.addEventListener('click', async function () {
             const catId = this.getAttribute('data-cat-id');
             const nuevoTexto = document.getElementById('texto-input-' + catId).value.trim();
             if (!nuevoTexto) return;
-            // Actualizar el texto visible
+
+            // 1. Persistir en base de datos via AJAX
+            try {
+                const params = new URLSearchParams({ catId, nuevoTexto });
+                const resp = await fetch('/admin/importar/api/actualizar-catalogo-texto', { method: 'POST', body: params });
+                const json = await resp.json();
+                if (!resp.ok) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: json.error || 'No se pudo guardar el texto.' });
+                    return;
+                }
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'Error de red', text: e.message });
+                return;
+            }
+
+            // 2. Actualizar el texto visible
             document.getElementById('texto-valor-' + catId).textContent = nuevoTexto;
-            // Actualizar el data-original-val en los botones que lo usan
+
+            // 3. Actualizar el data-original-val en los botones que lo usan
             const btnNuevo = document.querySelector('.btn-marcar-nuevo[data-cat-id="' + catId + '"]');
             if (btnNuevo) btnNuevo.setAttribute('data-original-val', nuevoTexto);
-            // Ocultar input, mostrar display
+            const btnEditar = document.querySelector('.btn-editar-texto[data-cat-id="' + catId + '"]');
+            if (btnEditar) btnEditar.setAttribute('data-original-val', nuevoTexto);
+
+            // 4. Ocultar input, mostrar display
             document.getElementById('texto-edit-' + catId).classList.add('hidden');
             document.getElementById('texto-edit-' + catId).classList.remove('flex');
             document.getElementById('texto-display-' + catId).classList.remove('hidden');
             document.getElementById('texto-display-' + catId).classList.add('flex');
+
+            // 5. Activar automáticamente el badge NUEVO (si no estaba ya activo) para que quede guardado
+            const nuevosBadge = document.getElementById('nuevo-badge-' + catId);
+            const container = document.getElementById('mapeo-container-' + catId);
+            if (nuevosBadge && nuevosBadge.classList.contains('hidden')) {
+                // Badge no visible: activarlo con el nuevo valor
+                const hiddenExistente = document.getElementById('hidden-nuevo-' + catId);
+                if (hiddenExistente) {
+                    hiddenExistente.value = 'NEW_' + nuevoTexto;
+                } else {
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.id = 'hidden-nuevo-' + catId;
+                    hidden.name = 'cat_' + catId;
+                    hidden.value = 'NEW_' + nuevoTexto;
+                    nuevosBadge.appendChild(hidden);
+                }
+                if (container) { container.classList.add('hidden'); container.classList.remove('flex'); }
+                nuevosBadge.classList.remove('hidden'); nuevosBadge.classList.add('flex');
+                const selectEl = document.getElementById('select-' + catId);
+                if (selectEl) selectEl.disabled = true;
+            } else if (nuevosBadge && !nuevosBadge.classList.contains('hidden')) {
+                // Badge ya visible: actualizar el hidden value con el nuevo texto
+                const hiddenExistente = document.getElementById('hidden-nuevo-' + catId);
+                if (hiddenExistente) hiddenExistente.value = 'NEW_' + nuevoTexto;
+            }
         });
     });
+
 
     // Cancelar edición del texto
     document.querySelectorAll('.btn-cancelar-edit').forEach(btn => {
