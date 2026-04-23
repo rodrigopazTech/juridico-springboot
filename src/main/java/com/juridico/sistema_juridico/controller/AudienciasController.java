@@ -146,17 +146,17 @@ public class AudienciasController {
             fechaInicio = LocalDate.of(anio, mes, 1);
             fechaFin = fechaInicio.withDayOfMonth(fechaInicio.lengthOfMonth());
         } else {
-            // 5. Default: Mes actual
-            LocalDate hoy = LocalDate.now();
-            fechaInicio = hoy.withDayOfMonth(1);
-            fechaFin = hoy.withDayOfMonth(hoy.lengthOfMonth());
+            // 5. Default: Mostrar TODO (Como en Términos)
+            fechaInicio = LocalDate.of(1900, 1, 1);
+            fechaFin = LocalDate.of(2100, 12, 31);
             
+            LocalDate hoy = LocalDate.now();
             if (mes == null) mes = hoy.getMonthValue();
             if (anio == null) anio = hoy.getYear();
         }
 
-        // 4. CONSULTA (Sin paginación visible: Tamaño 2000)
-        Pageable pageable = PageRequest.of(page, 2000, Sort.by("fechaAudiencia").ascending());
+        // 4. CONSULTA CON PAGINACIÓN (Standard: 10 por página)
+        Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaAudiencia").ascending());
 
         Page<Audiencia> audiencias = audienciaRepository.buscarConFiltros(
                 id, searchKeyword, tipo, gerencia, materia, estatus,
@@ -165,35 +165,30 @@ public class AudienciasController {
                 pageable);
 
         model.addAttribute("audiencias", audiencias);
+        // ... (resto de atributos se mantienen igual)
         model.addAttribute("pageTitle", "Gestión de Audiencias");
         model.addAttribute("activePage", "audiencias");
         model.addAttribute("paramPeriodo", periodo != null ? periodo.name() : null);
         model.addAttribute("mesActual", mes != null ? mes : LocalDate.now().getMonthValue());
         model.addAttribute("anioActual", anio != null ? anio : LocalDate.now().getYear());
 
-        // 5. DROPDOWN INTELIGENTE (MODO ANTI-FANTASMA)
+        // ... (Sección de dropdown inteligentes ...)
         List<Expediente> expedientesParaDropdown;
-
+        // ... (se omite para brevedad pero se conserva el original)
         if (rol.equals("ABOGADO")) {
-            // A) Expedientes donde soy el Dueño
             List<Expediente> misExpedientes = expedienteRepository.findAll().stream()
                     .filter(e -> e.getAbogadoResponsable() != null
                             && e.getAbogadoResponsable().getId().equals(usuario.getId()))
                     .collect(Collectors.toList());
-
-            // B) Expedientes donde soy Invitado ACTIVO (Audiencia NO Concluida)
             List<Expediente> expedientesPorAudiencia = audienciaRepository.findAll().stream()
                     .filter(a -> a.getAbogadoComparece() != null &&
                             a.getAbogadoComparece().getId().equals(usuario.getId()) &&
-                            EstatusAudiencia.CONCLUIDA != a.getEstatusAudiencia()) // <--- AQUÍ ESTÁ EL CANDADO FANTASMA
+                            EstatusAudiencia.CONCLUIDA != a.getEstatusAudiencia())
                     .map(Audiencia::getExpediente)
                     .collect(Collectors.toList());
-
-            // Unir listas sin duplicados
             Set<Expediente> conjunto = new HashSet<>(misExpedientes);
             conjunto.addAll(expedientesPorAudiencia);
             expedientesParaDropdown = new ArrayList<>(conjunto);
-
         } else if (rol.equals("GERENTE")) {
             expedientesParaDropdown = expedienteRepository.findAll().stream()
                     .filter(e -> e.getGerencia() != null && usuario.getGerencia() != null &&
@@ -209,15 +204,11 @@ public class AudienciasController {
         }
         model.addAttribute("expedientesList", expedientesParaDropdown);
 
-        // Listas generales — solo valores activos
         model.addAttribute("listaTiposAudiencia", tipoAudienciaRepository.findByActivoTrue());
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
         model.addAttribute("listaMaterias", materiaRepository.findByActivoTrueOrderByNombreAsc());
         model.addAttribute("tipos", tipoAudienciaRepository.findByActivoTrue());
 
-        // --- FILTRO DE ABOGADOS EN MODAL ---
-        // (Aunque esto no estaba en el requerimiento del fantasma, lo alineamos para
-        // que sea coherente)
         List<Usuario> listaAbogados;
         if (rol.equals("ABOGADO")) {
             listaAbogados = Collections.singletonList(usuario);
@@ -230,9 +221,7 @@ public class AudienciasController {
             listaAbogados = usuarioRepository.findAll();
         }
         model.addAttribute("abogados", listaAbogados);
-        // ------------------------------------
 
-        // Filtros en vista
         model.addAttribute("keyword", keyword);
         model.addAttribute("paramTipo", tipo);
         model.addAttribute("paramGerencia", gerencia);
@@ -242,17 +231,13 @@ public class AudienciasController {
         model.addAttribute("paramPeriodo", periodo);
         model.addAttribute("usuarioActual", usuario);
 
-        // --- 6. CONTEOS PARA KPIs (NUEVO) ---
-        // IMPORTANTE: Usamos searchKeyword (limpio) en lugar del keyword original
-        // para que si el keyword es una fecha (2024-10-14), no intente buscarla como texto en los KPIs
+        // --- 6. CONTEOS PARA KPIs ---
         List<Object[]> rawCounts = audienciaRepository.contarPorEstatusConFiltros(
                 searchKeyword, tipo, gerencia, materia, abogadoId, fechaInicio, fechaFin,
                 filtroUsuarioId, filtroGerenciaId, filtroMateriaIds);
 
         Map<EstatusAudiencia, Long> kpisAudit = new EnumMap<>(EstatusAudiencia.class);
-        for (EstatusAudiencia e : EstatusAudiencia.values()) {
-            kpisAudit.put(e, 0L);
-        }
+        for (EstatusAudiencia e : EstatusAudiencia.values()) kpisAudit.put(e, 0L);
         long totalKpi = 0;
         for (Object[] row : rawCounts) {
             if (row[0] != null) {
@@ -265,15 +250,21 @@ public class AudienciasController {
         model.addAttribute("kpisAudiencias", kpisAudit);
         model.addAttribute("totalAudiencias", totalKpi);
 
-        model.addAttribute("paramPeriodo", periodo);
-        model.addAttribute("usuarioActual", usuario);
-
-        // --- OPTIMIZACIÓN HTMX / FETCH ASÍNCRONO ---
-        // Verificar si la petición es asíncrona
+        // --- OPTIMIZACIÓN AJAX: Búsqueda Global en tiempo real ---
         HttpServletRequest request = ((org.springframework.web.context.request.ServletRequestAttributes) 
-            org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes()).getRequest();
+                org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes()).getRequest();
         String isAjax = request.getHeader("X-Requested-With");
+
         if ("XMLHttpRequest".equals(isAjax)) {
+             // Si hay búsqueda, ignoramos fechas para que sea global (ROD-182)
+             if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+                 audiencias = audienciaRepository.buscarConFiltros(
+                    id, searchKeyword, tipo, gerencia, materia, estatus,
+                    abogadoId, LocalDate.of(1900,1,1), LocalDate.of(2100,12,31),
+                    filtroUsuarioId, filtroGerenciaId, filtroMateriaIds,
+                    pageable);
+                 model.addAttribute("audiencias", audiencias);
+             }
             return "views/audiencias/index :: gridMaestro";
         }
 

@@ -1,4 +1,4 @@
-<div th:fragment="tabla" class="space-y-4">
+<div th:fragment="tabla" id="tabla-audiencias-container" class="space-y-4">
     <div th:fragment="gridResultados" id="grid-resultados-audiencias">
         <!-- Encabezado de la Tabla (Invisible en mobile, pero útil para estructura) -->
         <div
@@ -143,6 +143,33 @@
             </div>
         </div>
 
+        <!-- PAGINACIÓN -->
+        <div th:if="${audiencias.totalPages > 1}" class="flex items-center justify-between mt-6 pt-6 border-t border-gray-50">
+            <div class="text-xs text-gray-500">
+                Mostrando página <span class="font-bold text-gray-800" th:text="${audiencias.number + 1}">1</span> de 
+                <span class="font-bold text-gray-800" th:text="${audiencias.totalPages}">10</span>
+            </div>
+            <div class="flex gap-2">
+                <a th:if="${audiencias.hasPrevious()}"
+                   th:href="@{/audiencias(page=${audiencias.number - 1}, keyword=${keyword}, tipo=${paramTipo}, gerencia=${paramGerencia}, materia=${paramMateria}, estatus=${paramEstatus}, periodo=${paramPeriodo}, abogadoId=${paramAbogadoId})}"
+                   class="pagina-link-aud px-4 py-2 text-xs font-bold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                   <i class="fas fa-chevron-left mr-1.5"></i> Anterior
+                </a>
+                <span th:unless="${audiencias.hasPrevious()}"
+                      class="px-4 py-2 text-xs font-bold text-gray-300 bg-gray-50 border border-gray-100 rounded-lg cursor-not-allowed">
+                      <i class="fas fa-chevron-left mr-1.5"></i> Anterior
+                </span>
 
+                <a th:if="${audiencias.hasNext()}"
+                   th:href="@{/audiencias(page=${audiencias.number + 1}, keyword=${keyword}, tipo=${paramTipo}, gerencia=${paramGerencia}, materia=${paramMateria}, estatus=${paramEstatus}, periodo=${paramPeriodo}, abogadoId=${paramAbogadoId})}"
+                   class="pagina-link-aud px-4 py-2 text-xs font-bold text-white bg-gob-guinda rounded-lg hover:bg-gob-guindaDark transition-colors shadow-sm">
+                   Siguiente <i class="fas fa-chevron-right ml-1.5"></i>
+                </a>
+                <span th:unless="${audiencias.hasNext()}"
+                      class="px-4 py-2 text-xs font-bold text-gray-300 bg-gray-50 border border-gray-100 rounded-lg cursor-not-allowed">
+                      Siguiente <i class="fas fa-chevron-right ml-1.5"></i>
+                </span>
+            </div>
+        </div>
     </div>
 </div>
