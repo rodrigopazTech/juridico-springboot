@@ -1,6 +1,6 @@
-<div th:fragment="tabla-resultados">
+<div th:fragment="tabla-resultados" id="tabla-resultados-container">
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div class="max-h-[600px] overflow-y-auto scrollbar-thin rounded-t-lg">
+        <div class="rounded-t-lg">
             <table class="w-full text-sm text-left text-gray-600 border-collapse">
                 <thead
                     class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200 sticky top-0 z-10 shadow-sm">
@@ -8,7 +8,7 @@
                         <th class="px-4 py-3 bg-gray-50">Vencimiento</th>
                         <th class="px-4 py-3 bg-gray-50">Expediente</th>
                         <th class="px-4 py-3 bg-gray-50">Prioridad</th>
-                        <th class="px-4 py-3 bg-gray-50">Actuación</th>
+                        <th class="px-4 py-3 bg-gray-50 w-48 max-w-[192px]">Actuación</th>
                         <th class="px-4 py-3 bg-gray-50">Abogado</th>
                         <th class="px-4 py-3 text-right bg-gray-50">Acciones</th>
                     </tr>
@@ -61,7 +61,9 @@
                                 </div>
                             </td>
 
-                            <td class="px-4 py-3 max-w-xs truncate" th:text="${t.asunto}" th:title="${t.asunto}">
+                            <td class="px-4 py-3 w-48 max-w-[192px] truncate"
+                                th:text="${t.asunto != null ? #strings.abbreviate(t.asunto, 45) : 'Sin Actuación'}"
+                                th:title="${t.asunto}">
                                 Actuación</td>
 
                             <td class="px-4 py-3"

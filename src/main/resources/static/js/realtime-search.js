@@ -52,12 +52,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ahora es asíncrona real desde main-EXP.js para paginación)
 
     // === MÓDULO: Términos (Listado Principal) ===
+    // Deshabilitado localmente para usar búsqueda asíncrona global en terminos.js
+    /*
     const searchTerminos = document.getElementById('input-search-terminos');
     if (searchTerminos) {
         searchTerminos.addEventListener('input', function () {
             filtrarTablaRealTime('tabla-terminos-body', this.value);
         });
     }
+    */
 
     // === MÓDULO: Agenda ===
     const searchAgendaAud = document.getElementById('search-audiencias');

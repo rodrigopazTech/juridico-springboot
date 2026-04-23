@@ -26,6 +26,7 @@ import com.juridico.sistema_juridico.exception.ForbiddenException;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -302,6 +303,25 @@ public class TerminosController {
                     fechaInicio, fechaFin,
                     pageable);
             model.addAttribute("terminos", paginaTerminos);
+        }
+
+        // --- OPTIMIZACIÓN AJAX: Búsqueda Global en tiempo real ---
+        HttpServletRequest request = ((org.springframework.web.context.request.ServletRequestAttributes) 
+                org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes()).getRequest();
+        String isAjax = request.getHeader("X-Requested-With");
+            
+        if ("XMLHttpRequest".equals(isAjax)) {
+            // Si hay búsqueda, ignoramos estatus para que sea global en el módulo (ROD-182)
+            if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+                paginaTerminos = terminoRepository.buscarConFiltros(
+                    id, searchKeyword, null, prioridadId, filtroAbogadoSeguro, filtroGerenciaSeguro, 
+                    fechaInicio, fechaFin, materiaId, pageable);
+                model.addAttribute("terminos", paginaTerminos);
+                
+                // Limpiamos el estatus del modelo para que los links de paginación sean globales
+                model.addAttribute("paramEstatus", null);
+            }
+            return "fragments/terminos/tabla :: tabla-resultados";
         }
 
         return "views/terminos/index";

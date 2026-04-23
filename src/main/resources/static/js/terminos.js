@@ -6,7 +6,69 @@
 document.addEventListener('DOMContentLoaded', function () {
     console.log("Sistema de Terminos Cargado");
     initMiniCalendar();
+    initSearchTerminos();
 });
+
+// --- BÚSQUEDA ASÍNCRONA GLOBAL ---
+function initSearchTerminos() {
+    const inputSearch = document.getElementById('input-search-terminos');
+    const btnClear = document.getElementById('btn-clear-search-terminos');
+    const formSearch = document.getElementById('form-search-terminos');
+    let debounceTimer;
+
+    if (!inputSearch) return;
+
+    inputSearch.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        
+        // Mostrar/ocultar botón X
+        if (btnClear) {
+            if (this.value.trim() !== "") {
+                btnClear.classList.remove('hidden');
+            } else {
+                btnClear.classList.add('hidden');
+            }
+        }
+
+        debounceTimer = setTimeout(() => {
+            if (!formSearch) return;
+
+            // Preparamos los parámetros
+            const urlParams = new URLSearchParams(new FormData(formSearch));
+            urlParams.set('page', 0); // Reset a primera página
+
+            // LLAMADA AJAX
+            fetch('/terminos?' + urlParams.toString(), {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const nuevoContenedor = doc.getElementById('tabla-resultados-container');
+                const contenedorActual = document.getElementById('tabla-resultados-container');
+                
+                if (nuevoContenedor && contenedorActual) {
+                    contenedorActual.innerHTML = nuevoContenedor.innerHTML;
+                }
+            })
+            .catch(err => console.error("Error en búsqueda asíncrona:", err));
+
+        }, 400); // 400ms de espera para no saturar el servidor
+    });
+
+    if (btnClear) {
+        btnClear.onclick = () => {
+            inputSearch.value = '';
+            inputSearch.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+    }
+
+    // Evitar recarga completa con ENTER
+    if (formSearch) {
+        formSearch.addEventListener('submit', (e) => e.preventDefault());
+    }
+}
 
 // --- MENÚS DESPLEGABLES ---
 function toggleMenu(id) {
