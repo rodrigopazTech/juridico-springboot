@@ -47,16 +47,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // === MÓDULO: Expedientes ===
-    const searchExpedientes = document.getElementById('input-search-expedientes');
-    if (searchExpedientes) {
-        searchExpedientes.addEventListener('input', function () {
-            filtrarTablaRealTime('tabla-expedientes-body', this.value);
-        });
-    }
-
-    // === MÓDULO: Audiencias (Utiliza búsqueda en SERVIDOR para consistencia) ===
-    // Se gestiona directamente en audiencias.js
+    // === MÓDULOS GLOBALES (Búsqueda en SERVIDOR) ===
+    // (Búsqueda local CLIENT-SIDE deshabilitada intencionalmente. 
+    // Ahora es asíncrona real desde main-EXP.js para paginación)
 
     // === MÓDULO: Términos (Listado Principal) ===
     const searchTerminos = document.getElementById('input-search-terminos');

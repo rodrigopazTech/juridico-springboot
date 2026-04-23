@@ -240,4 +240,94 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
         console.warn("La librería Choices.js no se cargó correctamente.");
     }
+
+    // Inicializar barra de búsqueda (local & server)
+    const inputExp = document.getElementById('input-search-expedientes');
+    const btnClearExp = document.getElementById('btn-clear-search-expedientes');
+    
+    let debounceTimer;
+
+    if (inputExp) {
+        // A. Mostrar/Ocultar botón X y lanzar Fetch de Búsqueda
+        inputExp.addEventListener('input', function (e) {
+            clearTimeout(debounceTimer);
+
+            if (btnClearExp) {
+                if (this.value.trim() !== "") {
+                    btnClearExp.classList.remove('hidden');
+                } else {
+                    btnClearExp.classList.add('hidden');
+                }
+            }
+
+            // --- Búsqueda Asíncrona (Fetch y reemplazo de tabla) ---
+            debounceTimer = setTimeout(() => {
+                const form = document.getElementById('form-search-expedientes');
+                if (!form) return;
+
+                const urlParams = new URLSearchParams(new FormData(form));
+                urlParams.set('page', 0); // Al tipear, reseteamos a página 0
+                
+                // Recoger filtros adicionales del select superior
+                const formFiltros = document.getElementById('formFiltros');
+                if (formFiltros) {
+                    const fd = new FormData(formFiltros);
+                    for (const [key, value] of fd.entries()) {
+                        if (value) urlParams.set(key, value);
+                    }
+                }
+
+                // Llamar al endpoint
+                fetch('/expedientes?' + urlParams.toString(), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(res => res.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const nuevoGrid = doc.getElementById('grid-resultados');
+                    const gridActual = document.getElementById('grid-resultados');
+                    if (nuevoGrid && gridActual) {
+                        gridActual.innerHTML = nuevoGrid.innerHTML;
+                    }
+                })
+                .catch(err => console.error("Error en búsqueda en vivo:", err));
+
+            }, 400); // 400ms debounce
+        });
+
+        // B. Manejar Botón Limpiar (X)
+        if (btnClearExp) {
+            btnClearExp.onclick = () => {
+                inputExp.value = '';
+                // Disparamos un evento 'input' manual para que se ejecute la búsqueda vacía asíncrona
+                inputExp.dispatchEvent(new Event('input', { bubbles: true }));
+                
+                // O si preferimos forzar recarga (lo comento porque es mejor asíncrono)
+                // window.location.href = '/expedientes';
+            };
+        }
+
+        // C. Detección de "Borrado Total" por teclado 
+        // Ya está cubierto por el evento 'input' y el Fetch asíncrono superior.
+        // Pero para compatibilidad si hay URLParams:
+        inputExp.addEventListener('keyup', function (e) {
+            if (this.value.trim() === "" && (e.key === 'Backspace' || e.key === 'Delete')) {
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('keyword')) {
+                    // Mantenemos esto si queremos purgar la URL de los params "keyword" limpios
+                    window.history.pushState({}, '', '/expedientes');
+                }
+            }
+        });
+
+        // D. Evitar que la tecla ENTER cause un submit tradicional de página (recarga completa)
+        // Ya que el debounce buscará de forma asíncrona.
+        const formSearch = document.getElementById('form-search-expedientes');
+        if (formSearch) {
+            formSearch.addEventListener('submit', function(e) {
+                e.preventDefault();
+            });
+        }
+    }
 });

@@ -40,6 +40,7 @@ import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.util.AudienciaExcelExporter;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -119,30 +120,43 @@ public class AudienciasController {
                 break;
         }
 
-        // 3. FECHAS CENTINELA
-        LocalDate fechaInicio = LocalDate.of(1900, 1, 1);
-        LocalDate fechaFin = LocalDate.of(2100, 12, 31);
+        // 3. LÓGICA DE FECHAS (Prioridad: Fecha Calendario > Búsqueda Texto > Periodo > Mes > Default)
+        LocalDate fechaInicio;
+        LocalDate fechaFin;
 
-        String searchKeyword = keyword;
-        if (keyword != null && keyword.matches("\\d{4}-\\d{2}-\\d{2}")) {
-            // 1. Prioridad: Fecha exacta desde mini-calendario
-            LocalDate fecha = LocalDate.parse(keyword);
+        String searchKeyword = (keyword != null && !keyword.isEmpty()) ? keyword.trim() : null;
+
+        if (searchKeyword != null && searchKeyword.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            // 1. Fecha específica desde clic en calendario
+            LocalDate fecha = LocalDate.parse(searchKeyword);
             fechaInicio = fecha;
             fechaFin = fecha;
-            searchKeyword = null; // No buscar la fecha como texto en otros campos
+            searchKeyword = null; 
+        } else if (searchKeyword != null && !searchKeyword.isEmpty()) {
+            // 2. Búsqueda Global por texto (Ignora el mes seleccionado para encontrar todo)
+            fechaInicio = LocalDate.of(1900, 1, 1);
+            fechaFin = LocalDate.of(2100, 12, 31);
         } else if (periodo != null) {
-            // 2. Periodos relativos (Hoy, Semana, Mes actual)
+            // 3. Periodos relativos (Hoy, Semana, etc.)
             LocalDate[] rango = periodo.calcularRango();
             fechaInicio = rango[0];
             fechaFin = rango[1];
         } else if (mes != null && anio != null) {
-            // 3. Navegación por mes en mini-calendario
+            // 4. Navegación por mes (Flechas del calendario)
             fechaInicio = LocalDate.of(anio, mes, 1);
             fechaFin = fechaInicio.withDayOfMonth(fechaInicio.lengthOfMonth());
+        } else {
+            // 5. Default: Mes actual
+            LocalDate hoy = LocalDate.now();
+            fechaInicio = hoy.withDayOfMonth(1);
+            fechaFin = hoy.withDayOfMonth(hoy.lengthOfMonth());
+            
+            if (mes == null) mes = hoy.getMonthValue();
+            if (anio == null) anio = hoy.getYear();
         }
 
-        // 4. CONSULTA
-        Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaAudiencia").ascending());
+        // 4. CONSULTA (Sin paginación visible: Tamaño 2000)
+        Pageable pageable = PageRequest.of(page, 2000, Sort.by("fechaAudiencia").ascending());
 
         Page<Audiencia> audiencias = audienciaRepository.buscarConFiltros(
                 id, searchKeyword, tipo, gerencia, materia, estatus,
@@ -229,8 +243,10 @@ public class AudienciasController {
         model.addAttribute("usuarioActual", usuario);
 
         // --- 6. CONTEOS PARA KPIs (NUEVO) ---
+        // IMPORTANTE: Usamos searchKeyword (limpio) en lugar del keyword original
+        // para que si el keyword es una fecha (2024-10-14), no intente buscarla como texto en los KPIs
         List<Object[]> rawCounts = audienciaRepository.contarPorEstatusConFiltros(
-                keyword, tipo, gerencia, materia, abogadoId, fechaInicio, fechaFin,
+                searchKeyword, tipo, gerencia, materia, abogadoId, fechaInicio, fechaFin,
                 filtroUsuarioId, filtroGerenciaId, filtroMateriaIds);
 
         Map<EstatusAudiencia, Long> kpisAudit = new EnumMap<>(EstatusAudiencia.class);
@@ -248,6 +264,18 @@ public class AudienciasController {
         }
         model.addAttribute("kpisAudiencias", kpisAudit);
         model.addAttribute("totalAudiencias", totalKpi);
+
+        model.addAttribute("paramPeriodo", periodo);
+        model.addAttribute("usuarioActual", usuario);
+
+        // --- OPTIMIZACIÓN HTMX / FETCH ASÍNCRONO ---
+        // Verificar si la petición es asíncrona
+        HttpServletRequest request = ((org.springframework.web.context.request.ServletRequestAttributes) 
+            org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes()).getRequest();
+        String isAjax = request.getHeader("X-Requested-With");
+        if ("XMLHttpRequest".equals(isAjax)) {
+            return "views/audiencias/index :: gridMaestro";
+        }
 
         return "views/audiencias/index";
     }

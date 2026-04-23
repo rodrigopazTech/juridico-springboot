@@ -1,6 +1,6 @@
 <div th:fragment="filtros" class="space-y-4">
-    <form th:action="@{/audiencias}" method="get" class="space-y-4">
-        <input type="hidden" name="keyword" th:value="${keyword}">
+    <form id="form-filtros-aud" th:action="@{/audiencias}" method="get" class="space-y-4">
+        <input type="hidden" name="keyword" th:value="${param.keyword}">
 
         <!-- Encabezado de Filtros en Sidebar -->
         <div class="flex justify-between items-center pb-2 border-b border-white/10">
@@ -17,7 +17,7 @@
             <!-- Periodo -->
             <div class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Periodo</label>
-                <select name="periodo" onchange="this.form.submit()"
+                <select name="periodo"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
                     <option value="" class="text-gray-800">Todos los periodos</option>
                     <option value="HOY" th:selected="${paramPeriodo == 'HOY'}" class="text-gray-800">Hoy</option>
@@ -32,7 +32,7 @@
             <!-- Tipo -->
             <div class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Tipo de Audiencia</label>
-                <select name="tipo" onchange="this.form.submit()"
+                <select name="tipo"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
                     <option value="" class="text-gray-800">Todos los tipos</option>
                     <option th:each="t : ${listaTiposAudiencia}" th:value="${t.nombre}" th:text="${t.nombre}"
@@ -44,7 +44,7 @@
             <div th:if="${abogados != null}"
                 sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')" class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Abogado</label>
-                <select name="abogadoId" onchange="this.form.submit()"
+                <select name="abogadoId"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
                     <option value="" class="text-gray-800">Todos los abogados</option>
                     <option th:each="a : ${abogados}" th:value="${a.id}" th:text="${a.nombreCompleto}"
@@ -56,7 +56,7 @@
             <div th:if="${listaGerencias != null}" sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION')"
                 class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Gerencia</label>
-                <select name="gerencia" onchange="this.form.submit()"
+                <select name="gerencia"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
                     <option value="" class="text-gray-800">Todas las gerencias</option>
                     <option th:each="g : ${listaGerencias}" th:value="${g.nombre}" th:text="${g.nombre}"
@@ -68,7 +68,7 @@
             <div th:if="${listaMaterias != null}"
                 sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')" class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Materia</label>
-                <select name="materia" onchange="this.form.submit()"
+                <select name="materia"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
                     <option value="" class="text-gray-800">Todas las materias</option>
                     <option th:each="m : ${listaMaterias}" th:value="${m.nombre}" th:text="${m.nombre}"

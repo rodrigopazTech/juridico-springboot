@@ -42,6 +42,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -152,6 +153,11 @@ public class ExpedientesController {
 
         model.addAttribute("expedientes", paginaExpedientes);
         model.addAttribute("keyword", keyword);
+        model.addAttribute("paramGerenciaId", gerenciaId);
+        model.addAttribute("paramMateriaId", materiaId);
+        model.addAttribute("paramPrioridadId", prioridadId);
+        model.addAttribute("paramEtapa", etapa != null ? etapa.name() : null);
+        model.addAttribute("paramAbogadoId", abogadoId);
         model.addAttribute("paramEtiquetaId", etiquetaId);
         model.addAttribute("pageTitle", "Gestión de Expedientes");
         model.addAttribute("activePage", "expedientes");
@@ -174,6 +180,16 @@ public class ExpedientesController {
         model.addAttribute("estados", estadoRepository.findAllByActivoTrueOrderByNombreAsc());
         model.addAttribute("etiquetas", etiquetaRepository.findAll());
         model.addAttribute("usuarioActual", usuario);
+
+        // --- OPTIMIZACIÓN HTMX / FETCH ASÍNCRONO ---
+        // Verificar si la petición es asíncrona (para búsqueda en vivo veloz sin recargar toda la plantilla)
+        HttpServletRequest request = ((org.springframework.web.context.request.ServletRequestAttributes) 
+            org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes()).getRequest();
+        String isAjax = request.getHeader("X-Requested-With");
+        if ("XMLHttpRequest".equals(isAjax)) {
+            // Devuelve solo el fragmento de la grilla de la tabla
+            return "views/expedientes/index :: gridResultados";
+        }
 
         return "views/expedientes/index";
     }

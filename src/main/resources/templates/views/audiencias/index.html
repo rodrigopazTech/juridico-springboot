@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
 <head>
@@ -44,72 +44,73 @@
                     </div>
                 </aside>
 
-                <!-- Columna Derecha: KPIs, Filtros y Tabla -->
-                <div class="col-span-12 lg:col-span-9 space-y-6">
+                    <!-- SECCIÓN DINÁMICA: KPIs + Listado -->
+                    <div id="grid-maestro-audiencias" th:fragment="gridMaestro" class="col-span-12 lg:col-span-9 space-y-6">
+                        
+                        <!-- Tarjetas de KPIs Compactas -->
+                        <div id="contenedor-kpis-audiencias" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 flex items-center gap-4">
+                                <div
+                                    class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-gob-guinda">
+                                    <i class="fas fa-list-ul"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] uppercase text-gray-400 font-bold mb-0.5">Total</p>
+                                    <h3 class="text-xl font-bold text-gray-800" th:text="${totalAudiencias}">0</h3>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 flex items-center gap-4">
+                                <div
+                                    class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-gob-oro">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] uppercase text-gray-400 font-bold mb-0.5">Pendientes</p>
+                                    <h3 class="text-xl font-bold text-gray-800"
+                                        th:text="${kpisAudiencias[T(com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia).PENDIENTE]}">
+                                        0</h3>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
+                                    <i class="fas fa-file-contract"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] uppercase text-gray-400 font-bold mb-0.5">Con Acta</p>
+                                    <h3 class="text-xl font-bold text-gray-800"
+                                        th:text="${kpisAudiencias[T(com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia).CON_ACTA]}">
+                                        0</h3>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 flex items-center gap-4">
+                                <div
+                                    class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-green-600">
+                                    <i class="fas fa-check-double"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] uppercase text-gray-400 font-bold mb-0.5">Concluidas</p>
+                                    <h3 class="text-xl font-bold text-gray-800"
+                                        th:text="${kpisAudiencias[T(com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia).CONCLUIDA]}">
+                                        0</h3>
+                                </div>
+                            </div>
+                        </div>
 
-                    <!-- Tarjetas de KPIs Compactas -->
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 flex items-center gap-4">
+                        <!-- Contenedor de Listado -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                             <div
-                                class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-gob-guinda">
-                                <i class="fas fa-list-ul"></i>
+                                class="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <h2 class="text-lg font-bold text-gray-800">Listado de Audiencias</h2>
+                                <div th:replace="~{fragments/audiencias/barra-busqueda :: barra}"></div>
                             </div>
-                            <div>
-                                <p class="text-[10px] uppercase text-gray-400 font-bold mb-0.5">Total</p>
-                                <h3 class="text-xl font-bold text-gray-800" th:text="${totalAudiencias}">0</h3>
-                            </div>
-                        </div>
-                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 flex items-center gap-4">
-                            <div
-                                class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-gob-oro">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div>
-                                <p class="text-[10px] uppercase text-gray-400 font-bold mb-0.5">Pendientes</p>
-                                <h3 class="text-xl font-bold text-gray-800"
-                                    th:text="${kpisAudiencias[T(com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia).PENDIENTE]}">
-                                    0</h3>
+                            <div class="p-6 pt-0">
+                                <div class="mt-0">
+                                    <div th:replace="~{fragments/audiencias/tabla :: tabla}"></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
-                                <i class="fas fa-file-contract"></i>
-                            </div>
-                            <div>
-                                <p class="text-[10px] uppercase text-gray-400 font-bold mb-0.5">Con Acta</p>
-                                <h3 class="text-xl font-bold text-gray-800"
-                                    th:text="${kpisAudiencias[T(com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia).CON_ACTA]}">
-                                    0</h3>
-                            </div>
-                        </div>
-                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 flex items-center gap-4">
-                            <div
-                                class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-green-600">
-                                <i class="fas fa-check-double"></i>
-                            </div>
-                            <div>
-                                <p class="text-[10px] uppercase text-gray-400 font-bold mb-0.5">Concluidas</p>
-                                <h3 class="text-xl font-bold text-gray-800"
-                                    th:text="${kpisAudiencias[T(com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia).CONCLUIDA]}">
-                                    0</h3>
-                            </div>
-                        </div>
-                    </div>
+                    </div> <!-- /grid-maestro -->
 
-                    <!-- Contenedor de Listado -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div
-                            class="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <h2 class="text-lg font-bold text-gray-800">Listado de Audiencias</h2>
-                            <div th:replace="~{fragments/audiencias/barra-busqueda :: barra}"></div>
-                        </div>
-                        <div class="p-6 pt-0">
-                            <div class="mt-0">
-                                <div th:replace="~{fragments/audiencias/tabla :: tabla}"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </main>
     </div>

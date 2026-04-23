@@ -1,6 +1,6 @@
 <div th:fragment="filtros" class="mb-10 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
     <form th:action="@{/expedientes}" method="get" id="formFiltros" class="flex flex-col gap-4">
-        <input type="hidden" name="keyword" th:value="${keyword}">
+        <input type="hidden" name="keyword" th:value="${param.keyword}">
 
         <!-- Header row -->
         <div class="flex justify-between items-center pb-3 border-b border-gray-50 mb-1">

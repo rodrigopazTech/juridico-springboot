@@ -349,16 +349,88 @@ function initMiniCalendar() {
         prevBtn.onclick = () => {
             const date = miniCalendarState.currentDate;
             date.setMonth(date.getMonth() - 1);
-            window.location.href = `/audiencias?mes=${date.getMonth() + 1}&anio=${date.getFullYear()}`;
+            const searchInput = document.getElementById('input-search-audiencias');
+            if (searchInput) searchInput.value = ''; 
+            renderMiniCalendar();
+            actualizarTablaAsincrono();
         };
         nextBtn.onclick = () => {
             const date = miniCalendarState.currentDate;
             date.setMonth(date.getMonth() + 1);
-            window.location.href = `/audiencias?mes=${date.getMonth() + 1}&anio=${date.getFullYear()}`;
+            const searchInput = document.getElementById('input-search-audiencias');
+            if (searchInput) searchInput.value = ''; 
+            renderMiniCalendar();
+            actualizarTablaAsincrono();
         };
     }
 
     renderMiniCalendar();
+}
+
+/**
+ * Función centralizada para disparar la actualización de la tabla 
+ * capturando TODOS los parámetros (Buscador, Mini-Calendario, Filtros Side)
+ */
+function actualizarTablaAsincrono(keywordForzado = null) {
+    const input = document.getElementById('input-search-audiencias');
+    const formSearch = document.getElementById('form-search-audiencias');
+    const gridContext = document.getElementById('grid-resultados-audiencias');
+    
+    if (!gridContext) return;
+
+    const urlParams = new URLSearchParams();
+    
+    // 1. Keyword (Prioridad)
+    const valKeyword = keywordForzado !== null ? keywordForzado : (input ? input.value : '');
+    if (valKeyword) urlParams.set('keyword', valKeyword);
+
+    // 2. Mes y Año del Calendario
+    const date = miniCalendarState.currentDate;
+    urlParams.set('mes', date.getMonth() + 1);
+    urlParams.set('anio', date.getFullYear());
+
+    // 3. Filtros del Lateral
+    const formFiltros = document.getElementById('form-filtros-aud');
+    if (formFiltros) {
+        const fd = new FormData(formFiltros);
+        for (const [key, value] of fd.entries()) {
+            if (key === 'keyword' || key === 'mes' || key === 'anio') continue;
+            if (value && value !== 'null') urlParams.set(key, value);
+        }
+    }
+
+    // 4. Resetear página
+    urlParams.set('page', 0);
+
+    // 5. Fetch con Feedback visual
+    gridContext.style.opacity = '0.5';
+    
+    fetch('/audiencias?' + urlParams.toString(), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.text())
+    .then(html => {
+        gridContext.style.opacity = '1';
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // 1. Actualizar KPIs (coordinados con la búsqueda)
+        const nuevosKpis = doc.getElementById('contenedor-kpis-audiencias');
+        const kpiDestino = document.getElementById('contenedor-kpis-audiencias');
+        if (nuevosKpis && kpiDestino) {
+            kpiDestino.innerHTML = nuevosKpis.innerHTML;
+        }
+
+        // 2. Actualizar Tabla
+        const nuevoGrid = doc.getElementById('grid-resultados-audiencias');
+        if (nuevoGrid) {
+            gridContext.innerHTML = nuevoGrid.innerHTML;
+        }
+    })
+    .catch(err => {
+        gridContext.style.opacity = '1';
+        console.error("Error en actualización asíncrona:", err);
+    });
 }
 
 function renderMiniCalendar() {
@@ -375,6 +447,7 @@ function renderMiniCalendar() {
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
+    const today = new Date();
     // Celdas vacías
     for (let i = 0; i < firstDay; i++) {
         const emptyCell = document.createElement('div');
@@ -383,7 +456,6 @@ function renderMiniCalendar() {
     }
 
     // Días del mes
-    const today = new Date();
     for (let day = 1; day <= daysInMonth; day++) {
         const cell = document.createElement('div');
         cell.className = 'mini-day-cell';
@@ -401,13 +473,15 @@ function renderMiniCalendar() {
         }
 
         cell.onclick = () => {
+            // Al hacer clic en un día, forzamos el keyword con la fecha YYYY-MM-DD
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const url = new URL(window.location.href);
-            url.searchParams.set('keyword', dateStr);
-            // También mantenemos el mes/anio para que el calendario no brinque
-            url.searchParams.set('mes', month + 1);
-            url.searchParams.set('anio', year);
-            window.location.href = url.toString();
+            
+            // Actualizar estado visual
+            miniCalendarState.selectedDate = new Date(year, month, day);
+            renderMiniCalendar();
+            
+            // Actualizar tabla con el keyword de fecha
+            actualizarTablaAsincrono(dateStr);
         };
 
         grid.appendChild(cell);
@@ -424,11 +498,16 @@ function initSearchBar() {
     const input = document.getElementById('input-search-audiencias');
     const btnClear = document.getElementById('btn-clear-search');
     const form = document.getElementById('form-search-audiencias');
+    const gridContext = document.getElementById('grid-resultados-audiencias');
 
     if (!input || !form) return;
 
-    // A. Mostrar/Ocultar botón X según el contenido
-    input.addEventListener('input', function () {
+    let debounceTimer;
+
+    // A. Mostrar/Ocultar botón X y lanzar Fetch de Búsqueda
+    input.addEventListener('input', function (e) {
+        clearTimeout(debounceTimer);
+
         if (btnClear) {
             if (this.value.trim() !== "") {
                 btnClear.classList.remove('hidden');
@@ -436,35 +515,59 @@ function initSearchBar() {
                 btnClear.classList.add('hidden');
             }
         }
+
+        // --- Búsqueda Asíncrona (Fetch y reemplazo de tabla) ---
+        debounceTimer = setTimeout(() => {
+            actualizarTablaAsincrono();
+        }, 400); // 400ms debounce
     });
 
-    // B. Manejar tecla ENTER (Búsqueda Servidor)
-    input.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            form.submit();
-        }
-    });
-
-    // C. Manejar Botón Limpiar (X)
+    // B. Manejar Botón Limpiar (X)
     if (btnClear) {
         btnClear.onclick = () => {
             input.value = '';
-            // Al limpiar, quitamos también los parámetros de mes/anio si queremos volver a "Hoy"
-            // o simplemente enviamos el form para quitar el keyword.
-            // Para volver al "Estado Original", lo mejor es redirigir a la URL base de audiencias.
-            window.location.href = '/audiencias';
+            actualizarTablaAsincrono();
         };
     }
 
-    // D. Detección de "Borrado Total" por teclado
-    input.addEventListener('keyup', function (e) {
-        if (this.value.trim() === "" && (e.key === 'Backspace' || e.key === 'Delete')) {
-            // Si el usuario borra todo y ya había una búsqueda (keyword en URL), recargamos
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('keyword')) {
-                window.location.href = '/audiencias';
-            }
-        }
+    // C. Evitar que ENTER recargue la página
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        actualizarTablaAsincrono();
     });
+
+    // E. Escuchar cambios en los selectores de filtros (Sidebar)
+    const formFiltros = document.getElementById('form-filtros-aud');
+    if (formFiltros) {
+        formFiltros.addEventListener('change', function() {
+            actualizarTablaAsincrono();
+        });
+    }
+
+    // D. Paginación Asíncrona (Delegación de eventos)
+    if (gridContext) {
+        gridContext.addEventListener('click', function(e) {
+            const link = e.target.closest('.pagina-link-aud');
+            if (link) {
+                e.preventDefault();
+                const url = link.getAttribute('href');
+                
+                fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(res => res.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const nuevoGrid = doc.getElementById('grid-resultados-audiencias');
+                    if (nuevoGrid) {
+                        gridContext.innerHTML = nuevoGrid.innerHTML;
+                        // Scroll suave arriba de la tabla opcional
+                        gridContext.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                })
+                .catch(err => console.error("Error en paginación asíncrona:", err));
+            }
+        });
+    }
 }
