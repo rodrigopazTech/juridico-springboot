@@ -1,5 +1,5 @@
 <div th:fragment="tabla-resultados" id="tabla-resultados-container">
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
         <div class="rounded-t-lg">
             <table class="w-full text-sm text-left text-gray-600 border-collapse">
                 <thead
@@ -184,13 +184,13 @@
         <div class="flex gap-2">
             <a th:if="${terminos.hasPrevious()}"
                 th:href="@{/terminos(page=${terminos.number - 1}, keyword=${keyword}, estatus=${paramEstatus}, prioridadId=${paramPrioridadId}, abogadoId=${paramAbogadoId}, materiaId=${paramMateriaId}, gerenciaId=${paramGerenciaId}, periodo=${paramPeriodo}, mes=${param.mes}, anio=${param.anio})}"
-                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 bg-white shadow-sm transition-all flex items-center gap-1">
+                class="pagina-link-ter px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 bg-white shadow-sm transition-all flex items-center gap-1">
                 <i class="fas fa-chevron-left text-xs"></i> Anterior
             </a>
 
             <a th:if="${terminos.hasNext()}"
                 th:href="@{/terminos(page=${terminos.number + 1}, keyword=${keyword}, estatus=${paramEstatus}, prioridadId=${paramPrioridadId}, abogadoId=${paramAbogadoId}, materiaId=${paramMateriaId}, gerenciaId=${paramGerenciaId}, periodo=${paramPeriodo}, mes=${param.mes}, anio=${param.anio})}"
-                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 bg-white shadow-sm transition-all flex items-center gap-1">
+                class="pagina-link-ter px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 bg-white shadow-sm transition-all flex items-center gap-1">
                 Siguiente <i class="fas fa-chevron-right text-xs"></i>
             </a>
         </div>

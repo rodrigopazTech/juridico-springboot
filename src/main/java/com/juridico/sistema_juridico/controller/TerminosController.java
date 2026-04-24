@@ -260,7 +260,8 @@ public class TerminosController {
 
         // --- 6. CONTEOS PARA LA LÍNEA DE TIEMPO (NUEVO) ---
         List<Object[]> rawCounts = terminoRepository.contarPorEtapaConFiltros(
-                keyword, prioridadId, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId);
+                searchKeyword, prioridadId, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId, 
+                fechaInicio, fechaFin);
 
         Map<EstatusTermino, Long> conteosMap = new EnumMap<>(EstatusTermino.class);
         for (EstatusTermino e : EstatusTermino.values()) {
@@ -321,7 +322,7 @@ public class TerminosController {
                 // Limpiamos el estatus del modelo para que los links de paginación sean globales
                 model.addAttribute("paramEstatus", null);
             }
-            return "fragments/terminos/tabla :: tabla-resultados";
+            return "views/terminos/index :: gridMaestroTerminos";
         }
 
         return "views/terminos/index";

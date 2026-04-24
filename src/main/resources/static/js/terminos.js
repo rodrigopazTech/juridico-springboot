@@ -7,67 +7,135 @@ document.addEventListener('DOMContentLoaded', function () {
     console.log("Sistema de Terminos Cargado");
     initMiniCalendar();
     initSearchTerminos();
-});
 
-// --- BÚSQUEDA ASÍNCRONA GLOBAL ---
-function initSearchTerminos() {
-    const inputSearch = document.getElementById('input-search-terminos');
-    const btnClear = document.getElementById('btn-clear-search-terminos');
-    const formSearch = document.getElementById('form-search-terminos');
-    let debounceTimer;
-
-    if (!inputSearch) return;
-
-    inputSearch.addEventListener('input', function() {
-        clearTimeout(debounceTimer);
-        
-        // Mostrar/ocultar botón X
-        if (btnClear) {
-            if (this.value.trim() !== "") {
-                btnClear.classList.remove('hidden');
-            } else {
-                btnClear.classList.add('hidden');
-            }
+    // D. Paginación Asíncrona (Delegación Global)
+    document.addEventListener('click', function (e) {
+        // 1. Paginación
+        const linkPag = e.target.closest('.pagina-link-ter');
+        if (linkPag) {
+            e.preventDefault();
+            const url = linkPag.getAttribute('href');
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(res => res.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const nuevoMaestro = doc.getElementById('grid-maestro-terminos');
+                    const maestroDestino = document.getElementById('grid-maestro-terminos');
+                    if (nuevoMaestro && maestroDestino) {
+                        maestroDestino.innerHTML = nuevoMaestro.innerHTML;
+                    }
+                    window.history.replaceState({ path: url }, '', url);
+                })
+                .catch(err => console.error("Error en paginación asíncrona:", err));
+            return;
         }
 
-        debounceTimer = setTimeout(() => {
-            if (!formSearch) return;
+        // 2. Botón Limpiar Búsqueda (Barra Superior)
+        const btnClear = e.target.closest('#btn-clear-search-terminos');
+        if (btnClear) {
+            const input = document.getElementById('input-search-terminos');
+            if (input) input.value = '';
+            actualizarTablaAsincrono();
+            return;
+        }
 
-            // Preparamos los parámetros
-            const urlParams = new URLSearchParams(new FormData(formSearch));
-            urlParams.set('page', 0); // Reset a primera página
-
-            // LLAMADA AJAX
-            fetch('/terminos?' + urlParams.toString(), {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(res => res.text())
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const nuevoContenedor = doc.getElementById('tabla-resultados-container');
-                const contenedorActual = document.getElementById('tabla-resultados-container');
-                
-                if (nuevoContenedor && contenedorActual) {
-                    contenedorActual.innerHTML = nuevoContenedor.innerHTML;
-                }
-            })
-            .catch(err => console.error("Error en búsqueda asíncrona:", err));
-
-        }, 400); // 400ms de espera para no saturar el servidor
+        // 3. Botón Limpiar Filtros (Sidebar)
+        const btnLimpiar = e.target.closest('#btn-limpiar-filtros-ter');
+        if (btnLimpiar) {
+            const form = document.getElementById('form-filtros');
+            if (form) form.reset();
+            const input = document.getElementById('input-search-terminos');
+            if (input) input.value = '';
+            miniCalendarState.isDateFilterActive = false;
+            actualizarTablaAsincrono();
+            return;
+        }
     });
 
-    if (btnClear) {
-        btnClear.onclick = () => {
-            inputSearch.value = '';
-            inputSearch.dispatchEvent(new Event('input', { bubbles: true }));
-        };
+    // E. Búsqueda en Tiempo Real (Delegación Global)
+    document.addEventListener('input', function (e) {
+        if (e.target.id === 'input-search-terminos') {
+            const input = e.target;
+            const btnClear = document.getElementById('btn-clear-search-terminos');
+            if (input.value) {
+                btnClear?.classList.remove('hidden');
+            } else {
+                btnClear?.classList.add('hidden');
+            }
+            actualizarTablaAsincrono();
+        }
+    });
+
+    // F. Submit del formulario de búsqueda (Evitar recarga)
+    document.addEventListener('submit', function (e) {
+        if (e.target.id === 'form-search-terminos') {
+            e.preventDefault();
+            actualizarTablaAsincrono();
+        }
+    });
+
+    // G. Filtros del sidebar (Delegación para que no sea necesario rebindear)
+    document.addEventListener('change', function (e) {
+        if (e.target.closest('#form-filtros')) {
+            actualizarTablaAsincrono();
+        }
+    });
+});
+
+// --- BÚSQUEDA ASÍNCRONA CENTRALIZADA ---
+function actualizarTablaAsincrono(keywordForzado = null) {
+    const input = document.getElementById('input-search-terminos');
+    const container = document.getElementById('tabla-resultados-container');
+
+    if (!container) return;
+
+    const urlParams = new URLSearchParams();
+
+    // 1. Keyword (Buscador o Fecha del Calendario)
+    const valKeyword = keywordForzado !== null ? keywordForzado : (input ? input.value : '');
+    if (valKeyword) urlParams.set('keyword', valKeyword);
+
+    // 2. Mes y Año del Calendario (Solo si el filtro de fecha está activo)
+    if (miniCalendarState.isDateFilterActive) {
+        const date = miniCalendarState.currentDate;
+        urlParams.set('mes', date.getMonth() + 1);
+        urlParams.set('anio', date.getFullYear());
     }
 
-    // Evitar recarga completa con ENTER
-    if (formSearch) {
-        formSearch.addEventListener('submit', (e) => e.preventDefault());
+    // 3. Filtros del Lateral
+    const formFiltros = document.getElementById('form-filtros');
+    if (formFiltros) {
+        const fd = new FormData(formFiltros);
+        for (const [key, value] of fd.entries()) {
+            if (key === 'mes' || key === 'anio' || key === 'keyword' || key === '_csrf') continue;
+            if (value && value !== 'null' && value !== '') urlParams.set(key, value);
+        }
     }
+
+    urlParams.set('page', 0);
+
+    const newUrl = window.location.pathname + '?' + urlParams.toString();
+    window.history.replaceState({ path: newUrl }, '', newUrl);
+
+    fetch('/terminos?' + urlParams.toString(), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+        .then(res => res.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const nuevoMaestro = doc.getElementById('grid-maestro-terminos');
+            const maestroDestino = document.getElementById('grid-maestro-terminos');
+            if (nuevoMaestro && maestroDestino) {
+                maestroDestino.innerHTML = nuevoMaestro.innerHTML;
+            }
+        })
+        .catch(err => console.error("Error en actualización asíncrona:", err));
+}
+
+function initSearchTerminos() {
+    // Implementación asíncrona vía delegación global
 }
 
 // --- MENÚS DESPLEGABLES ---
@@ -317,6 +385,7 @@ function abrirModalConcluir(idTermino) {
 const miniCalendarState = {
     currentDate: new Date(),
     selectedDate: new Date(),
+    isDateFilterActive: false, // ROD-185: Bandera para saber si filtramos por fecha o vemos todo
     names: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
     events: []
 };
@@ -332,8 +401,13 @@ function initMiniCalendar() {
         miniCalendarState.currentDate = new Date(parseInt(hdnAnio.value), parseInt(hdnMes.value) - 1, 1);
     }
 
-    // Si hay un keyword que es fecha, marcarla como seleccionada
+    // Determinar si hay un filtro de fecha activo en la URL inicial
     const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('mes') || urlParams.has('anio') || urlParams.get('keyword')?.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        miniCalendarState.isDateFilterActive = true;
+    }
+
+    // Si hay un keyword que es fecha, marcarla como seleccionada
     const keyword = urlParams.get('keyword');
     if (keyword && keyword.match(/^\d{4}-\d{2}-\d{2}$/)) {
         const parts = keyword.split('-');
@@ -344,12 +418,28 @@ function initMiniCalendar() {
         prevBtn.onclick = () => {
             const date = miniCalendarState.currentDate;
             date.setMonth(date.getMonth() - 1);
-            window.location.href = `/terminos?mes=${date.getMonth() + 1}&anio=${date.getFullYear()}`;
+            const searchInput = document.getElementById('input-search-terminos');
+            if (searchInput) {
+                searchInput.value = '';
+                const btnClear = document.getElementById('btn-clear-search-terminos');
+                if (btnClear) btnClear.classList.add('hidden');
+            }
+            renderMiniCalendar();
+            miniCalendarState.isDateFilterActive = true; // Activar al navegar meses
+            actualizarTablaAsincrono();
         };
         nextBtn.onclick = () => {
             const date = miniCalendarState.currentDate;
             date.setMonth(date.getMonth() + 1);
-            window.location.href = `/terminos?mes=${date.getMonth() + 1}&anio=${date.getFullYear()}`;
+            const searchInput = document.getElementById('input-search-terminos');
+            if (searchInput) {
+                searchInput.value = '';
+                const btnClear = document.getElementById('btn-clear-search-terminos');
+                if (btnClear) btnClear.classList.add('hidden');
+            }
+            renderMiniCalendar();
+            miniCalendarState.isDateFilterActive = true; // Activar al navegar meses
+            actualizarTablaAsincrono();
         };
     }
 
@@ -366,6 +456,21 @@ function renderMiniCalendar() {
     const month = miniCalendarState.currentDate.getMonth();
 
     monthLabel.innerText = `${miniCalendarState.names[month]} ${year}`;
+    monthLabel.className = "text-base font-bold text-white font-headings cursor-pointer px-2 py-1 rounded-lg transition-all flex items-center gap-2 border border-gob-guinda bg-gob-guinda hover:bg-gob-guinda/80";
+    monthLabel.title = "Ver todo el mes";
+    monthLabel.onclick = () => {
+        // Al hacer clic en el mes, queremos ver TODO el mes
+        miniCalendarState.selectedDate = new Date(0);
+        const searchInput = document.getElementById('input-search-terminos');
+        if (searchInput) {
+            searchInput.value = '';
+            const btnClear = document.getElementById('btn-clear-search-terminos');
+            if (btnClear) btnClear.classList.add('hidden');
+        }
+        miniCalendarState.isDateFilterActive = true; // ACTIVAR filtro de fecha
+        renderMiniCalendar();
+        actualizarTablaAsincrono();
+    };
 
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -397,11 +502,10 @@ function renderMiniCalendar() {
 
         cell.onclick = () => {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const url = new URL(window.location.href);
-            url.searchParams.set('keyword', dateStr);
-            url.searchParams.set('mes', month + 1);
-            url.searchParams.set('anio', year);
-            window.location.href = url.toString();
+            miniCalendarState.selectedDate = new Date(year, month, day);
+            miniCalendarState.isDateFilterActive = true; // ACTIVAR filtro de fecha
+            renderMiniCalendar();
+            actualizarTablaAsincrono(dateStr);
         };
 
         grid.appendChild(cell);
@@ -421,7 +525,7 @@ function toggleSidebarView(view) {
         // Activar Botón Calendario
         btnCal.classList.add('bg-gob-guinda', 'text-white', 'shadow-md', 'shadow-gob-guinda/20');
         btnCal.classList.remove('text-gray-400', 'hover:bg-gray-50');
-        
+
         // Desactivar Botón Filtros
         btnFil.classList.remove('bg-gob-guinda', 'text-white', 'shadow-md', 'shadow-gob-guinda/20');
         btnFil.classList.add('text-gray-400', 'hover:bg-gray-50');
@@ -452,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const val = params.get(p);
         return val !== null && val !== '';
     });
-    
+
     if (hasActiveFilters) {
         toggleSidebarView('filtros');
     }

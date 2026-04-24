@@ -158,6 +158,12 @@ public class AudienciasController {
         // 4. CONSULTA CON PAGINACIÓN (Standard: 10 por página)
         Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaAudiencia").ascending());
 
+        // --- OPTIMIZACIÓN ROD-185: Si hay búsqueda, ignoramos fechas para que las KPIs y la tabla coincidan ---
+        if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+            fechaInicio = LocalDate.of(1900, 1, 1);
+            fechaFin = LocalDate.of(2100, 12, 31);
+        }
+
         Page<Audiencia> audiencias = audienciaRepository.buscarConFiltros(
                 id, searchKeyword, tipo, gerencia, materia, estatus,
                 abogadoId, fechaInicio, fechaFin,
@@ -230,6 +236,7 @@ public class AudienciasController {
         model.addAttribute("paramAbogadoId", filtroUsuarioId != null ? filtroUsuarioId : abogadoId);
         model.addAttribute("paramPeriodo", periodo);
         model.addAttribute("usuarioActual", usuario);
+        model.addAttribute("listaEstatus", EstatusAudiencia.values());
 
         // --- 6. CONTEOS PARA KPIs ---
         List<Object[]> rawCounts = audienciaRepository.contarPorEstatusConFiltros(
@@ -256,15 +263,6 @@ public class AudienciasController {
         String isAjax = request.getHeader("X-Requested-With");
 
         if ("XMLHttpRequest".equals(isAjax)) {
-             // Si hay búsqueda, ignoramos fechas para que sea global (ROD-182)
-             if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
-                 audiencias = audienciaRepository.buscarConFiltros(
-                    id, searchKeyword, tipo, gerencia, materia, estatus,
-                    abogadoId, LocalDate.of(1900,1,1), LocalDate.of(2100,12,31),
-                    filtroUsuarioId, filtroGerenciaId, filtroMateriaIds,
-                    pageable);
-                 model.addAttribute("audiencias", audiencias);
-             }
             return "views/audiencias/index :: gridMaestro";
         }
 

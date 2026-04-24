@@ -175,13 +175,16 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
             "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
             "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
+            "AND (t.fechaVencimiento >= :fechaInicio AND t.fechaVencimiento <= :fechaFin) " +
             "GROUP BY t.estatusTermino")
     List<Object[]> contarPorEtapaConFiltros(
             @Param("keyword") String keyword,
             @Param("prioridadId") Integer prioridadId,
             @Param("abogadoId") Integer abogadoId,
             @Param("gerenciaId") Integer gerenciaId,
-            @Param("materiaId") Integer materiaId);
+            @Param("materiaId") Integer materiaId,
+            @Param("fechaInicio") LocalDate fechaInicio,
+            @Param("fechaFin") LocalDate fechaFin);
 
     @Query("SELECT t FROM Termino t " +
             "LEFT JOIN t.expediente e " +

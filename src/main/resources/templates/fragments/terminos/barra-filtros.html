@@ -1,23 +1,26 @@
 <div th:fragment="filtros" class="space-y-4">
     <form id="form-filtros" th:action="@{/terminos}" method="get" class="space-y-4">
         <input type="hidden" name="keyword" th:value="${keyword}">
+        <!-- Preservar contexto de fecha (ROD-186) -->
+        <input type="hidden" name="mes" th:value="${mesActual}">
+        <input type="hidden" name="anio" th:value="${anioActual}">
 
         <!-- Encabezado de Filtros en Sidebar -->
         <div class="flex justify-between items-center pb-2 border-b border-white/10">
             <h3 class="text-[11px] font-bold text-gob-oro uppercase tracking-widest">
                 <i class="fas fa-filter mr-1"></i> Filtros de Términos
             </h3>
-            <a th:href="@{/terminos}"
+            <button type="button" id="btn-limpiar-filtros-ter"
                 class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-gob-oro hover:text-gob-guinda text-[9px] font-bold text-gob-oro transition-all border border-white/20 shadow-sm group">
                 <i class="fas fa-broom text-[10px] group-hover:text-gob-guinda transition-colors"></i> LIMPIAR FILTROS
-            </a>
+            </button>
         </div>
 
         <div class="space-y-3">
             <!-- Periodo -->
             <div class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Periodo</label>
-                <select name="periodo" onchange="this.form.submit()"
+                <select name="periodo"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
                     <option value="" class="text-gray-800">Todos los periodos</option>
                     <option value="HOY" th:selected="${paramPeriodo == 'HOY'}" class="text-gray-800">Hoy</option>
@@ -32,7 +35,7 @@
             <!-- Estatus -->
             <div class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Estatus</label>
-                <select name="estatus" onchange="this.form.submit()"
+                <select name="estatus"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
                     <option value="" class="text-gray-800">Todos los estatus</option>
                     <option th:each="st : ${listaEstatus}" th:value="${st}" th:text="${st}"
@@ -43,7 +46,7 @@
             <!-- Prioridad -->
             <div class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Prioridad</label>
-                <select name="prioridadId" onchange="this.form.submit()"
+                <select name="prioridadId"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
                     <option value="" class="text-gray-800">Todas las prioridades</option>
                     <option th:each="p : ${listaPrioridades}" th:value="${p.id}" th:text="${p.nombre}"
@@ -57,7 +60,7 @@
             <div sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')"
                 class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Abogado</label>
-                <select name="abogadoId" onchange="this.form.submit()"
+                <select name="abogadoId"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
                     <option value="" class="text-gray-800">Todos los abogados</option>
                     <option th:each="a : ${listaAbogados}" th:value="${a.id}" th:text="${a.nombreCompleto}"
@@ -70,7 +73,7 @@
             <div sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')"
                 class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Materia</label>
-                <select name="materiaId" onchange="this.form.submit()"
+                <select name="materiaId"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
                     <option value="" class="text-gray-800">Todas las materias</option>
                     <option th:each="m : ${listaMaterias}" th:value="${m.id}" th:text="${m.nombre}"
@@ -82,7 +85,7 @@
             <!-- Gerencia (Condicional) -->
             <div sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION')" class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Gerencia</label>
-                <select name="gerenciaId" onchange="this.form.submit()"
+                <select name="gerenciaId"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
                     <option value="" class="text-gray-800">Todas las gerencias</option>
                     <option th:each="g : ${listaGerencias}" th:value="${g.id}" th:text="${g.nombre}"

@@ -158,22 +158,22 @@ function cargarAbogadosPosibles(idPreseleccionado = null) {
     if (!expSelect || !abogadoSelect) return;
 
     const expId = expSelect.value;
-    
+
     // Filtrar Tipos de Audiencia por Gerencia
     const tipoSelect = document.getElementById('input-tipo');
     if (tipoSelect) {
         const selectedOption = expSelect.options[expSelect.selectedIndex];
         const gerenciaId = selectedOption ? selectedOption.getAttribute('data-gerencia-id') : null;
-        
+
         Array.from(tipoSelect.options).forEach(opt => {
             if (opt.value === "") return; // Option disabled selected
             const optGerenciaId = opt.getAttribute('data-gerencia-id');
-            
+
             // Si no hay gerencia seleccionada (no hay expediente), ocultar todos
             if (!gerenciaId) {
                 opt.style.display = 'none';
                 opt.hidden = true;
-            } 
+            }
             // Si hay gerenciaId, mostrar solo los que tengan la misma
             else if (!optGerenciaId || optGerenciaId === gerenciaId) {
                 opt.style.display = '';
@@ -183,7 +183,7 @@ function cargarAbogadosPosibles(idPreseleccionado = null) {
                 opt.hidden = true;
             }
         });
-        
+
         // Si el tipo actual está oculto, resetear
         const currentTipo = tipoSelect.options[tipoSelect.selectedIndex];
         if (currentTipo && currentTipo.hidden) {
@@ -322,6 +322,7 @@ function confirmarEliminarAudiencia(id) {
 const miniCalendarState = {
     currentDate: new Date(),
     selectedDate: new Date(),
+    isDateFilterActive: false, // Nueva bandera para saber si filtrar por fecha o ver todo (ROD-185)
     names: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
     events: [] // Para los puntos indicadores (opcional por ahora)
 };
@@ -337,8 +338,13 @@ function initMiniCalendar() {
         miniCalendarState.currentDate = new Date(parseInt(hdnAnio.value), parseInt(hdnMes.value) - 1, 1);
     }
 
-    // Si hay un keyword que es fecha, marcarla como seleccionada
+    // Determinar si hay un filtro de fecha activo en la URL inicial
     const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('mes') || urlParams.has('anio') || urlParams.get('keyword')?.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        miniCalendarState.isDateFilterActive = true;
+    }
+
+    // Si hay un keyword que es fecha, marcarla como seleccionada
     const keyword = urlParams.get('keyword');
     if (keyword && keyword.match(/^\d{4}-\d{2}-\d{2}$/)) {
         const parts = keyword.split('-');
@@ -350,16 +356,18 @@ function initMiniCalendar() {
             const date = miniCalendarState.currentDate;
             date.setMonth(date.getMonth() - 1);
             const searchInput = document.getElementById('input-search-audiencias');
-            if (searchInput) searchInput.value = ''; 
+            if (searchInput) searchInput.value = '';
             renderMiniCalendar();
+            miniCalendarState.isDateFilterActive = true; // Activar filtro al navegar meses
             actualizarTablaAsincrono();
         };
         nextBtn.onclick = () => {
             const date = miniCalendarState.currentDate;
             date.setMonth(date.getMonth() + 1);
             const searchInput = document.getElementById('input-search-audiencias');
-            if (searchInput) searchInput.value = ''; 
+            if (searchInput) searchInput.value = '';
             renderMiniCalendar();
+            miniCalendarState.isDateFilterActive = true; // Activar filtro al navegar meses
             actualizarTablaAsincrono();
         };
     }
@@ -375,19 +383,21 @@ function actualizarTablaAsincrono(keywordForzado = null) {
     const input = document.getElementById('input-search-audiencias');
     const formSearch = document.getElementById('form-search-audiencias');
     const gridContext = document.getElementById('grid-resultados-audiencias');
-    
+
     if (!gridContext) return;
 
     const urlParams = new URLSearchParams();
-    
+
     // 1. Keyword (Prioridad)
     const valKeyword = keywordForzado !== null ? keywordForzado : (input ? input.value : '');
     if (valKeyword) urlParams.set('keyword', valKeyword);
 
-    // 2. Mes y Año del Calendario
-    const date = miniCalendarState.currentDate;
-    urlParams.set('mes', date.getMonth() + 1);
-    urlParams.set('anio', date.getFullYear());
+    // 2. Mes y Año del Calendario (Solo si el filtro de fecha está activo)
+    if (miniCalendarState.isDateFilterActive) {
+        const date = miniCalendarState.currentDate;
+        urlParams.set('mes', date.getMonth() + 1);
+        urlParams.set('anio', date.getFullYear());
+    }
 
     // 3. Filtros del Lateral
     const formFiltros = document.getElementById('form-filtros-aud');
@@ -402,35 +412,29 @@ function actualizarTablaAsincrono(keywordForzado = null) {
     // 4. Resetear página
     urlParams.set('page', 0);
 
-    // 5. Fetch
-    // gridContext.style.opacity = '0.5';
-    
+    // 5. Sincronizar URL en la barra de direcciones
+    const newUrl = window.location.pathname + '?' + urlParams.toString();
+    window.history.replaceState({ path: newUrl }, '', newUrl);
+
+    // 6. Fetch
     fetch('/audiencias?' + urlParams.toString(), {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
-    .then(res => res.text())
-    .then(html => {
-        // gridContext.style.opacity = '1';
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        
-        // 1. Actualizar KPIs (coordinados con la búsqueda)
-        const nuevosKpis = doc.getElementById('contenedor-kpis-audiencias');
-        const kpiDestino = document.getElementById('contenedor-kpis-audiencias');
-        if (nuevosKpis && kpiDestino) {
-            kpiDestino.innerHTML = nuevosKpis.innerHTML;
-        }
+        .then(res => res.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
 
-        // 2. Actualizar Tabla
-        const nuevoGrid = doc.getElementById('grid-resultados-audiencias');
-        if (nuevoGrid) {
-            gridContext.innerHTML = nuevoGrid.innerHTML;
-        }
-    })
-    .catch(err => {
-        // gridContext.style.opacity = '1';
-        console.error("Error en actualización asíncrona:", err);
-    });
+            const nuevoMaestro = doc.getElementById('grid-maestro-audiencias');
+            const maestroDestino = document.getElementById('grid-maestro-audiencias');
+
+            if (nuevoMaestro && maestroDestino) {
+                maestroDestino.innerHTML = nuevoMaestro.innerHTML;
+            }
+        })
+        .catch(err => {
+            console.error("Error en actualización asíncrona:", err);
+        });
 }
 
 function renderMiniCalendar() {
@@ -443,6 +447,24 @@ function renderMiniCalendar() {
     const month = miniCalendarState.currentDate.getMonth();
 
     monthLabel.innerText = `${miniCalendarState.names[month]} ${year}`;
+    monthLabel.className = "text-base font-bold text-white font-headings cursor-pointer px-2 py-1 rounded-lg transition-all flex items-center gap-2 border border-gob-guinda bg-gob-guinda hover:bg-gob-guinda/80";
+    monthLabel.title = "Ver todo el mes";
+    monthLabel.onclick = () => {
+        // Al hacer clic en el mes, queremos ver TODO el mes
+        // 1. Limpiar fecha seleccionada en el estado visual
+        miniCalendarState.selectedDate = new Date(0); 
+        // 2. Limpiar el buscador si tiene una fecha
+        const searchInput = document.getElementById('input-search-audiencias');
+        if (searchInput) {
+            searchInput.value = '';
+            const btnClear = document.getElementById('btn-clear-search');
+            if (btnClear) btnClear.classList.add('hidden');
+        }
+        miniCalendarState.isDateFilterActive = true; // ACTIVAR filtro de fecha
+        renderMiniCalendar();
+        actualizarTablaAsincrono();
+    };
+
 
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -475,9 +497,10 @@ function renderMiniCalendar() {
         cell.onclick = () => {
             // Al hacer clic en un día, forzamos el keyword con la fecha YYYY-MM-DD
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            
+
             // Actualizar estado visual
             miniCalendarState.selectedDate = new Date(year, month, day);
+            miniCalendarState.isDateFilterActive = true; // ACTIVAR filtro de fecha
             renderMiniCalendar();
             
             // Actualizar tabla con el keyword de fecha
@@ -488,87 +511,91 @@ function renderMiniCalendar() {
     }
 }
 
+function initSearchBar() {
+    // Implementación asíncrona vía delegación global en document
+}
+
 // Iniciar componentes al cargar
 document.addEventListener('DOMContentLoaded', () => {
     initMiniCalendar();
     initSearchBar();
-});
 
-function initSearchBar() {
-    const input = document.getElementById('input-search-audiencias');
-    const btnClear = document.getElementById('btn-clear-search');
-    const form = document.getElementById('form-search-audiencias');
-    const gridContext = document.getElementById('grid-resultados-audiencias');
-
-    if (!input || !form) return;
-
-    let debounceTimer;
-
-    // A. Mostrar/Ocultar botón X y lanzar Fetch de Búsqueda
-    input.addEventListener('input', function (e) {
-        clearTimeout(debounceTimer);
-
-        if (btnClear) {
-            if (this.value.trim() !== "") {
-                btnClear.classList.remove('hidden');
-            } else {
-                btnClear.classList.add('hidden');
-            }
-        }
-
-        // --- Búsqueda Asíncrona (Fetch y reemplazo de tabla) ---
-        debounceTimer = setTimeout(() => {
-            actualizarTablaAsincrono();
-        }, 400); // 400ms debounce
-    });
-
-    // B. Manejar Botón Limpiar (X)
-    if (btnClear) {
-        btnClear.onclick = () => {
-            input.value = '';
-            actualizarTablaAsincrono();
-        };
-    }
-
-    // C. Evitar que ENTER recargue la página
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        actualizarTablaAsincrono();
-    });
-
-    // E. Escuchar cambios en los selectores de filtros (Sidebar)
-    const formFiltros = document.getElementById('form-filtros-aud');
-    if (formFiltros) {
-        formFiltros.addEventListener('change', function() {
-            actualizarTablaAsincrono();
-        });
-    }
-
-    // D. Paginación Asíncrona (Delegación de eventos)
-    if (gridContext) {
-        gridContext.addEventListener('click', function(e) {
-            const link = e.target.closest('.pagina-link-aud');
-            if (link) {
-                e.preventDefault();
-                const url = link.getAttribute('href');
-                
-                fetch(url, {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                })
+    // D. Delegación Global para Interacción (Paginación, Búsqueda, Limpieza)
+    document.addEventListener('click', function (e) {
+        // 1. Paginación
+        const linkPag = e.target.closest('.pagina-link-aud');
+        if (linkPag) {
+            e.preventDefault();
+            const url = linkPag.getAttribute('href');
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(res => res.text())
                 .then(html => {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
-                    const nuevoGrid = doc.getElementById('grid-resultados-audiencias');
-                    if (nuevoGrid) {
-                        gridContext.innerHTML = nuevoGrid.innerHTML;
+                    const nuevoMaestro = doc.getElementById('grid-maestro-audiencias');
+                    const maestroDestino = document.getElementById('grid-maestro-audiencias');
+                    if (nuevoMaestro && maestroDestino) {
+                        maestroDestino.innerHTML = nuevoMaestro.innerHTML;
                     }
+                    window.history.replaceState({ path: url }, '', url);
                 })
                 .catch(err => console.error("Error en paginación asíncrona:", err));
+            return;
+        }
+
+        // 2. Botón Limpiar Búsqueda (Barra Superior)
+        const btnClear = e.target.closest('#btn-clear-search');
+        if (btnClear) {
+            const input = document.getElementById('input-search-audiencias');
+            if (input) input.value = '';
+            actualizarTablaAsincrono();
+            return;
+        }
+
+        // 3. Botón Limpiar Filtros (Sidebar)
+        const btnLimpiar = e.target.closest('#btn-limpiar-filtros-aud');
+        if (btnLimpiar) {
+            const form = document.getElementById('form-filtros-aud');
+            if (form) form.reset();
+            const input = document.getElementById('input-search-audiencias');
+            if (input) input.value = '';
+            miniCalendarState.isDateFilterActive = false;
+            miniCalendarState.selectedDate = new Date(0);
+            renderMiniCalendar();
+            actualizarTablaAsincrono();
+            return;
+        }
+    });
+
+    // E. Búsqueda en Tiempo Real (Delegación Global)
+    document.addEventListener('input', function (e) {
+        if (e.target.id === 'input-search-audiencias') {
+            const input = e.target;
+            const btnClear = document.getElementById('btn-clear-search');
+            if (input.value) {
+                btnClear?.classList.remove('hidden');
+            } else {
+                btnClear?.classList.add('hidden');
             }
-        });
-    }
-}
+            actualizarTablaAsincrono();
+        }
+    });
+
+    // F. Submit Form (Delegación Global)
+    document.addEventListener('submit', function (e) {
+        if (e.target.id === 'form-search-audiencias') {
+            e.preventDefault();
+            actualizarTablaAsincrono();
+        }
+    });
+
+    // G. Filtros del sidebar (Delegación Global)
+    document.addEventListener('change', function (e) {
+        if (e.target.closest('#form-filtros-aud')) {
+            actualizarTablaAsincrono();
+        }
+    });
+});
 
 /**
  * Cambia entre la vista de Calendario y Filtros en el sidebar (ROD-183)
@@ -583,7 +610,7 @@ function toggleSidebarView(view) {
         // Activar Botón Calendario
         btnCal.classList.add('bg-gob-guinda', 'text-white', 'shadow-md', 'shadow-gob-guinda/20');
         btnCal.classList.remove('text-gray-400', 'hover:bg-gray-50');
-        
+
         // Desactivar Botón Filtros
         btnFil.classList.remove('bg-gob-guinda', 'text-white', 'shadow-md', 'shadow-gob-guinda/20');
         btnFil.classList.add('text-gray-400', 'hover:bg-gray-50');
@@ -614,7 +641,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const val = params.get(p);
         return val !== null && val !== '';
     });
-    
+
     if (hasActiveFilters) {
         toggleSidebarView('filtros');
     }
