@@ -402,15 +402,15 @@ function actualizarTablaAsincrono(keywordForzado = null) {
     // 4. Resetear página
     urlParams.set('page', 0);
 
-    // 5. Fetch con Feedback visual
-    gridContext.style.opacity = '0.5';
+    // 5. Fetch
+    // gridContext.style.opacity = '0.5';
     
     fetch('/audiencias?' + urlParams.toString(), {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
     .then(res => res.text())
     .then(html => {
-        gridContext.style.opacity = '1';
+        // gridContext.style.opacity = '1';
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
         
@@ -428,7 +428,7 @@ function actualizarTablaAsincrono(keywordForzado = null) {
         }
     })
     .catch(err => {
-        gridContext.style.opacity = '1';
+        // gridContext.style.opacity = '1';
         console.error("Error en actualización asíncrona:", err);
     });
 }
@@ -562,8 +562,6 @@ function initSearchBar() {
                     const nuevoGrid = doc.getElementById('grid-resultados-audiencias');
                     if (nuevoGrid) {
                         gridContext.innerHTML = nuevoGrid.innerHTML;
-                        // Scroll suave arriba de la tabla opcional
-                        gridContext.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }
                 })
                 .catch(err => console.error("Error en paginación asíncrona:", err));
@@ -571,3 +569,54 @@ function initSearchBar() {
         });
     }
 }
+
+/**
+ * Cambia entre la vista de Calendario y Filtros en el sidebar (ROD-183)
+ */
+function toggleSidebarView(view) {
+    const btnCal = document.getElementById('btn-ver-calendario');
+    const btnFil = document.getElementById('btn-ver-filtros');
+    const contCal = document.getElementById('cont-calendario');
+    const contFil = document.getElementById('cont-filtros');
+
+    if (view === 'calendario') {
+        // Activar Botón Calendario
+        btnCal.classList.add('bg-gob-guinda', 'text-white', 'shadow-md', 'shadow-gob-guinda/20');
+        btnCal.classList.remove('text-gray-400', 'hover:bg-gray-50');
+        
+        // Desactivar Botón Filtros
+        btnFil.classList.remove('bg-gob-guinda', 'text-white', 'shadow-md', 'shadow-gob-guinda/20');
+        btnFil.classList.add('text-gray-400', 'hover:bg-gray-50');
+
+        // Mostrar Contenedor Calendario
+        contCal.classList.remove('hidden');
+        contFil.classList.add('hidden');
+    } else {
+        // Activar Botón Filtros
+        btnFil.classList.add('bg-gob-guinda', 'text-white', 'shadow-md', 'shadow-gob-guinda/20');
+        btnFil.classList.remove('text-gray-400', 'hover:bg-gray-50');
+
+        // Desactivar Botón Calendario
+        btnCal.classList.remove('bg-gob-guinda', 'text-white', 'shadow-md', 'shadow-gob-guinda/20');
+        btnCal.classList.add('text-gray-400', 'hover:bg-gray-50');
+
+        // Mostrar Contenedor Filtros
+        contFil.classList.remove('hidden');
+        contCal.classList.add('hidden');
+    }
+}
+
+// Inicialización: Si hay filtros activos con VALOR en la URL, mostrar la pestaña de filtros por defecto
+document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    // Verificar que al menos uno tenga un valor no vacío
+    const hasActiveFilters = ['tipo', 'gerencia', 'materia', 'estatus', 'abogadoId', 'periodo'].some(p => {
+        const val = params.get(p);
+        return val !== null && val !== '';
+    });
+    
+    if (hasActiveFilters) {
+        toggleSidebarView('filtros');
+    }
+});
+

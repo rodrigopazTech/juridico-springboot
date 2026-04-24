@@ -407,3 +407,53 @@ function renderMiniCalendar() {
         grid.appendChild(cell);
     }
 }
+
+/**
+ * Cambia entre la vista de Calendario y Filtros en el sidebar (ROD-183)
+ */
+function toggleSidebarView(view) {
+    const btnCal = document.getElementById('btn-ver-calendario');
+    const btnFil = document.getElementById('btn-ver-filtros');
+    const contCal = document.getElementById('cont-calendario');
+    const contFil = document.getElementById('cont-filtros');
+
+    if (view === 'calendario') {
+        // Activar Botón Calendario
+        btnCal.classList.add('bg-gob-guinda', 'text-white', 'shadow-md', 'shadow-gob-guinda/20');
+        btnCal.classList.remove('text-gray-400', 'hover:bg-gray-50');
+        
+        // Desactivar Botón Filtros
+        btnFil.classList.remove('bg-gob-guinda', 'text-white', 'shadow-md', 'shadow-gob-guinda/20');
+        btnFil.classList.add('text-gray-400', 'hover:bg-gray-50');
+
+        // Mostrar Contenedor Calendario
+        contCal.classList.remove('hidden');
+        contFil.classList.add('hidden');
+    } else {
+        // Activar Botón Filtros
+        btnFil.classList.add('bg-gob-guinda', 'text-white', 'shadow-md', 'shadow-gob-guinda/20');
+        btnFil.classList.remove('text-gray-400', 'hover:bg-gray-50');
+
+        // Desactivar Botón Calendario
+        btnCal.classList.remove('bg-gob-guinda', 'text-white', 'shadow-md', 'shadow-gob-guinda/20');
+        btnCal.classList.add('text-gray-400', 'hover:bg-gray-50');
+
+        // Mostrar Contenedor Filtros
+        contFil.classList.remove('hidden');
+        contCal.classList.add('hidden');
+    }
+}
+
+// Inicialización: Si hay filtros activos con VALOR en la URL, mostrar la pestaña de filtros por defecto
+document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    // Verificar que al menos uno tenga un valor no vacío
+    const hasActiveFilters = ['gerenciaId', 'materiaId', 'estatus', 'abogadoId', 'periodo', 'prioridadId'].some(p => {
+        const val = params.get(p);
+        return val !== null && val !== '';
+    });
+    
+    if (hasActiveFilters) {
+        toggleSidebarView('filtros');
+    }
+});

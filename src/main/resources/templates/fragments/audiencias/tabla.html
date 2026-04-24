@@ -34,12 +34,14 @@
                 </div>
 
                 <!-- Asunto / Expediente -->
-                <div class="col-span-3 py-4 lg:px-4 border-b lg:border-b-0 lg:border-r border-gray-50">
-                    <div class="flex flex-col">
-                        <span class="text-sm font-bold text-gray-800 mb-1 line-clamp-2"
+                <div class="col-span-3 py-4 lg:px-4 border-b lg:border-b-0 lg:border-r border-gray-50 min-w-0">
+                    <div class="flex flex-col min-w-0">
+                        <span class="text-sm font-bold text-gray-800 mb-1 truncate block"
+                            th:title="${a.tipoAudiencia?.nombre ?: 'Audiencia General'}"
                             th:text="${a.tipoAudiencia?.nombre ?: 'Audiencia General'}">Revisión de Contrato</span>
                         <a th:href="@{/expedientes/{id}(id=${a.expediente?.id})}"
-                            class="text-xs font-semibold text-gob-guinda hover:underline inline-flex items-center gap-1">
+                            class="text-xs font-semibold text-gob-guinda hover:underline inline-flex items-center gap-1"
+                            th:title="${'Ver expediente: ' + a.expediente?.numero}">
                             <i class="fas fa-folder-open text-[10px] opacity-70"></i>
                             <span th:text="${a.expediente?.numero}">EXP-2024-001</span>
                         </a>
@@ -48,23 +50,26 @@
 
                 <!-- Tipo / Ubicación -->
                 <div
-                    class="col-span-2 py-4 lg:px-4 border-b lg:border-b-0 lg:border-r border-gray-50 flex items-center gap-2">
-                    <div class="flex flex-col">
-                        <span class="text-xs font-bold text-gray-600 truncate"
+                    class="col-span-2 py-4 lg:px-4 border-b lg:border-b-0 lg:border-r border-gray-50 flex items-center gap-2 min-w-0">
+                    <div class="flex flex-col min-w-0">
+                        <span class="text-xs font-bold text-gray-600 truncate block"
+                            th:title="${a.tipoAudiencia?.nombre ?: 'General'}"
                             th:text="${a.tipoAudiencia?.nombre ?: 'General'}">Conciliación</span>
                         <div class="flex items-center gap-1.5 mt-1">
                             <i th:if="${a.esVirtual}" class="fas fa-video text-[10px] text-blue-500"></i>
                             <i th:unless="${a.esVirtual}" class="fas fa-map-marker-alt text-[10px] text-gray-400"></i>
-                            <span class="text-[10px] font-medium text-gray-400"
+                            <span class="text-[10px] font-medium text-gray-400 truncate block max-w-[120px]"
+                                th:title="${a.esVirtual ? 'Virtual' : (a.salaLugar ?: 'Presencial')}"
                                 th:text="${a.esVirtual ? 'Virtual' : (a.salaLugar ?: 'Presencial')}">Virtual</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Abogado -->
-                <div class="col-span-2 py-4 lg:px-4 border-b lg:border-b-0 lg:border-r border-gray-50">
-                    <div class="flex flex-col">
-                        <span class="text-xs font-bold text-gray-700 line-clamp-2"
+                <div class="col-span-2 py-4 lg:px-4 border-b lg:border-b-0 lg:border-r border-gray-50 min-w-0">
+                    <div class="flex flex-col min-w-0">
+                        <span class="text-xs font-bold text-gray-700 truncate block"
+                            th:title="${a.abogadoComparece?.nombreCompleto ?: (a.expediente?.abogadoResponsable?.nombreCompleto ?: 'Sin asignar')}"
                             th:text="${a.abogadoComparece?.nombreCompleto ?: (a.expediente?.abogadoResponsable?.nombreCompleto ?: 'Sin asignar')}">Ana
                             Gómez</span>
                         <span class="text-[10px] text-gray-400 font-medium"
@@ -151,7 +156,7 @@
             </div>
             <div class="flex gap-2">
                 <a th:if="${audiencias.hasPrevious()}"
-                   th:href="@{/audiencias(page=${audiencias.number - 1}, keyword=${keyword}, tipo=${paramTipo}, gerencia=${paramGerencia}, materia=${paramMateria}, estatus=${paramEstatus}, periodo=${paramPeriodo}, abogadoId=${paramAbogadoId})}"
+                   th:href="@{/audiencias(page=${audiencias.number - 1}, keyword=${keyword}, tipo=${paramTipo}, gerencia=${paramGerencia}, materia=${paramMateria}, estatus=${paramEstatus}, periodo=${paramPeriodo}, abogadoId=${paramAbogadoId}, mes=${param.mes}, anio=${param.anio})}"
                    class="pagina-link-aud px-4 py-2 text-xs font-bold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                    <i class="fas fa-chevron-left mr-1.5"></i> Anterior
                 </a>
@@ -161,7 +166,7 @@
                 </span>
 
                 <a th:if="${audiencias.hasNext()}"
-                   th:href="@{/audiencias(page=${audiencias.number + 1}, keyword=${keyword}, tipo=${paramTipo}, gerencia=${paramGerencia}, materia=${paramMateria}, estatus=${paramEstatus}, periodo=${paramPeriodo}, abogadoId=${paramAbogadoId})}"
+                   th:href="@{/audiencias(page=${audiencias.number + 1}, keyword=${keyword}, tipo=${paramTipo}, gerencia=${paramGerencia}, materia=${paramMateria}, estatus=${paramEstatus}, periodo=${paramPeriodo}, abogadoId=${paramAbogadoId}, mes=${param.mes}, anio=${param.anio})}"
                    class="pagina-link-aud px-4 py-2 text-xs font-bold text-white bg-gob-guinda rounded-lg hover:bg-gob-guindaDark transition-colors shadow-sm">
                    Siguiente <i class="fas fa-chevron-right ml-1.5"></i>
                 </a>
