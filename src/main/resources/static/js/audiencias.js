@@ -401,15 +401,30 @@ function actualizarTablaAsincrono(keywordForzado = null) {
 
     // 3. Filtros del Lateral
     const formFiltros = document.getElementById('form-filtros-aud');
+    let filterCount = 0;
     if (formFiltros) {
         const fd = new FormData(formFiltros);
         for (const [key, value] of fd.entries()) {
             if (key === 'keyword' || key === 'mes' || key === 'anio') continue;
-            if (value && value !== 'null') urlParams.set(key, value);
+            if (value && value !== 'null' && value !== '') {
+                urlParams.set(key, value);
+                filterCount++;
+            }
         }
     }
 
-    // 4. Resetear página
+    // 4. Actualizar Indicador Visual (Badge con Conteo)
+    const badge = document.getElementById('badge-filtros-aud');
+    if (badge) {
+        if (filterCount > 0) {
+            badge.innerText = filterCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
+    // 5. Resetear página
     urlParams.set('page', 0);
 
     // 5. Sincronizar URL en la barra de direcciones
@@ -636,14 +651,21 @@ function toggleSidebarView(view) {
 // Inicialización: Si hay filtros activos con VALOR en la URL, mostrar la pestaña de filtros por defecto
 document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
-    // Verificar que al menos uno tenga un valor no vacío
-    const hasActiveFilters = ['tipo', 'gerencia', 'materia', 'estatus', 'abogadoId', 'periodo'].some(p => {
-        const val = params.get(p);
-        return val !== null && val !== '';
+    const filterKeys = ['tipo', 'gerencia', 'materia', 'estatus', 'abogadoId', 'periodo'];
+    
+    let count = 0;
+    filterKeys.forEach(key => {
+        const val = params.get(key);
+        if (val !== null && val !== '') count++;
     });
 
-    if (hasActiveFilters) {
+    if (count > 0) {
         toggleSidebarView('filtros');
+        const badge = document.getElementById('badge-filtros-aud');
+        if (badge) {
+            badge.innerText = count;
+            badge.classList.remove('hidden');
+        }
     }
 });
 
