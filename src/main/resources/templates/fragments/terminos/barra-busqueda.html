@@ -14,7 +14,8 @@
             placeholder="Buscar asunto, expediente...">
 
         <!-- Botón para limpiar (Solo visible si hay texto) -->
-        <button type="button" id="btn-clear-search-terminos" th:classappend="${keyword == null || keyword == '' ? 'hidden' : ''}"
+        <button type="button" id="btn-clear-search-terminos"
+            th:classappend="${keyword == null || keyword == '' ? 'hidden' : ''}"
             class="absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400 hover:text-gray-600">
             <i class="fas fa-times-circle"></i>
         </button>
@@ -22,7 +23,7 @@
 
     <!-- Acciones -->
     <div class="flex items-center gap-2 w-full md:w-auto">
-        <a th:href="@{/terminos}" class="text-sm text-gray-400 hover:text-gray-600 underline px-2">Limpiar</a>
+        <a th:href="@{/terminos}" class="text-sm text-gray-400 hover:text-gray-600 underline px-2">VerTodos</a>
 
         <a th:href="@{/terminos/exportar-excel(keyword=${keyword}, estatus=${paramEstatus}, prioridad=${paramPrioridad}, abogadoId=${paramAbogadoId})}"
             class="text-gob-gris bg-white border border-gray-300 hover:bg-gray-50 font-bold rounded-lg text-sm px-4 py-2.5 shadow-sm transition-colors flex items-center decoration-0"

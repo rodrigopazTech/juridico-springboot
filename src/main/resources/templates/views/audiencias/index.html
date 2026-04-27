@@ -61,48 +61,62 @@
 
                     <!-- SECCIÓN DINÁMICA: KPIs + Listado -->
                     <div id="grid-maestro-audiencias" th:fragment="gridMaestro" class="col-span-12 lg:col-span-9 space-y-6">
-                        
-                        <!-- Tarjetas de KPIs Compactas -->
+                                              <!-- Tarjetas de KPIs Compactas (ROD-186: Ahora son botones de filtrado) -->
                         <div id="contenedor-kpis-audiencias" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 flex items-center gap-4">
+                            <!-- Total -->
+                            <div onclick="filtrarPorEstatus('')"
+                                th:classappend="${paramEstatus == null or paramEstatus == '' ? 'ring-2 ring-gob-oro border-gob-oro scale-105 z-10 bg-white' : 'bg-white opacity-80 hover:opacity-100 hover:shadow-md cursor-pointer border-gray-50'}"
+                                class="p-4 rounded-2xl shadow-sm border flex items-center gap-4 transition-all duration-200">
                                 <div
                                     class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-gob-guinda">
                                     <i class="fas fa-list-ul"></i>
                                 </div>
-                                <div>
+                                <div class="flex-1">
                                     <p class="text-[10px] uppercase text-gray-400 font-bold mb-0.5">Total</p>
                                     <h3 class="text-xl font-bold text-gray-800" th:text="${totalAudiencias}">0</h3>
                                 </div>
                             </div>
-                            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 flex items-center gap-4">
+
+                            <!-- Pendientes -->
+                            <div onclick="filtrarPorEstatus('PENDIENTE')"
+                                th:classappend="${paramEstatus == 'PENDIENTE' ? 'ring-2 ring-gob-oro border-gob-oro scale-105 z-10 bg-white' : 'bg-white opacity-80 hover:opacity-100 hover:shadow-md cursor-pointer border-gray-50'}"
+                                class="p-4 rounded-2xl shadow-sm border flex items-center gap-4 transition-all duration-200">
                                 <div
                                     class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-gob-oro">
                                     <i class="fas fa-clock"></i>
                                 </div>
-                                <div>
+                                <div class="flex-1">
                                     <p class="text-[10px] uppercase text-gray-400 font-bold mb-0.5">Pendientes</p>
                                     <h3 class="text-xl font-bold text-gray-800"
                                         th:text="${kpisAudiencias[T(com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia).PENDIENTE]}">
                                         0</h3>
                                 </div>
                             </div>
-                            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 flex items-center gap-4">
+
+                            <!-- Con Acta -->
+                            <div onclick="filtrarPorEstatus('CON_ACTA')"
+                                th:classappend="${paramEstatus == 'CON_ACTA' ? 'ring-2 ring-gob-oro border-gob-oro scale-105 z-10 bg-white' : 'bg-white opacity-80 hover:opacity-100 hover:shadow-md cursor-pointer border-gray-50'}"
+                                class="p-4 rounded-2xl shadow-sm border flex items-center gap-4 transition-all duration-200">
                                 <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
                                     <i class="fas fa-file-contract"></i>
                                 </div>
-                                <div>
+                                <div class="flex-1">
                                     <p class="text-[10px] uppercase text-gray-400 font-bold mb-0.5">Con Acta</p>
                                     <h3 class="text-xl font-bold text-gray-800"
                                         th:text="${kpisAudiencias[T(com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia).CON_ACTA]}">
                                         0</h3>
                                 </div>
                             </div>
-                            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 flex items-center gap-4">
+
+                            <!-- Concluidas -->
+                            <div onclick="filtrarPorEstatus('CONCLUIDA')"
+                                th:classappend="${paramEstatus == 'CONCLUIDA' ? 'ring-2 ring-gob-oro border-gob-oro scale-105 z-10 bg-white' : 'bg-white opacity-80 hover:opacity-100 hover:shadow-md cursor-pointer border-gray-50'}"
+                                class="p-4 rounded-2xl shadow-sm border flex items-center gap-4 transition-all duration-200">
                                 <div
                                     class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-green-600">
                                     <i class="fas fa-check-double"></i>
                                 </div>
-                                <div>
+                                <div class="flex-1">
                                     <p class="text-[10px] uppercase text-gray-400 font-bold mb-0.5">Concluidas</p>
                                     <h3 class="text-xl font-bold text-gray-800"
                                         th:text="${kpisAudiencias[T(com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia).CONCLUIDA]}">
@@ -134,8 +148,7 @@
     <form id="form-subir-acta" th:action="@{/audiencias/subir-acta}" method="post" enctype="multipart/form-data"
         class="hidden">
         <input type="hidden" name="id" id="input-acta-id">
-        <input type="file" name="archivo" id="input-acta-file"
-            onchange="document.getElementById('form-subir-acta').submit()">
+        <input type="file" name="archivo" id="input-acta-file">
     </form>
 
     <script th:src="@{/js/audiencias.js(v=4)}"></script>

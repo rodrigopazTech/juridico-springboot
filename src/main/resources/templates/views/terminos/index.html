@@ -97,8 +97,7 @@
     <form id="form-upload" th:action="@{/terminos/subir-archivo}" method="post" enctype="multipart/form-data"
         class="hidden">
         <input type="hidden" name="id" id="upload-termino-id">
-        <input type="file" name="archivo" id="upload-file-input"
-            onchange="document.getElementById('form-upload').submit()">
+        <input type="file" name="archivo" id="upload-file-input">
     </form>
 
     <script th:src="@{/js/terminos.js(v=5)}"></script>

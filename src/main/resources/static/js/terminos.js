@@ -44,10 +44,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnLimpiar = e.target.closest('#btn-limpiar-filtros-ter');
         if (btnLimpiar) {
             const form = document.getElementById('form-filtros');
-            if (form) form.reset();
+            if (form) {
+                form.querySelectorAll('select').forEach(s => s.value = '');
+            }
             const input = document.getElementById('input-search-terminos');
             if (input) input.value = '';
+            
             miniCalendarState.isDateFilterActive = false;
+            miniCalendarState.selectedDate = new Date(0);
+            renderMiniCalendar();
             actualizarTablaAsincrono();
             return;
         }
@@ -138,12 +143,28 @@ function actualizarTablaAsincrono(keywordForzado = null) {
     })
         .then(res => res.text())
         .then(html => {
+            // Guardar posición del cursor antes de actualizar el DOM
+            const searchInputBefore = document.getElementById('input-search-terminos');
+            const cursorPos = searchInputBefore ? searchInputBefore.selectionStart : null;
+            const wasFocused = document.activeElement === searchInputBefore;
+
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
             const nuevoMaestro = doc.getElementById('grid-maestro-terminos');
             const maestroDestino = document.getElementById('grid-maestro-terminos');
             if (nuevoMaestro && maestroDestino) {
                 maestroDestino.innerHTML = nuevoMaestro.innerHTML;
+            }
+
+            // Restaurar foco y posición del cursor si el input estaba activo
+            if (wasFocused) {
+                const searchInputAfter = document.getElementById('input-search-terminos');
+                if (searchInputAfter) {
+                    searchInputAfter.focus();
+                    if (cursorPos !== null) {
+                        searchInputAfter.setSelectionRange(cursorPos, cursorPos);
+                    }
+                }
             }
         })
         .catch(err => console.error("Error en actualización asíncrona:", err));
@@ -207,6 +228,42 @@ function activarSubida(idTermino) {
     }
 }
 
+// ROD-186: Configuración de Notificaciones Estilo Proyecto
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+});
+
+function showSuccessToast(mensaje) {
+    Toast.fire({
+        icon: 'success',
+        title: mensaje,
+        iconColor: '#22c55e',
+        background: '#f0fdf4',
+        padding: '1em',
+        customClass: { title: 'text-green-800 text-sm font-bold' }
+    });
+}
+
+function showErrorModal(mensaje) {
+    Swal.fire({
+        title: 'Atención',
+        text: mensaje,
+        icon: 'error',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#bc955c',
+        background: '#f9fafb',
+        customClass: { confirmButton: 'font-bold' }
+    });
+}
+
 function confirmarEliminar(id) {
     Swal.fire({
         title: '¿Eliminar término?',
@@ -219,10 +276,120 @@ function confirmarEliminar(id) {
         cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) {
-            window.location.href = '/terminos/eliminar/' + id;
+            // ROD-186: Usar AJAX para eliminar y preservar filtros
+            fetch('/terminos/eliminar/' + id, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => {
+                if (res.ok) {
+                    showSuccessToast('¡Término eliminado correctamente!');
+                    actualizarTablaAsincrono();
+                } else {
+                    throw new Error('Error al eliminar');
+                }
+            })
+            .catch(err => {
+                showErrorModal('No se pudo eliminar el registro.');
+            });
         }
     })
 }
+
+// ROD-186: Listeners para subida de archivos y conclusión vía AJAX (Preservar contexto)
+
+// A. Subida de Archivo General (Form oculto en index)
+document.addEventListener('change', function(e) {
+    if (e.target && e.target.id === 'upload-file-input') {
+        const form = document.getElementById('form-upload');
+        if (!form) return;
+        
+        const fd = new FormData(form);
+        Swal.fire({ title: 'Subiendo archivo...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        fetch(form.action, {
+            method: 'POST',
+            body: fd,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => {
+            if (res.ok) {
+                showSuccessToast('¡Archivo subido correctamente!');
+                actualizarTablaAsincrono();
+            } else throw new Error();
+        })
+        .catch(() => showErrorModal('No se pudo subir el archivo.'));
+    }
+});
+
+// B. Concluir Término (Form en modal)
+document.addEventListener('submit', function(e) {
+    // Buscar si el form es el de concluir (está dentro del modal-concluir-final)
+    const formConcluir = e.target.closest('#modal-concluir-final form');
+    if (formConcluir) {
+        e.preventDefault();
+        const fd = new FormData(formConcluir);
+        
+        fetch(formConcluir.action, {
+            method: 'POST',
+            body: fd,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => {
+            if (res.ok) {
+                document.getElementById('modal-concluir-final').classList.add('hidden');
+                showSuccessToast('¡Término Concluido con éxito!');
+                actualizarTablaAsincrono();
+            } else throw new Error();
+        })
+        .catch(() => showErrorModal('No se pudo concluir el término.'));
+    }
+
+    // C. Subir Acuse (Form en modal acuse)
+    const formAcuse = e.target.closest('#modal-subir-acuse form');
+    if (formAcuse) {
+        e.preventDefault();
+        const fd = new FormData(formAcuse);
+        Swal.fire({ title: 'Subiendo acuse...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        fetch(formAcuse.action, {
+            method: 'POST',
+            body: fd,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => {
+            if (res.ok) {
+                document.getElementById('modal-subir-acuse').classList.add('hidden');
+                showSuccessToast('¡Acuse registrado correctamente!');
+                actualizarTablaAsincrono();
+            } else throw new Error();
+        })
+        .catch(() => showErrorModal('No se pudo registrar el acuse.'));
+    }
+
+    // D. Guardar/Editar Término
+    const formTermino = e.target.closest('#modal-nuevo-termino form');
+    if (formTermino) {
+        e.preventDefault();
+        const fd = new FormData(formTermino);
+        Swal.fire({ title: 'Guardando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        fetch(formTermino.action, {
+            method: 'POST',
+            body: fd,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => {
+            if (res.ok) {
+                document.getElementById('modal-nuevo-termino').classList.add('hidden');
+                showSuccessToast('¡Datos guardados correctamente!');
+                actualizarTablaAsincrono();
+            } else throw new Error();
+        })
+        .catch(() => showErrorModal('Error al guardar el término.'));
+    }
+});
+
 
 // --- MODALES (NUEVO / EDITAR) ---
 

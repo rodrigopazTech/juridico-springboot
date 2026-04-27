@@ -140,6 +140,154 @@ function activarSubidaActa(id) {
     }
 }
 
+// ROD-186: Configuración de Notificaciones Estilo Proyecto
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+});
+
+function showSuccessToast(mensaje) {
+    Toast.fire({
+        icon: 'success',
+        title: mensaje,
+        iconColor: '#22c55e',
+        background: '#f0fdf4',
+        padding: '1em',
+        customClass: {
+            title: 'text-green-800 text-sm font-bold'
+        }
+    });
+}
+
+// ROD-186: Filtrar por estatus desde las tarjetas KPI
+function filtrarPorEstatus(estatus) {
+    const formFiltros = document.getElementById('form-filtros-aud');
+    if (!formFiltros) return;
+    
+    const selectEstatus = formFiltros.querySelector('select[name="estatus"]');
+    if (selectEstatus) {
+        selectEstatus.value = estatus;
+        actualizarTablaAsincrono();
+    }
+}
+
+function showErrorModal(mensaje) {
+    Swal.fire({
+        title: 'Atención',
+        text: mensaje,
+        icon: 'error',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#bc955c',
+        background: '#f9fafb',
+        customClass: { confirmButton: 'font-bold' }
+    });
+}
+
+// ROD-186: Listener para subida de acta y conclusión vía AJAX (Preserva filtros)
+document.addEventListener('submit', function(e) {
+    // A. Concluir Audiencia
+    const formConcluir = e.target.closest('#form-concluir');
+    if (formConcluir) {
+        e.preventDefault();
+        const formData = new FormData(formConcluir);
+        
+        Swal.fire({
+            title: 'Procesando...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        fetch(formConcluir.action, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => {
+            if (response.ok) {
+                document.getElementById('modal-concluir').classList.add('hidden');
+                showSuccessToast('¡Audiencia Concluida correctamente!');
+                actualizarTablaAsincrono();
+            } else {
+                throw new Error('Error al concluir');
+            }
+        })
+        .catch(error => {
+            showErrorModal('No se pudo completar la acción.');
+        });
+    }
+
+    // B. Guardar/Editar Audiencia
+    const formAudiencia = e.target.closest('#form-audiencia');
+    if (formAudiencia) {
+        e.preventDefault();
+        const formData = new FormData(formAudiencia);
+        
+        Swal.fire({
+            title: 'Guardando...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        fetch(formAudiencia.action, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => {
+            if (response.ok) {
+                document.getElementById('modal-audiencia').classList.add('hidden');
+                showSuccessToast('¡Datos guardados correctamente!');
+                actualizarTablaAsincrono();
+            } else {
+                throw new Error('Error al guardar');
+            }
+        })
+        .catch(error => {
+            showErrorModal('No se pudo guardar la audiencia.');
+        });
+    }
+});
+
+document.addEventListener('change', function(e) {
+    if (e.target && e.target.id === 'input-acta-file') {
+        const form = document.getElementById('form-subir-acta');
+        if (!form) return;
+
+        const formData = new FormData(form);
+        
+        // Mostrar indicador de carga
+        Swal.fire({
+            title: 'Subiendo acta...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => {
+            if (response.ok) {
+                showSuccessToast('¡Acta subida correctamente!');
+                actualizarTablaAsincrono();
+            } else {
+                throw new Error('Error en la subida');
+            }
+        })
+        .catch(error => {
+            showErrorModal('No se pudo subir el archivo. Intente de nuevo.');
+        });
+    }
+});
+
 function abrirModalConcluir(id) {
     const inputId = document.getElementById('concluir-audiencia-id');
     if (inputId) inputId.value = id;
@@ -302,7 +450,8 @@ function confirmarEliminarAudiencia(id) {
                                 title: 'text-green-800 text-sm font-bold'
                             }
                         }).then(() => {
-                            location.reload();
+                            // ROD-186: En lugar de reload, usamos actualización asíncrona para preservar filtros
+                            actualizarTablaAsincrono();
                         });
                     } else {
                         Swal.fire('Error', data.message || 'Error al eliminar la audiencia.', 'error');
@@ -437,6 +586,11 @@ function actualizarTablaAsincrono(keywordForzado = null) {
     })
         .then(res => res.text())
         .then(html => {
+            // Guardar posición del cursor antes de actualizar el DOM
+            const searchInputBefore = document.getElementById('input-search-audiencias');
+            const cursorPos = searchInputBefore ? searchInputBefore.selectionStart : null;
+            const wasFocused = document.activeElement === searchInputBefore;
+
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
 
@@ -445,6 +599,17 @@ function actualizarTablaAsincrono(keywordForzado = null) {
 
             if (nuevoMaestro && maestroDestino) {
                 maestroDestino.innerHTML = nuevoMaestro.innerHTML;
+            }
+
+            // Restaurar foco y posición del cursor si el input estaba activo
+            if (wasFocused) {
+                const searchInputAfter = document.getElementById('input-search-audiencias');
+                if (searchInputAfter) {
+                    searchInputAfter.focus();
+                    if (cursorPos !== null) {
+                        searchInputAfter.setSelectionRange(cursorPos, cursorPos);
+                    }
+                }
             }
         })
         .catch(err => {
@@ -571,7 +736,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnLimpiar = e.target.closest('#btn-limpiar-filtros-aud');
         if (btnLimpiar) {
             const form = document.getElementById('form-filtros-aud');
-            if (form) form.reset();
+            if (form) {
+                form.querySelectorAll('select').forEach(s => s.value = '');
+            }
             const input = document.getElementById('input-search-audiencias');
             if (input) input.value = '';
             miniCalendarState.isDateFilterActive = false;
