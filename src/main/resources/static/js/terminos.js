@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             const input = document.getElementById('input-search-terminos');
             if (input) input.value = '';
-            
+
             miniCalendarState.isDateFilterActive = false;
             miniCalendarState.selectedDate = new Date(0);
             renderMiniCalendar();
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // E. Búsqueda en Tiempo Real (Delegación Global)
+    // E. Búsqueda en Tiempo Real (Delegación Global con Debounce)
     document.addEventListener('input', function (e) {
         if (e.target.id === 'input-search-terminos') {
             const input = e.target;
@@ -68,7 +68,11 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 btnClear?.classList.add('hidden');
             }
-            actualizarTablaAsincrono();
+
+            clearTimeout(debounceTimerTerminos);
+            debounceTimerTerminos = setTimeout(() => {
+                actualizarTablaAsincrono();
+            }, 650);
         }
     });
 
@@ -89,11 +93,20 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // --- BÚSQUEDA ASÍNCRONA CENTRALIZADA ---
+let debounceTimerTerminos;
+let abortControllerTerminos;
+
 function actualizarTablaAsincrono(keywordForzado = null) {
     const input = document.getElementById('input-search-terminos');
     const container = document.getElementById('tabla-resultados-container');
 
     if (!container) return;
+
+    // Abortar petición previa si existe
+    if (abortControllerTerminos) {
+        abortControllerTerminos.abort();
+    }
+    abortControllerTerminos = new AbortController();
 
     const urlParams = new URLSearchParams();
 
@@ -139,7 +152,8 @@ function actualizarTablaAsincrono(keywordForzado = null) {
     window.history.replaceState({ path: newUrl }, '', newUrl);
 
     fetch('/terminos?' + urlParams.toString(), {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        signal: abortControllerTerminos.signal
     })
         .then(res => res.text())
         .then(html => {
@@ -167,7 +181,10 @@ function actualizarTablaAsincrono(keywordForzado = null) {
                 }
             }
         })
-        .catch(err => console.error("Error en actualización asíncrona:", err));
+        .catch(err => {
+            if (err.name === 'AbortError') return; // Ignorar si fue abortada
+            console.error("Error en actualización asíncrona:", err);
+        });
 }
 
 function initSearchTerminos() {
@@ -281,17 +298,17 @@ function confirmarEliminar(id) {
                 method: 'POST',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
-            .then(res => {
-                if (res.ok) {
-                    showSuccessToast('¡Término eliminado correctamente!');
-                    actualizarTablaAsincrono();
-                } else {
-                    throw new Error('Error al eliminar');
-                }
-            })
-            .catch(err => {
-                showErrorModal('No se pudo eliminar el registro.');
-            });
+                .then(res => {
+                    if (res.ok) {
+                        showSuccessToast('¡Término eliminado correctamente!');
+                        actualizarTablaAsincrono();
+                    } else {
+                        throw new Error('Error al eliminar');
+                    }
+                })
+                .catch(err => {
+                    showErrorModal('No se pudo eliminar el registro.');
+                });
         }
     })
 }
@@ -299,11 +316,11 @@ function confirmarEliminar(id) {
 // ROD-186: Listeners para subida de archivos y conclusión vía AJAX (Preservar contexto)
 
 // A. Subida de Archivo General (Form oculto en index)
-document.addEventListener('change', function(e) {
+document.addEventListener('change', function (e) {
     if (e.target && e.target.id === 'upload-file-input') {
         const form = document.getElementById('form-upload');
         if (!form) return;
-        
+
         const fd = new FormData(form);
         Swal.fire({ title: 'Subiendo archivo...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
@@ -312,37 +329,37 @@ document.addEventListener('change', function(e) {
             body: fd,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(res => {
-            if (res.ok) {
-                showSuccessToast('¡Archivo subido correctamente!');
-                actualizarTablaAsincrono();
-            } else throw new Error();
-        })
-        .catch(() => showErrorModal('No se pudo subir el archivo.'));
+            .then(res => {
+                if (res.ok) {
+                    showSuccessToast('¡Archivo subido correctamente!');
+                    actualizarTablaAsincrono();
+                } else throw new Error();
+            })
+            .catch(() => showErrorModal('No se pudo subir el archivo.'));
     }
 });
 
 // B. Concluir Término (Form en modal)
-document.addEventListener('submit', function(e) {
+document.addEventListener('submit', function (e) {
     // Buscar si el form es el de concluir (está dentro del modal-concluir-final)
     const formConcluir = e.target.closest('#modal-concluir-final form');
     if (formConcluir) {
         e.preventDefault();
         const fd = new FormData(formConcluir);
-        
+
         fetch(formConcluir.action, {
             method: 'POST',
             body: fd,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(res => {
-            if (res.ok) {
-                document.getElementById('modal-concluir-final').classList.add('hidden');
-                showSuccessToast('¡Término Concluido con éxito!');
-                actualizarTablaAsincrono();
-            } else throw new Error();
-        })
-        .catch(() => showErrorModal('No se pudo concluir el término.'));
+            .then(res => {
+                if (res.ok) {
+                    document.getElementById('modal-concluir-final').classList.add('hidden');
+                    showSuccessToast('¡Término Concluido con éxito!');
+                    actualizarTablaAsincrono();
+                } else throw new Error();
+            })
+            .catch(() => showErrorModal('No se pudo concluir el término.'));
     }
 
     // C. Subir Acuse (Form en modal acuse)
@@ -357,14 +374,14 @@ document.addEventListener('submit', function(e) {
             body: fd,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(res => {
-            if (res.ok) {
-                document.getElementById('modal-subir-acuse').classList.add('hidden');
-                showSuccessToast('¡Acuse registrado correctamente!');
-                actualizarTablaAsincrono();
-            } else throw new Error();
-        })
-        .catch(() => showErrorModal('No se pudo registrar el acuse.'));
+            .then(res => {
+                if (res.ok) {
+                    document.getElementById('modal-subir-acuse').classList.add('hidden');
+                    showSuccessToast('¡Acuse registrado correctamente!');
+                    actualizarTablaAsincrono();
+                } else throw new Error();
+            })
+            .catch(() => showErrorModal('No se pudo registrar el acuse.'));
     }
 
     // D. Guardar/Editar Término
@@ -379,14 +396,14 @@ document.addEventListener('submit', function(e) {
             body: fd,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(res => {
-            if (res.ok) {
-                document.getElementById('modal-nuevo-termino').classList.add('hidden');
-                showSuccessToast('¡Datos guardados correctamente!');
-                actualizarTablaAsincrono();
-            } else throw new Error();
-        })
-        .catch(() => showErrorModal('Error al guardar el término.'));
+            .then(res => {
+                if (res.ok) {
+                    document.getElementById('modal-nuevo-termino').classList.add('hidden');
+                    showSuccessToast('¡Datos guardados correctamente!');
+                    actualizarTablaAsincrono();
+                } else throw new Error();
+            })
+            .catch(() => showErrorModal('Error al guardar el término.'));
     }
 });
 
@@ -734,7 +751,7 @@ function toggleSidebarView(view) {
 document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const filterKeys = ['gerenciaId', 'materiaId', 'estatus', 'abogadoId', 'periodo', 'prioridadId'];
-    
+
     let count = 0;
     filterKeys.forEach(key => {
         const val = params.get(key);

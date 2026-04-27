@@ -170,7 +170,7 @@ function showSuccessToast(mensaje) {
 function filtrarPorEstatus(estatus) {
     const formFiltros = document.getElementById('form-filtros-aud');
     if (!formFiltros) return;
-    
+
     const selectEstatus = formFiltros.querySelector('select[name="estatus"]');
     if (selectEstatus) {
         selectEstatus.value = estatus;
@@ -191,13 +191,13 @@ function showErrorModal(mensaje) {
 }
 
 // ROD-186: Listener para subida de acta y conclusión vía AJAX (Preserva filtros)
-document.addEventListener('submit', function(e) {
+document.addEventListener('submit', function (e) {
     // A. Concluir Audiencia
     const formConcluir = e.target.closest('#form-concluir');
     if (formConcluir) {
         e.preventDefault();
         const formData = new FormData(formConcluir);
-        
+
         Swal.fire({
             title: 'Procesando...',
             allowOutsideClick: false,
@@ -209,18 +209,18 @@ document.addEventListener('submit', function(e) {
             body: formData,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(response => {
-            if (response.ok) {
-                document.getElementById('modal-concluir').classList.add('hidden');
-                showSuccessToast('¡Audiencia Concluida correctamente!');
-                actualizarTablaAsincrono();
-            } else {
-                throw new Error('Error al concluir');
-            }
-        })
-        .catch(error => {
-            showErrorModal('No se pudo completar la acción.');
-        });
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('modal-concluir').classList.add('hidden');
+                    showSuccessToast('¡Audiencia Concluida correctamente!');
+                    actualizarTablaAsincrono();
+                } else {
+                    throw new Error('Error al concluir');
+                }
+            })
+            .catch(error => {
+                showErrorModal('No se pudo completar la acción.');
+            });
     }
 
     // B. Guardar/Editar Audiencia
@@ -228,7 +228,7 @@ document.addEventListener('submit', function(e) {
     if (formAudiencia) {
         e.preventDefault();
         const formData = new FormData(formAudiencia);
-        
+
         Swal.fire({
             title: 'Guardando...',
             allowOutsideClick: false,
@@ -240,28 +240,28 @@ document.addEventListener('submit', function(e) {
             body: formData,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(response => {
-            if (response.ok) {
-                document.getElementById('modal-audiencia').classList.add('hidden');
-                showSuccessToast('¡Datos guardados correctamente!');
-                actualizarTablaAsincrono();
-            } else {
-                throw new Error('Error al guardar');
-            }
-        })
-        .catch(error => {
-            showErrorModal('No se pudo guardar la audiencia.');
-        });
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('modal-audiencia').classList.add('hidden');
+                    showSuccessToast('¡Datos guardados correctamente!');
+                    actualizarTablaAsincrono();
+                } else {
+                    throw new Error('Error al guardar');
+                }
+            })
+            .catch(error => {
+                showErrorModal('No se pudo guardar la audiencia.');
+            });
     }
 });
 
-document.addEventListener('change', function(e) {
+document.addEventListener('change', function (e) {
     if (e.target && e.target.id === 'input-acta-file') {
         const form = document.getElementById('form-subir-acta');
         if (!form) return;
 
         const formData = new FormData(form);
-        
+
         // Mostrar indicador de carga
         Swal.fire({
             title: 'Subiendo acta...',
@@ -274,17 +274,17 @@ document.addEventListener('change', function(e) {
             body: formData,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(response => {
-            if (response.ok) {
-                showSuccessToast('¡Acta subida correctamente!');
-                actualizarTablaAsincrono();
-            } else {
-                throw new Error('Error en la subida');
-            }
-        })
-        .catch(error => {
-            showErrorModal('No se pudo subir el archivo. Intente de nuevo.');
-        });
+            .then(response => {
+                if (response.ok) {
+                    showSuccessToast('¡Acta subida correctamente!');
+                    actualizarTablaAsincrono();
+                } else {
+                    throw new Error('Error en la subida');
+                }
+            })
+            .catch(error => {
+                showErrorModal('No se pudo subir el archivo. Intente de nuevo.');
+            });
     }
 });
 
@@ -528,12 +528,22 @@ function initMiniCalendar() {
  * Función centralizada para disparar la actualización de la tabla 
  * capturando TODOS los parámetros (Buscador, Mini-Calendario, Filtros Side)
  */
+// --- BÚSQUEDA ASÍNCRONA CENTRALIZADA ---
+let debounceTimerAudiencias;
+let abortControllerAudiencias;
+
 function actualizarTablaAsincrono(keywordForzado = null) {
     const input = document.getElementById('input-search-audiencias');
     const formSearch = document.getElementById('form-search-audiencias');
-    const gridContext = document.getElementById('grid-resultados-audiencias');
+    const gridContext = document.getElementById('grid-master-audiencias') || document.getElementById('grid-maestro-audiencias');
 
     if (!gridContext) return;
+
+    // Abortar petición previa si existe
+    if (abortControllerAudiencias) {
+        abortControllerAudiencias.abort();
+    }
+    abortControllerAudiencias = new AbortController();
 
     const urlParams = new URLSearchParams();
 
@@ -576,13 +586,14 @@ function actualizarTablaAsincrono(keywordForzado = null) {
     // 5. Resetear página
     urlParams.set('page', 0);
 
-    // 5. Sincronizar URL en la barra de direcciones
+    // 6. Sincronizar URL en la barra de direcciones
     const newUrl = window.location.pathname + '?' + urlParams.toString();
     window.history.replaceState({ path: newUrl }, '', newUrl);
 
-    // 6. Fetch
+    // 7. Fetch con AbortController
     fetch('/audiencias?' + urlParams.toString(), {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        signal: abortControllerAudiencias.signal
     })
         .then(res => res.text())
         .then(html => {
@@ -613,6 +624,7 @@ function actualizarTablaAsincrono(keywordForzado = null) {
             }
         })
         .catch(err => {
+            if (err.name === 'AbortError') return; // Ignorar si fue abortada
             console.error("Error en actualización asíncrona:", err);
         });
 }
@@ -632,7 +644,7 @@ function renderMiniCalendar() {
     monthLabel.onclick = () => {
         // Al hacer clic en el mes, queremos ver TODO el mes
         // 1. Limpiar fecha seleccionada en el estado visual
-        miniCalendarState.selectedDate = new Date(0); 
+        miniCalendarState.selectedDate = new Date(0);
         // 2. Limpiar el buscador si tiene una fecha
         const searchInput = document.getElementById('input-search-audiencias');
         if (searchInput) {
@@ -682,7 +694,7 @@ function renderMiniCalendar() {
             miniCalendarState.selectedDate = new Date(year, month, day);
             miniCalendarState.isDateFilterActive = true; // ACTIVAR filtro de fecha
             renderMiniCalendar();
-            
+
             // Actualizar tabla con el keyword de fecha
             actualizarTablaAsincrono(dateStr);
         };
@@ -749,7 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // E. Búsqueda en Tiempo Real (Delegación Global)
+    // E. Búsqueda en Tiempo Real (Delegación Global con Debounce)
     document.addEventListener('input', function (e) {
         if (e.target.id === 'input-search-audiencias') {
             const input = e.target;
@@ -759,7 +771,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 btnClear?.classList.add('hidden');
             }
-            actualizarTablaAsincrono();
+
+            clearTimeout(debounceTimerAudiencias);
+            debounceTimerAudiencias = setTimeout(() => {
+                actualizarTablaAsincrono();
+            }, 650);
         }
     });
 
@@ -819,7 +835,7 @@ function toggleSidebarView(view) {
 document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const filterKeys = ['tipo', 'gerencia', 'materia', 'estatus', 'abogadoId', 'periodo'];
-    
+
     let count = 0;
     filterKeys.forEach(key => {
         const val = params.get(key);
