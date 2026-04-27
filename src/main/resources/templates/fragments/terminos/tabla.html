@@ -26,9 +26,9 @@
                                     <div class="w-3 h-3 rounded-full shadow-sm border border-gray-200"
                                         th:classappend="${t.semaforoColor}">
                                     </div>
-                                    <span th:text="${#temporals.format(t.fechaVencimiento, 'dd/MM/yyyy')}"
+                                    <span th:text="${#temporals.format(t.fechaVencimiento, 'yyyy-MM-dd')}"
                                         th:classappend="${t.semaforoColor == 'bg-red-800' || t.semaforoColor == 'bg-red-500' ? 'text-red-600' : ''}">
-                                        01/01/2026
+                                        2026-01-01
                                     </span>
                                     </span>
                                 </div>

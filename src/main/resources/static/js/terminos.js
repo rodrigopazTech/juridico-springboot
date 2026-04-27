@@ -157,28 +157,37 @@ function actualizarTablaAsincrono(keywordForzado = null) {
     })
         .then(res => res.text())
         .then(html => {
-            // Guardar posición del cursor antes de actualizar el DOM
-            const searchInputBefore = document.getElementById('input-search-terminos');
-            const cursorPos = searchInputBefore ? searchInputBefore.selectionStart : null;
-            const wasFocused = document.activeElement === searchInputBefore;
-
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-            const nuevoMaestro = doc.getElementById('grid-maestro-terminos');
-            const maestroDestino = document.getElementById('grid-maestro-terminos');
-            if (nuevoMaestro && maestroDestino) {
-                maestroDestino.innerHTML = nuevoMaestro.innerHTML;
+
+            // 1. ACTUALIZAR KPIs (Sin afectar al resto)
+            const kpisNuevos = doc.getElementById('contenedor-kpis-terminos');
+            const kpisActuales = document.getElementById('contenedor-kpis-terminos');
+            if (kpisNuevos && kpisActuales) {
+                kpisActuales.innerHTML = kpisNuevos.innerHTML;
             }
 
-            // Restaurar foco y posición del cursor si el input estaba activo
-            if (wasFocused) {
-                const searchInputAfter = document.getElementById('input-search-terminos');
-                if (searchInputAfter) {
-                    searchInputAfter.focus();
-                    if (cursorPos !== null) {
-                        searchInputAfter.setSelectionRange(cursorPos, cursorPos);
-                    }
-                }
+            // 2. ACTUALIZAR TABLA DE RESULTADOS (Lo más importante)
+            const tablaNueva = doc.getElementById('tabla-resultados-container');
+            const tablaActual = document.getElementById('tabla-resultados-container');
+            if (tablaNueva && tablaActual) {
+                tablaActual.innerHTML = tablaNueva.innerHTML;
+            }
+
+            // 3. ACTUALIZAR ACCIONES (VerTodos y Exportar que dependen de filtros)
+            const accionesNuevas = doc.getElementById('acciones-barra-terminos');
+            const accionesActuales = document.getElementById('acciones-barra-terminos');
+            if (accionesNuevas && accionesActuales) {
+                accionesActuales.innerHTML = accionesNuevas.innerHTML;
+            }
+
+            // 4. SINCRONIZAR INPUT (Solo si se forzó desde fuera, ej: KPIs)
+            const searchInput = document.getElementById('input-search-terminos');
+            if (keywordForzado !== null && searchInput) {
+                searchInput.value = keywordForzado;
+                const btnClear = document.getElementById('btn-clear-search-terminos');
+                if (keywordForzado) btnClear?.classList.remove('hidden');
+                else btnClear?.classList.add('hidden');
             }
         })
         .catch(err => {

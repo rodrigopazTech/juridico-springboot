@@ -597,30 +597,37 @@ function actualizarTablaAsincrono(keywordForzado = null) {
     })
         .then(res => res.text())
         .then(html => {
-            // Guardar posición del cursor antes de actualizar el DOM
-            const searchInputBefore = document.getElementById('input-search-audiencias');
-            const cursorPos = searchInputBefore ? searchInputBefore.selectionStart : null;
-            const wasFocused = document.activeElement === searchInputBefore;
-
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
 
-            const nuevoMaestro = doc.getElementById('grid-maestro-audiencias');
-            const maestroDestino = document.getElementById('grid-maestro-audiencias');
-
-            if (nuevoMaestro && maestroDestino) {
-                maestroDestino.innerHTML = nuevoMaestro.innerHTML;
+            // 1. ACTUALIZAR KPIs
+            const kpisNuevos = doc.getElementById('contenedor-kpis-audiencias');
+            const kpisActuales = document.getElementById('contenedor-kpis-audiencias');
+            if (kpisNuevos && kpisActuales) {
+                kpisActuales.innerHTML = kpisNuevos.innerHTML;
             }
 
-            // Restaurar foco y posición del cursor si el input estaba activo
-            if (wasFocused) {
-                const searchInputAfter = document.getElementById('input-search-audiencias');
-                if (searchInputAfter) {
-                    searchInputAfter.focus();
-                    if (cursorPos !== null) {
-                        searchInputAfter.setSelectionRange(cursorPos, cursorPos);
-                    }
-                }
+            // 2. ACTUALIZAR TABLA DE RESULTADOS
+            const tablaNueva = doc.getElementById('grid-resultados-audiencias');
+            const tablaActual = document.getElementById('grid-resultados-audiencias');
+            if (tablaNueva && tablaActual) {
+                tablaActual.innerHTML = tablaNueva.innerHTML;
+            }
+
+            // 3. ACTUALIZAR ACCIONES (VerTodos y Exportar)
+            const accionesNuevas = doc.getElementById('acciones-barra-audiencias');
+            const accionesActuales = document.getElementById('acciones-barra-audiencias');
+            if (accionesNuevas && accionesActuales) {
+                accionesActuales.innerHTML = accionesNuevas.innerHTML;
+            }
+
+            // 4. SINCRONIZAR BARRA DE BÚSQUEDA (Solo si es keyword forzado de calendario/KPIs)
+            const searchInput = document.getElementById('input-search-audiencias');
+            if (keywordForzado !== null && searchInput) {
+                searchInput.value = keywordForzado;
+                const btnClear = document.getElementById('btn-clear-search');
+                if (keywordForzado) btnClear?.classList.remove('hidden');
+                else btnClear?.classList.add('hidden');
             }
         })
         .catch(err => {
