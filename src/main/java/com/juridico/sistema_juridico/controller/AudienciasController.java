@@ -156,7 +156,7 @@ public class AudienciasController {
         }
 
         // 4. CONSULTA CON PAGINACIÓN (Standard: 10 por página)
-        Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaAudiencia").ascending());
+        Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaAudiencia").descending());
 
         // --- OPTIMIZACIÓN ROD-185: Si hay búsqueda, ignoramos fechas para que las KPIs y la tabla coincidan ---
         if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {

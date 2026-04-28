@@ -27,6 +27,7 @@ public class AgendaController {
 
     @GetMapping
     public String index(Model model,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
             @RequestParam(required = false) Integer gerenciaId,
@@ -35,14 +36,13 @@ public class AgendaController {
             @RequestParam(defaultValue = "0") int page) {
 
         // 2. Obtener Datos PAGINADOS
-        // Nota: Usamos la misma variable 'page' para ambas listas.
-        // Si el usuario cambia de pestaña, volverá a la pagina que indique la URL o 0.
-        var audiencias = agendaService.getAudienciasPorFiltro(fechaInicio, fechaFin, gerenciaId, materiaId, page);
-        var terminos = agendaService.getTerminosPorFiltro(fechaInicio, fechaFin, gerenciaId, materiaId, page);
+        var audiencias = agendaService.getAudienciasPorFiltro(keyword, fechaInicio, fechaFin, gerenciaId, materiaId, page);
+        var terminos = agendaService.getTerminosPorFiltro(keyword, fechaInicio, fechaFin, gerenciaId, materiaId, page);
 
         // 3. Cargar Modelo
         model.addAttribute("audiencias", audiencias);
         model.addAttribute("terminos", terminos);
+        model.addAttribute("paramKeyword", keyword);
 
         // 4. UI y Filtros
         model.addAttribute("pageTitle", "Agenda / Historial");

@@ -131,7 +131,7 @@ public class TerminosController {
         }
 
         Usuario usuarioActual = getUsuarioActual();
-        Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaVencimiento").ascending());
+        Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaVencimiento").descending());
 
         // --- 2. FILTROS DE SEGURIDAD (TABLA) ---
         Integer filtroAbogadoSeguro = abogadoId;

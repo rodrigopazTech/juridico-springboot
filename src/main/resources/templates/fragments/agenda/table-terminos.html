@@ -1,13 +1,12 @@
-<div th:fragment="tabla" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mt-6">
+<div th:fragment="tabla" id="contenedor-tabla-terminos" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mt-6">
 
     <div class="overflow-x-auto">
         <table class="w-full text-sm text-left text-gob-gris" id="tabla-terminos-presentados">
             <thead class="text-xs text-gob-gris uppercase bg-gray-100 border-b border-gray-200 font-heading">
                 <tr>
-                    <th scope="col" class="px-6 py-3 font-bold text-gob-guinda">F. Presentación</th>
-                    <th scope="col" class="px-6 py-3 font-bold">F. Vencimiento</th>
-
+                    <th scope="col" class="px-6 py-3 font-bold">Vencimiento</th>
                     <th scope="col" class="px-6 py-3 font-bold">Expediente</th>
+                    <th scope="col" class="px-6 py-3 font-bold">Prioridad</th>
                     <th scope="col" class="px-6 py-3 font-bold">Actuación</th>
                     <th scope="col" class="px-6 py-3 font-bold">Abogado</th>
                     <th scope="col" class="px-6 py-3 font-bold text-center">Acciones</th>
@@ -25,23 +24,25 @@
 
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-2">
-                            <i class="fas fa-check-circle text-green-600"></i>
+                            <i class="fas fa-circle text-xs text-gray-400"></i>
                             <span class="font-bold text-gray-800"
-                                th:text="${t.fechaPresentacion != null ? #temporals.format(t.fechaPresentacion, 'dd/MM/yyyy') : 'Pendiente'}">
-                                01/02/2026
-                            </span>
+                                th:text="${#temporals.format(t.fechaVencimiento, 'yyyy-MM-dd')}">2025-01-14</span>
                         </div>
-                    </td>
-
-                    <td class="px-6 py-4 text-gray-500 text-xs">
-                        <span class="block uppercase text-[10px]">Vencía el:</span>
-                        <span class="font-medium"
-                            th:text="${#temporals.format(t.fechaVencimiento, 'dd/MM/yyyy')}">01/01/2026</span>
                     </td>
 
                     <td class="px-6 py-4">
                         <span class="text-gob-guinda font-bold"
                             th:text="${t.expediente != null ? t.expediente.numero : 'S/N'}">EXP-001</span>
+                    </td>
+
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-1.5 inline-flex px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-tight"
+                            th:classappend="${t.prioridad != null ? t.prioridad.color : 'bg-gray-100 text-gray-800'}">
+                            <i class="fas fa-circle text-[8px] opacity-70"></i>
+                            <span th:text="${t.prioridad != null ? t.prioridad.nombre : 'MEDIA'}">
+                                MEDIA
+                            </span>
+                        </div>
                     </td>
                     <td class="px-4 py-4 w-48">
                         <div class="line-clamp-2 whitespace-normal break-words text-sm" th:text="${t.asunto}"
@@ -57,9 +58,11 @@
 
                     <td class="px-6 py-4 text-center">
                         <div class="flex justify-center gap-2">
-                            <a th:if="${t.acuse != null}" th:href="@{/terminos/descargar/{id}(id=${t.id})}"
-                                class="text-gray-500 hover:text-gob-guinda transition-colors" title="Descargar Acuse">
-                                <i class="fas fa-file-download fa-lg"></i>
+                            <a th:if="${t.acuse != null}" 
+                                th:href="${#strings.startsWith(t.acuse, 'http')} ? ${t.acuse} : @{/terminos/descargar/{id}(id=${t.id})}"
+                                th:target="${#strings.startsWith(t.acuse, 'http')} ? '_blank' : '_self'"
+                                class="text-red-600 hover:text-red-800 transition-colors" title="Descargar Acuse">
+                                <i class="fas fa-file-pdf fa-lg"></i>
                             </a>
 
                             <button type="button" th:data-id="${t.id}"

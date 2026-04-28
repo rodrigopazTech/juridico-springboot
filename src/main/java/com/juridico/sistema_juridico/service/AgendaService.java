@@ -40,7 +40,7 @@ public class AgendaService {
         return usuarioRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 
-    public Page<Audiencia> getAudienciasPorFiltro(LocalDate fechaInicio, LocalDate fechaFin, Integer gerenciaId, Integer materiaId, int page) {
+    public Page<Audiencia> getAudienciasPorFiltro(String keyword, LocalDate fechaInicio, LocalDate fechaFin, Integer gerenciaId, Integer materiaId, int page) {
         Pageable pageable = PageRequest.of(page, 10);
         Usuario actual = obtenerUsuarioActual();
 
@@ -58,6 +58,7 @@ public class AgendaService {
         if (fechaFin == null) fechaFin = LocalDate.of(2100, 12, 31);
 
         return audienciaRepository.buscarParaHistorial(
+                keyword,
                 EstatusAudiencia.CONCLUIDA,
                 fechaInicio, fechaFin,
                 gerenciaId, materiaId,
@@ -65,7 +66,7 @@ public class AgendaService {
                 pageable);
     }
 
-    public Page<Termino> getTerminosPorFiltro(LocalDate fechaInicio, LocalDate fechaFin, Integer gerenciaId, Integer materiaId, int page) {
+    public Page<Termino> getTerminosPorFiltro(String keyword, LocalDate fechaInicio, LocalDate fechaFin, Integer gerenciaId, Integer materiaId, int page) {
         Pageable pageable = PageRequest.of(page, 10);
         Usuario actual = obtenerUsuarioActual();
 
@@ -84,6 +85,7 @@ public class AgendaService {
         if (fechaFin == null) fechaFin = LocalDate.of(2100, 12, 31);
 
         return terminoRepository.buscarParaHistorial(
+                keyword,
                 estatusFinales,
                 fechaInicio, fechaFin,
                 gerenciaId, materiaId,

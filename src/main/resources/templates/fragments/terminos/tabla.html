@@ -1,5 +1,5 @@
 <div th:fragment="tabla-resultados" id="tabla-resultados-container">
-    <div class="overflow-x-auto custom-scrollbar">
+    <div class="overflow-visible">
         <div class="rounded-t-lg">
             <table class="w-full text-sm text-left text-gray-600 border-collapse">
                 <thead
@@ -116,7 +116,9 @@
                                             Borrador</span>
                                     </button>
 
-                                    <a th:if="${t.acuse != null}" th:href="@{/terminos/descargar/{id}(id=${t.id})}"
+                                    <a th:if="${t.acuse != null}" 
+                                        th:href="${#strings.startsWith(t.acuse, 'http')} ? ${t.acuse} : @{/terminos/descargar/{id}(id=${t.id})}"
+                                        th:target="${#strings.startsWith(t.acuse, 'http')} ? '_blank' : '_self'"
                                         class="block w-full text-left px-4 py-3 text-sm text-blue-600 hover:bg-blue-50 transition flex items-center border-l-4 border-transparent hover:border-blue-500">
                                         <i class="fas fa-file-word mr-3 w-4 text-center"></i>
                                         <span class="truncate font-medium" th:text="${t.acuse}">Archivo.docx</span>
@@ -153,7 +155,8 @@
 
                                     <div th:if="${t.estatusTermino?.name() == 'CONCLUIDO' || t.estatusTermino?.name() == 'PRESENTADO'}"
                                         class="bg-gray-50 border-l-4 border-gray-400">
-                                        <a th:href="@{/terminos/descargar-acuse/{id}(id=${t.id})}"
+                                        <a th:href="${#strings.startsWith(t.acuse, 'http')} ? ${t.acuse} : @{/terminos/descargar-acuse/{id}(id=${t.id})}"
+                                            th:target="${#strings.startsWith(t.acuse, 'http')} ? '_blank' : '_self'"
                                             class="block w-full text-left px-4 py-2 text-sm text-purple-700 hover:bg-purple-100 transition flex items-center font-bold">
                                             <i class="fas fa-file-download mr-3 w-4 text-center"></i> Descargar Acuse
                                         </a>

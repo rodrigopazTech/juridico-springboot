@@ -130,4 +130,118 @@ document.addEventListener("DOMContentLoaded", function() {
         const modal = document.getElementById('modal-observaciones');
         if (event.target == modal) window.cerrarModal();
     };
+
+    // Búsqueda asíncrona (Debounce)
+    document.addEventListener('input', function(e) {
+        if (e.target.id === 'search-agenda-audiencias' || e.target.id === 'search-agenda-terminos') {
+            // Sincronizar el input oculto del formulario
+            const inputHidden = document.getElementById('historial-keyword');
+            if (inputHidden) {
+                inputHidden.value = e.target.value;
+            }
+
+            clearTimeout(debounceTimerAgenda);
+            debounceTimerAgenda = setTimeout(() => {
+                actualizarAgendaAsincrono();
+            }, 650);
+        }
+    });
+
+    // Delegación para paginación asíncrona
+    document.addEventListener('click', function(e) {
+        const linkPag = e.target.closest('.px-3.py-1.border'); // The pagination links
+        if (linkPag && linkPag.href && linkPag.href.includes('/agenda?')) {
+            e.preventDefault();
+            const url = linkPag.getAttribute('href');
+            actualizarAgendaDesdeUrl(url);
+        }
+    });
 });
+
+// --- BÚSQUEDA ASÍNCRONA CENTRALIZADA ---
+let debounceTimerAgenda;
+let abortControllerAgenda;
+
+function actualizarAgendaAsincrono() {
+    // Collect all inputs
+    const formFiltros = document.getElementById('form-filtros');
+    const urlParams = new URLSearchParams();
+
+    // Determinar qué pestaña está activa
+    let tabActiva = 'audiencias';
+    const tabTerminos = document.getElementById('tab-terminos');
+    if (tabTerminos && tabTerminos.classList.contains('block')) {
+        tabActiva = 'terminos';
+    }
+    urlParams.set('tab', tabActiva);
+
+    // Obtener keyword del input visible
+    let keyword = '';
+    const searchAud = document.getElementById('search-agenda-audiencias');
+    const searchTer = document.getElementById('search-agenda-terminos');
+    
+    if (tabActiva === 'audiencias' && searchAud) keyword = searchAud.value;
+    else if (tabActiva === 'terminos' && searchTer) keyword = searchTer.value;
+
+    if (keyword) {
+        urlParams.set('keyword', keyword);
+    }
+
+    // Filtros
+    if (formFiltros) {
+        const fd = new FormData(formFiltros);
+        for (const [key, value] of fd.entries()) {
+            if (key === 'keyword' || key === 'tab' || key === '_csrf') continue;
+            if (value && value !== 'null' && value !== '') {
+                urlParams.set(key, value);
+            }
+        }
+    }
+
+    urlParams.set('page', 0); // Al buscar, reiniciar paginación
+
+    const newUrl = window.location.pathname + '?' + urlParams.toString();
+    window.history.replaceState({ path: newUrl }, '', newUrl);
+
+    ejecutarFetchAgenda('/agenda?' + urlParams.toString());
+}
+
+function actualizarAgendaDesdeUrl(url) {
+    window.history.replaceState({ path: url }, '', url);
+    ejecutarFetchAgenda(url);
+}
+
+function ejecutarFetchAgenda(url) {
+    if (abortControllerAgenda) {
+        abortControllerAgenda.abort();
+    }
+    abortControllerAgenda = new AbortController();
+
+    fetch(url, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        signal: abortControllerAgenda.signal
+    })
+    .then(res => res.text())
+    .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // Reemplazar tabla audiencias
+        const tablaAudNueva = doc.getElementById('contenedor-tabla-audiencias');
+        const tablaAudActual = document.getElementById('contenedor-tabla-audiencias');
+        if (tablaAudNueva && tablaAudActual) {
+            tablaAudActual.innerHTML = tablaAudNueva.innerHTML;
+        }
+
+        // Reemplazar tabla terminos
+        const tablaTerNueva = doc.getElementById('contenedor-tabla-terminos');
+        const tablaTerActual = document.getElementById('contenedor-tabla-terminos');
+        if (tablaTerNueva && tablaTerActual) {
+            tablaTerActual.innerHTML = tablaTerNueva.innerHTML;
+        }
+    })
+    .catch(err => {
+        if (err.name === 'AbortError') return;
+        console.error("Error en actualización asíncrona de agenda:", err);
+    });
+}

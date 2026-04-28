@@ -143,12 +143,18 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
     @Query("SELECT t FROM Termino t " +
            "LEFT JOIN t.expediente e " +
            "WHERE t.estatusTermino IN :estatusList " +
-           "AND t.fechaPresentacion >= :fechaInicio AND t.fechaPresentacion <= :fechaFin " +
+           "AND (:keyword IS NULL OR :keyword = '' OR " +
+           "LOWER(t.asunto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "CONCAT(t.id, '') LIKE CONCAT('%', :keyword, '%')) " +
+           "AND t.fechaVencimiento >= :fechaInicio AND t.fechaVencimiento <= :fechaFin " +
            "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
            "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
            "AND (:filtroRoleGerenciaId IS NULL OR e.gerencia.id = :filtroRoleGerenciaId) " +
            "AND ((:filtroRoleMateriaIds) IS NULL OR e.materia.id IN (:filtroRoleMateriaIds))")
     Page<Termino> buscarParaHistorial(
+            @Param("keyword") String keyword,
             @Param("estatusList") List<EstatusTermino> estatusList,
             @Param("fechaInicio") LocalDate fechaInicio,
             @Param("fechaFin") LocalDate fechaFin,

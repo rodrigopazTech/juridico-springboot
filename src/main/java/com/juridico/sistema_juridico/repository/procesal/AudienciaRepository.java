@@ -68,13 +68,20 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
         // --- 2. LISTADO PARA EXCEL (Sin paginación) ---
         @Query("SELECT a FROM Audiencia a " +
                         "LEFT JOIN a.expediente e " +
+                        "LEFT JOIN a.tipoAudiencia ta " +
                         "WHERE a.estatusAudiencia = :estatus " +
+                        "AND (:keyword IS NULL OR :keyword = '' OR " +
+                        "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(ta.nombre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "CONCAT(a.id, '') LIKE CONCAT('%', :keyword, '%')) " +
                         "AND a.fechaAudiencia >= :fechaInicio AND a.fechaAudiencia <= :fechaFin " +
                         "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
                         "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
                         "AND (:filtroRoleGerenciaId IS NULL OR e.gerencia.id = :filtroRoleGerenciaId) " +
                         "AND ((:filtroRoleMateriaIds) IS NULL OR e.materia.id IN (:filtroRoleMateriaIds))")
         Page<Audiencia> buscarParaHistorial(
+                        @Param("keyword") String keyword,
                         @Param("estatus") EstatusAudiencia estatus,
                         @Param("fechaInicio") LocalDate fechaInicio,
                         @Param("fechaFin") LocalDate fechaFin,

@@ -63,19 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     */
 
     // === MÓDULO: Agenda ===
-    const searchAgendaAud = document.getElementById('search-audiencias');
-    if (searchAgendaAud) {
-        searchAgendaAud.addEventListener('input', function () {
-            filtrarTablaRealTime('audiencias-desahogadas-body', this.value);
-        });
-    }
-
-    const searchAgendaTerm = document.getElementById('search-terminos');
-    if (searchAgendaTerm) {
-        searchAgendaTerm.addEventListener('input', function () {
-            filtrarTablaRealTime('terminos-presentados-body', this.value);
-        });
-    }
+    // (Búsqueda asíncrona de agenda manejada en agenda.js)
 
     // === CATÁLOGOS ===
     const searchGerencias = document.getElementById('input-search-gerencias');

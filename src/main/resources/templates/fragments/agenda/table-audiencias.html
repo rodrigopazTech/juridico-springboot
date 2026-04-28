@@ -1,11 +1,11 @@
-<div th:fragment="tabla" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mt-6">
+<div th:fragment="tabla" id="contenedor-tabla-audiencias" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mt-6">
     <div class="overflow-x-auto">
         <table class="w-full text-sm text-left text-gob-gris" id="tabla-audiencias-desahogadas">
             <thead class="text-xs text-gob-gris uppercase bg-gray-50 border-b border-gray-200 font-headings">
                 <tr>
                     <th class="px-6 py-3 font-bold">Fecha Desahogo</th>
                     <th class="px-6 py-3 font-bold">Expediente</th>
-                    <th class="px-6 py-3 font-bold">Tipo Audiencia</th>
+                    <th class="px-6 py-3 font-bold w-[150px]">Tipo Audiencia</th>
                     <th class="px-6 py-3 font-bold">Partes</th>
                     <th class="px-6 py-3 font-bold text-center">Acciones</th>
                 </tr>
@@ -25,8 +25,10 @@
                     <td class="px-6 py-4 text-gob-guinda font-bold" th:text="${a.expediente.numero}">EXP-001</td>
 
                     <td class="px-6 py-4">
-                        <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded"
-                            th:text="${a.tipoAudiencia.nombre}">Tipo</span>
+                        <div class="w-[150px] truncate">
+                            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded inline-block max-w-full truncate"
+                                th:text="${a.tipoAudiencia.nombre}" th:title="${a.tipoAudiencia.nombre}">Tipo</span>
+                        </div>
                     </td>
 
                     <td class="px-6 py-4 w-56">
@@ -40,7 +42,8 @@
                         <div class="flex justify-center gap-3">
 
                             <a th:if="${a.actaDocumento != null}"
-                                th:href="@{/audiencias/descargar-acta/{id}(id=${a.id})}"
+                                th:href="${#strings.startsWith(a.actaDocumento, 'http')} ? ${a.actaDocumento} : @{/audiencias/descargar-acta/{id}(id=${a.id})}"
+                                th:target="${#strings.startsWith(a.actaDocumento, 'http')} ? '_blank' : '_self'"
                                 class="text-red-600 hover:text-red-800 transition-colors" title="Descargar Acta">
                                 <i class="fas fa-file-pdf fa-lg"></i>
                             </a>

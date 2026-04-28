@@ -43,7 +43,8 @@
                 <div class="col-span-12 lg:col-span-9 space-y-6">
 
                     <!-- Selector de Vista Horizontal (Pill Switcher) -->
-                    <div class="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 flex gap-1 items-center max-w-md">
+                    <div
+                        class="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 flex gap-1 items-center max-w-md">
                         <button onclick="window.cambiarTabPill('audiencias')" id="btn-tab-audiencias"
                             class="tab-btn-pill flex-1 inline-flex items-center justify-center gap-2 py-2.5 text-[11px] font-extrabold uppercase tracking-widest rounded-xl transition-all duration-300"
                             th:classappend="${activeTab == 'audiencias' ? 'bg-gob-guinda text-white shadow-md shadow-gob-guinda/20' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'}">
@@ -76,7 +77,6 @@
     </div>
 
     <div th:replace="~{fragments/agenda/modal-observaciones :: modal-observaciones}"></div>
-    <script th:src="@{/js/realtime-search.js}"></script>
 
 </body>
 

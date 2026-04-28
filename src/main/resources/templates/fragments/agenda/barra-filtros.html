@@ -1,7 +1,8 @@
 <div th:fragment="filtros" class="space-y-4">
-    <form id="form-filtros" th:action="@{/agenda}" method="get" class="space-y-4">
-        <!-- Preserve current tab -->
+    <form id="form-filtros" th:action="@{/agenda}" method="get" class="space-y-5">
+        <!-- Preserve current tab & keyword -->
         <input type="hidden" name="tab" th:value="${activeTab}">
+        <input type="hidden" name="keyword" id="historial-keyword" th:value="${paramKeyword}">
 
         <!-- Encabezado de Filtros en Sidebar -->
         <div class="flex justify-between items-center pb-2 border-b border-white/10">
@@ -9,8 +10,8 @@
                 <i class="fas fa-filter mr-1"></i> Filtros Historial
             </h3>
             <a th:href="@{/agenda(tab=${activeTab})}"
-                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-gob-oro hover:text-gob-guinda text-[9px] font-bold text-gob-oro transition-all border border-white/20 shadow-sm group">
-                <i class="fas fa-broom text-[10px] group-hover:text-gob-guinda transition-colors"></i> LIMPIAR
+                class="px-4 py-1.5 rounded-lg bg-white/10 hover:bg-gob-oro hover:text-gob-guinda text-[9px] font-bold text-gob-oro transition-all border border-white/20 shadow-sm">
+                LIMPIAR
             </a>
         </div>
 
@@ -18,7 +19,7 @@
             <!-- Gerencia (Condicional) -->
             <div sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION')" class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Gerencia</label>
-                <select name="gerenciaId" onchange="this.form.submit()"
+                <select name="gerenciaId" onchange="actualizarAgendaAsincrono()"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
                     <option value="" class="text-gray-800">Todas las gerencias</option>
                     <option th:each="g : ${listaGerencias}" th:value="${g.id}" th:text="${g.nombre}"
@@ -31,7 +32,7 @@
             <div sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')"
                 class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Materia</label>
-                <select name="materiaId" onchange="this.form.submit()"
+                <select name="materiaId" onchange="actualizarAgendaAsincrono()"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
                     <option value="" class="text-gray-800">Todas las materias</option>
                     <option th:each="m : ${listaMaterias}" th:value="${m.id}" th:text="${m.nombre}"
@@ -44,12 +45,12 @@
             <div class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Periodo</label>
                 <div class="flex items-center gap-2">
-                    <input type="date" name="fechaInicio" th:value="${paramFechaInicio}" onchange="this.form.submit()"
-                        class="w-full bg-white/10 border border-white/10 rounded-xl px-2 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer"
+                    <input type="date" name="fechaInicio" th:value="${paramFechaInicio}" onchange="actualizarAgendaAsincrono()"
+                        class="w-full bg-white/10 border border-white/10 rounded-xl px-2 py-2 text-[10px] text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer"
                         title="Fecha Inicio">
-                    <span class="text-white/50 font-bold">-</span>
-                    <input type="date" name="fechaFin" th:value="${paramFechaFin}" onchange="this.form.submit()"
-                        class="w-full bg-white/10 border border-white/10 rounded-xl px-2 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer"
+                    <span class="text-white/30 font-bold">-</span>
+                    <input type="date" name="fechaFin" th:value="${paramFechaFin}" onchange="actualizarAgendaAsincrono()"
+                        class="w-full bg-white/10 border border-white/10 rounded-xl px-2 py-2 text-[10px] text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer"
                         title="Fecha Fin">
                 </div>
             </div>
