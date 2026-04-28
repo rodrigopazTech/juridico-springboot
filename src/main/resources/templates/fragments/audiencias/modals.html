@@ -97,11 +97,14 @@
                             </div>
 
                             <div id="campo-sala" class="col-span-1 sm:col-span-2">
-                                <label for="input-sala" class="block text-sm font-bold text-gray-700">Sala / Juzgado
+                                <label for="input-sala" class="block text-sm font-bold text-gray-700">Órgano Jurisdiccional
                                     *</label>
-                                <input type="text" name="salaLugar" id="input-sala"
-                                    placeholder="Ej. Sala 3 de Juicios Orales"
+                                <select name="salaLugar" id="input-sala"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2">
+                                    <option value="" disabled selected>Seleccione órgano jurisdiccional...</option>
+                                    <option th:each="o : ${listaOrganos}" th:value="${o.nombre}" th:text="${o.nombre}"
+                                            th:data-gerencia-id="${o.gerencia != null ? o.gerencia.id : ''}"></option>
+                                </select>
                             </div>
 
                             <div id="campo-url" class="col-span-1 sm:col-span-2 hidden">

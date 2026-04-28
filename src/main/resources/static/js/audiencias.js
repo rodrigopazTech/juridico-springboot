@@ -339,6 +339,38 @@ function cargarAbogadosPosibles(idPreseleccionado = null) {
         }
     }
 
+    // Filtrar Organos Jurisdiccionales (input-sala) por Gerencia
+    const salaSelect = document.getElementById('input-sala');
+    if (salaSelect && salaSelect.tagName === 'SELECT') {
+        const selectedOption = expSelect.options[expSelect.selectedIndex];
+        const gerenciaId = selectedOption ? selectedOption.getAttribute('data-gerencia-id') : null;
+
+        Array.from(salaSelect.options).forEach(opt => {
+            if (opt.value === "") return; // Option disabled selected
+            const optGerenciaId = opt.getAttribute('data-gerencia-id');
+
+            // Si no hay gerencia seleccionada, ocultar
+            if (!gerenciaId) {
+                opt.style.display = 'none';
+                opt.hidden = true;
+            }
+            // Si hay gerenciaId, mostrar solo los que tengan la misma
+            else if (!optGerenciaId || optGerenciaId === gerenciaId) {
+                opt.style.display = '';
+                opt.hidden = false;
+            } else {
+                opt.style.display = 'none';
+                opt.hidden = true;
+            }
+        });
+
+        // Resetear si la opción seleccionada quedó oculta
+        const currentSala = salaSelect.options[salaSelect.selectedIndex];
+        if (currentSala && currentSala.hidden) {
+            salaSelect.value = '';
+        }
+    }
+
     if (!expId) {
         abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
         return;
