@@ -1,5 +1,5 @@
 <!-- Fragmento de Modales para Detalle de Expediente -->
-<div th:fragment="modales(expediente, gerencias, materias, usuarios, organos, prioridades, estados, etapas, tipos)">
+<div th:fragment="modales(expediente, gerencias, materias, usuarios, organos, prioridades, estados, etapas, tipos, tiposExpediente)">
 
     <!-- 1. MODAL OBSERVACIONES -->
     <div id="modal-observaciones"
@@ -129,16 +129,6 @@
                             <option value="">Selecciona...</option>
                             <option th:each="m : ${materias}" th:value="${m.id}" th:text="${m.nombre}"
                                 th:selected="${expediente.materia != null and expediente.materia.id == m.id}"></option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block font-bold text-gray-600 mb-1">Tipo Expediente*</label>
-                        <select name="tipoExpediente"
-                            class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white"
-                            required>
-                            <option value="">Selecciona...</option>
-                            <option th:each="t : ${tipos}" th:value="${t.id}" th:text="${t.nombre}">
-                            </option>
                         </select>
                     </div>
                 </div>

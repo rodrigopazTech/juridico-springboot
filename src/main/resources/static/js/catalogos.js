@@ -58,6 +58,13 @@ const TIPOS_CONFIG = {
         urlEliminar: '/catalogos/tipos-audiencia/eliminar/',
         placeholder: 'Ej. Conciliación y Arbitraje'
     },
+    'tipo-expediente': {
+        titulo: 'Tipo de Expediente',
+        icono: 'fa-folder',
+        urlGuardar: '/catalogos/tipos-expediente/guardar',
+        urlEliminar: '/catalogos/tipos-expediente/eliminar/',
+        placeholder: 'Ej. Ordinario Civil'
+    },
     'sede': {
         titulo: 'Sede / Estado',
         icono: 'fa-map-marker-alt',
@@ -246,6 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Buscadores
     setupSearch('search-organos', 'tbody-organos');
     setupSearch('search-tipos-audiencia', 'tbody-tipos-audiencia');
+    setupSearch('search-tipos-expediente', 'tbody-tipos-expediente');
     setupSearch('search-abogados', 'tbody-abogados');
     setupSearch('search-sedes', 'tbody-sedes');
     setupSearch('search-materias', 'tbody-materias');

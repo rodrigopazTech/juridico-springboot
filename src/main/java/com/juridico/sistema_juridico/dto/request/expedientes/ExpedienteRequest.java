@@ -20,4 +20,6 @@ public class ExpedienteRequest {
 
     @NotBlank(message = "La descripción del asunto es necesaria")
     private String descripcion;
+
+    private Integer tipoExpedienteId;
 }

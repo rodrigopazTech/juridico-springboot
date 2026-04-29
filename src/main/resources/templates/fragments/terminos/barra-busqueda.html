@@ -3,8 +3,11 @@
     <!-- Buscador -->
     <form id="form-search-terminos" th:action="@{/terminos}" method="get" class="relative w-full md:flex-1 md:max-w-xl">
         <input type="hidden" name="estatus" th:value="${paramEstatus}">
-        <input type="hidden" name="prioridad" th:value="${paramPrioridad}">
+        <input type="hidden" name="prioridadId" th:value="${paramPrioridadId}">
         <input type="hidden" name="abogadoId" th:value="${paramAbogadoId}">
+        <input type="hidden" name="materiaId" th:value="${paramMateriaId}">
+        <input type="hidden" name="gerenciaId" th:value="${paramGerenciaId}">
+        <input type="hidden" name="periodo" th:value="${paramPeriodo}">
 
         <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
             <i class="fas fa-search text-gray-400"></i>
@@ -31,7 +34,15 @@
             <i class="fas fa-list-ul"></i> VerTodos
         </a>
 
-        <a th:href="@{/terminos/exportar-excel(keyword=${keyword}, estatus=${paramEstatus}, prioridad=${paramPrioridad}, abogadoId=${paramAbogadoId})}"
+        <a th:href="@{/terminos/exportar-excel(
+                keyword=${keyword}, 
+                estatus=${paramEstatus}, 
+                prioridadId=${paramPrioridadId}, 
+                abogadoId=${paramAbogadoId},
+                materiaId=${paramMateriaId},
+                gerenciaId=${paramGerenciaId},
+                periodo=${paramPeriodo}
+            )}"
             class="text-gob-gris bg-white border border-gray-300 hover:bg-gray-50 font-bold rounded-lg text-sm px-4 py-2.5 shadow-sm transition-colors flex items-center decoration-0"
             title="Descargar Excel">
             <i class="fas fa-file-excel text-green-600 mr-1.5"></i> Exportar
