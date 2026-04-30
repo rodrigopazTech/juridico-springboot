@@ -35,6 +35,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     Page<Usuario> findByGerencia(Gerencia gerencia, Pageable pageable);
 
-    // 4. Para filtro de usuarios por gerencia en el calendario
-    List<Usuario> findByGerenciaId(Long gerenciaId);
+    // 4. Para filtro de usuarios por gerencia
+    List<Usuario> findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(Integer gerenciaId);
 }

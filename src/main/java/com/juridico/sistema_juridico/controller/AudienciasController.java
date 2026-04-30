@@ -15,6 +15,7 @@ import com.juridico.sistema_juridico.service.procesal.AudienciaService;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -79,6 +80,8 @@ public class AudienciasController {
     private MateriaRepository materiaRepository;
     @Autowired
     private TipoAudienciaRepository tipoAudienciaRepository;
+    @Autowired
+    private OrganoJurisdiccionalRepository organoJurisdiccionalRepository;
 
     @GetMapping
     public String index(Model model,
@@ -214,6 +217,7 @@ public class AudienciasController {
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
         model.addAttribute("listaMaterias", materiaRepository.findByActivoTrueOrderByNombreAsc());
         model.addAttribute("tipos", tipoAudienciaRepository.findByActivoTrue());
+        model.addAttribute("listaOrganos", organoJurisdiccionalRepository.findByActivoTrue());
 
         List<Usuario> listaAbogados;
         if (rol.equals("ABOGADO")) {

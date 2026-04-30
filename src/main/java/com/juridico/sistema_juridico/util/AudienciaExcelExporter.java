@@ -30,14 +30,13 @@ public class AudienciaExcelExporter {
         font.setFontHeight(14);
         style.setFont(font);
 
-        String[] headers = {"Fecha", "Hora", "Expediente", "Gerencia", "Materia", "Tipo Audiencia", "Ubicación", "Estatus", "Abogado"};
+        String[] headers = {"Fecha", "Hora", "Expediente", "Gerencia", "Materia", "Tipo Audiencia", "Órgano Jurisdiccional", "Estatus", "Abogado"};
         for (int i = 0; i < headers.length; i++) {
             createCell(row, i, headers[i], style);
         }
     }
 
     private void createCell(Row row, int columnCount, Object value, CellStyle style) {
-        sheet.autoSizeColumn(columnCount);
         Cell cell = row.createCell(columnCount);
         
         if (value == null) {
@@ -63,7 +62,7 @@ public class AudienciaExcelExporter {
             Row row = sheet.createRow(rowCount++);
             int col = 0;
 
-            // 1. Fecha y Hora (Con protección anti-nulos)
+            // 1. Fecha y Hora
             String fecha = (a.getFechaAudiencia() != null) ? a.getFechaAudiencia().toString() : "S/F";
             String hora = (a.getHoraAudiencia() != null) ? a.getHoraAudiencia().toString() : "S/H";
 
@@ -79,22 +78,26 @@ public class AudienciaExcelExporter {
             createCell(row, col++, gerencia, style); 
             createCell(row, col++, materia, style);  
 
-            // 3. Tipo y Ubicación
+            // 3. Tipo y Órgano Jurisdiccional
             String tipo = (a.getTipoAudiencia() != null) ? a.getTipoAudiencia().getNombre() : "General";
             createCell(row, col++, tipo, style);
 
-            String ubicacion = Boolean.TRUE.equals(a.getEsVirtual()) ? "VIRTUAL: " + a.getUrlReunion() : "SALA: " + a.getSalaLugar();
-            createCell(row, col++, ubicacion, style);
+            String organo = "N/A";
+            if (a.getExpediente() != null) {
+                organo = (a.getExpediente().getOrganoJurisdiccional() != null) 
+                         ? a.getExpediente().getOrganoJurisdiccional().getNombre() 
+                         : (a.getExpediente().getOrganoJurisdiccionalTexto() != null ? a.getExpediente().getOrganoJurisdiccionalTexto() : "N/A");
+            }
+            createCell(row, col++, organo, style);
 
             // 4. Estatus
             createCell(row, col++, a.getEstatusAudiencia(), style);
 
-            // 5. CORRECCIÓN CRÍTICA: Obtener el nombre del Abogado (String) en lugar del Objeto
+            // 5. Abogado
             String nombreAbogado = "Sin Asignar";
             if (a.getAbogadoComparece() != null) {
                 nombreAbogado = a.getAbogadoComparece().getNombreCompleto();
             } else if (a.getExpediente() != null && a.getExpediente().getAbogadoResponsable() != null) {
-                // Si no hay nadie asignado a comparecer, mostramos al titular del expediente
                 nombreAbogado = a.getExpediente().getAbogadoResponsable().getNombreCompleto() + " (Titular)";
             }
             
@@ -105,6 +108,12 @@ public class AudienciaExcelExporter {
     public void export(HttpServletResponse response) throws IOException {
         writeHeaderLine();
         writeDataLines();
+
+        // Ajustar el ancho de las columnas (9 columnas)
+        for (int i = 0; i < 9; i++) {
+            sheet.autoSizeColumn(i);
+        }
+
         ServletOutputStream outputStream = response.getOutputStream();
         workbook.write(outputStream);
         workbook.close();

@@ -41,14 +41,15 @@ public class TerminoExcelExporter {
     }
 
     private void createCell(Row row, int columnCount, Object value, CellStyle style) {
-        sheet.autoSizeColumn(columnCount);
         Cell cell = row.createCell(columnCount);
-        if (value instanceof Integer) {
+        if (value == null) {
+            cell.setCellValue("");
+        } else if (value instanceof Integer) {
             cell.setCellValue((Integer) value);
         } else if (value instanceof Boolean) {
             cell.setCellValue((Boolean) value);
         } else {
-            cell.setCellValue((String) value);
+            cell.setCellValue(value.toString());
         }
         cell.setCellStyle(style);
     }
@@ -69,7 +70,9 @@ public class TerminoExcelExporter {
             createCell(row, columnCount++, expedienteInfo, style);
             
             createCell(row, columnCount++, t.getAsunto(), style);
-            createCell(row, columnCount++, t.getFechaVencimiento().toString(), style);
+            
+            String fecha = (t.getFechaVencimiento() != null) ? t.getFechaVencimiento().toString() : "S/F";
+            createCell(row, columnCount++, fecha, style);
             
             String prioridadStr = (t.getPrioridad() != null) ? t.getPrioridad().getNombre() : "MEDIA";
             createCell(row, columnCount++, prioridadStr, style);
@@ -84,6 +87,11 @@ public class TerminoExcelExporter {
     public void export(HttpServletResponse response) throws IOException {
         writeHeaderLine();
         writeDataLines();
+
+        // Ajustar el ancho de las columnas (6 columnas)
+        for (int i = 0; i < 6; i++) {
+            sheet.autoSizeColumn(i);
+        }
 
         ServletOutputStream outputStream = response.getOutputStream();
         workbook.write(outputStream);

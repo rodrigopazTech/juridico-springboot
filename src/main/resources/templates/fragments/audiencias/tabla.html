@@ -55,12 +55,14 @@
                         <span class="text-xs font-bold text-gray-600 truncate block"
                             th:title="${a.tipoAudiencia?.nombre ?: 'General'}"
                             th:text="${a.tipoAudiencia?.nombre ?: 'General'}">Conciliación</span>
-                        <div class="flex items-center gap-1.5 mt-1">
+                        <div class="flex items-center gap-1.5 mt-1"
+                             th:with="organoFallback=${a.expediente?.organoJurisdiccional?.nombre ?: (not #strings.isEmpty(a.expediente?.organoJurisdiccionalTexto) ? a.expediente.organoJurisdiccionalTexto : 'Presencial')},
+                                      nombreOrgano=${not #strings.isEmpty(a.salaLugar) ? a.salaLugar : organoFallback}">
                             <i th:if="${a.esVirtual}" class="fas fa-video text-[10px] text-blue-500"></i>
                             <i th:unless="${a.esVirtual}" class="fas fa-map-marker-alt text-[10px] text-gray-400"></i>
-                            <span class="text-[10px] font-medium text-gray-400 truncate block max-w-[120px]"
-                                th:title="${a.esVirtual ? 'Virtual' : (a.salaLugar ?: 'Presencial')}"
-                                th:text="${a.esVirtual ? 'Virtual' : (a.salaLugar ?: 'Presencial')}">Virtual</span>
+                            <span class="text-[10px] font-medium text-gray-400 truncate block max-w-[150px]"
+                                th:title="${a.esVirtual ? 'Virtual' : nombreOrgano}"
+                                th:text="${a.esVirtual ? 'Virtual' : nombreOrgano}">Virtual</span>
                         </div>
                     </div>
                 </div>

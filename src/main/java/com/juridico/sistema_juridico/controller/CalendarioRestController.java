@@ -141,8 +141,8 @@ public class CalendarioRestController {
         // GERENTE solo ve usuarios de su propia gerencia
         if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.GERENTE) {
             if (usuarioActual.getGerencia() != null) {
-                List<Usuario> usuarios = usuarioRepository.findByGerenciaId(
-                    usuarioActual.getGerencia().getId().longValue());
+                List<Usuario> usuarios = usuarioRepository.findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(
+                    usuarioActual.getGerencia().getId());
                 return ResponseEntity.ok(usuarios);
             }
             return ResponseEntity.ok(List.of());
@@ -151,8 +151,8 @@ public class CalendarioRestController {
         // JEFE_DEPTO solo ve usuarios de su propia gerencia
         if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
             if (usuarioActual.getGerencia() != null) {
-                List<Usuario> usuarios = usuarioRepository.findByGerenciaId(
-                    usuarioActual.getGerencia().getId().longValue());
+                List<Usuario> usuarios = usuarioRepository.findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(
+                    usuarioActual.getGerencia().getId());
                 return ResponseEntity.ok(usuarios);
             }
             return ResponseEntity.ok(List.of());

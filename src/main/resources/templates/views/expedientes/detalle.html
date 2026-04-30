@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 
 <head>
@@ -47,12 +47,6 @@
                             <div>
                                 <p class="text-gray-400 text-[10px] uppercase font-bold tracking-wider">Materia</p>
                                 <p class="font-semibold text-gray-800" th:text="${expediente.materia.nombre}">Materia
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-gray-400 text-[10px] uppercase font-bold tracking-wider">Tipo Expediente
-                                </p>
-                                <p class="font-semibold text-gray-800">N/A
                                 </p>
                             </div>
 
@@ -222,7 +216,7 @@
 
     <!-- Modales -->
     <div
-        th:replace="~{fragments/expedientes/modales-detalle :: modales(${expediente}, ${gerencias}, ${materias}, ${usuarios}, ${organos}, ${prioridades}, ${estados}, ${etapas}, ${tipos})}">
+        th:replace="~{fragments/expedientes/modales-detalle :: modales(${expediente}, ${gerencias}, ${materias}, ${usuarios}, ${organos}, ${prioridades}, ${estados}, ${etapas}, ${tipos}, ${tiposExpediente})}">
     </div>
 
     <!-- Gestor Documental -->

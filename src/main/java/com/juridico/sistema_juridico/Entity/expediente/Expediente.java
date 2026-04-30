@@ -67,6 +67,10 @@ public class Expediente {
     @JoinColumn(name = "prioridad_id")
     private CatPrioridad prioridad;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tipo_expediente_id")
+    private com.juridico.sistema_juridico.Entity.catalogo.TipoExpediente tipoExpediente;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "etapa_procesal", nullable = false, length = 30)
     @Builder.Default

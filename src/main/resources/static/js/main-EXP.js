@@ -128,7 +128,7 @@ function cargarOrganosExpediente(arg1 = '', arg2 = '', organoIdSeleccionado = nu
         return Promise.resolve();
     }
 
-    return fetch(`/admin/importar/api/organos-por-gerencia/${gerenciaId}`)
+    return fetch(`/expedientes/api/organos-por-gerencia/${gerenciaId}`)
         .then(res => res.json())
         .then(organos => {
             selectOrgano.innerHTML = '<option value="">Selecciona órgano...</option>';

@@ -61,6 +61,9 @@ public class DataInitializer implements CommandLineRunner {
         @Autowired
         private CatPrioridadRepository catPrioridadRepository;
 
+        @Autowired
+        private com.juridico.sistema_juridico.repository.Catalogo.TipoExpedienteRepository tipoExpedienteRepository;
+
         @Override
         @Transactional
         public void run(String... args) throws Exception {
@@ -249,6 +252,20 @@ public class DataInitializer implements CommandLineRunner {
                         tipoAudienciaRepository.saveAll(tipos);
                         System.out.println("✅ Tipos de Audiencia cargados automáticamente.");
                 }
+
+                // 6.5. CATÁLOGO DE TIPOS DE EXPEDIENTE
+                if (tipoExpedienteRepository.count() == 0) {
+                        List<com.juridico.sistema_juridico.Entity.catalogo.TipoExpediente> tiposExp = List.of(
+                                        com.juridico.sistema_juridico.Entity.catalogo.TipoExpediente.builder().nombre("Ordinario Civil").activo(true).build(),
+                                        com.juridico.sistema_juridico.Entity.catalogo.TipoExpediente.builder().nombre("Ejecutivo Mercantil").activo(true).build(),
+                                        com.juridico.sistema_juridico.Entity.catalogo.TipoExpediente.builder().nombre("Amparo Directo").activo(true).build(),
+                                        com.juridico.sistema_juridico.Entity.catalogo.TipoExpediente.builder().nombre("Amparo Indirecto").activo(true).build(),
+                                        com.juridico.sistema_juridico.Entity.catalogo.TipoExpediente.builder().nombre("Procedimiento Administrativo").activo(true).build());
+
+                        tipoExpedienteRepository.saveAll(tiposExp);
+                        System.out.println("✅ Tipos de Expediente cargados automáticamente.");
+                }
+                
                 if (usuarioRepository.findByEmail("admin@sistema.com").isEmpty()) {
                         Usuario admin = Usuario.builder()
                                         .nombreCompleto("Administrador del Sistema")

@@ -30,6 +30,7 @@ public class CatalogosController {
     @Autowired private TipoAudienciaRepository tipoAudienciaRepository;
     @Autowired private MateriaRepository materiaRepository;
     @Autowired private EstadoRepository estadoRepository;
+    @Autowired private TipoExpedienteRepository tipoExpedienteRepository;
     @Autowired private com.juridico.sistema_juridico.service.CatalogosSyncService syncService;
 
     // ===============================================================
@@ -80,6 +81,7 @@ public class CatalogosController {
         List<Usuario> abogados = new ArrayList<>();
         List<Estado> sedes = new ArrayList<>();
         List<Materia> materias = new ArrayList<>();
+        List<TipoExpediente> tiposExpediente = new ArrayList<>();
 
         if (gerenciaSeleccionada != null) {
             organos = organoRepository.findByGerenciaIdAndActivoTrue(gerenciaSeleccionada.getId());
@@ -120,6 +122,15 @@ public class CatalogosController {
             sedes.sort(Comparator.comparing(Estado::getNombre, String.CASE_INSENSITIVE_ORDER));
             
             materias = materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(gerenciaSeleccionada.getId());
+            
+            tiposExpediente = tipoExpedienteRepository.findByGerenciaIdAndActivoTrue(gerenciaSeleccionada.getId());
+            tiposExpediente.addAll(tipoExpedienteRepository.findByGerenciaIsNullAndActivoTrue());
+            tiposExpediente = tiposExpediente.stream()
+                .collect(Collectors.collectingAndThen(
+                    Collectors.toMap(TipoExpediente::getId, t -> t, (a, b) -> a),
+                    m -> new ArrayList<>(m.values())
+                ));
+            tiposExpediente.sort(Comparator.comparing(TipoExpediente::getNombre, String.CASE_INSENSITIVE_ORDER));
         }
 
         model.addAttribute("usuarioActual", usuarioActual);
@@ -132,6 +143,7 @@ public class CatalogosController {
         model.addAttribute("listaAbogados", abogados);
         model.addAttribute("listaSedes", sedes);
         model.addAttribute("listaMaterias", materias);
+        model.addAttribute("listaTiposExpediente", tiposExpediente);
         
         model.addAttribute("fechaLimiteNuevo", java.time.LocalDateTime.now().minusDays(7));
 
@@ -266,6 +278,71 @@ public class CatalogosController {
             TipoAudiencia t = usuarioService.buscarTipoAudienciaPorId(id);
             t.setActivo(false);
             tipoAudienciaRepository.save(t);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "El valor estaba en uso. Ha sido ocultado del catálogo."));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo eliminar: " + e.getMessage()));
+        }
+    }
+
+    // ===============================================================
+    // CRUD - TIPOS DE EXPEDIENTE
+    // ===============================================================
+    @PostMapping("/tipos-expediente/guardar")
+    @ResponseBody
+    public ResponseEntity<?> guardarTipoExpediente(@RequestBody Map<String, String> payload) {
+        try {
+            String nombre = payload.get("nombre");
+            String idStr = payload.get("id");
+            String gerenciaIdStr = payload.get("gerenciaId");
+
+            if (nombre == null || nombre.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "El nombre es obligatorio."));
+            }
+
+            TipoExpediente tipo;
+            if (idStr != null && !idStr.isEmpty()) {
+                // EDICIÓN
+                tipo = tipoExpedienteRepository.findById(Integer.parseInt(idStr))
+                        .orElseThrow(() -> new RuntimeException("Tipo de Expediente no encontrado"));
+                tipo.setNombre(nombre.trim());
+            } else {
+                // CREACIÓN
+                tipo = tipoExpedienteRepository.findByNombreIgnoreCase(nombre.trim())
+                    .filter(t -> Boolean.FALSE.equals(t.getActivo()))
+                    .orElse(null);
+
+                if (tipo != null) {
+                    tipo.setActivo(true);
+                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
+                        tipo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                    }
+                } else {
+                    tipo = new TipoExpediente();
+                    tipo.setNombre(nombre.trim());
+                    tipo.setActivo(true);
+                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
+                        tipo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                    }
+                }
+            }
+
+            tipoExpedienteRepository.save(tipo);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Tipo de Expediente guardado correctamente."));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/tipos-expediente/eliminar/{id}")
+    @ResponseBody
+    public ResponseEntity<?> eliminarTipoExpediente(@PathVariable("id") Integer id) {
+        try {
+            tipoExpedienteRepository.deleteById(id);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Tipo de Expediente eliminado correctamente."));
+        } catch (DataIntegrityViolationException e) {
+            TipoExpediente t = tipoExpedienteRepository.findById(id).orElseThrow();
+            t.setActivo(false);
+            tipoExpedienteRepository.save(t);
             return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "El valor estaba en uso. Ha sido ocultado del catálogo."));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo eliminar: " + e.getMessage()));
@@ -444,6 +521,15 @@ public class CatalogosController {
         TipoAudiencia t = usuarioService.buscarTipoAudienciaPorId(id);
         t.setActivo(!t.getActivo());
         usuarioService.guardarTipoAudiencia(t);
+        Integer gId = t.getGerencia() != null ? t.getGerencia().getId() : null;
+        return "redirect:/catalogos" + (gId != null ? "?gerenciaId=" + gId : "");
+    }
+
+    @GetMapping("/tipos-expediente/toggle/{id}")
+    public String toggleTipoExpediente(@PathVariable("id") Integer id) {
+        TipoExpediente t = tipoExpedienteRepository.findById(id).orElseThrow();
+        t.setActivo(!t.getActivo());
+        tipoExpedienteRepository.save(t);
         Integer gId = t.getGerencia() != null ? t.getGerencia().getId() : null;
         return "redirect:/catalogos" + (gId != null ? "?gerenciaId=" + gId : "");
     }

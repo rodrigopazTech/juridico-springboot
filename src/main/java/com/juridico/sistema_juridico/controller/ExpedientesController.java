@@ -14,6 +14,7 @@ import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRepository;
 import com.juridico.sistema_juridico.Entity.catalogo.Etiqueta;
+import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
@@ -44,17 +45,15 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.servlet.http.HttpServletRequest;
 
+import com.juridico.sistema_juridico.util.ExpedienteExcelExporter;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashMap;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Controller
 @RequestMapping("/expedientes")
@@ -83,6 +82,8 @@ public class ExpedientesController {
     private CatPrioridadRepository catPrioridadRepository;
     @Autowired
     private com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository tipoAudienciaRepository;
+    @Autowired
+    private com.juridico.sistema_juridico.repository.Catalogo.TipoExpedienteRepository tipoExpedienteRepository;
 
     @Autowired
     private ActividadExpedienteRepository actividadRepository;
@@ -93,6 +94,62 @@ public class ExpedientesController {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    @GetMapping("/exportar-excel")
+    public void exportarExcel(HttpServletResponse response,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer gerenciaId,
+            @RequestParam(required = false) Integer materiaId,
+            @RequestParam(required = false) Integer prioridadId,
+            @RequestParam(required = false) EtapaProcesal etapa,
+            @RequestParam(required = false) Integer abogadoId,
+            @RequestParam(required = false) Integer etiquetaId) throws IOException {
+
+        response.setContentType("application/octet-stream");
+        DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+        String currentDateTime = dateFormatter.format(new Date());
+
+        String headerKey = "Content-Disposition";
+        String headerValue = "attachment; filename=Expedientes_" + currentDateTime + ".xlsx";
+        response.setHeader(headerKey, headerValue);
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+
+        Integer secGerenciaId = null;
+        List<Integer> secMateriaIds = null;
+        Integer secUsuarioId = usuario.getId();
+
+        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECCION
+                || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+        } else if (usuario.getRol() == RolUsuario.GERENTE) {
+            if (usuario.getGerencia() != null)
+                secGerenciaId = usuario.getGerencia().getId();
+        } else if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
+            // Jefe de Depto: ve expedientes de sus materias dentro de su gerencia
+            if (usuario.getGerencia() != null)
+                secGerenciaId = usuario.getGerencia().getId();
+            if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
+                secMateriaIds = usuario.getMaterias().stream().map(m -> m.getId()).collect(Collectors.toList());
+            } else {
+                secMateriaIds = Collections.emptyList();
+            }
+        } else {
+            // ABOGADO: solo ve sus propios expedientes
+            if (usuario.getGerencia() != null)
+                secGerenciaId = usuario.getGerencia().getId();
+            secMateriaIds = Collections.emptyList();
+        }
+
+        // Buscamos todos los expedientes que coincidan con los filtros (sin paginación)
+        List<Expediente> listaExpedientes = expedienteRepository.buscarConSeguridad(
+                keyword, gerenciaId, materiaId, prioridadId, etapa, abogadoId, etiquetaId,
+                secGerenciaId, secMateriaIds, secUsuarioId,
+                Pageable.unpaged()).getContent();
+
+        ExpedienteExcelExporter excelExporter = new ExpedienteExcelExporter(listaExpedientes);
+        excelExporter.export(response);
+    }
 
     @GetMapping
     public String index(Model model,
@@ -118,7 +175,8 @@ public class ExpedientesController {
         } else if (usuario.getRol() == RolUsuario.GERENTE) {
             if (usuario.getGerencia() != null)
                 secGerenciaId = usuario.getGerencia().getId();
-        } else {
+        } else if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
+            // Jefe de Depto: ve expedientes de sus materias dentro de su gerencia
             if (usuario.getGerencia() != null)
                 secGerenciaId = usuario.getGerencia().getId();
             if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
@@ -126,6 +184,12 @@ public class ExpedientesController {
             } else {
                 secMateriaIds = Collections.emptyList();
             }
+        } else {
+            // ABOGADO: solo ve sus propios expedientes (donde es abogadoResponsable)
+            // Las materias asignadas no expanden su visibilidad
+            if (usuario.getGerencia() != null)
+                secGerenciaId = usuario.getGerencia().getId();
+            secMateriaIds = Collections.emptyList();
         }
 
         Pageable pageable = PageRequest.of(page, 20, Sort.by("createdAt").descending());
@@ -164,21 +228,42 @@ public class ExpedientesController {
 
         model.addAttribute("rolActual", usuario.getRol());
 
-        model.addAttribute("listaGerencias", gerenciaRepository.findAll());
-        model.addAttribute("listaMaterias", materiaRepository.findAll());
+        // --- FILTRADO DE CATÁLOGOS SEGÚN ROL ---
+        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+            model.addAttribute("listaGerencias", gerenciaRepository.findAll());
+            model.addAttribute("listaMaterias", materiaRepository.findByActivoTrueOrderByNombreAsc());
+            model.addAttribute("listaAbogados", usuarioRepository.findAll());
+            model.addAttribute("gerencias", gerenciaRepository.findAll());
+            model.addAttribute("materias", materiaRepository.findByActivoTrueOrderByNombreAsc());
+            model.addAttribute("usuarios", usuarioRepository.findAll());
+        } else {
+            Integer gid = (usuario.getGerencia() != null) ? usuario.getGerencia().getId() : null;
+            if (gid != null) {
+                List<Materia> mats = materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(gid);
+                List<Usuario> usrs = usuarioRepository.findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(gid);
+                model.addAttribute("listaGerencias", List.of(usuario.getGerencia()));
+                model.addAttribute("gerencias", List.of(usuario.getGerencia()));
+                model.addAttribute("listaMaterias", mats);
+                model.addAttribute("materias", mats);
+                model.addAttribute("listaAbogados", usrs);
+                model.addAttribute("usuarios", usrs);
+            } else {
+                model.addAttribute("listaGerencias", Collections.emptyList());
+                model.addAttribute("gerencias", Collections.emptyList());
+                model.addAttribute("listaMaterias", Collections.emptyList());
+                model.addAttribute("materias", Collections.emptyList());
+                model.addAttribute("listaAbogados", Collections.emptyList());
+                model.addAttribute("usuarios", Collections.emptyList());
+            }
+        }
 
         model.addAttribute("listaPrioridades", catPrioridadRepository.findAll());
         model.addAttribute("etapas", EtapaProcesal.values());
-        model.addAttribute("listaAbogados", usuarioRepository.findAll());
-
-        model.addAttribute("gerencias", gerenciaRepository.findAll());
-        model.addAttribute("materias", materiaRepository.findAll());
-
         model.addAttribute("organos", organoRepository.findByActivoTrue());
-        model.addAttribute("usuarios", usuarioRepository.findAll());
         model.addAttribute("prioridades", catPrioridadRepository.findAll());
         model.addAttribute("estados", estadoRepository.findAllByActivoTrueOrderByNombreAsc());
         model.addAttribute("etiquetas", etiquetaRepository.findAll());
+        model.addAttribute("tiposExpediente", tipoExpedienteRepository.findAll());
         model.addAttribute("usuarioActual", usuario);
 
         // --- OPTIMIZACIÓN HTMX / FETCH ASÍNCRONO ---
@@ -239,6 +324,7 @@ public class ExpedientesController {
                     expedienteReal.setAbogadoResponsable(
                             usuarioRepository.findById(expedienteForm.getAbogadoResponsable().getId()).orElse(null));
 
+
             } else {
                 // MODO EDICIÓN
                 Expediente dbOriginal = expedienteRepository.findById(expedienteForm.getId())
@@ -280,6 +366,8 @@ public class ExpedientesController {
                         && expedienteForm.getAbogadoResponsable().getId() != null)
                     expedienteReal.setAbogadoResponsable(
                             usuarioRepository.findById(expedienteForm.getAbogadoResponsable().getId()).orElse(null));
+                
+
             }
 
             if (expedienteReal.getNumero() == null || expedienteReal.getNumero().trim().isEmpty()) {
@@ -477,6 +565,7 @@ public class ExpedientesController {
         model.addAttribute("etapas", EtapaProcesal.values());
         model.addAttribute("materias", materiaRepository.findByActivoTrueOrderByNombreAsc());
         model.addAttribute("tipos", tipoAudienciaRepository.findByActivoTrue());
+        model.addAttribute("tiposExpediente", tipoExpedienteRepository.findAll());
         model.addAttribute("pageTitle", "Detalle del Expediente");
         model.addAttribute("activePage", "expedientes");
 
@@ -587,5 +676,14 @@ public class ExpedientesController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/api/organos-por-gerencia/{gerenciaId}")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> obtenerOrganosPorGerencia(@PathVariable("gerenciaId") Integer gerenciaId) {
+        List<Map<String, Object>> res = organoRepository.findByGerenciaIdAndActivoTrue(gerenciaId).stream()
+                .map(o -> Map.of("id", (Object) o.getId(), "nombre", o.getNombre()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(res);
     }
 }

@@ -80,8 +80,8 @@ public class CalendarioController {
 
                     // Filtro de usuario visible para GERENTE (solo usuarios de su gerencia)
                     puedeVerFiltroUsuario = true;
-                    listaUsuarios = usuarioRepository.findByGerenciaId(
-                            usuarioActual.getGerencia().getId().longValue());
+                    listaUsuarios = usuarioRepository.findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(
+                            usuarioActual.getGerencia().getId());
 
                 } else if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
                     // ABOGADO no ve el filtro de usuario
@@ -106,8 +106,8 @@ public class CalendarioController {
                     puedeVerFiltroUsuario = true;
                     // JEFE_DEPTO ve los usuarios de su gerencia
                     if (usuarioActual.getGerencia() != null) {
-                        listaUsuarios = usuarioRepository.findByGerenciaId(
-                                usuarioActual.getGerencia().getId().longValue());
+                        listaUsuarios = usuarioRepository.findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(
+                                usuarioActual.getGerencia().getId());
                     }
                 }
             }
