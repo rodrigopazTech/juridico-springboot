@@ -423,8 +423,10 @@ document.addEventListener('submit', function (e) {
 
 function activarSubidaAcuse(idTermino) {
     const inputId = document.getElementById('input-acuse-id');
+    const inputFile = document.getElementById('input-acuse-file');
     if (inputId) {
         inputId.value = idTermino;
+        if (inputFile) inputFile.value = ''; // Limpiar archivo previo
         const modal = document.getElementById('modal-subir-acuse');
         if (modal) {
             modal.classList.remove('hidden');
@@ -550,10 +552,12 @@ function vincularAbogadoTermino() {
 // ABRIR MODAL PARA CONCLUIR TÉRMINO
 function abrirModalConcluir(idTermino) {
     const inputId = document.getElementById('input-concluir-id');
+    const inputObs = document.getElementById('input-concluir-obs');
     const modal = document.getElementById('modal-concluir-final');
 
     if (inputId && modal) {
         inputId.value = idTermino;
+        if (inputObs) inputObs.value = ''; // Limpiar comentarios previos
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
