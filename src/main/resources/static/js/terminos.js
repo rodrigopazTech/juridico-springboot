@@ -363,7 +363,7 @@ document.addEventListener('submit', function (e) {
         })
             .then(res => {
                 if (res.ok) {
-                    document.getElementById('modal-concluir-final').classList.add('hidden');
+                    cerrarModal('modal-concluir-final');
                     showSuccessToast('¡Término Concluido con éxito!');
                     actualizarTablaAsincrono();
                 } else throw new Error();
@@ -385,7 +385,7 @@ document.addEventListener('submit', function (e) {
         })
             .then(res => {
                 if (res.ok) {
-                    document.getElementById('modal-subir-acuse').classList.add('hidden');
+                    cerrarModal('modal-subir-acuse');
                     showSuccessToast('¡Acuse registrado correctamente!');
                     actualizarTablaAsincrono();
                 } else throw new Error();
@@ -407,7 +407,7 @@ document.addEventListener('submit', function (e) {
         })
             .then(res => {
                 if (res.ok) {
-                    document.getElementById('modal-nuevo-termino').classList.add('hidden');
+                    cerrarModal('modal-nuevo-termino');
                     showSuccessToast('¡Datos guardados correctamente!');
                     actualizarTablaAsincrono();
                 } else throw new Error();
@@ -419,46 +419,14 @@ document.addEventListener('submit', function (e) {
 
 // --- MODALES (NUEVO / EDITAR) ---
 
-function abrirModalNuevo() {
-    const form = document.getElementById('form-termino');
-    if (form) form.reset();
-
-    // Limpiamos el ID oculto para que el Controller sepa que es CREAR
-    document.getElementById('input-termino-id').value = '';
-
-    // Cambiamos título
-    document.getElementById('modal-titulo').innerHTML = '<i class="fas fa-plus-circle"></i> Nuevo Término';
-
-    // Mostramos modal
-    document.getElementById('modal-nuevo-termino').classList.remove('hidden');
-}
-
-function editarTermino(id, actuacion, fecha, expedienteId, abogadoId) {
-    // 1. Rellenar campos del formulario
-    document.getElementById('input-termino-id').value = id;
-    document.getElementById('input-actuacion').value = actuacion;
-    document.getElementById('input-fecha').value = fecha;
-    document.getElementById('input-expediente').value = expedienteId;
-
-    // Manejo seguro del abogado (puede ser null)
-    if (abogadoId) {
-        document.getElementById('input-abogado').value = abogadoId;
-    } else {
-        document.getElementById('input-abogado').value = "";
-    }
-
-    // 2. Cambiar título a "Editar"
-    document.getElementById('modal-titulo').innerHTML = '<i class="fas fa-edit"></i> Editar Término';
-
-    // 3. Mostrar modal
-    document.getElementById('modal-nuevo-termino').classList.remove('hidden');
-}
 
 
 function activarSubidaAcuse(idTermino) {
     const inputId = document.getElementById('input-acuse-id');
+    const inputFile = document.getElementById('input-acuse-file');
     if (inputId) {
         inputId.value = idTermino;
+        if (inputFile) inputFile.value = ''; // Limpiar archivo previo
         const modal = document.getElementById('modal-subir-acuse');
         if (modal) {
             modal.classList.remove('hidden');
@@ -499,7 +467,10 @@ function abrirModalNuevo() {
     if (titulo) titulo.innerHTML = '<i class="fas fa-plus-circle"></i> Nuevo Término';
 
     const modal = document.getElementById('modal-nuevo-termino');
-    if (modal) modal.classList.remove('hidden');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
 }
 
 // 2. EDITAR TÉRMINO (Con el botón amarillo)
@@ -539,7 +510,10 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
     if (titulo) titulo.innerHTML = '<i class="fas fa-edit"></i> Editar Término';
 
     const modal = document.getElementById('modal-nuevo-termino');
-    if (modal) modal.classList.remove('hidden');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
 }
 
 // 3. VINCULACIÓN AUTOMÁTICA
@@ -578,11 +552,25 @@ function vincularAbogadoTermino() {
 // ABRIR MODAL PARA CONCLUIR TÉRMINO
 function abrirModalConcluir(idTermino) {
     const inputId = document.getElementById('input-concluir-id');
+    const inputObs = document.getElementById('input-concluir-obs');
     const modal = document.getElementById('modal-concluir-final');
 
     if (inputId && modal) {
         inputId.value = idTermino;
+        if (inputObs) inputObs.value = ''; // Limpiar comentarios previos
         modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+}
+
+/**
+ * Función estandarizada para cerrar modales eliminando conflictos de display
+ */
+function cerrarModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
     }
 }
 
