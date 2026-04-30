@@ -125,7 +125,8 @@ public class ExpedientesController {
         } else if (usuario.getRol() == RolUsuario.GERENTE) {
             if (usuario.getGerencia() != null)
                 secGerenciaId = usuario.getGerencia().getId();
-        } else {
+        } else if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
+            // Jefe de Depto: ve expedientes de sus materias dentro de su gerencia
             if (usuario.getGerencia() != null)
                 secGerenciaId = usuario.getGerencia().getId();
             if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
@@ -133,6 +134,11 @@ public class ExpedientesController {
             } else {
                 secMateriaIds = Collections.emptyList();
             }
+        } else {
+            // ABOGADO: solo ve sus propios expedientes
+            if (usuario.getGerencia() != null)
+                secGerenciaId = usuario.getGerencia().getId();
+            secMateriaIds = Collections.emptyList();
         }
 
         // Buscamos todos los expedientes que coincidan con los filtros (sin paginación)
@@ -169,7 +175,8 @@ public class ExpedientesController {
         } else if (usuario.getRol() == RolUsuario.GERENTE) {
             if (usuario.getGerencia() != null)
                 secGerenciaId = usuario.getGerencia().getId();
-        } else {
+        } else if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
+            // Jefe de Depto: ve expedientes de sus materias dentro de su gerencia
             if (usuario.getGerencia() != null)
                 secGerenciaId = usuario.getGerencia().getId();
             if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
@@ -177,6 +184,12 @@ public class ExpedientesController {
             } else {
                 secMateriaIds = Collections.emptyList();
             }
+        } else {
+            // ABOGADO: solo ve sus propios expedientes (donde es abogadoResponsable)
+            // Las materias asignadas no expanden su visibilidad
+            if (usuario.getGerencia() != null)
+                secGerenciaId = usuario.getGerencia().getId();
+            secMateriaIds = Collections.emptyList();
         }
 
         Pageable pageable = PageRequest.of(page, 20, Sort.by("createdAt").descending());
