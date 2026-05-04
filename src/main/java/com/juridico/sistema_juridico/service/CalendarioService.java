@@ -42,50 +42,90 @@ public class CalendarioService {
 
     public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo, Long filtroGerenciaId, Long filtroUsuarioId, String filtroMateria) {
         List<EventoResponse> eventos = new ArrayList<>();
-        
-        // Determinar si el usuario tiene restricción por gerencia
-        boolean tieneRestriccionGerencia = usuarioActual != null && 
-            usuarioActual.getRol() == RolUsuario.GERENTE && 
-            usuarioActual.getGerencia() != null;
-        
-        Integer gerenciaIdRestriccion = tieneRestriccionGerencia ? 
-            usuarioActual.getGerencia().getId() : null;
-        
+
+        // --- FILTRO DE SEGURIDAD MANDATORIO ---
+        // Determinar la restricción de gerencia según el rol del usuario.
+        // GERENTE, JEFE_DEPTO y ABOGADO solo pueden ver eventos de su propia gerencia.
+        // DIRECCION, SUBDIRECCION y ADMIN ven todo (gerenciaIdRestriccion queda null).
+        Integer gerenciaIdRestriccion = null;
+        Integer abogadoIdRestriccion = null;
+
+        if (usuarioActual != null) {
+            RolUsuario rol = usuarioActual.getRol();
+            if (rol == RolUsuario.GERENTE || rol == RolUsuario.JEFE_DEPTO || rol == RolUsuario.ABOGADO) {
+                if (usuarioActual.getGerencia() != null) {
+                    gerenciaIdRestriccion = usuarioActual.getGerencia().getId();
+                }
+                // ABOGADO: adicionalmente filtrar solo sus propios expedientes
+                if (rol == RolUsuario.ABOGADO) {
+                    abogadoIdRestriccion = usuarioActual.getId();
+                }
+            }
+        }
+
         // 1. Mapear Audiencias
         List<Audiencia> audiencias = audienciaRepository.findAll();
-        
-        // Filtrar por gerencia si el usuario tiene restricción
+
+        // Aplicar restricción de gerencia
         if (gerenciaIdRestriccion != null) {
             final Integer gid = gerenciaIdRestriccion;
             audiencias = audiencias.stream()
-                .filter(a -> a.getExpediente() != null && 
+                .filter(a -> a.getExpediente() != null &&
                             a.getExpediente().getGerencia() != null &&
                             a.getExpediente().getGerencia().getId().equals(gid))
                 .collect(Collectors.toList());
         }
-        
+        // Restricción adicional para ABOGADO: solo sus audiencias
+        if (abogadoIdRestriccion != null) {
+            final Integer uid = abogadoIdRestriccion;
+            audiencias = audiencias.stream()
+                .filter(a -> {
+                    boolean esResponsable = a.getExpediente() != null &&
+                        a.getExpediente().getAbogadoResponsable() != null &&
+                        a.getExpediente().getAbogadoResponsable().getId().equals(uid);
+                    boolean esComparece = a.getAbogadoComparece() != null &&
+                        a.getAbogadoComparece().getId().equals(uid);
+                    return esResponsable || esComparece;
+                })
+                .collect(Collectors.toList());
+        }
+
         eventos.addAll(audiencias.stream()
                 .<EventoResponse>map(a -> mapToAudienciaResponse(a))
                 .collect(Collectors.toList()));
 
         // 2. Mapear Términos
         List<Termino> terminos = terminoRepository.findAll();
-        
-        // Filtrar por gerencia si el usuario tiene restricción
+
+        // Aplicar restricción de gerencia
         if (gerenciaIdRestriccion != null) {
             final Integer gid = gerenciaIdRestriccion;
             terminos = terminos.stream()
-                .filter(t -> t.getExpediente() != null && 
+                .filter(t -> t.getExpediente() != null &&
                              t.getExpediente().getGerencia() != null &&
                              t.getExpediente().getGerencia().getId().equals(gid))
                 .collect(Collectors.toList());
         }
-        
+        // Restricción adicional para ABOGADO: solo sus términos
+        if (abogadoIdRestriccion != null) {
+            final Integer uid = abogadoIdRestriccion;
+            terminos = terminos.stream()
+                .filter(t -> {
+                    boolean esResponsableTermino = t.getAbogadoResponsable() != null &&
+                        t.getAbogadoResponsable().getId().equals(uid);
+                    boolean esResponsableExp = t.getExpediente() != null &&
+                        t.getExpediente().getAbogadoResponsable() != null &&
+                        t.getExpediente().getAbogadoResponsable().getId().equals(uid);
+                    return esResponsableTermino || esResponsableExp;
+                })
+                .collect(Collectors.toList());
+        }
+
         eventos.addAll(terminos.stream()
                 .<EventoResponse>map(t -> mapToTerminoResponse(t))
                 .collect(Collectors.toList()));
 
-        // 3. Mapear Recordatorios (solo del usuario actual)
+        // 3. Mapear Recordatorios (solo del usuario actual, siempre)
         if (usuarioActual != null && usuarioActual.getId() != null) {
             List<Recordatorio> recordatorios = recordatorioRepository
                 .findByUsuarioIdAndCompletadoFalse(usuarioActual.getId());
@@ -94,7 +134,7 @@ public class CalendarioService {
                     .collect(Collectors.toList()));
         }
 
-        // Aplicar filtros adicionales
+        // Aplicar filtros adicionales de UI (tipo, gerencia elegida, usuario elegido, materia)
         return aplicarFiltros(eventos, filtroTipo, filtroGerenciaId, filtroUsuarioId, filtroMateria);
     }
 

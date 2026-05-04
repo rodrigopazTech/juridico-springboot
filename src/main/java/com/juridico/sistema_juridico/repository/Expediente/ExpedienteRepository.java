@@ -153,5 +153,11 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
         @Query(value = "SELECT TO_CHAR(created_at, 'Month'), COUNT(*) FROM expedientes WHERE gerencia_id IN :gerenciaIds AND etapa_procesal = 'FIRME' GROUP BY TO_CHAR(created_at, 'Month')", nativeQuery = true)
         List<Object[]> contarExpedientesCompletadosPorMesYGerencias(@Param("gerenciaIds") List<Long> gerenciaIds);
 
+        @Query("SELECT e FROM Expediente e WHERE e.gerencia.id = :gerenciaId")
+        List<Expediente> findAllByGerenciaId(@Param("gerenciaId") Integer gerenciaId);
+
+        @Query("SELECT e FROM Expediente e WHERE e.materia.id IN :materiaIds")
+        List<Expediente> findAllByMateriaIdIn(@Param("materiaIds") List<Integer> materiaIds);
+
         List<Expediente> findAllByAbogadoResponsableId(Integer abogadoId);
 }

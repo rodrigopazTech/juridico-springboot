@@ -272,22 +272,21 @@ public class AudienciasController {
 
         return "views/audiencias/index";
     }
+@PostMapping("/guardar")
+public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes redirectAttrs) {
+    // NOTA: Ya no necesitamos el try-catch envolvente.
+    // Si algo falla, el GlobalExceptionHandler se encarga.
 
-    @PostMapping("/guardar")
-    public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes redirectAttrs) {
-        // NOTA: Ya no necesitamos el try-catch envolvente.
-        // Si algo falla, el GlobalExceptionHandler se encarga.
+    boolean esNueva = (audiencia.getId() == null);
 
-        boolean esNueva = (audiencia.getId() == null);
+    if (audiencia.getFechaAudiencia() == null) {
+        throw new BadRequestException("La fecha de la audiencia es obligatoria.");
+    }
+    if (audiencia.getTipoAudiencia() == null || audiencia.getTipoAudiencia().getId() == null) {
+        throw new BadRequestException("El tipo de audiencia es obligatorio.");
+    }
 
-        if (audiencia.getFechaAudiencia() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha de la audiencia es obligatoria.");
-        }
-        if (audiencia.getTipoAudiencia() == null || audiencia.getTipoAudiencia().getId() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El tipo de audiencia es obligatorio.");
-        }
-
-        if (!esNueva) {
+    if (!esNueva) {
             // Lógica de EDICIÓN:
             // Buscamos la audiencia. Si no existe, lanzamos la excepción y el sistema
             // redirige al usuario con la alerta roja.
@@ -366,14 +365,8 @@ public class AudienciasController {
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
-            // 2. VALIDAR PERMISOS (Solo Jefes hacia arriba pueden concluir)
-            if (usuario.getRol().name().equals("ABOGADO")) {
-                throw new ForbiddenException(
-                        "Acceso denegado: Solo Dirección o Jefatura pueden validar y concluir audiencias.");
-            }
-
-            // 3. EJECUTAR LÓGICA
-            audienciaService.concluirAudiencia(id, observaciones);
+            // 2. EJECUTAR LÓGICA (La seguridad ahora se valida en el Service)
+            audienciaService.concluirAudiencia(id, observaciones, usuario);
 
             redirectAttrs.addFlashAttribute("mensaje", "Audiencia validada y concluida exitosamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");

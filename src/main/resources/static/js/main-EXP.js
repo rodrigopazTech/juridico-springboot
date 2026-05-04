@@ -131,14 +131,20 @@ function cargarOrganosExpediente(arg1 = '', arg2 = '', organoIdSeleccionado = nu
     return fetch(`/expedientes/api/organos-por-gerencia/${gerenciaId}`)
         .then(res => res.json())
         .then(organos => {
-            selectOrgano.innerHTML = '<option value="">Selecciona órgano...</option>';
-            organos.forEach(o => {
-                const selected = (organoIdSeleccionado && o.id == organoIdSeleccionado) ? 'selected' : '';
-                selectOrgano.innerHTML += `<option value="${o.id}" ${selected}>${o.nombre}</option>`;
-            });
-
-            selectOrgano.disabled = false;
-            selectOrgano.classList.remove('bg-gray-50');
+            if (organos.length === 0) {
+                // Sin órganos disponibles: habilitar con opción vacía para no bloquear el form
+                selectOrgano.innerHTML = '<option value="">-- Sin órgano jurisdiccional --</option>';
+                selectOrgano.disabled = false;
+                selectOrgano.classList.remove('bg-gray-50');
+            } else {
+                selectOrgano.innerHTML = '<option value="">Selecciona órgano...</option>';
+                organos.forEach(o => {
+                    const selected = (organoIdSeleccionado && o.id == organoIdSeleccionado) ? 'selected' : '';
+                    selectOrgano.innerHTML += `<option value="${o.id}" ${selected}>${o.nombre}</option>`;
+                });
+                selectOrgano.disabled = false;
+                selectOrgano.classList.remove('bg-gray-50');
+            }
             return organos;
         })
         .catch(error => {

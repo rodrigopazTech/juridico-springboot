@@ -122,12 +122,18 @@ function toggleUbicacion(isVirtual) {
         if (campoSala) campoSala.classList.add('hidden');
         if (campoUrl) campoUrl.classList.remove('hidden');
         if (inputUrl) inputUrl.setAttribute('required', 'required');
-        if (inputSala) inputSala.removeAttribute('required');
+        if (inputSala) {
+            inputSala.removeAttribute('required');
+            inputSala.value = ''; // Limpiar Sala si es Virtual
+        }
     } else {
         if (campoSala) campoSala.classList.remove('hidden');
         if (campoUrl) campoUrl.classList.add('hidden');
         if (inputSala) inputSala.setAttribute('required', 'required');
-        if (inputUrl) inputUrl.removeAttribute('required');
+        if (inputUrl) {
+            inputUrl.removeAttribute('required');
+            inputUrl.value = ''; // Limpiar URL si es Presencial
+        }
     }
 }
 

@@ -15,6 +15,7 @@ import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.NotificacionService;
 import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -91,12 +92,35 @@ public class AudienciaService {
     // Método privado para enviar la alerta
     private void notificarSubidaActa(Audiencia audiencia) {
         try {
-            List<Usuario> directivos = usuarioRepository.findAll().stream()
-                    .filter(u -> u.getRol().name().equals("DIRECCION") || u.getRol().name().equals("SUBDIRECCION"))
-                    .filter(Usuario::getActivo)
+            // 1. Obtener destinatarios: Dirección, Subdirección
+            List<Usuario> destinatarios = usuarioRepository.findAll().stream()
+                    .filter(u -> u.getActivo())
+                    .filter(u -> u.getRol() == RolUsuario.DIRECCION || u.getRol() == RolUsuario.SUBDIRECCION)
                     .collect(Collectors.toList());
 
-            // Aquí usamos el expediente que ya viene cargado porque es una actualización
+            // 2. Agregar Gerentes de la misma Gerencia
+            if (audiencia.getExpediente().getGerencia() != null) {
+                Integer gerenciaId = audiencia.getExpediente().getGerencia().getId();
+                List<Usuario> gerentes = usuarioRepository.findAll().stream()
+                        .filter(u -> u.getActivo() && u.getRol() == RolUsuario.GERENTE)
+                        .filter(u -> u.getGerencia() != null && u.getGerencia().getId().equals(gerenciaId))
+                        .collect(Collectors.toList());
+                destinatarios.addAll(gerentes);
+            }
+
+            // 3. Agregar Jefes de Departamento de la misma Materia
+            if (audiencia.getExpediente().getMateria() != null) {
+                Integer materiaId = audiencia.getExpediente().getMateria().getId();
+                List<Usuario> jefes = usuarioRepository.findAll().stream()
+                        .filter(u -> u.getActivo() && u.getRol() == RolUsuario.JEFE_DEPTO)
+                        .filter(u -> u.tieneMateria(materiaId))
+                        .collect(Collectors.toList());
+                destinatarios.addAll(jefes);
+            }
+
+            // Eliminar duplicados si los hay
+            destinatarios = destinatarios.stream().distinct().collect(Collectors.toList());
+
             String expediente = (audiencia.getExpediente() != null) ? audiencia.getExpediente().getNumero()
                     : "Desconocido";
 
@@ -109,9 +133,9 @@ public class AudienciaService {
 
             String entidadId = audiencia.getId().toString();
 
-            for (Usuario directivo : directivos) {
+            for (Usuario destinatario : destinatarios) {
                 notificacionService.crearNotificacion(
-                        directivo,
+                        destinatario,
                         "Acta Disponible: " + expediente,
                         "El abogado " + nombreAbogado + " ha subido el acta. Requiere validación.",
                         "AUDIENCIA",
@@ -127,9 +151,12 @@ public class AudienciaService {
     // 2. PASO FINAL: CONCLUIR (Cambia a CONCLUIDA y Mueve a Histórico)
     @Transactional
     @SuppressWarnings("null")
-    public void concluirAudiencia(Integer id, String observaciones) {
+    public void concluirAudiencia(Integer id, String observaciones, Usuario usuarioActual) {
         Audiencia audiencia = audienciaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
+
+        // --- SEGURIDAD: Validar permisos de conclusión ---
+        validarPermisoConclusion(audiencia, usuarioActual);
 
         audiencia.setEstatusAudiencia(EstatusAudiencia.CONCLUIDA);
         audiencia.setFechaDesahogo(LocalDate.now());
@@ -151,16 +178,53 @@ public class AudienciaService {
         String tipoConcluida = (audiencia.getTipoAudiencia() != null) ? audiencia.getTipoAudiencia().getNombre()
                 : "Desconocida";
 
-        String usuarioActual = SecurityContextHolder.getContext().getAuthentication().getName();
         String fechaFormat = LocalDate.now().toString();
 
         String desc = "La audiencia ha sido marcada como concluida: " + tipoConcluida + ".";
         if (observaciones != null && !observaciones.trim().isEmpty()) {
             desc += " - Observaciones: " + observaciones;
         }
-        desc += " Acción realizada por: " + usuarioActual + " el " + fechaFormat + ".";
+        desc += " Acción realizada por: " + usuarioActual.getNombreCompleto() + " el " + fechaFormat + ".";
 
         registrarActividad(audiencia.getExpediente(), "Audiencia Concluida", desc, "CHECK");
+    }
+
+    private void validarPermisoConclusion(Audiencia audiencia, Usuario usuario) {
+        String rol = usuario.getRol().name();
+
+        // 1. Admin y Dirección pueden concluir todo
+        if (rol.equals("ADMIN") || rol.equals("DIRECCION") || rol.equals("SUBDIRECCION")) {
+            return;
+        }
+
+        // 2. Abogados no pueden concluir
+        if (rol.equals("ABOGADO")) {
+            throw new com.juridico.sistema_juridico.exception.ForbiddenException(
+                    "Acceso denegado: Los abogados no pueden concluir audiencias. Requiere validación de Jefatura.");
+        }
+
+        // 3. Gerentes deben ser de la misma Gerencia
+        if (rol.equals("GERENTE")) {
+            if (usuario.getGerencia() == null || audiencia.getExpediente().getGerencia() == null ||
+                    !usuario.getGerencia().getId().equals(audiencia.getExpediente().getGerencia().getId())) {
+                throw new com.juridico.sistema_juridico.exception.ForbiddenException(
+                        "Acceso denegado: Solo el Gerente del área correspondiente puede concluir esta audiencia.");
+            }
+            return;
+        }
+
+        // 4. Jefes de Departamento deben tener la materia asignada
+        if (rol.equals("JEFE_DEPTO")) {
+            if (audiencia.getExpediente().getMateria() == null ||
+                    !usuario.tieneMateria(audiencia.getExpediente().getMateria().getId())) {
+                throw new com.juridico.sistema_juridico.exception.ForbiddenException(
+                        "Acceso denegado: Solo el Jefe de Departamento de la materia correspondiente puede concluir esta audiencia.");
+            }
+            return;
+        }
+
+        // Por defecto, denegar
+        throw new com.juridico.sistema_juridico.exception.ForbiddenException("Acceso denegado para realizar esta acción.");
     }
 
     @Transactional

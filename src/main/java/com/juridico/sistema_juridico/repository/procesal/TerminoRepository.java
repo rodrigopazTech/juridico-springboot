@@ -32,7 +32,14 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
            "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
            "AND (:id IS NULL OR t.id = :id) " +
-           "AND (t.fechaVencimiento BETWEEN :fechaInicio AND :fechaFin)")
+           "AND (t.fechaVencimiento BETWEEN :fechaInicio AND :fechaFin) " +
+           "AND (:secGerenciaId IS NULL OR e.gerencia.id = :secGerenciaId) " +
+           "AND (" +
+           "COALESCE(:secMateriaIds, NULL) IS NULL " +
+           "OR e.materia.id IN :secMateriaIds " +
+           "OR a.id = :secUsuarioId " +
+           "OR e.abogadoResponsable.id = :secUsuarioId" +
+           ")")
     List<Termino> listarParaExcel(
             @Param("id") Integer id,
             @Param("keyword") String keyword,
@@ -42,7 +49,10 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("gerenciaId") Integer gerenciaId,
             @Param("fechaInicio") LocalDate fechaInicio,
             @Param("fechaFin") LocalDate fechaFin,
-            @Param("materiaId") Integer materiaId);
+            @Param("materiaId") Integer materiaId,
+            @Param("secGerenciaId") Integer secGerenciaId,
+            @Param("secMateriaIds") List<Integer> secMateriaIds,
+            @Param("secUsuarioId") Integer secUsuarioId);
 
     // 2. CONSULTA PARA PAGINACIÓN
     @Query("SELECT t FROM Termino t " +
@@ -59,7 +69,14 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
            "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
            "AND (:id IS NULL OR t.id = :id) " +
-           "AND (t.fechaVencimiento >= :fechaInicio AND t.fechaVencimiento <= :fechaFin)")
+           "AND (t.fechaVencimiento >= :fechaInicio AND t.fechaVencimiento <= :fechaFin) " +
+           "AND (:secGerenciaId IS NULL OR e.gerencia.id = :secGerenciaId) " +
+           "AND (" +
+           "COALESCE(:secMateriaIds, NULL) IS NULL " +
+           "OR e.materia.id IN :secMateriaIds " +
+           "OR a.id = :secUsuarioId " +
+           "OR e.abogadoResponsable.id = :secUsuarioId" +
+           ")")
     Page<Termino> buscarConFiltros(
             @Param("id") Integer id,
             @Param("keyword") String keyword,
@@ -70,15 +87,16 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("fechaInicio") LocalDate fechaInicio,
             @Param("fechaFin") LocalDate fechaFin,
             @Param("materiaId") Integer materiaId,
+            @Param("secGerenciaId") Integer secGerenciaId,
+            @Param("secMateriaIds") List<Integer> secMateriaIds,
+            @Param("secUsuarioId") Integer secUsuarioId,
             Pageable pageable);
 
-    // ... Métodos auxiliares (sin cambios) ...
+    // ... Métodos auxiliares ...
     List<Termino> findByFechaVencimientoBeforeAndEstatusTerminoNot(LocalDate fecha, EstatusTermino estatus);
 
     List<Termino> findByExpedienteId(UUID expedienteId);
 
-    // Buscar términos que vencen en una fecha específica trayendo (FETCH) el
-    // Expediente y Abogado de inmediato
     @Query("SELECT t FROM Termino t " +
             "JOIN FETCH t.expediente " +
             "LEFT JOIN FETCH t.abogadoResponsable " +
@@ -110,7 +128,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
                 WHERE e.gerencia.id = :gerenciaId
                 GROUP BY u.nombreCompleto
             """)
-    List<Object[]> contarTerminosPorUsuarioYGerencia(@Param("gerenciaId") Long gerenciaId);
+    List<Object[]> contarTerminosPorUsuarioYGerencia(@Param("gerenciaId") Integer gerenciaId);
 
     @Query("""
                 SELECT u.nombreCompleto, COUNT(t)
@@ -120,10 +138,8 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
                 WHERE e.gerencia.id IN :gerenciaIds
                 GROUP BY u.nombreCompleto
             """)
-    List<Object[]> contarTerminosPorUsuarioYGerencias(@Param("gerenciaIds") List<Long> gerenciaIds);
+    List<Object[]> contarTerminosPorUsuarioYGerencias(@Param("gerenciaIds") List<Integer> gerenciaIds);
 
-    // --- 4. CONTEO PARA DASHBOARD KPIs ---
-    // Conteo por abogado individual (solo términos activos)
     @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE (e.abogadoResponsable.id = :abogadoId OR t.abogadoResponsable.id = :abogadoId) AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
     long countActivosByAbogadoId(@Param("abogadoId") Integer abogadoId);
 
@@ -136,12 +152,12 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
     @Query("SELECT t.prioridad.nombre, COUNT(t) FROM Termino t JOIN t.expediente e WHERE (e.abogadoResponsable.id = :abogadoId OR t.abogadoResponsable.id = :abogadoId) AND e.materia.id = :materiaId AND t.prioridad IS NOT NULL AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO) GROUP BY t.prioridad.nombre")
     List<Object[]> contarTerminosPorPrioridadYAbogadoYMateria(@Param("abogadoId") Integer abogadoId, @Param("materiaId") Integer materiaId);
 
-    // Conteo por gerencia individual (solo términos activos - excluidos concluidos/presentados)
     @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.gerencia.id = :gerenciaId AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
     long countByExpedienteGerenciaIdAndActivo(@Param("gerenciaId") Long gerenciaId);
 
     @Query("SELECT t FROM Termino t " +
            "LEFT JOIN t.expediente e " +
+           "LEFT JOIN t.abogadoResponsable a " +
            "WHERE t.estatusTermino IN :estatusList " +
            "AND (:keyword IS NULL OR :keyword = '' OR " +
            "LOWER(t.asunto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -151,8 +167,13 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "AND t.fechaVencimiento >= :fechaInicio AND t.fechaVencimiento <= :fechaFin " +
            "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
            "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
-           "AND (:filtroRoleGerenciaId IS NULL OR e.gerencia.id = :filtroRoleGerenciaId) " +
-           "AND ((:filtroRoleMateriaIds) IS NULL OR e.materia.id IN (:filtroRoleMateriaIds))")
+           "AND (:secGerenciaId IS NULL OR e.gerencia.id = :secGerenciaId) " +
+           "AND (" +
+           "COALESCE(:secMateriaIds, NULL) IS NULL " +
+           "OR e.materia.id IN :secMateriaIds " +
+           "OR a.id = :secUsuarioId " +
+           "OR e.abogadoResponsable.id = :secUsuarioId" +
+           ")")
     Page<Termino> buscarParaHistorial(
             @Param("keyword") String keyword,
             @Param("estatusList") List<EstatusTermino> estatusList,
@@ -160,11 +181,11 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("fechaFin") LocalDate fechaFin,
             @Param("gerenciaId") Integer gerenciaId,
             @Param("materiaId") Integer materiaId,
-            @Param("filtroRoleGerenciaId") Integer filtroRoleGerenciaId,
-            @Param("filtroRoleMateriaIds") List<Integer> filtroRoleMateriaIds,
+            @Param("secGerenciaId") Integer secGerenciaId,
+            @Param("secMateriaIds") List<Integer> secMateriaIds,
+            @Param("secUsuarioId") Integer secUsuarioId,
             Pageable pageable);
 
-    // Conteo por lista de gerencias (solo términos activos)
     @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.gerencia.id IN :gerenciaIds AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
     long countByExpedienteGerenciaIdInAndActivo(@Param("gerenciaIds") List<Long> gerenciaIds);
 
@@ -182,6 +203,13 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
             "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
             "AND (t.fechaVencimiento >= :fechaInicio AND t.fechaVencimiento <= :fechaFin) " +
+            "AND (:secGerenciaId IS NULL OR e.gerencia.id = :secGerenciaId) " +
+            "AND (" +
+            "COALESCE(:secMateriaIds, NULL) IS NULL " +
+            "OR e.materia.id IN :secMateriaIds " +
+            "OR a.id = :secUsuarioId " +
+            "OR e.abogadoResponsable.id = :secUsuarioId" +
+            ") " +
             "GROUP BY t.estatusTermino")
     List<Object[]> contarPorEtapaConFiltros(
             @Param("keyword") String keyword,
@@ -190,7 +218,10 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("gerenciaId") Integer gerenciaId,
             @Param("materiaId") Integer materiaId,
             @Param("fechaInicio") LocalDate fechaInicio,
-            @Param("fechaFin") LocalDate fechaFin);
+            @Param("fechaFin") LocalDate fechaFin,
+            @Param("secGerenciaId") Integer secGerenciaId,
+            @Param("secMateriaIds") List<Integer> secMateriaIds,
+            @Param("secUsuarioId") Integer secUsuarioId);
 
     @Query("SELECT t FROM Termino t " +
             "LEFT JOIN t.expediente e " +
@@ -207,7 +238,14 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
             "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
             "AND (:id IS NULL OR t.id = :id) " +
-            "AND (t.fechaVencimiento >= :fechaInicio AND t.fechaVencimiento <= :fechaFin)")
+            "AND (t.fechaVencimiento >= :fechaInicio AND t.fechaVencimiento <= :fechaFin) " +
+            "AND (:secGerenciaId IS NULL OR e.gerencia.id = :secGerenciaId) " +
+            "AND (" +
+            "COALESCE(:secMateriaIds, NULL) IS NULL " +
+            "OR e.materia.id IN :secMateriaIds " +
+            "OR a.id = :secUsuarioId " +
+            "OR e.abogadoResponsable.id = :secUsuarioId" +
+            ")")
     Page<Termino> buscarPorMultiplesEstatus(
             @Param("id") Integer id,
             @Param("keyword") String keyword,
@@ -218,13 +256,14 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("materiaId") Integer materiaId,
             @Param("fechaInicio") LocalDate fechaInicio,
             @Param("fechaFin") LocalDate fechaFin,
+            @Param("secGerenciaId") Integer secGerenciaId,
+            @Param("secMateriaIds") List<Integer> secMateriaIds,
+            @Param("secUsuarioId") Integer secUsuarioId,
             Pageable pageable);
 
-    // Conteo total términos activos (sin filtro)
     @Query("SELECT COUNT(t) FROM Termino t WHERE t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
     long countByActivo();
 
-    // --- AGENDA GENERAL ---
     @Query("SELECT t FROM Termino t WHERE t.estatusTermino IN :estatus AND t.fechaPresentacion BETWEEN :inicio AND :fin AND t.expediente.gerencia.id = :gerenciaId ORDER BY t.fechaPresentacion DESC")
     Page<Termino> findByEstatusGerencia(
             @Param("estatus") List<EstatusTermino> estatus,

@@ -90,6 +90,7 @@ public class AgendaService {
                 fechaInicio, fechaFin,
                 gerenciaId, materiaId,
                 filtroRoleGerenciaId, filtroRoleMateriaIds,
+                null,
                 pageable);
     }
 }

@@ -681,9 +681,18 @@ public class ExpedientesController {
     @GetMapping("/api/organos-por-gerencia/{gerenciaId}")
     @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> obtenerOrganosPorGerencia(@PathVariable("gerenciaId") Integer gerenciaId) {
+        // Buscar órganos específicos de la gerencia
         List<Map<String, Object>> res = organoRepository.findByGerenciaIdAndActivoTrue(gerenciaId).stream()
                 .map(o -> Map.of("id", (Object) o.getId(), "nombre", o.getNombre()))
                 .collect(Collectors.toList());
+
+        // Si no hay órganos para esta gerencia, devolver los órganos generales (sin gerencia asignada)
+        if (res.isEmpty()) {
+            res = organoRepository.findByGerenciaIsNullAndActivoTrue().stream()
+                    .map(o -> Map.of("id", (Object) o.getId(), "nombre", o.getNombre()))
+                    .collect(Collectors.toList());
+        }
+
         return ResponseEntity.ok(res);
     }
 }

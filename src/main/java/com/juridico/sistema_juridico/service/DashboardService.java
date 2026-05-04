@@ -232,12 +232,13 @@ public class DashboardService {
             // Filtro por gerencia individual
             expedientesMap = toMap(expedienteRepository.contarExpedientesPorUsuarioYGerencia(gerenciaId));
             audienciasMap = toMap(audienciaRepository.contarAudienciasPorUsuarioYGerencia(gerenciaId));
-            terminosMap = toMap(terminoRepository.contarTerminosPorUsuarioYGerencia(gerenciaId));
+            terminosMap = toMap(terminoRepository.contarTerminosPorUsuarioYGerencia(gerenciaId.intValue()));
         } else if (gerenciaIds != null && !gerenciaIds.isEmpty()) {
             // Filtro por lista de gerencias (grupo)
             expedientesMap = toMap(expedienteRepository.contarExpedientesPorUsuarioYGerencias(gerenciaIds));
             audienciasMap = toMap(audienciaRepository.contarAudienciasPorUsuarioYGerencias(gerenciaIds));
-            terminosMap = toMap(terminoRepository.contarTerminosPorUsuarioYGerencias(gerenciaIds));
+            terminosMap = toMap(terminoRepository.contarTerminosPorUsuarioYGerencias(
+                    gerenciaIds.stream().map(Long::intValue).collect(java.util.stream.Collectors.toList())));
         } else {
             // Sin filtro
             expedientesMap = toMap(expedienteRepository.contarExpedientesPorUsuario());
