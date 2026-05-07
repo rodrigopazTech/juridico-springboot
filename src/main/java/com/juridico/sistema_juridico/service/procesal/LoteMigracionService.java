@@ -652,7 +652,11 @@
                 java.util.Map<String, Object> map = new java.util.HashMap<>();
                 String numExp = entry.getKey();
                 boolean esVariante = false; // Las variantes se eliminaron mediante agruparRegistros
-                map.put("numeroExpediente", numExp);
+
+                // La clave interna puede ser "S/N-HASH" o "SIN_NUMERO" — normalizamos para la UI
+                String numExpDisplay = (numExp.startsWith("S/N-") || numExp.equals("SIN_NUMERO")) ? "S/N" : numExp;
+                map.put("numeroExpediente", numExpDisplay); // Valor visible en el template
+                map.put("numExpInterno", numExp);           // Clave interna para lógica Java
                 map.put("esVariante", esVariante);
                 
                 long totalTerminos = entry.getValue().stream().filter(r -> "TERMINO".equals(r.getTipoDato())).count();
@@ -669,14 +673,11 @@
                     if (numExp.equals("SIN_NUMERO")) { camposFaltantes.add("Número de Expediente"); critico = true; }
                 } catch (Exception e) { critico = true; }
 
-                map.put("faltantes", camposFaltantes);
-                map.put("esCritico", critico);
-                map.put("estaListo", camposFaltantes.isEmpty());
-                
+
                 map.put("registroId", entry.getValue().get(0).getId());
-                map.put("yaExiste", !numExp.startsWith("S/N") && !numExp.equals("SIN_NUMERO") && expedienteRepository.existsByNumero(numExp));
 
                 // --- LÓGICA DE REGISTRO MÁS RECIENTE ---
+                // Se extrae ANTES de yaExiste para que partesModa esté disponible en la búsqueda S/N
                 RegistroMigracion masReciente = entry.getValue().stream()
                     .max((r1, r2) -> extractLatestDate(r1).compareTo(extractLatestDate(r2)))
                     .orElse(entry.getValue().get(0));
@@ -684,9 +685,24 @@
                 JsonNode masRecJson = null;
                 try { masRecJson = objectMapper.readTree(masReciente.getPayloadJson()); } catch (Exception e) {}
 
-                String partesModa = masRecJson != null && masRecJson.hasNonNull("partes") && !masRecJson.get("partes").asText("").trim().isEmpty() 
+                String partesModa = masRecJson != null && masRecJson.hasNonNull("partes") && !masRecJson.get("partes").asText("").trim().isEmpty()
                     ? masRecJson.get("partes").asText("") : findMostRepeated(entry.getValue(), "partes", "");
-                    
+
+                // yaExiste: para S/N verificar por número+partes; para normales por número único
+                boolean yaExiste;
+                if (numExp.startsWith("S/N-") || numExp.equals("SIN_NUMERO")) {
+                    if (partesModa != null && !partesModa.isEmpty()) {
+                        yaExiste = expedienteRepository
+                            .findByNumeroIgnoreCaseAndPartesIgnoreCase("S/N", partesModa)
+                            .isPresent();
+                    } else {
+                        yaExiste = false; // Sin partes no podemos saber → permitir crear
+                    }
+                } else {
+                    yaExiste = expedienteRepository.existsByNumero(numExp);
+                }
+                map.put("yaExiste", yaExiste);
+
                 String sedeModa = masRecJson != null && masRecJson.hasNonNull("sede") && !masRecJson.get("sede").asText("").trim().isEmpty() 
                     ? masRecJson.get("sede").asText("") : findMostRepeated(entry.getValue(), "sede", "");
                     
@@ -1322,9 +1338,41 @@
                     
                     String numeroFinal = baseNum;
 
+                    // ── LÓGICA S/N ────────────────────────────────────────────────────────────
+                    // agruparRegistros() genera claves como "S/N-A3F2E1" para diferenciar grupos.
+                    // Al persistir en BD debemos guardar el número real "S/N", y usar la regla
+                    // de negocio: mismo número + mismas partes = duplicado.
+                    boolean esGrupoSinNumero = baseNum.startsWith("S/N-") || baseNum.equals("SIN_NUMERO");
+                    if (esGrupoSinNumero) {
+                        numeroFinal = "S/N";
+                    }
+                    // ─────────────────────────────────────────────────────────────────────────
+
+                    // Extraer las partes del registro más representativo para la búsqueda de duplicado
+                    String partesParaBusqueda = "";
+                    try {
+                        RegistroMigracion masRec = expRegistros.stream()
+                            .max((r1, r2) -> extractLatestDate(r1).compareTo(extractLatestDate(r2)))
+                            .orElse(expRegistros.get(0));
+                        JsonNode jn = objectMapper.readTree(masRec.getPayloadJson());
+                        partesParaBusqueda = jn.hasNonNull("partes") ? jn.get("partes").asText("").trim() : "";
+                    } catch (Exception ignored) {}
+
                     // Buscar si ya existe para decidir si Crear o Actualizar
-                    Expediente expediente = expedienteRepository.findByNumeroIgnoreCase(numeroFinal).orElse(null);
-                    
+                    Expediente expediente = null;
+
+                    if (esGrupoSinNumero && !partesParaBusqueda.isEmpty()) {
+                        // Para S/N: buscar por número + partes exactas (nueva regla de negocio)
+                        final String partesFinales = partesParaBusqueda;
+                        expediente = expedienteRepository
+                            .findByNumeroIgnoreCaseAndPartesIgnoreCase(numeroFinal, partesFinales)
+                            .orElse(null);
+                    } else if (!esGrupoSinNumero) {
+                        // Para números normales: búsqueda clásica por número único
+                        expediente = expedienteRepository.findByNumeroIgnoreCase(numeroFinal).orElse(null);
+                    }
+                    // Si esGrupoSinNumero y partes vacías → expediente = null → se crea nuevo
+
                     if (expediente == null) {
                         expediente = new Expediente();
                         expediente.setNumero(numeroFinal);
@@ -1424,6 +1472,7 @@
 
                         expediente = expedienteRepository.save(expediente);
                     }
+
 
                     for (RegistroMigracion r : expRegistros) {
                         try {

@@ -324,6 +324,29 @@ public class ExpedientesController {
                     expedienteReal.setAbogadoResponsable(
                             usuarioRepository.findById(expedienteForm.getAbogadoResponsable().getId()).orElse(null));
 
+                // ── VALIDACIÓN DE DUPLICADOS (Regla de Negocio) ──────────────────────────
+                // Si el número NO es S/N, aplicamos la regla clásica: número único.
+                // Si el número ES S/N (u otro valor repetido), permitimos duplicarlo SOLO si
+                // las partes procesales son distintas. Mismo número + mismas partes = duplicado.
+                String numeroIngresado = expedienteForm.getNumero() != null ? expedienteForm.getNumero().trim() : "";
+                String partesIngresadas = expedienteForm.getPartes() != null ? expedienteForm.getPartes().trim() : "";
+
+                if ("S/N".equalsIgnoreCase(numeroIngresado) || expedienteRepository.existsByNumero(numeroIngresado)) {
+                    // Ya existe al menos un expediente con este número → verificar partes
+                    boolean duplicadoExacto = expedienteRepository
+                        .findByNumeroIgnoreCaseAndPartesIgnoreCase(numeroIngresado, partesIngresadas)
+                        .isPresent();
+                    if (duplicadoExacto) {
+                        redirectAttrs.addFlashAttribute("mensaje",
+                            "Ya existe un expediente con el número \"" + numeroIngresado +
+                            "\" y las mismas partes procesales. Si es un asunto diferente, cambia las partes.");
+                        redirectAttrs.addFlashAttribute("tipo", "error");
+                        return "redirect:/expedientes";
+                    }
+                    // Si las partes son distintas → se permite crear (continúa el flujo)
+                }
+                // ──────────────────────────────────────────────────────────────────────────
+
 
             } else {
                 // MODO EDICIÓN
@@ -372,6 +395,10 @@ public class ExpedientesController {
 
             if (expedienteReal.getNumero() == null || expedienteReal.getNumero().trim().isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El número es obligatorio.");
+            }
+
+            if (expedienteReal.getOrganoJurisdiccional() == null || expedienteReal.getOrganoJurisdiccional().getId() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El Órgano Jurisdiccional es obligatorio.");
             }
 
             // ====== PROCESAMIENTO DE ETIQUETAS ======
@@ -429,7 +456,7 @@ public class ExpedientesController {
             redirectAttrs.addFlashAttribute("tipo", "success");
 
         } catch (DataIntegrityViolationException e) {
-            redirectAttrs.addFlashAttribute("mensaje", "Error: El número de expediente ya existe.");
+            redirectAttrs.addFlashAttribute("mensaje", "Error de integridad al guardar el expediente. Verifica que los datos sean correctos.");
             redirectAttrs.addFlashAttribute("tipo", "error");
         } catch (Exception e) {
             System.out.println("Error al guardar: " + e.getMessage());

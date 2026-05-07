@@ -26,6 +26,9 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
 
         List<Expediente> findTop10ByNumeroContainingIgnoreCase(String numero);
 
+        // Validación de duplicado exacto: mismo número Y mismas partes (para S/N)
+        Optional<Expediente> findByNumeroIgnoreCaseAndPartesIgnoreCase(String numero, String partes);
+
 
         // ==========================================
         // 🔐 BÚSQUEDA CON SEGURIDAD (HEAD)

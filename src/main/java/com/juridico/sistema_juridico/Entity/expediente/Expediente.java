@@ -36,7 +36,7 @@ public class Expediente {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(nullable = false, length = 50)
     private String numero;
 
     @Column(nullable = false, columnDefinition = "TEXT")
