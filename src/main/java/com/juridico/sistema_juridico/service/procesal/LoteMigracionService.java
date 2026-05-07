@@ -703,67 +703,80 @@
                 }
                 map.put("yaExiste", yaExiste);
 
-                String sedeModa = masRecJson != null && masRecJson.hasNonNull("sede") && !masRecJson.get("sede").asText("").trim().isEmpty() 
-                    ? masRecJson.get("sede").asText("") : findMostRepeated(entry.getValue(), "sede", "");
-                    
-                String gerenciaModa = masRecJson != null && masRecJson.hasNonNull("gerencia") && !masRecJson.get("gerencia").asText("").trim().isEmpty() 
-                    ? masRecJson.get("gerencia").asText("") : findMostRepeated(entry.getValue(), "gerencia", "");
-                    
-                String materiaModa = masRecJson != null && masRecJson.hasNonNull("materia") && !masRecJson.get("materia").asText("").trim().isEmpty() 
-                    ? masRecJson.get("materia").asText("") : findMostRepeated(entry.getValue(), "materia", "");
-                    
-                String organoModa = masRecJson != null && masRecJson.hasNonNull("organoJurisdiccional") && !masRecJson.get("organoJurisdiccional").asText("").trim().isEmpty() 
-                    ? masRecJson.get("organoJurisdiccional").asText("") : findMostRepeated(entry.getValue(), "organoJurisdiccional", "");
-                    
-                String abogadoModa = masRecJson != null && masRecJson.hasNonNull("abogadoResponsable") && !masRecJson.get("abogadoResponsable").asText("").trim().isEmpty() 
-                    ? masRecJson.get("abogadoResponsable").asText("") : findMostRepeated(entry.getValue(), "abogadoResponsable", "");
-                    
-                String descModa = masRecJson != null && masRecJson.hasNonNull("descripcion") && !masRecJson.get("descripcion").asText("").trim().isEmpty() 
-                    ? masRecJson.get("descripcion").asText("") : findMostRepeated(entry.getValue(), "descripcion", "Expediente migrado.");
-
-                // LIMPIEZA AGRESIVA de basura antes de procesar
-                if (gerenciaModa != null && gerenciaModa.toUpperCase().contains("DEFINIR")) gerenciaModa = "";
-                if (materiaModa != null && materiaModa.toUpperCase().contains("DEFINIR")) materiaModa = "";
-
-                // INTELIGENCIA MEJORADA: Inferir gerencia buscando la materia o el órgano DIRECTAMENTE DE LOS CATÁLOGOS MAPEADOS
-                if ((gerenciaModa == null || gerenciaModa.isEmpty()) && materiaModa != null && !materiaModa.isEmpty() && !materiaModa.equals("Por asignar")) {
-                    Long matMapId = buscarIdMapeado(loteId, "MATERIA", materiaModa);
-                    if (matMapId != null) {
-                        java.util.Optional<Materia> matOpt = materiaRepository.findById(matMapId.intValue());
-                        if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
-                            gerenciaModa = matOpt.get().getGerencia().getNombre();
-                        }
+                // ── SI YA EXISTE EN BD: usar los datos del expediente real como fuente de verdad ──
+                // Esto garantiza que los cambios hechos en el sistema (ej. asignar materia)
+                // se reflejen correctamente en el resumen de migración.
+                Expediente expExistente = null;
+                if (yaExiste) {
+                    if (numExp.startsWith("S/N-") || numExp.equals("SIN_NUMERO")) {
+                        expExistente = expedienteRepository
+                            .findByNumeroIgnoreCaseAndPartesIgnoreCase("S/N", partesModa)
+                            .orElse(null);
                     } else {
-                        // Respaldo
-                        java.util.Optional<Materia> matOpt = materiaRepository.findByNombreIgnoreCase(materiaModa.trim());
-                        if (matOpt.isPresent() && matOpt.get().getGerencia() != null) {
-                            gerenciaModa = matOpt.get().getGerencia().getNombre();
-                        }
+                        expExistente = expedienteRepository.findByNumeroIgnoreCase(numExp).orElse(null);
                     }
                 }
-                
-                if ((gerenciaModa == null || gerenciaModa.isEmpty()) && organoModa != null && !organoModa.isEmpty()) {
-                    Long orgMapId = buscarIdMapeado(loteId, "ORGANO", organoModa);
-                    if (orgMapId != null) {
-                        java.util.Optional<OrganoJurisdiccional> orgOpt = organoRepository.findById(orgMapId.intValue());
-                        if (orgOpt.isPresent() && orgOpt.get().getGerencia() != null) {
-                            gerenciaModa = orgOpt.get().getGerencia().getNombre();
-                        }
-                    } else {
-                        java.util.Optional<OrganoJurisdiccional> orgOpt = organoRepository.findByNombreIgnoreCase(organoModa.trim());
-                        if (orgOpt.isPresent() && orgOpt.get().getGerencia() != null) {
-                            gerenciaModa = orgOpt.get().getGerencia().getNombre();
+
+                String sedeModa, gerenciaModa, materiaModa, organoModa, abogadoModa, descModa;
+
+                if (expExistente != null) {
+                    // Datos reales del expediente en el sistema
+                    partesModa    = expExistente.getPartes() != null ? expExistente.getPartes() : partesModa;
+                    sedeModa      = expExistente.getSede() != null ? expExistente.getSede() : "";
+                    gerenciaModa  = expExistente.getGerencia() != null ? expExistente.getGerencia().getNombre() : "";
+                    materiaModa   = expExistente.getMateria() != null ? expExistente.getMateria().getNombre() : "Por asignar";
+                    organoModa    = expExistente.getOrganoJurisdiccional() != null ? expExistente.getOrganoJurisdiccional().getNombre() : "";
+                    abogadoModa   = expExistente.getAbogadoResponsable() != null ? expExistente.getAbogadoResponsable().getNombreCompleto()
+                                    : (expExistente.getAbogadoResponsableNombre() != null ? expExistente.getAbogadoResponsableNombre() : "");
+                    descModa      = expExistente.getDescripcion() != null && !expExistente.getDescripcion().isEmpty()
+                                    ? expExistente.getDescripcion() : "Expediente migrado.";
+                } else {
+                    // Datos del payload (expediente nuevo o S/N sin partes)
+                    sedeModa = masRecJson != null && masRecJson.hasNonNull("sede") && !masRecJson.get("sede").asText("").trim().isEmpty()
+                        ? masRecJson.get("sede").asText("") : findMostRepeated(entry.getValue(), "sede", "");
+                    gerenciaModa = masRecJson != null && masRecJson.hasNonNull("gerencia") && !masRecJson.get("gerencia").asText("").trim().isEmpty()
+                        ? masRecJson.get("gerencia").asText("") : findMostRepeated(entry.getValue(), "gerencia", "");
+                    materiaModa = masRecJson != null && masRecJson.hasNonNull("materia") && !masRecJson.get("materia").asText("").trim().isEmpty()
+                        ? masRecJson.get("materia").asText("") : findMostRepeated(entry.getValue(), "materia", "");
+                    organoModa = masRecJson != null && masRecJson.hasNonNull("organoJurisdiccional") && !masRecJson.get("organoJurisdiccional").asText("").trim().isEmpty()
+                        ? masRecJson.get("organoJurisdiccional").asText("") : findMostRepeated(entry.getValue(), "organoJurisdiccional", "");
+                    abogadoModa = masRecJson != null && masRecJson.hasNonNull("abogadoResponsable") && !masRecJson.get("abogadoResponsable").asText("").trim().isEmpty()
+                        ? masRecJson.get("abogadoResponsable").asText("") : findMostRepeated(entry.getValue(), "abogadoResponsable", "");
+                    descModa = masRecJson != null && masRecJson.hasNonNull("descripcion") && !masRecJson.get("descripcion").asText("").trim().isEmpty()
+                        ? masRecJson.get("descripcion").asText("") : findMostRepeated(entry.getValue(), "descripcion", "Expediente migrado.");
+
+
+                    // LIMPIEZA AGRESIVA de basura antes de procesar
+                    if (gerenciaModa != null && gerenciaModa.toUpperCase().contains("DEFINIR")) gerenciaModa = "";
+                    if (materiaModa != null && materiaModa.toUpperCase().contains("DEFINIR")) materiaModa = "";
+
+                    // INTELIGENCIA: Inferir gerencia desde materia o el órgano
+                    if ((gerenciaModa == null || gerenciaModa.isEmpty()) && materiaModa != null && !materiaModa.isEmpty() && !materiaModa.equals("Por asignar")) {
+                        Long matMapId = buscarIdMapeado(loteId, "MATERIA", materiaModa);
+                        if (matMapId != null) {
+                            java.util.Optional<Materia> matOpt = materiaRepository.findById(matMapId.intValue());
+                            if (matOpt.isPresent() && matOpt.get().getGerencia() != null) gerenciaModa = matOpt.get().getGerencia().getNombre();
+                        } else {
+                            java.util.Optional<Materia> matOpt = materiaRepository.findByNombreIgnoreCase(materiaModa.trim());
+                            if (matOpt.isPresent() && matOpt.get().getGerencia() != null) gerenciaModa = matOpt.get().getGerencia().getNombre();
                         }
                     }
-                }
-                
-                // ANCLAR A GERENCIA GLOBAL
-                if (gerenciaModa == null || gerenciaModa.isEmpty()) {
-                    gerenciaModa = gerenciaGlobal;
-                }
-                
-                // Reemplazo para mantener la cascada funcional sin forzar en gerencia
-                if (materiaModa == null || materiaModa.isEmpty()) materiaModa = "Por asignar";
+                    if ((gerenciaModa == null || gerenciaModa.isEmpty()) && organoModa != null && !organoModa.isEmpty()) {
+                        Long orgMapId = buscarIdMapeado(loteId, "ORGANO", organoModa);
+                        if (orgMapId != null) {
+                            java.util.Optional<OrganoJurisdiccional> orgOpt = organoRepository.findById(orgMapId.intValue());
+                            if (orgOpt.isPresent() && orgOpt.get().getGerencia() != null) gerenciaModa = orgOpt.get().getGerencia().getNombre();
+                        } else {
+                            java.util.Optional<OrganoJurisdiccional> orgOpt = organoRepository.findByNombreIgnoreCase(organoModa.trim());
+                            if (orgOpt.isPresent() && orgOpt.get().getGerencia() != null) gerenciaModa = orgOpt.get().getGerencia().getNombre();
+                        }
+                    }
+                    // ANCLAR A GERENCIA GLOBAL si sigue vacía
+                    if (gerenciaModa == null || gerenciaModa.isEmpty()) gerenciaModa = gerenciaGlobal;
+                    if (materiaModa == null || materiaModa.isEmpty()) materiaModa = "Por asignar";
+                } // fin else (expediente nuevo)
+
+
 
                 map.put("partes", partesModa);
                 map.put("sede", sedeModa);
