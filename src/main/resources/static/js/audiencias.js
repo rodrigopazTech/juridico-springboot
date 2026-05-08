@@ -143,7 +143,7 @@ function activarSubidaActa(id) {
 // ROD-186: Configuración de Notificaciones Estilo Proyecto
 const Toast = Swal.mixin({
     toast: true,
-    position: 'top-end',
+    position: 'bottom-end',
     showConfirmButton: false,
     timer: 3000,
     timerProgressBar: true,
@@ -467,7 +467,7 @@ function confirmarEliminarAudiencia(id) {
                         // Éxito: Usamos un toast
                         const Toast = Swal.mixin({
                             toast: true,
-                            position: 'top-end',
+                            position: 'bottom-end',
                             showConfirmButton: false,
                             timer: 2000,
                             timerProgressBar: true

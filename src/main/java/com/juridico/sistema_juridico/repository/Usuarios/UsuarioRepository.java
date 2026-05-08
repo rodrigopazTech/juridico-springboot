@@ -35,6 +35,9 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     Page<Usuario> findByGerencia(Gerencia gerencia, Pageable pageable);
 
+    // 5. Para jerarquía de notificaciones (Superiores de la misma gerencia)
+    List<Usuario> findByGerenciaIdAndRolInAndActivoTrue(Integer gerenciaId, List<RolUsuario> roles);
+
     // 4. Para filtro de usuarios por gerencia
     List<Usuario> findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(Integer gerenciaId);
 }

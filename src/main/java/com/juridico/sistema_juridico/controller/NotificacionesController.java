@@ -12,9 +12,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -31,21 +33,49 @@ public class NotificacionesController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    // Listado general de notificaciones (Historial)
+    // Listado general de notificaciones (Solo No Leídas)
     @GetMapping
     public String index(Model model, @RequestParam(value = "page", defaultValue = "0") int page) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
-        // Traemos las notificaciones del sistema
         Page<Notificacion> notificaciones = notificacionRepository
-                .findByUsuarioOrderByCreatedAtDesc(usuario, PageRequest.of(page, 20));
+                .findByUsuarioAndLeidaFalseOrderByCreatedAtDesc(usuario, PageRequest.of(page, 20));
 
         model.addAttribute("notificaciones", notificaciones);
+        model.addAttribute("esPapelera", false);
         model.addAttribute("pageTitle", "Centro de Notificaciones");
         model.addAttribute("activePage", "notificaciones");
 
-        return "views/alertas/historial"; // Apunta a la vista de historial
+        return "views/alertas/historial";
+    }
+
+    // Papelera de reciclaje (Solo Leídas)
+    @GetMapping("/papelera")
+    public String papelera(Model model, @RequestParam(value = "page", defaultValue = "0") int page) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+
+        Page<Notificacion> notificaciones = notificacionRepository
+                .findByUsuarioAndLeidaTrueOrderByCreatedAtDesc(usuario, PageRequest.of(page, 20));
+
+        model.addAttribute("notificaciones", notificaciones);
+        model.addAttribute("esPapelera", true);
+        model.addAttribute("pageTitle", "Papelera de Notificaciones");
+        model.addAttribute("activePage", "notificaciones");
+
+        return "views/alertas/historial";
+    }
+
+    @Transactional
+    @GetMapping("/vaciar")
+    public String vaciarPapelera() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+        
+        notificacionRepository.deleteByUsuarioAndLeidaTrue(usuario);
+        
+        return "redirect:/notificaciones/papelera";
     }
 
     @GetMapping("/leer/{id}")
@@ -71,7 +101,43 @@ public class NotificacionesController {
                 }
             }
         }
-        return "redirect:/notificaciones"; // Redirige al historial si no hay destino
+        return "redirect:/notificaciones";
+    }
+
+    @GetMapping("/archivar/{id}")
+    public String archivarNotificacion(@PathVariable("id") Integer id, HttpServletRequest request) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Notificacion notificacion = notificacionRepository.findById(id).orElse(null);
+
+        if (notificacion != null && notificacion.getUsuario().getEmail().equals(email)) {
+            notificacion.setLeida(true);
+            notificacion.setFechaLeida(LocalDateTime.now());
+            notificacionRepository.save(notificacion);
+        }
+
+        String referer = request.getHeader("Referer");
+        if (referer != null && !referer.contains("/leer/")) {
+            return "redirect:" + referer;
+        }
+        return "redirect:/notificaciones";
+    }
+
+    @GetMapping("/restaurar/{id}")
+    public String restaurarNotificacion(@PathVariable("id") Integer id, HttpServletRequest request) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Notificacion notificacion = notificacionRepository.findById(id).orElse(null);
+
+        if (notificacion != null && notificacion.getUsuario().getEmail().equals(email)) {
+            notificacion.setLeida(false);
+            notificacion.setFechaLeida(null);
+            notificacionRepository.save(notificacion);
+        }
+
+        String referer = request.getHeader("Referer");
+        if (referer != null) {
+            return "redirect:" + referer;
+        }
+        return "redirect:/notificaciones/papelera";
     }
 
     /**
@@ -90,8 +156,14 @@ public class NotificacionesController {
     }
 
     @GetMapping("/eliminar/{id}")
-    public String eliminarNotificacion(@PathVariable("id") Integer id) {
+    public String eliminarNotificacion(@PathVariable("id") Integer id, HttpServletRequest request) {
         notificacionRepository.deleteById(id);
+        
+        // Intentar volver a la página anterior (Papelera o Historial)
+        String referer = request.getHeader("Referer");
+        if (referer != null && referer.contains("/papelera")) {
+            return "redirect:/notificaciones/papelera";
+        }
         return "redirect:/notificaciones";
     }
 

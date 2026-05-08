@@ -59,6 +59,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
            "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
            "AND (:id IS NULL OR t.id = :id) " +
+           "AND ((:filtroMateriaIds) IS NULL OR e.materia.id IN (:filtroMateriaIds)) " +
            "AND (t.fechaVencimiento >= :fechaInicio AND t.fechaVencimiento <= :fechaFin)")
     Page<Termino> buscarConFiltros(
             @Param("id") Integer id,
@@ -70,6 +71,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("fechaInicio") LocalDate fechaInicio,
             @Param("fechaFin") LocalDate fechaFin,
             @Param("materiaId") Integer materiaId,
+            @Param("filtroMateriaIds") List<Integer> filtroMateriaIds,
             Pageable pageable);
 
     // ... Métodos auxiliares (sin cambios) ...
@@ -243,6 +245,20 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
 
     @Query("SELECT t FROM Termino t WHERE t.abogadoResponsable.id = :usuarioId OR t.expediente.abogadoResponsable.id = :usuarioId")
     List<Termino> findByUsuarioId(@Param("usuarioId") Integer usuarioId);
+
+    // --- MÉTODOS PARA JEFE DE DEPTO (POR MATERIAS) ---
+    @Query("SELECT COUNT(t) FROM Termino t JOIN t.expediente e WHERE e.gerencia.id = :gerenciaId AND e.materia.id IN :materiaIds AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
+    long countByExpedienteGerenciaIdAndMateriaIdInAndActivo(@Param("gerenciaId") Long gerenciaId, @Param("materiaIds") List<Integer> materiaIds);
+
+    @Query("""
+                SELECT u.nombreCompleto, COUNT(t)
+                FROM Termino t
+                JOIN t.expediente e
+                JOIN t.abogadoResponsable u
+                WHERE e.gerencia.id = :gerenciaId AND e.materia.id IN :materiaIds
+                GROUP BY u.nombreCompleto
+            """)
+    List<Object[]> contarTerminosPorUsuarioYGerenciaYMateriaIn(@Param("gerenciaId") Long gerenciaId, @Param("materiaIds") List<Integer> materiaIds);
 
     List<Termino> findByExpedienteAndAsuntoAndFechaVencimiento(com.juridico.sistema_juridico.Entity.expediente.Expediente expediente, String asunto, LocalDate fechaVencimiento);
 }

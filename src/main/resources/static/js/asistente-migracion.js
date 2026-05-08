@@ -484,7 +484,7 @@ function inicializarMapeo() {
                     timer: 2500,
                     showConfirmButton: false,
                     toast: true,
-                    position: 'top-end'
+                    position: 'bottom-end'
                 });
 
                 this.innerHTML = '<i class="fas fa-undo mr-2"></i> Restaurar Vacíos';
@@ -510,7 +510,7 @@ function inicializarMapeo() {
                         timer: 2000,
                         showConfirmButton: false,
                         toast: true,
-                        position: 'top-end'
+                        position: 'bottom-end'
                     });
                 }
 

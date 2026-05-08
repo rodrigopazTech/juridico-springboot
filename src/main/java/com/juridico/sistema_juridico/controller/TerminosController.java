@@ -136,13 +136,29 @@ public class TerminosController {
         // --- 2. FILTROS DE SEGURIDAD (TABLA) ---
         Integer filtroAbogadoSeguro = abogadoId;
         Integer filtroGerenciaSeguro = gerenciaId;
+        List<Integer> filtroMateriaIds = null;
 
-        if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
-            filtroAbogadoSeguro = usuarioActual.getId();
-        } else if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
-            if (usuarioActual.getGerencia() != null) {
-                filtroGerenciaSeguro = usuarioActual.getGerencia().getId();
-            }
+        switch (usuarioActual.getRol()) {
+            case ABOGADO:
+                filtroAbogadoSeguro = usuarioActual.getId();
+                break;
+            case JEFE_DEPTO:
+                if (usuarioActual.getGerencia() != null) {
+                    filtroGerenciaSeguro = usuarioActual.getGerencia().getId();
+                }
+                if (usuarioActual.getMaterias() != null && !usuarioActual.getMaterias().isEmpty()) {
+                    filtroMateriaIds = usuarioActual.getMaterias().stream()
+                            .map(m -> m.getId())
+                            .collect(Collectors.toList());
+                }
+                break;
+            case GERENTE:
+            case DIRECCION:
+            case SUBDIRECCION:
+                if (usuarioActual.getGerencia() != null) {
+                    filtroGerenciaSeguro = usuarioActual.getGerencia().getId();
+                }
+                break;
         }
 
         // CÁLCULO DE FECHAS
@@ -179,7 +195,7 @@ public class TerminosController {
                 id, searchKeyword, estatus, prioridadId,
                 filtroAbogadoSeguro, filtroGerenciaSeguro,
                 fechaInicio, fechaFin,
-                materiaId,
+                materiaId, filtroMateriaIds,
                 pageable);
 
         model.addAttribute("terminos", paginaTerminos);
@@ -188,10 +204,16 @@ public class TerminosController {
         List<Usuario> abogadosParaModal;
         if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
             abogadosParaModal = Collections.singletonList(usuarioActual);
-        } else if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+        } else if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.DIRECCION || usuarioActual.getRol() == RolUsuario.SUBDIRECCION) {
             abogadosParaModal = usuarioRepository.findByRolAndActivoTrue(RolUsuario.ABOGADO).stream()
                     .filter(u -> u.getGerencia() != null && usuarioActual.getGerencia() != null &&
                             u.getGerencia().getId().equals(usuarioActual.getGerencia().getId()))
+                    .collect(Collectors.toList());
+        } else if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+            abogadosParaModal = usuarioRepository.findByRolAndActivoTrue(RolUsuario.ABOGADO).stream()
+                    .filter(u -> u.getGerencia() != null && usuarioActual.getGerencia() != null &&
+                            u.getGerencia().getId().equals(usuarioActual.getGerencia().getId()))
+                    .filter(u -> u.getMaterias().stream().anyMatch(m -> usuarioActual.getMaterias().contains(m)))
                     .collect(Collectors.toList());
         } else {
             abogadosParaModal = usuarioRepository.findByRolAndActivoTrue(RolUsuario.ABOGADO);
@@ -305,7 +327,7 @@ public class TerminosController {
             if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
                 paginaTerminos = terminoRepository.buscarConFiltros(
                     id, searchKeyword, null, prioridadId, filtroAbogadoSeguro, filtroGerenciaSeguro, 
-                    fechaInicio, fechaFin, materiaId, pageable);
+                    fechaInicio, fechaFin, materiaId, filtroMateriaIds, pageable);
                 model.addAttribute("terminos", paginaTerminos);
                 
                 // Limpiamos el estatus del modelo para que los links de paginación sean globales

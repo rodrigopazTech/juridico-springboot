@@ -153,5 +153,21 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
         @Query(value = "SELECT TO_CHAR(created_at, 'Month'), COUNT(*) FROM expedientes WHERE gerencia_id IN :gerenciaIds AND etapa_procesal = 'FIRME' GROUP BY TO_CHAR(created_at, 'Month')", nativeQuery = true)
         List<Object[]> contarExpedientesCompletadosPorMesYGerencias(@Param("gerenciaIds") List<Long> gerenciaIds);
 
+        // --- MÉTODOS PARA JEFE DE DEPTO (POR MATERIAS) ---
+        @Query("SELECT COUNT(e) FROM Expediente e WHERE e.gerencia.id = :gerenciaId AND e.materia.id IN :materiaIds")
+        long countByGerenciaIdAndMateriaIdIn(@Param("gerenciaId") Long gerenciaId, @Param("materiaIds") List<Integer> materiaIds);
+
+        @Query("SELECT COUNT(e) FROM Expediente e WHERE e.etapaProcesal = :etapa AND e.gerencia.id = :gerenciaId AND e.materia.id IN :materiaIds")
+        long countByEtapaProcesalAndGerenciaIdAndMateriaIdIn(@Param("etapa") EtapaProcesal etapa, @Param("gerenciaId") Long gerenciaId, @Param("materiaIds") List<Integer> materiaIds);
+
+        @Query("SELECT e.etapaProcesal, COUNT(e) FROM Expediente e WHERE e.gerencia.id = :gerenciaId AND e.materia.id IN :materiaIds GROUP BY e.etapaProcesal")
+        List<Object[]> contarExpedientesPorEstatusYGerenciaYMateriaIn(@Param("gerenciaId") Long gerenciaId, @Param("materiaIds") List<Integer> materiaIds);
+
+        @Query("SELECT e.abogadoResponsable.nombreCompleto, COUNT(e) FROM Expediente e WHERE e.gerencia.id = :gerenciaId AND e.materia.id IN :materiaIds GROUP BY e.abogadoResponsable.nombreCompleto")
+        List<Object[]> contarExpedientesPorUsuarioYGerenciaYMateriaIn(@Param("gerenciaId") Long gerenciaId, @Param("materiaIds") List<Integer> materiaIds);
+
+        @Query(value = "SELECT TO_CHAR(created_at, 'Month'), COUNT(*) FROM expedientes WHERE gerencia_id = :gerenciaId AND materia_id IN :materiaIds AND etapa_procesal = 'FIRME' GROUP BY TO_CHAR(created_at, 'Month')", nativeQuery = true)
+        List<Object[]> contarExpedientesCompletadosPorMesYGerenciaYMateriaIn(@Param("gerenciaId") Long gerenciaId, @Param("materiaIds") List<Integer> materiaIds);
+
         List<Expediente> findAllByAbogadoResponsableId(Integer abogadoId);
 }
