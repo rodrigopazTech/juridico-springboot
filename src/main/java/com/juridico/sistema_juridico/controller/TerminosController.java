@@ -291,20 +291,9 @@ public class TerminosController {
         List<EstatusTermino> etapasAsignadas = getEtapasAsignadasPorRol(usuarioActual.getRol());
         model.addAttribute("etapasAsignadas", etapasAsignadas);
 
-        // --- 8. FILTRO POR DEFECTO PARA EL USUARIO ---
-        if (estatus == null && (keyword == null || keyword.isEmpty()) && id == null && !etapasAsignadas.isEmpty()) {
-            // Si tiene múltiples etapas, por defecto filtramos por la primera (o podrías no
-            // filtrar, pero el usuario pidió "muestrales por default los que se encuentren
-            // en su etapa asignada")
-            // Para múltiples etapas, ajustamos la consulta para que traiga todas las de su
-            // rol si no hay estatus seleccionado
-            model.addAttribute("etapasDefault", etapasAsignadas); // Para que la UI sepa cuáles son las default
-            paginaTerminos = terminoRepository.buscarPorMultiplesEstatus(
-                    id, searchKeyword, etapasAsignadas, prioridadId, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId,
-                    fechaInicio, fechaFin,
-                    pageable);
-            model.addAttribute("terminos", paginaTerminos);
-        }
+        // --- 8. FILTRO POR DEFECTO PARA EL USUARIO (ELIMINADO PARA MOSTRAR TODO) ---
+        // Se eliminó la lógica que filtraba por etapas asignadas por defecto para mostrar el listado completo.
+
 
         // --- OPTIMIZACIÓN AJAX: Búsqueda Global en tiempo real ---
         HttpServletRequest request = ((org.springframework.web.context.request.ServletRequestAttributes) 

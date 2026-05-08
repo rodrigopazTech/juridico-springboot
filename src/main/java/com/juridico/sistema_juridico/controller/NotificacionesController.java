@@ -8,12 +8,19 @@ import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/notificaciones")
@@ -86,5 +93,50 @@ public class NotificacionesController {
     public String eliminarNotificacion(@PathVariable("id") Integer id) {
         notificacionRepository.deleteById(id);
         return "redirect:/notificaciones";
+    }
+
+    /**
+     * API REST: Devuelve las notificaciones NO leídas del usuario autenticado (máx. 5).
+     * Usado por el frontend para polling y mostrar el popup de campana.
+     */
+    @GetMapping("/api/recientes")
+    @ResponseBody
+    public ResponseEntity<?> getNotificacionesRecientes() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+            return ResponseEntity.status(401).body(Map.of("error", "No autenticado"));
+        }
+
+        String email = auth.getName();
+        Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+        if (usuario == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "Usuario no encontrado"));
+        }
+
+        List<Notificacion> noLeidas = notificacionRepository.findByUsuarioIdAndLeidaFalseOrderByCreatedAtDesc(usuario.getId());
+
+        DateTimeFormatter fmtFecha = DateTimeFormatter.ofPattern("dd MMM yyyy");
+        DateTimeFormatter fmtHora  = DateTimeFormatter.ofPattern("HH:mm");
+
+        List<Map<String, Object>> resultado = noLeidas.stream()
+            .limit(5)
+            .map(n -> {
+                Map<String, Object> item = new HashMap<>();
+                item.put("id",       n.getId());
+                item.put("titulo",   n.getTitulo());
+                item.put("mensaje",  n.getMensaje());
+                item.put("tipo",     n.getTipo() != null ? n.getTipo() : "SISTEMA");
+                item.put("prioridad",n.getPrioridad() != null ? n.getPrioridad().getNombre() : null);
+                item.put("fecha",    n.getNotificarEn() != null ? n.getNotificarEn().format(fmtFecha) : "");
+                item.put("hora",     n.getNotificarEn() != null ? n.getNotificarEn().format(fmtHora)  : "");
+                item.put("leida",    n.getLeida());
+                return item;
+            })
+            .collect(Collectors.toList());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("total",          noLeidas.size());
+        response.put("notificaciones", resultado);
+        return ResponseEntity.ok(response);
     }
 }
