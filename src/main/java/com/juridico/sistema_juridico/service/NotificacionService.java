@@ -6,11 +6,15 @@ import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.usuario.PreferenciaNotificacion;
 import com.juridico.sistema_juridico.repository.Usuarios.NotificacionRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.PreferenciaNotificacionRepository;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
+import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class NotificacionService {
@@ -21,6 +25,9 @@ public class NotificacionService {
     // 1. Inyectamos el repositorio de preferencias
     @Autowired
     private PreferenciaNotificacionRepository preferenciaRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     public void crearNotificacion(Usuario usuario, String titulo, String mensaje, String tipo, CatPrioridad prioridad,
             String entidadId) {
@@ -73,6 +80,59 @@ public class NotificacionService {
                 .createdAt(LocalDateTime.now())
                 .build();
         notificacionRepository.save(notif);
+
+        // 6. NOTIFICAR A SUPERIORES (Jerarquía de Gerencia)
+        notificarASuperiores(usuario, titulo, mensaje, tipo, prioridad, entidadId);
+    }
+
+    private void notificarASuperiores(Usuario subordinado, String titulo, String mensaje, String tipo, CatPrioridad prioridad, String entidadId) {
+        if (subordinado.getGerencia() == null || subordinado.getRol() == null) return;
+
+        List<RolUsuario> rolesSuperiores = new ArrayList<>();
+        RolUsuario rolActual = subordinado.getRol();
+
+        // Definir quiénes son "jefes" según el rol del que crea/recibe la acción
+        if (rolActual == RolUsuario.ABOGADO) {
+            rolesSuperiores.add(RolUsuario.JEFE_DEPTO);
+            rolesSuperiores.add(RolUsuario.GERENTE);
+            rolesSuperiores.add(RolUsuario.DIRECCION);
+            rolesSuperiores.add(RolUsuario.SUBDIRECCION);
+        } else if (rolActual == RolUsuario.JEFE_DEPTO) {
+            rolesSuperiores.add(RolUsuario.GERENTE);
+            rolesSuperiores.add(RolUsuario.DIRECCION);
+            rolesSuperiores.add(RolUsuario.SUBDIRECCION);
+        } else if (rolActual == RolUsuario.GERENTE) {
+            rolesSuperiores.add(RolUsuario.DIRECCION);
+            rolesSuperiores.add(RolUsuario.SUBDIRECCION);
+        }
+
+        if (rolesSuperiores.isEmpty()) return;
+
+        // Buscar a los jefes de la MISMA gerencia
+        List<Usuario> jefes = usuarioRepository.findByGerenciaIdAndRolInAndActivoTrue(
+                subordinado.getGerencia().getId(), rolesSuperiores);
+
+        String tituloJefe = "[SUBORDINADO] " + titulo;
+        String mensajeJefe = "Actividad de " + subordinado.getNombreCompleto() + ": " + mensaje;
+
+        for (Usuario jefe : jefes) {
+            // Evitar duplicados si el jefe ya es el usuario asignado (aunque la lógica ya lo separa)
+            if (jefe.getId().equals(subordinado.getId())) continue;
+
+            Notificacion notifJefe = Notificacion.builder()
+                    .usuario(jefe)
+                    .titulo(tituloJefe)
+                    .mensaje(mensajeJefe)
+                    .tipo(tipo)
+                    .prioridad(prioridad)
+                    .entidadTipo(tipo)
+                    .entidadId(entidadId)
+                    .notificarEn(LocalDateTime.now())
+                    .leida(false)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            notificacionRepository.save(notifJefe);
+        }
     }
 
     public Page<Notificacion> listarMisNotificaciones(Usuario usuario, Pageable pageable) {

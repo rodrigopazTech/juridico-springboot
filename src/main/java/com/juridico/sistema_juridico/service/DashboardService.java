@@ -42,24 +42,35 @@ public class DashboardService {
         };
     }
 
-    public Map<String, Long> obtenerKpis(Long gerenciaId) {
-        return obtenerKpisPorLista(gerenciaId, null);
+    public Map<String, Long> obtenerKpisPorLista(Long gerenciaId, List<Long> gerenciaIds) {
+        return obtenerKpisPorLista(gerenciaId, gerenciaIds, null);
     }
 
-    public Map<String, Long> obtenerKpisPorLista(Long gerenciaId, List<Long> gerenciaIds) {
+    public Map<String, Long> obtenerKpisPorLista(Long gerenciaId, List<Long> gerenciaIds, List<Integer> materiaIds) {
         Map<String, Long> kpis = new HashMap<>();
 
         // Si hay lista de gerencias, usar esa; si hay gerenciaId individual, usar esa
         boolean hayFiltro = gerenciaIds != null && !gerenciaIds.isEmpty();
+        boolean hayMaterias = materiaIds != null && !materiaIds.isEmpty();
 
         if (gerenciaId != null) {
-            // Filtro por gerencia individual
-            kpis.put("totalExpedientes", expedienteRepository.countByGerenciaId(gerenciaId));
-            kpis.put("expedientesActivos",
-                    expedienteRepository.countByEtapaProcesalAndGerenciaId(EtapaProcesal.TRAMITE, gerenciaId));
-            kpis.put("audienciasProgramadas",
-                    audienciaRepository.countByExpedienteGerenciaIdAndEstatusPendiente(gerenciaId));
-            kpis.put("terminosActivos", terminoRepository.countByExpedienteGerenciaIdAndActivo(gerenciaId));
+            if (hayMaterias) {
+                // Filtro por gerencia Y materias (Jefe de Depto)
+                kpis.put("totalExpedientes", expedienteRepository.countByGerenciaIdAndMateriaIdIn(gerenciaId, materiaIds));
+                kpis.put("expedientesActivos",
+                        expedienteRepository.countByEtapaProcesalAndGerenciaIdAndMateriaIdIn(EtapaProcesal.TRAMITE, gerenciaId, materiaIds));
+                kpis.put("audienciasProgramadas",
+                        audienciaRepository.countByExpedienteGerenciaIdAndMateriaIdInAndEstatusPendiente(gerenciaId, materiaIds));
+                kpis.put("terminosActivos", terminoRepository.countByExpedienteGerenciaIdAndMateriaIdInAndActivo(gerenciaId, materiaIds));
+            } else {
+                // Filtro por gerencia individual (Gerente/Director)
+                kpis.put("totalExpedientes", expedienteRepository.countByGerenciaId(gerenciaId));
+                kpis.put("expedientesActivos",
+                        expedienteRepository.countByEtapaProcesalAndGerenciaId(EtapaProcesal.TRAMITE, gerenciaId));
+                kpis.put("audienciasProgramadas",
+                        audienciaRepository.countByExpedienteGerenciaIdAndEstatusPendiente(gerenciaId));
+                kpis.put("terminosActivos", terminoRepository.countByExpedienteGerenciaIdAndActivo(gerenciaId));
+            }
         } else if (hayFiltro) {
             // Filtro por lista de gerencias (grupo)
             kpis.put("totalExpedientes", expedienteRepository.countByGerenciaIdIn(gerenciaIds));
@@ -185,23 +196,31 @@ public class DashboardService {
     }
 
     public Map<String, Object> obtenerMetricas(Long gerenciaId) {
-        return obtenerMetricasPorLista(gerenciaId, null);
+        return obtenerMetricasPorLista(gerenciaId, null, null);
     }
 
     public Map<String, Object> obtenerMetricasPorLista(Long gerenciaId, List<Long> gerenciaIds) {
+        return obtenerMetricasPorLista(gerenciaId, gerenciaIds, null);
+    }
+
+    public Map<String, Object> obtenerMetricasPorLista(Long gerenciaId, List<Long> gerenciaIds, List<Integer> materiaIds) {
         Map<String, Object> data = new HashMap<>();
-        data.put("estatusExpedientes", obtenerEstatusExpedientes(gerenciaId, gerenciaIds));
-        data.put("cargaTrabajoUsuarios", obtenerCargaTrabajoUsuarios(gerenciaId, gerenciaIds));
+        data.put("estatusExpedientes", obtenerEstatusExpedientes(gerenciaId, gerenciaIds, materiaIds));
+        data.put("cargaTrabajoUsuarios", obtenerCargaTrabajoUsuarios(gerenciaId, gerenciaIds, materiaIds));
         data.put("distribucionGerencias", obtenerDistribucionGerencias());
-        data.put("trabajoMensual", obtenerTrabajoMensual(gerenciaId, gerenciaIds));
+        data.put("trabajoMensual", obtenerTrabajoMensual(gerenciaId, gerenciaIds, materiaIds));
         return data;
     }
 
-    private Map<String, Object> obtenerEstatusExpedientes(Long gerenciaId, List<Long> gerenciaIds) {
+    private Map<String, Object> obtenerEstatusExpedientes(Long gerenciaId, List<Long> gerenciaIds, List<Integer> materiaIds) {
         List<Object[]> rows;
 
         if (gerenciaId != null) {
-            rows = expedienteRepository.contarExpedientesPorEstatusYGerencia(gerenciaId);
+            if (materiaIds != null && !materiaIds.isEmpty()) {
+                rows = expedienteRepository.contarExpedientesPorEstatusYGerenciaYMateriaIn(gerenciaId, materiaIds);
+            } else {
+                rows = expedienteRepository.contarExpedientesPorEstatusYGerencia(gerenciaId);
+            }
         } else if (gerenciaIds != null && !gerenciaIds.isEmpty()) {
             rows = expedienteRepository.contarExpedientesPorEstatusYGerencias(gerenciaIds);
         } else {
@@ -223,16 +242,23 @@ public class DashboardService {
         return Map.of("labels", labels, "values", values);
     }
 
-    private Map<String, Object> obtenerCargaTrabajoUsuarios(Long gerenciaId, List<Long> gerenciaIds) {
+    private Map<String, Object> obtenerCargaTrabajoUsuarios(Long gerenciaId, List<Long> gerenciaIds, List<Integer> materiaIds) {
         Map<String, Integer> expedientesMap;
         Map<String, Integer> audienciasMap;
         Map<String, Integer> terminosMap;
 
         if (gerenciaId != null) {
-            // Filtro por gerencia individual
-            expedientesMap = toMap(expedienteRepository.contarExpedientesPorUsuarioYGerencia(gerenciaId));
-            audienciasMap = toMap(audienciaRepository.contarAudienciasPorUsuarioYGerencia(gerenciaId));
-            terminosMap = toMap(terminoRepository.contarTerminosPorUsuarioYGerencia(gerenciaId.intValue()));
+            if (materiaIds != null && !materiaIds.isEmpty()) {
+                // Filtro por gerencia Y materias (Jefe de Depto)
+                expedientesMap = toMap(expedienteRepository.contarExpedientesPorUsuarioYGerenciaYMateriaIn(gerenciaId, materiaIds));
+                audienciasMap = toMap(audienciaRepository.contarAudienciasPorUsuarioYGerenciaYMateriaIn(gerenciaId, materiaIds));
+                terminosMap = toMap(terminoRepository.contarTerminosPorUsuarioYGerenciaYMateriaIn(gerenciaId, materiaIds));
+            } else {
+                // Filtro por gerencia individual (Gerente/Director)
+                expedientesMap = toMap(expedienteRepository.contarExpedientesPorUsuarioYGerencia(gerenciaId));
+                audienciasMap = toMap(audienciaRepository.contarAudienciasPorUsuarioYGerencia(gerenciaId));
+                terminosMap = toMap(terminoRepository.contarTerminosPorUsuarioYGerencia(gerenciaId.intValue()));
+            }
         } else if (gerenciaIds != null && !gerenciaIds.isEmpty()) {
             // Filtro por lista de gerencias (grupo)
             expedientesMap = toMap(expedienteRepository.contarExpedientesPorUsuarioYGerencias(gerenciaIds));
@@ -269,8 +295,11 @@ public class DashboardService {
         return processRows(expedienteRepository.contarExpedientesPorGerencia());
     }
 
-    private Map<String, Object> obtenerTrabajoMensual(Long gerenciaId, List<Long> gerenciaIds) {
+    private Map<String, Object> obtenerTrabajoMensual(Long gerenciaId, List<Long> gerenciaIds, List<Integer> materiaIds) {
         if (gerenciaId != null) {
+            if (materiaIds != null && !materiaIds.isEmpty()) {
+                return processRows(expedienteRepository.contarExpedientesCompletadosPorMesYGerenciaYMateriaIn(gerenciaId, materiaIds));
+            }
             return processRows(expedienteRepository.contarExpedientesCompletadosPorMes());
         } else if (gerenciaIds != null && !gerenciaIds.isEmpty()) {
             return processRows(expedienteRepository.contarExpedientesCompletadosPorMesYGerencias(gerenciaIds));

@@ -120,9 +120,10 @@ public class ExpedientesController {
         List<Integer> secMateriaIds = null;
         Integer secUsuarioId = usuario.getId();
 
-        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECCION
+        if (usuario.getRol() == RolUsuario.ADMIN) {
+            // Admin sigue viendo todo
+        } else if (usuario.getRol() == RolUsuario.GERENTE || usuario.getRol() == RolUsuario.DIRECCION
                 || usuario.getRol() == RolUsuario.SUBDIRECCION) {
-        } else if (usuario.getRol() == RolUsuario.GERENTE) {
             if (usuario.getGerencia() != null)
                 secGerenciaId = usuario.getGerencia().getId();
         } else if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
@@ -169,10 +170,10 @@ public class ExpedientesController {
         List<Integer> secMateriaIds = null;
         Integer secUsuarioId = usuario.getId();
 
-        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECCION
-                || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+        if (usuario.getRol() == RolUsuario.ADMIN) {
             // Ven todo
-        } else if (usuario.getRol() == RolUsuario.GERENTE) {
+        } else if (usuario.getRol() == RolUsuario.GERENTE || usuario.getRol() == RolUsuario.DIRECCION
+                || usuario.getRol() == RolUsuario.SUBDIRECCION) {
             if (usuario.getGerencia() != null)
                 secGerenciaId = usuario.getGerencia().getId();
         } else if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
@@ -551,9 +552,10 @@ public class ExpedientesController {
         boolean tienePermiso = false;
         String rol = usuario.getRol().name();
 
-        if (rol.equals("ADMIN") || rol.equals("DIRECCION") || rol.equals("SUBDIRECCION")) {
+        if (rol.equals("ADMIN")) {
             tienePermiso = true;
-        } else if (rol.equals("GERENTE") && usuario.getGerencia() != null
+        } else if ((rol.equals("GERENTE") || rol.equals("DIRECCION") || rol.equals("SUBDIRECCION")) 
+                && usuario.getGerencia() != null
                 && expediente.getGerencia() != null
                 && expediente.getGerencia().getId().equals(usuario.getGerencia().getId())) {
             tienePermiso = true;

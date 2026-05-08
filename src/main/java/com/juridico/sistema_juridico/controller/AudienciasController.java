@@ -112,14 +112,26 @@ public class AudienciasController {
         Integer filtroGerenciaId = null;
         List<Integer> filtroMateriaIds = null;
 
-        switch (rol) {
-            case "ABOGADO":
+        switch (usuario.getRol()) {
+            case ABOGADO:
                 filtroUsuarioId = usuario.getId();
                 break;
-            case "GERENTE":
-            case "JEFE_DEPTO":
-                if (usuario.getGerencia() != null)
+            case JEFE_DEPTO:
+                if (usuario.getGerencia() != null) {
                     filtroGerenciaId = usuario.getGerencia().getId();
+                }
+                if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
+                    filtroMateriaIds = usuario.getMaterias().stream()
+                            .map(m -> m.getId())
+                            .collect(Collectors.toList());
+                }
+                break;
+            case GERENTE:
+            case DIRECCION:
+            case SUBDIRECCION:
+                if (usuario.getGerencia() != null) {
+                    filtroGerenciaId = usuario.getGerencia().getId();
+                }
                 break;
         }
 
@@ -220,9 +232,15 @@ public class AudienciasController {
         model.addAttribute("listaOrganos", organoJurisdiccionalRepository.findByActivoTrue());
 
         List<Usuario> listaAbogados;
-        if (rol.equals("ABOGADO")) {
+        if (usuario.getRol() == RolUsuario.ABOGADO) {
             listaAbogados = Collections.singletonList(usuario);
-        } else if (rol.equals("GERENTE") || rol.equals("JEFE_DEPTO")) {
+        } else if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
+            listaAbogados = usuarioRepository.findAll().stream()
+                    .filter(u -> u.getGerencia() != null && usuario.getGerencia() != null &&
+                            u.getGerencia().getId().equals(usuario.getGerencia().getId()))
+                    .filter(u -> u.getMaterias().stream().anyMatch(m -> usuario.getMaterias().contains(m)))
+                    .collect(Collectors.toList());
+        } else if (usuario.getRol() == RolUsuario.GERENTE || usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
             listaAbogados = usuarioRepository.findAll().stream()
                     .filter(u -> u.getGerencia() != null && usuario.getGerencia() != null &&
                             u.getGerencia().getId().equals(usuario.getGerencia().getId()))

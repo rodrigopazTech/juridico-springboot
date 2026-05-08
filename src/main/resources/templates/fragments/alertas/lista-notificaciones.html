@@ -1,4 +1,4 @@
-﻿<div th:fragment="lista" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+<div th:fragment="lista" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
     <div class="overflow-x-auto">
         <table class="w-full text-sm text-left text-gray-500">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
@@ -17,7 +17,8 @@
                     </td>
                 </tr>
 
-                <tr th:each="n : ${notificaciones}" class="bg-white hover:bg-gray-50 transition-colors">
+                <tr th:each="n : ${notificaciones}" class="hover:bg-gray-50/80 transition-colors group"
+                    th:classappend="${!n.leida ? 'bg-yellow-50/50' : ''}">
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm font-bold text-gray-900" th:text="${#temporals.format(n.notificarEn, 'dd MMM')}">25 Ene</div>
                         <div class="text-xs text-gray-500" th:text="${#temporals.format(n.notificarEn, 'HH:mm')}">10:00</div>
@@ -31,7 +32,7 @@
                         </span>
                     </td>
                     <td class="px-6 py-4 cursor-pointer group">
-                        <a th:href="@{/alertas/notificaciones/leer/{id}(id=${n.id})}" class="block">
+                        <a th:href="@{/notificaciones/leer/{id}(id=${n.id})}" class="block">
                             <div class="text-sm font-bold text-gray-800 group-hover:text-gob-guinda transition-colors"
                                  th:text="${n.titulo}">
                                 Título
@@ -42,7 +43,7 @@
                         </a>
                     </td>
                     <td class="px-6 py-4 text-right">
-                        <a th:href="@{/alertas/notificaciones/eliminar/{id}(id=${n.id})}" class="text-gray-300 hover:text-red-500 transition-colors" title="Marcar como leída / Eliminar">
+                        <a th:href="@{/notificaciones/archivar/{id}(id=${n.id})}" class="text-gray-300 hover:text-red-500 transition-colors" title="Mover a papelera">
                             <i class="fas fa-times-circle text-lg"></i>
                         </a>
                     </td>

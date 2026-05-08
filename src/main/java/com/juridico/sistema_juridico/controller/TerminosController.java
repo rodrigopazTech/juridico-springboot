@@ -133,30 +133,32 @@ public class TerminosController {
         Usuario usuarioActual = getUsuarioActual();
         Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaVencimiento").descending());
 
-        // --- 2. FILTROS DE SEGURIDAD MANDATORIOS ---
-        Integer secGerenciaId = null;
-        List<Integer> secMateriaIds = null;
-        Integer secUsuarioId = usuarioActual.getId();
+        // --- 2. FILTROS DE SEGURIDAD (TABLA) ---
+        Integer filtroAbogadoSeguro = abogadoId;
+        Integer filtroGerenciaSeguro = gerenciaId;
+        List<Integer> filtroMateriaIds = null;
 
-        if (usuarioActual.getRol() == RolUsuario.ADMIN || usuarioActual.getRol() == RolUsuario.DIRECCION
-                || usuarioActual.getRol() == RolUsuario.SUBDIRECCION) {
-            // Ven todo
-        } else if (usuarioActual.getRol() == RolUsuario.GERENTE) {
-            if (usuarioActual.getGerencia() != null)
-                secGerenciaId = usuarioActual.getGerencia().getId();
-        } else if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
-            if (usuarioActual.getGerencia() != null)
-                secGerenciaId = usuarioActual.getGerencia().getId();
-            if (usuarioActual.getMaterias() != null && !usuarioActual.getMaterias().isEmpty()) {
-                secMateriaIds = usuarioActual.getMaterias().stream().map(m -> m.getId()).collect(Collectors.toList());
-            } else {
-                secMateriaIds = Collections.emptyList();
-            }
-        } else {
-            // ABOGADO
-            if (usuarioActual.getGerencia() != null)
-                secGerenciaId = usuarioActual.getGerencia().getId();
-            secMateriaIds = Collections.emptyList();
+        switch (usuarioActual.getRol()) {
+            case ABOGADO:
+                filtroAbogadoSeguro = usuarioActual.getId();
+                break;
+            case JEFE_DEPTO:
+                if (usuarioActual.getGerencia() != null) {
+                    filtroGerenciaSeguro = usuarioActual.getGerencia().getId();
+                }
+                if (usuarioActual.getMaterias() != null && !usuarioActual.getMaterias().isEmpty()) {
+                    filtroMateriaIds = usuarioActual.getMaterias().stream()
+                            .map(m -> m.getId())
+                            .collect(Collectors.toList());
+                }
+                break;
+            case GERENTE:
+            case DIRECCION:
+            case SUBDIRECCION:
+                if (usuarioActual.getGerencia() != null) {
+                    filtroGerenciaSeguro = usuarioActual.getGerencia().getId();
+                }
+                break;
         }
 
         // CÁLCULO DE FECHAS
@@ -186,10 +188,9 @@ public class TerminosController {
 
         Page<Termino> paginaTerminos = terminoRepository.buscarConFiltros(
                 id, searchKeyword, estatus, prioridadId,
-                abogadoId, gerenciaId,
+                filtroAbogadoSeguro, filtroGerenciaSeguro,
                 fechaInicio, fechaFin,
-                materiaId,
-                secGerenciaId, secMateriaIds, secUsuarioId,
+                materiaId, filtroMateriaIds,
                 pageable);
 
         model.addAttribute("terminos", paginaTerminos);
@@ -198,8 +199,17 @@ public class TerminosController {
         List<Usuario> abogadosParaModal;
         if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
             abogadosParaModal = Collections.singletonList(usuarioActual);
-        } else if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
-            abogadosParaModal = usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.ABOGADO, usuarioActual.getGerencia());
+        } else if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.DIRECCION || usuarioActual.getRol() == RolUsuario.SUBDIRECCION) {
+            abogadosParaModal = usuarioRepository.findByRolAndActivoTrue(RolUsuario.ABOGADO).stream()
+                    .filter(u -> u.getGerencia() != null && usuarioActual.getGerencia() != null &&
+                            u.getGerencia().getId().equals(usuarioActual.getGerencia().getId()))
+                    .collect(Collectors.toList());
+        } else if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+            abogadosParaModal = usuarioRepository.findByRolAndActivoTrue(RolUsuario.ABOGADO).stream()
+                    .filter(u -> u.getGerencia() != null && usuarioActual.getGerencia() != null &&
+                            u.getGerencia().getId().equals(usuarioActual.getGerencia().getId()))
+                    .filter(u -> u.getMaterias().stream().anyMatch(m -> usuarioActual.getMaterias().contains(m)))
+                    .collect(Collectors.toList());
         } else {
             abogadosParaModal = usuarioRepository.findByRolAndActivoTrue(RolUsuario.ABOGADO);
         }
@@ -254,9 +264,9 @@ public class TerminosController {
         
         // --- 6. CONTEOS PARA LA LÍNEA DE TIEMPO (NUEVO) ---
         List<Object[]> rawCounts = terminoRepository.contarPorEtapaConFiltros(
-                searchKeyword, prioridadId, abogadoId, gerenciaId, materiaId, 
+                searchKeyword, prioridadId, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId, 
                 fechaInicio, fechaFin,
-                secGerenciaId, secMateriaIds, secUsuarioId);
+                filtroMateriaIds);
 
         Map<EstatusTermino, Long> conteosMap = new EnumMap<>(EstatusTermino.class);
         for (EstatusTermino e : EstatusTermino.values()) {
@@ -286,16 +296,8 @@ public class TerminosController {
         List<EstatusTermino> etapasAsignadas = getEtapasAsignadasPorRol(usuarioActual.getRol());
         model.addAttribute("etapasAsignadas", etapasAsignadas);
 
-        // --- 8. FILTRO POR DEFECTO PARA EL USUARIO ---
-        if (estatus == null && (keyword == null || keyword.isEmpty()) && id == null && !etapasAsignadas.isEmpty()) {
-            model.addAttribute("etapasDefault", etapasAsignadas);
-            paginaTerminos = terminoRepository.buscarPorMultiplesEstatus(
-                    id, searchKeyword, etapasAsignadas, prioridadId, abogadoId, gerenciaId, materiaId,
-                    fechaInicio, fechaFin,
-                    secGerenciaId, secMateriaIds, secUsuarioId,
-                    pageable);
-            model.addAttribute("terminos", paginaTerminos);
-        }
+        // --- 8. FILTRO POR DEFECTO PARA EL USUARIO (ELIMINADO PARA MOSTRAR TODO) ---
+        // Se eliminó la lógica que filtraba por etapas asignadas por defecto para mostrar el listado completo.
 
         // --- OPTIMIZACIÓN AJAX ---
         HttpServletRequest request = ((org.springframework.web.context.request.ServletRequestAttributes) 
@@ -305,10 +307,8 @@ public class TerminosController {
         if ("XMLHttpRequest".equals(isAjax)) {
             if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
                 paginaTerminos = terminoRepository.buscarConFiltros(
-                    id, searchKeyword, null, prioridadId, abogadoId, gerenciaId, 
-                    fechaInicio, fechaFin, materiaId,
-                    secGerenciaId, secMateriaIds, secUsuarioId,
-                    pageable);
+                    id, searchKeyword, null, prioridadId, filtroAbogadoSeguro, filtroGerenciaSeguro, 
+                    fechaInicio, fechaFin, materiaId, filtroMateriaIds, pageable);
                 model.addAttribute("terminos", paginaTerminos);
                 model.addAttribute("paramEstatus", null);
             }

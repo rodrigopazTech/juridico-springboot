@@ -16,9 +16,37 @@
 
     <div class="p-6 sm:ml-64" style="padding-top: 100px !important;">
 
-        <div class="mb-8">
-            <h1 class="text-4xl font-extrabold text-gob-guinda font-headings">Notificaciones</h1>
-            <p class="text-gray-500 mt-1">Avisos automáticos sobre expedientes, términos y audiencias.</p>
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-4xl font-extrabold text-gob-guinda font-headings" 
+                    th:text="${esPapelera ? 'Notificaciones ya leídas' : 'Notificaciones'}">Notificaciones</h1>
+                <p class="text-gray-500 mt-1" 
+                   th:text="${esPapelera ? 'Notificaciones que pueden ser eliminadas o restauradas.' : 'Avisos automáticos sobre expedientes, términos y audiencias.'}">
+                    Avisos automáticos sobre expedientes, términos y audiencias.
+                </p>
+            </div>
+
+            <!-- Botones de navegación / Acción -->
+            <div class="flex items-center gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-gray-100">
+                <a th:href="@{/notificaciones}" 
+                   class="px-5 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center gap-2"
+                   th:classappend="${!esPapelera ? 'bg-gob-guinda text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}">
+                   <i class="fas fa-inbox"></i> Recientes
+                </a>
+                <a th:href="@{/notificaciones/papelera}" 
+                   class="px-5 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center gap-2"
+                   th:classappend="${esPapelera ? 'bg-gob-guinda text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}">
+                   <i class="fas fa-trash-alt"></i> Vistos
+                </a>
+
+                <div th:if="${esPapelera and !notificaciones.empty}" class="ml-4 pl-4 border-l border-gray-100">
+                    <a th:href="@{/notificaciones/vaciar}" 
+                       onclick="return confirm('¿Estás seguro de que deseas vaciar la papelera? Esta acción no se puede deshacer.')"
+                       class="px-5 py-2.5 bg-red-50 text-red-600 rounded-lg text-sm font-bold hover:bg-red-600 hover:text-white transition-all flex items-center gap-2">
+                        <i class="fas fa-broom"></i> Vaciar Papelera
+                    </a>
+                </div>
+            </div>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -37,30 +65,48 @@
                     <tbody class="divide-y divide-gray-50">
                         <tr th:if="${notificaciones.empty}">
                             <td colspan="4" class="px-6 py-12 text-center text-gray-400">
-                                <i class="fas fa-bell-slash text-4xl mb-3 block opacity-20"></i>
-                                <p class="font-bold">No hay notificaciones en tu historial.</p>
+                                <i class="fas text-4xl mb-3 block opacity-20"
+                                   th:classappend="${esPapelera ? 'fa-trash-restore' : 'fa-bell-slash'}"></i>
+                                <p class="font-bold" th:text="${esPapelera ? 'Tu papelera está vacía.' : 'No hay notificaciones nuevas.'}"></p>
                             </td>
                         </tr>
 
                         <tr th:each="n : ${notificaciones.content}" class="hover:bg-gray-50/80 transition-colors group"
-                            th:classappend="${!n.leida ? 'bg-blue-50/30' : ''}">
+                            th:classappend="${!n.leida ? 'bg-gob-oro' : ''}">
 
                             <td class="px-6 py-5 whitespace-nowrap">
                                 <div class="text-sm font-bold text-gray-900"
                                     th:text="${#temporals.format(n.createdAt, 'dd MMM, yyyy')}">Fecha</div>
-                                <div class="text-xs text-gray-500" th:text="${#temporals.format(n.createdAt, 'HH:mm')}">
-                                    Hora</div>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-xs text-gray-500" th:text="${#temporals.format(n.createdAt, 'HH:mm')}">Hora</span>
+
+
+                                    <!-- Icono Visto tipo WhatsApp
+                                    <i th:if="${n.leida}" class="fas fa-check-double text-blue-500 text-[10px]" title="Leída"></i>
+                                    <i th:if="${!n.leida}" class="fas fa-check text-gray-300 text-[10px]" title="Entregada"></i> -->
+                                                                    
+                                    
+                                    <!-- Etiqueta de Leída Azul Eléctrico -->
+                                    <span th:if="${n.leida}"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold border bg-blue-50 text-blue-600 border-blue-200">
+                                        <i class="fas fa-eye"></i> LEÍDA
+                                    </span>
+                                
+                                </div>
                             </td>
 
                             <td class="px-6 py-5 whitespace-nowrap">
-                                <span
-                                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold border"
-                                    th:classappend="${n.tipo == 'AUDIENCIA' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                   (n.tipo == 'TERMINO' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gob-oro/10 text-gob-oro border-gob-oro/20')}">
-                                    <i class="fas"
-                                        th:classappend="${n.tipo == 'AUDIENCIA' ? 'fa-gavel' : (n.tipo == 'TERMINO' ? 'fa-hourglass-end' : 'fa-info-circle')}"></i>
-                                    <span th:text="${n.tipo}">TIPO</span>
-                                </span>
+                                <div class="flex flex-col gap-2">
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold border"
+                                        th:classappend="${n.tipo == 'AUDIENCIA' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                       (n.tipo == 'TERMINO' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gob-oro/10 text-gob-oro border-gob-oro/20')}">
+                                        <i class="fas"
+                                            th:classappend="${n.tipo == 'AUDIENCIA' ? 'fa-gavel' : (n.tipo == 'TERMINO' ? 'fa-hourglass-end' : 'fa-info-circle')}"></i>
+                                        <span th:text="${n.tipo}">TIPO</span>
+                                    </span>
+
+                                </div>
                             </td>
 
                             <td class="px-6 py-5 w-1/2">
@@ -74,16 +120,38 @@
 
                             <td class="px-6 py-5 text-right whitespace-nowrap">
                                 <div class="flex justify-end gap-3 items-center">
-                                    <a th:href="@{/notificaciones/leer/{id}(id=${n.id})}"
-                                        class="text-xs font-bold text-gob-guinda hover:underline flex items-center gap-1"
-                                        title="Ir al origen">
-                                        Ver <i class="fas fa-external-link-alt text-[10px]"></i>
-                                    </a>
+                                    
+                                    <!-- Acciones para Recientes -->
+                                    <th:block th:if="${!esPapelera}">
+                                        <a th:href="@{/notificaciones/leer/{id}(id=${n.id})}"
+                                            class="text-xs font-bold text-gob-guinda hover:underline flex items-center gap-1"
+                                            title="Ir al origen">
+                                            Ver <i class="fas fa-external-link-alt text-[10px]"></i>
+                                        </a>
 
-                                    <a th:href="@{/notificaciones/eliminar/{id}(id=${n.id})}"
-                                        class="text-gray-300 hover:text-red-500 transition-colors p-2 rounded hover:bg-red-50">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </a>
+                                        <a th:href="@{/notificaciones/archivar/{id}(id=${n.id})}"
+                                            class="text-gray-300 hover:text-red-500 transition-colors p-2 rounded hover:bg-red-50"
+                                            title="Mover a papelera">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </th:block>
+
+                                    <!-- Acciones para Papelera -->
+                                    <th:block th:if="${esPapelera}">
+                                        <a th:href="@{/notificaciones/restaurar/{id}(id=${n.id})}"
+                                            class="text-xs font-bold text-gob-oro hover:underline flex items-center gap-1"
+                                            title="Restaurar a recientes">
+                                            <i class="fas fa-undo"></i> Restaurar
+                                        </a>
+
+                                        <a th:href="@{/notificaciones/eliminar/{id}(id=${n.id})}"
+                                            class="text-gray-300 hover:text-red-600 transition-colors p-2 rounded hover:bg-red-100"
+                                            title="Eliminar permanentemente"
+                                            onclick="return confirm('¿Eliminar esta notificación permanentemente?')">
+                                            <i class="fas fa-times-circle"></i>
+                                        </a>
+                                    </th:block>
+
                                 </div>
                             </td>
                         </tr>

@@ -70,9 +70,9 @@ public class DashboardController {
         FiltroResult filtro = validarFiltrosPorRol(usuario, gerenciaId, grupoGerencia);
 
         model.addAttribute("gerencias", gerenciaRepository.findByActivoTrueOrderByNombreAsc());
-        model.addAttribute("kpis", dashboardService.obtenerKpisPorLista(filtro.gerenciaId(), filtro.gerenciaIds()));
+        model.addAttribute("kpis", dashboardService.obtenerKpisPorLista(filtro.gerenciaId(), filtro.gerenciaIds(), filtro.materiaIds()));
         model.addAttribute("dashboardData",
-                dashboardService.obtenerMetricasPorLista(filtro.gerenciaId(), filtro.gerenciaIds()));
+                dashboardService.obtenerMetricasPorLista(filtro.gerenciaId(), filtro.gerenciaIds(), filtro.materiaIds()));
         model.addAttribute("gerenciaSeleccionada", filtro.gerenciaId());
         model.addAttribute("grupoGerenciaSeleccionado", filtro.grupoGerencia());
         model.addAttribute("pageTitle", "Dashboard - Gerencia");
@@ -92,14 +92,14 @@ public class DashboardController {
         FiltroResult filtro = validarFiltrosPorRol(usuario, gerenciaId, grupoGerencia);
 
         return Map.of(
-                "kpis", dashboardService.obtenerKpisPorLista(filtro.gerenciaId(), filtro.gerenciaIds()),
-                "dashboardData", dashboardService.obtenerMetricasPorLista(filtro.gerenciaId(), filtro.gerenciaIds()));
+                "kpis", dashboardService.obtenerKpisPorLista(filtro.gerenciaId(), filtro.gerenciaIds(), filtro.materiaIds()),
+                "dashboardData", dashboardService.obtenerMetricasPorLista(filtro.gerenciaId(), filtro.gerenciaIds(), filtro.materiaIds()));
     }
 
     /**
      * Resultado de la validación de filtros
      */
-    private record FiltroResult(Long gerenciaId, List<Long> gerenciaIds, String grupoGerencia) {
+    private record FiltroResult(Long gerenciaId, List<Long> gerenciaIds, String grupoGerencia, List<Integer> materiaIds) {
     }
 
     /**
@@ -115,13 +115,23 @@ public class DashboardController {
             // El director/subdirector puede usar filtros de grupo o gerencia individual
             if (grupoGerenciaSolicitado != null && !grupoGerenciaSolicitado.isEmpty()) {
                 List<Long> gerenciaIds = dashboardService.obtenerListaGerencias(grupoGerenciaSolicitado);
-                return new FiltroResult(null, gerenciaIds, grupoGerenciaSolicitado);
+                return new FiltroResult(null, gerenciaIds, grupoGerenciaSolicitado, null);
             }
-            return new FiltroResult(gerenciaIdSolicitada, null, null);
+            // Si el director tiene gerencia asignada, lo restringimos a esa (ROD-JERARQUIA)
+            if (usuario.getGerencia() != null) {
+                return new FiltroResult(usuario.getGerencia().getId().longValue(), null, null, null);
+            }
+            return new FiltroResult(gerenciaIdSolicitada, null, null, null);
         } else {
             // Si es Gerente o Jefe, obligatoriamente solo ve su gerencia
             Long gerenciaId = (usuario.getGerencia() != null) ? usuario.getGerencia().getId().longValue() : null;
-            return new FiltroResult(gerenciaId, null, null);
+            
+            List<Integer> materiaIds = null;
+            if (usuario.getRol() == RolUsuario.JEFE_DEPTO && usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
+                materiaIds = usuario.getMaterias().stream().map(m -> m.getId()).collect(java.util.stream.Collectors.toList());
+            }
+            
+            return new FiltroResult(gerenciaId, null, null, materiaIds);
         }
     }
 }

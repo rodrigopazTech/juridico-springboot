@@ -284,5 +284,19 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
         @Query("SELECT DISTINCT a.expediente FROM Audiencia a WHERE a.abogadoComparece.id = :usuarioId AND a.estatusAudiencia != com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.CONCLUIDA")
         List<com.juridico.sistema_juridico.Entity.expediente.Expediente> findExpedientesByAbogadoInvitadoActivo(@Param("usuarioId") Integer usuarioId);
 
+        // --- MÉTODOS PARA JEFE DE DEPTO (POR MATERIAS) ---
+        @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.gerencia.id = :gerenciaId AND e.materia.id IN :materiaIds AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
+        long countByExpedienteGerenciaIdAndMateriaIdInAndEstatusPendiente(@Param("gerenciaId") Long gerenciaId, @Param("materiaIds") List<Integer> materiaIds);
+
+        @Query("""
+                        SELECT u.nombreCompleto, COUNT(a)
+                        FROM Audiencia a
+                        JOIN a.expediente e
+                        JOIN e.abogadoResponsable u
+                        WHERE e.gerencia.id = :gerenciaId AND e.materia.id IN :materiaIds
+                        GROUP BY u.nombreCompleto
+                        """)
+        List<Object[]> contarAudienciasPorUsuarioYGerenciaYMateriaIn(@Param("gerenciaId") Long gerenciaId, @Param("materiaIds") List<Integer> materiaIds);
+
         List<Audiencia> findByExpedienteAndFechaAudienciaAndHoraAudiencia(com.juridico.sistema_juridico.Entity.expediente.Expediente expediente, java.time.LocalDate fechaAudiencia, java.time.LocalTime horaAudiencia);
 }

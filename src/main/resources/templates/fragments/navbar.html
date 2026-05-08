@@ -5,7 +5,8 @@
 
 <body>
 
-    <nav th:fragment="navbar"
+    <th:block th:fragment="navbar">
+    <nav
         class="bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 fixed top-0 right-0 z-30 transition-all sm:ml-64 shadow-sm flex items-center h-[72px]"
         style="width: calc(100% - 16rem);">
         <div class="flex justify-between items-center w-full">
@@ -32,18 +33,61 @@
 
             <div class="flex items-center gap-3">
 
-                <a th:href="@{/notificaciones}" title="Centro de Notificaciones"
-                    class="relative group p-2.5 rounded-full hover:bg-gray-100 transition-colors">
-                    <i class="fas fa-bell text-xl text-gray-400 group-hover:text-gob-guinda transition-colors"></i>
+                <!-- Campana de Notificaciones con Dropdown -->
+                <div class="relative" id="notif-bell-wrapper">
+                    <button id="notif-bell-btn" type="button" title="Centro de Notificaciones"
+                        onclick="toggleNotifDropdown()"
+                        class="relative p-2.5 rounded-full hover:bg-gray-100 transition-colors focus:outline-none">
+                        <i class="fas fa-bell text-xl text-gray-400 hover:text-gob-guinda transition-colors"></i>
 
-                    <span th:if="${notificacionesNoLeidas != null and notificacionesNoLeidas > 0}"
-                        class="absolute top-2 right-2.5 flex h-2.5 w-2.5">
-                        <span
-                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span
-                            class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white"></span>
-                    </span>
-                </a>
+                        <span th:if="${notificacionesNoLeidas != null and notificacionesNoLeidas > 0}"
+                            id="notif-badge-ping"
+                            class="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-5 w-5 bg-red-600 text-white text-[10px] font-black items-center justify-center border-2 border-white shadow-sm"
+                                  th:text="${notificacionesNoLeidas}">0</span>
+                        </span>
+                        <span th:if="${notificacionesNoLeidas == null or notificacionesNoLeidas == 0}"
+                            id="notif-badge-ping" class="absolute -top-0.5 -right-0.5 hidden">
+                        </span>
+                    </button>
+
+                    <!-- Dropdown Panel -->
+                    <div id="notif-dropdown"
+                        class="hidden absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
+                        style="top: calc(100% + 8px);">
+
+                        <!-- Header -->
+                        <div class="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-gob-guinda to-red-800 text-white">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-bell text-sm"></i>
+                                <span class="font-bold text-sm font-headings">Notificaciones</span>
+                                <span id="notif-count-badge"
+                                    class="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                    ...
+                                </span>
+                            </div>
+                            <a href="/notificaciones" class="text-xs text-white/80 hover:text-white transition-colors font-medium">
+                                Ver todas <i class="fas fa-arrow-right ml-1 text-[10px]"></i>
+                            </a>
+                        </div>
+
+                        <!-- Lista -->
+                        <div id="notif-dropdown-list" class="divide-y divide-gray-100 max-h-80 overflow-y-auto">
+                            <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+                                <i class="fas fa-spinner fa-spin text-2xl mb-2 text-gob-guinda/30"></i>
+                                <p class="text-xs">Cargando...</p>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 text-center">
+                            <a href="/notificaciones" class="text-xs text-gob-guinda hover:underline font-semibold">
+                                <i class="fas fa-list-ul mr-1"></i> Ir al Centro de Notificaciones
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="h-8 w-px bg-gray-200 mx-2"></div>
 
@@ -90,9 +134,265 @@
                     </div>
                 </div>
 
-            </div>
         </div>
     </nav>
+
+    <!-- =====================================================================
+         TOAST / POPUP GLOBAL DE NOTIFICACIONES NUEVAS (Fuera del nav)
+         ===================================================================== -->
+    <div id="notif-toast-container"
+        class="fixed bottom-5 right-5 z-[9999] flex flex-col gap-3 items-end pointer-events-none">
+    </div>
+
+        <script th:inline="none">
+        /* -----------------------------------------------------------------------
+           Sistema de Popup de Notificaciones (Navbar Bell)
+           ----------------------------------------------------------------------- */
+        (function () {
+            const POLL_INTERVAL  = 1000; // antes cada 30s ahora cada 1s
+            const API_URL        = '/notificaciones/api/recientes';
+            const TOAST_DURATION = 5000;  // ms que dura el toast
+
+            // ---- IDs ya vistos (para no repetir toasts) ----
+            let seenIds = new Set();
+            let firstLoad = true; // La primera carga NO muestra toasts
+
+            // ---- Mapas de estilo por Tipo ----
+            const TIPO_META = {
+                AUDIENCIA:  { icon: 'fa-gavel',         color: 'from-blue-500 to-blue-700',   badge: 'bg-blue-100 text-blue-700 border-blue-200'   },
+                TERMINO:    { icon: 'fa-hourglass-end',  color: 'from-red-500 to-red-700',     badge: 'bg-red-100 text-red-700 border-red-200'      },
+                EXPEDIENTE: { icon: 'fa-folder-open',    color: 'from-green-500 to-green-700', badge: 'bg-green-100 text-green-700 border-green-200' },
+                ASIGNACION: { icon: 'fa-user-check',     color: 'from-purple-500 to-purple-700',badge:'bg-purple-100 text-purple-700 border-purple-200'},
+                SISTEMA:    { icon: 'fa-bell',           color: 'from-gray-500 to-gray-700',   badge: 'bg-gray-100 text-gray-700 border-gray-200'   },
+            };
+
+            const PRIORIDAD_META = {
+                ALTA:   { icon: 'fa-exclamation-triangle', color: 'text-red-600',    label: 'Alta'   },
+                MEDIA:  { icon: 'fa-minus-circle',         color: 'text-yellow-600', label: 'Media'  },
+                BAJA:   { icon: 'fa-arrow-circle-down',    color: 'text-green-600',  label: 'Baja'   },
+            };
+
+            function getMeta(tipo) {
+                return TIPO_META[(tipo || '').toUpperCase()] || TIPO_META['SISTEMA'];
+            }
+            function getPriMeta(p) {
+                return PRIORIDAD_META[(p || '').toUpperCase()] || null;
+            }
+
+            // ---- Fetch notificaciones ----
+            async function fetchNotificaciones() {
+                try {
+                    const r = await fetch(API_URL, { credentials: 'same-origin' });
+                    if (!r.ok) return null;
+                    return await r.json();
+                } catch(e) {
+                    return null;
+                }
+            }
+
+            // ---- Actualizar badge de campana ----
+            function actualizarBadge(total) {
+                const badge = document.getElementById('notif-badge-ping');
+                if (!badge) return;
+                if (total > 0) {
+                    badge.classList.remove('hidden');
+                    badge.innerHTML = `
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-5 w-5 bg-red-600 text-white text-[10px] font-black items-center justify-center border-2 border-white shadow-sm">
+                            ${total}
+                        </span>`;
+                } else {
+                    badge.classList.add('hidden');
+                    badge.innerHTML = '';
+                }
+            }
+
+            // ---- Renderizar lista del dropdown ----
+            function renderDropdown(data) {
+                const list    = document.getElementById('notif-dropdown-list');
+                const counter = document.getElementById('notif-count-badge');
+                if (!list) return;
+
+                if (counter) counter.textContent = data.total > 0 ? data.total + ' no leída(s)' : 'Al día';
+
+                if (!data.notificaciones || data.notificaciones.length === 0) {
+                    list.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+                            <i class="fas fa-check-circle text-3xl mb-2 text-green-300"></i>
+                            <p class="text-xs font-medium">¡Estás al día!</p>
+                        </div>`;
+                    return;
+                }
+
+                list.innerHTML = data.notificaciones.map(n => {
+                    const meta    = getMeta(n.tipo);
+                    const priMeta = getPriMeta(n.prioridad);
+                    const priHTML = priMeta
+                        ? `<span class="flex items-center gap-1 ${priMeta.color} text-[10px] font-bold uppercase">
+                               <i class="fas ${priMeta.icon}"></i> ${priMeta.label}
+                           </span>`
+                        : '';
+                    return `
+                    <a href="/notificaciones/leer/${n.id}" class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors block">
+                        <div class="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br ${meta.color} flex items-center justify-center text-white shadow-sm mt-0.5">
+                            <i class="fas ${meta.icon} text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-bold text-gray-800 truncate">${escHtml(n.titulo)}</span>
+                                <span class="text-[10px] text-gray-400 whitespace-nowrap">${escHtml(n.hora)}</span>
+                            </div>
+                            <p class="text-[11px] text-gray-500 mt-0.5 line-clamp-2">${escHtml(n.mensaje)}</p>
+                            <div class="flex items-center gap-2 mt-1 flex-wrap">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${meta.badge}">
+                                    <i class="fas ${meta.icon} text-[9px]"></i> ${escHtml(n.tipo)}
+                                </span>
+                                ${priHTML}
+                                <span class="text-[10px] text-gray-400">${escHtml(n.fecha)}</span>
+                            </div>
+                        </div>
+                    </a>`;
+                }).join('');
+            }
+
+            // ---- Mostrar Toast ----
+            function mostrarToast(n) {
+                const meta    = getMeta(n.tipo);
+                const priMeta = getPriMeta(n.prioridad);
+                const priHTML = priMeta
+                    ? `<span class="flex items-center gap-1 ${priMeta.color} text-[10px] font-bold uppercase mt-0.5">
+                           <i class="fas ${priMeta.icon}"></i> Prioridad ${priMeta.label}
+                       </span>`
+                    : '';
+
+                const toast = document.createElement('div');
+                toast.className = [
+                    'pointer-events-auto flex items-start gap-3 bg-white rounded-2xl shadow-2xl border border-gray-200',
+                    'p-4 max-w-sm w-full transform transition-all duration-500 translate-x-full opacity-0'
+                ].join(' ');
+
+                toast.innerHTML = `
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${meta.color} flex items-center justify-center text-white shadow-md">
+                        <i class="fas ${meta.icon}"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Nueva Notificación</p>
+                                <p class="text-sm font-bold text-gray-800 leading-tight">${escHtml(n.titulo)}</p>
+                            </div>
+                            <button onclick="this.closest('[data-toast]').remove()" class="text-gray-300 hover:text-gray-500 flex-shrink-0 transition-colors mt-0.5">
+                                <i class="fas fa-times text-xs"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1 line-clamp-2">${escHtml(n.mensaje)}</p>
+                        <div class="flex flex-wrap items-center gap-2 mt-2">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${meta.badge}">
+                                <i class="fas ${meta.icon} text-[9px]"></i> ${escHtml(n.tipo)}
+                            </span>
+                            ${priHTML}
+                        </div>
+                        <div class="flex items-center justify-between mt-2">
+                            <span class="text-[10px] text-gray-400">
+                                <i class="fas fa-calendar-alt mr-1"></i>${escHtml(n.fecha)}
+                                <i class="fas fa-clock ml-2 mr-1"></i>${escHtml(n.hora)}
+                            </span>
+                            <a href="/notificaciones/leer/${n.id}" class="text-[10px] text-gob-guinda hover:underline font-bold">
+                                Ver <i class="fas fa-arrow-right text-[9px]"></i>
+                            </a>
+                        </div>
+                    </div>`;
+
+                toast.setAttribute('data-toast', n.id);
+
+                const container = document.getElementById('notif-toast-container');
+                if (container) container.appendChild(toast);
+
+                // Animación entrada
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        toast.classList.remove('translate-x-full', 'opacity-0');
+                    });
+                });
+
+                // Auto-dismiss
+                setTimeout(() => {
+                    toast.classList.add('translate-x-full', 'opacity-0');
+                    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+                }, TOAST_DURATION);
+            }
+
+            // ---- Utilidad escape HTML ----
+            function escHtml(str) {
+                if (str == null) return '';
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            // ---- Ciclo principal ----
+            async function poll() {
+                const data = await fetchNotificaciones();
+                if (!data) return;
+
+                actualizarBadge(data.total);
+
+                // Mostrar toasts para IDs nuevos
+                if (!firstLoad && data.notificaciones) {
+                    data.notificaciones.forEach(n => {
+                        if (!seenIds.has(n.id)) {
+                            mostrarToast(n);
+                        }
+                    });
+                }
+
+                // Actualizar set de IDs vistos
+                if (data.notificaciones) {
+                    data.notificaciones.forEach(n => seenIds.add(n.id));
+                }
+                firstLoad = false;
+            }
+
+            // ---- Toggle dropdown ----
+            window.toggleNotifDropdown = async function () {
+                const dropdown = document.getElementById('notif-dropdown');
+                if (!dropdown) return;
+                const isHidden = dropdown.classList.contains('hidden');
+                dropdown.classList.toggle('hidden');
+
+                if (isHidden) {
+                    // Cargar datos al abrir
+                    const data = await fetchNotificaciones();
+                    if (data) {
+                        actualizarBadge(data.total);
+                        renderDropdown(data);
+                        if (data.notificaciones) {
+                            data.notificaciones.forEach(n => seenIds.add(n.id));
+                        }
+                        firstLoad = false;
+                    }
+                }
+            };
+
+            // Cerrar al hacer click fuera
+            document.addEventListener('click', function(e) {
+                const wrapper  = document.getElementById('notif-bell-wrapper');
+                const dropdown = document.getElementById('notif-dropdown');
+                if (wrapper && dropdown && !wrapper.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+
+            // Iniciar polling
+            document.addEventListener('DOMContentLoaded', function () {
+                poll();
+                setInterval(poll, POLL_INTERVAL);
+            });
+        })();
+        </script>
+    </th:block>
 
 </body>
 
