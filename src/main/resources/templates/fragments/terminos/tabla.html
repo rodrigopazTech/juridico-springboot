@@ -128,9 +128,17 @@
                                         th:if="${t.estatusTermino?.name() == 'LIBERADO' and mapaPermisos.get(t.estatusTermino)?.contains(rolActual)}"
                                         th:onclick="'activarSubidaAcuse(' + ${t.id} + ')'"
                                         class="w-full text-left px-4 py-3 text-sm text-purple-700 hover:bg-purple-50 transition flex items-center border-l-4 border-transparent hover:border-purple-500 font-bold bg-purple-50/50">
-                                        <i class="fas fa-file-signature mr-3 w-4 text-center text-purple-600"></i>
-                                        Subir Acuse
+                                        <i th:class="${t.acuseNombre != null ? 'fas fa-sync-alt mr-3 w-4 text-center text-orange-500' : 'fas fa-file-signature mr-3 w-4 text-center text-purple-600'}"></i>
+                                        <span th:text="${t.acuseNombre != null ? 'Reemplazar Acuse' : 'Subir Acuse'}">Subir Acuse</span>
                                     </button>
+
+                                    <!-- Acuse ya cargado: mostrar nombre del archivo -->
+                                    <a th:if="${t.acuseNombre != null}"
+                                        th:href="@{/terminos/descargar-acuse/{id}(id=${t.id})}"
+                                        class="block w-full text-left px-4 py-3 text-sm text-purple-600 hover:bg-purple-50 transition flex items-center border-l-4 border-purple-400 bg-purple-50/30">
+                                        <i class="fas fa-file-download mr-3 w-4 text-center text-purple-500"></i>
+                                        <span class="truncate font-medium text-xs" th:text="${t.acuseNombre}">Acuse.pdf</span>
+                                    </a>
 
                                     <button
                                         th:if="${t.estatusTermino?.name() == 'PRESENTADO' and mapaPermisos.get(t.estatusTermino)?.contains(rolActual)}"
@@ -153,13 +161,14 @@
                                         Etapa
                                     </a>
 
-                                    <div th:if="${t.estatusTermino?.name() == 'CONCLUIDO' || t.estatusTermino?.name() == 'PRESENTADO'}"
-                                        class="bg-gray-50 border-l-4 border-gray-400">
-                                        <a th:href="${#strings.startsWith(t.acuse, 'http')} ? ${t.acuse} : @{/terminos/descargar-acuse/{id}(id=${t.id})}"
-                                            th:target="${#strings.startsWith(t.acuse, 'http')} ? '_blank' : '_self'"
+                                    <div th:if="${(t.estatusTermino?.name() == 'CONCLUIDO' || t.estatusTermino?.name() == 'PRESENTADO') and t.acuseNombre != null}"
+                                        class="bg-gray-50 border-l-4 border-purple-400">
+                                        <a th:href="@{/terminos/descargar-acuse/{id}(id=${t.id})}"
                                             class="block w-full text-left px-4 py-2 text-sm text-purple-700 hover:bg-purple-100 transition flex items-center font-bold">
-                                            <i class="fas fa-file-download mr-3 w-4 text-center"></i> Descargar Acuse
+                                            <i class="fas fa-file-download mr-3 w-4 text-center text-purple-500"></i>
+                                            <span>Descargar Acuse</span>
                                         </a>
+                                        <p class="px-4 pb-2 text-[10px] text-gray-400 truncate" th:text="${t.acuseNombre}"></p>
                                     </div>
 
                                     <div class="border-t border-gray-100"></div>

@@ -71,14 +71,16 @@
                             </td>
                         </tr>
 
-                        <tr th:each="n : ${notificaciones.content}" class="hover:bg-gray-50/80 transition-colors group"
-                            th:classappend="${!n.leida ? 'bg-gob-oro' : ''}">
+                        <tr th:each="n : ${notificaciones.content}" class="hover:bg-gob-verde/100 transition-colors group"
+
+
+                            th:classappend="${!n.leida ? 'bg-gob-verde/80' : ''}"> <!--ORIGINAL class="hover:bg-grey-50/80 transition-colors group" && th:classappend="${!n.leida ? 'bg-gob-verde/75' : ''}" -->
 
                             <td class="px-6 py-5 whitespace-nowrap">
-                                <div class="text-sm font-bold text-gray-900"
-                                    th:text="${#temporals.format(n.createdAt, 'dd MMM, yyyy')}">Fecha</div>
+                                <div class="text-sm font-bold text-yellow-50"
+                                    th:text="${#temporals.format(n.createdAt, 'dd MMM, yyyy')}">Fecha</div> <!--ORIGINAL class="text-sm font-bold text-gray-900"-->
                                 <div class="flex items-center gap-1">
-                                    <span class="text-xs text-gray-500" th:text="${#temporals.format(n.createdAt, 'HH:mm')}">Hora</span>
+                                    <span class="text-xs text-yellow-50" th:text="${#temporals.format(n.createdAt, 'HH:mm')}">Hora</span> <!--ORIGINAL class="text-xs text-gray-500"-->
 
 
                                     <!-- Icono Visto tipo WhatsApp
@@ -98,9 +100,9 @@
                             <td class="px-6 py-5 whitespace-nowrap">
                                 <div class="flex flex-col gap-2">
                                     <span
-                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold border"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[12px] font-extrabold border"
                                         th:classappend="${n.tipo == 'AUDIENCIA' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                       (n.tipo == 'TERMINO' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gob-oro/10 text-gob-oro border-gob-oro/20')}">
+                                       (n.tipo == 'TERMINO' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gob-oro/15 text-gob-oro border-gob-oro/50')}"> <!--ORIGINAL (n.tipo == 'TERMINO' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gob-oro/10 text-gob-oro border-gob-oro/20')}"-->
                                         <i class="fas"
                                             th:classappend="${n.tipo == 'AUDIENCIA' ? 'fa-gavel' : (n.tipo == 'TERMINO' ? 'fa-hourglass-end' : 'fa-info-circle')}"></i>
                                         <span th:text="${n.tipo}">TIPO</span>
@@ -111,10 +113,10 @@
 
                             <td class="px-6 py-5 w-1/2">
                                 <div class="max-w-md">
-                                    <p class="text-sm font-bold text-gray-800" th:text="${n.titulo}">Título de la
-                                        Notificación</p>
-                                    <p class="text-xs text-gray-500 mt-0.5 line-clamp-2" th:text="${n.mensaje}">
-                                        Mensaje...</p>
+                                    <p class="text-sm font-bold text-yellow-50" th:text="${n.titulo}">Título de la
+                                        Notificación</p> <!--ORIGINAL class="text-sm font-bold text-gray-800"-->
+                                    <p class="text-xs text-yellow-50 mt-0.5 line-clamp-2" th:text="${n.mensaje}">
+                                        Mensaje...</p> <!--ORIGINAL class="text-xs text-gray-500 mt-0.5 line-clamp-2" -->
                                 </div>
                             </td>
 
@@ -130,7 +132,7 @@
                                         </a>
 
                                         <a th:href="@{/notificaciones/archivar/{id}(id=${n.id})}"
-                                            class="text-gray-300 hover:text-red-500 transition-colors p-2 rounded hover:bg-red-50"
+                                            class="text-gray-500 hover:text-red-500 transition-colors p-2 rounded hover:bg-red-50"
                                             title="Mover a papelera">
                                             <i class="fas fa-trash-alt"></i>
                                         </a>
