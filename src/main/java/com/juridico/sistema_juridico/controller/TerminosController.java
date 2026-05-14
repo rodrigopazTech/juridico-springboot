@@ -1,60 +1,75 @@
 package com.juridico.sistema_juridico.controller;
 
-import com.juridico.sistema_juridico.Entity.expediente.Expediente;
-import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
-import com.juridico.sistema_juridico.Entity.procesal.Termino;
-import com.juridico.sistema_juridico.Entity.procesal.TerminoPresentado;
-import com.juridico.sistema_juridico.Entity.usuario.Usuario;
-import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
-import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
-import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
-import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
-import com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro;
-import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
-import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
-import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
-import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
-import com.juridico.sistema_juridico.repository.procesal.TerminoPresentadoRepository;
-import com.juridico.sistema_juridico.repository.Catalogo.CatPrioridadRepository;
-import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
-import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
-import com.juridico.sistema_juridico.service.NotificacionService;
-import com.juridico.sistema_juridico.service.AuditoriaService;
-import com.juridico.sistema_juridico.util.TerminoExcelExporter;
-import com.juridico.sistema_juridico.exception.BadRequestException;
-import com.juridico.sistema_juridico.exception.ForbiddenException;
-import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
-
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
-
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
-import java.util.*;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
+import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
+import com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
+import com.juridico.sistema_juridico.Entity.expediente.Expediente;
+import com.juridico.sistema_juridico.Entity.procesal.Termino;
+import com.juridico.sistema_juridico.Entity.procesal.TerminoPresentado;
+import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.exception.ForbiddenException;
+import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
+import com.juridico.sistema_juridico.repository.Catalogo.CatPrioridadRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
+import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+import com.juridico.sistema_juridico.repository.procesal.TerminoPresentadoRepository;
+import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
+import com.juridico.sistema_juridico.service.AuditoriaService;
+import com.juridico.sistema_juridico.service.NotificacionService;
+import com.juridico.sistema_juridico.util.TerminoExcelExporter;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Controller
 @RequestMapping("/terminos")
@@ -83,6 +98,7 @@ public class TerminosController {
 
     // --- MATRIZ DE PERMISOS ---
     private static final Map<EstatusTermino, List<RolUsuario>> PERMISOS_ETAPAS = new HashMap<>();
+
     static {
         PERMISOS_ETAPAS.put(EstatusTermino.PROYECTISTA,
                 Arrays.asList(RolUsuario.ABOGADO, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO,
@@ -101,6 +117,7 @@ public class TerminosController {
     }
 
     private static final Map<EstatusTermino, Integer> ORDEN_ETAPAS = new HashMap<>();
+
     static {
         ORDEN_ETAPAS.put(EstatusTermino.PROYECTISTA, 1);
         ORDEN_ETAPAS.put(EstatusTermino.REVISION, 2);
@@ -201,13 +218,13 @@ public class TerminosController {
             abogadosParaModal = Collections.singletonList(usuarioActual);
         } else if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.DIRECCION || usuarioActual.getRol() == RolUsuario.SUBDIRECCION) {
             abogadosParaModal = usuarioRepository.findByRolAndActivoTrue(RolUsuario.ABOGADO).stream()
-                    .filter(u -> u.getGerencia() != null && usuarioActual.getGerencia() != null &&
-                            u.getGerencia().getId().equals(usuarioActual.getGerencia().getId()))
+                    .filter(u -> u.getGerencia() != null && usuarioActual.getGerencia() != null
+                    && u.getGerencia().getId().equals(usuarioActual.getGerencia().getId()))
                     .collect(Collectors.toList());
         } else if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
             abogadosParaModal = usuarioRepository.findByRolAndActivoTrue(RolUsuario.ABOGADO).stream()
-                    .filter(u -> u.getGerencia() != null && usuarioActual.getGerencia() != null &&
-                            u.getGerencia().getId().equals(usuarioActual.getGerencia().getId()))
+                    .filter(u -> u.getGerencia() != null && usuarioActual.getGerencia() != null
+                    && u.getGerencia().getId().equals(usuarioActual.getGerencia().getId()))
                     .filter(u -> u.getMaterias().stream().anyMatch(m -> usuarioActual.getMaterias().contains(m)))
                     .collect(Collectors.toList());
         } else {
@@ -252,7 +269,7 @@ public class TerminosController {
         model.addAttribute("rolActual", usuarioActual.getRol());
         model.addAttribute("mapaPermisos", PERMISOS_ETAPAS);
         model.addAttribute("ordenEtapas", ORDEN_ETAPAS);
-        
+
         // Mantener valores
         model.addAttribute("keyword", keyword);
         model.addAttribute("paramEstatus", estatus);
@@ -261,10 +278,10 @@ public class TerminosController {
         model.addAttribute("paramGerenciaId", gerenciaId);
         model.addAttribute("paramMateriaId", materiaId);
         model.addAttribute("paramPeriodo", periodo != null ? periodo.name() : null);
-        
+
         // --- 6. CONTEOS PARA LA LÍNEA DE TIEMPO (NUEVO) ---
         List<Object[]> rawCounts = terminoRepository.contarPorEtapaConFiltros(
-                searchKeyword, prioridadId, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId, 
+                searchKeyword, prioridadId, filtroAbogadoSeguro, filtroGerenciaSeguro, materiaId,
                 fechaInicio, fechaFin,
                 filtroMateriaIds);
 
@@ -298,17 +315,15 @@ public class TerminosController {
 
         // --- 8. FILTRO POR DEFECTO PARA EL USUARIO (ELIMINADO PARA MOSTRAR TODO) ---
         // Se eliminó la lógica que filtraba por etapas asignadas por defecto para mostrar el listado completo.
-
         // --- OPTIMIZACIÓN AJAX ---
-        HttpServletRequest request = ((org.springframework.web.context.request.ServletRequestAttributes) 
-                org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes()).getRequest();
+        HttpServletRequest request = ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes()).getRequest();
         String isAjax = request.getHeader("X-Requested-With");
-            
+
         if ("XMLHttpRequest".equals(isAjax)) {
             if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
                 paginaTerminos = terminoRepository.buscarConFiltros(
-                    id, searchKeyword, null, prioridadId, filtroAbogadoSeguro, filtroGerenciaSeguro, 
-                    fechaInicio, fechaFin, materiaId, filtroMateriaIds, pageable);
+                        id, searchKeyword, null, prioridadId, filtroAbogadoSeguro, filtroGerenciaSeguro,
+                        fechaInicio, fechaFin, materiaId, filtroMateriaIds, pageable);
                 model.addAttribute("terminos", paginaTerminos);
                 model.addAttribute("paramEstatus", null);
             }
@@ -319,8 +334,9 @@ public class TerminosController {
     }
 
     private List<EstatusTermino> getEtapasAsignadasPorRol(RolUsuario rol) {
-        if (rol == null)
+        if (rol == null) {
             return new ArrayList<>();
+        }
         List<EstatusTermino> etapas = new ArrayList<>();
         switch (rol) {
             case ABOGADO:
@@ -381,7 +397,7 @@ public class TerminosController {
         if (terminoForm.getId() != null) {
             Termino existente = terminoRepository.findById(terminoForm.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("El término que intentas editar no existe."));
-            
+
             validarAccesoTermino(existente, actor);
 
             existente.setAsunto(terminoForm.getAsunto());
@@ -420,13 +436,16 @@ public class TerminosController {
             if (terminoGuardar.getPrioridad() == null && terminoGuardar.getExpediente() != null) {
                 terminoGuardar.setPrioridad(terminoGuardar.getExpediente().getPrioridad());
             }
-            
+
             validarAccesoTermino(terminoGuardar, actor);
         }
 
         Termino terminoGuardado = terminoRepository.save(terminoGuardar);
 
-        if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
+        //////////BLOQUE SUPERIOR SIN MODIFICACIONES //////////////////////////
+/// 
+/// LINEAS INFERIORES EN MODIFICACION ////////////////////////////////////////
+    /*    if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
             String expedienteNum = (terminoGuardado.getExpediente() != null)
                     ? terminoGuardado.getExpediente().getNumero()
                     : "S/N";
@@ -437,7 +456,39 @@ public class TerminosController {
                     "TERMINO",
                     terminoGuardado.getPrioridad(),
                     terminoGuardado.getId().toString());
+        } */
+
+     if (actor.getRol() == RolUsuario.ABOGADO) {
+            if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
+                String expedienteNum = (terminoGuardado.getExpediente() != null)
+                        ? terminoGuardado.getExpediente().getNumero()
+                        : "S/N";
+                notificacionService.crearNotificacion(
+                        terminoGuardado.getAbogadoResponsable(),
+                        "Nuevo Término en expediente: " + expedienteNum,
+                        "Creaste un Termino nuevo con el asunto: " + terminoGuardado.getAsunto(),
+                        "TERMINO",
+                        terminoGuardado.getPrioridad(),
+                        terminoGuardado.getId().toString());
+            }
+        } else {
+            if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
+                String expedienteNum = (terminoGuardado.getExpediente() != null)
+                        ? terminoGuardado.getExpediente().getNumero()
+                        : "S/N";
+                notificacionService.crearNotificacion(
+                        terminoGuardado.getAbogadoResponsable(),
+                        "Nuevo Término: " + expedienteNum,
+                        "[" + actor.getNombreCompleto() + "]" + " Ha creado un termino nuevo con el asunto: " + terminoGuardado.getAsunto(),
+                        "TERMINO",
+                        terminoGuardado.getPrioridad(),
+                        terminoGuardado.getId().toString());
+            }
         }
+        /////////LINEAS SUPERIORES EN MODIFICACION //////////////////////////////////////
+/// 
+/// 
+/// BLOQUE INFERIOR SIN MODIFICACIONES ///////////////////////////////////////////     
 
         redirectAttrs.addFlashAttribute("mensaje", "Término guardado correctamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
@@ -451,7 +502,7 @@ public class TerminosController {
 
         Usuario actor = getUsuarioActual();
         validarAccesoTermino(termino, actor);
-        
+
         EstatusTermino etapaAnterior = termino.getEstatusTermino();
 
         if (!tienePermiso(etapaAnterior, actor.getRol())) {
@@ -468,8 +519,9 @@ public class TerminosController {
 
         EstatusTermino siguienteEtapa = calcularSiguienteEstado(etapaAnterior);
         termino.setEstatusTermino(siguienteEtapa);
-        if (siguienteEtapa == EstatusTermino.PRESENTADO)
+        if (siguienteEtapa == EstatusTermino.PRESENTADO) {
             termino.setFechaPresentacion(LocalDate.now());
+        }
 
         if (termino.getExpediente() != null) {
             String desc = "Cambio de estatus de Término a " + siguienteEtapa.getDescripcion()
@@ -485,10 +537,14 @@ public class TerminosController {
     }
 
     private void notificarCambioDeEtapa(Termino termino, EstatusTermino etapaAnterior, EstatusTermino nuevaEtapa, Usuario actor) {
-        if (termino.getExpediente() == null) return;
+        if (termino.getExpediente() == null) {
+            return;
+        }
 
         Gerencia g = termino.getExpediente().getGerencia();
-        if (g == null) return;
+        if (g == null) {
+            return;
+        }
 
         String titulo = "Término en " + nuevaEtapa.getDescripcion();
         String mensajeBase = String.format("Movimiento de '%s' a '%s' por %s", etapaAnterior.getDescripcion(), nuevaEtapa.getDescripcion(), actor.getNombreCompleto());
@@ -505,7 +561,9 @@ public class TerminosController {
                 destinatarios.addAll(usuarioRepository.findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
                 break;
             case LIBERADO:
-                if (termino.getAbogadoResponsable() != null) destinatarios.add(termino.getAbogadoResponsable());
+                if (termino.getAbogadoResponsable() != null) {
+                    destinatarios.add(termino.getAbogadoResponsable());
+                }
                 destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, g));
                 break;
             case PRESENTADO:
@@ -551,7 +609,9 @@ public class TerminosController {
 
             String carpetaDestino = "uploads/terminos/";
             Path rutaCarpeta = Paths.get(carpetaDestino);
-            if (!Files.exists(rutaCarpeta)) Files.createDirectories(rutaCarpeta);
+            if (!Files.exists(rutaCarpeta)) {
+                Files.createDirectories(rutaCarpeta);
+            }
 
             String nombreFinal = id + "_" + archivo.getOriginalFilename();
             Files.copy(archivo.getInputStream(), rutaCarpeta.resolve(nombreFinal), StandardCopyOption.REPLACE_EXISTING);
@@ -585,7 +645,9 @@ public class TerminosController {
             if (termino.getEstatusTermino() == EstatusTermino.LIBERADO) {
                 String carpeta = "uploads/acuses/";
                 Path ruta = Paths.get(carpeta);
-                if (!Files.exists(ruta)) Files.createDirectories(ruta);
+                if (!Files.exists(ruta)) {
+                    Files.createDirectories(ruta);
+                }
                 String nombreAcuse = "ACUSE_" + id + "_" + archivo.getOriginalFilename();
                 Files.copy(archivo.getInputStream(), ruta.resolve(nombreAcuse), StandardCopyOption.REPLACE_EXISTING);
 
@@ -598,12 +660,16 @@ public class TerminosController {
                 terminoPresentadoRepository.save(presentado);
 
                 termino.setAcuseNombre(nombreAcuse);
-                if (observaciones != null) termino.setObservaciones(observaciones);
+                if (observaciones != null) {
+                    termino.setObservaciones(observaciones);
+                }
                 termino.setUpdatedAt(LocalDateTime.now());
                 terminoRepository.save(termino);
 
                 String logDesc = "Se ha cargado el acuse: " + archivo.getOriginalFilename();
-                if (observaciones != null && !observaciones.trim().isEmpty()) logDesc += " - Observaciones: " + observaciones;
+                if (observaciones != null && !observaciones.trim().isEmpty()) {
+                    logDesc += " - Observaciones: " + observaciones;
+                }
                 auditoriaService.registrar(termino.getExpediente(), "ARCHIVO CARGADO", logDesc, "UPLOAD", actor);
 
                 redirectAttrs.addFlashAttribute("mensaje", "Acuse cargado correctamente. Ahora puedes avanzar el término a 'Presentado'.");
@@ -630,12 +696,16 @@ public class TerminosController {
 
             if (termino.getEstatusTermino() == EstatusTermino.PRESENTADO) {
                 termino.setEstatusTermino(EstatusTermino.CONCLUIDO);
-                if (observaciones != null) termino.setObservaciones(observaciones);
+                if (observaciones != null) {
+                    termino.setObservaciones(observaciones);
+                }
                 termino.setUpdatedAt(LocalDateTime.now());
                 terminoRepository.save(termino);
 
                 String logDesc = "El término ha sido marcado como CONCLUIDO y archivado.";
-                if (observaciones != null && !observaciones.trim().isEmpty()) logDesc += " - Observaciones: " + observaciones;
+                if (observaciones != null && !observaciones.trim().isEmpty()) {
+                    logDesc += " - Observaciones: " + observaciones;
+                }
                 auditoriaService.registrar(termino.getExpediente(), "TÉRMINO CONCLUIDO", logDesc, "CHECK", actor);
 
                 redirectAttrs.addFlashAttribute("mensaje", "¡Término finalizado y archivado correctamente!");
@@ -649,20 +719,30 @@ public class TerminosController {
     }
 
     private boolean tienePermiso(EstatusTermino etapaActual, RolUsuario rolUsuario) {
-        if (etapaActual == null) return false;
+        if (etapaActual == null) {
+            return false;
+        }
         List<RolUsuario> permitidos = PERMISOS_ETAPAS.get(etapaActual);
         return permitidos != null && permitidos.contains(rolUsuario);
     }
 
     private EstatusTermino calcularSiguienteEstado(EstatusTermino actual) {
-        if (actual == null) return EstatusTermino.PROYECTISTA;
+        if (actual == null) {
+            return EstatusTermino.PROYECTISTA;
+        }
         switch (actual) {
-            case PROYECTISTA: return EstatusTermino.REVISION;
-            case REVISION: return EstatusTermino.GERENCIA;
-            case GERENCIA: return EstatusTermino.DIRECCION;
-            case DIRECCION: return EstatusTermino.LIBERADO;
-            case LIBERADO: return EstatusTermino.PRESENTADO;
-            default: return actual;
+            case PROYECTISTA:
+                return EstatusTermino.REVISION;
+            case REVISION:
+                return EstatusTermino.GERENCIA;
+            case GERENCIA:
+                return EstatusTermino.DIRECCION;
+            case DIRECCION:
+                return EstatusTermino.LIBERADO;
+            case LIBERADO:
+                return EstatusTermino.PRESENTADO;
+            default:
+                return actual;
         }
     }
 
@@ -675,8 +755,10 @@ public class TerminosController {
     public ResponseEntity<Resource> descargarArchivo(@PathVariable("id") Integer id) {
         try {
             Termino termino = terminoRepository.findById(id).orElse(null);
-            if (termino == null || termino.getAcuse() == null) return ResponseEntity.notFound().build();
-            
+            if (termino == null || termino.getAcuse() == null) {
+                return ResponseEntity.notFound().build();
+            }
+
             validarAccesoTermino(termino, getUsuarioActual());
 
             Path rutaArchivo = Paths.get("uploads/terminos").resolve(termino.getAcuse());
@@ -713,16 +795,22 @@ public class TerminosController {
 
         if (usuarioActual.getRol() == RolUsuario.ADMIN || usuarioActual.getRol() == RolUsuario.DIRECCION || usuarioActual.getRol() == RolUsuario.SUBDIRECCION) {
         } else if (usuarioActual.getRol() == RolUsuario.GERENTE) {
-            if (usuarioActual.getGerencia() != null) secGerenciaId = usuarioActual.getGerencia().getId();
+            if (usuarioActual.getGerencia() != null) {
+                secGerenciaId = usuarioActual.getGerencia().getId();
+            }
         } else if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
-            if (usuarioActual.getGerencia() != null) secGerenciaId = usuarioActual.getGerencia().getId();
+            if (usuarioActual.getGerencia() != null) {
+                secGerenciaId = usuarioActual.getGerencia().getId();
+            }
             if (usuarioActual.getMaterias() != null && !usuarioActual.getMaterias().isEmpty()) {
                 secMateriaIds = usuarioActual.getMaterias().stream().map(m -> m.getId()).collect(Collectors.toList());
             } else {
                 secMateriaIds = Collections.emptyList();
             }
         } else {
-            if (usuarioActual.getGerencia() != null) secGerenciaId = usuarioActual.getGerencia().getId();
+            if (usuarioActual.getGerencia() != null) {
+                secGerenciaId = usuarioActual.getGerencia().getId();
+            }
             secMateriaIds = Collections.emptyList();
         }
 
@@ -777,7 +865,9 @@ public class TerminosController {
             List<TerminoPresentado> presentados = terminoPresentadoRepository.findByTerminoExpedienteId(termino.getExpediente().getId());
             TerminoPresentado acuse = presentados.stream().filter(p -> p.getTermino().getId().equals(id)).findFirst().orElseThrow(() -> new ResourceNotFoundException("Acuse no encontrado"));
 
-            if (acuse.getAcuseDocumento() == null) return ResponseEntity.notFound().build();
+            if (acuse.getAcuseDocumento() == null) {
+                return ResponseEntity.notFound().build();
+            }
 
             Path rutaArchivo = Paths.get("uploads/acuses").resolve(acuse.getAcuseDocumento());
             Resource recurso = new UrlResource(rutaArchivo.toUri());
@@ -811,22 +901,32 @@ public class TerminosController {
     }
 
     private void validarAccesoTermino(Termino termino, Usuario usuario) {
-        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) return;
+        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+            return;
+        }
         Expediente e = termino.getExpediente();
-        if (e == null) return;
+        if (e == null) {
+            return;
+        }
         validarAccesoExpediente(e, usuario);
         if (usuario.getRol() == RolUsuario.ABOGADO) {
             boolean esResponsableTermino = termino.getAbogadoResponsable() != null && termino.getAbogadoResponsable().getId().equals(usuario.getId());
             boolean esResponsableExp = e.getAbogadoResponsable() != null && e.getAbogadoResponsable().getId().equals(usuario.getId());
             boolean esInvitado = audienciaRepository.findExpedientesByAbogadoInvitadoActivo(usuario.getId()).stream().anyMatch(exp -> exp.getId().equals(e.getId()));
-            if (!esResponsableTermino && !esResponsableExp && !esInvitado) throw new ForbiddenException("No tienes acceso a este término.");
+            if (!esResponsableTermino && !esResponsableExp && !esInvitado) {
+                throw new ForbiddenException("No tienes acceso a este término.");
+            }
         }
     }
 
     private void validarAccesoExpediente(Expediente e, Usuario usuario) {
-        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) return;
+        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+            return;
+        }
         if (usuario.getGerencia() != null && (e.getGerencia() == null || !e.getGerencia().getId().equals(usuario.getGerencia().getId()))) {
-            if (usuario.getRol() != RolUsuario.ABOGADO) throw new ForbiddenException("No tienes acceso a esta gerencia.");
+            if (usuario.getRol() != RolUsuario.ABOGADO) {
+                throw new ForbiddenException("No tienes acceso a esta gerencia.");
+            }
         }
         if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
             if (e.getMateria() == null || usuario.getMaterias().stream().noneMatch(m -> m.getId().equals(e.getMateria().getId()))) {
@@ -835,7 +935,9 @@ public class TerminosController {
         } else if (usuario.getRol() == RolUsuario.ABOGADO) {
             boolean esResponsable = e.getAbogadoResponsable() != null && e.getAbogadoResponsable().getId().equals(usuario.getId());
             boolean esInvitado = audienciaRepository.findExpedientesByAbogadoInvitadoActivo(usuario.getId()).stream().anyMatch(exp -> exp.getId().equals(e.getId()));
-            if (!esResponsable && !esInvitado) throw new ForbiddenException("No tienes acceso a este expediente.");
+            if (!esResponsable && !esInvitado) {
+                throw new ForbiddenException("No tienes acceso a este expediente.");
+            }
         }
     }
 }

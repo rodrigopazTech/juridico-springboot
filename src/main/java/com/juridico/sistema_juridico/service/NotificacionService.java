@@ -1,20 +1,22 @@
 package com.juridico.sistema_juridico.service;
 
-import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
-import com.juridico.sistema_juridico.Entity.usuario.Notificacion;
-import com.juridico.sistema_juridico.Entity.usuario.Usuario;
-import com.juridico.sistema_juridico.Entity.usuario.PreferenciaNotificacion;
-import com.juridico.sistema_juridico.repository.Usuarios.NotificacionRepository;
-import com.juridico.sistema_juridico.repository.Usuarios.PreferenciaNotificacionRepository;
-import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
-import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
+import com.juridico.sistema_juridico.Entity.usuario.Notificacion;
+import com.juridico.sistema_juridico.Entity.usuario.PreferenciaNotificacion;
+import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.repository.Usuarios.NotificacionRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.PreferenciaNotificacionRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 
 @Service
 public class NotificacionService {
@@ -31,9 +33,9 @@ public class NotificacionService {
 
     public void crearNotificacion(Usuario usuario, String titulo, String mensaje, String tipo, CatPrioridad prioridad,
             String entidadId) {
-        if (usuario == null)
+        if (usuario == null) {
             return; // Evitar null pointer
-
+        }
         // 2. Obtener preferencias del usuario (si no existen, crea unas por defecto)
         PreferenciaNotificacion prefs = preferenciaRepository.findByUsuarioId(usuario.getId())
                 .orElseGet(() -> PreferenciaNotificacion.builder().usuario(usuario).build());
@@ -86,7 +88,9 @@ public class NotificacionService {
     }
 
     private void notificarASuperiores(Usuario subordinado, String titulo, String mensaje, String tipo, CatPrioridad prioridad, String entidadId) {
-        if (subordinado.getGerencia() == null || subordinado.getRol() == null) return;
+        if (subordinado.getGerencia() == null || subordinado.getRol() == null) {
+            return;
+        }
 
         List<RolUsuario> rolesSuperiores = new ArrayList<>();
         RolUsuario rolActual = subordinado.getRol();
@@ -106,18 +110,34 @@ public class NotificacionService {
             rolesSuperiores.add(RolUsuario.SUBDIRECCION);
         }
 
-        if (rolesSuperiores.isEmpty()) return;
+        if (rolesSuperiores.isEmpty()) {
+            return;
+        }
 
         // Buscar a los jefes de la MISMA gerencia
         List<Usuario> jefes = usuarioRepository.findByGerenciaIdAndRolInAndActivoTrue(
                 subordinado.getGerencia().getId(), rolesSuperiores);
+        String nombreSubordinado = subordinado.getNombreCompleto();
 
-        String tituloJefe = "[SUBORDINADO] " + titulo;
-        String mensajeJefe = "Actividad de " + subordinado.getNombreCompleto() + ": " + mensaje;
+        String tituloJefe = "[" + rolActual + "]"+titulo;
+        //String mensajeJefe = "Actividad de " + nombreSubordinado + ": " + mensaje;
+        String mensajeJefe = "";
+
+        if (tipo == "TERMINO") {
+            mensajeJefe = nombreSubordinado + " " + " Ha creado un témino nuevo";
+        }
+        if (tipo == "AUDIENCIA") {
+            mensajeJefe = nombreSubordinado + " " + " Ha asignado una audiencia nueva";
+        }
+        if (tipo == "ASIGNACIÓN") {
+            mensajeJefe = nombreSubordinado + " " + " Ha hecho una asignación nueva";
+        }
 
         for (Usuario jefe : jefes) {
             // Evitar duplicados si el jefe ya es el usuario asignado (aunque la lógica ya lo separa)
-            if (jefe.getId().equals(subordinado.getId())) continue;
+            if (jefe.getId().equals(subordinado.getId())) {
+                continue;
+            }
 
             Notificacion notifJefe = Notificacion.builder()
                     .usuario(jefe)
