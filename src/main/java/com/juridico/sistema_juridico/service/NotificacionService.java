@@ -33,10 +33,15 @@ public class NotificacionService {
 
     public void crearNotificacion(Usuario usuario, String titulo, String mensaje, String tipo, CatPrioridad prioridad,
             String entidadId) {
+        crearNotificacion(usuario, null, titulo, mensaje, tipo, prioridad, entidadId, false);
+    }
+
+    public void crearNotificacion(Usuario usuario, Usuario actor, String titulo, String mensaje, String tipo, CatPrioridad prioridad,
+            String entidadId, boolean silenciarSuperiores) {
         if (usuario == null) {
             return; // Evitar null pointer
         }
-        // 2. Obtener preferencias del usuario (si no existen, crea unas por defecto)
+        // 2. Obtener preferencias del usuario
         PreferenciaNotificacion prefs = preferenciaRepository.findByUsuarioId(usuario.getId())
                 .orElseGet(() -> PreferenciaNotificacion.builder().usuario(usuario).build());
 
@@ -53,7 +58,6 @@ public class NotificacionService {
                 debeNotificar = prefs.isNotificarReasignacion();
                 break;
             case "TERMINO":
-                // Diferenciamos por el título si es un término nuevo o uno por vencer
                 if (tituloUpper.contains("NUEVO")) {
                     debeNotificar = prefs.isNotificarNuevoTermino();
                 } else if (tituloUpper.contains("VENCER") || tituloUpper.contains("VENCIDO")
@@ -63,12 +67,11 @@ public class NotificacionService {
                 break;
         }
 
-        // 4. Si la preferencia está apagada, abortamos silenciosamente
         if (!debeNotificar) {
             return;
         }
 
-        // 5. Si está encendida, procedemos a guardar
+        // 5. Guardar notificación principal
         Notificacion notif = Notificacion.builder()
                 .usuario(usuario)
                 .titulo(titulo)
@@ -83,60 +86,63 @@ public class NotificacionService {
                 .build();
         notificacionRepository.save(notif);
 
-        // 6. NOTIFICAR A SUPERIORES (Jerarquía de Gerencia)
-        notificarASuperiores(usuario, titulo, mensaje, tipo, prioridad, entidadId);
+        // 6. NOTIFICAR A SUPERIORES con contexto del autor
+        if (!silenciarSuperiores) {
+            notificarASuperiores(usuario, actor, titulo, mensaje, tipo, prioridad, entidadId);
+        }
     }
 
-    private void notificarASuperiores(Usuario subordinado, String titulo, String mensaje, String tipo, CatPrioridad prioridad, String entidadId) {
+    private void notificarASuperiores(Usuario subordinado, Usuario actor, String titulo, String mensaje, String tipo, CatPrioridad prioridad, String entidadId) {
         if (subordinado.getGerencia() == null || subordinado.getRol() == null) {
             return;
         }
 
         List<RolUsuario> rolesSuperiores = new ArrayList<>();
-        RolUsuario rolActual = subordinado.getRol();
+        RolUsuario rolDestinatario = subordinado.getRol();
 
-        // Definir quiénes son "jefes" según el rol del que crea/recibe la acción
-        if (rolActual == RolUsuario.ABOGADO) {
-            rolesSuperiores.add(RolUsuario.JEFE_DEPTO);
-            rolesSuperiores.add(RolUsuario.GERENTE);
-            rolesSuperiores.add(RolUsuario.DIRECCION);
-            rolesSuperiores.add(RolUsuario.SUBDIRECCION);
-        } else if (rolActual == RolUsuario.JEFE_DEPTO) {
-            rolesSuperiores.add(RolUsuario.GERENTE);
-            rolesSuperiores.add(RolUsuario.DIRECCION);
-            rolesSuperiores.add(RolUsuario.SUBDIRECCION);
-        } else if (rolActual == RolUsuario.GERENTE) {
-            rolesSuperiores.add(RolUsuario.DIRECCION);
-            rolesSuperiores.add(RolUsuario.SUBDIRECCION);
+        if (rolDestinatario == RolUsuario.ABOGADO) {
+            rolesSuperiores.addAll(List.of(RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE, RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
+        } else if (rolDestinatario == RolUsuario.JEFE_DEPTO) {
+            rolesSuperiores.addAll(List.of(RolUsuario.GERENTE, RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
+        } else if (rolDestinatario == RolUsuario.GERENTE) {
+            rolesSuperiores.addAll(List.of(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
         }
 
         if (rolesSuperiores.isEmpty()) {
             return;
         }
 
-        // Buscar a los jefes de la MISMA gerencia
-        List<Usuario> jefes = usuarioRepository.findByGerenciaIdAndRolInAndActivoTrue(
-                subordinado.getGerencia().getId(), rolesSuperiores);
-        String nombreSubordinado = subordinado.getNombreCompleto();
+        List<Usuario> jefes = new ArrayList<>();
+        if (subordinado.getGerencia() != null) {
+            jefes.addAll(usuarioRepository.findByGerenciaIdAndRolInAndActivoTrue(
+                    subordinado.getGerencia().getId(), rolesSuperiores));
+        }
 
-        String tituloJefe = "[" + rolActual + "]"+titulo;
-        //String mensajeJefe = "Actividad de " + nombreSubordinado + ": " + mensaje;
+        jefes = jefes.stream().distinct().toList();
+
+        // Título mejorado para el Jefe
+        String etiquetaAutor = (actor != null) ? actor.getRol().toString() : "SISTEMA";
+        String tituloJefe = "[" + etiquetaAutor + "] Asignación a " + rolDestinatario;
+
+        // Mensaje detallado: "¿Quién le asignó a quién?"
         String mensajeJefe = "";
-
-        if (tipo == "TERMINO") {
-            mensajeJefe = nombreSubordinado + " " + " Ha creado un témino nuevo";
-        }
-        if (tipo == "AUDIENCIA") {
-            mensajeJefe = nombreSubordinado + " " + " Ha asignado una audiencia nueva";
-        }
-        if (tipo == "ASIGNACIÓN") {
-            mensajeJefe = nombreSubordinado + " " + " Ha hecho una asignación nueva";
+        String numExpediente = (entidadId != null && !entidadId.trim().isEmpty()) ? entidadId : "S/N";
+        
+        if (actor != null && !actor.getId().equals(subordinado.getId())) {
+            // Caso: Alguien más le asignó al subordinado
+            mensajeJefe = String.format("El %s %s ha asignado un %s al %s %s en el expediente: %s",
+                    actor.getRol(), actor.getNombreCompleto(), tipo.toLowerCase(),
+                    rolDestinatario, subordinado.getNombreCompleto(), numExpediente);
+        } else {
+            // Caso: El mismo usuario creó la actividad o es proceso de sistema
+            String nombreAutor = (actor != null) ? actor.getNombreCompleto() : "El sistema";
+            mensajeJefe = String.format("%s ha generado actividad de %s para %s en el expediente: %s",
+                    nombreAutor, tipo.toLowerCase(), subordinado.getNombreCompleto(), numExpediente);
         }
 
         for (Usuario jefe : jefes) {
-            // Evitar duplicados si el jefe ya es el usuario asignado (aunque la lógica ya lo separa)
-            if (jefe.getId().equals(subordinado.getId())) {
-                continue;
+            if (jefe.getId().equals(subordinado.getId()) || (actor != null && jefe.getId().equals(actor.getId()))) {
+                continue; // No notificar al receptor ni al autor
             }
 
             Notificacion notifJefe = Notificacion.builder()
@@ -163,3 +169,4 @@ public class NotificacionService {
         return notificacionRepository.countByUsuarioAndLeidaFalse(usuario);
     }
 }
+// NotificacionService - Version VScode en antigravity - lineas 188

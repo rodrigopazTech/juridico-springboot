@@ -110,11 +110,13 @@ public class NotificacionAutomaticaService {
             for (Usuario u : destinatarios) {
                 notificacionService.crearNotificacion(
                         u,
+                        null,
                         tituloNotif,
                         mensaje,
                         "TERMINO",
                         prioridad,
-                        t.getId().toString());
+                        t.getId().toString(),
+                        true);
                 System.out.println("   -> Notificación enviada a " + u.getEmail() + " (" + u.getRol()
                         + ") sobre término ID: " + t.getId());
             }

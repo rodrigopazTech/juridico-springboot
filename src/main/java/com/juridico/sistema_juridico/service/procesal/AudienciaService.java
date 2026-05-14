@@ -133,14 +133,19 @@ public class AudienciaService {
 
             String entidadId = audiencia.getId().toString();
 
+            String emailActor = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario actor = usuarioRepository.findByEmail(emailActor).orElse(null);
+
             for (Usuario destinatario : destinatarios) {
                 notificacionService.crearNotificacion(
                         destinatario,
+                        actor,
                         "Acta Disponible: " + expediente,
                         "El abogado " + nombreAbogado + " ha subido el acta. Requiere validación.",
                         "AUDIENCIA",
                         catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
-                        entidadId);
+                        entidadId,
+                        true);
             }
         } catch (Exception e) {
             System.err.println("Error al enviar notificación de acta: " + e.getMessage());
@@ -264,15 +269,19 @@ public class AudienciaService {
             String mensajeBase = "Programada para el " + a.getFechaAudiencia() + " a las " + a.getHoraAudiencia();
             String entidadId = a.getId().toString();
 
+            Usuario actor = usuarioRepository.findByEmail(emailCreador).orElse(null);
+
             // 4. NOTIFICAR AL RESPONSABLE (Dueño del expediente)
             if (responsable != null && !responsable.getEmail().equalsIgnoreCase(emailCreador)) {
                 notificacionService.crearNotificacion(
                         responsable,
+                        actor,
                         tituloBase,
                         mensajeBase,
                         "AUDIENCIA",
                         catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
-                        entidadId);
+                        entidadId,
+                        false);
             }
 
             // 5. NOTIFICAR AL QUE COMPARECE (El asignado)
@@ -281,11 +290,13 @@ public class AudienciaService {
                 if (responsable == null || !comparece.getId().equals(responsable.getId())) {
                     notificacionService.crearNotificacion(
                             comparece,
+                            actor,
                             "Asignación de Comparecencia",
                             "Has sido asignado para asistir a la audiencia del expediente " + numeroExpediente,
                             "AUDIENCIA",
                             catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
-                            entidadId);
+                            entidadId,
+                            false);
                 }
             }
 

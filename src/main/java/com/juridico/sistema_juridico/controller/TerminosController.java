@@ -441,11 +441,10 @@ public class TerminosController {
         }
 
         Termino terminoGuardado = terminoRepository.save(terminoGuardar);
+        Usuario usuarioActualN = getUsuarioActual();
 
-        //////////BLOQUE SUPERIOR SIN MODIFICACIONES //////////////////////////
-/// 
-/// LINEAS INFERIORES EN MODIFICACION ////////////////////////////////////////
-    /*    if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
+        /* PUNTO DE REFERENCIA - FUNCION ORIGINAL 
+        if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
             String expedienteNum = (terminoGuardado.getExpediente() != null)
                     ? terminoGuardado.getExpediente().getNumero()
                     : "S/N";
@@ -455,21 +454,30 @@ public class TerminosController {
                     "El usuario " + actor.getNombreCompleto() + " te ha asignado: " + terminoGuardado.getAsunto(),
                     "TERMINO",
                     terminoGuardado.getPrioridad(),
-                    terminoGuardado.getId().toString());
-        } */
+                        expedienteNum);
 
-     if (actor.getRol() == RolUsuario.ABOGADO) {
+
+
+        }
+         */
+        //BLOQUE ARRIBA SIN MODIFICACIONES ////////////////////////////
+        // LINEAS DEBAJO EN MODIFICACION ///////////////////////////////
+        // punto de referencia 2
+        if (usuarioActualN.getRol() == RolUsuario.ABOGADO) {
             if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
                 String expedienteNum = (terminoGuardado.getExpediente() != null)
                         ? terminoGuardado.getExpediente().getNumero()
                         : "S/N";
                 notificacionService.crearNotificacion(
                         terminoGuardado.getAbogadoResponsable(),
+                        actor,
                         "Nuevo Término en expediente: " + expedienteNum,
-                        "Creaste un Termino nuevo con el asunto: " + terminoGuardado.getAsunto(),
+                        "Haz creado el termino con el asunto: " + terminoGuardado.getAsunto(),
                         "TERMINO",
-                        terminoGuardado.getPrioridad(),
-                        terminoGuardado.getId().toString());
+                          terminoGuardado.getPrioridad(),
+                          expedienteNum,
+                          false);
+
             }
         } else {
             if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
@@ -478,17 +486,22 @@ public class TerminosController {
                         : "S/N";
                 notificacionService.crearNotificacion(
                         terminoGuardado.getAbogadoResponsable(),
+                        actor,
                         "Nuevo Término: " + expedienteNum,
-                        "[" + actor.getNombreCompleto() + "]" + " Ha creado un termino nuevo con el asunto: " + terminoGuardado.getAsunto(),
+                        "El usuario " + actor.getNombreCompleto() + " te ha asignado: " + terminoGuardado.getAsunto(),
                         "TERMINO",
-                        terminoGuardado.getPrioridad(),
-                        terminoGuardado.getId().toString());
+                          terminoGuardado.getPrioridad(),
+                          expedienteNum,
+                          false);
+
             }
         }
-        /////////LINEAS SUPERIORES EN MODIFICACION //////////////////////////////////////
-/// 
-/// 
-/// BLOQUE INFERIOR SIN MODIFICACIONES ///////////////////////////////////////////     
+
+        /////LINEAS ARRIBA EN MODIFICACION //////////////////////////////////////
+
+
+        
+        //////BLOQUE DEBAJO SIN CAMBIOS ///////////////////////////////////////////////////////
 
         redirectAttrs.addFlashAttribute("mensaje", "Término guardado correctamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
@@ -558,8 +571,11 @@ public class TerminosController {
                 destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE, g));
                 break;
             case DIRECCION:
-                destinatarios.addAll(usuarioRepository.findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
+                // Dirección/Subdirección deben recibir solo de la misma gerencia del término
+                destinatarios.addAll(usuarioRepository.findByGerenciaIdAndRolInAndActivoTrue(g.getId(),
+                        Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
                 break;
+
             case LIBERADO:
                 if (termino.getAbogadoResponsable() != null) {
                     destinatarios.add(termino.getAbogadoResponsable());
@@ -567,8 +583,11 @@ public class TerminosController {
                 destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, g));
                 break;
             case PRESENTADO:
-                destinatarios.addAll(usuarioRepository.findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION)));
+                // Dirección debe recibir solo de la misma gerencia del término
+                destinatarios.addAll(usuarioRepository.findByGerenciaIdAndRolInAndActivoTrue(g.getId(),
+                        Arrays.asList(RolUsuario.DIRECCION)));
                 break;
+
         }
 
         Set<Usuario> unicos = new HashSet<>(destinatarios);
@@ -577,7 +596,7 @@ public class TerminosController {
 
         for (Usuario u : unicos) {
             if (!u.getId().equals(actor.getId())) {
-                notificacionService.crearNotificacion(u, tituloExp, mensajeBase, "TERMINO", termino.getPrioridad(), termino.getId().toString());
+                notificacionService.crearNotificacion(u, actor, tituloExp, mensajeBase, "TERMINO", termino.getPrioridad(), termino.getId().toString(), true);
             }
         }
     }
@@ -941,3 +960,4 @@ public class TerminosController {
         }
     }
 }
+// TerminosController - Version VsCode dentro de antigravity - lineas 960
