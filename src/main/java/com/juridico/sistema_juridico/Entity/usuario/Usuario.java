@@ -64,6 +64,14 @@ public class Usuario {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    /**
+     * Fecha en que el usuario cambió su contraseña por última vez.
+     * Se usa para detectar contraseñas vencidas (> 3 meses).
+     * NULL = nunca ha cambiado (se inicializa en createdAt).
+     */
+    @Column(name = "password_updated_at")
+    private LocalDateTime passwordUpdatedAt;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "usuario_materias", joinColumns = @JoinColumn(name = "usuario_id"), inverseJoinColumns = @JoinColumn(name = "materia_id"))
     @Builder.Default

@@ -109,6 +109,8 @@ public class NotificacionesController {
                     return "redirect:/terminos?id=" + idClean;
                 } else if ("EXPEDIENTE".equals(notificacion.getEntidadTipo())) {
                     return "redirect:/expedientes/" + idClean;
+                } else if ("SEGURIDAD".equals(notificacion.getEntidadTipo())) {
+                    return "redirect:/perfil?tab=seguridad";
                 }
             }
         }

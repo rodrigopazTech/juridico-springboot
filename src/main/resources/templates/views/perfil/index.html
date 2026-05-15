@@ -7,6 +7,32 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- Script global de navegación de pestañas -->
+    <script th:inline="javascript">
+        window.showTab = function (tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            const tabActual = document.getElementById('tab-' + tabId);
+            if (tabActual) tabActual.classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-gob-guinda', 'bg-gray-50', 'text-gob-guinda');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.add('border-gob-guinda', 'bg-gray-50', 'text-gob-guinda');
+                activeBtn.classList.remove('border-transparent', 'text-gray-500');
+            }
+        };
+
+        // Abrir el tab indicado por el servidor (soporte para ?tab=seguridad)
+        document.addEventListener('DOMContentLoaded', function () {
+            const tabInicial = /*[[${tabInicial}]]*/ 'datos';
+            showTab(tabInicial);
+        });
+    </script>
 </head>
 
 <body class="bg-gray-50 text-gray-800 font-sans">

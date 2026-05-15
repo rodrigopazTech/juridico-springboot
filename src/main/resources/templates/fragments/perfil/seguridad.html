@@ -19,9 +19,104 @@
         </div>
 
         <div class="mt-8 flex justify-center">
-            <button type="submit" class="w-full bg-gray-800 text-white px-8 py-3 rounded-xl hover:bg-black font-bold shadow-xl transition-all flex items-center justify-center gap-2">
+            <button type="submit"
+                class="w-full bg-gray-800 text-white px-8 py-3 rounded-xl hover:bg-black font-bold shadow-xl transition-all flex items-center justify-center gap-2">
                 <i class="fas fa-key"></i> Actualizar Credenciales
             </button>
         </div>
     </form>
+
+    <!-- Script 1: Validación en Tiempo Real -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const nuevoPassword = document.getElementById('nuevoPassword');
+            const confirmarPassword = document.getElementById('confirmarPassword');
+            const mensajePassword = document.getElementById('mensajePassword');
+            const btnSubmit = document.getElementById('btnSubmitPassword');
+
+            if (!nuevoPassword || !confirmarPassword) return;
+
+            function validarCoincidencia() {
+                if (nuevoPassword.value === '' && confirmarPassword.value === '') {
+                    mensajePassword.classList.add('hidden');
+                    btnSubmit.disabled = false;
+                    return;
+                }
+
+                mensajePassword.classList.remove('hidden');
+
+                if (nuevoPassword.value.length < 6) {
+                    mensajePassword.textContent = 'La contraseña debe tener al menos 6 caracteres';
+                    mensajePassword.className = 'text-xs mt-1 block text-red-600 font-bold';
+                    bloquearBoton();
+                    return;
+                }
+
+                if (confirmarPassword.value === '') {
+                    mensajePassword.textContent = 'Ingresa la confirmación de la contraseña';
+                    mensajePassword.className = 'text-xs mt-1 block text-gray-500 font-medium';
+                    bloquearBoton();
+                    return;
+                }
+
+                if (nuevoPassword.value !== confirmarPassword.value) {
+                    mensajePassword.textContent = 'Las contraseñas nuevas no coinciden';
+                    mensajePassword.className = 'text-xs mt-1 block text-red-600 font-bold';
+                    bloquearBoton();
+                } else {
+                    mensajePassword.textContent = '✓ Las contraseñas cumplen con los requisitos';
+                    mensajePassword.className = 'text-xs mt-1 block text-green-600 font-bold';
+                    desbloquearBoton();
+                }
+            }
+
+            function bloquearBoton() {
+                btnSubmit.disabled = true;
+                btnSubmit.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+            function desbloquearBoton() {
+                btnSubmit.disabled = false;
+                btnSubmit.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            nuevoPassword.addEventListener('input', validarCoincidencia);
+            confirmarPassword.addEventListener('input', validarCoincidencia);
+        });
+    </script>
+
+    <!-- Script 2: Alertas Emergentes (Backend Feedback) -->
+    <script th:if="${mensaje != null}" th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            const mensaje = /*[[${mensaje}]]*/ '';
+            const tipo = /*[[${tipo}]]*/ '';
+
+            if (tipo === 'error') {
+                Swal.fire({
+                    title: 'Atención',
+                    text: mensaje,
+                    icon: 'error',
+                    confirmButtonText: 'Intentar de nuevo',
+                    confirmButtonColor: '#bc955c',
+                    background: '#f9fafb',
+                    customClass: { confirmButton: 'font-bold rounded-xl px-6 py-2.5' }
+                });
+            } else if (tipo === 'success') {
+                Swal.fire({
+                    title: '¡Actualización Exitosa!',
+                    text: 'Tu contraseña se cambió correctamente. Por seguridad, vuelve a iniciar sesión.',
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 5000,
+                    timerProgressBar: true,
+                    background: '#f0fdf4',
+                    willClose: () => {
+                        window.location.href = '/logout';
+                    }
+                });
+            } else {
+                Swal.fire({ title: 'Aviso', text: mensaje, icon: tipo });
+            }
+        });
+    </script>
 </div>

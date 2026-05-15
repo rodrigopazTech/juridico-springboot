@@ -24,18 +24,23 @@ public class CambiarPasswordController {
     private PasswordEncoder passwordEncoder;
 
     @GetMapping("/cambiar-password")
-    public String mostrarFormulario() {
+    public String mostrarFormulario(
+            @RequestParam(value = "razon", defaultValue = "primera-vez") String razon,
+            org.springframework.ui.Model model) {
+        model.addAttribute("razon", razon); // "primera-vez" o "vencida"
         return "views/auth/cambiar-password";
     }
 
     @PostMapping("/cambiar-password")
     public String procesarCambioPassword(@RequestParam("newPassword") String newPassword,
             @RequestParam("confirmPassword") String confirmPassword,
+            @RequestParam(value = "razon", defaultValue = "primera-vez") String razon,
             RedirectAttributes redirectAttributes) {
 
         if (!newPassword.equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("error", "Las contraseñas no coinciden.");
-            return "redirect:/cambiar-password";
+            redirectAttributes.addFlashAttribute("razon", razon);
+            return "redirect:/cambiar-password?razon=" + razon;
         }
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -46,6 +51,7 @@ public class CambiarPasswordController {
             if (usuario != null) {
                 usuario.setPassword(passwordEncoder.encode(newPassword));
                 usuario.setForcePasswordChange(false);
+                usuario.setPasswordUpdatedAt(java.time.LocalDateTime.now()); // Registro de caducidad
                 usuarioRepository.save(usuario);
 
                 // Actualizar el Authentication tag en session

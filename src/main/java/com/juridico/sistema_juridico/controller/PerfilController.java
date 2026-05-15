@@ -31,7 +31,9 @@ public class PerfilController {
 
     // --- 1. VER PERFIL ---
     @GetMapping
-    public String verPerfil(Model model) {
+    public String verPerfil(
+            @RequestParam(value = "tab", defaultValue = "datos") String tab,
+            Model model) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
@@ -42,6 +44,7 @@ public class PerfilController {
         model.addAttribute("preferencias", prefs);
         model.addAttribute("pageTitle", "Mi Cuenta");
         model.addAttribute("activePage", "perfil");
+        model.addAttribute("tabInicial", tab); // "datos", "notif", "seguridad"
 
         return "views/perfil/index";
     }
@@ -94,6 +97,7 @@ public class PerfilController {
             redirectAttrs.addFlashAttribute("tipo", "error");
             return "redirect:/perfil";
         }
+        
 
         // B. Validar que las contraseñas nuevas coincidan
         if (!nuevoPassword.equals(confirmarPassword)) {
@@ -105,6 +109,7 @@ public class PerfilController {
         // C. Actualizar y guardar en base de datos
         usuario.setPassword(passwordEncoder.encode(nuevoPassword));
         usuario.setForcePasswordChange(false);
+        usuario.setPasswordUpdatedAt(java.time.LocalDateTime.now()); // Registro de caducidad
         usuarioRepository.save(usuario);
 
         // D. Actualizar la sesión de Spring Security para no desloguear al usuario
@@ -126,6 +131,6 @@ public class PerfilController {
 
         redirectAttrs.addFlashAttribute("mensaje", "Contraseña actualizada exitosamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
-        return "redirect:/perfil";
+        return "redirect:/perfil?tab=seguridad";
     }
 }
