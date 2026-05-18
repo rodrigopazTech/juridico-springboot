@@ -53,7 +53,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 1. Recursos Públicos
                         .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**", "/lib/**").permitAll()
-                        .requestMatchers("/", "/login", "/register", "/api/auth/**", "/error", "/cambiar-password")
+                        .requestMatchers("/", "/login", "/register", "/api/auth/**", "/error", "/cambiar-password", "/ws-realtime/**")
                         .permitAll()
 
                         // 2. NIVEL ALTO

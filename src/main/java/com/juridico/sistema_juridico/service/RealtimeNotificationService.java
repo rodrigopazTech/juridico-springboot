@@ -1,0 +1,161 @@
+package com.juridico.sistema_juridico.service;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import org.postgresql.PGConnection;
+import org.postgresql.PGNotification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+@Service
+public class RealtimeNotificationService {
+
+    private static final Logger log = LoggerFactory.getLogger(RealtimeNotificationService.class);
+    private static final String CHANNEL_NAME = "canal_notificaciones_realtime";
+
+    @Value("${spring.datasource.url}")
+    private String dbUrl;
+
+    @Value("${spring.datasource.username}")
+    private String dbUser;
+
+    @Value("${spring.datasource.password}")
+    private String dbPassword;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+    private final ExecutorService listenerExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread thread = new Thread(r, "postgres-event-listener");
+        thread.setDaemon(true);
+        return thread;
+    });
+
+    private Connection dedicatedConnection;
+    private volatile boolean running = true;
+
+    @PostConstruct
+    public void startListener() {
+        log.info("Iniciando servicio de escucha en tiempo real para PostgreSQL...");
+        listenerExecutor.submit(this::listenLoop);
+    }
+
+    private void listenLoop() {
+        int reconnectAttempts = 0;
+
+        while (running && !Thread.currentThread().isInterrupted()) {
+            try {
+                establishDedicatedConnection();
+                reconnectAttempts = 0; // Resetear intentos al conectar con éxito
+
+                try (Statement stmt = dedicatedConnection.createStatement()) {
+                    log.info("Ejecutando comando LISTEN en el canal: {}", CHANNEL_NAME);
+                    stmt.execute("LISTEN " + CHANNEL_NAME + ";");
+                }
+
+                PGConnection pgConn = dedicatedConnection.unwrap(PGConnection.class);
+
+                while (running && !Thread.currentThread().isInterrupted()) {
+                    // Consulta de control periódica para forzar la lectura del socket y 
+                    // recibir las notificaciones asíncronas pendientes del servidor.
+                    try (Statement dummyStmt = dedicatedConnection.createStatement()) {
+                        dummyStmt.execute("SELECT 1;");
+                    }
+
+                    PGNotification[] notifications = pgConn.getNotifications();
+
+                    if (notifications != null) {
+                        for (PGNotification notification : notifications) {
+                            String jsonPayload = notification.getParameter();
+                            log.info("🔔 Evento recibido de Postgres [Canal: {}]: {}", 
+                                    notification.getName(), jsonPayload);
+                            
+                            // Propagar el evento a la capa de red (WebSockets STOMP)
+                            dispatchToNetworkLayer(jsonPayload);
+                        }
+                    }
+
+                    // Evitar consumo excesivo de CPU (Polling controlado de 500ms)
+                    TimeUnit.MILLISECONDS.sleep(500);
+                }
+
+            } catch (SQLException e) {
+                log.error("Error en la conexión dedicada de PostgreSQL. Intentando reconectar...", e);
+                closeResources();
+                handleReconnectionBackoff(++reconnectAttempts);
+            } catch (InterruptedException e) {
+                log.warn("El hilo de escucha de eventos ha sido interrumpido.");
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    /**
+     * Establece una conexión física directa e independiente de HikariCP
+     */
+    private void establishDedicatedConnection() throws SQLException {
+        log.info("Abriendo conexión dedicada con la base de datos para eventos asíncronos en URL: {}", dbUrl);
+        this.dedicatedConnection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
+    }
+
+    /**
+     * Punto de integración con la capa de red (WebSockets STOMP)
+     */
+    private void dispatchToNetworkLayer(String jsonPayload) {
+        log.info("Despachando evento JSON al broker de WebSockets en '/topic/alertas'");
+        this.messagingTemplate.convertAndSend("/topic/alertas", jsonPayload);
+    }
+
+    private void handleReconnectionBackoff(int attempt) {
+        // Backoff exponencial para evitar saturar el servidor (máximo de 30 segundos)
+        long sleepTime = Math.min((long) Math.pow(2, attempt) * 1000L, 30000L);
+        log.info("Reintento de conexión #{} en {} ms...", attempt, sleepTime);
+        try {
+            TimeUnit.MILLISECONDS.sleep(sleepTime);
+        } catch (InterruptedException e) {
+            log.warn("Espera de reconexión interrumpida.");
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private void closeResources() {
+        if (dedicatedConnection != null) {
+            try {
+                if (!dedicatedConnection.isClosed()) {
+                    dedicatedConnection.close();
+                }
+            } catch (SQLException e) {
+                log.error("Error al cerrar la conexión dedicada de PostgreSQL", e);
+            }
+        }
+    }
+
+    @PreDestroy
+    public void stopListener() {
+        log.info("Deteniendo el Listener de PostgreSQL de forma segura...");
+        this.running = false;
+        closeResources();
+        listenerExecutor.shutdownNow();
+        try {
+            if (!listenerExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                log.warn("El pool del Listener no se detuvo en el tiempo esperado.");
+            }
+        } catch (InterruptedException e) {
+            log.error("Interrupción durante el apagado del servicio", e);
+            Thread.currentThread().interrupt();
+        }
+        log.info("Servicio de notificaciones en tiempo real apagado.");
+    }
+}

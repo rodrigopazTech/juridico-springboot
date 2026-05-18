@@ -332,23 +332,104 @@
                     .replace(/"/g, '&quot;');
             }
 
-            // ---- Ciclo principal ----
-            async function poll() {
+            // ---- Cargar librerías WebSocket dinámicamente ----
+            function loadScripts(urls, callback) {
+                let loadedCount = 0;
+                urls.forEach(url => {
+                    if (url.includes('sockjs') && typeof SockJS !== 'undefined') {
+                        loadedCount++;
+                        if (loadedCount === urls.length) callback();
+                        return;
+                    }
+                    if (url.includes('stomp') && typeof Stomp !== 'undefined') {
+                        loadedCount++;
+                        if (loadedCount === urls.length) callback();
+                        return;
+                    }
+                    const script = document.createElement('script');
+                    script.type = 'text/javascript';
+                    script.src = url;
+                    script.onload = () => {
+                        loadedCount++;
+                        if (loadedCount === urls.length) callback();
+                    };
+                    document.head.appendChild(script);
+                });
+            }
+
+            // ---- Incrementar contador del Badge ----
+            function incrementarContadorBadge() {
+                const badge = document.getElementById('notif-badge-ping');
+                if (!badge) return;
+                
+                let currentCount = 0;
+                const textSpan = badge.querySelector('.relative.inline-flex');
+                if (textSpan) {
+                    currentCount = parseInt(textSpan.textContent.trim()) || 0;
+                }
+                actualizarBadge(currentCount + 1);
+            }
+
+            // ---- Refrescar Dropdown si está abierto ----
+            async function actualizarListaDropdownSiAbierto() {
+                const dropdown = document.getElementById('notif-dropdown');
+                if (dropdown && !dropdown.classList.contains('hidden')) {
+                    const data = await fetchNotificaciones();
+                    if (data) {
+                        actualizarBadge(data.total);
+                        renderDropdown(data);
+                    }
+                }
+            }
+
+            // ---- Conexión WebSocket Realtime ----
+            function iniciarWebSocket() {
+                loadScripts([
+                    'https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js'
+                ], function() {
+                    const socket = new SockJS('/ws-realtime');
+                    const stompClient = Stomp.over(socket);
+                    stompClient.debug = null; // Silenciar logs de debug en consola
+
+                    stompClient.connect({}, function (frame) {
+                        stompClient.subscribe('/topic/alertas', function (message) {
+                            const payload = JSON.parse(message.body);
+                            
+                            // Validar que el evento sea de inserción en notificaciones
+                            if (payload.tabla === 'notificaciones' && payload.operacion === 'INSERT') {
+                                const nuevaNotif = {
+                                    id: payload.id,
+                                    titulo: payload.titulo,
+                                    mensaje: payload.mensaje,
+                                    tipo: payload.etapa_procesal || 'SISTEMA',
+                                    prioridad: 'MEDIA',
+                                    fecha: new Date(payload.fecha).toLocaleDateString(),
+                                    hora: new Date(payload.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                                };
+
+                                if (!seenIds.has(nuevaNotif.id)) {
+                                    seenIds.add(nuevaNotif.id);
+                                    mostrarToast(nuevaNotif);
+                                    incrementarContadorBadge();
+                                    actualizarListaDropdownSiAbierto();
+                                }
+                            }
+                        });
+                    }, function(error) {
+                        // Reconexión automática con retraso de 5 segundos ante fallos de conexión
+                        setTimeout(iniciarWebSocket, 5000);
+                    });
+                });
+            }
+
+            // ---- Carga Inicial del Estado (una sola llamada al inicio) ----
+            async function pollInitialState() {
                 const data = await fetchNotificaciones();
                 if (!data) return;
 
                 actualizarBadge(data.total);
 
-                // Mostrar toasts para IDs nuevos
-                if (!firstLoad && data.notificaciones) {
-                    data.notificaciones.forEach(n => {
-                        if (!seenIds.has(n.id)) {
-                            mostrarToast(n);
-                        }
-                    });
-                }
-
-                // Actualizar set de IDs vistos
                 if (data.notificaciones) {
                     data.notificaciones.forEach(n => seenIds.add(n.id));
                 }
@@ -363,7 +444,6 @@
                 dropdown.classList.toggle('hidden');
 
                 if (isHidden) {
-                    // Cargar datos al abrir
                     const data = await fetchNotificaciones();
                     if (data) {
                         actualizarBadge(data.total);
@@ -385,10 +465,10 @@
                 }
             });
 
-            // Iniciar polling
+            // Inicializar de manera híbrida y reactiva
             document.addEventListener('DOMContentLoaded', function () {
-                poll();
-                setInterval(poll, POLL_INTERVAL);
+                pollInitialState();
+                iniciarWebSocket();
             });
         })();
         </script>

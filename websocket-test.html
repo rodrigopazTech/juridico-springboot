@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>WS Realtime Test Client</title>
+    <!-- Cargamos las librerías oficiales desde CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body style="font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px;">
+    <h2>Monitor de Expedientes en Tiempo Real</h2>
+    <div id="status" style="font-weight: bold; color: gray; margin-bottom: 20px; padding: 10px; border-radius: 4px; background: #eee;">Conectando...</div>
+    
+    <h3>Registro de Eventos:</h3>
+    <ul id="events" style="font-family: monospace; background: #f8f9fa; padding: 20px; border-radius: 6px; border: 1px solid #ddd; list-style-type: none; min-height: 100px;">
+        <li style="color: #666; font-style: italic;">Esperando eventos en tiempo real...</li>
+    </ul>
+
+    <script>
+        // Conexión al endpoint seguro de tu Spring Boot
+        const socket = new SockJS('http://localhost:8080/ws-realtime');
+        const stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function (frame) {
+            document.getElementById('status').innerText = '🟢 CONECTADO ONLINE (Escuchando /topic/alertas)';
+            document.getElementById('status').style.color = '#155724';
+            document.getElementById('status').style.background = '#d4edda';
+            document.getElementById('status').style.border = '1px solid #c3e6cb';
+            console.log('STOMP conectado:', frame);
+
+            // Suscripción al broker en memoria configurado
+            stompClient.subscribe('/topic/alertas', function (message) {
+                const payload = JSON.parse(message.body);
+                console.log('Mensaje Recibido:', payload);
+                
+                const eventsList = document.getElementById('events');
+                
+                // Limpiar el mensaje de "esperando" la primera vez
+                if (eventsList.children.length === 1 && eventsList.children[0].style.fontStyle === 'italic') {
+                    eventsList.innerHTML = '';
+                }
+
+                // Pintar el evento dinámicamente en el HTML con diseño enriquecido
+                const li = document.createElement('li');
+                li.style.padding = '12px 16px';
+                li.style.borderBottom = '1px solid #e9ecef';
+                li.style.display = 'flex';
+                li.style.flexDirection = 'column';
+                li.style.gap = '6px';
+                
+                const opBadgeColor = payload.operacion === 'INSERT' ? '#28a745' : '#007bff';
+                const tableBadgeColor = payload.tabla === 'expedientes' ? '#6f42c1' : '#fd7e14';
+                const tableName = payload.tabla === 'expedientes' ? '💼 EXPEDIENTE' : '🔔 ALERTA';
+
+                li.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>
+                            <span style="background: ${opBadgeColor}; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75em; margin-right: 6px;">${payload.operacion}</span>
+                            <span style="background: ${tableBadgeColor}; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75em; margin-right: 10px;">${tableName}</span>
+                            <strong style="color: #212529; font-size: 1.1em;">${payload.titulo || 'Sin Título'}</strong>
+                        </span>
+                        <span style="color: #6c757d; font-size: 0.85em;">
+                            Por: <strong>${payload.usuario_modificador}</strong> (${new Date(payload.fecha).toLocaleTimeString()})
+                        </span>
+                    </div>
+                    <div style="color: #495057; font-size: 0.95em; padding-left: 10px; border-left: 3px solid #dee2e6;">
+                        ${payload.mensaje || 'Sin descripción adicional.'}
+                    </div>
+                    <div style="font-size: 0.8em; color: #adb5bd; padding-left: 10px;">
+                        ID de Registro: <code>${payload.id}</code> | Estado/Tipo: <strong>${payload.etapa_procesal}</strong>
+                    </div>
+                `;
+                eventsList.prepend(li);
+            });
+        }, function(error) {
+            document.getElementById('status').innerText = '🔴 ERROR DE CONEXIÓN (¿Está el servidor Spring Boot corriendo en el puerto 8080?)';
+            document.getElementById('status').style.color = '#721c24';
+            document.getElementById('status').style.background = '#f8d7da';
+            document.getElementById('status').style.border = '1px solid #f5c6cb';
+            console.error('Error en STOMP:', error);
+        });
+    </script>
+</body>
+</html>
