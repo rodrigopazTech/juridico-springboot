@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -36,6 +39,12 @@ public class RealtimeNotificationService {
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private final ExecutorService listenerExecutor = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r, "postgres-event-listener");
@@ -112,9 +121,35 @@ public class RealtimeNotificationService {
 
     /**
      * Punto de integración con la capa de red (WebSockets STOMP)
+     * Notificaciones se envían al canal privado del usuario destinatario.
+     * Otros eventos (expedientes) se envían al canal global.
      */
     private void dispatchToNetworkLayer(String jsonPayload) {
-        log.info("Despachando evento JSON al broker de WebSockets en '/topic/alertas'");
+        try {
+            JsonNode node = objectMapper.readTree(jsonPayload);
+            String tabla = node.path("tabla").asText();
+            
+            if ("notificaciones".equals(tabla)) {
+                if (node.has("usuario_id")) {
+                    int usuarioId = node.get("usuario_id").asInt();
+                    var opt = usuarioRepository.findById(usuarioId);
+                    if (opt.isPresent()) {
+                        String email = opt.get().getEmail();
+                        if (email != null && !email.trim().isEmpty()) {
+                            log.info("Despachando notificación privada al usuario '{}' en '/queue/alertas'", email);
+                            this.messagingTemplate.convertAndSendToUser(email, "/queue/alertas", jsonPayload);
+                            return;
+                        }
+                    } else {
+                        log.warn("No se encontró el usuario con ID {} para enviar la notificación realtime.", usuarioId);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error al procesar el payload de notificación para envío segmentado", e);
+        }
+
+        log.info("Despachando evento JSON al broker de WebSockets en '/topic/alertas' (global)");
         this.messagingTemplate.convertAndSend("/topic/alertas", jsonPayload);
     }
 

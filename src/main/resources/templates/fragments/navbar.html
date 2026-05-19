@@ -393,7 +393,7 @@
                     stompClient.debug = null; // Silenciar logs de debug en consola
 
                     stompClient.connect({}, function (frame) {
-                        stompClient.subscribe('/topic/alertas', function (message) {
+                        stompClient.subscribe('/user/queue/alertas', function (message) {
                             const payload = JSON.parse(message.body);
                             
                             // Validar que el evento sea de inserción en notificaciones
