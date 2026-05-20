@@ -8,6 +8,16 @@ document.addEventListener('DOMContentLoaded', function () {
     initMiniCalendar();
     initSearchTerminos();
 
+    // Si la navegación viene de notificaciones con un estatus objetivo, hacemos scroll y parpadeo
+    const urlParams = new URLSearchParams(window.location.search);
+    const estatusObj = urlParams.get('estatus');
+    if (estatusObj) {
+        setTimeout(() => {
+            animarEtapaPorEstatus(estatusObj);
+        }, 150);
+    }
+
+
     // D. Paginación Asíncrona (Delegación Global)
     document.addEventListener('click', function (e) {
         // 1. Paginación
@@ -242,6 +252,51 @@ function toggleTimeline(id) {
         }
     }
 }
+
+// Parpadeo local de la etapa cuando se navega desde una notificación
+function animarEtapaPorEstatus(estatusObj) {
+    try {
+        // estatus puede venir como nombre del enum o como ordinal; intentamos ambos
+        const target = document.getElementById('etapa-' + estatusObj) ||
+            document.querySelector('[data-etapa-hidden="true"][value="' + estatusObj + '"]')?.parentElement;
+
+        if (!target) return;
+
+        // Scroll al contenedor de la línea de tiempo para que el usuario lo vea
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Efecto parpadeo más “iluminado” (evitar capa gris)
+        // - quitamos el ring alto
+        // - agregamos un glow (shadow) y ring suave
+        target.classList.add('animate-pulse');
+        target.classList.add('ring-2', 'ring-gob-guinda/40');
+        target.classList.add('shadow-[0_0_18px_rgba(19,50,43,0.35)]', 'shadow-gob-guinda/30');
+
+
+        // Repetición corta para que se note aunque animate-pulse sea breve
+        let toggles = 0;
+        const interval = setInterval(() => {
+            if (!target.isConnected) {
+                clearInterval(interval);
+                return;
+            }
+
+            if (toggles >= 6) {
+                clearInterval(interval);
+                target.classList.remove('animate-pulse');
+                target.classList.remove('ring-4', 'ring-gob-guinda/60');
+                return;
+            }
+
+            target.classList.toggle('ring-4');
+            toggles++;
+
+        }, 250); //220 valor original
+    } catch (e) {
+        // silencioso
+    }
+}
+
 
 // --- SUBIDA DE ARCHIVOS ---
 function activarSubida(idTermino) {

@@ -2,8 +2,11 @@ package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.Entity.usuario.Notificacion;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.procesal.Termino;
+import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
 import com.juridico.sistema_juridico.repository.Usuarios.NotificacionRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -32,6 +35,9 @@ public class NotificacionesController {
     private NotificacionRepository notificacionRepository;
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private TerminoRepository terminoRepository;
 
     // Listado general de notificaciones (Solo No Leídas)
     @GetMapping
@@ -95,6 +101,11 @@ public class NotificacionesController {
                 if ("AUDIENCIA".equals(notificacion.getEntidadTipo())) {
                     return "redirect:/audiencias?id=" + idClean;
                 } else if ("TERMINO".equals(notificacion.getEntidadTipo())) {
+                    Termino termino = terminoRepository.findById(Integer.valueOf(idClean)).orElse(null);
+                    EstatusTermino estatusActual = termino != null ? termino.getEstatusTermino() : null;
+                    if (estatusActual != null) {
+                        return "redirect:/terminos?id=" + idClean + "&estatus=" + estatusActual;
+                    }
                     return "redirect:/terminos?id=" + idClean;
                 } else if ("EXPEDIENTE".equals(notificacion.getEntidadTipo())) {
                     return "redirect:/expedientes/" + idClean;

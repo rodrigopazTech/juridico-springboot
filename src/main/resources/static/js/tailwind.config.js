@@ -6,6 +6,7 @@ tailwind.config = {
         'gob-guindaDark': '#4e0c1d',
         'gob-oro': '#D4C19C',
         'gob-gris': '#545454',
+        'gob-grisTenue': '#f0eded',
         'gob-plata': '#98989A',
         'gob-verde': '#13322B',
         'gob-verdeDark': '#0C231E',
