@@ -131,6 +131,8 @@ public class PerfilController {
 
         redirectAttrs.addFlashAttribute("mensaje", "Contraseña actualizada exitosamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
+        // Redirige de vuelta a la pestaña de seguridad; el frontend
+        // muestra el modal de éxito 4 s y luego redirige a /logout.
         return "redirect:/perfil?tab=seguridad";
     }
 }
