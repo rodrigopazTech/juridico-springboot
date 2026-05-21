@@ -1,6 +1,7 @@
 <div th:fragment="linea">
     <!-- Contenedor Principal de la Línea de Tiempo (Compacto) -->
-    <div id="contenedor-kpis-terminos" class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 mb-4 overflow-hidden">
+    <div id="contenedor-kpis-terminos"
+        class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 mb-4 overflow-hidden">
         <div class="relative flex items-center justify-between w-full px-4 sm:px-8 mb-4">
 
             <!-- Línea de Conexión (Fondo) -->
@@ -15,9 +16,11 @@
                         class="flex flex-col items-center no-underline transition-all duration-300 hover:scale-105">
 
                         <!-- Esfera con Conteo (Reducida) -->
-                        <div id="etapa-${etapa}" class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 shadow-sm transition-all duration-300 relative"
+                        <div id="etapa-${etapa}"
+                            class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 shadow-sm transition-all duration-300 relative"
                             th:with="enEtapa=${conteosEtapas.get(etapa)}, isSelected=${paramEstatus == etapa}, isAssigned=${etapasAsignadas != null and !etapasAsignadas.isEmpty() and etapasAsignadas.contains(etapa)}"
-                            th:classappend="${isAssigned ? 'bg-gob-guinda border-white text-white' : 'bg-gob-grisTenue border-white text-gob-guinda'}"> <!-- ORIGINAL bg-gob-oro text-white  -->
+                            th:classappend="${isAssigned ? 'bg-gob-guinda border-white text-white' : 'bg-gob-grisTenue border-white text-gob-guinda'}">
+                            <!-- ORIGINAL bg-gob-oro text-white  -->
 
                             <!-- Anillo de Selección (Solo si está seleccionada) -->
                             <th:block th:if="${isSelected}">
