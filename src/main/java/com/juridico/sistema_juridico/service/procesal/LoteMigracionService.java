@@ -786,6 +786,40 @@
                 map.put("abogado", abogadoModa);
                 map.put("descripcion", descModa);
 
+                // --- ASIGNACIÓN AUTOMÁTICA DE MATERIA POR DEFECTO SEGÚN GERENCIA ---
+                // Si el expediente no tiene materia pero sí gerencia, se asigna la materia
+                // predeterminada: "Laboral" para Gerencia Laboral y Penal,
+                // "Administrativo" para Gerencia Civil, Mercantil, Fiscal y Administrativo.
+                if ((materiaModa == null || materiaModa.isEmpty() || materiaModa.equals("Por asignar"))
+                        && gerenciaModa != null && !gerenciaModa.isEmpty()) {
+
+                    String gerenciaNorm = gerenciaModa.toLowerCase();
+                    String materiaDefecto = null;
+
+                    if (gerenciaNorm.contains("laboral") || gerenciaNorm.contains("penal")) {
+                        materiaDefecto = "Laboral";
+                    } else if (gerenciaNorm.contains("civil") || gerenciaNorm.contains("mercantil")
+                            || gerenciaNorm.contains("fiscal") || gerenciaNorm.contains("administrativo")) {
+                        materiaDefecto = "Administrativo";
+                    }
+
+                    if (materiaDefecto != null) {
+                        // Resolver el ID de la materia desde la BD para consistencia
+                        final String materiaDefectoFinal = materiaDefecto;
+                        java.util.Optional<Materia> matOpt = materiaRepository.findByNombreIgnoreCase(materiaDefectoFinal);
+                        if (matOpt.isPresent()) {
+                            materiaModa = matOpt.get().getNombre();
+                            // Actualizar los mapas intermedios para que los pasos siguientes usen el ID correcto
+                            map.put("materia", materiaModa);
+                            map.put("materiaId", matOpt.get().getId().longValue());
+                        } else {
+                            // Si por alguna razón no está en BD, al menos ponemos el texto
+                            materiaModa = materiaDefecto;
+                            map.put("materia", materiaModa);
+                        }
+                    }
+                }
+
                 // --- VALIDACIÓN con valores ya resueltos (post-catálogo) ---
                 if (materiaModa == null || materiaModa.isEmpty() || materiaModa.equals("Por asignar")) {
                     if (!camposFaltantes.contains("Materia")) { camposFaltantes.add("Materia"); critico = true; }
@@ -1342,6 +1376,10 @@
                 // --- PRE-PROCESAMIENTO: Crear entidades nuevas marcadas en la Etapa 1 ---
                 crearEntidadesNuevas(catalogosMap);
 
+                // Capturar gerencia global del lote como fallback garantizado ANTES del loop
+                // Esto cubre el caso donde la gerencia no viene explícita en el JSON del registro.
+                final Gerencia gerenciaGlobalLote = lote.getGerenciaGlobal();
+
                 // --- AGRUPACIÓN ---
                 java.util.Map<String, List<RegistroMigracion>> expedientesAgrupados = agruparRegistros(registros);
 
@@ -1475,15 +1513,40 @@
                             } catch (Exception ignored) {}
                         }
                         
-                        if (expediente.getMateria() == null) {
-                            expediente.setMateria(getFallbackMateria());
+                        // ── FALLBACK DE GERENCIA: Si sigue nula, usar gerenciaGlobal del lote ──
+                        if (expediente.getGerencia() == null && gerenciaGlobalLote != null) {
+                            expediente.setGerencia(gerenciaGlobalLote);
                         }
-                        
                         if (expediente.getGerencia() == null) {
                             expediente.setGerencia(getFallbackGerencia());
                         }
 
+                        // ── FALLBACK DE MATERIA: asignar por defecto según gerencia ya resuelta ──
+                        if (expediente.getMateria() == null) {
+                            Materia materiaDefecto = resolverMateriaDefectoPorGerencia(expediente.getGerencia());
+                            expediente.setMateria(materiaDefecto != null ? materiaDefecto : getFallbackMateria());
+                        }
+
                         expediente = expedienteRepository.save(expediente);
+                    } else {
+                        // ── EXPEDIENTE EXISTENTE: corregir materia si está sin asignar ──────────
+                        boolean materiaSinAsignar = expediente.getMateria() == null
+                                || expediente.getMateria().getNombre() == null
+                                || expediente.getMateria().getNombre().equalsIgnoreCase("Por Asignar")
+                                || expediente.getMateria().getNombre().equalsIgnoreCase("Por Definir");
+
+                        // Intentar obtener la gerencia del lote si el expediente no la tiene
+                        Gerencia gerenciaParaFix = expediente.getGerencia();
+                        if (gerenciaParaFix == null) gerenciaParaFix = gerenciaGlobalLote;
+
+                        if (materiaSinAsignar && gerenciaParaFix != null) {
+                            Materia materiaCorrecta = resolverMateriaDefectoPorGerencia(gerenciaParaFix);
+                            if (materiaCorrecta != null) {
+                                expediente.setMateria(materiaCorrecta);
+                                if (expediente.getGerencia() == null) expediente.setGerencia(gerenciaParaFix);
+                                expediente = expedienteRepository.save(expediente);
+                            }
+                        }
                     }
 
 
@@ -1628,12 +1691,62 @@
             }
         }
 
+        /**
+         * Dado una gerencia, retorna la materia por defecto correspondiente:
+         *  - "Laboral" para Gerencia Laboral y Penal
+         *  - "Administrativo" para Gerencia Civil, Mercantil, Fiscal y Administrativo
+         *  - null si la gerencia no coincide con ningún patrón (usar getFallbackMateria)
+         */
+        private Materia resolverMateriaDefectoPorGerencia(Gerencia gerencia) {
+            if (gerencia == null || gerencia.getNombre() == null) return null;
+            String gerNom = gerencia.getNombre().toLowerCase();
+            if (gerNom.contains("laboral") || gerNom.contains("penal")) {
+                return materiaRepository.findByNombreIgnoreCase("Laboral").orElse(null);
+            } else if (gerNom.contains("civil") || gerNom.contains("mercantil")
+                    || gerNom.contains("fiscal") || gerNom.contains("administrativo")) {
+                return materiaRepository.findByNombreIgnoreCase("Administrativo").orElse(null);
+            }
+            return null;
+        }
+
+        /**
+         * Corrección batch: recorre TODOS los expedientes en la BD que tienen materia
+         * nula, "Por Asignar" o "Por Definir" y les asigna la materia correcta según
+         * su gerencia. Se llama desde el endpoint /admin/importar/corregir-materias.
+         * @return número de expedientes corregidos
+         */
+        @Transactional
+        public int corregirMateriasPorAsignar() {
+            List<com.juridico.sistema_juridico.Entity.expediente.Expediente> todos =
+                    expedienteRepository.findAll();
+            int count = 0;
+            for (com.juridico.sistema_juridico.Entity.expediente.Expediente exp : todos) {
+                boolean sinMateria = exp.getMateria() == null
+                        || exp.getMateria().getNombre() == null
+                        || exp.getMateria().getNombre().equalsIgnoreCase("Por Asignar")
+                        || exp.getMateria().getNombre().equalsIgnoreCase("Por Definir");
+                if (!sinMateria) continue;
+
+                Gerencia g = exp.getGerencia();
+                if (g == null) continue; // Sin gerencia no podemos inferir materia
+
+                Materia correcta = resolverMateriaDefectoPorGerencia(g);
+                if (correcta != null) {
+                    exp.setMateria(correcta);
+                    expedienteRepository.save(exp);
+                    count++;
+                }
+            }
+            return count;
+        }
+
         private Gerencia getFallbackGerencia() {
             return gerenciaRepository.findAll().stream().findFirst().orElseGet(() -> {
                 Gerencia g = new Gerencia(); g.setNombre("Sin Gerencia"); g.setActivo(true);
                 return gerenciaRepository.save(g);
             });
         }
+
 
         private Materia getFallbackMateria() {
             // Buscamos o creamos una materia específica llamada "Por Asignar" para no

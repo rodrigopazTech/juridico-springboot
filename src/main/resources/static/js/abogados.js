@@ -92,12 +92,27 @@ function abrirModalUsuario() {
     document.getElementById('input-usuario-id').value = '';
     document.getElementById('input-usuario-nombre').value = '';
     document.getElementById('input-usuario-email').value = '';
-    document.getElementById('input-usuario-password').value = '';
-    document.getElementById('input-usuario-password').required = true;
-    document.getElementById('input-usuario-password').placeholder = "";
-    document.getElementById('select-usuario-rol').value = "";
-    document.getElementById('select-usuario-gerencia').value = "";
+    document.getElementById('select-usuario-rol').value = '';
+    document.getElementById('select-usuario-gerencia').value = '';
     document.getElementById('check-usuario-activo').checked = true;
+
+    // CREACIÓN: mostrar campo de contraseña normal, ocultar bloque temporal
+    const bloqueNuevo = document.getElementById('bloque-password-nuevo');
+    const bloqueTemporal = document.getElementById('bloque-password-temporal');
+    const inputPass = document.getElementById('input-usuario-password');
+    if (bloqueNuevo) { bloqueNuevo.classList.remove('hidden'); }
+    if (bloqueTemporal) { bloqueTemporal.classList.add('hidden'); }
+    if (inputPass) { inputPass.value = ''; inputPass.required = true; inputPass.placeholder = 'Contraseña inicial'; inputPass.disabled = false; }
+
+    // Limpiar campo hidden y badge
+    const hiddenPass = document.getElementById('input-password-temporal');
+    const badge = document.getElementById('badge-pass-generado');
+    if (hiddenPass) hiddenPass.value = '';
+    if (badge) badge.classList.add('hidden');
+
+    // Eliminar input oculto de forcePasswordChange si existía
+    const fpcOld = document.getElementById('input-force-password-change');
+    if (fpcOld) fpcOld.remove();
 
     materiasUsuarioActual = [];
     document.getElementById('contenedor-materias').classList.add('hidden');
@@ -159,9 +174,20 @@ function editarUsuario(id, nombre, email, rol, gerenciaId, activo, materiasIdsAr
     document.getElementById('select-usuario-rol').value = rol;
     document.getElementById('check-usuario-activo').checked = activo;
 
+    // EDICIÓN: ocultar campo de contraseña normal y mostrar botón de generación temporal
+    const bloqueNuevo = document.getElementById('bloque-password-nuevo');
+    const bloqueTemporal = document.getElementById('bloque-password-temporal');
     const inputPass = document.getElementById('input-usuario-password');
-    inputPass.required = false;
-    inputPass.placeholder = "Dejar en blanco para mantener actual";
+    if (bloqueNuevo) { bloqueNuevo.classList.add('hidden'); }
+    if (bloqueTemporal) { bloqueTemporal.classList.remove('hidden'); }
+    // Deshabilitar el input original para que NO se envíe al backend (evita conflicto con el hidden input)
+    if (inputPass) { inputPass.required = false; inputPass.value = ''; inputPass.disabled = true; }
+
+    // Limpiar estado de contraseña temporal previa
+    const hiddenPass = document.getElementById('input-password-temporal');
+    const badge = document.getElementById('badge-pass-generado');
+    if (hiddenPass) hiddenPass.value = '';
+    if (badge) badge.classList.add('hidden');
 
     materiasUsuarioActual = materiasIdsArray || [];
     actualizarFormularioPorRol();
@@ -171,6 +197,66 @@ function editarUsuario(id, nombre, email, rol, gerenciaId, activo, materiasIdsAr
         cargarMateriasDeGerencia();
     }
     document.getElementById('btn-eliminar-usuario').classList.remove('hidden');
+}
+
+// ── MODAL DE CONTRASEÑA TEMPORAL ──────────────────────────────────────────
+function abrirModalPasswordTemporal() {
+    // Generar contraseña: "Temporal" + 5 dígitos aleatorios
+    const digitos = Math.floor(10000 + Math.random() * 90000);
+    const passGenerada = `Temporal${digitos}`;
+
+    Swal.fire({
+        width: '36rem', // Tamaño Grande
+        title: '<i class="fas fa-key text-gob-guinda mr-2"></i>Contraseña Temporal',
+        html: `
+            <p class="text-sm text-gray-600 mb-6">Se asignará esta contraseña temporal al abogado.<br>Al iniciar sesión se le pedirá cambiarla.</p>
+            <div class="flex items-center gap-6 bg-gray-50 border border-gray-200 rounded-lg px-4 py-6">
+                <code id="swal-pass-code" class="flex-1 text-left text-lg font-mono font-bold text-gob-guinda tracking-widest select-all">${passGenerada}</code>
+                <button type="button" onclick="copiarPasswordTemporal('${passGenerada}')"
+                    class="flex-shrink-0 px-3 py-1.5 bg-gob-guinda text-white text-xs font-bold rounded-lg hover:opacity-90 transition-all">
+                    <i class="fas fa-copy mr-1"></i>Copiar
+                </button>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-2">El usuario deberá cambiarla en su próximo inicio de sesión.</p>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '<i class="fas fa-save mr-1"></i> Actualizar contraseña',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#691228',
+        cancelButtonColor: '#808590ff',
+        focusConfirm: false,
+        customClass: {
+            title: 'text-3xl font-bold pt-6',
+            confirmButton: 'px-8 py-3 text-lg rounded-lg',
+            cancelButton: 'px-8 py-3 text-lg rounded-lg',
+
+        }
+    }).then(result => {
+        if (result.isConfirmed) {
+            // Inyectar contraseña en el campo hidden (único campo 'password' activo)
+            const hiddenPass = document.getElementById('input-password-temporal');
+            if (hiddenPass) hiddenPass.value = passGenerada;
+
+            // Enviar el formulario → cierra ambas ventanas (SweetAlert ya está cerrado)
+            // El servicio activa forcePasswordChange automáticamente al detectar nueva contraseña
+            const form = document.querySelector('#modal-usuario form');
+            if (form) form.submit();
+        }
+    });
+}
+
+function copiarPasswordTemporal(pass) {
+    navigator.clipboard.writeText(pass).then(() => {
+        const btn = document.querySelector('#swal-pass-code + button') ||
+            document.querySelector('[onclick*="copiarPasswordTemporal"]');
+        if (btn) {
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check mr-1"></i>¡Copiado!';
+            btn.classList.add('bg-green-600');
+            btn.classList.remove('bg-gob-guinda');
+            setTimeout(() => { btn.innerHTML = original; btn.classList.remove('bg-green-600'); btn.classList.add('bg-gob-guinda'); }, 1500);
+        }
+    }).catch(() => { /* fallback silencioso */ });
 }
 
 function eliminarUsuarioDesdeModal() {

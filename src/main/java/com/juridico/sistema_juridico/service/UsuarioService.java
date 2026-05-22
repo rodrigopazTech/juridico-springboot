@@ -114,6 +114,8 @@ public class UsuarioService {
 
             if (usuario.getPassword() != null && !usuario.getPassword().isBlank()) {
                 existente.setPassword(passwordEncoder.encode(usuario.getPassword()));
+                // Si el admin o director asigna una contraseña manual (temporal), forzar cambio en el próximo login
+                existente.setForcePasswordChange(true);
             }
 
             return usuarioRepository.save(existente);
