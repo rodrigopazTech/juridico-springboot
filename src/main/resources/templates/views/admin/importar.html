@@ -47,23 +47,6 @@
                             <i class="fas fa-play mr-2"></i> Iniciar Lote de Prueba Manual
                         </button>
                     </form>
-
-                    <!-- Corrección de materias "Por Asignar" en expedientes ya migrados -->
-                    <div class="mt-6 pt-6 border-t border-dashed border-gray-200">
-                        <p class="text-sm text-gray-500 mb-3">
-                            <i class="fas fa-wrench text-amber-500 mr-1"></i>
-                            ¿Hay expedientes con materia <strong>"Por Asignar"</strong>?
-                            Esta acción les asignará automáticamente la materia correcta según su gerencia.
-                        </p>
-                        <form th:action="@{/admin/importar/corregir-materias}" method="post"
-                            onsubmit="return confirm('¿Deseas corregir las materias de todos los expedientes que tienen \"
-                            Por Asignar\"? Se asignará Laboral o Administrativo según su gerencia.')">
-                            <button type="submit"
-                                class="bg-amber-500 text-white px-6 py-2 rounded-lg font-semibold shadow hover:bg-amber-600 transition text-sm">
-                                <i class="fas fa-magic mr-2"></i> Corregir Materias "Por Asignar"
-                            </button>
-                        </form>
-                    </div>
                 </div>
             </div>
 
