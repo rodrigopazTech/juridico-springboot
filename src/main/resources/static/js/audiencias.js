@@ -152,9 +152,9 @@ const Toast = Swal.mixin({
     position: 'bottom-end',
     showConfirmButton: false,
     timer: 3000,
-    timerProgressBar: true,
+    //timerProgressBar: true,
     didOpen: (toast) => {
-        toast.addEventListener('mouseenter', Swal.stopTimer)
+        //toast.addEventListener('mouseenter', Swal.stopTimer)
         toast.addEventListener('mouseleave', Swal.resumeTimer)
     }
 });
@@ -476,7 +476,7 @@ function confirmarEliminarAudiencia(id) {
                             position: 'bottom-end',
                             showConfirmButton: false,
                             timer: 2000,
-                            timerProgressBar: true
+                            //timerProgressBar: true
                         });
 
                         Toast.fire({

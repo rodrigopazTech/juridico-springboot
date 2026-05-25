@@ -434,7 +434,7 @@ function eliminarUsuarioDesdeModal() {
                             position: 'bottom-end',
                             showConfirmButton: false,
                             timer: 2000,
-                            timerProgressBar: true
+                            //timerProgressBar: true
                         });
 
                         Toast.fire({

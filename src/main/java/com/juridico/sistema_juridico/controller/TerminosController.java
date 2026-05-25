@@ -548,7 +548,7 @@ public class TerminosController {
         }
 
         notificarCambioDeEtapa(termino, etapaAnterior, siguienteEtapa, actor);
-        redirectAttrs.addFlashAttribute("mensaje", "Avanzó a: " + siguienteEtapa.getDescripcion());
+        redirectAttrs.addFlashAttribute("mensaje", "Avanzó a " + siguienteEtapa.getDescripcion());
         redirectAttrs.addFlashAttribute("tipo", "success");
         return "redirect:/terminos";
     }

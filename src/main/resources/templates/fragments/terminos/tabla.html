@@ -116,20 +116,25 @@
                                             Borrador</span>
                                     </button>
 
-                                    <a th:if="${t.acuse != null}" 
+                                    <a th:if="${t.acuse != null}"
                                         th:href="${#strings.startsWith(t.acuse, 'http')} ? ${t.acuse} : @{/terminos/descargar/{id}(id=${t.id})}"
                                         th:target="${#strings.startsWith(t.acuse, 'http')} ? '_blank' : '_self'"
-                                        class="block w-full text-left px-4 py-3 text-sm text-blue-600 hover:bg-blue-50 transition flex items-center border-l-4 border-transparent hover:border-blue-500">
-                                        <i class="fas fa-file-word mr-3 w-4 text-center"></i>
+                                        class="block w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition flex items-center border-l-4 border-transparent hover:border-red-500">
+                                        <i class="fas fa-file-pdf mr-3 w-4 text-center"></i>
                                         <span class="truncate font-medium" th:text="${t.acuse}">Archivo.docx</span>
                                     </a>
+
+                                    <div class="border-t border-purple-500"></div>
 
                                     <button
                                         th:if="${t.estatusTermino?.name() == 'LIBERADO' and mapaPermisos.get(t.estatusTermino)?.contains(rolActual)}"
                                         th:onclick="'activarSubidaAcuse(' + ${t.id} + ')'"
                                         class="w-full text-left px-4 py-3 text-sm text-purple-700 hover:bg-purple-50 transition flex items-center border-l-4 border-transparent hover:border-purple-500 font-bold bg-purple-50/50">
-                                        <i th:class="${t.acuseNombre != null ? 'fas fa-sync-alt mr-3 w-4 text-center text-orange-500' : 'fas fa-file-signature mr-3 w-4 text-center text-purple-600'}"></i>
-                                        <span th:text="${t.acuseNombre != null ? 'Reemplazar Acuse' : 'Subir Acuse'}">Subir Acuse</span>
+                                        <i
+                                            th:class="${t.acuseNombre != null ? 'fas fa-sync-alt mr-3 w-4 text-center text-orange-500' : 'fas fa-file-signature mr-3 w-4 text-center text-purple-600'}"></i>
+                                        <span
+                                            th:text="${t.acuseNombre != null ? 'Reemplazar Acuse' : 'Subir Acuse'}">Subir
+                                            Acuse</span>
                                     </button>
 
                                     <!-- Acuse ya cargado: mostrar nombre del archivo -->
@@ -137,18 +142,20 @@
                                         th:href="@{/terminos/descargar-acuse/{id}(id=${t.id})}"
                                         class="block w-full text-left px-4 py-3 text-sm text-purple-600 hover:bg-purple-50 transition flex items-center border-l-4 border-purple-400 bg-purple-50/30">
                                         <i class="fas fa-file-download mr-3 w-4 text-center text-purple-500"></i>
-                                        <span class="truncate font-medium text-xs" th:text="${t.acuseNombre}">Acuse.pdf</span>
+                                        <span class="truncate font-medium text-xs"
+                                            th:text="${t.acuseNombre}"></span>
                                     </a>
 
-                                    <button
+
+
+                          <!--          <button
                                         th:if="${t.estatusTermino?.name() == 'PRESENTADO' and mapaPermisos.get(t.estatusTermino)?.contains(rolActual)}"
-                                        th:onclick="'abrirModalConcluir(' + ${t.id} + ')'"
+                                        th:onclick=" 'abrirModalConcluir(' + ${t.id} + ')' "
                                         class="w-full text-left px-4 py-3 text-sm text-green-700 hover:bg-green-50 transition flex items-center border-l-4 border-transparent hover:border-green-500 font-bold bg-green-50/50">
                                         <i class="fas fa-check-circle mr-3 w-4 text-center text-green-600"></i>
                                         Finalizar Término
-                                    </button>
+                                    </button> -->
 
-                                    <div class="border-t border-gray-100"></div>
 
                                     <a th:if="${((t.estatusTermino?.name() == 'PROYECTISTA' and t.acuse != null) or 
                                              (t.estatusTermino?.name() == 'LIBERADO' and t.acuseNombre != null) or 
@@ -168,10 +175,21 @@
                                             <i class="fas fa-file-download mr-3 w-4 text-center text-purple-500"></i>
                                             <span>Descargar Acuse</span>
                                         </a>
-                                        <p class="px-4 pb-2 text-[10px] text-gray-400 truncate" th:text="${t.acuseNombre}"></p>
+                                        <p class="px-4 pb-2 text-[10px] text-gray-400 truncate"
+                                            th:text="${t.acuseNombre}"></p>
                                     </div>
 
-                                    <div class="border-t border-gray-100"></div>
+                                    <div class="border-t border-purple-500"></div>
+
+
+                                    <button
+                                        th:if="${t.estatusTermino?.name() == 'PRESENTADO' and mapaPermisos.get(t.estatusTermino)?.contains(rolActual)}"
+                                        th:onclick=" 'abrirModalConcluir(' + ${t.id} + ')' "
+                                        class="w-full text-left px-4 py-3 text-sm text-green-700 hover:bg-green-50 transition flex items-center border-l-4 border-transparent hover:border-green-500 font-bold bg-green-50/50">
+                                        <i class="fas fa-check-circle mr-3 w-4 text-center text-green-600"></i>
+                                        Finalizar Término
+                                    </button>
+
 
                                     <button th:onclick="'confirmarEliminar(' + ${t.id} + ')'"
                                         class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition font-medium border-l-4 border-transparent hover:border-red-500">
@@ -185,25 +203,25 @@
             </table>
         </div>
 
-    <div class="mt-4 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500"
-        th:if="${!terminos.empty}">
-        <span class="mb-2 sm:mb-0">
-            Mostrando página <span th:text="${terminos.number + 1}" class="font-bold text-gray-700"></span> de <span
-                th:text="${terminos.totalPages}" class="font-bold text-gray-700"></span>
-        </span>
+        <div class="mt-4 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500"
+            th:if="${!terminos.empty}">
+            <span class="mb-2 sm:mb-0">
+                Mostrando página <span th:text="${terminos.number + 1}" class="font-bold text-gray-700"></span> de <span
+                    th:text="${terminos.totalPages}" class="font-bold text-gray-700"></span>
+            </span>
 
-        <div class="flex gap-2">
-            <a th:if="${terminos.hasPrevious()}"
-                th:href="@{/terminos(page=${terminos.number - 1}, keyword=${keyword}, estatus=${paramEstatus}, prioridadId=${paramPrioridadId}, abogadoId=${paramAbogadoId}, materiaId=${paramMateriaId}, gerenciaId=${paramGerenciaId}, periodo=${paramPeriodo}, mes=${param.mes}, anio=${param.anio})}"
-                class="pagina-link-ter px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 bg-white shadow-sm transition-all flex items-center gap-1">
-                <i class="fas fa-chevron-left text-xs"></i> Anterior
-            </a>
+            <div class="flex gap-2">
+                <a th:if="${terminos.hasPrevious()}"
+                    th:href="@{/terminos(page=${terminos.number - 1}, keyword=${keyword}, estatus=${paramEstatus}, prioridadId=${paramPrioridadId}, abogadoId=${paramAbogadoId}, materiaId=${paramMateriaId}, gerenciaId=${paramGerenciaId}, periodo=${paramPeriodo}, mes=${param.mes}, anio=${param.anio})}"
+                    class="pagina-link-ter px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 bg-white shadow-sm transition-all flex items-center gap-1">
+                    <i class="fas fa-chevron-left text-xs"></i> Anterior
+                </a>
 
-            <a th:if="${terminos.hasNext()}"
-                th:href="@{/terminos(page=${terminos.number + 1}, keyword=${keyword}, estatus=${paramEstatus}, prioridadId=${paramPrioridadId}, abogadoId=${paramAbogadoId}, materiaId=${paramMateriaId}, gerenciaId=${paramGerenciaId}, periodo=${paramPeriodo}, mes=${param.mes}, anio=${param.anio})}"
-                class="pagina-link-ter px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 bg-white shadow-sm transition-all flex items-center gap-1">
-                Siguiente <i class="fas fa-chevron-right text-xs"></i>
-            </a>
+                <a th:if="${terminos.hasNext()}"
+                    th:href="@{/terminos(page=${terminos.number + 1}, keyword=${keyword}, estatus=${paramEstatus}, prioridadId=${paramPrioridadId}, abogadoId=${paramAbogadoId}, materiaId=${paramMateriaId}, gerenciaId=${paramGerenciaId}, periodo=${paramPeriodo}, mes=${param.mes}, anio=${param.anio})}"
+                    class="pagina-link-ter px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 bg-white shadow-sm transition-all flex items-center gap-1">
+                    Siguiente <i class="fas fa-chevron-right text-xs"></i>
+                </a>
+            </div>
         </div>
     </div>
-</div>
