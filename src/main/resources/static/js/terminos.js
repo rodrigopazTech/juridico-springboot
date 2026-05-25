@@ -268,10 +268,10 @@ function animarEtapaPorEstatus(estatusObj) {
         // Efecto parpadeo más “iluminado” (evitar capa gris)
         // - quitamos el ring alto
         // - agregamos un glow (shadow) y ring suave
-        target.classList.add('animate-pulse');
-        target.classList.add('ring-2', 'ring-gob-guinda/40');
-        target.classList.add('shadow-[0_0_18px_rgba(19,50,43,0.35)]', 'shadow-gob-guinda/30');
-
+        //target.classList.add('animate-pulse'); - se elimina este linea
+        target.classList.add('ring-2', 'ring-cyan'); //'ring-gob-guinda/40'
+        target.classList.add('shadow-[0_0_30px_cyan]');
+                                          ////'shadow-[0_0_18px_rgba(19,50,43,0.35)]'
 
         // Repetición corta para que se note aunque animate-pulse sea breve
         let toggles = 0;
@@ -284,7 +284,7 @@ function animarEtapaPorEstatus(estatusObj) {
             if (toggles >= 6) {
                 clearInterval(interval);
                 target.classList.remove('animate-pulse');
-                target.classList.remove('ring-4', 'ring-gob-guinda/60');
+                target.classList.remove('ring-4', 'ring-gob-guinda/60');  //'ring-gob-guinda/60'
                 return;
             }
 
@@ -315,9 +315,9 @@ const Toast = Swal.mixin({
     position: 'bottom-end',
     showConfirmButton: false,
     timer: 3000,
-    timerProgressBar: true,
+    //timerProgressBar: true,
     didOpen: (toast) => {
-        toast.addEventListener('mouseenter', Swal.stopTimer)
+        //toast.addEventListener('mouseenter', Swal.stopTimer)
         toast.addEventListener('mouseleave', Swal.resumeTimer)
     }
 });

@@ -129,7 +129,7 @@ async function guardarNota() {
                     position: 'bottom-end',
                     showConfirmButton: false,
                     timer: 2000,
-                    timerProgressBar: true
+                    //timerProgressBar: true
                 });
                 Toast.fire({ icon: 'success', title: 'Nota guardada' });
             }
