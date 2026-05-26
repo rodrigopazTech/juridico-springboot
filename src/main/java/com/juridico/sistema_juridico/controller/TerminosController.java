@@ -217,10 +217,14 @@ public class TerminosController {
         if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
             abogadosParaModal = Collections.singletonList(usuarioActual);
         } else if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.DIRECCION || usuarioActual.getRol() == RolUsuario.SUBDIRECCION) {
-            abogadosParaModal = usuarioRepository.findByRolAndActivoTrue(RolUsuario.ABOGADO).stream()
-                    .filter(u -> u.getGerencia() != null && usuarioActual.getGerencia() != null
-                    && u.getGerencia().getId().equals(usuarioActual.getGerencia().getId()))
-                    .collect(Collectors.toList());
+            if (usuarioActual.getGerencia() != null) {
+                abogadosParaModal = usuarioRepository.findByRolAndActivoTrue(RolUsuario.ABOGADO).stream()
+                        .filter(u -> u.getGerencia() != null
+                        && u.getGerencia().getId().equals(usuarioActual.getGerencia().getId()))
+                        .collect(Collectors.toList());
+            } else {
+                abogadosParaModal = usuarioRepository.findByRolAndActivoTrue(RolUsuario.ABOGADO);
+            }
         } else if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
             abogadosParaModal = usuarioRepository.findByRolAndActivoTrue(RolUsuario.ABOGADO).stream()
                     .filter(u -> u.getGerencia() != null && usuarioActual.getGerencia() != null

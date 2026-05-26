@@ -125,15 +125,8 @@ function abrirModalUsuario() {
 }
 
 function actualizarFormularioPorRol() {
-    const rol = document.getElementById('select-usuario-rol').value;
     const seccion = document.getElementById('seccion-asignacion');
-    const selectGerencia = document.getElementById('select-usuario-gerencia');
-    if (rol === 'DIRECCION' || rol === 'SUBDIRECCION') {
-        seccion.classList.add('hidden');
-        selectGerencia.value = "";
-    } else {
-        seccion.classList.remove('hidden');
-    }
+    seccion.classList.remove('hidden');
 }
 
 function cargarMateriasDeGerencia() {

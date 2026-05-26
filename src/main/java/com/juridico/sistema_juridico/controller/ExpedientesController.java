@@ -552,9 +552,9 @@ public class ExpedientesController {
         boolean tienePermiso = false;
         String rol = usuario.getRol().name();
 
-        if (rol.equals("ADMIN")) {
+        if (rol.equals("ADMIN") || rol.equals("DIRECCION") || rol.equals("SUBDIRECCION")) {
             tienePermiso = true;
-        } else if ((rol.equals("GERENTE") || rol.equals("DIRECCION") || rol.equals("SUBDIRECCION")) 
+        } else if (rol.equals("GERENTE") 
                 && usuario.getGerencia() != null
                 && expediente.getGerencia() != null
                 && expediente.getGerencia().getId().equals(usuario.getGerencia().getId())) {

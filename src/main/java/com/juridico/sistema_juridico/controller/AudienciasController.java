@@ -241,10 +241,14 @@ public class AudienciasController {
                     .filter(u -> u.getMaterias().stream().anyMatch(m -> usuario.getMaterias().contains(m)))
                     .collect(Collectors.toList());
         } else if (usuario.getRol() == RolUsuario.GERENTE || usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
-            listaAbogados = usuarioRepository.findAll().stream()
-                    .filter(u -> u.getGerencia() != null && usuario.getGerencia() != null &&
-                            u.getGerencia().getId().equals(usuario.getGerencia().getId()))
-                    .collect(Collectors.toList());
+            if (usuario.getGerencia() != null) {
+                listaAbogados = usuarioRepository.findAll().stream()
+                        .filter(u -> u.getGerencia() != null &&
+                                u.getGerencia().getId().equals(usuario.getGerencia().getId()))
+                        .collect(Collectors.toList());
+            } else {
+                listaAbogados = usuarioRepository.findAll();
+            }
         } else {
             listaAbogados = usuarioRepository.findAll();
         }

@@ -70,17 +70,8 @@ function abrirModalUsuario() {
 }
 
 function actualizarFormularioPorRol() {
-    const rol = document.getElementById('select-usuario-rol').value;
     const seccionAsignacion = document.getElementById('seccion-asignacion');
-    const selectGerencia = document.getElementById('select-usuario-gerencia');
-
-    // Si es Dirección, ocultamos gerencia y materias
-    if (rol === 'DIRECCION' || rol === 'SUBDIRECCION') {
-        seccionAsignacion.classList.add('hidden');
-        selectGerencia.value = "";
-    } else {
-        seccionAsignacion.classList.remove('hidden');
-    }
+    seccionAsignacion.classList.remove('hidden');
 }
 
 function cargarMateriasDeGerencia() {

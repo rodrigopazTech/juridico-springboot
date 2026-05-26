@@ -97,17 +97,12 @@ public class UsuarioService {
             existente.setEmail(usuario.getEmail());
             existente.setRol(usuario.getRol());
 
-            if (usuario.getRol().name().equals("DIRECCION") || usuario.getRol().name().equals("SUBDIRECCION")) {
-                existente.setGerencia(null);
+            existente.setGerencia(usuario.getGerencia());
+            // Solo actualizar materias si el formulario envió una lista explícita
+            // (materiasIds != null). Si es null, conservar las materias existentes.
+            if (materiasIds != null) {
                 existente.getMaterias().clear();
-            } else {
-                existente.setGerencia(usuario.getGerencia());
-                // Solo actualizar materias si el formulario envió una lista explícita
-                // (materiasIds != null). Si es null, conservar las materias existentes.
-                if (materiasIds != null) {
-                    existente.getMaterias().clear();
-                    existente.getMaterias().addAll(materiasSeleccionadas);
-                }
+                existente.getMaterias().addAll(materiasSeleccionadas);
             }
 
             existente.setActivo(usuario.getActivo());
