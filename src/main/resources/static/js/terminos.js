@@ -41,6 +41,37 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        // 1.5 Avanzar Etapa Asíncrono
+        const btnAvanzar = e.target.closest('.btn-avanzar-etapa');
+        if (btnAvanzar) {
+            e.preventDefault();
+            const url = btnAvanzar.getAttribute('href');
+            Swal.fire({
+                title: 'Avanzando etapa...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => {
+                Swal.close();
+                if (res.ok) {
+                    showSuccessToast('¡Etapa avanzada correctamente!');
+                } else {
+                    showErrorModal('No se pudo avanzar la etapa del término.');
+                }
+            })
+            .catch(err => {
+                Swal.close();
+                console.error("Error al avanzar etapa:", err);
+                showErrorModal('Error de red al intentar avanzar la etapa.');
+            });
+            return;
+        }
+
         // 2. Botón Limpiar Búsqueda (Barra Superior)
         const btnClear = e.target.closest('#btn-clear-search-terminos');
         if (btnClear) {
@@ -100,6 +131,9 @@ document.addEventListener('DOMContentLoaded', function () {
             actualizarTablaAsincrono();
         }
     });
+
+    // H. Iniciar conexión WebSocket
+    iniciarTerminosWebSocket();
 });
 
 // --- BÚSQUEDA ASÍNCRONA CENTRALIZADA ---
@@ -265,15 +299,11 @@ function animarEtapaPorEstatus(estatusObj) {
         // Scroll al contenedor de la línea de tiempo para que el usuario lo vea
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-        // Efecto parpadeo más “iluminado” (evitar capa gris)
-        // - quitamos el ring alto
-        // - agregamos un glow (shadow) y ring suave
-        //target.classList.add('animate-pulse'); - se elimina este linea
-        target.classList.add('ring-2', 'ring-cyan'); //'ring-gob-guinda/40'
+        // Efecto parpadeo más “iluminado”
+        target.classList.remove('ring-4', 'ring-gob-guinda/60');
+        target.classList.add('ring-2', 'ring-cyan');
         target.classList.add('shadow-[0_0_30px_cyan]');
-                                          ////'shadow-[0_0_18px_rgba(19,50,43,0.35)]'
 
-        // Repetición corta para que se note aunque animate-pulse sea breve
         let toggles = 0;
         const interval = setInterval(() => {
             if (!target.isConnected) {
@@ -281,20 +311,61 @@ function animarEtapaPorEstatus(estatusObj) {
                 return;
             }
 
-            if (toggles >= 6) {
+            if (toggles >= 12) {
                 clearInterval(interval);
-                target.classList.remove('animate-pulse');
-                target.classList.remove('ring-4', 'ring-gob-guinda/60');  //'ring-gob-guinda/60'
+                target.classList.remove('ring-2', 'ring-cyan', 'shadow-[0_0_30px_cyan]');
+                target.classList.remove('ring-4');
                 return;
             }
 
             target.classList.toggle('ring-4');
+            target.classList.toggle('ring-2');
             toggles++;
 
-        }, 250); //220 valor original
+        }, 250);
     } catch (e) {
         // silencioso
     }
+}
+
+// --- CONEXIÓN WEBSOCKET PARA ACTUALIZACIÓN EN TIEMPO REAL ---
+function iniciarTerminosWebSocket() {
+    function conectar() {
+        if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
+            setTimeout(conectar, 500);
+            return;
+        }
+        
+        console.log("Iniciando WebSocket de Términos...");
+        const socket = new SockJS('/ws-realtime');
+        const stompClient = Stomp.over(socket);
+        stompClient.debug = null; // silenciar debug de consola
+
+        stompClient.connect({}, function (frame) {
+            console.log("WebSocket de Términos conectado.");
+            stompClient.subscribe('/topic/alertas', function (message) {
+                try {
+                    const payload = JSON.parse(message.body);
+                    if (payload.tabla === 'terminos') {
+                        console.log("Evento de Término recibido:", payload);
+                        actualizarTablaAsincrono();
+                        
+                        if (payload.etapa_procesal) {
+                            setTimeout(() => {
+                                animarEtapaPorEstatus(payload.etapa_procesal);
+                            }, 500);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error al procesar mensaje de WebSocket:", e);
+                }
+            });
+        }, function (error) {
+            console.warn("Conexión de WebSocket perdida, reintentando en 5s...", error);
+            setTimeout(conectar, 5000);
+        });
+    }
+    conectar();
 }
 
 

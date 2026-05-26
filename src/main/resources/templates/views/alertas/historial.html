@@ -128,17 +128,20 @@
                                     <!-- Acciones para Recientes -->
                                     <th:block th:if="${!esPapelera}">
                                         <a th:href="@{/notificaciones/leer/{id}(id=${n.id})}"
-                                            class="text-xs font-bold hover:underline flex items-center gap-1 rounded-lg p-2 border"
-                                            th:classappend="${!n.leida ? 'text-yellow-400' : 'text-gob-guinda'}"
-                                            title="Ir al origen">Ver <i class="fas fa-external-link-alt text-[10px]"></i>
+                                            class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all"
+                                            th:classappend="${!n.leida ? 'border-yellow-400/30 text-yellow-400 hover:bg-white/10' : 'border-gob-guinda/20 text-gob-guinda hover:bg-gob-guinda/5'}"
+                                            title="Ir al origen">
+                                            <i class="fas fa-external-link-alt text-[10px]"></i>
+                                            <span>Ver</span>
                                         </a>
 
                                         <!--BOTON PARA MARCAR COMO LEIDA UNA NOTIFICACION-->
                                         <a th:href="@{/notificaciones/archivar/{id}(id=${n.id})}"
-                                            class="transition-colors p-2 rounded"
-                                            th:classappend="${!n.leida ? 'text-yellow-100 hover:text-white hover:bg-white/20' : 'text-gray-800 hover:text-red-500 hover:bg-red-500'}"
-                                            title="Marcar como leida">
-                                            <i class="fas fa-eye"></i> <!--ORIGINAL class="fas fa-trash-alt"-->
+                                            class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all"
+                                            th:classappend="${!n.leida ? 'border-yellow-100/20 text-yellow-100 hover:bg-white/20' : 'border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-500 hover:border-red-200'}"
+                                            title="Marcar como leída">
+                                            <i class="fas fa-eye"></i>
+                                            <span>Marcar como leída</span>
                                         </a> 
                                     </th:block>
 
