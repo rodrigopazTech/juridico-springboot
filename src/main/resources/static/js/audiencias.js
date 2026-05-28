@@ -629,7 +629,7 @@ function actualizarTablaAsincrono(keywordForzado = null) {
     window.history.replaceState({ path: newUrl }, '', newUrl);
 
     // 7. Fetch con AbortController
-    fetch('/audiencias?' + urlParams.toString(), {
+    return fetch('/audiencias?' + urlParams.toString(), {
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         signal: abortControllerAudiencias.signal
     })
@@ -897,3 +897,97 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+
+// ==========================================
+// 🔔 WEBSOCKET: ACTUALIZACIÓN EN TIEMPO REAL
+// ==========================================
+function iniciarWebSocketAudiencias() {
+    if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
+        setTimeout(iniciarWebSocketAudiencias, 1000);
+        return;
+    }
+    const socket = new SockJS('/ws-realtime');
+    const stompClient = Stomp.over(socket);
+    stompClient.debug = null; // Silenciar logs de debug en consola
+
+    stompClient.connect({}, function (frame) {
+        console.log('Conectado a WebSockets para Audiencias en tiempo real.');
+        stompClient.subscribe('/topic/alertas', function (message) {
+            try {
+                const payload = JSON.parse(message.body);
+                // Escuchar eventos específicamente para la tabla 'audiencias'
+                if (payload.tabla === 'audiencias') {
+                    console.log('Cambio detectado en audiencias vía WS:', payload);
+
+
+                    // Refrescar la tabla y KPIs de forma asíncrona, y LUEGO alumbrar la tarjeta
+                    const fetchPromise = actualizarTablaAsincrono();
+                    if (fetchPromise && fetchPromise.then) {
+                        fetchPromise.then(() => {
+                            animarTarjetaKPI(payload.estatus);
+                        });
+                    } else {
+                        // Por si falló o retornó algo nulo
+                        setTimeout(() => animarTarjetaKPI(payload.estatus), 800);
+                    }
+                }
+            } catch (e) {
+                console.error("Error parseando notificación de websocket", e);
+            }
+        });
+    }, function (error) {
+        console.warn('Conexión WS perdida. Reconectando en 5s...');
+        setTimeout(iniciarWebSocketAudiencias, 5000);
+    });
+}
+
+function animarTarjetaKPI(estatus) {
+    let cardId = null;
+    let colorClase = 'ring-gob-oro';
+    let bgClase = 'bg-yellow-50';
+
+    if (estatus === 'PENDIENTE') {
+        cardId = 'kpi-card-pendiente';
+        colorClase = 'ring-orange-400';
+        bgClase = 'bg-orange-50';
+    } else if (estatus === 'CON_ACTA') {
+        cardId = 'kpi-card-con-acta';
+        colorClase = 'ring-blue-400';
+        bgClase = 'bg-blue-50';
+    } else if (estatus === 'CONCLUIDA') {
+        cardId = 'kpi-card-concluida';
+        colorClase = 'ring-green-400';
+        bgClase = 'bg-green-50';
+    } else {
+        // Si no hay estatus (ej. un borrado genérico o creación sin estatus explícito), alumbrar el Total
+        cardId = 'kpi-card-total';
+        colorClase = 'ring-red-400';
+        bgClase = 'bg-red-50';
+    }
+
+    // Siempre alumbrar la tarjeta Total sutilmente
+    const totalCard = document.getElementById('kpi-card-total');
+    if (totalCard && cardId !== 'kpi-card-total') {
+        totalCard.classList.add('ring-4', 'ring-red-200', 'scale-105', 'shadow-xl');
+        setTimeout(() => totalCard.classList.remove('ring-4', 'ring-red-200', 'scale-105', 'shadow-xl'), 1500);
+    }
+
+    if (cardId) {
+        const card = document.getElementById(cardId);
+        if (card) {
+            // Aplicar clases de alumbrado (Glow animation)
+            card.classList.add('ring-4', colorClase, bgClase, 'scale-110', 'shadow-2xl', 'z-50', 'transition-all', 'duration-300');
+
+            // Quitar el alumbrado después de 1.5s
+            setTimeout(() => {
+                card.classList.remove('ring-4', colorClase, bgClase, 'scale-110', 'shadow-2xl', 'z-50');
+            }, 1500);
+        }
+    }
+}
+
+// Inicializar la conexión WS después de que el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    // Retrasar ligeramente la conexión para no competir con el WS del Navbar y asegurar librerías
+    setTimeout(iniciarWebSocketAudiencias, 2000);
+});

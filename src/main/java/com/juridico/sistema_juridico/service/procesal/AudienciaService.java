@@ -192,6 +192,36 @@ public class AudienciaService {
         desc += " Acción realizada por: " + usuarioActual.getNombreCompleto() + " el " + fechaFormat + ".";
 
         registrarActividad(audiencia.getExpediente(), "Audiencia Concluida", desc, "CHECK");
+
+        // Notificar al abogado responsable si la audiencia fue concluida por un superior
+        Usuario abogadoResponsable = audiencia.getExpediente().getAbogadoResponsable();
+        Usuario abogadoComparece = audiencia.getAbogadoComparece(); // Si existe
+
+        if (abogadoComparece != null && !abogadoComparece.getId().equals(usuarioActual.getId())) {
+            notificacionService.crearNotificacion(
+                    abogadoComparece,
+                    usuarioActual,
+                    "Audiencia Validada y Concluida",
+                    "Tu audiencia del expediente " + audiencia.getExpediente().getNumero() + " ha sido validada y concluida.",
+                    "AUDIENCIA",
+                    catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
+                    audiencia.getId().toString(),
+                    true
+            );
+        }
+        if (abogadoResponsable != null && !abogadoResponsable.getId().equals(usuarioActual.getId()) && (abogadoComparece == null || !abogadoResponsable.getId().equals(abogadoComparece.getId()))) {
+            notificacionService.crearNotificacion(
+                    abogadoResponsable,
+                    usuarioActual,
+                    "Audiencia Validada y Concluida",
+                    "La audiencia del expediente " + audiencia.getExpediente().getNumero() + " ha sido validada y concluida.",
+                    "AUDIENCIA",
+                    catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
+                    audiencia.getId().toString(),
+                    true
+            );
+        }
+
     }
 
     private void validarPermisoConclusion(Audiencia audiencia, Usuario usuario) {

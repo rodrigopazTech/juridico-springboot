@@ -16,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.juridico.sistema_juridico.service.NotificacionService;
+import com.juridico.sistema_juridico.repository.Catalogo.CatPrioridadRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +36,9 @@ public class TerminoService {
     private final TerminoPresentadoRepository presentadoRepository;
     private final AuditoriaService auditoriaService;
     private final UsuarioRepository usuarioRepository;
+    private final NotificacionService notificacionService;
+    private final CatPrioridadRepository catPrioridadRepository;
+
 
     public Page<TerminoResponse> listarPaginado(Pageable pageable) {
         return terminoRepository.findAll(pageable).map(this::mapToResponse);
@@ -100,6 +105,37 @@ public class TerminoService {
                 "El término ha sido marcado como presentado. Acción realizada por: " + usuarioActual + " el "
                         + fechaFormat + ".",
                 "CHECK");
+
+        // Notificar al abogado si fue concluido por un superior
+        Usuario abogadoResponsable = termino.getExpediente().getAbogadoResponsable();
+        Usuario responsableTermino = termino.getAbogadoResponsable(); // Si existe
+        Usuario usuarioActor = usuarioRepository.findByEmail(usuarioActual).orElse(null);
+
+        if (abogadoResponsable != null && usuarioActor != null && !abogadoResponsable.getId().equals(usuarioActor.getId())) {
+            notificacionService.crearNotificacion(
+                    abogadoResponsable,
+                    usuarioActor,
+                    "Término Validado y Concluido",
+                    "El término '" + termino.getAsunto() + "' del expediente " + termino.getExpediente().getNumero() + " ha sido marcado como presentado y concluido.",
+                    "TERMINO",
+                    catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
+                    termino.getId().toString(),
+                    true
+            );
+        }
+        if (responsableTermino != null && usuarioActor != null && !responsableTermino.getId().equals(usuarioActor.getId()) && !responsableTermino.getId().equals(abogadoResponsable.getId())) {
+            notificacionService.crearNotificacion(
+                    responsableTermino,
+                    usuarioActor,
+                    "Término Validado y Concluido",
+                    "El término '" + termino.getAsunto() + "' del expediente " + termino.getExpediente().getNumero() + " ha sido marcado como presentado y concluido.",
+                    "TERMINO",
+                    catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
+                    termino.getId().toString(),
+                    true
+            );
+        }
+
     }
 
     @Transactional
