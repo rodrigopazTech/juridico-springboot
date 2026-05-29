@@ -107,7 +107,10 @@ function abrirModalUsuario() {
     // Limpiar campo hidden y badge
     const hiddenPass = document.getElementById('input-password-temporal');
     const badge = document.getElementById('badge-pass-generado');
-    if (hiddenPass) hiddenPass.value = '';
+    if (hiddenPass) {
+        hiddenPass.value = '';
+        hiddenPass.disabled = true; // Deshabilitar para que no se envíe y evitar el problema de parámetro duplicado
+    }
     if (badge) badge.classList.add('hidden');
 
     // Eliminar input oculto de forcePasswordChange si existía
@@ -179,7 +182,10 @@ function editarUsuario(id, nombre, email, rol, gerenciaId, activo, materiasIdsAr
     // Limpiar estado de contraseña temporal previa
     const hiddenPass = document.getElementById('input-password-temporal');
     const badge = document.getElementById('badge-pass-generado');
-    if (hiddenPass) hiddenPass.value = '';
+    if (hiddenPass) {
+        hiddenPass.value = '';
+        hiddenPass.disabled = false; // Habilitar para edición para recibir contraseña temporal si se genera
+    }
     if (badge) badge.classList.add('hidden');
 
     materiasUsuarioActual = materiasIdsArray || [];
