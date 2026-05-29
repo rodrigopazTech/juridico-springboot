@@ -4,7 +4,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log("Sistema de Terminos Cargado");
+    //console.log("Sistema de Terminos Cargado");
     initMiniCalendar();
     initSearchTerminos();
 
@@ -56,19 +56,19 @@ document.addEventListener('DOMContentLoaded', function () {
             fetch(url, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
-            .then(res => {
-                Swal.close();
-                if (res.ok) {
-                    showSuccessToast('¡Etapa avanzada correctamente!');
-                } else {
-                    showErrorModal('No se pudo avanzar la etapa del término.');
-                }
-            })
-            .catch(err => {
-                Swal.close();
-                console.error("Error al avanzar etapa:", err);
-                showErrorModal('Error de red al intentar avanzar la etapa.');
-            });
+                .then(res => {
+                    Swal.close();
+                    if (res.ok) {
+                        showSuccessToast('¡Etapa avanzada correctamente!');
+                    } else {
+                        showErrorModal('No se pudo avanzar la etapa del término.');
+                    }
+                })
+                .catch(err => {
+                    Swal.close();
+                    console.error("Error al avanzar etapa:", err);
+                    showErrorModal('Error de red al intentar avanzar la etapa.');
+                });
             return;
         }
 
@@ -329,31 +329,40 @@ function animarEtapaPorEstatus(estatusObj) {
 }
 
 // --- CONEXIÓN WEBSOCKET PARA ACTUALIZACIÓN EN TIEMPO REAL ---
+let intentos = 0;
+let maxIntentos = 5;
+let seguirIntentando = true;
+
 function iniciarTerminosWebSocket() {
     function conectar() {
+        if (!seguirIntentando) {
+            console.warn("Reconexión detenida manualmente.");
+            return;
+        }
+
         if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
             setTimeout(conectar, 500);
             return;
         }
-        
-        console.log("Iniciando WebSocket de Términos...");
+
         const socket = new SockJS('/ws-realtime');
         const stompClient = Stomp.over(socket);
         stompClient.debug = null; // silenciar debug de consola
 
         stompClient.connect({}, function (frame) {
-            console.log("WebSocket de Términos conectado.");
+            // Conexión exitosa → reiniciamos contador
+            intentos = 0;
+
             stompClient.subscribe('/topic/alertas', function (message) {
                 try {
                     const payload = JSON.parse(message.body);
                     if (payload.tabla === 'terminos') {
-                        console.log("Evento de Término recibido:", payload);
                         actualizarTablaAsincrono();
-                        
+
                         if (payload.etapa_procesal) {
                             setTimeout(() => {
                                 animarEtapaPorEstatus(payload.etapa_procesal);
-                            }, 500);
+                            }, 1000);
                         }
                     }
                 } catch (e) {
@@ -361,12 +370,25 @@ function iniciarTerminosWebSocket() {
                 }
             });
         }, function (error) {
+            intentos++;
             console.warn("Conexión de WebSocket perdida, reintentando en 5s...", error);
+            console.log(`Reconexión No.${intentos}`);
+
+            if (intentos >= maxIntentos) {
+                console.error(`Se ha tratado de conectar más de ${maxIntentos} veces`);
+                console.log("Deteniendo reconexión de WebSocket...");
+                seguirIntentando = false;
+                window.location.reload();
+                return;
+            }
+
             setTimeout(conectar, 5000);
         });
     }
+
     conectar();
 }
+
 
 
 // --- SUBIDA DE ARCHIVOS ---
