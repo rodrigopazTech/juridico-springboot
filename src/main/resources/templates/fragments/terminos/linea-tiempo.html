@@ -16,7 +16,7 @@
                         class="flex flex-col items-center no-underline transition-all duration-300 hover:scale-105">
 
                         <!-- Esfera con Conteo (Reducida) -->
-                        <div id="etapa-${etapa}"
+                        <div th:id="|etapa-${etapa}|"
                             class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 shadow-sm transition-all duration-300 relative"
                             th:with="enEtapa=${conteosEtapas.get(etapa)}, isSelected=${paramEstatus == etapa}, isAssigned=${etapasAsignadas != null and !etapasAsignadas.isEmpty() and etapasAsignadas.contains(etapa)}"
                             th:classappend="${isAssigned ? 'bg-gob-guinda border-white text-white' : 'bg-gob-grisTenue border-white text-gob-guinda'}">

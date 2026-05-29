@@ -149,13 +149,13 @@
            Sistema de Popup de Notificaciones (Navbar Bell)
            ----------------------------------------------------------------------- */
         (function () {
-            const POLL_INTERVAL  = 1000; // antes cada 30s ahora cada 1s
             const API_URL        = '/notificaciones/api/recientes';
             const TOAST_DURATION = 5000;  // ms que dura el toast
 
-            // ---- IDs ya vistos (para no repetir toasts) ----
+            // ---- IDs ya vistos cuando se cargó la página (para no hacer toast de notifs viejas) ----
             let seenIds = new Set();
-            let firstLoad = true; // La primera carga NO muestra toasts
+            // Snapshot de IDs al momento de conectar el WS (se pobla en pollInitialState)
+            let initialIdsLoaded = false;
 
             // ---- Mapas de estilo por Tipo ----
             const TIPO_META = {
@@ -398,8 +398,9 @@
                             
                             // Validar que el evento sea de inserción en notificaciones
                             if (payload.tabla === 'notificaciones' && payload.operacion === 'INSERT') {
+                                const notifId = String(payload.id); // Normalizar a string (el trigger envía el id como texto)
                                 const nuevaNotif = {
-                                    id: payload.id,
+                                    id: notifId,
                                     titulo: payload.titulo,
                                     mensaje: payload.mensaje,
                                     tipo: payload.etapa_procesal || 'SISTEMA',
@@ -408,11 +409,14 @@
                                     hora: new Date(payload.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
                                 };
 
-                                if (!seenIds.has(nuevaNotif.id)) {
-                                    seenIds.add(nuevaNotif.id);
-                                    mostrarToast(nuevaNotif);
-                                    incrementarContadorBadge();
-                                    actualizarListaDropdownSiAbierto();
+                                // Mostrar toast solo si es un ID nuevo (no existía al cargar la página)
+                                if (!seenIds.has(notifId)) {
+                                    seenIds.add(notifId);
+                                    if (initialIdsLoaded) {
+                                        mostrarToast(nuevaNotif);
+                                        incrementarContadorBadge();
+                                        actualizarListaDropdownSiAbierto();
+                                    }
                                 }
                             }
                         });
@@ -430,10 +434,11 @@
 
                 actualizarBadge(data.total);
 
+                // Registrar los IDs ya existentes para que el WS no haga toast de notifs viejas
                 if (data.notificaciones) {
-                    data.notificaciones.forEach(n => seenIds.add(n.id));
+                    data.notificaciones.forEach(n => seenIds.add(String(n.id))); // Normalizar a string
                 }
-                firstLoad = false;
+                initialIdsLoaded = true; // El WS puede empezar a mostrar toasts de IDs nuevos
             }
 
             // ---- Toggle dropdown ----
@@ -451,7 +456,6 @@
                         if (data.notificaciones) {
                             data.notificaciones.forEach(n => seenIds.add(n.id));
                         }
-                        firstLoad = false;
                     }
                 }
             };
