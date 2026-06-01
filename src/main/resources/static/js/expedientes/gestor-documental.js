@@ -7,6 +7,7 @@ let numeroExpedienteGlobal = null;
 let carpetaActualId = null;
 let arbolCarpetasGlobal = [];
 let vistaActual = 'list';
+let mostrandoPapelera = false;
 
 // ========================================
 // INICIALIZACIÓN
@@ -16,10 +17,12 @@ function openGestorDocumental(expedienteId, numeroExpediente) {
     expedienteIdGlobal = expedienteId;
     numeroExpedienteGlobal = numeroExpediente || 'Expediente';
     carpetaActualId = null;
+    mostrandoPapelera = false;
 
     const modal = document.getElementById('modal-gestor-documental');
     modal.classList.remove('hidden');
     modal.classList.add('flex');
+    actualizarEstadoPapelera();
 
     // Cargar datos iniciales
     cargarArbolCarpetas();
@@ -37,6 +40,7 @@ function closeGestorDocumental() {
     numeroExpedienteGlobal = null;
     carpetaActualId = null;
     arbolCarpetasGlobal = [];
+    mostrandoPapelera = false;
 }
 
 // ========================================
@@ -178,7 +182,9 @@ function toggleCarpeta(carpetaId) {
 }
 
 function seleccionarCarpeta(carpetaId) {
+    mostrandoPapelera = false;
     carpetaActualId = carpetaId;
+    actualizarEstadoPapelera();
 
     // Actualizar UI
     document.querySelectorAll('.explorer-item').forEach(node => {
@@ -203,6 +209,15 @@ function seleccionarCarpeta(carpetaId) {
 
 function actualizarBreadcrumb() {
     const breadcrumb = document.getElementById('breadcrumb-carpetas');
+
+    if (mostrandoPapelera) {
+        breadcrumb.innerHTML = `
+            <i class="fas fa-trash-restore text-gob-guinda mr-1"></i>
+            <span class="font-semibold">Papelera</span>
+            <span class="ml-2 text-gray-400">Los documentos se eliminan definitivamente despues de 90 dias.</span>
+        `;
+        return;
+    }
 
     if (!carpetaActualId) {
         breadcrumb.innerHTML = `
@@ -234,6 +249,39 @@ function actualizarBreadcrumb() {
     breadcrumb.innerHTML = html;
 }
 
+function mostrarPapeleraDocumentos() {
+    mostrandoPapelera = true;
+    carpetaActualId = null;
+    actualizarEstadoPapelera();
+    actualizarBreadcrumb();
+    cargarDocumentos();
+}
+
+function actualizarEstadoPapelera() {
+    const btnPapelera = document.getElementById('btn-papelera-documentos');
+    const btnNuevaCarpeta = document.getElementById('btn-nueva-carpeta');
+    const btnSubir = document.getElementById('btn-subir-documento-toolbar');
+    const searchInput = document.getElementById('search-documentos-gestor');
+
+    if (btnPapelera) {
+        btnPapelera.classList.toggle('text-gob-guinda', mostrandoPapelera);
+        btnPapelera.classList.toggle('text-gray-600', !mostrandoPapelera);
+    }
+    if (btnNuevaCarpeta) {
+        btnNuevaCarpeta.disabled = mostrandoPapelera;
+        btnNuevaCarpeta.classList.toggle('opacity-40', mostrandoPapelera);
+    }
+    if (btnSubir) {
+        btnSubir.disabled = mostrandoPapelera;
+        btnSubir.classList.toggle('opacity-40', mostrandoPapelera);
+    }
+    if (searchInput) {
+        searchInput.disabled = mostrandoPapelera;
+        searchInput.value = '';
+        searchInput.placeholder = mostrandoPapelera ? 'La busqueda no aplica en papelera' : 'Buscar archivo en esta carpeta...';
+    }
+}
+
 function obtenerRutaCarpeta(carpetaId, arbol = arbolCarpetasGlobal, ruta = []) {
     for (const carpeta of arbol) {
         if (carpeta.id === carpetaId) {
@@ -253,6 +301,10 @@ function obtenerRutaCarpeta(carpetaId, arbol = arbolCarpetasGlobal, ruta = []) {
 // ========================================
 
 function abrirModalNuevaCarpeta() {
+    if (mostrandoPapelera) {
+        return;
+    }
+
     document.getElementById('carpeta-actual-id').value = carpetaActualId || '';
     document.getElementById('nombre-nueva-carpeta').value = '';
 
@@ -470,6 +522,18 @@ async function cargarDocumentos() {
     `;
 
     try {
+        if (mostrandoPapelera) {
+            const response = await fetch(`/api/documentos/expedientes/${expedienteIdGlobal}/papelera`);
+
+            if (!response.ok) {
+                throw new Error('Error al cargar la papelera');
+            }
+
+            const documentos = await response.json();
+            renderizarPapelera(documentos);
+            return;
+        }
+
         // Obtener subcarpetas de la carpeta actual
         let subcarpetas = [];
         if (carpetaActualId) {
@@ -516,6 +580,19 @@ function renderizarContenido(subcarpetas, documentos) {
     const vistaGrid = document.getElementById('vista-grid');
 
     const tieneContenido = subcarpetas.length > 0 || documentos.length > 0;
+
+    if (!tieneContenido && mostrandoPapelera) {
+        const mensajePapeleraVacia = `
+            <div class="text-center text-gray-400 py-12">
+                <i class="fas fa-trash text-5xl mb-3"></i>
+                <p class="text-lg font-semibold">Papelera vacia</p>
+                <p class="text-sm mt-1">No hay documentos pendientes de recuperacion</p>
+            </div>
+        `;
+        vistaLista.innerHTML = mensajePapeleraVacia;
+        vistaGrid.innerHTML = mensajePapeleraVacia;
+        return;
+    }
 
     if (!tieneContenido) {
         const mensajeVacio = `
@@ -648,11 +725,77 @@ function renderizarDocumentos(documentos) {
     renderizarContenido([], documentos);
 }
 
+function renderizarPapelera(documentos) {
+    const vistaLista = document.getElementById('vista-lista');
+    const vistaGrid = document.getElementById('vista-grid');
+
+    if (documentos.length === 0) {
+        const mensajeVacio = `
+            <div class="text-center text-gray-400 py-12">
+                <i class="fas fa-trash text-5xl mb-3"></i>
+                <p class="text-lg font-semibold">Papelera vacia</p>
+                <p class="text-sm mt-1">No hay documentos pendientes de recuperacion</p>
+            </div>
+        `;
+        vistaLista.innerHTML = mensajeVacio;
+        vistaGrid.innerHTML = mensajeVacio;
+        return;
+    }
+
+    let htmlLista = '';
+    let htmlGrid = '';
+
+    documentos.forEach(doc => {
+        const icono = obtenerIconoArchivo(doc.tipoMime);
+        const tamanio = formatearTamanio(doc.tamanioBytes);
+        const fechaEliminacion = doc.fechaEliminacion ? new Date(doc.fechaEliminacion).toLocaleDateString('es-MX') : 'Sin fecha';
+        const fechaDefinitiva = doc.fechaEliminacionDefinitiva ? new Date(doc.fechaEliminacionDefinitiva).toLocaleDateString('es-MX') : '90 dias';
+
+        htmlLista += `
+            <div class="flex items-center justify-between p-3 bg-white border border-red-100 rounded-lg hover:shadow-md transition-shadow">
+                <div class="flex items-center gap-3 flex-1">
+                    <div class="text-3xl opacity-70">${icono}</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-sm text-gray-900 truncate">${doc.nombreOriginal}</p>
+                        <p class="text-xs text-gray-500">${tamanio} - eliminado: ${fechaEliminacion} - definitivo: ${fechaDefinitiva}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="recuperarDocumento('${doc.id}')"
+                            class="p-2 text-green-700 hover:bg-green-50 rounded transition-colors" title="Recuperar">
+                        <i class="fas fa-trash-restore"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        htmlGrid += `
+            <div class="bg-white border border-red-100 rounded-lg p-4 hover:shadow-lg transition-shadow text-center">
+                <div class="text-5xl mb-3 opacity-70">${icono}</div>
+                <p class="font-semibold text-sm text-gray-900 truncate mb-2">${doc.nombreOriginal}</p>
+                <p class="text-xs text-gray-500 mb-1">${tamanio}</p>
+                <p class="text-[11px] text-gray-500 mb-3">Definitivo: ${fechaDefinitiva}</p>
+                <button onclick="recuperarDocumento('${doc.id}')"
+                        class="px-3 py-2 text-sm text-green-700 hover:bg-green-50 rounded transition-colors" title="Recuperar">
+                    <i class="fas fa-trash-restore mr-1"></i> Recuperar
+                </button>
+            </div>
+        `;
+    });
+
+    vistaLista.innerHTML = htmlLista;
+    vistaGrid.innerHTML = htmlGrid;
+}
+
 // ========================================
 // SUBIR DOCUMENTO
 // ========================================
 
 function abrirModalSubirDocumento() {
+    if (mostrandoPapelera) {
+        return;
+    }
+
     document.getElementById('carpeta-actual-id').value = carpetaActualId || '';
     document.getElementById('doc-file-gestor').value = '';
     document.getElementById('doc-descripcion-gestor').value = '';
@@ -778,7 +921,7 @@ async function subirDocumento() {
 }
 
 async function eliminarDocumento(documentoId) {
-    if (!confirm('¿Está seguro de eliminar este documento? Esta acción no se puede deshacer.')) {
+    if (!confirm('El documento se movera a la papelera y podra recuperarse durante 90 dias. ¿Desea continuar?')) {
         return;
     }
 
@@ -797,7 +940,30 @@ async function eliminarDocumento(documentoId) {
         await cargarEspacioOcupado();
         await cargarArbolCarpetas(); // Actualizar contadores
 
-        mostrarNotificacion('Documento eliminado correctamente', 'success');
+        mostrarNotificacion('Documento enviado a la papelera', 'success');
+
+    } catch (error) {
+        console.error('Error:', error);
+        alert(error.message);
+    }
+}
+
+async function recuperarDocumento(documentoId) {
+    try {
+        const response = await fetch(`/api/documentos/${documentoId}/recuperar`, {
+            method: 'PUT'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Error al recuperar documento');
+        }
+
+        await cargarDocumentos();
+        await cargarEspacioOcupado();
+        await cargarArbolCarpetas();
+
+        mostrarNotificacion('Documento recuperado correctamente', 'success');
 
     } catch (error) {
         console.error('Error:', error);
@@ -818,6 +984,10 @@ function previsualizarDocumento(documentoId) {
 // ========================================
 
 function handleDragOver(event) {
+    if (mostrandoPapelera) {
+        return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
     
@@ -852,6 +1022,10 @@ function handleDragLeave(event) {
 }
 
 async function handleDrop(event) {
+    if (mostrandoPapelera) {
+        return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
     
@@ -1081,6 +1255,10 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 async function buscarDocumentos() {
+    if (mostrandoPapelera) {
+        return;
+    }
+
     const busqueda = document.getElementById('search-documentos-gestor').value.trim();
 
     if (busqueda.length < 2) {

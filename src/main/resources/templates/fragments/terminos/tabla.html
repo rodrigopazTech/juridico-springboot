@@ -30,7 +30,6 @@
                                         th:classappend="${t.semaforoColor == 'bg-red-800' || t.semaforoColor == 'bg-red-500' ? 'text-red-600' : ''}">
                                         2026-01-01
                                     </span>
-                                    </span>
                                 </div>
                             </td>
 
@@ -46,8 +45,14 @@
                                         th:if="${t.expediente != null}" th:title="${t.expediente?.partes}"
                                         th:text="${t.expediente?.partes}">Partes</span>
 
-                                    <span class="text-xs text-gray-300 italic" th:if="${t.expediente == null}">Sin
-                                        Asignar</span>
+                                    <span class="font-bold text-gob-guinda text-sm truncate"
+                                        th:if="${t.expediente == null}"
+                                        th:title="${t.descripcionReferencia}"
+                                        th:text="${t.numeroReferencia}">Asunto único</span>
+
+                                    <span class="text-xs text-gray-400 truncate cursor-help"
+                                        th:if="${t.expediente == null}" th:title="${t.partesReferencia}"
+                                        th:text="${t.partesReferencia != null ? t.partesReferencia : 'Sin expediente'}">Sin expediente</span>
                                 </div>
                             </td>
 
@@ -73,7 +78,7 @@
                             <td class="px-4 py-3 text-right relative">
                                 <button
                                     th:if="${t.estatusTermino?.name() != 'LIBERADO' && t.estatusTermino?.name() != 'PRESENTADO' && t.estatusTermino?.name() != 'CONCLUIDO'}"
-                                    th:onclick="editarTermino([[${t.id}]], [[${t.asunto}]], [[${t.fechaVencimiento}]], [[${t.expediente?.id ?: ''}]], [[${t.expediente?.numero ?: 'Sin Número'}]], [[${t.abogadoResponsable?.id ?: ''}]], [[${t.prioridad?.id ?: ''}]], [[${t.observaciones != null ? #strings.escapeJavaScript(t.observaciones) : ''}]])"
+                                    th:onclick="editarTermino([[${t.id}]], [[${t.asunto}]], [[${t.fechaVencimiento}]], [[${t.expediente?.id ?: ''}]], [[${t.expediente?.numero ?: 'Sin Número'}]], [[${t.abogadoResponsable?.id ?: ''}]], [[${t.prioridad?.id ?: ''}]], [[${t.observaciones != null ? #strings.escapeJavaScript(t.observaciones) : ''}]], [[${t.contexto?.origen?.name() ?: 'EXPEDIENTE'}]], [[${t.contexto?.materia?.id ?: ''}]], [[${t.contexto?.gerencia?.id ?: ''}]], [[${t.contexto?.descripcion != null ? #strings.escapeJavaScript(t.contexto.descripcion) : ''}]], [[${t.contexto?.partes != null ? #strings.escapeJavaScript(t.contexto.partes) : ''}]], [[${t.contexto?.numeroExpedienteSnapshot != null ? #strings.escapeJavaScript(t.contexto.numeroExpedienteSnapshot) : ''}]])"
                                     class="text-gray-400 hover:text-gob-oro mr-2" title="Editar">
                                     <i class="fas fa-edit"></i>
                                 </button>
@@ -225,3 +230,4 @@
             </div>
         </div>
     </div>
+</div>

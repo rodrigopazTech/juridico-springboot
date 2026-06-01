@@ -53,6 +53,20 @@ public class Documento {
     @Column(name = "fecha_subida", nullable = false)
     private LocalDateTime fechaSubida;
 
+    @Column(name = "eliminado")
+    private Boolean eliminado;
+
+    @Column(name = "fecha_eliminacion")
+    private LocalDateTime fechaEliminacion;
+
+    @Column(name = "fecha_eliminacion_definitiva")
+    private LocalDateTime fechaEliminacionDefinitiva;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_eliminacion_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "passwordHash", "materias"})
+    private Usuario usuarioEliminacion;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -65,6 +79,9 @@ public class Documento {
         updatedAt = LocalDateTime.now();
         if (fechaSubida == null) {
             fechaSubida = LocalDateTime.now();
+        }
+        if (eliminado == null) {
+            eliminado = false;
         }
     }
 

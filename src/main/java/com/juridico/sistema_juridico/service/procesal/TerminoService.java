@@ -92,7 +92,7 @@ public class TerminoService {
         // Lógica de Histórico: Creamos el registro en la tabla de presentados
         TerminoPresentado historico = TerminoPresentado.builder()
                 .termino(termino)
-                .expedienteNumero(termino.getExpediente().getNumero())
+                .expedienteNumero(termino.getNumeroReferencia())
                 .fechaPresentacion(LocalDate.now())
                 .acuseDocumento(observaciones) // Guardamos el comentario como acuse inicial
                 .build();
@@ -101,41 +101,51 @@ public class TerminoService {
 
         String usuarioActual = SecurityContextHolder.getContext().getAuthentication().getName();
         String fechaFormat = LocalDate.now().toString();
-        registrarActividad(termino.getExpediente(), "Término Concluido",
+        if (termino.getExpediente() != null) {
+            registrarActividad(termino.getExpediente(), "Término Concluido",
                 "El término ha sido marcado como presentado. Acción realizada por: " + usuarioActual + " el "
                         + fechaFormat + ".",
                 "CHECK");
+        } else {
+            Usuario usuarioActor = usuarioRepository.findByEmail(usuarioActual).orElse(null);
+            auditoriaService.registrarActividadGeneral(usuarioActor, "Término Concluido",
+                "El término '" + termino.getAsunto() + "' (sin expediente) ha sido marcado como presentado. Acción realizada por: " + usuarioActual + " el " + fechaFormat + ".",
+                "CHECK");
+        }
 
         // Notificar al abogado si fue concluido por un superior
-        Usuario abogadoResponsable = termino.getExpediente().getAbogadoResponsable();
+        Usuario abogadoResponsable = termino.getExpediente() != null ? termino.getExpediente().getAbogadoResponsable() : null;
         Usuario responsableTermino = termino.getAbogadoResponsable(); // Si existe
         Usuario usuarioActor = usuarioRepository.findByEmail(usuarioActual).orElse(null);
+
+        String descExpediente = (termino.getExpediente() != null) 
+                ? "del expediente " + termino.getExpediente().getNumero() 
+                : "(sin expediente)";
 
         if (abogadoResponsable != null && usuarioActor != null && !abogadoResponsable.getId().equals(usuarioActor.getId())) {
             notificacionService.crearNotificacion(
                     abogadoResponsable,
                     usuarioActor,
                     "Término Validado y Concluido",
-                    "El término '" + termino.getAsunto() + "' del expediente " + termino.getExpediente().getNumero() + " ha sido marcado como presentado y concluido.",
+                    "El término '" + termino.getAsunto() + "' " + descExpediente + " ha sido marcado como presentado y concluido.",
                     "TERMINO",
                     catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                     termino.getId().toString(),
                     true
             );
         }
-        if (responsableTermino != null && usuarioActor != null && !responsableTermino.getId().equals(usuarioActor.getId()) && !responsableTermino.getId().equals(abogadoResponsable.getId())) {
+        if (responsableTermino != null && usuarioActor != null && !responsableTermino.getId().equals(usuarioActor.getId()) && (abogadoResponsable == null || !responsableTermino.getId().equals(abogadoResponsable.getId()))) {
             notificacionService.crearNotificacion(
                     responsableTermino,
                     usuarioActor,
                     "Término Validado y Concluido",
-                    "El término '" + termino.getAsunto() + "' del expediente " + termino.getExpediente().getNumero() + " ha sido marcado como presentado y concluido.",
+                    "El término '" + termino.getAsunto() + "' " + descExpediente + " ha sido marcado como presentado y concluido.",
                     "TERMINO",
                     catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                     termino.getId().toString(),
                     true
             );
         }
-
     }
 
     @Transactional
@@ -149,11 +159,13 @@ public class TerminoService {
         String usuarioActual = SecurityContextHolder.getContext().getAuthentication().getName();
         String fechaFormat = LocalDate.now().toString();
 
-        registrarActividad(termino.getExpediente(), "Cambio de Estado (Término)",
+        if (termino.getExpediente() != null) {
+            registrarActividad(termino.getExpediente(), "Cambio de Estado (Término)",
                 "Cambio de estatus de Término a " + nuevoEstado.getDescripcion() + ". Acción realizada por: "
                         + usuarioActual + " el "
                         + fechaFormat + ".",
-                "EDIT");
+                    "EDIT");
+        }
     }
 
     private void registrarActividad(Expediente expediente, String titulo, String descripcion, String icono) {
@@ -177,9 +189,7 @@ public class TerminoService {
         res.setActuación(entity.getAsunto());
         res.setFechaVencimiento(entity.getFechaVencimiento());
 
-        if (entity.getExpediente() != null) {
-            res.setExpediente(entity.getExpediente().getNumero());
-        }
+        res.setExpediente(entity.getNumeroReferencia());
 
         // Agregamos lógica para el abogado responsable
         if (entity.getAbogadoResponsable() != null) {

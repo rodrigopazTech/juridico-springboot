@@ -104,9 +104,14 @@ public class UsuariosController {
 
     @PostMapping("/gerencias/guardar")
     public String guardarGerencia(@ModelAttribute Gerencia gerencia, RedirectAttributes redirectAttrs) {
-        usuarioService.guardarGerencia(gerencia);
-        redirectAttrs.addFlashAttribute("mensaje", "Gerencia procesada correctamente.");
-        redirectAttrs.addFlashAttribute("tipo", "success");
+        try {
+            usuarioService.guardarGerencia(gerencia);
+            redirectAttrs.addFlashAttribute("mensaje", "Gerencia procesada correctamente.");
+            redirectAttrs.addFlashAttribute("tipo", "success");
+        } catch (IllegalArgumentException ex) {
+            redirectAttrs.addFlashAttribute("mensaje", ex.getMessage());
+            redirectAttrs.addFlashAttribute("tipo", "error");
+        }
         return "redirect:/usuarios?tab=gerencias";
     }
 

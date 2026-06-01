@@ -11,4 +11,6 @@ public interface TerminoPresentadoRepository extends JpaRepository<TerminoPresen
     
     // Este es el método que te faltaba para descargar el acuse
     List<TerminoPresentado> findByTerminoExpedienteId(UUID expedienteId);
+
+    List<TerminoPresentado> findByTerminoId(Integer terminoId);
 }

@@ -19,6 +19,7 @@ import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import com.juridico.sistema_juridico.repository.Expediente.ActividadExpedienteRepository;
 import com.juridico.sistema_juridico.repository.General.ComentarioRepository;
 import com.juridico.sistema_juridico.Entity.general.Comentario;
@@ -74,6 +75,8 @@ public class ExpedientesController {
     private EstadoRepository estadoRepository;
     @Autowired
     private AudienciaRepository audienciaRepository;
+    @Autowired
+    private TerminoRepository terminoRepository;
     @Autowired
     private ComentarioRepository comentarioRepository;
     @Autowired
@@ -442,6 +445,12 @@ public class ExpedientesController {
 
                     if (!idNuevo.equals(idAnterior)
                             && !guardado.getAbogadoResponsable().getEmail().equalsIgnoreCase(usuario.getEmail())) {
+                        // Reasignacion funcional: NO crear terminos nuevos.
+                        // Se actualiza el responsable de los terminos activos del expediente.
+                        terminoRepository.reasignarResponsableEnTerminosActivos(
+                                guardado.getId(),
+                                idNuevo);
+
                         notificacionService.crearNotificacion(
                                 guardado.getAbogadoResponsable(),
                                 "Expediente Reasignado",

@@ -6,11 +6,10 @@ import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.documento.CarpetaRepository;
 import com.juridico.sistema_juridico.repository.documento.DocumentoRepository;
-import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
-import com.juridico.sistema_juridico.service.AuditoriaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,11 +17,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 public class DocumentoService {
+
+    private static final int DIAS_RETENCION_PAPELERA = 90;
 
     @Autowired
     private DocumentoRepository documentoRepository;
@@ -42,14 +44,9 @@ public class DocumentoService {
     @Autowired
     private AuditoriaService auditoriaService;
 
-    /**
-     * Verifica si un usuario tiene permiso para acceder a documentos de un
-     * expediente
-     */
     public boolean tienePermiso(Usuario usuario, UUID expedienteId) {
         RolUsuario rol = usuario.getRol();
 
-        // DIRECCION y SUBDIRECCION tienen acceso total
         if (rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
             return true;
         }
@@ -59,13 +56,11 @@ public class DocumentoService {
             return false;
         }
 
-        // Abogado responsable tiene acceso
         if (expediente.getAbogadoResponsable() != null &&
                 expediente.getAbogadoResponsable().getId().equals(usuario.getId())) {
             return true;
         }
 
-        // Abogado compareciente: verificar si tiene audiencia activa HOY
         if (rol == RolUsuario.ABOGADO) {
             List<Audiencia> audienciasHoy = audienciaRepository
                     .findByExpedienteIdAndFechaAudiencia(expedienteId, LocalDate.now());
@@ -81,14 +76,10 @@ public class DocumentoService {
         return false;
     }
 
-    /**
-     * Guarda un documento en una carpeta específica
-     */
     @Transactional
     public Documento guardarDocumento(MultipartFile file, UUID expedienteId, UUID carpetaId,
             String descripcion, Usuario usuario) throws IOException {
 
-        // Validar que la carpeta existe y pertenece al expediente
         Carpeta carpeta = null;
         if (carpetaId != null) {
             carpeta = carpetaRepository.findById(carpetaId)
@@ -99,11 +90,9 @@ public class DocumentoService {
             }
         }
 
-        // Guardar archivo en filesystem
         String nombreCarpeta = carpeta != null ? carpeta.getNombre() : "raiz";
         String rutaArchivo = fileStorageService.guardarArchivo(file, expedienteId, nombreCarpeta);
 
-        // Crear registro en BD
         Documento documento = Documento.builder()
                 .expedienteId(expedienteId)
                 .nombreArchivo(file.getOriginalFilename())
@@ -114,11 +103,11 @@ public class DocumentoService {
                 .carpeta(carpeta)
                 .descripcion(descripcion)
                 .usuarioSubida(usuario)
+                .eliminado(false)
                 .build();
 
         Documento guardado = documentoRepository.save(documento);
 
-        // Auditoría
         Expediente exp = expedienteRepository.findById(expedienteId).orElse(null);
         if (exp != null) {
             auditoriaService.registrar(exp, "ARCHIVO CARGADO",
@@ -130,108 +119,136 @@ public class DocumentoService {
         return guardado;
     }
 
-    /**
-     * Lista documentos de una carpeta específica
-     */
     public List<Documento> listarDocumentosPorCarpeta(UUID carpetaId) {
-        return documentoRepository.findByCarpetaIdOrderByFechaSubidaDesc(carpetaId);
+        return documentoRepository.findActivosByCarpetaIdOrderByFechaSubidaDesc(carpetaId);
     }
 
-    /**
-     * Lista todos los documentos de un expediente
-     */
     public List<Documento> listarDocumentos(UUID expedienteId) {
-        return documentoRepository.findByExpedienteIdOrderByFechaSubidaDesc(expedienteId);
+        return documentoRepository.findActivosByExpedienteIdOrderByFechaSubidaDesc(expedienteId);
     }
 
-    /**
-     * Lista documentos en la raíz del expediente (sin carpeta asignada)
-     */
     public List<Documento> listarDocumentosRaiz(UUID expedienteId) {
-        return documentoRepository.findByExpedienteIdAndCarpetaIsNullOrderByFechaSubidaDesc(expedienteId);
+        return documentoRepository.findActivosByExpedienteIdAndCarpetaIsNullOrderByFechaSubidaDesc(expedienteId);
     }
 
-    /**
-     * Busca documentos en un expediente
-     */
+    public List<Documento> listarPapelera(UUID expedienteId) {
+        return documentoRepository.findPapeleraByExpedienteIdOrderByFechaEliminacionDesc(expedienteId);
+    }
+
     public List<Documento> buscarDocumentos(UUID expedienteId, String busqueda) {
         return documentoRepository.buscarEnExpediente(expedienteId, busqueda);
     }
 
-    /**
-     * Busca documentos en una carpeta específica
-     */
     public List<Documento> buscarDocumentosEnCarpeta(UUID carpetaId, String busqueda) {
         return documentoRepository.buscarEnCarpeta(carpetaId, busqueda);
     }
 
-    /**
-     * Calcula el espacio ocupado por un expediente
-     */
     public Long calcularEspacioOcupado(UUID expedienteId) {
         Long espacio = documentoRepository.calcularEspacioOcupado(expedienteId);
         return espacio != null ? espacio : 0L;
     }
 
-    /**
-     * Elimina un documento
-     */
     @Transactional
-    public void eliminarDocumento(UUID documentoId, Usuario usuario) throws IOException {
+    public Documento eliminarDocumento(UUID documentoId, Usuario usuario) {
         Documento documento = documentoRepository.findById(documentoId)
                 .orElseThrow(() -> new IllegalArgumentException("Documento no encontrado"));
 
-        // Auditoría (ANTES de eliminar el registro)
+        if (Boolean.TRUE.equals(documento.getEliminado())) {
+            throw new IllegalArgumentException("El documento ya se encuentra en la papelera");
+        }
+
+        LocalDateTime ahora = LocalDateTime.now();
+        documento.setEliminado(true);
+        documento.setFechaEliminacion(ahora);
+        documento.setFechaEliminacionDefinitiva(ahora.plusDays(DIAS_RETENCION_PAPELERA));
+        documento.setUsuarioEliminacion(usuario);
+        Documento guardado = documentoRepository.save(documento);
+
         Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
         if (exp != null) {
-            auditoriaService.registrar(exp, "ARCHIVO ELIMINADO",
-                    "Eliminado del gestor documental: " + documento.getNombreOriginal(),
+            auditoriaService.registrar(exp, "ARCHIVO EN PAPELERA",
+                    "Enviado a la papelera por 90 dias: " + documento.getNombreOriginal(),
                     "TRASH", usuario);
         }
 
-        // Eliminar archivo del filesystem
-        fileStorageService.eliminarArchivo(documento.getRutaArchivo());
-
-        // Eliminar registro de BD
-        documentoRepository.delete(documento);
+        return guardado;
     }
 
-    /**
-     * Obtiene un documento por ID
-     */
+    @Transactional
+    public Documento recuperarDocumento(UUID documentoId, Usuario usuario) {
+        Documento documento = documentoRepository.findById(documentoId)
+                .orElseThrow(() -> new IllegalArgumentException("Documento no encontrado"));
+
+        if (!Boolean.TRUE.equals(documento.getEliminado())) {
+            throw new IllegalArgumentException("El documento no esta en la papelera");
+        }
+
+        documento.setEliminado(false);
+        documento.setFechaEliminacion(null);
+        documento.setFechaEliminacionDefinitiva(null);
+        documento.setUsuarioEliminacion(null);
+        Documento recuperado = documentoRepository.save(documento);
+
+        Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
+        if (exp != null) {
+            auditoriaService.registrar(exp, "ARCHIVO RECUPERADO",
+                    "Recuperado desde la papelera: " + documento.getNombreOriginal(),
+                    "UNDO", usuario);
+        }
+
+        return recuperado;
+    }
+
+    @Transactional
+    public int purgarDocumentosVencidos() {
+        List<Documento> vencidos = documentoRepository
+                .findByEliminadoTrueAndFechaEliminacionDefinitivaBefore(LocalDateTime.now());
+
+        int eliminados = 0;
+        for (Documento documento : vencidos) {
+            try {
+                fileStorageService.eliminarArchivo(documento.getRutaArchivo());
+                documentoRepository.delete(documento);
+                eliminados++;
+            } catch (IOException e) {
+                // Mantener el registro si el archivo no pudo borrarse del disco.
+            }
+        }
+
+        return eliminados;
+    }
+
     public Documento obtenerDocumento(UUID documentoId) {
         return documentoRepository.findById(documentoId)
                 .orElseThrow(() -> new IllegalArgumentException("Documento no encontrado"));
     }
 
-    /**
-     * Mueve un documento a otra carpeta
-     */
     @Transactional
     public Documento moverDocumento(UUID documentoId, UUID nuevaCarpetaId, Usuario usuario) {
         Documento documento = obtenerDocumento(documentoId);
+
+        if (Boolean.TRUE.equals(documento.getEliminado())) {
+            throw new IllegalArgumentException("No se puede mover un documento que esta en la papelera");
+        }
 
         Carpeta nuevaCarpeta = null;
         if (nuevaCarpetaId != null) {
             nuevaCarpeta = carpetaRepository.findById(nuevaCarpetaId)
                     .orElseThrow(() -> new IllegalArgumentException("Carpeta destino no encontrada"));
 
-            // Validar que la carpeta pertenece al mismo expediente
             if (!nuevaCarpeta.getExpedienteId().equals(documento.getExpedienteId())) {
                 throw new IllegalArgumentException("La carpeta destino no pertenece al mismo expediente");
             }
         }
 
-        // Determinar carpeta origen antes de cambiarla
-        String origen = documento.getCarpeta() != null ? documento.getCarpeta().getNombre() : "Raíz";
+        String origen = documento.getCarpeta() != null ? documento.getCarpeta().getNombre() : "Raiz";
 
         documento.setCarpeta(nuevaCarpeta);
         Documento guardado = documentoRepository.save(documento);
 
-        // Auditoría
         Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
         if (exp != null) {
-            String destino = nuevaCarpeta != null ? nuevaCarpeta.getNombre() : "Raíz";
+            String destino = nuevaCarpeta != null ? nuevaCarpeta.getNombre() : "Raiz";
 
             auditoriaService.registrar(exp, "ARCHIVO MOVIDO",
                     "Movido de " + origen + " a " + destino + ": " + documento.getNombreOriginal(),

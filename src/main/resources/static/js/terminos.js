@@ -131,9 +131,18 @@ document.addEventListener('DOMContentLoaded', function () {
             actualizarTablaAsincrono();
         }
     });
-
     // H. Iniciar conexión WebSocket
     iniciarTerminosWebSocket();
+
+    // I. Event listener para recarga de materias y abogados según gerencia
+    document.addEventListener('change', function (e) {
+        if (e.target.id === 'select-contexto-gerencia') {
+            const origen = document.querySelector('input[name="origenTermino"]:checked')?.value || 'EXPEDIENTE';
+            if (origen === 'ASUNTO_UNICO') {
+                cargarMateriasYAbogadosPorGerencia(e.target.value);
+            }
+        }
+    });
 });
 
 // --- BÚSQUEDA ASÍNCRONA CENTRALIZADA ---
@@ -600,6 +609,24 @@ function abrirModalNuevo() {
     if (asuntoInput) asuntoInput.value = "";
     if (vencimientoInput) vencimientoInput.value = "";
     if (observacionesInput) observacionesInput.value = "";
+    ['select-contexto-materia', 'input-contexto-descripcion', 'input-contexto-partes', 'input-contexto-referencia']
+        .forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = "";
+        });
+    const gerenciaSelect = document.getElementById('select-contexto-gerencia');
+    if (gerenciaSelect) {
+        if (gerenciaSelect.options.length === 2) {
+            gerenciaSelect.selectedIndex = 1;
+        } else {
+            gerenciaSelect.value = "";
+        }
+    }
+
+    document.querySelectorAll('input[name="origenTermino"]').forEach(radio => {
+        radio.checked = radio.value === 'EXPEDIENTE';
+    });
+    toggleOrigenTermino();
 
     // Resetear abogado
     if (abogadoSelect) {
@@ -622,7 +649,111 @@ function abrirModalNuevo() {
 }
 
 // 2. EDITAR TÉRMINO (Con el botón amarillo)
-function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogadoId, prioridad, observaciones = "") {
+function toggleOrigenTermino() {
+    const origen = document.querySelector('input[name="origenTermino"]:checked')?.value || 'EXPEDIENTE';
+    const esAsuntoUnico = origen === 'ASUNTO_UNICO';
+    const grupoExpediente = document.getElementById('grupo-expediente-termino');
+    const grupoContexto = document.getElementById('grupo-contexto-termino');
+    const expSelect = document.getElementById('select-expediente-termino');
+    const abogadoSelect = document.getElementById('select-abogado-termino');
+
+    grupoExpediente?.classList.toggle('hidden', esAsuntoUnico);
+    grupoContexto?.classList.toggle('hidden', !esAsuntoUnico);
+
+    if (expSelect) expSelect.required = !esAsuntoUnico;
+    ['select-contexto-materia', 'select-contexto-gerencia', 'input-contexto-descripcion'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.required = esAsuntoUnico;
+    });
+
+    if (esAsuntoUnico && abogadoSelect) {
+        abogadoSelect.removeAttribute('readonly');
+        
+        const gerenciaSelect = document.getElementById('select-contexto-gerencia');
+        if (gerenciaSelect) {
+            // Auto-seleccionar si solo hay 1 opción
+            if (gerenciaSelect.options.length === 2) {
+                gerenciaSelect.selectedIndex = 1;
+            }
+            // Cargar materias y abogados dinámicamente si hay una gerencia seleccionada
+            if (gerenciaSelect.value) {
+                cargarMateriasYAbogadosPorGerencia(gerenciaSelect.value);
+            } else {
+                cargarMateriasYAbogadosPorGerencia('');
+            }
+        }
+    } else if (abogadoSelect && !expSelect?.value) {
+        abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
+        abogadoSelect.classList.add('cursor-not-allowed', 'bg-gray-50');
+        abogadoSelect.classList.remove('bg-white');
+        abogadoSelect.setAttribute('readonly', 'true');
+    }
+}
+
+function cargarMateriasYAbogadosPorGerencia(gerenciaId, callbackMateria = null, callbackAbogado = null) {
+    const materiaSelect = document.getElementById('select-contexto-materia');
+    const abogadoSelect = document.getElementById('select-abogado-termino');
+
+    if (!gerenciaId) {
+        if (materiaSelect) {
+            materiaSelect.innerHTML = '<option value="">Seleccione gerencia primero...</option>';
+            materiaSelect.disabled = true;
+        }
+        if (abogadoSelect) {
+            abogadoSelect.innerHTML = '<option value="">Seleccione gerencia primero...</option>';
+            abogadoSelect.disabled = true;
+        }
+        return;
+    }
+
+    if (materiaSelect) {
+        materiaSelect.disabled = false;
+        materiaSelect.innerHTML = '<option value="">Cargando materias...</option>';
+        fetch(`/terminos/api/materias-por-gerencia/${gerenciaId}`)
+            .then(res => res.json())
+            .then(data => {
+                materiaSelect.innerHTML = '<option value="">Seleccione materia...</option>';
+                data.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.id;
+                    opt.text = m.nombre;
+                    materiaSelect.appendChild(opt);
+                });
+                if (callbackMateria) callbackMateria();
+            })
+            .catch(err => {
+                console.error("Error al cargar materias:", err);
+                materiaSelect.innerHTML = '<option value="">Error al cargar materias</option>';
+            });
+    }
+
+    if (abogadoSelect) {
+        abogadoSelect.disabled = false;
+        abogadoSelect.innerHTML = '<option value="">Cargando abogados...</option>';
+        fetch(`/terminos/api/abogados-por-gerencia/${gerenciaId}`)
+            .then(res => res.json())
+            .then(data => {
+                abogadoSelect.innerHTML = '<option value="">Seleccione abogado...</option>';
+                data.forEach(a => {
+                    const opt = document.createElement('option');
+                    opt.value = a.id;
+                    opt.text = a.nombre;
+                    abogadoSelect.appendChild(opt);
+                });
+                // Auto-seleccionar si solo hay 1 abogado disponible (ej. rol Abogado)
+                if (abogadoSelect.options.length === 2) {
+                    abogadoSelect.selectedIndex = 1;
+                }
+                if (callbackAbogado) callbackAbogado();
+            })
+            .catch(err => {
+                console.error("Error al cargar abogados:", err);
+                abogadoSelect.innerHTML = '<option value="">Error al cargar abogados</option>';
+            });
+    }
+}
+
+function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogadoId, prioridad, observaciones = "", origenTermino = 'EXPEDIENTE', materiaId = '', gerenciaId = '', descripcion = '', partes = '', referencia = '') {
 
     // Llenar datos en el formulario
     const idInput = document.getElementById('input-termino-id');
@@ -632,6 +763,13 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
     const prioridadSelect = document.getElementById('select-prioridad');
     const observacionesInput = document.getElementById('input-observaciones-termino');
     const titulo = document.getElementById('modal-titulo');
+    
+    const materiaSelect = document.getElementById('select-contexto-materia');
+    const gerenciaSelect = document.getElementById('select-contexto-gerencia');
+    const descTextArea = document.getElementById('input-contexto-descripcion');
+    const partesInput = document.getElementById('input-contexto-partes');
+    const refInput = document.getElementById('input-contexto-referencia');
+    const abogadoSelect = document.getElementById('select-abogado-termino');
 
     if (idInput) idInput.value = id;
     if (asuntoInput) asuntoInput.value = actuacion;
@@ -639,20 +777,52 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
     if (prioridadSelect && prioridad) prioridadSelect.value = prioridad;
     if (observacionesInput) observacionesInput.value = observaciones;
 
-    if (expSelect && expedienteId) {
-        // Verificar si la opción ya existe en la lista del select actual (por filtro de roles)
-        let optionExists = Array.from(expSelect.options).some(opt => opt.value == expedienteId);
+    if (descTextArea) descTextArea.value = descripcion;
+    if (partesInput) partesInput.value = partes;
+    if (refInput) refInput.value = referencia;
 
-        // Si no existe, agregarla dinámicamente para que el 'required' del select no bloquee el guardado
-        if (!optionExists) {
-            const opt = document.createElement('option');
-            opt.value = expedienteId;
-            opt.text = expedienteNum + " (Autoseleccionado)";
-            expSelect.add(opt);
+    document.querySelectorAll('input[name="origenTermino"]').forEach(radio => {
+        radio.checked = radio.value === origenTermino;
+    });
+
+    if (origenTermino === 'ASUNTO_UNICO') {
+        if (gerenciaSelect) {
+            if (gerenciaId) {
+                gerenciaSelect.value = gerenciaId;
+            } else if (gerenciaSelect.options.length === 2) {
+                gerenciaSelect.selectedIndex = 1;
+            } else {
+                gerenciaSelect.value = "";
+            }
         }
+        toggleOrigenTermino();
+        
+        const currentGerenciaId = gerenciaSelect ? gerenciaSelect.value : '';
+        cargarMateriasYAbogadosPorGerencia(currentGerenciaId, () => {
+            if (materiaSelect && materiaId) materiaSelect.value = materiaId;
+        }, () => {
+            if (abogadoSelect && abogadoId) abogadoSelect.value = abogadoId;
+        });
+    } else {
+        toggleOrigenTermino();
+        if (expSelect && expedienteId) {
+            // Verificar si la opción ya existe en la lista del select actual (por filtro de roles)
+            let optionExists = Array.from(expSelect.options).some(opt => opt.value == expedienteId);
 
-        expSelect.value = expedienteId;
-        vincularAbogadoTermino(); // Cargar abogado automáticamente
+            // Si no existe, agregarla dinámicamente para que el 'required' del select no bloquee el guardado
+            if (!optionExists) {
+                const opt = document.createElement('option');
+                opt.value = expedienteId;
+                opt.text = expedienteNum + " (Autoseleccionado)";
+                expSelect.add(opt);
+            }
+
+            expSelect.value = expedienteId;
+            vincularAbogadoTermino(); // Cargar abogado automáticamente
+        }
+        if (abogadoSelect && abogadoId) {
+            abogadoSelect.value = abogadoId;
+        }
     }
 
     if (titulo) titulo.innerHTML = '<i class="fas fa-edit"></i> Editar Término';
@@ -664,7 +834,6 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
     }
 }
 
-// 3. VINCULACIÓN AUTOMÁTICA
 function vincularAbogadoTermino() {
     const expSelect = document.getElementById('select-expediente-termino');
     const abogadoSelect = document.getElementById('select-abogado-termino');

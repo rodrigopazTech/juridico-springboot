@@ -47,11 +47,14 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
+import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
+import com.juridico.sistema_juridico.Entity.enums.OrigenTermino;
 import com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
+import com.juridico.sistema_juridico.Entity.procesal.TerminoContexto;
 import com.juridico.sistema_juridico.Entity.procesal.TerminoPresentado;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.exception.ForbiddenException;
@@ -239,6 +242,13 @@ public class TerminosController {
         // --- 4. LISTAS PARA FILTROS GENERALES ---
         model.addAttribute("listaAbogados", usuarioRepository.findAll());
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
+        List<Gerencia> gerenciasParaModal;
+        if (usuarioActual.getRol() == RolUsuario.ADMIN || usuarioActual.getGerencia() == null) {
+            gerenciasParaModal = gerenciaRepository.findAll();
+        } else {
+            gerenciasParaModal = Collections.singletonList(usuarioActual.getGerencia());
+        }
+        model.addAttribute("gerenciasParaModal", gerenciasParaModal);
         model.addAttribute("listaMaterias", materiaRepository.findAll());
         model.addAttribute("listaPrioridades", catPrioridadRepository.findAll());
         model.addAttribute("listaEstatus", EstatusTermino.values());
@@ -372,6 +382,12 @@ public class TerminosController {
     public String guardar(@ModelAttribute Termino terminoForm,
             @RequestParam(value = "expedienteId", required = false) UUID expedienteId,
             @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
+            @RequestParam(value = "origenTermino", required = false, defaultValue = "EXPEDIENTE") OrigenTermino origenTermino,
+            @RequestParam(value = "contextoMateriaId", required = false) Integer contextoMateriaId,
+            @RequestParam(value = "contextoGerenciaId", required = false) Integer contextoGerenciaId,
+            @RequestParam(value = "contextoDescripcion", required = false) String contextoDescripcion,
+            @RequestParam(value = "contextoPartes", required = false) String contextoPartes,
+            @RequestParam(value = "contextoNumeroReferencia", required = false) String contextoNumeroReferencia,
             RedirectAttributes redirectAttrs) {
 
         Usuario actor = getUsuarioActual();
@@ -385,17 +401,31 @@ public class TerminosController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha de vencimiento es obligatoria.");
         }
 
-        if (expedienteId != null) {
+        if (abogadoId == null && actor.getRol() == RolUsuario.ABOGADO) {
+            abogadoId = actor.getId();
+        }
+
+        if (origenTermino == OrigenTermino.ASUNTO_UNICO) {
+            if (actor.getGerencia() != null) {
+                contextoGerenciaId = actor.getGerencia().getId();
+            }
+            terminoForm.setExpediente(null);
+            terminoForm.setContexto(crearContextoAsuntoUnico(contextoMateriaId, contextoGerenciaId,
+                    contextoDescripcion, contextoPartes, contextoNumeroReferencia));
+        } else if (expedienteId != null) {
             Expediente exp = expedienteRepository.findById(expedienteId)
                     .orElseThrow(() -> new ResourceNotFoundException("El expediente asociado no existe."));
             validarAccesoExpediente(exp, actor);
             terminoForm.setExpediente(exp);
+            terminoForm.setContexto(crearContextoDesdeExpediente(exp));
         }
 
         if (abogadoId != null) {
             Usuario abogado = usuarioRepository.findById(abogadoId)
                     .orElseThrow(() -> new ResourceNotFoundException("El abogado asignado no existe."));
             terminoForm.setAbogadoResponsable(abogado);
+        } else if (terminoForm.getId() == null && origenTermino == OrigenTermino.ASUNTO_UNICO) {
+            terminoForm.setAbogadoResponsable(actor);
         }
 
         if (terminoForm.getId() != null) {
@@ -410,8 +440,12 @@ public class TerminosController {
             if (terminoForm.getAbogadoResponsable() != null) {
                 existente.setAbogadoResponsable(terminoForm.getAbogadoResponsable());
             }
-            if (terminoForm.getExpediente() != null) {
+            if (origenTermino == OrigenTermino.ASUNTO_UNICO) {
+                existente.setExpediente(null);
+                existente.setContexto(terminoForm.getContexto());
+            } else if (terminoForm.getExpediente() != null) {
                 existente.setExpediente(terminoForm.getExpediente());
+                existente.setContexto(terminoForm.getContexto());
             }
             if (terminoForm.getPrioridad() != null) {
                 existente.setPrioridad(terminoForm.getPrioridad());
@@ -423,12 +457,13 @@ public class TerminosController {
             existente.setUpdatedAt(LocalDateTime.now());
             terminoGuardar = existente;
         } else {
-            if (expedienteId == null && terminoForm.getExpediente() == null) {
+            if (origenTermino != OrigenTermino.ASUNTO_UNICO && expedienteId == null && terminoForm.getExpediente() == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "El expediente asociado es obligatorio para crear un término.");
             }
             esNuevo = true;
             terminoGuardar = terminoForm;
+            terminoGuardar.setFechaCreacion(LocalDate.now());
             terminoGuardar.setFechaIngreso(LocalDate.now());
             terminoGuardar.setEstatusTermino(EstatusTermino.PROYECTISTA);
             terminoGuardar.setCreatedAt(LocalDateTime.now());
@@ -447,31 +482,9 @@ public class TerminosController {
         Termino terminoGuardado = terminoRepository.save(terminoGuardar);
         Usuario usuarioActualN = getUsuarioActual();
 
-        /* PUNTO DE REFERENCIA - FUNCION ORIGINAL 
-        if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
-            String expedienteNum = (terminoGuardado.getExpediente() != null)
-                    ? terminoGuardado.getExpediente().getNumero()
-                    : "S/N";
-            notificacionService.crearNotificacion(
-                    terminoGuardado.getAbogadoResponsable(),
-                    "Nuevo Término: " + expedienteNum,
-                    "El usuario " + actor.getNombreCompleto() + " te ha asignado: " + terminoGuardado.getAsunto(),
-                    "TERMINO",
-                    terminoGuardado.getPrioridad(),
-                        expedienteNum);
-
-
-
-        }
-         */
-        //BLOQUE ARRIBA SIN MODIFICACIONES ////////////////////////////
-        // LINEAS DEBAJO EN MODIFICACION ///////////////////////////////
-        // punto de referencia 2
         if (usuarioActualN.getRol() == RolUsuario.ABOGADO) {
             if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
-                String expedienteNum = (terminoGuardado.getExpediente() != null)
-                        ? terminoGuardado.getExpediente().getNumero()
-                        : "S/N";
+                String expedienteNum = terminoGuardado.getNumeroReferencia();
                 notificacionService.crearNotificacion(
                         terminoGuardado.getAbogadoResponsable(),
                         actor,
@@ -485,9 +498,7 @@ public class TerminosController {
             }
         } else {
             if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
-                String expedienteNum = (terminoGuardado.getExpediente() != null)
-                        ? terminoGuardado.getExpediente().getNumero()
-                        : "S/N";
+                String expedienteNum = terminoGuardado.getNumeroReferencia();
                 notificacionService.crearNotificacion(
                         terminoGuardado.getAbogadoResponsable(),
                         actor,
@@ -501,15 +512,65 @@ public class TerminosController {
             }
         }
 
-        /////LINEAS ARRIBA EN MODIFICACION //////////////////////////////////////
-
-
-        
-        //////BLOQUE DEBAJO SIN CAMBIOS ///////////////////////////////////////////////////////
-
         redirectAttrs.addFlashAttribute("mensaje", "Término guardado correctamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
         return "redirect:/terminos";
+    }
+
+    private TerminoContexto crearContextoDesdeExpediente(Expediente exp) {
+        if (exp.getMateria() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El expediente no tiene materia asignada.");
+        }
+        if (exp.getGerencia() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El expediente no tiene gerencia asignada.");
+        }
+        String descripcion = normalizarTexto(exp.getDescripcion());
+        if (descripcion == null) {
+            descripcion = "Expediente " + exp.getNumero();
+        }
+
+        return TerminoContexto.builder()
+                .origen(OrigenTermino.EXPEDIENTE)
+                .numeroExpedienteSnapshot(exp.getNumero())
+                .descripcion(descripcion)
+                .materia(exp.getMateria())
+                .gerencia(exp.getGerencia())
+                .organoJurisdiccional(exp.getOrganoJurisdiccional())
+                .organoJurisdiccionalTexto(exp.getOrganoJurisdiccionalTexto())
+                .partes(exp.getPartes())
+                .sede(exp.getSede())
+                .build();
+    }
+
+    private TerminoContexto crearContextoAsuntoUnico(Integer materiaId, Integer gerenciaId, String descripcion,
+            String partes, String numeroReferencia) {
+        if (materiaId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La materia es obligatoria para un asunto único.");
+        }
+        if (gerenciaId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La gerencia es obligatoria para un asunto único.");
+        }
+        if (descripcion == null || descripcion.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La descripción es obligatoria para un asunto único.");
+        }
+
+        Materia materia = materiaRepository.findById(materiaId)
+                .orElseThrow(() -> new ResourceNotFoundException("La materia seleccionada no existe."));
+        Gerencia gerencia = gerenciaRepository.findById(gerenciaId)
+                .orElseThrow(() -> new ResourceNotFoundException("La gerencia seleccionada no existe."));
+
+        return TerminoContexto.builder()
+                .origen(OrigenTermino.ASUNTO_UNICO)
+                .numeroExpedienteSnapshot(normalizarTexto(numeroReferencia))
+                .descripcion(descripcion.trim())
+                .materia(materia)
+                .gerencia(gerencia)
+                .partes(normalizarTexto(partes))
+                .build();
+    }
+
+    private String normalizarTexto(String valor) {
+        return valor == null || valor.trim().isEmpty() ? null : valor.trim();
     }
 
     @GetMapping("/avanzar/{id}")
@@ -961,6 +1022,42 @@ public class TerminosController {
             if (!esResponsable && !esInvitado) {
                 throw new ForbiddenException("No tienes acceso a este expediente.");
             }
+        }
+    }
+
+    @GetMapping("/api/materias-por-gerencia/{gerenciaId}")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> obtenerMateriasPorGerencia(@PathVariable("gerenciaId") Integer gerenciaId) {
+        try {
+            List<Materia> materias = materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(gerenciaId);
+            List<Map<String, Object>> respuesta = materias.stream().map(m -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", m.getId());
+                map.put("nombre", m.getNombre());
+                return map;
+            }).collect(Collectors.toList());
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/api/abogados-por-gerencia/{gerenciaId}")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> obtenerAbogadosPorGerencia(@PathVariable("gerenciaId") Integer gerenciaId) {
+        try {
+            List<Usuario> abogados = usuarioRepository.findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(gerenciaId).stream()
+                    .filter(u -> u.getRol() == RolUsuario.ABOGADO)
+                    .collect(Collectors.toList());
+            List<Map<String, Object>> respuesta = abogados.stream().map(a -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", a.getId());
+                map.put("nombre", a.getNombreCompleto());
+                return map;
+            }).collect(Collectors.toList());
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
         }
     }
 }

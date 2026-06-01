@@ -22,7 +22,26 @@
 
                 <form th:action="@{/terminos/guardar}" method="post" class="p-6 space-y-5 bg-gray-50/50">
                     <input type="hidden" name="id" id="input-termino-id">
-                    <div>
+                    <select id="template-abogados-termino" class="hidden" aria-hidden="true">
+                        <option value="">Seleccione abogado...</option>
+                        <option th:each="a : ${abogados}" th:value="${a.id}" th:text="${a.nombreCompleto}"></option>
+                    </select>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <label class="flex items-center gap-3 rounded-lg border border-gob-guinda bg-white px-4 py-3 text-sm font-bold text-gob-guinda cursor-pointer">
+                            <input type="radio" name="origenTermino" value="EXPEDIENTE" checked
+                                onchange="toggleOrigenTermino()"
+                                class="text-gob-guinda focus:ring-gob-oro">
+                            <span><i class="fas fa-folder-open mr-2"></i> Asociado a expediente</span>
+                        </label>
+                        <label class="flex items-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-gray-700 cursor-pointer">
+                            <input type="radio" name="origenTermino" value="ASUNTO_UNICO"
+                                onchange="toggleOrigenTermino()"
+                                class="text-gob-guinda focus:ring-gob-oro">
+                            <span><i class="fas fa-file-circle-plus mr-2"></i> Asunto único</span>
+                        </label>
+                    </div>
+
+                    <div id="grupo-expediente-termino">
                         <label class="block text-sm font-bold text-gray-700 mb-1">Expediente *</label>
                         <div class="relative">
                             <div
@@ -37,6 +56,50 @@
                                     th:text="${e.numero + ' - ' + (e.materia != null ? e.materia.nombre : '')}">
                                 </option>
                             </select>
+                        </div>
+                    </div>
+
+                    <div id="grupo-contexto-termino" class="hidden space-y-5 rounded-lg border border-gray-200 bg-white p-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Gerencia *</label>
+                                <select name="contextoGerenciaId" id="select-contexto-gerencia"
+                                    class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm">
+                                    <option value="">Seleccione gerencia...</option>
+                                    <option th:each="g : ${gerenciasParaModal}" th:value="${g.id}" th:text="${g.nombre}"
+                                        th:selected="${gerenciasParaModal.size() == 1}"></option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Materia *</label>
+                                <select name="contextoMateriaId" id="select-contexto-materia"
+                                    class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm">
+                                    <option value="">Seleccione materia...</option>
+                                    <option th:each="m : ${listaMaterias}" th:value="${m.id}" th:text="${m.nombre}"></option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Referencia</label>
+                                <input type="text" name="contextoNumeroReferencia" id="input-contexto-referencia"
+                                    placeholder="Ej. Oficio, folio o referencia interna"
+                                    class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Partes / Interesado</label>
+                                <input type="text" name="contextoPartes" id="input-contexto-partes"
+                                    placeholder="Persona, área o contraparte"
+                                    class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Descripción del asunto *</label>
+                            <textarea name="contextoDescripcion" id="input-contexto-descripcion" rows="2"
+                                class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm resize-none"
+                                placeholder="Describe el asunto que origina este término..."></textarea>
                         </div>
                     </div>
 

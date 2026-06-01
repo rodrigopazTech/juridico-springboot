@@ -32,7 +32,7 @@
 
                     <td class="px-6 py-4">
                         <span class="text-gob-guinda font-bold"
-                            th:text="${t.expediente != null ? t.expediente.numero : 'S/N'}">EXP-001</span>
+                            th:text="${t.numeroReferencia}">EXP-001</span>
                     </td>
 
                     <td class="px-6 py-4">
@@ -66,7 +66,7 @@
                             </a>
 
                             <button type="button" th:data-id="${t.id}"
-                                th:data-expediente="${t.expediente != null ? t.expediente.numero : ''}"
+                                th:data-expediente="${t.numeroReferencia}"
                                 th:data-obs="${t.observaciones}"
                                 onclick="window.verObservaciones(this.getAttribute('data-id'), 'termino', this.getAttribute('data-expediente'), this.getAttribute('data-obs'))"
                                 class="text-gray-500 hover:text-blue-600 transition-colors" title="Ver Observaciones">

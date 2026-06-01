@@ -48,6 +48,30 @@ public class FileStorageService {
     }
 
     /**
+     * Guarda un archivo en una ruta relativa personalizada dentro de app.upload.dir.
+     *
+     * @param file              Archivo a guardar
+     * @param rutaRelativaBase  Ruta relativa base (ej. "expedientes/{id}/Terminos/...")
+     * @return Ruta relativa final del archivo guardado
+     */
+    public String guardarArchivoEnRutaRelativa(MultipartFile file, String rutaRelativaBase) throws IOException {
+        Path base = Paths.get(uploadDir).resolve(rutaRelativaBase).normalize();
+        Files.createDirectories(base);
+
+        String nombreOriginal = file.getOriginalFilename();
+        String extension = "";
+        if (nombreOriginal != null && nombreOriginal.contains(".")) {
+            extension = nombreOriginal.substring(nombreOriginal.lastIndexOf("."));
+        }
+        String nombreUnico = UUID.randomUUID() + extension;
+
+        Path rutaDestino = base.resolve(nombreUnico).normalize();
+        Files.copy(file.getInputStream(), rutaDestino, StandardCopyOption.REPLACE_EXISTING);
+
+        return Paths.get(rutaRelativaBase, nombreUnico).toString();
+    }
+
+    /**
      * Obtiene un archivo del filesystem
      * 
      * @param rutaRelativa Ruta relativa del archivo

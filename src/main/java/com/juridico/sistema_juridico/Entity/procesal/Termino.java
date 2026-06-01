@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
+import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
+import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
@@ -27,11 +29,18 @@ public class Termino {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "expediente_id", nullable = false)
+    @JoinColumn(name = "expediente_id")
     private Expediente expediente;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "contexto_id")
+    private TerminoContexto contexto;
 
     @Column(nullable = true, columnDefinition = "TEXT")
     private String asunto;
+
+    @Column(name = "fecha_creacion")
+    private LocalDate fechaCreacion;
 
     @Column(name = "fecha_ingreso")
     private LocalDate fechaIngreso;
@@ -68,6 +77,63 @@ public class Termino {
 
     @Column(name = "acuse_nombre", length = 500)
     private String acuseNombre;
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime ahora = LocalDateTime.now();
+        if (this.fechaCreacion == null) {
+            this.fechaCreacion = ahora.toLocalDate();
+        }
+        if (this.createdAt == null) {
+            this.createdAt = ahora;
+        }
+        this.updatedAt = ahora;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public String getNumeroReferencia() {
+        if (this.expediente != null) {
+            return this.expediente.getNumero();
+        }
+        if (this.contexto != null
+                && this.contexto.getNumeroExpedienteSnapshot() != null
+                && !this.contexto.getNumeroExpedienteSnapshot().trim().isEmpty()) {
+            return this.contexto.getNumeroExpedienteSnapshot();
+        }
+        return "Asunto único";
+    }
+
+    public String getPartesReferencia() {
+        if (this.expediente != null) {
+            return this.expediente.getPartes();
+        }
+        return this.contexto != null ? this.contexto.getPartes() : null;
+    }
+
+    public Materia getMateriaReferencia() {
+        if (this.expediente != null) {
+            return this.expediente.getMateria();
+        }
+        return this.contexto != null ? this.contexto.getMateria() : null;
+    }
+
+    public Gerencia getGerenciaReferencia() {
+        if (this.expediente != null) {
+            return this.expediente.getGerencia();
+        }
+        return this.contexto != null ? this.contexto.getGerencia() : null;
+    }
+
+    public String getDescripcionReferencia() {
+        if (this.expediente != null) {
+            return this.expediente.getDescripcion();
+        }
+        return this.contexto != null ? this.contexto.getDescripcion() : null;
+    }
 
     public String getSemaforoColor() {
         // Si ya está terminado, semáforo gris (apagado)

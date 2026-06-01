@@ -5,6 +5,7 @@ import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional;
 import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.time.LocalDateTime;
 
 @Service
@@ -79,6 +81,7 @@ public class UsuarioService {
         if (materiasIds != null && !materiasIds.isEmpty()) {
             materiasSeleccionadas.addAll(materiaRepository.findAllById(materiasIds));
         }
+        normalizarGerenciaPorRol(usuario);
 
         if (usuario.getId() == null) {
             // CREACIÓN
@@ -98,6 +101,7 @@ public class UsuarioService {
             existente.setRol(usuario.getRol());
 
             existente.setGerencia(usuario.getGerencia());
+            normalizarGerenciaPorRol(existente);
             // Solo actualizar materias si el formulario envió una lista explícita
             // (materiasIds != null). Si es null, conservar las materias existentes.
             if (materiasIds != null) {
@@ -137,6 +141,14 @@ public class UsuarioService {
     }
 
     public Gerencia guardarGerencia(Gerencia gerencia) {
+        if (gerencia.getNombre() != null) {
+            String nombreNormalizado = gerencia.getNombre().toLowerCase(Locale.ROOT);
+            if (nombreNormalizado.contains("dirección de asuntos jurídicos")
+                    || nombreNormalizado.contains("direccion de asuntos juridicos")) {
+                throw new IllegalArgumentException(
+                        "La Dirección de Asuntos Jurídicos es una unidad transversal y no debe registrarse como gerencia.");
+            }
+        }
         return gerenciaRepository.save(gerencia);
     }
 
@@ -208,5 +220,16 @@ public class UsuarioService {
             throw new ResourceNotFoundException("Tipo de Audiencia no encontrado.");
         }
         tipoAudienciaRepository.deleteById(id);
+    }
+
+    private void normalizarGerenciaPorRol(Usuario usuario) {
+        if (usuario == null || usuario.getRol() == null) {
+            return;
+        }
+        if (usuario.getRol() == RolUsuario.ADMIN
+                || usuario.getRol() == RolUsuario.DIRECCION
+                || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+            usuario.setGerencia(null);
+        }
     }
 }

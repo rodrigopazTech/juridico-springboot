@@ -129,7 +129,7 @@ public class CarpetaService {
         nodo.put("orden", carpeta.getOrden());
 
         // Contar documentos en esta carpeta
-        long cantidadDocumentos = documentoRepository.countByCarpetaId(carpeta.getId());
+        long cantidadDocumentos = documentoRepository.countActivosByCarpetaId(carpeta.getId());
         nodo.put("cantidadDocumentos", cantidadDocumentos);
 
         // Obtener subcarpetas recursivamente
@@ -205,7 +205,7 @@ public class CarpetaService {
         }
 
         // Verificar que no tenga documentos
-        long cantidadDocumentos = documentoRepository.countByCarpetaId(carpetaId);
+        long cantidadDocumentos = documentoRepository.countActivosByCarpetaId(carpetaId);
         if (cantidadDocumentos > 0) {
             throw new IllegalArgumentException("No se puede eliminar una carpeta que contiene documentos");
         }

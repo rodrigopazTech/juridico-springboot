@@ -66,7 +66,7 @@ public class TerminoExcelExporter {
             Row row = sheet.createRow(rowCount++);
             int columnCount = 0;
 
-            String expedienteInfo = (t.getExpediente() != null) ? t.getExpediente().getNumero() : "N/A";
+            String expedienteInfo = t.getNumeroReferencia();
             createCell(row, columnCount++, expedienteInfo, style);
             
             createCell(row, columnCount++, t.getAsunto(), style);
