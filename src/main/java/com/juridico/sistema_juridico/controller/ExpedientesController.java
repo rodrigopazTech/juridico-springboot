@@ -25,6 +25,7 @@ import com.juridico.sistema_juridico.repository.General.ComentarioRepository;
 import com.juridico.sistema_juridico.Entity.general.Comentario;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.NotificacionService;
+import com.juridico.sistema_juridico.service.CarpetaService;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 
 import jakarta.persistence.EntityManager;
@@ -94,6 +95,8 @@ public class ExpedientesController {
     private NotificacionService notificacionService;
     @Autowired
     private AuditoriaService auditoriaService;
+    @Autowired
+    private CarpetaService carpetaService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -432,6 +435,7 @@ public class ExpedientesController {
 
             if (esNuevo) {
                 enviarNotificacionesNuevoExpediente(guardado);
+                carpetaService.inicializarCarpetasPorDefecto(guardado.getId(), usuario);
                 auditoriaService.registrar(guardado, "Expediente Creado",
                         "Se ha registrado un nuevo expediente: " + guardado.getNumero(), "PLUS", usuario);
             } else {
