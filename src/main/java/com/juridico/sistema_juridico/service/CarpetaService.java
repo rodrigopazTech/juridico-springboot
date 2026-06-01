@@ -128,8 +128,8 @@ public class CarpetaService {
         nodo.put("esSistema", carpeta.getEsSistema());
         nodo.put("orden", carpeta.getOrden());
 
-        // Contar documentos en esta carpeta
-        long cantidadDocumentos = documentoRepository.countByCarpetaId(carpeta.getId());
+        // Contar documentos activos en esta carpeta (excluye papelera)
+        long cantidadDocumentos = documentoRepository.countByCarpetaIdAndEliminadoFalse(carpeta.getId());
         nodo.put("cantidadDocumentos", cantidadDocumentos);
 
         // Obtener subcarpetas recursivamente
@@ -194,7 +194,7 @@ public class CarpetaService {
     }
 
     /**
-     * Eliminar carpeta (solo si está vacía)
+     * Eliminar carpeta (solo si está vacía de documentos activos)
      */
     @Transactional
     public void eliminarCarpeta(UUID carpetaId, Usuario usuario) {
@@ -204,8 +204,8 @@ public class CarpetaService {
             throw new IllegalArgumentException("No se pueden eliminar carpetas del sistema");
         }
 
-        // Verificar que no tenga documentos
-        long cantidadDocumentos = documentoRepository.countByCarpetaId(carpetaId);
+        // Verificar que no tenga documentos activos (documentos en papelera no cuentan)
+        long cantidadDocumentos = documentoRepository.countByCarpetaIdAndEliminadoFalse(carpetaId);
         if (cantidadDocumentos > 0) {
             throw new IllegalArgumentException("No se puede eliminar una carpeta que contiene documentos");
         }
@@ -213,6 +213,19 @@ public class CarpetaService {
         // Verificar que no tenga subcarpetas
         if (carpetaRepository.existsByCarpetaPadreId(carpetaId)) {
             throw new IllegalArgumentException("No se puede eliminar una carpeta que contiene subcarpetas");
+        }
+
+        // Seguridad: desvincular cualquier documento en papelera que aún apunte a esta carpeta.
+        // Normalmente carpeta_id ya es null (se limpia al mover a papelera), pero por compatibilidad
+        // con documentos trashados antes de esta versión se mantiene este paso de seguridad.
+        // IMPORTANTE: NO limpiar carpetaOriginalId ni carpetaOriginalRuta — se necesitan para recrear la carpeta al restaurar.
+        for (com.juridico.sistema_juridico.Entity.documento.Documento doc :
+                documentoRepository.findByCarpetaIdOrderByFechaSubidaDesc(carpetaId)) {
+            if (Boolean.TRUE.equals(doc.getEliminado())) {
+                doc.setCarpeta(null); // liberar FK solamente
+                // carpetaOriginalId y carpetaOriginalRuta se conservan para restauración
+                documentoRepository.save(doc);
+            }
         }
 
         carpetaRepository.delete(carpeta);

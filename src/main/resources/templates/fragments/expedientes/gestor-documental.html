@@ -40,6 +40,19 @@
                         </div>
                     </div>
 
+                    <!-- Botón Papelera en Explorador -->
+                    <div class="border-t border-gray-200 bg-white">
+                        <button onclick="abrirPapelera()" id="btn-papelera"
+                            class="w-full flex items-center justify-between px-3 py-2.5 text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors group">
+                            <span class="flex items-center gap-2">
+                                <i class="fas fa-trash-alt text-gray-400 group-hover:text-red-500 transition-colors"></i>
+                                <span class="font-medium">Papelera</span>
+                            </span>
+                            <span id="papelera-badge"
+                                class="hidden bg-red-500 text-white text-[9px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center">0</span>
+                        </button>
+                    </div>
+
                     <!-- Espacio ocupado -->
                     <div class="p-3 border-t border-gray-200 bg-white">
                         <div class="flex items-center justify-between text-sm">
@@ -283,6 +296,74 @@
                 <button onclick="moverDocumento()" id="btn-mover-documento"
                     class="px-4 py-2 text-sm font-bold text-white bg-gob-guinda rounded hover:bg-gob-guinda-claro shadow-md">
                     <i class="fas fa-folder-tree mr-1"></i> Mover
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PAPELERA TEMPORAL (dentro del fragment) -->
+    <div id="modal-papelera"
+        class="fixed inset-0 z-[60] hidden items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+        <div class="relative w-full max-w-3xl max-h-[80vh] bg-white rounded-lg shadow-2xl border-t-4 border-red-500 flex flex-col">
+
+            <!-- Header -->
+            <div class="flex-none flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-lg">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <i class="fas fa-trash-alt text-red-500"></i> Papelera Temporal
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Los archivos se eliminan permanentemente después de 3 meses.</p>
+                </div>
+                <button onclick="cerrarPapelera()" class="text-gray-400 hover:text-gray-900 rounded-lg p-1">
+                    <i class="fas fa-times fa-lg"></i>
+                </button>
+            </div>
+
+            <!-- Contenido -->
+            <div class="flex-1 overflow-y-auto p-4" id="papelera-contenido">
+                <div class="text-center text-gray-400 py-12">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                    <p>Cargando papelera...</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="flex-none flex items-center justify-between p-4 border-t bg-gray-50 rounded-b-lg">
+                <p class="text-xs text-gray-500">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Los archivos restaurados vuelven a su carpeta original. Si la carpeta ya no existe, se restauran en la raíz.
+                </p>
+                <button onclick="cerrarPapelera()"
+                    class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-100">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMACIÓN ELIMINAR PERMANENTE (dentro del fragment) -->
+    <div id="modal-confirmar-eliminar-permanente"
+        class="fixed inset-0 z-[70] hidden items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+        <div class="relative w-full max-w-sm bg-white rounded-lg shadow-2xl border-t-4 border-red-600">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">¿Eliminar permanentemente?</h3>
+                <p class="text-sm text-gray-600 mb-1">Esta acción no se puede deshacer.</p>
+                <p id="nombre-doc-eliminar-perm" class="text-sm font-semibold text-gray-800 truncate px-4 mb-4"></p>
+                <p class="text-xs text-red-600 bg-red-50 rounded p-2">
+                    <i class="fas fa-warning mr-1"></i>El archivo se borrará definitivamente del sistema.
+                </p>
+            </div>
+            <div class="flex gap-3 p-4 border-t">
+                <button onclick="cerrarConfirmarEliminarPerm()"
+                    class="flex-1 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-100">
+                    Cancelar
+                </button>
+                <button onclick="confirmarEliminarPermanente()" id="btn-confirmar-eliminar-perm"
+                    class="flex-1 px-4 py-2 text-sm font-bold text-white bg-red-600 rounded hover:bg-red-700 shadow-md">
+                    <i class="fas fa-trash mr-1"></i> Eliminar
                 </button>
             </div>
         </div>
