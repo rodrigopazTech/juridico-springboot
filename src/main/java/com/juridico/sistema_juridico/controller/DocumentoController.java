@@ -136,30 +136,6 @@ public class DocumentoController {
     }
 
     /**
-     * Listar documentos en papelera de un expediente.
-     */
-    @GetMapping("/expedientes/{expedienteId}/papelera")
-    public ResponseEntity<?> listarPapelera(@PathVariable UUID expedienteId) {
-
-        try {
-            String email = SecurityContextHolder.getContext().getAuthentication().getName();
-            Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
-
-            if (!documentoService.tienePermiso(usuario, expedienteId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "No tiene permisos para ver la papelera de este expediente"));
-            }
-
-            List<Documento> documentos = documentoService.listarPapelera(expedienteId);
-            return ResponseEntity.ok(documentos);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al listar papelera: " + e.getMessage()));
-        }
-    }
-
-    /**
      * Buscar documentos
      */
     @GetMapping("/expedientes/{expedienteId}/buscar")
@@ -291,18 +267,16 @@ public class DocumentoController {
     }
 
     /**
-     * Eliminar documento
+     * Mover documento a la papelera (soft-delete)
      */
     @DeleteMapping("/{documentoId}")
     public ResponseEntity<?> eliminarDocumento(@PathVariable UUID documentoId) {
         try {
-            // Obtener usuario actual
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
             Documento documento = documentoService.obtenerDocumento(documentoId);
 
-            // Verificar permisos
             if (!documentoService.tienePermiso(usuario, documento.getExpedienteId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("error", "No tiene permisos para eliminar este documento"));
@@ -315,7 +289,7 @@ public class DocumentoController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al eliminar documento: " + e.getMessage()));
+                    .body(Map.of("error", "Error al mover a papelera: " + e.getMessage()));
         }
     }
 
@@ -335,7 +309,7 @@ public class DocumentoController {
                         .body(Map.of("error", "No tiene permisos para recuperar este documento"));
             }
 
-            Documento recuperado = documentoService.recuperarDocumento(documentoId, usuario);
+            Documento recuperado = documentoService.restaurarDocumento(documentoId, usuario);
             return ResponseEntity.ok(recuperado);
 
         } catch (IllegalArgumentException e) {
@@ -348,18 +322,16 @@ public class DocumentoController {
     }
 
     /**
-     * Listar documentos de una carpeta específica
+     * Listar documentos de una carpeta específica (activos, sin papelera)
      */
     @GetMapping("/carpetas/{carpetaId}")
     public ResponseEntity<?> listarDocumentosPorCarpeta(@PathVariable UUID carpetaId) {
         try {
-            // Obtener usuario actual
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
             List<Documento> documentos = documentoService.listarDocumentosPorCarpeta(carpetaId);
 
-            // Verificar permisos (usando el primer documento si existe)
             if (!documentos.isEmpty()) {
                 if (!documentoService.tienePermiso(usuario, documentos.get(0).getExpedienteId())) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -384,13 +356,11 @@ public class DocumentoController {
             @RequestParam(value = "carpetaId", required = false) UUID nuevaCarpetaId) {
 
         try {
-            // Obtener usuario actual
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
             Documento documento = documentoService.obtenerDocumento(documentoId);
 
-            // Verificar permisos
             if (!documentoService.tienePermiso(usuario, documento.getExpedienteId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("error", "No tiene permisos para mover este documento"));
@@ -405,6 +375,89 @@ public class DocumentoController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error al mover documento: " + e.getMessage()));
+        }
+    }
+
+    // ========================================
+    // ENDPOINTS DE PAPELERA TEMPORAL
+    // ========================================
+
+    /**
+     * Listar documentos en la papelera de un expediente
+     */
+    @GetMapping("/expedientes/{expedienteId}/papelera")
+    public ResponseEntity<?> listarPapelera(@PathVariable UUID expedienteId) {
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+
+            if (!documentoService.tienePermiso(usuario, expedienteId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "No tiene permisos para ver la papelera"));
+            }
+
+            List<Documento> papelera = documentoService.listarPapelera(expedienteId);
+            return ResponseEntity.ok(papelera);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al cargar la papelera: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Restaurar un documento desde la papelera
+     */
+    @PutMapping("/{documentoId}/restaurar")
+    public ResponseEntity<?> restaurarDocumento(@PathVariable UUID documentoId) {
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+
+            Documento documento = documentoService.obtenerDocumento(documentoId);
+
+            if (!documentoService.tienePermiso(usuario, documento.getExpedienteId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "No tiene permisos para restaurar este documento"));
+            }
+
+            Documento restaurado = documentoService.restaurarDocumento(documentoId, usuario);
+            return ResponseEntity.ok(restaurado);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al restaurar documento: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Eliminar permanentemente un documento de la papelera (borra archivo físico)
+     */
+    @DeleteMapping("/{documentoId}/permanente")
+    public ResponseEntity<?> eliminarPermanente(@PathVariable UUID documentoId) {
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+
+            Documento documento = documentoService.obtenerDocumento(documentoId);
+
+            if (!documentoService.tienePermiso(usuario, documento.getExpedienteId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "No tiene permisos para eliminar este documento"));
+            }
+
+            documentoService.eliminarPermanente(documentoId, usuario);
+            return ResponseEntity.ok(Map.of("message", "Documento eliminado permanentemente"));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al eliminar permanentemente: " + e.getMessage()));
         }
     }
 }

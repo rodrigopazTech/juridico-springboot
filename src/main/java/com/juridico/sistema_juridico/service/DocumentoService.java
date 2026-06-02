@@ -119,32 +119,39 @@ public class DocumentoService {
         return guardado;
     }
 
+    /**
+     * Lista documentos activos de una carpeta específica (excluye papelera)
+     */
     public List<Documento> listarDocumentosPorCarpeta(UUID carpetaId) {
-        return documentoRepository.findActivosByCarpetaIdOrderByFechaSubidaDesc(carpetaId);
+        return documentoRepository.findByCarpetaIdAndEliminadoFalseOrderByFechaSubidaDesc(carpetaId);
     }
 
+    /**
+     * Lista todos los documentos activos de un expediente (excluye papelera)
+     */
     public List<Documento> listarDocumentos(UUID expedienteId) {
-        return documentoRepository.findActivosByExpedienteIdOrderByFechaSubidaDesc(expedienteId);
+        return documentoRepository.findByExpedienteIdAndEliminadoFalseOrderByFechaSubidaDesc(expedienteId);
     }
 
+    /**
+     * Lista documentos activos en la raíz del expediente (sin carpeta, excluye papelera)
+     */
     public List<Documento> listarDocumentosRaiz(UUID expedienteId) {
-        return documentoRepository.findActivosByExpedienteIdAndCarpetaIsNullOrderByFechaSubidaDesc(expedienteId);
+        return documentoRepository.findByExpedienteIdAndCarpetaIsNullAndEliminadoFalseOrderByFechaSubidaDesc(expedienteId);
     }
-
-    public List<Documento> listarPapelera(UUID expedienteId) {
-        return documentoRepository.findPapeleraByExpedienteIdOrderByFechaEliminacionDesc(expedienteId);
-    }
-
     public List<Documento> buscarDocumentos(UUID expedienteId, String busqueda) {
-        return documentoRepository.buscarEnExpediente(expedienteId, busqueda);
+        return documentoRepository.buscarEnExpedienteActivos(expedienteId, busqueda);
     }
 
     public List<Documento> buscarDocumentosEnCarpeta(UUID carpetaId, String busqueda) {
         return documentoRepository.buscarEnCarpeta(carpetaId, busqueda);
     }
 
+    /**
+     * Calcula el espacio ocupado por documentos activos de un expediente (excluye papelera)
+     */
     public Long calcularEspacioOcupado(UUID expedienteId) {
-        Long espacio = documentoRepository.calcularEspacioOcupado(expedienteId);
+        Long espacio = documentoRepository.calcularEspacioOcupadoActivo(expedienteId);
         return espacio != null ? espacio : 0L;
     }
 
@@ -157,17 +164,153 @@ public class DocumentoService {
             throw new IllegalArgumentException("El documento ya se encuentra en la papelera");
         }
 
+        // Guardar info de carpeta original ANTES de limpiar la referencia
+        Carpeta carpetaOriginal = documento.getCarpeta();
+        UUID carpetaOriginalId = carpetaOriginal != null ? carpetaOriginal.getId() : null;
+        String carpetaOriginalRuta = carpetaOriginal != null ? carpetaOriginal.getRutaString() : null;
+
         LocalDateTime ahora = LocalDateTime.now();
         documento.setEliminado(true);
         documento.setFechaEliminacion(ahora);
         documento.setFechaEliminacionDefinitiva(ahora.plusDays(DIAS_RETENCION_PAPELERA));
         documento.setUsuarioEliminacion(usuario);
+        documento.setCarpetaOriginalId(carpetaOriginalId);      // UUID para verificar si aún existe
+        documento.setCarpetaOriginalRuta(carpetaOriginalRuta); // ruta completa para recrear jerarquía
+        documento.setCarpeta(null); // ← liberar FK inmediatamente
+
         Documento guardado = documentoRepository.save(documento);
 
         Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
         if (exp != null) {
             auditoriaService.registrar(exp, "ARCHIVO EN PAPELERA",
                     "Enviado a la papelera por 90 dias: " + documento.getNombreOriginal(),
+                    "TRASH", usuario);
+        }
+
+        return guardado;
+    }
+
+    // ========================================
+    // PAPELERA TEMPORAL
+    // ========================================
+
+    /**
+     * Lista los documentos en la papelera de un expediente
+     */
+    public List<Documento> listarPapelera(UUID expedienteId) {
+        return documentoRepository.findByExpedienteIdAndEliminadoTrueOrderByFechaEliminacionDesc(expedienteId);
+    }
+
+    /**
+     * Restaura un documento desde la papelera a su ubicación original.
+     *
+     * Lógica de restauración:
+     *  1. Si la carpeta original aún existe → restaurar ahí.
+     *  2. Si la carpeta original fue eliminada pero guardamos su nombre → recrearla y restaurar.
+     *  3. Si no hay información de carpeta → restaurar en raíz.
+     */
+    @Transactional
+    public Documento restaurarDocumento(UUID documentoId, Usuario usuario) {
+        Documento documento = documentoRepository.findById(documentoId)
+                .orElseThrow(() -> new IllegalArgumentException("Documento no encontrado"));
+
+        if (!documento.getEliminado()) {
+            throw new IllegalArgumentException("El documento no está en la papelera");
+        }
+
+        Carpeta carpetaRestaurar = null;
+        String mensajeDestino;
+
+        if (documento.getCarpetaOriginalId() != null) {
+            // Intentar recuperar la carpeta original por su ID
+            carpetaRestaurar = carpetaRepository.findById(documento.getCarpetaOriginalId()).orElse(null);
+
+            if (carpetaRestaurar != null) {
+                // Carpeta original existe → restaurar ahí
+                mensajeDestino = "carpeta '" + carpetaRestaurar.getNombre() + "'";
+            } else if (documento.getCarpetaOriginalRuta() != null) {
+                // Carpeta original fue eliminada → recrear jerarquía completa
+                String[] carpetasPath = documento.getCarpetaOriginalRuta().split("/");
+                Carpeta parentFolder = null;
+                
+                for (String nombreCarpeta : carpetasPath) {
+                    final Carpeta currentParent = parentFolder;
+                    // Buscar si esta carpeta ya existe en este nivel
+                    Carpeta existingFolder = null;
+                    if (currentParent == null) {
+                        List<Carpeta> rootFolders = carpetaRepository.findByExpedienteIdAndCarpetaPadreIsNullOrderByOrdenAsc(documento.getExpedienteId());
+                        existingFolder = rootFolders.stream().filter(c -> c.getNombre().equals(nombreCarpeta)).findFirst().orElse(null);
+                    } else {
+                        existingFolder = currentParent.getSubcarpetas().stream().filter(c -> c.getNombre().equals(nombreCarpeta)).findFirst().orElse(null);
+                    }
+                    
+                    if (existingFolder != null) {
+                        parentFolder = existingFolder;
+                    } else {
+                        // Crear la carpeta faltante
+                        Carpeta nuevaCarpeta = Carpeta.builder()
+                                .nombre(nombreCarpeta)
+                                .expedienteId(documento.getExpedienteId())
+                                .carpetaPadre(currentParent)
+                                .esSistema(false)
+                                .orden(0)
+                                .usuarioCreador(usuario)
+                                .build();
+                        parentFolder = carpetaRepository.save(nuevaCarpeta);
+                    }
+                }
+                
+                carpetaRestaurar = parentFolder;
+                mensajeDestino = "carpeta recreada en ruta '" + documento.getCarpetaOriginalRuta() + "'";
+            } else {
+                // Sin ruta guardada → raíz
+                mensajeDestino = "raíz";
+            }
+        } else {
+            // Sin carpeta original → restaurar en raíz
+            mensajeDestino = "raíz";
+        }
+
+        // Restaurar el documento
+        documento.setCarpeta(carpetaRestaurar);
+        documento.setEliminado(false);
+        documento.setFechaEliminacion(null);
+        documento.setFechaEliminacionDefinitiva(null);
+        documento.setUsuarioEliminacion(null);
+        documento.setCarpetaOriginalId(null);
+        documento.setCarpetaOriginalRuta(null);
+
+        Documento restaurado = documentoRepository.save(documento);
+
+        // Auditoría
+        Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
+        if (exp != null) {
+            auditoriaService.registrar(exp, "ARCHIVO RESTAURADO",
+                    "Restaurado desde papelera: " + documento.getNombreOriginal() + " → " + mensajeDestino,
+                    "UNDO", usuario);
+        }
+
+        return restaurado;
+    }
+
+    /**
+     * Elimina permanentemente un documento de la papelera (borra archivo físico y registro BD).
+     * Este método es llamado manualmente o por el scheduler de purga.
+     */
+    @Transactional
+    public void eliminarPermanente(UUID documentoId, Usuario usuario) throws IOException {
+        Documento documento = documentoRepository.findById(documentoId)
+                .orElseThrow(() -> new IllegalArgumentException("Documento no encontrado"));
+
+        if (!documento.getEliminado()) {
+            throw new IllegalArgumentException("Solo se pueden eliminar permanentemente documentos en la papelera");
+        }
+
+        // Auditoría
+        Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
+        if (exp != null) {
+            auditoriaService.registrar(exp, "ARCHIVO ELIMINADO PERMANENTEMENTE",
+                    "Eliminado definitivamente desde papelera: " + documento.getNombreOriginal(),
                     "TRASH", usuario);
         }
 
@@ -218,6 +361,9 @@ public class DocumentoService {
         return eliminados;
     }
 
+    /**
+     * Obtiene un documento por ID
+     */
     public Documento obtenerDocumento(UUID documentoId) {
         return documentoRepository.findById(documentoId)
                 .orElseThrow(() -> new IllegalArgumentException("Documento no encontrado"));

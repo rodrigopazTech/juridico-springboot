@@ -28,6 +28,7 @@ function openGestorDocumental(expedienteId, numeroExpediente) {
     cargarArbolCarpetas();
     cargarEspacioOcupado();
     cargarDocumentos();
+    actualizarBadgePapelera();
 }
 
 function closeGestorDocumental() {
@@ -940,7 +941,8 @@ async function eliminarDocumento(documentoId) {
         await cargarEspacioOcupado();
         await cargarArbolCarpetas(); // Actualizar contadores
 
-        mostrarNotificacion('Documento enviado a la papelera', 'success');
+        mostrarNotificacion('Documento enviado a la papelera. Se eliminará definitivamente en 90 días.', 'warning');
+        actualizarBadgePapelera();
 
     } catch (error) {
         console.error('Error:', error);
@@ -1334,6 +1336,262 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
     // Implementación simple con alert
     // Puedes mejorar esto con una librería de notificaciones
     console.log(`[${tipo.toUpperCase()}] ${mensaje}`);
+}
+
+// ========================================
+// PAPELERA TEMPORAL
+// ========================================
+
+let documentoIdEliminarPerm = null;
+
+/**
+ * Abre el modal de papelera y carga los documentos eliminados.
+ */
+async function abrirPapelera() {
+    const modal = document.getElementById('modal-papelera');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    await cargarPapelera();
+}
+
+function cerrarPapelera() {
+    const modal = document.getElementById('modal-papelera');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+/**
+ * Carga y renderiza los documentos en la papelera del expediente actual.
+ */
+async function cargarPapelera() {
+    const contenido = document.getElementById('papelera-contenido');
+    contenido.innerHTML = `
+        <div class="text-center text-gray-400 py-12">
+            <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+            <p>Cargando papelera...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(`/api/documentos/expedientes/${expedienteIdGlobal}/papelera`);
+
+        if (!response.ok) {
+            throw new Error('Error al cargar la papelera');
+        }
+
+        const documentos = await response.json();
+        renderizarPapelera(documentos);
+        actualizarBadgePapelera(documentos.length);
+
+    } catch (error) {
+        console.error('Error:', error);
+        contenido.innerHTML = `
+            <div class="text-center text-red-500 py-12">
+                <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
+                <p>Error al cargar la papelera</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Renderiza la lista de documentos en la papelera.
+ */
+function renderizarPapelera(documentos) {
+    const contenido = document.getElementById('papelera-contenido');
+
+    if (!documentos || documentos.length === 0) {
+        contenido.innerHTML = `
+            <div class="text-center text-gray-400 py-12">
+                <i class="fas fa-trash-alt text-5xl mb-3 opacity-30"></i>
+                <p class="text-lg font-semibold">La papelera está vacía</p>
+                <p class="text-sm mt-1">Los documentos eliminados aparecerán aquí por 90 días.</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = `<div class="space-y-2">`;
+
+    documentos.forEach(doc => {
+        const icono = obtenerIconoArchivo(doc.tipoMime);
+        const tamanio = formatearTamanio(doc.tamanioBytes);
+        const fechaEliminado = doc.fechaEliminacion
+            ? new Date(doc.fechaEliminacion).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' })
+            : '---';
+
+        // Calcular días restantes antes de eliminación permanente
+        let diasRestantes = '---';
+        let colorDias = 'text-gray-500';
+        if (doc.fechaEliminacionDefinitiva) {
+            const fechaExpiracion = new Date(doc.fechaEliminacionDefinitiva);
+            const hoy = new Date();
+            const diff = Math.ceil((fechaExpiracion - hoy) / (1000 * 60 * 60 * 24));
+            diasRestantes = diff > 0 ? diff + ' días' : 'Vencido';
+            if (diff <= 7) colorDias = 'text-red-600 font-semibold';
+            else if (diff <= 30) colorDias = 'text-amber-600';
+            else colorDias = 'text-gray-500';
+        }
+
+        // Determinar info de carpeta original
+        let carpetaInfo = 'Raíz del expediente';
+        if (doc.carpetaOriginalId) {
+            const carpeta = encontrarCarpeta(arbolCarpetasGlobal, doc.carpetaOriginalId);
+            if (carpeta) {
+                carpetaInfo = '📁 ' + carpeta.nombre;
+            } else {
+                carpetaInfo = '⚠️ Carpeta original eliminada (se restaurará en raíz)';
+            }
+        }
+
+        const nombreEscapado = (doc.nombreOriginal || '').replace(/'/g, "\\'");
+
+        html += `
+            <div class="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors">
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                    <div class="text-3xl opacity-70">${icono}</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-sm text-gray-800 truncate">${doc.nombreOriginal}</p>
+                        <p class="text-xs text-gray-500">${tamanio} • Eliminado el ${fechaEliminado}</p>
+                        <p class="text-xs text-gray-400 truncate">${carpetaInfo}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 ml-3 shrink-0">
+                    <span class="text-xs ${colorDias} whitespace-nowrap">
+                        <i class="fas fa-clock mr-1"></i>${diasRestantes}
+                    </span>
+                    <button onclick="restaurarDocumentoDesde('${doc.id}')"
+                            class="p-2 text-green-600 hover:bg-green-100 rounded transition-colors"
+                            title="Restaurar documento">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    <button onclick="solicitarEliminarPermanente('${doc.id}', '${nombreEscapado}')"
+                            class="p-2 text-red-600 hover:bg-red-200 rounded transition-colors"
+                            title="Eliminar permanentemente">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+    contenido.innerHTML = html;
+}
+
+/**
+ * Actualiza el badge numérico del botón de papelera.
+ * Si no se pasa cantidad, consulta al servidor.
+ */
+async function actualizarBadgePapelera(cantidad) {
+    const badge = document.getElementById('papelera-badge');
+    if (!badge || !expedienteIdGlobal) return;
+
+    let total = cantidad;
+    if (total === undefined) {
+        try {
+            const response = await fetch(`/api/documentos/expedientes/${expedienteIdGlobal}/papelera`);
+            if (response.ok) {
+                const docs = await response.json();
+                total = docs.length;
+            } else {
+                return;
+            }
+        } catch {
+            return;
+        }
+    }
+
+    if (total > 0) {
+        badge.textContent = total > 99 ? '99+' : total;
+        badge.classList.remove('hidden');
+        badge.classList.add('flex');
+    } else {
+        badge.classList.add('hidden');
+        badge.classList.remove('flex');
+    }
+}
+
+/**
+ * Restaura un documento desde la papelera a su ubicación original.
+ */
+async function restaurarDocumentoDesde(documentoId) {
+    try {
+        const response = await fetch(`/api/documentos/${documentoId}/restaurar`, {
+            method: 'PUT'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Error al restaurar el documento');
+        }
+
+        // Recargar papelera y vista principal
+        await cargarPapelera();
+        await cargarDocumentos();
+        await cargarArbolCarpetas();
+        await cargarEspacioOcupado();
+
+        mostrarNotificacion('Documento restaurado correctamente', 'success');
+
+    } catch (error) {
+        console.error('Error:', error);
+        alert(error.message);
+    }
+}
+
+/**
+ * Muestra el diálogo de confirmación para eliminar permanentemente.
+ */
+function solicitarEliminarPermanente(documentoId, nombreDocumento) {
+    documentoIdEliminarPerm = documentoId;
+    document.getElementById('nombre-doc-eliminar-perm').textContent = nombreDocumento;
+
+    const modal = document.getElementById('modal-confirmar-eliminar-permanente');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function cerrarConfirmarEliminarPerm() {
+    documentoIdEliminarPerm = null;
+    const modal = document.getElementById('modal-confirmar-eliminar-permanente');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+/**
+ * Ejecuta la eliminación permanente tras confirmación del usuario.
+ */
+async function confirmarEliminarPermanente() {
+    if (!documentoIdEliminarPerm) return;
+
+    const btn = document.getElementById('btn-confirmar-eliminar-perm');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Eliminando...';
+
+    try {
+        const response = await fetch(`/api/documentos/${documentoIdEliminarPerm}/permanente`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Error al eliminar permanentemente');
+        }
+
+        cerrarConfirmarEliminarPerm();
+        await cargarPapelera();
+        await cargarEspacioOcupado();
+
+        mostrarNotificacion('Documento eliminado permanentemente', 'success');
+
+    } catch (error) {
+        console.error('Error:', error);
+        alert(error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-trash mr-1"></i> Eliminar';
+    }
 }
 
 // ========================================

@@ -47,25 +47,39 @@ public class Documento {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_subida_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "passwordHash", "materias"})
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "materias", "gerencia"})
     private Usuario usuarioSubida;
 
     @Column(name = "fecha_subida", nullable = false)
     private LocalDateTime fechaSubida;
+    // ===== PAPELERA TEMPORAL =====
+    /** Indica si el documento está en la papelera (soft-delete) */
+    @Column(name = "eliminado", nullable = false)
+    @Builder.Default
+    private Boolean eliminado = false;
 
-    @Column(name = "eliminado")
-    private Boolean eliminado;
-
+    /** Fecha en que se movió a la papelera. Null = no está eliminado. */
     @Column(name = "fecha_eliminacion")
     private LocalDateTime fechaEliminacion;
 
+    /** Fecha de eliminación definitiva (90 días después de ser eliminado) */
     @Column(name = "fecha_eliminacion_definitiva")
     private LocalDateTime fechaEliminacionDefinitiva;
 
+    /** Usuario que movió el documento a la papelera */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_eliminacion_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "passwordHash", "materias"})
     private Usuario usuarioEliminacion;
+
+    /** ID de la carpeta original antes de ser eliminado (para restauración). */
+    @Column(name = "carpeta_original_id")
+    private UUID carpetaOriginalId;
+
+    /** Ruta de la carpeta original (separada por /) para recrear subcarpetas. */
+    @Column(name = "carpeta_original_ruta", length = 1024)
+    private String carpetaOriginalRuta;
+    // ===========================
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

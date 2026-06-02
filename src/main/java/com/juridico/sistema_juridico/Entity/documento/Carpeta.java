@@ -49,7 +49,7 @@ public class Carpeta {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_creador_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "passwordHash", "materias"})
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "materias", "gerencia"})
     private Usuario usuarioCreador;
 
     // Orden de visualización
@@ -75,6 +75,14 @@ public class Carpeta {
             return nombre;
         }
         return carpetaPadre.getRutaCompleta() + " > " + nombre;
+    }
+
+    // Método helper para obtener la ruta como string separado por barras /
+    public String getRutaString() {
+        if (carpetaPadre == null) {
+            return nombre;
+        }
+        return carpetaPadre.getRutaString() + "/" + nombre;
     }
 
     // Método helper para obtener el nivel de profundidad
