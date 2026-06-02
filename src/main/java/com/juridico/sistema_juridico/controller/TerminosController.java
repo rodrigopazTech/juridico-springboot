@@ -1051,6 +1051,38 @@ public class TerminosController {
         }
     }
 
+    @GetMapping("/api/{id}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> obtenerTermino(@PathVariable("id") Integer id) {
+        try {
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Término no encontrado"));
+            validarAccesoTermino(termino, getUsuarioActual());
+
+            Map<String, Object> res = new HashMap<>();
+            res.put("id", termino.getId());
+            res.put("asunto", termino.getAsunto());
+            res.put("fechaVencimiento", termino.getFechaVencimiento() != null ? termino.getFechaVencimiento().toString() : "");
+            res.put("expedienteId", termino.getExpediente() != null ? termino.getExpediente().getId().toString() : "");
+            res.put("expedienteNum", termino.getExpediente() != null ? termino.getExpediente().getNumero() : "");
+            res.put("abogadoId", termino.getAbogadoResponsable() != null ? termino.getAbogadoResponsable().getId() : "");
+            res.put("prioridad", termino.getPrioridad() != null ? termino.getPrioridad().getId() : "");
+            res.put("observaciones", termino.getObservaciones() != null ? termino.getObservaciones() : "");
+            
+            TerminoContexto ctx = termino.getContexto();
+            res.put("origenTermino", ctx != null && ctx.getOrigen() != null ? ctx.getOrigen().name() : "EXPEDIENTE");
+            res.put("materiaId", ctx != null && ctx.getMateria() != null ? ctx.getMateria().getId() : "");
+            res.put("gerenciaId", ctx != null && ctx.getGerencia() != null ? ctx.getGerencia().getId() : "");
+            res.put("descripcion", ctx != null && ctx.getDescripcion() != null ? ctx.getDescripcion() : "");
+            res.put("partes", ctx != null && ctx.getPartes() != null ? ctx.getPartes() : "");
+            res.put("referencia", ctx != null && ctx.getNumeroExpedienteSnapshot() != null ? ctx.getNumeroExpedienteSnapshot() : "");
+
+            return ResponseEntity.ok(res);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @GetMapping("/api/responsable-expediente/{id}")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> obtenerResponsable(@PathVariable("id") String id) {

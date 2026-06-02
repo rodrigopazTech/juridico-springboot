@@ -389,20 +389,35 @@ function iniciarTerminosWebSocket() {
                             if (idInput && idInput.value && parseInt(idInput.value) === parseInt(payload.id)) {
                                 const banner = document.getElementById('banner-concurrencia');
                                 const mensaje = document.getElementById('mensaje-concurrencia');
+                                
+                                // Bloquear botón de guardar
+                                const btnGuardar = document.getElementById('btn-guardar-termino');
+                                if (btnGuardar) {
+                                    btnGuardar.disabled = true;
+                                    btnGuardar.classList.add('opacity-50', 'cursor-not-allowed');
+                                }
+
                                 if (banner && mensaje) {
-                                    mensaje.innerHTML = `⚠️ Atención: Este término ha sido modificado recientemente por otro usuario. Cierre esta ventana y vuelva a abrirla para cargar los nuevos datos.`;
+                                    mensaje.innerHTML = `⚠️ Atención: Este término ha sido modificado recientemente por otro usuario. El botón de guardar se ha desactivado. <button type="button" onclick="recargarDatosTerminoActual()" class="underline font-bold text-red-900 hover:text-red-950 ml-2">Recargar Datos</button>`;
                                     banner.classList.remove('hidden');
                                     banner.classList.remove('bg-yellow-50', 'border-yellow-400', 'text-yellow-700');
                                     banner.classList.add('bg-red-50', 'border-red-500', 'text-red-700');
                                 }
                                 
-                                // Mostrar Toast de advertencia crítica
+                                // Mostrar Toast de advertencia crítica con opción de recargar de inmediato
                                 Swal.fire({
                                     title: 'Término Modificado',
-                                    text: 'Este término ha sido modificado en la base de datos por otro usuario. Se sugiere no guardar para evitar sobrescribir los cambios.',
+                                    text: 'Este término ha sido modificado en la base de datos por otro usuario. El botón de guardar se ha desactivado temporalmente para evitar sobrescribir los datos.',
                                     icon: 'warning',
-                                    confirmButtonText: 'Entendido',
-                                    confirmButtonColor: '#bc955c'
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Recargar datos',
+                                    cancelButtonText: 'Entendido',
+                                    confirmButtonColor: '#bc955c',
+                                    cancelButtonColor: '#6b7280'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        recargarDatosTerminoActual();
+                                    }
                                 });
                             }
                         }
@@ -747,6 +762,12 @@ function abrirModalNuevo() {
 
     if (titulo) titulo.innerHTML = '<i class="fas fa-plus-circle"></i> Nuevo Término';
 
+    const btnGuardar = document.getElementById('btn-guardar-termino');
+    if (btnGuardar) {
+        btnGuardar.disabled = false;
+        btnGuardar.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+
     const modal = document.getElementById('modal-nuevo-termino');
     if (modal) {
         modal.classList.remove('hidden');
@@ -933,6 +954,12 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
 
     if (titulo) titulo.innerHTML = '<i class="fas fa-edit"></i> Editar Término';
 
+    const btnGuardar = document.getElementById('btn-guardar-termino');
+    if (btnGuardar) {
+        btnGuardar.disabled = false;
+        btnGuardar.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+
     const modal = document.getElementById('modal-nuevo-termino');
     if (modal) {
         modal.classList.remove('hidden');
@@ -942,6 +969,72 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
     if (id) {
         sendTerminoLock(id);
     }
+}
+
+function recargarDatosTerminoActual() {
+    const idInput = document.getElementById('input-termino-id');
+    if (!idInput || !idInput.value) return;
+
+    const termId = idInput.value;
+    
+    Swal.fire({
+        title: 'Recargando datos...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    fetch(`/terminos/api/${termId}`)
+        .then(res => {
+            if (!res.ok) throw new Error('Error al recargar');
+            return res.json();
+        })
+        .then(data => {
+            editarTermino(
+                data.id,
+                data.asunto,
+                data.fechaVencimiento,
+                data.expedienteId,
+                data.expedienteNum,
+                data.abogadoId,
+                data.prioridad,
+                data.observaciones,
+                data.origenTermino,
+                data.materiaId,
+                data.gerenciaId,
+                data.descripcion,
+                data.partes,
+                data.referencia
+            );
+
+            const btnGuardar = document.getElementById('btn-guardar-termino');
+            if (btnGuardar) {
+                btnGuardar.disabled = false;
+                btnGuardar.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            const banner = document.getElementById('banner-concurrencia');
+            if (banner) {
+                banner.classList.add('hidden');
+            }
+
+            Swal.fire({
+                title: 'Datos Recargados',
+                text: 'Se han cargado los datos más recientes del término desde la base de datos.',
+                icon: 'success',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#bc955c'
+            });
+        })
+        .catch(err => {
+            console.error("Error al recargar término:", err);
+            Swal.fire({
+                title: 'Error',
+                text: 'No se pudieron recargar los datos del término.',
+                icon: 'error',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#bc955c'
+            });
+        });
 }
 
 function vincularAbogadoTermino() {
