@@ -59,6 +59,19 @@ public class TerminoArchivoService {
         return terminoArchivoRepository.findByTerminoIdOrderByCreatedAtDesc(terminoId);
     }
 
+    @Transactional
+    public void eliminarArchivosPorTermino(Integer terminoId) {
+        List<TerminoArchivo> archivos = terminoArchivoRepository.findByTerminoIdOrderByCreatedAtDesc(terminoId);
+        for (TerminoArchivo ta : archivos) {
+            try {
+                fileStorageService.eliminarArchivo(ta.getRutaArchivo());
+            } catch (Exception e) {
+                // Ignorar si el archivo no existe en el almacenamiento
+            }
+        }
+        terminoArchivoRepository.deleteAll(archivos);
+    }
+
     private String normalizarNombreEtapa(EstatusTermino estatus) {
         if (estatus == null) {
             return "00-SIN-ETAPA";

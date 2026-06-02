@@ -101,12 +101,17 @@ public class NotificacionesController {
                 if ("AUDIENCIA".equals(notificacion.getEntidadTipo())) {
                     return "redirect:/audiencias?id=" + idClean;
                 } else if ("TERMINO".equals(notificacion.getEntidadTipo())) {
-                    Termino termino = terminoRepository.findById(Integer.valueOf(idClean)).orElse(null);
-                    EstatusTermino estatusActual = termino != null ? termino.getEstatusTermino() : null;
-                    if (estatusActual != null) {
-                        return "redirect:/terminos?id=" + idClean + "&estatus=" + estatusActual;
+                    try {
+                        Integer termId = Integer.valueOf(idClean);
+                        Termino termino = terminoRepository.findById(termId).orElse(null);
+                        EstatusTermino estatusActual = termino != null ? termino.getEstatusTermino() : null;
+                        if (estatusActual != null) {
+                            return "redirect:/terminos?id=" + termId + "&estatus=" + estatusActual;
+                        }
+                        return "redirect:/terminos?id=" + termId;
+                    } catch (NumberFormatException e) {
+                        return "redirect:/terminos?keyword=" + idClean;
                     }
-                    return "redirect:/terminos?id=" + idClean;
                 } else if ("EXPEDIENTE".equals(notificacion.getEntidadTipo())) {
                     return "redirect:/expedientes/" + idClean;
                 } else if ("SEGURIDAD".equals(notificacion.getEntidadTipo())) {

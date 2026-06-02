@@ -341,6 +341,8 @@ function animarEtapaPorEstatus(estatusObj) {
 let intentos = 0;
 let maxIntentos = 5;
 let seguirIntentando = true;
+let terminosStompClient = null;
+let activeLocks = {};
 
 function iniciarTerminosWebSocket() {
     function conectar() {
@@ -361,6 +363,7 @@ function iniciarTerminosWebSocket() {
         stompClient.connect({}, function (frame) {
             // Conexión exitosa → reiniciamos contador
             intentos = 0;
+            terminosStompClient = stompClient;
 
             stompClient.subscribe('/topic/alertas', function (message) {
                 try {
@@ -376,6 +379,16 @@ function iniciarTerminosWebSocket() {
                     }
                 } catch (e) {
                     console.error("Error al procesar mensaje de WebSocket:", e);
+                }
+            });
+
+            // Suscribirse a bloqueos de edición de términos
+            stompClient.subscribe('/topic/terminos/locks', function (message) {
+                try {
+                    const locks = JSON.parse(message.body);
+                    onLocksReceived(locks);
+                } catch (e) {
+                    console.error("Error al procesar mensaje de locks:", e);
                 }
             });
         }, function (error) {
@@ -396,6 +409,62 @@ function iniciarTerminosWebSocket() {
     }
 
     conectar();
+}
+
+function sendTerminoLock(terminoId) {
+    if (terminosStompClient && terminosStompClient.connected) {
+        const nombreInput = document.getElementById('hdnUsuarioNombre');
+        const nombre = nombreInput ? nombreInput.value : '';
+        terminosStompClient.send('/app/terminos/lock', {}, JSON.stringify({
+            terminoId: terminoId,
+            nombreCompleto: nombre
+        }));
+    }
+}
+
+function sendTerminoUnlock(terminoId) {
+    if (terminosStompClient && terminosStompClient.connected) {
+        terminosStompClient.send('/app/terminos/unlock', {}, JSON.stringify({
+            terminoId: terminoId
+        }));
+    }
+}
+
+function onLocksReceived(locks) {
+    activeLocks = locks || {};
+    
+    const idInput = document.getElementById('input-termino-id');
+    const myEmailInput = document.getElementById('hdnUsuarioEmail');
+    
+    if (idInput && idInput.value && myEmailInput) {
+        const currentTermId = parseInt(idInput.value);
+        const myEmail = myEmailInput.value;
+        const lockUsers = activeLocks[currentTermId];
+        
+        const banner = document.getElementById('banner-concurrencia');
+        const mensaje = document.getElementById('mensaje-concurrencia');
+        
+        // Filtrar a mí mismo para ver si hay otros editando
+        const otherEditors = Object.keys(lockUsers || {})
+            .filter(email => email !== myEmail)
+            .map(email => lockUsers[email]);
+            
+        if (otherEditors.length > 0) {
+            if (banner && mensaje) {
+                const nombres = otherEditors.join(', ');
+                mensaje.innerHTML = `⚠️ Atención: El/La Lic. ${nombres} también está editando este término en este momento.`;
+                banner.classList.remove('hidden');
+                
+                // Mostrar alerta estilo Toast
+                Toast.fire({
+                    icon: 'warning',
+                    title: `Edición concurrente: ${nombres} está editando este término.`
+                });
+            }
+        } else {
+            if (banner) banner.classList.add('hidden');
+        }
+    }
 }
 
 
@@ -832,6 +901,10 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
+
+    if (id) {
+        sendTerminoLock(id);
+    }
 }
 
 function vincularAbogadoTermino() {
@@ -888,6 +961,17 @@ function cerrarModal(id) {
     if (modal) {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+        
+        if (id === 'modal-nuevo-termino') {
+            const banner = document.getElementById('banner-concurrencia');
+            if (banner) banner.classList.add('hidden');
+            
+            const idInput = document.getElementById('input-termino-id');
+            if (idInput && idInput.value) {
+                sendTerminoUnlock(idInput.value);
+                idInput.value = "";
+            }
+        }
     }
 }
 

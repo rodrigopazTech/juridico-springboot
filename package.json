@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@modelcontextprotocol/server-postgres": "^0.6.2",
     "exceljs": "^4.4.0",
     "playwright": "^1.58.2",
     "xlsx": "^0.18.5"

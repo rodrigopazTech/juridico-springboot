@@ -64,15 +64,16 @@ public class NotificacionAutomaticaService {
                 ESTATUS_FINALES);
 
         for (Termino t : terminos) {
+            String expedienteNum = t.getNumeroReferencia();
             String mensaje = String.format(
-                    "El término '%s' del expediente %s vence el %s. Actualmente está en la etapa: %s",
+                    "El término '%s' %s vence el %s. Actualmente está en la etapa: %s",
                     t.getAsunto(),
-                    t.getExpediente().getNumero(),
+                    (t.getExpediente() != null ? "del expediente " + expedienteNum : "(sin expediente)"),
                     t.getFechaVencimiento(),
                     t.getEstatusTermino());
 
             Set<Usuario> destinatarios = new HashSet<>();
-            Gerencia g = t.getExpediente().getGerencia();
+            Gerencia g = t.getExpediente() != null ? t.getExpediente().getGerencia() : (t.getContexto() != null ? t.getContexto().getGerencia() : null);
 
             // 1. El Abogado Responsable SIEMPRE es notificado
             if (t.getAbogadoResponsable() != null) {
@@ -80,31 +81,35 @@ public class NotificacionAutomaticaService {
             }
 
             // 2. Ruteo Dinámico: ¿A quién más le avisamos según la etapa?
-            switch (t.getEstatusTermino()) {
-                case REVISION:
-                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, g));
-                    break;
-                case GERENCIA:
-                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE, g));
-                    break;
-                case DIRECCION:
+            if (g != null) {
+                switch (t.getEstatusTermino()) {
+                    case REVISION:
+                        destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, g));
+                        break;
+                    case GERENCIA:
+                        destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE, g));
+                        break;
+                    case DIRECCION:
+                        destinatarios.addAll(usuarioRepository
+                                .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
+                        break;
+                    case LIBERADO:
+                    case PRESENTADO:
+                        // ¡ALERTA GENERAL! Si ya se liberó o presentó pero no se ha subido el acuse (Concluido)
+                        destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, g));
+                        destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE, g));
+                        destinatarios.addAll(usuarioRepository
+                                .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
+                        break;
+                }
+            } else {
+                if (t.getEstatusTermino() == EstatusTermino.DIRECCION || t.getEstatusTermino() == EstatusTermino.LIBERADO || t.getEstatusTermino() == EstatusTermino.PRESENTADO) {
                     destinatarios.addAll(usuarioRepository
                             .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
-                    break;
-                case LIBERADO:
-                case PRESENTADO:
-                    // ¡ALERTA GENERAL! Si ya se liberó o presentó pero no se ha subido el acuse
-                    // (Concluido),
-                    // y el tiempo se está acabando, le avisamos a TODA LA CADENA DE MANDO.
-                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, g));
-                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE, g));
-                    destinatarios.addAll(usuarioRepository
-                            .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
-                    break;
+                }
             }
 
             // 3. Enviar las notificaciones
-            String expedienteNum = (t.getExpediente() != null) ? t.getExpediente().getNumero() : "S/N";
             String tituloNotif = tituloBase + ": " + expedienteNum;
 
             for (Usuario u : destinatarios) {

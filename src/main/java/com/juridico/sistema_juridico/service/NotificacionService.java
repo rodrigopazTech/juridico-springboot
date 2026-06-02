@@ -3,6 +3,7 @@ package com.juridico.sistema_juridico.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,6 +15,9 @@ import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.usuario.Notificacion;
 import com.juridico.sistema_juridico.Entity.usuario.PreferenciaNotificacion;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.procesal.Termino;
+import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
+import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.repository.Usuarios.NotificacionRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.PreferenciaNotificacionRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
@@ -30,6 +34,18 @@ public class NotificacionService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.juridico.sistema_juridico.repository.procesal.TerminoRepository terminoRepository;
+
+    @Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.juridico.sistema_juridico.repository.procesal.AudienciaRepository audienciaRepository;
+
+    @Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository expedienteRepository;
 
     public void crearNotificacion(Usuario usuario, String titulo, String mensaje, String tipo, CatPrioridad prioridad,
             String entidadId) {
@@ -126,7 +142,33 @@ public class NotificacionService {
 
         // Mensaje detallado: "¿Quién le asignó a quién?"
         String mensajeJefe = "";
-        String numExpediente = (entidadId != null && !entidadId.trim().isEmpty()) ? entidadId : "S/N";
+        String numExpediente = "S/N";
+        if (entidadId != null && !entidadId.trim().isEmpty()) {
+            if ("TERMINO".equals(tipo)) {
+                try {
+                    Termino t = terminoRepository.findById(Integer.valueOf(entidadId)).orElse(null);
+                    if (t != null) {
+                        numExpediente = t.getNumeroReferencia();
+                    }
+                } catch (Exception ignored) {}
+            } else if ("AUDIENCIA".equals(tipo)) {
+                try {
+                    Audiencia aud = audienciaRepository.findById(Integer.valueOf(entidadId)).orElse(null);
+                    if (aud != null && aud.getExpediente() != null) {
+                        numExpediente = aud.getExpediente().getNumero();
+                    }
+                } catch (Exception ignored) {}
+            } else if ("EXPEDIENTE".equals(tipo)) {
+                try {
+                    Expediente exp = expedienteRepository.findById(UUID.fromString(entidadId)).orElse(null);
+                    if (exp != null) {
+                        numExpediente = exp.getNumero();
+                    }
+                } catch (Exception ignored) {}
+            } else {
+                numExpediente = entidadId;
+            }
+        }
         
         if (actor != null && !actor.getId().equals(subordinado.getId())) {
             // Caso: Alguien más le asignó al subordinado

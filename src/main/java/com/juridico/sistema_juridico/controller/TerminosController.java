@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -70,6 +71,10 @@ import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.NotificacionService;
 import com.juridico.sistema_juridico.util.TerminoExcelExporter;
+import com.juridico.sistema_juridico.service.procesal.TerminoArchivoService;
+import com.juridico.sistema_juridico.service.FileStorageService;
+import com.juridico.sistema_juridico.Entity.enums.TipoDocumentoTermino;
+import com.juridico.sistema_juridico.Entity.procesal.TerminoArchivo;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -80,6 +85,10 @@ public class TerminosController {
 
     @Autowired
     private TerminoRepository terminoRepository;
+    @Autowired
+    private TerminoArchivoService terminoArchivoService;
+    @Autowired
+    private FileStorageService fileStorageService;
     @Autowired
     private ExpedienteRepository expedienteRepository;
     @Autowired
@@ -492,7 +501,7 @@ public class TerminosController {
                         "Haz creado el termino con el asunto: " + terminoGuardado.getAsunto(),
                         "TERMINO",
                           terminoGuardado.getPrioridad(),
-                          expedienteNum,
+                          terminoGuardado.getId().toString(),
                           false);
 
             }
@@ -506,7 +515,7 @@ public class TerminosController {
                         "El usuario " + actor.getNombreCompleto() + " te ha asignado: " + terminoGuardado.getAsunto(),
                         "TERMINO",
                           terminoGuardado.getPrioridad(),
-                          expedienteNum,
+                          terminoGuardado.getId().toString(),
                           false);
 
             }
@@ -691,20 +700,19 @@ public class TerminosController {
                 return "redirect:/terminos";
             }
 
-            String carpetaDestino = "uploads/terminos/";
-            Path rutaCarpeta = Paths.get(carpetaDestino);
-            if (!Files.exists(rutaCarpeta)) {
-                Files.createDirectories(rutaCarpeta);
-            }
+            // Usar persistencia avanzada para guardar el Borrador
+            TerminoArchivo ta = terminoArchivoService.guardarArchivo(termino, archivo, TipoDocumentoTermino.BORRADOR, actor);
 
-            String nombreFinal = id + "_" + archivo.getOriginalFilename();
-            Files.copy(archivo.getInputStream(), rutaCarpeta.resolve(nombreFinal), StandardCopyOption.REPLACE_EXISTING);
-
-            termino.setAcuse(nombreFinal);
+            termino.setAcuse(ta.getNombreOriginal());
             termino.setUpdatedAt(LocalDateTime.now());
             terminoRepository.save(termino);
 
-            auditoriaService.registrar(termino.getExpediente(), "ARCHIVO CARGADO", "Borrador: " + archivo.getOriginalFilename(), "UPLOAD", actor);
+            if (termino.getExpediente() != null) {
+                auditoriaService.registrar(termino.getExpediente(), "ARCHIVO CARGADO", "Borrador: " + archivo.getOriginalFilename(), "UPLOAD", actor);
+            } else {
+                auditoriaService.registrarActividadGeneral(actor, "ARCHIVO CARGADO", "Borrador de término '" + termino.getAsunto() + "' cargado: " + archivo.getOriginalFilename(), "UPLOAD");
+            }
+
             redirectAttrs.addFlashAttribute("mensaje", "Borrador actualizado correctamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
         } catch (IOException e) {
@@ -727,23 +735,18 @@ public class TerminosController {
             validarAccesoTermino(termino, actor);
 
             if (termino.getEstatusTermino() == EstatusTermino.LIBERADO) {
-                String carpeta = "uploads/acuses/";
-                Path ruta = Paths.get(carpeta);
-                if (!Files.exists(ruta)) {
-                    Files.createDirectories(ruta);
-                }
-                String nombreAcuse = "ACUSE_" + id + "_" + archivo.getOriginalFilename();
-                Files.copy(archivo.getInputStream(), ruta.resolve(nombreAcuse), StandardCopyOption.REPLACE_EXISTING);
+                // Guardar acuse con persistencia avanzada
+                TerminoArchivo ta = terminoArchivoService.guardarArchivo(termino, archivo, TipoDocumentoTermino.ACUSE, actor);
 
                 TerminoPresentado presentado = TerminoPresentado.builder()
                         .termino(termino)
-                        .expedienteNumero(termino.getExpediente().getNumero())
+                        .expedienteNumero(termino.getExpediente() != null ? termino.getExpediente().getNumero() : "Sin Expediente")
                         .fechaPresentacion(LocalDate.now())
-                        .acuseDocumento(nombreAcuse)
+                        .acuseDocumento(ta.getNombreOriginal())
                         .sincronizadoAt(LocalDateTime.now()).build();
                 terminoPresentadoRepository.save(presentado);
 
-                termino.setAcuseNombre(nombreAcuse);
+                termino.setAcuseNombre(ta.getNombreOriginal());
                 if (observaciones != null) {
                     termino.setObservaciones(observaciones);
                 }
@@ -754,7 +757,12 @@ public class TerminosController {
                 if (observaciones != null && !observaciones.trim().isEmpty()) {
                     logDesc += " - Observaciones: " + observaciones;
                 }
-                auditoriaService.registrar(termino.getExpediente(), "ARCHIVO CARGADO", logDesc, "UPLOAD", actor);
+
+                if (termino.getExpediente() != null) {
+                    auditoriaService.registrar(termino.getExpediente(), "ARCHIVO CARGADO", logDesc, "UPLOAD", actor);
+                } else {
+                    auditoriaService.registrarActividadGeneral(actor, "ARCHIVO CARGADO", "Acuse de término '" + termino.getAsunto() + "' cargado. " + logDesc, "UPLOAD");
+                }
 
                 redirectAttrs.addFlashAttribute("mensaje", "Acuse cargado correctamente. Ahora puedes avanzar el término a 'Presentado'.");
                 redirectAttrs.addFlashAttribute("tipo", "success");
@@ -790,7 +798,11 @@ public class TerminosController {
                 if (observaciones != null && !observaciones.trim().isEmpty()) {
                     logDesc += " - Observaciones: " + observaciones;
                 }
-                auditoriaService.registrar(termino.getExpediente(), "TÉRMINO CONCLUIDO", logDesc, "CHECK", actor);
+                if (termino.getExpediente() != null) {
+                    auditoriaService.registrar(termino.getExpediente(), "TÉRMINO CONCLUIDO", logDesc, "CHECK", actor);
+                } else {
+                    auditoriaService.registrarActividadGeneral(actor, "TÉRMINO CONCLUIDO", "Término '" + termino.getAsunto() + "' marcado como CONCLUIDO. " + logDesc, "CHECK");
+                }
 
                 redirectAttrs.addFlashAttribute("mensaje", "¡Término finalizado y archivado correctamente!");
                 redirectAttrs.addFlashAttribute("tipo", "success");
@@ -839,16 +851,35 @@ public class TerminosController {
     public ResponseEntity<Resource> descargarArchivo(@PathVariable("id") Integer id) {
         try {
             Termino termino = terminoRepository.findById(id).orElse(null);
-            if (termino == null || termino.getAcuse() == null) {
+            if (termino == null) {
                 return ResponseEntity.notFound().build();
             }
 
             validarAccesoTermino(termino, getUsuarioActual());
 
+            // 1. Intentar persistencia avanzada (Borrador)
+            Optional<TerminoArchivo> taOpt = terminoArchivoService.obtenerUltimoPorTipo(id, TipoDocumentoTermino.BORRADOR);
+            if (taOpt.isPresent()) {
+                TerminoArchivo ta = taOpt.get();
+                Path rutaArchivo = fileStorageService.obtenerArchivo(ta.getRutaArchivo());
+                Resource recurso = new UrlResource(rutaArchivo.toUri());
+                if (recurso.exists() || recurso.isReadable()) {
+                    return ResponseEntity.ok()
+                            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + ta.getNombreOriginal() + "\"")
+                            .body(recurso);
+                }
+            }
+
+            // 2. Fallback a persistencia clásica
+            if (termino.getAcuse() == null) {
+                return ResponseEntity.notFound().build();
+            }
             Path rutaArchivo = Paths.get("uploads/terminos").resolve(termino.getAcuse());
             Resource recurso = new UrlResource(rutaArchivo.toUri());
             if (recurso.exists() || recurso.isReadable()) {
-                return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + recurso.getFilename() + "\"").body(recurso);
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + (termino.getAcuseNombre() != null ? termino.getAcuseNombre() : recurso.getFilename()) + "\"")
+                        .body(recurso);
             }
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
@@ -929,6 +960,16 @@ public class TerminosController {
             Termino termino = terminoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Término no existe."));
             validarAccesoTermino(termino, actor);
 
+            // 1. Eliminar archivos asociados y registros en TerminoArchivo
+            terminoArchivoService.eliminarArchivosPorTermino(id);
+
+            // 2. Eliminar acuses presentados
+            List<TerminoPresentado> presentados = terminoPresentadoRepository.findByTerminoId(id);
+            if (presentados != null && !presentados.isEmpty()) {
+                terminoPresentadoRepository.deleteAll(presentados);
+            }
+
+            // 3. Eliminar el término principal
             terminoRepository.delete(termino);
             response.put("success", true);
             response.put("message", "Término eliminado correctamente.");
@@ -946,8 +987,30 @@ public class TerminosController {
             Termino termino = terminoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Término no encontrado"));
             validarAccesoTermino(termino, getUsuarioActual());
 
-            List<TerminoPresentado> presentados = terminoPresentadoRepository.findByTerminoExpedienteId(termino.getExpediente().getId());
-            TerminoPresentado acuse = presentados.stream().filter(p -> p.getTermino().getId().equals(id)).findFirst().orElseThrow(() -> new ResourceNotFoundException("Acuse no encontrado"));
+            // 1. Intentar persistencia avanzada (Acuse)
+            Optional<TerminoArchivo> taOpt = terminoArchivoService.obtenerUltimoPorTipo(id, TipoDocumentoTermino.ACUSE);
+            if (taOpt.isPresent()) {
+                TerminoArchivo ta = taOpt.get();
+                Path rutaArchivo = fileStorageService.obtenerArchivo(ta.getRutaArchivo());
+                Resource recurso = new UrlResource(rutaArchivo.toUri());
+                if (recurso.exists() || recurso.isReadable()) {
+                    return ResponseEntity.ok()
+                            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + ta.getNombreOriginal() + "\"")
+                            .body(recurso);
+                }
+            }
+
+            // 2. Fallback a persistencia clásica
+            List<TerminoPresentado> presentados;
+            if (termino.getExpediente() != null) {
+                presentados = terminoPresentadoRepository.findByTerminoExpedienteId(termino.getExpediente().getId());
+            } else {
+                presentados = terminoPresentadoRepository.findByTerminoId(id);
+            }
+            TerminoPresentado acuse = presentados.stream()
+                    .filter(p -> p.getTermino().getId().equals(id))
+                    .findFirst()
+                    .orElseThrow(() -> new ResourceNotFoundException("Acuse no encontrado"));
 
             if (acuse.getAcuseDocumento() == null) {
                 return ResponseEntity.notFound().build();
@@ -956,7 +1019,9 @@ public class TerminosController {
             Path rutaArchivo = Paths.get("uploads/acuses").resolve(acuse.getAcuseDocumento());
             Resource recurso = new UrlResource(rutaArchivo.toUri());
             if (recurso.exists() || recurso.isReadable()) {
-                return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + recurso.getFilename() + "\"").body(recurso);
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + recurso.getFilename() + "\"")
+                        .body(recurso);
             }
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
