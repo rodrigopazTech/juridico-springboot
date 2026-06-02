@@ -56,6 +56,9 @@ public interface DocumentoRepository extends JpaRepository<Documento, UUID> {
         /** Documentos activos por carpeta */
         List<Documento> findByCarpetaIdAndEliminadoFalseOrderByFechaSubidaDesc(UUID carpetaId);
 
+        /** Todos los documentos por carpeta (incluyendo papelera) */
+        List<Documento> findByCarpetaIdOrderByFechaSubidaDesc(UUID carpetaId);
+
         /** Documentos activos en raíz (sin carpeta) */
         List<Documento> findByExpedienteIdAndCarpetaIsNullAndEliminadoFalseOrderByFechaSubidaDesc(UUID expedienteId);
 

@@ -314,7 +314,8 @@ public class DocumentoService {
                     "TRASH", usuario);
         }
 
-        return guardado;
+        fileStorageService.eliminarArchivo(documento.getRutaArchivo());
+        documentoRepository.delete(documento);
     }
 
     @Transactional
