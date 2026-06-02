@@ -1,17 +1,29 @@
 package com.juridico.sistema_juridico.Entity.documento;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.juridico.sistema_juridico.Entity.usuario.Usuario;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "carpetas")
@@ -49,7 +61,7 @@ public class Carpeta {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_creador_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "passwordHash", "materias"})
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "materias","gerencia"})
     private Usuario usuarioCreador;
 
     // Orden de visualización

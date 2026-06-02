@@ -1,4 +1,4 @@
-<div th:fragment="historial" class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 h-fit">
+<div th:fragment="historial" id="historial-lateral-container" class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 h-fit">
     <h3 class="font-bold text-gray-700 mb-4 border-b pb-2 flex items-center gap-2">
         <i class="fas fa-history text-gob-oro"></i> Historial de Cambios
     </h3>
@@ -24,9 +24,8 @@
             </p>
         </div>
     </div>
-</div>
 
-<div class="text-center py-4 text-gray-400 italic text-sm" th:if="${#lists.isEmpty(actividades)}">
-    No hay actividad registrada aún.
-</div>
+    <div class="text-center py-4 text-gray-400 italic text-sm" th:if="${#lists.isEmpty(actividades)}">
+        No hay actividad registrada aún.
+    </div>
 </div>

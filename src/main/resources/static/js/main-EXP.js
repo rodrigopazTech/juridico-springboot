@@ -336,4 +336,106 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
     }
+
+    iniciarWebSocketExpedientes();
 });
+
+// ========================================
+// TIEMPO REAL (WEBSOCKET) PARA LISTADO
+// ========================================
+let stompClientExpedientes = null;
+
+function iniciarWebSocketExpedientes() {
+    function loadScripts(urls, callback) {
+        let loadedCount = 0;
+        let scriptsToLoad = [];
+        
+        urls.forEach(url => {
+            if (url.includes('sockjs') && typeof SockJS !== 'undefined') {
+                loadedCount++;
+            } else if (url.includes('stomp') && typeof Stomp !== 'undefined') {
+                loadedCount++;
+            } else {
+                scriptsToLoad.push(url);
+            }
+        });
+
+        if (loadedCount === urls.length) {
+            callback();
+            return;
+        }
+
+        let loadedScriptsCount = 0;
+        scriptsToLoad.forEach(url => {
+            const script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = url;
+            script.onload = () => {
+                loadedScriptsCount++;
+                if (loadedScriptsCount === scriptsToLoad.length) {
+                    callback();
+                }
+            };
+            document.head.appendChild(script);
+        });
+    }
+
+    loadScripts([
+        'https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js'
+    ], function() {
+        if (stompClientExpedientes) return;
+
+        const socket = new SockJS('/ws-realtime');
+        stompClientExpedientes = Stomp.over(socket);
+        stompClientExpedientes.debug = null;
+
+        stompClientExpedientes.connect({}, function (frame) {
+            console.log('🔔 Listado Expedientes: Conexión WebSocket establecida.');
+            
+            stompClientExpedientes.subscribe('/topic/expedientes', function (message) {
+                try {
+                    const payload = JSON.parse(message.body);
+                    if (payload.tabla === 'expedientes') {
+                        console.log("🔔 Expediente modificado o creado. Actualizando listado...");
+                        recargarListadoExpedientes();
+                    }
+                } catch (e) {
+                    console.error("Error al procesar mensaje en listado:", e);
+                }
+            });
+        }, function (error) {
+            stompClientExpedientes = null;
+            setTimeout(iniciarWebSocketExpedientes, 5000);
+        });
+    });
+}
+
+function recargarListadoExpedientes() {
+    const form = document.getElementById('form-search-expedientes');
+    if (!form) return;
+
+    const urlParams = new URLSearchParams(new FormData(form));
+    const formFiltros = document.getElementById('formFiltros');
+    if (formFiltros) {
+        const fd = new FormData(formFiltros);
+        for (const [key, value] of fd.entries()) {
+            if (value) urlParams.set(key, value);
+        }
+    }
+
+    fetch('/expedientes?' + urlParams.toString(), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.text())
+    .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const nuevoGrid = doc.getElementById('grid-resultados');
+        const gridActual = document.getElementById('grid-resultados');
+        if (nuevoGrid && gridActual) {
+            gridActual.innerHTML = nuevoGrid.innerHTML;
+        }
+    })
+    .catch(err => console.error("Error al recargar listado en tiempo real:", err));
+}

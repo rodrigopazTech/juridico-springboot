@@ -144,6 +144,26 @@ public class RealtimeNotificationService {
                         log.warn("No se encontró el usuario con ID {} para enviar la notificación realtime.", usuarioId);
                     }
                 }
+            } else if ("expedientes".equals(tabla) || "documentos".equals(tabla) || "carpetas".equals(tabla)
+                    || "comentarios".equals(tabla) || "actividad_expedientes".equals(tabla)) {
+                String expedienteId = null;
+                if ("expedientes".equals(tabla) && node.has("id")) {
+                    expedienteId = node.get("id").asText();
+                } else if (node.has("expediente_id")) {
+                    expedienteId = node.get("expediente_id").asText();
+                }
+                
+                if (expedienteId != null && !expedienteId.trim().isEmpty()) {
+                    String dest = "/topic/expedientes/" + expedienteId;
+                    log.info("Despachando evento de expediente al canal '{}'", dest);
+                    this.messagingTemplate.convertAndSend(dest, jsonPayload);
+                    
+                    // Notificar también al canal general de expedientes
+                    if ("expedientes".equals(tabla)) {
+                        this.messagingTemplate.convertAndSend("/topic/expedientes", jsonPayload);
+                    }
+                    return;
+                }
             }
         } catch (Exception e) {
             log.error("Error al procesar el payload de notificación para envío segmentado", e);
