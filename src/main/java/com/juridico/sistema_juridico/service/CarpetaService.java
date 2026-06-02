@@ -128,8 +128,8 @@ public class CarpetaService {
         nodo.put("esSistema", carpeta.getEsSistema());
         nodo.put("orden", carpeta.getOrden());
 
-        // Contar documentos activos en esta carpeta (excluye papelera)
-        long cantidadDocumentos = documentoRepository.countByCarpetaIdAndEliminadoFalse(carpeta.getId());
+        // Contar documentos activos en esta carpeta (excluye papelera y eliminados definitivos)
+        long cantidadDocumentos = documentoRepository.countByCarpetaIdAndEliminadoFalseAndEliminadoDefinitivoFalse(carpeta.getId());
         nodo.put("cantidadDocumentos", cantidadDocumentos);
 
         // Obtener subcarpetas recursivamente
@@ -205,7 +205,7 @@ public class CarpetaService {
         }
 
         // Verificar que no tenga documentos activos (documentos en papelera no cuentan)
-        long cantidadDocumentos = documentoRepository.countByCarpetaIdAndEliminadoFalse(carpetaId);
+        long cantidadDocumentos = documentoRepository.countByCarpetaIdAndEliminadoFalseAndEliminadoDefinitivoFalse(carpetaId);
         if (cantidadDocumentos > 0) {
             throw new IllegalArgumentException("No se puede eliminar una carpeta que contiene documentos");
         }

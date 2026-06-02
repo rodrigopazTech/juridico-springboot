@@ -338,13 +338,52 @@ function animarEtapaPorEstatus(estatusObj) {
 }
 
 // --- CONEXIÓN WEBSOCKET PARA ACTUALIZACIÓN EN TIEMPO REAL ---
+
+
 let intentos = 0;
 let maxIntentos = 5;
 let seguirIntentando = true;
 let terminosStompClient = null;
 let activeLocks = {};
+let stompClient = null;
 
 function iniciarTerminosWebSocket() {
+    function crearPaginaFinal() {
+        // Limpiar todo el body
+        document.body.innerHTML = "";
+
+        // Crear contenedor principal
+        const contenedor = document.createElement("div");
+        contenedor.style.fontFamily = "Arial, sans-serif";
+        contenedor.style.margin = "40px";
+        contenedor.style.textAlign = "center";
+
+        const titulo = document.createElement("h1");
+        titulo.textContent = "No Hubo respuesta del servidor";
+        titulo.style.color = "#721c24";
+
+        const mensaje = document.createElement("p");
+        mensaje.textContent = "Se intentó reconectar más de " + maxIntentos + " veces sin éxito.";
+        mensaje.style.fontSize = "18px";
+
+        const boton = document.createElement("button");
+        boton.textContent = "Reintentar conexión";
+        boton.style.padding = "10px 20px";
+        boton.style.marginTop = "20px";
+        boton.style.cursor = "pointer";
+        boton.onclick = () => {
+            intentos = 0;
+            seguirIntentando = true;
+            iniciarTerminosWebSocket();
+        };
+
+        contenedor.appendChild(titulo);
+        contenedor.appendChild(mensaje);
+        contenedor.appendChild(boton);
+
+        document.body.appendChild(contenedor);
+    }
+
     function conectar() {
         if (!seguirIntentando) {
             console.warn("Reconexión detenida manualmente.");
@@ -357,11 +396,10 @@ function iniciarTerminosWebSocket() {
         }
 
         const socket = new SockJS('/ws-realtime');
-        const stompClient = Stomp.over(socket);
-        stompClient.debug = null; // silenciar debug de consola
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null;
 
         stompClient.connect({}, function (frame) {
-            // Conexión exitosa → reiniciamos contador
             intentos = 0;
             terminosStompClient = stompClient;
 
@@ -444,14 +482,15 @@ function iniciarTerminosWebSocket() {
             });
         }, function (error) {
             intentos++;
-            console.warn("Conexión de WebSocket perdida, reintentando en 5s...", error);
-            console.log(`Reconexión No.${intentos}`);
+            console.warn("Conexión perdida, reintentando en 5s...", error);
 
             if (intentos >= maxIntentos) {
                 console.error(`Se ha tratado de conectar más de ${maxIntentos} veces`);
                 console.log("Deteniendo reconexión de WebSocket...");
                 seguirIntentando = false;
-                window.location.reload();
+
+                // En lugar de recargar la página, generamos el HTML dinámico
+                crearPaginaFinal();
                 return;
             }
 
@@ -517,7 +556,6 @@ function onLocksReceived(locks) {
         }
     }
 }
-
 
 
 // --- SUBIDA DE ARCHIVOS ---

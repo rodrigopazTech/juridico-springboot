@@ -1246,13 +1246,103 @@ function cambiarVista(vista) {
 }
 
 // ========================================
-// BÚSQUEDA
+// TIEMPO REAL (WEBSOCKET)
+// ========================================
+
+let stompClientDocumentos = null;
+
+function iniciarWebSocketDocumentos() {
+    function loadScripts(urls, callback) {
+        let loadedCount = 0;
+        let scriptsToLoad = [];
+        
+        urls.forEach(url => {
+            if (url.includes('sockjs') && typeof SockJS !== 'undefined') {
+                loadedCount++;
+            } else if (url.includes('stomp') && typeof Stomp !== 'undefined') {
+                loadedCount++;
+            } else {
+                scriptsToLoad.push(url);
+            }
+        });
+
+        if (loadedCount === urls.length) {
+            callback();
+            return;
+        }
+
+        let loadedScriptsCount = 0;
+        scriptsToLoad.forEach(url => {
+            const script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = url;
+            script.onload = () => {
+                loadedScriptsCount++;
+                if (loadedScriptsCount === scriptsToLoad.length) {
+                    callback();
+                }
+            };
+            document.head.appendChild(script);
+        });
+    }
+
+    loadScripts([
+        'https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js'
+    ], function() {
+        if (stompClientDocumentos) return;
+
+        const socket = new SockJS('/ws-realtime');
+        stompClientDocumentos = Stomp.over(socket);
+        stompClientDocumentos.debug = null; // Desactivar logs ruidosos en la consola
+
+        stompClientDocumentos.connect({}, function (frame) {
+            //console.log('🔔 Gestor Documental: Conexión WebSocket establecida de forma permanente.');
+            
+            const dest = '/topic/expedientes/' + expedienteIdGlobal;
+            stompClientDocumentos.subscribe(dest, function (message) {
+                try {
+                    const payload = JSON.parse(message.body);
+                    
+                    if (payload.tabla === 'documentos' || payload.tabla === 'carpetas') {
+                       // console.log(`🔔 Cambio detectado en la tabla '${payload.tabla}' (${payload.operacion}). Actualizando gestor documental...`);
+                        cargarArbolCarpetas();
+                        cargarEspacioOcupado();
+                        cargarDocumentos();
+                        if (typeof cargarArchivosRecientes === 'function') {
+                            cargarArchivosRecientes();
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error al procesar mensaje de WebSocket en el Gestor Documental:", e);
+                }
+            });
+        }, function (error) {
+            //console.warn('⚠️ Gestor Documental: Conexión WebSocket perdida. Reintentando en 5 segundos...', error);
+            stompClientDocumentos = null;
+            setTimeout(iniciarWebSocketDocumentos, 5000);
+        });
+    });
+}
+
+// ========================================
+// BÚSQUEDA E INICIALIZACIÓN
 // ========================================
 
 document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('search-documentos-gestor');
     if (searchInput) {
         searchInput.addEventListener('input', debounce(buscarDocumentos, 300));
+    }
+
+    // Detectar si estamos en la vista de detalle y obtener el expediente actual
+    const btnGestor = document.querySelector('[data-expediente-id]');
+    if (btnGestor) {
+        expedienteIdGlobal = btnGestor.dataset.expedienteId;
+        numeroExpedienteGlobal = btnGestor.dataset.expedienteNumero;
+        
+        // Conectar el canal de tiempo real para documentos/carpetas
+        iniciarWebSocketDocumentos();
     }
 });
 

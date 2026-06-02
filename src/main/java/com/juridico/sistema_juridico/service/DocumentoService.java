@@ -90,6 +90,13 @@ public class DocumentoService {
             }
         }
 
+        // Verificar duplicado de nombre en la ubicación actual
+        String nombreOriginal = file.getOriginalFilename();
+        if (documentoRepository.existeNombreDuplicado(expedienteId, carpetaId, nombreOriginal)) {
+            throw new IllegalArgumentException("Ya existe un archivo activo con el nombre '" + nombreOriginal + "' en esta ubicación");
+        }
+
+        // Guardar archivo en filesystem
         String nombreCarpeta = carpeta != null ? carpeta.getNombre() : "raiz";
         String rutaArchivo = fileStorageService.guardarArchivo(file, expedienteId, nombreCarpeta);
 
@@ -123,21 +130,21 @@ public class DocumentoService {
      * Lista documentos activos de una carpeta específica (excluye papelera)
      */
     public List<Documento> listarDocumentosPorCarpeta(UUID carpetaId) {
-        return documentoRepository.findByCarpetaIdAndEliminadoFalseOrderByFechaSubidaDesc(carpetaId);
+        return documentoRepository.findByCarpetaIdAndEliminadoFalseAndEliminadoDefinitivoFalseOrderByFechaSubidaDesc(carpetaId);
     }
 
     /**
      * Lista todos los documentos activos de un expediente (excluye papelera)
      */
     public List<Documento> listarDocumentos(UUID expedienteId) {
-        return documentoRepository.findByExpedienteIdAndEliminadoFalseOrderByFechaSubidaDesc(expedienteId);
+        return documentoRepository.findByExpedienteIdAndEliminadoFalseAndEliminadoDefinitivoFalseOrderByFechaSubidaDesc(expedienteId);
     }
 
     /**
      * Lista documentos activos en la raíz del expediente (sin carpeta, excluye papelera)
      */
     public List<Documento> listarDocumentosRaiz(UUID expedienteId) {
-        return documentoRepository.findByExpedienteIdAndCarpetaIsNullAndEliminadoFalseOrderByFechaSubidaDesc(expedienteId);
+        return documentoRepository.findByExpedienteIdAndCarpetaIsNullAndEliminadoFalseAndEliminadoDefinitivoFalseOrderByFechaSubidaDesc(expedienteId);
     }
     public List<Documento> buscarDocumentos(UUID expedienteId, String busqueda) {
         return documentoRepository.buscarEnExpedienteActivos(expedienteId, busqueda);
@@ -198,7 +205,7 @@ public class DocumentoService {
      * Lista los documentos en la papelera de un expediente
      */
     public List<Documento> listarPapelera(UUID expedienteId) {
-        return documentoRepository.findByExpedienteIdAndEliminadoTrueOrderByFechaEliminacionDesc(expedienteId);
+        return documentoRepository.findByExpedienteIdAndEliminadoTrueAndEliminadoDefinitivoFalseOrderByFechaEliminacionDesc(expedienteId);
     }
 
     /**
@@ -294,11 +301,11 @@ public class DocumentoService {
     }
 
     /**
-     * Elimina permanentemente un documento de la papelera (borra archivo físico y registro BD).
+     * Elimina permanentemente un documento de la papelera (marca como eliminado definitivo).
      * Este método es llamado manualmente o por el scheduler de purga.
      */
     @Transactional
-    public void eliminarPermanente(UUID documentoId, Usuario usuario) throws IOException {
+    public void eliminarPermanente(UUID documentoId, Usuario usuario) {
         Documento documento = documentoRepository.findById(documentoId)
                 .orElseThrow(() -> new IllegalArgumentException("Documento no encontrado"));
 
@@ -310,11 +317,15 @@ public class DocumentoService {
         Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
         if (exp != null) {
             auditoriaService.registrar(exp, "ARCHIVO ELIMINADO PERMANENTEMENTE",
-                    "Eliminado definitivamente desde papelera: " + documento.getNombreOriginal(),
+                    "Eliminado definitivamente desde papelera (oculto en UI): " + documento.getNombreOriginal(),
                     "TRASH", usuario);
         }
 
-        fileStorageService.eliminarArchivo(documento.getRutaArchivo());
+        try {
+            fileStorageService.eliminarArchivo(documento.getRutaArchivo());
+        } catch (IOException e) {
+            System.err.println("No se pudo eliminar el archivo físico: " + e.getMessage());
+        }
         documentoRepository.delete(documento);
     }
 

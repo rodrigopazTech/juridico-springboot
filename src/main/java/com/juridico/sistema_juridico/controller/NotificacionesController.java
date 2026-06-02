@@ -131,6 +131,8 @@ public class NotificacionesController {
                     }
                 } else if ("EXPEDIENTE".equals(tipo)) {
                     return "redirect:/expedientes/" + idClean;
+                } else if ("OBSERVACION".equals(tipo)) {
+                    return "redirect:/expedientes/" + idClean + "?openObservaciones=true";
                 } else if ("SEGURIDAD".equals(tipo)) {
                     return "redirect:/perfil?tab=seguridad";
                 }
@@ -151,7 +153,7 @@ public class NotificacionesController {
         }
 
         try {
-            if ("EXPEDIENTE".equals(tipo)) {
+            if ("EXPEDIENTE".equals(tipo) || "OBSERVACION".equals(tipo)) {
                 UUID expId = UUID.fromString(idStr);
                 Expediente exp = expedienteRepository.findById(expId).orElse(null);
                 if (exp == null) return false;
