@@ -99,6 +99,12 @@ public class DocumentoService {
             }
         }
 
+        // Verificar duplicado de nombre en la ubicación actual
+        String nombreOriginal = file.getOriginalFilename();
+        if (documentoRepository.existeNombreDuplicado(expedienteId, carpetaId, nombreOriginal)) {
+            throw new IllegalArgumentException("Ya existe un archivo activo con el nombre '" + nombreOriginal + "' en esta ubicación");
+        }
+
         // Guardar archivo en filesystem
         String nombreCarpeta = carpeta != null ? carpeta.getNombre() : "raiz";
         String rutaArchivo = fileStorageService.guardarArchivo(file, expedienteId, nombreCarpeta);
@@ -135,21 +141,21 @@ public class DocumentoService {
      * Lista documentos activos de una carpeta específica (excluye papelera)
      */
     public List<Documento> listarDocumentosPorCarpeta(UUID carpetaId) {
-        return documentoRepository.findByCarpetaIdAndEliminadoFalseOrderByFechaSubidaDesc(carpetaId);
+        return documentoRepository.findByCarpetaIdAndEliminadoFalseAndEliminadoDefinitivoFalseOrderByFechaSubidaDesc(carpetaId);
     }
 
     /**
      * Lista todos los documentos activos de un expediente (excluye papelera)
      */
     public List<Documento> listarDocumentos(UUID expedienteId) {
-        return documentoRepository.findByExpedienteIdAndEliminadoFalseOrderByFechaSubidaDesc(expedienteId);
+        return documentoRepository.findByExpedienteIdAndEliminadoFalseAndEliminadoDefinitivoFalseOrderByFechaSubidaDesc(expedienteId);
     }
 
     /**
      * Lista documentos activos en la raíz del expediente (sin carpeta, excluye papelera)
      */
     public List<Documento> listarDocumentosRaiz(UUID expedienteId) {
-        return documentoRepository.findByExpedienteIdAndCarpetaIsNullAndEliminadoFalseOrderByFechaSubidaDesc(expedienteId);
+        return documentoRepository.findByExpedienteIdAndCarpetaIsNullAndEliminadoFalseAndEliminadoDefinitivoFalseOrderByFechaSubidaDesc(expedienteId);
     }
 
     /**
@@ -216,7 +222,7 @@ public class DocumentoService {
      * Lista los documentos en la papelera de un expediente
      */
     public List<Documento> listarPapelera(UUID expedienteId) {
-        return documentoRepository.findByExpedienteIdAndEliminadoTrueOrderByFechaEliminadoDesc(expedienteId);
+        return documentoRepository.findByExpedienteIdAndEliminadoTrueAndEliminadoDefinitivoFalseOrderByFechaEliminadoDesc(expedienteId);
     }
 
     /**
@@ -310,11 +316,11 @@ public class DocumentoService {
     }
 
     /**
-     * Elimina permanentemente un documento de la papelera (borra archivo físico y registro BD).
+     * Elimina permanentemente un documento de la papelera (marca como eliminado definitivo).
      * Este método es llamado manualmente o por el scheduler de purga.
      */
     @Transactional
-    public void eliminarPermanente(UUID documentoId, Usuario usuario) throws IOException {
+    public void eliminarPermanente(UUID documentoId, Usuario usuario) {
         Documento documento = documentoRepository.findById(documentoId)
                 .orElseThrow(() -> new IllegalArgumentException("Documento no encontrado"));
 
@@ -326,39 +332,29 @@ public class DocumentoService {
         Expediente exp = expedienteRepository.findById(documento.getExpedienteId()).orElse(null);
         if (exp != null) {
             auditoriaService.registrar(exp, "ARCHIVO ELIMINADO PERMANENTEMENTE",
-                    "Eliminado definitivamente desde papelera: " + documento.getNombreOriginal(),
+                    "Eliminado definitivamente desde papelera (oculto en UI): " + documento.getNombreOriginal(),
                     "TRASH", usuario);
         }
 
-        // Eliminar archivo del filesystem
-        fileStorageService.eliminarArchivo(documento.getRutaArchivo());
-
-        // Eliminar registro de BD
-        documentoRepository.delete(documento);
+        // En lugar de borrar del FS y de la BD, marcamos como eliminado definitivo
+        documento.setEliminadoDefinitivo(true);
+        documentoRepository.save(documento);
     }
 
     /**
-     * Purga automática: elimina permanentemente documentos que llevan más de 3 meses en la papelera.
+     * Purga automática: marca como eliminado definitivo los documentos que llevan más de 3 meses en la papelera.
      * Llamado por el scheduler. Sin auditoría por usuario (es proceso automático).
      */
     @Transactional
-    public int purgarDocumentosVencidos() throws IOException {
+    public int purgarDocumentosVencidos() {
         LocalDateTime fechaLimite = LocalDateTime.now().minusMonths(3);
         List<Documento> vencidos = documentoRepository.findDocumentosVencidosEnPapelera(fechaLimite);
 
         int contador = 0;
         for (Documento doc : vencidos) {
-            try {
-                fileStorageService.eliminarArchivo(doc.getRutaArchivo());
-                documentoRepository.delete(doc);
-                contador++;
-            } catch (IOException e) {
-                // Loguear error pero continuar con los demás
-                System.err.println("[Papelera] Error al eliminar físicamente: " + doc.getNombreOriginal() + " — " + e.getMessage());
-                // Eliminar el registro de BD aunque falle el FS para evitar acumulación
-                documentoRepository.delete(doc);
-                contador++;
-            }
+            doc.setEliminadoDefinitivo(true);
+            documentoRepository.save(doc);
+            contador++;
         }
 
         return contador;
