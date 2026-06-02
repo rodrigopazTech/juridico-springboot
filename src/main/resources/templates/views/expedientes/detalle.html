@@ -9,6 +9,7 @@
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <script th:src="@{/lib/chart.umd.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
     <script th:src="@{/js/expedientes/detalle-acciones.js?v=101.0}" defer></script>
     <script th:src="@{/js/expedientes/gestor-documental.js?v=101.0}" defer></script>
 </head>
@@ -16,17 +17,14 @@
 <body class="bg-gob-fondo text-gray-800 font-sans pb-10">
 
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
-    <div class="p-4 sm:ml-64">
+    <div class="sm:ml-64 flex flex-col min-h-screen">
+        <!-- Navbar Fragment -->
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-        <div class="mb-6 container mx-auto">
-            <h1 class="text-3xl font-bold text-gob-guinda font-headings">
-                <i class="fas fa-folder-open text-gob-oro mr-2"></i> Detalle del Expediente
-            </h1>
-            <hr class="h-1 w-20 bg-gob-oro border-0 mt-2 mb-4" />
-        </div>
-
-        <div class="container mx-auto px-4">
-            <div id="encabezado-detalle-container" th:replace="~{fragments/expedientes/encabezado-detalle :: encabezado(${expediente})}"></div>
+        <!-- Main Content with padding to avoid overlapping -->
+        <main class="p-6 md:p-10 flex-1 animate-fade-in" style="padding-top: 100px !important;">
+            <div class="container mx-auto px-4">
+                <div id="encabezado-detalle-container" th:replace="~{fragments/expedientes/encabezado-detalle :: encabezado(${expediente})}"></div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -210,9 +208,9 @@
             </div>
 
             <div th:replace="~{fragments/expedientes/archivos-recientes :: archivos}"></div>
-
         </div>
-    </div>
+    </main>
+</div>
 
     <!-- Modales -->
     <div
@@ -222,6 +220,7 @@
     <!-- Gestor Documental -->
     <div th:replace="~{fragments/expedientes/gestor-documental :: gestor-documental}"></div>
 
+    <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
 </body>
 
 </html>

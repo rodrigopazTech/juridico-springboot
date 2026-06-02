@@ -37,10 +37,10 @@ window.onclick = function (event) {
 
 async function openObservaciones() {
     openModal('modal-observaciones');
-    await loadObservaciones();
+    await loadObservaciones(false);
 }
 
-async function loadObservaciones() {
+async function loadObservaciones(smooth = false) {
     const container = document.getElementById('lista-observaciones');
     try {
         const response = await fetch(`/expedientes/${EXPEDIENTE_ID}/comentarios`);
@@ -90,12 +90,19 @@ async function loadObservaciones() {
                         <span class="text-[10px] text-gray-400">${fechaStr} ${horaStr}</span>
                     </div>
                 </div>
-                <p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">${nota.comentario}</p> //observacion
+                <p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed break-words">${nota.comentario}</p>
             `;
             container.appendChild(div);
         });
 
-        container.scrollTop = container.scrollHeight;
+        if (smooth) {
+            container.scrollTo({
+                top: container.scrollHeight,
+                behavior: 'smooth'
+            });
+        } else {
+            container.scrollTop = container.scrollHeight;
+        }
 
     } catch (error) {
         console.error('Error al cargar notas:', error);
@@ -122,7 +129,7 @@ async function guardarNota() {
 
         if (response.ok) {
             textarea.value = '';
-            await loadObservaciones();
+            await loadObservaciones(true);
             if (typeof Swal !== 'undefined') {
                 const Toast = Swal.mixin({
                     toast: true,
@@ -193,6 +200,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     cargarArchivosRecientes();
     iniciarWebSocketExpediente();
+
+    // Abrir automáticamente el apartado de Observaciones si viene con el parámetro en la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('openObservaciones') === 'true') {
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+        openObservaciones();
+    }
 });
 
 // ========================================
@@ -262,7 +277,7 @@ function iniciarWebSocketExpediente() {
                     } else if (payload.tabla === 'comentarios') {
                         const modalObs = document.getElementById('modal-observaciones');
                         if (modalObs && !modalObs.classList.contains('hidden')) {
-                            loadObservaciones();
+                            loadObservaciones(true);
                         }
                         recargarDetalleExpediente();
                     }

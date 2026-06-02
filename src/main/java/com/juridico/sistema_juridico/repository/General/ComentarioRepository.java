@@ -10,4 +10,5 @@ import com.juridico.sistema_juridico.Entity.general.Comentario;
 @Repository
 public interface ComentarioRepository extends JpaRepository<Comentario, Integer> {
     List<Comentario> findByEntidadTipoAndEntidadIdOrderByCreatedAtDesc(String tipo, String id);
+    List<Comentario> findByEntidadTipoAndEntidadIdOrderByCreatedAtAsc(String tipo, String id);
 }

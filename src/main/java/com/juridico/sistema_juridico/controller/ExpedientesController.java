@@ -518,6 +518,11 @@ public class ExpedientesController {
             destinatarios.addAll(jefes);
         }
 
+        // D) Directores y Subdirectores (Tienen visibilidad global)
+        List<Usuario> directivos = usuarioRepository.findByRolInAndActivoTrue(
+                List.of(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
+        destinatarios.addAll(directivos);
+
         // Enviar notificaciones
         // Usamos un Set para evitar duplicados si una persona tuviera doble rol (raro
         // pero posible)
@@ -610,7 +615,7 @@ public class ExpedientesController {
     @GetMapping("/{id}/comentarios")
     @ResponseBody
     public List<Comentario> getComentarios(@PathVariable("id") String id) {
-        return comentarioRepository.findByEntidadTipoAndEntidadIdOrderByCreatedAtDesc("EXPEDIENTE", id);
+        return comentarioRepository.findByEntidadTipoAndEntidadIdOrderByCreatedAtAsc("EXPEDIENTE", id);
     }
 
     @PostMapping("/{id}/comentarios")
@@ -637,6 +642,52 @@ public class ExpedientesController {
                                 + (nuevo.getComentario().length() > 50 ? nuevo.getComentario().substring(0, 47) + "..."
                                         : nuevo.getComentario()),
                         "EDIT", usuario);
+
+                // Enviar notificaciones a otros involucrados
+                List<Usuario> destinatarios = new ArrayList<>();
+                if (exp.getAbogadoResponsable() != null) {
+                    destinatarios.add(exp.getAbogadoResponsable());
+                }
+                if (exp.getGerencia() != null) {
+                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(
+                            com.juridico.sistema_juridico.Entity.enums.RolUsuario.GERENTE, exp.getGerencia()));
+                }
+                if (exp.getMateria() != null) {
+                    destinatarios.addAll(usuarioRepository.findByRolAndMateriaId(
+                            RolUsuario.JEFE_DEPTO, exp.getMateria().getId()));
+                }
+
+                // Directores y Subdirectores (Tienen visibilidad global)
+                destinatarios.addAll(usuarioRepository.findByRolInAndActivoTrue(
+                        List.of(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
+
+                // Filtrar para no enviársela al autor y que no se repitan
+                List<Usuario> destinatariosUnicos = destinatarios.stream()
+                        .filter(u -> u != null && !u.getId().equals(usuario.getId()))
+                        .distinct()
+                        .toList();
+
+                if (!destinatariosUnicos.isEmpty()) {
+                    CatPrioridad prioMedia = catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null);
+                    String tituloNotif = "Nueva Observación";
+                    String mensajeNotif = String.format("El usuario %s agregó una nota en el expediente %s: \"%s\"",
+                            usuario.getNombreCompleto(),
+                            exp.getNumero(),
+                            nuevo.getComentario().length() > 60 ? nuevo.getComentario().substring(0, 57) + "..." : nuevo.getComentario());
+
+                    for (Usuario dest : destinatariosUnicos) {
+                        notificacionService.crearNotificacion(
+                                dest,
+                                usuario, // El autor
+                                tituloNotif,
+                                mensajeNotif,
+                                "OBSERVACION", // Tipo de notificación
+                                prioMedia,
+                                exp.getId().toString(),
+                                true // Silenciar el reenvío automático a jefes/superiores que hace NotificacionService
+                        );
+                    }
+                }
             });
         } catch (Exception e) {
             // Ignorar si el ID no es de expediente
