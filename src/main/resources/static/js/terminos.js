@@ -371,6 +371,42 @@ function iniciarTerminosWebSocket() {
                     if (payload.tabla === 'terminos') {
                         actualizarTablaAsincrono();
 
+                        // Notificación de eliminación en tiempo real para otros usuarios
+                        if (payload.operacion === 'DELETE') {
+                            if (window.justDeletedTermId !== payload.id) {
+                                Toast.fire({
+                                    icon: 'info',
+                                    title: `El término "${payload.titulo}" ha sido eliminado.`
+                                });
+                            } else {
+                                delete window.justDeletedTermId;
+                            }
+                        }
+
+                        // Advertencia de modificación en tiempo real para el usuario que tiene abierto el modal
+                        if (payload.operacion === 'UPDATE') {
+                            const idInput = document.getElementById('input-termino-id');
+                            if (idInput && idInput.value && parseInt(idInput.value) === parseInt(payload.id)) {
+                                const banner = document.getElementById('banner-concurrencia');
+                                const mensaje = document.getElementById('mensaje-concurrencia');
+                                if (banner && mensaje) {
+                                    mensaje.innerHTML = `⚠️ Atención: Este término ha sido modificado recientemente por otro usuario. Cierre esta ventana y vuelva a abrirla para cargar los nuevos datos.`;
+                                    banner.classList.remove('hidden');
+                                    banner.classList.remove('bg-yellow-50', 'border-yellow-400', 'text-yellow-700');
+                                    banner.classList.add('bg-red-50', 'border-red-500', 'text-red-700');
+                                }
+                                
+                                // Mostrar Toast de advertencia crítica
+                                Swal.fire({
+                                    title: 'Término Modificado',
+                                    text: 'Este término ha sido modificado en la base de datos por otro usuario. Se sugiere no guardar para evitar sobrescribir los cambios.',
+                                    icon: 'warning',
+                                    confirmButtonText: 'Entendido',
+                                    confirmButtonColor: '#bc955c'
+                                });
+                            }
+                        }
+
                         if (payload.etapa_procesal) {
                             setTimeout(() => {
                                 animarEtapaPorEstatus(payload.etapa_procesal);
@@ -528,6 +564,7 @@ function confirmarEliminar(id) {
         cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) {
+            window.justDeletedTermId = id;
             // ROD-186: Usar AJAX para eliminar y preservar filtros
             fetch('/terminos/eliminar/' + id, {
                 method: 'POST',

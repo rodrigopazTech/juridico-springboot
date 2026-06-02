@@ -437,6 +437,7 @@ public class TerminosController {
             terminoForm.setAbogadoResponsable(actor);
         }
 
+        boolean expedienteCambiado = false;
         if (terminoForm.getId() != null) {
             Termino existente = terminoRepository.findById(terminoForm.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("El término que intentas editar no existe."));
@@ -449,10 +450,18 @@ public class TerminosController {
             if (terminoForm.getAbogadoResponsable() != null) {
                 existente.setAbogadoResponsable(terminoForm.getAbogadoResponsable());
             }
+
+            Expediente expAnterior = existente.getExpediente();
             if (origenTermino == OrigenTermino.ASUNTO_UNICO) {
+                if (expAnterior != null) {
+                    expedienteCambiado = true;
+                }
                 existente.setExpediente(null);
                 existente.setContexto(terminoForm.getContexto());
             } else if (terminoForm.getExpediente() != null) {
+                if (expAnterior == null || !expAnterior.getId().equals(terminoForm.getExpediente().getId())) {
+                    expedienteCambiado = true;
+                }
                 existente.setExpediente(terminoForm.getExpediente());
                 existente.setContexto(terminoForm.getContexto());
             }
@@ -490,6 +499,19 @@ public class TerminosController {
 
         Termino terminoGuardado = terminoRepository.save(terminoGuardar);
         Usuario usuarioActualN = getUsuarioActual();
+
+        if (expedienteCambiado && terminoGuardado.getAbogadoResponsable() != null) {
+            String expedienteNum = terminoGuardado.getNumeroReferencia();
+            notificacionService.crearNotificacion(
+                    terminoGuardado.getAbogadoResponsable(),
+                    actor,
+                    "Término Asignado: " + expedienteNum,
+                    "El usuario " + actor.getNombreCompleto() + " ha vinculado un término a tu expediente: " + terminoGuardado.getAsunto(),
+                    "TERMINO",
+                    terminoGuardado.getPrioridad(),
+                    terminoGuardado.getId().toString(),
+                    false);
+        }
 
         if (usuarioActualN.getRol() == RolUsuario.ABOGADO) {
             if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
