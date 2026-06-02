@@ -1,6 +1,7 @@
 package com.juridico.sistema_juridico.service.scheduler;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,11 +11,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
+import com.juridico.sistema_juridico.Entity.enums.TipoEventoAlerta;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Catalogo.CatPrioridadRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.service.NotificacionService;
+import com.juridico.sistema_juridico.service.configuracion.ConfiguracionAlertaService;
 
 @Component
 public class AudienciaNotificacionScheduler {
@@ -28,53 +31,62 @@ public class AudienciaNotificacionScheduler {
     @Autowired
     private CatPrioridadRepository catPrioridadRepository;
 
+    @Autowired
+    private ConfiguracionAlertaService configuracionAlertaService;
+
     @Scheduled(cron = "0 0 8 * * ?")
     @Transactional
     public void notificarAudienciasProximas() {
         LocalDate hoy = LocalDate.now();
-        LocalDate manana = hoy.plusDays(1);
-        LocalDate enTresDias = hoy.plusDays(3);
-
         List<Audiencia> audienciasParaNotificar = new ArrayList<>();
-        audienciasParaNotificar.addAll(audienciaRepository.findByFechaAudienciaAndEstatusAudienciaNot(hoy, EstatusAudiencia.CONCLUIDA));
-        audienciasParaNotificar.addAll(audienciaRepository.findByFechaAudienciaAndEstatusAudienciaNot(manana, EstatusAudiencia.CONCLUIDA));
-        audienciasParaNotificar.addAll(audienciaRepository.findByFechaAudienciaAndEstatusAudienciaNot(enTresDias, EstatusAudiencia.CONCLUIDA));
 
-        for (Audiencia aud : audienciasParaNotificar) {
-            Usuario destinatario = obtenerDestinatario(aud);
+        for (Integer diasAnticipacion : configuracionAlertaService.obtenerDiasCandidatos(TipoEventoAlerta.AUDIENCIA)) {
+            audienciasParaNotificar.addAll(audienciaRepository.findByFechaAudienciaAndEstatusAudienciaNot(
+                    hoy.plusDays(diasAnticipacion), EstatusAudiencia.CONCLUIDA));
+        }
 
-            if (destinatario != null) {
-                String titulo = "⏰ ¡RECORDATORIO DE AUDIENCIA!";
-                if (aud.getFechaAudiencia().equals(hoy)) {
-                    titulo = "🚨 ¡AUDIENCIA ES HOY!";
-                } else if (aud.getFechaAudiencia().equals(manana)) {
-                    titulo = "⚠️ ¡AUDIENCIA MAÑANA!";
-                }
+        for (Audiencia audiencia : audienciasParaNotificar) {
+            Usuario destinatario = obtenerDestinatario(audiencia);
+            int diasAnticipacion = (int) ChronoUnit.DAYS.between(hoy, audiencia.getFechaAudiencia());
 
-                String lugar = (aud.getEsVirtual() != null && aud.getEsVirtual()) ? "Virtual" : aud.getSalaLugar();
-                String mensaje = String.format("Audiencia programada para el %s a las %s. Sala/Lugar: %s",
-                        aud.getFechaAudiencia(), aud.getHoraAudiencia(), lugar);
-
-                notificacionService.crearNotificacion(
-                        destinatario,
-                        null,
-                        titulo,
-                        mensaje,
-                        "AUDIENCIA",
-                        catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
-                        String.valueOf(aud.getId()),
-                        false
-                );
+            if (destinatario == null || !configuracionAlertaService.debeNotificar(
+                    TipoEventoAlerta.AUDIENCIA, diasAnticipacion, destinatario,
+                    "AUDIENCIA", audiencia.getId().toString())) {
+                continue;
             }
+
+            String lugar = Boolean.TRUE.equals(audiencia.getEsVirtual()) ? "Virtual" : audiencia.getSalaLugar();
+            String mensaje = String.format("Audiencia programada para el %s a las %s. Sala/Lugar: %s",
+                    audiencia.getFechaAudiencia(), audiencia.getHoraAudiencia(), lugar);
+
+            notificacionService.crearNotificacion(
+                    destinatario,
+                    null,
+                    crearTitulo(diasAnticipacion),
+                    mensaje,
+                    "AUDIENCIA",
+                    catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
+                    String.valueOf(audiencia.getId()),
+                    false);
         }
     }
 
-    private Usuario obtenerDestinatario(Audiencia a) {
-        if (a.getAbogadoComparece() != null) {
-            return a.getAbogadoComparece();
+    private String crearTitulo(int diasAnticipacion) {
+        if (diasAnticipacion == 0) {
+            return "¡AUDIENCIA ES HOY!";
         }
-        if (a.getExpediente() != null && a.getExpediente().getAbogadoResponsable() != null) {
-            return a.getExpediente().getAbogadoResponsable();
+        if (diasAnticipacion == 1) {
+            return "¡AUDIENCIA MAÑANA!";
+        }
+        return "Audiencia en " + diasAnticipacion + " días";
+    }
+
+    private Usuario obtenerDestinatario(Audiencia audiencia) {
+        if (audiencia.getAbogadoComparece() != null) {
+            return audiencia.getAbogadoComparece();
+        }
+        if (audiencia.getExpediente() != null && audiencia.getExpediente().getAbogadoResponsable() != null) {
+            return audiencia.getExpediente().getAbogadoResponsable();
         }
         return null;
     }

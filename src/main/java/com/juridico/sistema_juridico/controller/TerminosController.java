@@ -73,6 +73,7 @@ import com.juridico.sistema_juridico.service.NotificacionService;
 import com.juridico.sistema_juridico.util.TerminoExcelExporter;
 import com.juridico.sistema_juridico.service.procesal.TerminoArchivoService;
 import com.juridico.sistema_juridico.service.FileStorageService;
+import com.juridico.sistema_juridico.service.configuracion.ConfiguracionSemaforoService;
 import com.juridico.sistema_juridico.Entity.enums.TipoDocumentoTermino;
 import com.juridico.sistema_juridico.Entity.procesal.TerminoArchivo;
 
@@ -107,6 +108,8 @@ public class TerminosController {
     private CatPrioridadRepository catPrioridadRepository;
     @Autowired
     private AuditoriaService auditoriaService;
+    @Autowired
+    private ConfiguracionSemaforoService configuracionSemaforoService;
 
     // --- MATRIZ DE PERMISOS ---
     private static final Map<EstatusTermino, List<RolUsuario>> PERMISOS_ETAPAS = new HashMap<>();
@@ -222,6 +225,7 @@ public class TerminosController {
                 materiaId, filtroMateriaIds,
                 pageable);
 
+        configuracionSemaforoService.aplicarATerminos(paginaTerminos.getContent());
         model.addAttribute("terminos", paginaTerminos);
 
         // --- 3. FILTRO DE ABOGADOS PARA EL MODAL (SEGURIDAD) ---

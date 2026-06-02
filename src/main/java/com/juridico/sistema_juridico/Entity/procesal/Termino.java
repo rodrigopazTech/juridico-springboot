@@ -78,6 +78,14 @@ public class Termino {
     @Column(name = "acuse_nombre", length = 500)
     private String acuseNombre;
 
+    @Transient
+    @Builder.Default
+    private Integer semaforoRojoHasta = 3;
+
+    @Transient
+    @Builder.Default
+    private Integer semaforoAmarilloHasta = 7;
+
     @PrePersist
     protected void onCreate() {
         LocalDateTime ahora = LocalDateTime.now();
@@ -144,8 +152,8 @@ public class Termino {
         long diasRestantes = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaVencimiento);
 
         if (diasRestantes < 0) return "bg-red-800";      // Vencido (Rojo Oscuro)
-        if (diasRestantes <= 3) return "bg-red-500";     // Crítico (Rojo Brillante)
-        if (diasRestantes <= 7) return "bg-yellow-400";  // Advertencia (Amarillo)
+        if (diasRestantes <= semaforoRojoHasta) return "bg-red-500";     // Crítico (Rojo Brillante)
+        if (diasRestantes <= semaforoAmarilloHasta) return "bg-yellow-400";  // Advertencia (Amarillo)
         return "bg-green-500";                           // A tiempo (Verde)
     }
 

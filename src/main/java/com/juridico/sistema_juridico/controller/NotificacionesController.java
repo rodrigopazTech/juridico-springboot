@@ -3,10 +3,15 @@ package com.juridico.sistema_juridico.controller;
 import com.juridico.sistema_juridico.Entity.usuario.Notificacion;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
+import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
+import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.repository.Usuarios.NotificacionRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
+import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -18,6 +23,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -25,6 +31,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Controller
@@ -35,9 +42,12 @@ public class NotificacionesController {
     private NotificacionRepository notificacionRepository;
     @Autowired
     private UsuarioRepository usuarioRepository;
-
     @Autowired
     private TerminoRepository terminoRepository;
+    @Autowired
+    private ExpedienteRepository expedienteRepository;
+    @Autowired
+    private AudienciaRepository audienciaRepository;
 
     // Listado general de notificaciones (Solo No Leídas)
     @GetMapping
@@ -85,7 +95,7 @@ public class NotificacionesController {
     }
 
     @GetMapping("/leer/{id}")
-    public String leerNotificacion(@PathVariable("id") Integer id) {
+    public String leerNotificacion(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Notificacion notificacion = notificacionRepository.findById(id).orElse(null);
 
@@ -97,10 +107,17 @@ public class NotificacionesController {
             if (notificacion.getEntidadId() != null) {
                 String rawId = notificacion.getEntidadId();
                 String idClean = extraerSoloId(rawId);
+                String tipo = notificacion.getEntidadTipo();
 
-                if ("AUDIENCIA".equals(notificacion.getEntidadTipo())) {
+                if (!tieneAccesoAEntidad(notificacion.getUsuario(), tipo, idClean)) {
+                    redirectAttrs.addFlashAttribute("mensaje", "Ya no tienes acceso a esta " + (tipo != null ? tipo.toLowerCase() : "información") + " o el registro ya no existe.");
+                    redirectAttrs.addFlashAttribute("tipo", "warning");
+                    return "redirect:/notificaciones";
+                }
+
+                if ("AUDIENCIA".equals(tipo)) {
                     return "redirect:/audiencias?id=" + idClean;
-                } else if ("TERMINO".equals(notificacion.getEntidadTipo())) {
+                } else if ("TERMINO".equals(tipo)) {
                     try {
                         Integer termId = Integer.valueOf(idClean);
                         Termino termino = terminoRepository.findById(termId).orElse(null);
@@ -112,14 +129,128 @@ public class NotificacionesController {
                     } catch (NumberFormatException e) {
                         return "redirect:/terminos?keyword=" + idClean;
                     }
-                } else if ("EXPEDIENTE".equals(notificacion.getEntidadTipo())) {
+                } else if ("EXPEDIENTE".equals(tipo)) {
                     return "redirect:/expedientes/" + idClean;
-                } else if ("SEGURIDAD".equals(notificacion.getEntidadTipo())) {
+                } else if ("SEGURIDAD".equals(tipo)) {
                     return "redirect:/perfil?tab=seguridad";
                 }
             }
         }
         return "redirect:/notificaciones";
+    }
+
+    private boolean tieneAccesoAEntidad(Usuario usuario, String tipo, String idStr) {
+        if (usuario == null || tipo == null || idStr == null) {
+            return false;
+        }
+
+        if (usuario.getRol() == RolUsuario.ADMIN || 
+            usuario.getRol() == RolUsuario.DIRECCION || 
+            usuario.getRol() == RolUsuario.SUBDIRECCION) {
+            return true;
+        }
+
+        try {
+            if ("EXPEDIENTE".equals(tipo)) {
+                UUID expId = UUID.fromString(idStr);
+                Expediente exp = expedienteRepository.findById(expId).orElse(null);
+                if (exp == null) return false;
+                return tieneAccesoAExpediente(usuario, exp);
+            } else if ("TERMINO".equals(tipo)) {
+                Integer termId = Integer.valueOf(idStr);
+                Termino term = terminoRepository.findById(termId).orElse(null);
+                if (term == null) return false;
+                
+                Expediente exp = term.getExpediente();
+                if (exp != null) {
+                    if (!tieneAccesoAExpediente(usuario, exp)) {
+                        return false;
+                    }
+                    if (usuario.getRol() == RolUsuario.ABOGADO) {
+                        boolean esResponsableTermino = term.getAbogadoResponsable() != null && term.getAbogadoResponsable().getId().equals(usuario.getId());
+                        boolean esResponsableExp = exp.getAbogadoResponsable() != null && exp.getAbogadoResponsable().getId().equals(usuario.getId());
+                        boolean esInvitado = audienciaRepository.findExpedientesByAbogadoInvitadoActivo(usuario.getId()).stream()
+                                .anyMatch(e -> e.getId().equals(exp.getId()));
+                        return esResponsableTermino || esResponsableExp || esInvitado;
+                    }
+                    return true;
+                } else {
+                    com.juridico.sistema_juridico.Entity.procesal.TerminoContexto ctx = term.getContexto();
+                    if (ctx == null) return false;
+                    
+                    if (usuario.getRol() == RolUsuario.ABOGADO) {
+                        return term.getAbogadoResponsable() != null && term.getAbogadoResponsable().getId().equals(usuario.getId());
+                    }
+                    
+                    if (usuario.getGerencia() == null || ctx.getGerencia() == null ||
+                        !usuario.getGerencia().getId().equals(ctx.getGerencia().getId())) {
+                        return false;
+                    }
+                    
+                    if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
+                        if (ctx.getMateria() == null) return false;
+                        Integer matId = ctx.getMateria().getId();
+                        return usuario.getMaterias().stream().anyMatch(m -> m.getId().equals(matId));
+                    }
+                    return true;
+                }
+            } else if ("AUDIENCIA".equals(tipo)) {
+                Integer audId = Integer.valueOf(idStr);
+                Audiencia aud = audienciaRepository.findById(audId).orElse(null);
+                if (aud == null) return false;
+                
+                Expediente exp = aud.getExpediente();
+                if (exp == null) return false;
+                
+                if (!tieneAccesoAExpediente(usuario, exp)) {
+                    return false;
+                }
+                
+                if (usuario.getRol() == RolUsuario.ABOGADO) {
+                    boolean esCompareciente = aud.getAbogadoComparece() != null && aud.getAbogadoComparece().getId().equals(usuario.getId());
+                    boolean esResponsableExp = exp.getAbogadoResponsable() != null && exp.getAbogadoResponsable().getId().equals(usuario.getId());
+                    boolean esInvitado = audienciaRepository.findExpedientesByAbogadoInvitadoActivo(usuario.getId()).stream()
+                            .anyMatch(e -> e.getId().equals(exp.getId()));
+                    return esCompareciente || esResponsableExp || esInvitado;
+                }
+                return true;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean tieneAccesoAExpediente(Usuario usuario, Expediente exp) {
+        if (usuario == null || exp == null) return false;
+        
+        if (usuario.getRol() == RolUsuario.ADMIN || 
+            usuario.getRol() == RolUsuario.DIRECCION || 
+            usuario.getRol() == RolUsuario.SUBDIRECCION) {
+            return true;
+        }
+        
+        if (usuario.getGerencia() != null && (exp.getGerencia() == null || !exp.getGerencia().getId().equals(usuario.getGerencia().getId()))) {
+            if (usuario.getRol() != RolUsuario.ABOGADO) {
+                return false;
+            }
+        }
+        
+        if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
+            if (exp.getMateria() == null) return false;
+            Integer matId = exp.getMateria().getId();
+            return usuario.getMaterias().stream().anyMatch(m -> m.getId().equals(matId));
+        }
+        
+        if (usuario.getRol() == RolUsuario.ABOGADO) {
+            boolean esResponsable = exp.getAbogadoResponsable() != null && exp.getAbogadoResponsable().getId().equals(usuario.getId());
+            boolean esInvitado = audienciaRepository.findExpedientesByAbogadoInvitadoActivo(usuario.getId()).stream()
+                    .anyMatch(e -> e.getId().equals(exp.getId()));
+            return esResponsable || esInvitado;
+        }
+        
+        return true;
     }
 
     @GetMapping("/archivar/{id}")

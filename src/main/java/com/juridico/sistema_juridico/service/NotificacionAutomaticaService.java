@@ -1,25 +1,28 @@
 package com.juridico.sistema_juridico.service;
 
-import com.juridico.sistema_juridico.Entity.procesal.Termino;
-import com.juridico.sistema_juridico.Entity.usuario.Usuario;
-import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
-import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
-import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
-import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
-import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
-import com.juridico.sistema_juridico.repository.Catalogo.CatPrioridadRepository;
-import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
+import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
+import com.juridico.sistema_juridico.Entity.enums.TipoEventoAlerta;
+import com.juridico.sistema_juridico.Entity.procesal.Termino;
+import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.repository.Catalogo.CatPrioridadRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
+import com.juridico.sistema_juridico.service.configuracion.ConfiguracionAlertaService;
 
 @Service
 @EnableScheduling
@@ -37,94 +40,105 @@ public class NotificacionAutomaticaService {
     @Autowired
     private CatPrioridadRepository catPrioridadRepository;
 
-    // CORRECCIÓN CLAVE: Ahora SOLO "Concluido" apaga la alarma.
-    // Si está en Liberado o Presentado y se acaba el tiempo, ¡la alarma sonará!
+    @Autowired
+    private ConfiguracionAlertaService configuracionAlertaService;
+
     private final List<EstatusTermino> ESTATUS_FINALES = Arrays.asList(EstatusTermino.CONCLUIDO);
 
-    // @Scheduled(fixedRate = 60000) // Cambiar al cron normal cuando termines de
-    // probar
-    @Scheduled(cron = "0 0 8 * * ?") // (Horario real 8 AM)
+    @Scheduled(cron = "0 0 8 * * ?")
     @Transactional
     public void verificarVencimientosProximos() {
         LocalDate hoy = LocalDate.now();
-        System.out.println("⏰ Ejecutando revisión automática de términos: " + hoy);
 
-        verificarYNotificar(hoy.plusDays(3), "Advertencia de Vencimiento",
-                catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null));
-        verificarYNotificar(hoy.plusDays(1), "¡Vence Mañana!",
-                catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null));
-        verificarYNotificar(hoy, "¡VENCE HOY! URGENTE",
-                catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null));
+        for (Integer diasAnticipacion : configuracionAlertaService.obtenerDiasCandidatos(TipoEventoAlerta.TERMINO)) {
+            verificarYNotificar(hoy.plusDays(diasAnticipacion), diasAnticipacion);
+        }
     }
 
-    private void verificarYNotificar(LocalDate fechaObjetivo, String tituloBase, CatPrioridad prioridad) {
-        // La consulta trae el expediente y abogado de inmediato (Evita
-        // LazyInitializationException)
-        List<Termino> terminos = terminoRepository.findByFechaVencimientoAndEstatusTerminoNotIn(fechaObjetivo,
-                ESTATUS_FINALES);
+    private void verificarYNotificar(LocalDate fechaObjetivo, int diasAnticipacion) {
+        CatPrioridad prioridad = catPrioridadRepository
+                .findByNombreIgnoreCase(diasAnticipacion >= 3 ? "MEDIA" : "ALTA")
+                .orElse(null);
+        List<Termino> terminos = terminoRepository.findByFechaVencimientoAndEstatusTerminoNotIn(
+                fechaObjetivo, ESTATUS_FINALES);
 
-        for (Termino t : terminos) {
-            String expedienteNum = t.getNumeroReferencia();
+        for (Termino termino : terminos) {
+            String expedienteNum = termino.getNumeroReferencia();
             String mensaje = String.format(
                     "El término '%s' %s vence el %s. Actualmente está en la etapa: %s",
-                    t.getAsunto(),
-                    (t.getExpediente() != null ? "del expediente " + expedienteNum : "(sin expediente)"),
-                    t.getFechaVencimiento(),
-                    t.getEstatusTermino());
+                    termino.getAsunto(),
+                    termino.getExpediente() != null ? "del expediente " + expedienteNum : "(sin expediente)",
+                    termino.getFechaVencimiento(),
+                    termino.getEstatusTermino());
 
-            Set<Usuario> destinatarios = new HashSet<>();
-            Gerencia g = t.getExpediente() != null ? t.getExpediente().getGerencia() : (t.getContexto() != null ? t.getContexto().getGerencia() : null);
+            Set<Usuario> destinatarios = obtenerDestinatarios(termino);
+            String tituloNotif = crearTitulo(diasAnticipacion) + ": " + expedienteNum;
 
-            // 1. El Abogado Responsable SIEMPRE es notificado
-            if (t.getAbogadoResponsable() != null) {
-                destinatarios.add(t.getAbogadoResponsable());
-            }
-
-            // 2. Ruteo Dinámico: ¿A quién más le avisamos según la etapa?
-            if (g != null) {
-                switch (t.getEstatusTermino()) {
-                    case REVISION:
-                        destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, g));
-                        break;
-                    case GERENCIA:
-                        destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE, g));
-                        break;
-                    case DIRECCION:
-                        destinatarios.addAll(usuarioRepository
-                                .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
-                        break;
-                    case LIBERADO:
-                    case PRESENTADO:
-                        // ¡ALERTA GENERAL! Si ya se liberó o presentó pero no se ha subido el acuse (Concluido)
-                        destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, g));
-                        destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE, g));
-                        destinatarios.addAll(usuarioRepository
-                                .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
-                        break;
+            for (Usuario usuario : destinatarios) {
+                if (!configuracionAlertaService.debeNotificar(
+                        TipoEventoAlerta.TERMINO, diasAnticipacion, usuario, "TERMINO", termino.getId().toString())) {
+                    continue;
                 }
-            } else {
-                if (t.getEstatusTermino() == EstatusTermino.DIRECCION || t.getEstatusTermino() == EstatusTermino.LIBERADO || t.getEstatusTermino() == EstatusTermino.PRESENTADO) {
-                    destinatarios.addAll(usuarioRepository
-                            .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
-                }
-            }
-
-            // 3. Enviar las notificaciones
-            String tituloNotif = tituloBase + ": " + expedienteNum;
-
-            for (Usuario u : destinatarios) {
                 notificacionService.crearNotificacion(
-                        u,
+                        usuario,
                         null,
                         tituloNotif,
                         mensaje,
                         "TERMINO",
                         prioridad,
-                        t.getId().toString(),
+                        termino.getId().toString(),
                         true);
-                System.out.println("   -> Notificación enviada a " + u.getEmail() + " (" + u.getRol()
-                        + ") sobre término ID: " + t.getId());
             }
         }
+    }
+
+    private Set<Usuario> obtenerDestinatarios(Termino termino) {
+        Set<Usuario> destinatarios = new HashSet<>();
+        Gerencia gerencia = termino.getExpediente() != null
+                ? termino.getExpediente().getGerencia()
+                : termino.getContexto() != null ? termino.getContexto().getGerencia() : null;
+
+        if (termino.getAbogadoResponsable() != null) {
+            destinatarios.add(termino.getAbogadoResponsable());
+        }
+
+        if (gerencia != null) {
+            switch (termino.getEstatusTermino()) {
+                case REVISION:
+                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, gerencia));
+                    break;
+                case GERENCIA:
+                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE, gerencia));
+                    break;
+                case DIRECCION:
+                    destinatarios.addAll(usuarioRepository
+                            .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
+                    break;
+                case LIBERADO:
+                case PRESENTADO:
+                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, gerencia));
+                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE, gerencia));
+                    destinatarios.addAll(usuarioRepository
+                            .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
+                    break;
+            }
+        } else if (termino.getEstatusTermino() == EstatusTermino.DIRECCION
+                || termino.getEstatusTermino() == EstatusTermino.LIBERADO
+                || termino.getEstatusTermino() == EstatusTermino.PRESENTADO) {
+            destinatarios.addAll(usuarioRepository
+                    .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
+        }
+
+        return destinatarios;
+    }
+
+    private String crearTitulo(int diasAnticipacion) {
+        if (diasAnticipacion == 0) {
+            return "¡VENCE HOY! URGENTE";
+        }
+        if (diasAnticipacion == 1) {
+            return "¡Vence Mañana!";
+        }
+        return "Advertencia: vence en " + diasAnticipacion + " días";
     }
 }

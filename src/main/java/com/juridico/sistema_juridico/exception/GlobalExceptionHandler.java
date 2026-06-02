@@ -68,6 +68,9 @@ public class GlobalExceptionHandler {
 
     private String getRefererOrHome(HttpServletRequest request) {
         String referer = request.getHeader("Referer");
+        if (referer != null && (referer.contains("/notificaciones/leer") || referer.contains("/leer/"))) {
+            return "/notificaciones";
+        }
         return referer != null ? referer : "/";
     }
 }

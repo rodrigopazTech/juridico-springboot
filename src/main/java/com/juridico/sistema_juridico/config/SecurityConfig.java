@@ -59,6 +59,8 @@ public class SecurityConfig {
                         // 2. NIVEL ALTO
                         .requestMatchers("/agenda", "/agenda/**")
                         .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO")
+                        .requestMatchers("/catalogos", "/catalogos/**")
+                        .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO")
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/usuarios", "/usuarios/**")
                         .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE")

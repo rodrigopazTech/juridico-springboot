@@ -838,17 +838,22 @@ function ajustarVisibilidadCamposPorRolYOrigen() {
     
     const divGerencia = document.getElementById('div-gerencia-termino');
     const divAbogado = document.getElementById('div-abogado-termino');
+    const gerenciaSelect = document.getElementById('select-contexto-gerencia');
+    const abogadoSelect = document.getElementById('select-abogado-termino');
 
     // 1. Gerencia (solo relevante para ASUNTO_UNICO)
     if (divGerencia) {
         if (origen === 'ASUNTO_UNICO') {
             if (['ABOGADO', 'JEFE_DEPTO', 'GERENTE'].includes(userRol)) {
                 divGerencia.classList.add('hidden');
+                if (gerenciaSelect) gerenciaSelect.required = false;
             } else {
                 divGerencia.classList.remove('hidden');
+                if (gerenciaSelect) gerenciaSelect.required = true;
             }
         } else {
             divGerencia.classList.add('hidden');
+            if (gerenciaSelect) gerenciaSelect.required = false;
         }
     }
 
@@ -857,14 +862,17 @@ function ajustarVisibilidadCamposPorRolYOrigen() {
         if (origen === 'EXPEDIENTE') {
             // Vinculado al expediente, por lo tanto es readonly → lo ocultamos
             divAbogado.classList.add('hidden');
+            if (abogadoSelect) abogadoSelect.required = false;
         } else {
             // ASUNTO_UNICO
             if (userRol === 'ABOGADO') {
                 // El abogado no puede elegir (siempre es él mismo) → lo ocultamos
                 divAbogado.classList.add('hidden');
+                if (abogadoSelect) abogadoSelect.required = false;
             } else {
                 // Jefes, Gerentes, Admin, Dirección pueden asignar → lo mostramos
                 divAbogado.classList.remove('hidden');
+                if (abogadoSelect) abogadoSelect.required = true;
             }
         }
     }

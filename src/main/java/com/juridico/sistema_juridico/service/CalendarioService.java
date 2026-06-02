@@ -9,6 +9,8 @@ import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.RecordatorioRepository;
+import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
+import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -56,11 +58,15 @@ public class CalendarioService {
                 if (usuarioActual.getGerencia() != null) {
                     gerenciaIdRestriccion = usuarioActual.getGerencia().getId();
                 }
-                // ABOGADO: adicionalmente filtrar solo sus propios expedientes
-                if (rol == RolUsuario.ABOGADO) {
-                    abogadoIdRestriccion = usuarioActual.getId();
-                }
             }
+        }
+
+        // Restricción adicional para JEFE_DEPTO: solo materias asignadas
+        List<Integer> jefeMateriaIds = null;
+        if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+            jefeMateriaIds = usuarioActual.getMaterias().stream()
+                .map(Materia::getId)
+                .collect(Collectors.toList());
         }
 
         // 1. Mapear Audiencias
@@ -89,6 +95,15 @@ public class CalendarioService {
                 })
                 .collect(Collectors.toList());
         }
+        // Restricción adicional para JEFE_DEPTO: solo materias asignadas
+        if (jefeMateriaIds != null) {
+            final List<Integer> mIds = jefeMateriaIds;
+            audiencias = audiencias.stream()
+                .filter(a -> a.getExpediente() != null &&
+                            a.getExpediente().getMateria() != null &&
+                            mIds.contains(a.getExpediente().getMateria().getId()))
+                .collect(Collectors.toList());
+        }
 
         eventos.addAll(audiencias.stream()
                 .<EventoResponse>map(a -> mapToAudienciaResponse(a))
@@ -101,9 +116,8 @@ public class CalendarioService {
         if (gerenciaIdRestriccion != null) {
             final Integer gid = gerenciaIdRestriccion;
             terminos = terminos.stream()
-                .filter(t -> t.getExpediente() != null &&
-                             t.getExpediente().getGerencia() != null &&
-                             t.getExpediente().getGerencia().getId().equals(gid))
+                .filter(t -> t.getGerenciaReferencia() != null &&
+                             t.getGerenciaReferencia().getId().equals(gid))
                 .collect(Collectors.toList());
         }
         // Restricción adicional para ABOGADO: solo sus términos
@@ -117,6 +131,16 @@ public class CalendarioService {
                         t.getExpediente().getAbogadoResponsable() != null &&
                         t.getExpediente().getAbogadoResponsable().getId().equals(uid);
                     return esResponsableTermino || esResponsableExp;
+                })
+                .collect(Collectors.toList());
+        }
+        // Restricción adicional para JEFE_DEPTO: solo materias asignadas
+        if (jefeMateriaIds != null) {
+            final List<Integer> mIds = jefeMateriaIds;
+            terminos = terminos.stream()
+                .filter(t -> {
+                    Materia mat = t.getMateriaReferencia();
+                    return mat != null && mIds.contains(mat.getId());
                 })
                 .collect(Collectors.toList());
         }
@@ -219,21 +243,21 @@ public class CalendarioService {
         Integer materiaId = null;
         String materiaNombre = "";
         
-        if (t.getExpediente() != null) {
-            if (t.getExpediente().getGerencia() != null) {
-                gerenciaId = t.getExpediente().getGerencia().getId().longValue();
-                gerenciaNombre = t.getExpediente().getGerencia().getNombre();
-            }
-            if (t.getExpediente().getMateria() != null) {
-                materiaId = t.getExpediente().getMateria().getId();
-                materiaNombre = t.getExpediente().getMateria().getNombre();
-            }
-            if (t.getAbogadoResponsable() != null) {
-                usuarioId = t.getAbogadoResponsable().getId().longValue();
-                usuarioNombre = t.getAbogadoResponsable().getNombreCompleto();
-            } else if (t.getExpediente().getAbogadoResponsableNombre() != null) {
-                usuarioNombre = t.getExpediente().getAbogadoResponsableNombre();
-            }
+        Gerencia ger = t.getGerenciaReferencia();
+        if (ger != null) {
+            gerenciaId = ger.getId().longValue();
+            gerenciaNombre = ger.getNombre();
+        }
+        Materia mat = t.getMateriaReferencia();
+        if (mat != null) {
+            materiaId = mat.getId();
+            materiaNombre = mat.getNombre();
+        }
+        if (t.getAbogadoResponsable() != null) {
+            usuarioId = t.getAbogadoResponsable().getId().longValue();
+            usuarioNombre = t.getAbogadoResponsable().getNombreCompleto();
+        } else if (t.getExpediente() != null && t.getExpediente().getAbogadoResponsableNombre() != null) {
+            usuarioNombre = t.getExpediente().getAbogadoResponsableNombre();
         }
         
         return EventoResponse.builder()
@@ -246,7 +270,7 @@ public class CalendarioService {
                 .gerenciaNombre(gerenciaNombre)
                 .usuarioId(usuarioId)
                 .usuarioNombre(usuarioNombre)
-                .expediente(t.getExpediente() != null ? t.getExpediente().getNumero() : "N/A")
+                .expediente(t.getNumeroReferencia())
                 .materiaId(materiaId)
                 .materiaNombre(materiaNombre)
                 .build();

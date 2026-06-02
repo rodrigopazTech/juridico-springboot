@@ -68,6 +68,13 @@ public class CalendarioRestController {
             }
         }
         
+        // ABOGADO: forzar filtrar por su propia gerencia
+        if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.ABOGADO) {
+            if (usuarioActual.getGerencia() != null) {
+                gerenciaId = usuarioActual.getGerencia().getId().longValue();
+            }
+        }
+        
         // Determinar usuarioId a filtrar
         Long usuarioId = null;
         if (misAsuntos && usuarioActual != null) {
