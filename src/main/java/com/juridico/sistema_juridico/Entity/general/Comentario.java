@@ -32,6 +32,7 @@ public class Comentario {
 
     @ManyToOne
     @JoinColumn(name = "usuario_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Usuario usuario;
     
     @Column(name = "usuario_nombre")
