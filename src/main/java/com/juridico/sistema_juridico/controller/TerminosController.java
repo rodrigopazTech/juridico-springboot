@@ -410,11 +410,19 @@ public class TerminosController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha de vencimiento es obligatoria.");
         }
 
-        if (abogadoId == null && actor.getRol() == RolUsuario.ABOGADO) {
+        if (actor.getRol() == RolUsuario.ABOGADO) {
             abogadoId = actor.getId();
         }
 
         if (origenTermino == OrigenTermino.ASUNTO_UNICO) {
+            if (actor.getRol() == RolUsuario.ABOGADO || actor.getRol() == RolUsuario.JEFE_DEPTO) {
+                Set<Integer> misMateriasIds = actor.getMaterias().stream()
+                        .map(Materia::getId)
+                        .collect(Collectors.toSet());
+                if (contextoMateriaId == null || !misMateriasIds.contains(contextoMateriaId)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No tienes acceso a la materia seleccionada.");
+                }
+            }
             if (actor.getGerencia() != null) {
                 contextoGerenciaId = actor.getGerencia().getId();
             }
@@ -1148,7 +1156,18 @@ public class TerminosController {
     @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> obtenerMateriasPorGerencia(@PathVariable("gerenciaId") Integer gerenciaId) {
         try {
+            Usuario usuarioActual = getUsuarioActual();
             List<Materia> materias = materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(gerenciaId);
+            
+            if (usuarioActual.getRol() == RolUsuario.ABOGADO || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+                Set<Integer> misMateriasIds = usuarioActual.getMaterias().stream()
+                        .map(Materia::getId)
+                        .collect(Collectors.toSet());
+                materias = materias.stream()
+                        .filter(m -> misMateriasIds.contains(m.getId()))
+                        .collect(Collectors.toList());
+            }
+
             List<Map<String, Object>> respuesta = materias.stream().map(m -> {
                 Map<String, Object> map = new HashMap<>();
                 map.put("id", m.getId());
@@ -1165,9 +1184,20 @@ public class TerminosController {
     @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> obtenerAbogadosPorGerencia(@PathVariable("gerenciaId") Integer gerenciaId) {
         try {
+            Usuario usuarioActual = getUsuarioActual();
             List<Usuario> abogados = usuarioRepository.findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(gerenciaId).stream()
                     .filter(u -> u.getRol() == RolUsuario.ABOGADO)
                     .collect(Collectors.toList());
+
+            if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+                Set<Integer> misMateriasIds = usuarioActual.getMaterias().stream()
+                        .map(Materia::getId)
+                        .collect(Collectors.toSet());
+                abogados = abogados.stream()
+                        .filter(u -> u.getMaterias().stream().anyMatch(m -> misMateriasIds.contains(m.getId())))
+                        .collect(Collectors.toList());
+            }
+
             List<Map<String, Object>> respuesta = abogados.stream().map(a -> {
                 Map<String, Object> map = new HashMap<>();
                 map.put("id", a.getId());

@@ -773,6 +773,8 @@ function abrirModalNuevo() {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
+    
+    ajustarVisibilidadCamposPorRolYOrigen();
 }
 
 // 2. EDITAR TÉRMINO (Con el botón amarillo)
@@ -783,6 +785,7 @@ function toggleOrigenTermino() {
     const grupoContexto = document.getElementById('grupo-contexto-termino');
     const expSelect = document.getElementById('select-expediente-termino');
     const abogadoSelect = document.getElementById('select-abogado-termino');
+    const userRol = document.getElementById('hdnUsuarioRol')?.value;
 
     grupoExpediente?.classList.toggle('hidden', esAsuntoUnico);
     grupoContexto?.classList.toggle('hidden', !esAsuntoUnico);
@@ -795,13 +798,23 @@ function toggleOrigenTermino() {
 
     if (esAsuntoUnico && abogadoSelect) {
         abogadoSelect.removeAttribute('readonly');
+        abogadoSelect.classList.remove('cursor-not-allowed', 'bg-gray-50');
+        abogadoSelect.classList.add('bg-white');
         
         const gerenciaSelect = document.getElementById('select-contexto-gerencia');
         if (gerenciaSelect) {
             // Auto-seleccionar si solo hay 1 opción
-            if (gerenciaSelect.options.length === 2) {
+            if (gerenciaSelect.options.length === 2 && !gerenciaSelect.value) {
                 gerenciaSelect.selectedIndex = 1;
             }
+            
+            if (userRol === 'ABOGADO') {
+                const myId = document.getElementById('hdnUsuarioId')?.value;
+                const myName = document.getElementById('hdnUsuarioNombre')?.value;
+                abogadoSelect.innerHTML = `<option value="${myId}" selected>${myName}</option>`;
+                abogadoSelect.value = myId;
+            }
+            
             // Cargar materias y abogados dinámicamente si hay una gerencia seleccionada
             if (gerenciaSelect.value) {
                 cargarMateriasYAbogadosPorGerencia(gerenciaSelect.value);
@@ -814,6 +827,46 @@ function toggleOrigenTermino() {
         abogadoSelect.classList.add('cursor-not-allowed', 'bg-gray-50');
         abogadoSelect.classList.remove('bg-white');
         abogadoSelect.setAttribute('readonly', 'true');
+    }
+
+    ajustarVisibilidadCamposPorRolYOrigen();
+}
+
+function ajustarVisibilidadCamposPorRolYOrigen() {
+    const userRol = document.getElementById('hdnUsuarioRol')?.value;
+    const origen = document.querySelector('input[name="origenTermino"]:checked')?.value || 'EXPEDIENTE';
+    
+    const divGerencia = document.getElementById('div-gerencia-termino');
+    const divAbogado = document.getElementById('div-abogado-termino');
+
+    // 1. Gerencia (solo relevante para ASUNTO_UNICO)
+    if (divGerencia) {
+        if (origen === 'ASUNTO_UNICO') {
+            if (['ABOGADO', 'JEFE_DEPTO', 'GERENTE'].includes(userRol)) {
+                divGerencia.classList.add('hidden');
+            } else {
+                divGerencia.classList.remove('hidden');
+            }
+        } else {
+            divGerencia.classList.add('hidden');
+        }
+    }
+
+    // 2. Abogado Responsable
+    if (divAbogado) {
+        if (origen === 'EXPEDIENTE') {
+            // Vinculado al expediente, por lo tanto es readonly → lo ocultamos
+            divAbogado.classList.add('hidden');
+        } else {
+            // ASUNTO_UNICO
+            if (userRol === 'ABOGADO') {
+                // El abogado no puede elegir (siempre es él mismo) → lo ocultamos
+                divAbogado.classList.add('hidden');
+            } else {
+                // Jefes, Gerentes, Admin, Dirección pueden asignar → lo mostramos
+                divAbogado.classList.remove('hidden');
+            }
+        }
     }
 }
 
@@ -969,6 +1022,8 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
     if (id) {
         sendTerminoLock(id);
     }
+    
+    ajustarVisibilidadCamposPorRolYOrigen();
 }
 
 function recargarDatosTerminoActual() {

@@ -113,6 +113,8 @@
     <input type="hidden" id="hdnAnioActual" th:value="${anioActual}">
     <input type="hidden" id="hdnUsuarioNombre" th:value="${usuarioGlobal != null ? usuarioGlobal.nombreCompleto : ''}">
     <input type="hidden" id="hdnUsuarioEmail" th:value="${usuarioGlobal != null ? usuarioGlobal.email : ''}">
+    <input type="hidden" id="hdnUsuarioRol" th:value="${usuarioGlobal != null ? usuarioGlobal.rol.name() : ''}">
+    <input type="hidden" id="hdnUsuarioId" th:value="${usuarioGlobal != null ? usuarioGlobal.id : ''}">
 </body>
 
 </html>
