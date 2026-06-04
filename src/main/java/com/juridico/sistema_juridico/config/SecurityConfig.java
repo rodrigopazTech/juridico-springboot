@@ -58,12 +58,14 @@ public class SecurityConfig {
 
                         // 2. NIVEL ALTO
                         .requestMatchers("/agenda", "/agenda/**")
-                        .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO")
+                        .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO",
+                                "PERM_AGENDA_VER")
                         .requestMatchers("/catalogos", "/catalogos/**")
-                        .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO")
-                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
+                        .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO",
+                                "PERM_CATALOGOS_VER")
+                        .requestMatchers("/admin/**").hasAnyAuthority("ADMIN", "PERM_ADMIN_PANEL")
                         .requestMatchers("/usuarios", "/usuarios/**")
-                        .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE")
+                        .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "PERM_USUARIOS_VER")
 
                         // 3. NIVEL MEDIO
                         .requestMatchers("/dashboard", "/dashboard/**")

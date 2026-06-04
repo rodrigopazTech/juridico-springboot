@@ -8,6 +8,7 @@ import java.util.HashSet;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
+import com.juridico.sistema_juridico.Entity.enums.PermisoSistema;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 
 // --- CAMBIO 1: QUITAMOS @Data Y USAMOS ESTOS 3 ---
@@ -23,8 +24,8 @@ import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
         @Index(name = "idx_usuarios_rol", columnList = "rol")
 })
 // --- CAMBIO 2: AGREGAMOS ESTOS 2 PARA EVITAR ERRORES DE GUARDADO ---
-@ToString(exclude = "materias")
-@EqualsAndHashCode(exclude = "materias")
+@ToString(exclude = {"materias", "permisosAdicionales"})
+@EqualsAndHashCode(exclude = {"materias", "permisosAdicionales"})
 public class Usuario {
 
     @Id
@@ -78,6 +79,13 @@ public class Usuario {
     @JoinTable(name = "usuario_materias", joinColumns = @JoinColumn(name = "usuario_id"), inverseJoinColumns = @JoinColumn(name = "materia_id"))
     @Builder.Default
     private Set<Materia> materias = new HashSet<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "usuario_permisos_adicionales", joinColumns = @JoinColumn(name = "usuario_id"))
+    @Column(name = "permiso", nullable = false, length = 80)
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private Set<PermisoSistema> permisosAdicionales = new HashSet<>();
 
     public boolean tieneMateria(Integer materiaId) {
         if (this.materias == null)
