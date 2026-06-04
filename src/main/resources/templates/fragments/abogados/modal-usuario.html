@@ -13,7 +13,6 @@
         </div>
 
         <form th:action="@{/abogados/guardar}" th:object="${nuevoUsuario}" method="post" class="p-6 space-y-4">
-            <input type="hidden" th:field="*{id}" id="input-usuario-id">
 
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-1">Nombre Completo *</label>
@@ -29,28 +28,12 @@
 
             <div class="grid grid-cols-2 gap-4">
 
-                <!-- ── BLOQUE CONTRASEÑA NUEVA (solo en creación) ── -->
+                <!-- ── BLOQUE CONTRASEÑA NUEVA ── -->
                 <div id="bloque-password-nuevo">
                     <label class="block text-sm font-bold text-gray-700 mb-1">Contraseña *</label>
                     <input type="password" th:field="*{password}" id="input-usuario-password" required
                         class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-gob-oro focus:border-gob-oro outline-none"
                         placeholder="Contraseña inicial">
-                </div>
-
-                <!-- ── BLOQUE CONTRASEÑA TEMPORAL (solo en edición) ── -->
-                <div id="bloque-password-temporal" class="hidden">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Contraseña</label>
-                    <!-- Campo hidden que recibe la contraseña generada y la envía al backend -->
-                    <input type="hidden" id="input-password-temporal" name="password" value="">
-                    <button type="button" id="btn-generar-password" onclick="abrirModalPasswordTemporal()"
-                        class="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gob-guinda text-gob-guinda bg-red-50 hover:bg-gob-guinda hover:text-white rounded-lg p-2.5 text-sm font-bold transition-all">
-                        <i class="fas fa-key"></i> Generar Contraseña
-                    </button>
-                    <!-- Badge que muestra si ya se generó una contraseña para esta sesión -->
-                    <p id="badge-pass-generado"
-                        class="hidden text-[10px] text-green-600 font-bold mt-1 flex items-center gap-1">
-                        <i class="fas fa-check-circle"></i> Contraseña temporal lista
-                    </p>
                 </div>
 
                 <div>
@@ -91,23 +74,15 @@
                 <label for="check-usuario-activo" class="ms-2 text-sm font-medium text-gray-900">Usuario Activo</label>
             </div>
 
-            <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-100">
-
-                <button type="button" id="btn-eliminar-usuario" onclick="eliminarUsuarioDesdeModal()"
-                    class="hidden text-red-600 hover:text-red-800 font-medium text-sm hover:underline transition-colors">
-                    <i class="fas fa-trash-alt mr-1"></i> Eliminar Usuario
+            <div class="flex justify-end items-center mt-6 pt-4 border-t border-gray-100 gap-3">
+                <button type="button" onclick="document.getElementById('modal-usuario').classList.add('hidden')"
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancelar
                 </button>
-
-                <div class="flex gap-3 ml-auto">
-                    <button type="button" onclick="document.getElementById('modal-usuario').classList.add('hidden')"
-                        class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                        Cancelar
-                    </button>
-                    <button type="submit"
-                        class="px-4 py-2 bg-gob-guinda text-white rounded-lg hover:bg-opacity-90 transition-colors shadow-md">
-                        Guardar Usuario
-                    </button>
-                </div>
+                <button type="submit"
+                    class="px-4 py-2 bg-gob-guinda text-white rounded-lg hover:bg-opacity-90 transition-colors shadow-md">
+                    Guardar Usuario
+                </button>
             </div>
         </form>
     </div>

@@ -74,7 +74,7 @@ public class PerfilController {
         redirectAttrs.addFlashAttribute("tipo", "success");
         redirectAttrs.addFlashAttribute("origenMensaje", "preferencias");
 
-        return "redirect:/perfil";
+        return "redirect:/perfil?tab=notif";
     }
 
     @PostMapping("/password/actualizar")

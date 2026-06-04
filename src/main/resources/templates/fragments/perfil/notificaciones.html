@@ -1,5 +1,5 @@
 <div th:fragment="form">
-    <form th:action="@{/perfil/preferencias/guardar}" method="post">
+    <form th:action="@{/perfil/preferencias/guardar}" method="post" id="formPreferenciasNotificaciones">
         <div class="space-y-8">
             <div th:each="grupo : ${gruposPreferencias}" class="space-y-3">
                 <div>
@@ -33,12 +33,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="mt-8 flex justify-end">
-            <button type="submit" class="bg-gob-guinda text-white px-8 py-3 rounded-xl hover:bg-gob-guindaDark font-bold shadow-lg shadow-gob-guinda/20 transition-all flex items-center gap-2">
-                <i class="fas fa-save"></i> Guardar Cambios
-            </button>
         </div>
     </form>
 </div>

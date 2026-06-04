@@ -207,16 +207,36 @@ public class AbogadosController {
     @Autowired
     private com.juridico.sistema_juridico.repository.Usuarios.ActividadUsuarioRepository actividadUsuarioRepository;
 
+    private String categorizarAccion(String titulo) {
+        if (titulo == null) return "ACCIONES";
+        String t = titulo.toUpperCase();
+        if (t.contains("INICIO") || t.contains("CIERRE") || t.contains("SESIÓN") || t.contains("SESION") || 
+            t.contains("CONTRASEÑA") || t.contains("CONTRASENA") || t.contains("ROL") || t.contains("PERMISOS") || 
+            t.contains("ACTIVAR") || t.contains("DESACTIVAR") || t.contains("FALLIDO") || t.contains("BLOQUEO")) {
+            return "SEGURIDAD";
+        }
+        if (t.contains("ASIGNADO") || t.contains("ASIGNACION") || t.contains("ASIGNACIÓN") || t.contains("RESPONSABLE") || 
+            t.contains("DESASIGNADO") || t.contains("REASIGNADO")) {
+            return "ASIGNACION";
+        }
+        if (t.contains("ARCHIVO") || t.contains("DOCUMENTO") || t.contains("PAPELERA") || 
+            t.contains("ELIMINADO") || t.contains("RESTAURADO") || t.contains("SUBIDA") || 
+            t.contains("UPLOAD") || t.contains("CARGADO")) {
+            return "DOCUMENTAL";
+        }
+        return "ACCIONES";
+    }
+
     @GetMapping("/api/{id}/historial")
     @ResponseBody
     public org.springframework.http.ResponseEntity<List<Map<String, Object>>> obtenerHistorialReal(
             @PathVariable("id") Integer id) {
 
         // 1. Obtener actividades de expedientes (donde es actor exclusivamente)
-        List<ActividadExpediente> actExp = actividadRepository.findTop15ByUsuarioIdOrderByFechaRegistroDesc(id);
+        List<ActividadExpediente> actExp = actividadRepository.findTop100ByUsuarioIdOrderByFechaRegistroDesc(id);
         
-        // 2. Obtener actividades generales del sistema (login/logout)
-        List<com.juridico.sistema_juridico.Entity.usuario.ActividadUsuario> actUs = actividadUsuarioRepository.findTop15ByUsuarioIdOrderByFechaRegistroDesc(id);
+        // 2. Obtener actividades generales del sistema (login/logout, etc)
+        List<com.juridico.sistema_juridico.Entity.usuario.ActividadUsuario> actUs = actividadUsuarioRepository.findTop100ByUsuarioIdOrderByFechaRegistroDesc(id);
 
         // 3. Combinar y mapear a un formato común
         List<Map<String, Object>> listaCombinada = new ArrayList<>();
@@ -228,6 +248,7 @@ public class AbogadosController {
             map.put("expediente", act.getExpediente() != null ? act.getExpediente().getNumero() : "N/A");
             map.put("fecha", act.getFechaRegistro() != null ? act.getFechaRegistro().format(dateTimeFormatter) : "-");
             map.put("_raw_date", act.getFechaRegistro());
+            map.put("categoria", categorizarAccion(act.getTitulo()));
             listaCombinada.add(map);
         }
 
@@ -238,10 +259,11 @@ public class AbogadosController {
             map.put("expediente", "General"); // Para el frontend
             map.put("fecha", act.getFechaRegistro() != null ? act.getFechaRegistro().format(dateTimeFormatter) : "-");
             map.put("_raw_date", act.getFechaRegistro());
+            map.put("categoria", categorizarAccion(act.getTitulo()));
             listaCombinada.add(map);
         }
 
-        // 4. Ordenar la lista combinada por fecha descendente y limitar a 15
+        // 4. Ordenar la lista combinada por fecha descendente y limitar a 100
         listaCombinada.sort((m1, m2) -> {
             java.time.LocalDateTime d1 = (java.time.LocalDateTime) m1.get("_raw_date");
             java.time.LocalDateTime d2 = (java.time.LocalDateTime) m2.get("_raw_date");
@@ -250,7 +272,7 @@ public class AbogadosController {
             return d2.compareTo(d1);
         });
 
-        List<Map<String, Object>> response = listaCombinada.stream().limit(15).collect(Collectors.toList());
+        List<Map<String, Object>> response = listaCombinada.stream().limit(100).collect(Collectors.toList());
 
         return org.springframework.http.ResponseEntity.ok(response);
     }
