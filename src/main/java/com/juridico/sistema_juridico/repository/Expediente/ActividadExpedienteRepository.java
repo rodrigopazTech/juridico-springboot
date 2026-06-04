@@ -12,6 +12,7 @@ public interface ActividadExpedienteRepository extends JpaRepository<ActividadEx
     List<ActividadExpediente> findByExpedienteIdOrderByFechaRegistroDesc(UUID expedienteId);
     
     List<ActividadExpediente> findTop15ByUsuarioIdOrderByFechaRegistroDesc(Integer usuarioId);
+    List<ActividadExpediente> findTop100ByUsuarioIdOrderByFechaRegistroDesc(Integer usuarioId);
     
     List<ActividadExpediente> findTop15ByUsuarioIdOrExpedienteAbogadoResponsableIdOrderByFechaRegistroDesc(Integer usuarioId, Integer responsableId);
 

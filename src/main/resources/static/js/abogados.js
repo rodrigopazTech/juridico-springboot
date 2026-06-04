@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let materiasUsuarioActual = [];
+let materiasUsuarioEdicion = [];
 let usuarioSeleccionadoId = null;
 
 // --- 1. LÓGICA DE MAESTRO - DETALLE ---
@@ -24,10 +25,14 @@ function seleccionarAbogado(cardElement) {
     const email = cardElement.getAttribute('data-email');
     const rol = cardElement.getAttribute('data-rol');
     const gerenciaNombre = cardElement.getAttribute('data-gerencia-nombre');
+    const gerenciaId = cardElement.getAttribute('data-gerencia-id');
     const activo = cardElement.getAttribute('data-activo') === 'true';
 
     const materiasStr = cardElement.getAttribute('data-materias-nombres');
     const materiasNombres = materiasStr ? materiasStr.split('|') : [];
+    
+    const materiasIdsStr = cardElement.getAttribute('data-materias-ids');
+    const materiasIdsArray = materiasIdsStr ? materiasIdsStr.split(',').map(Number) : [];
 
     usuarioSeleccionadoId = id;
 
@@ -40,7 +45,7 @@ function seleccionarAbogado(cardElement) {
     void panelDetalle.offsetWidth; // Trigger reflow
     panelDetalle.classList.add('animate-fade-in');
 
-    // 5. Inyectar datos en el panel derecho
+    // 5. Inyectar datos en el panel derecho (Vista de consulta)
     document.getElementById('det-avatar').innerText = nombre.charAt(0).toUpperCase();
     document.getElementById('det-nombre').innerText = nombre;
     document.getElementById('det-email').innerText = email;
@@ -64,25 +69,46 @@ function seleccionarAbogado(cardElement) {
 
     document.getElementById('det-badges').innerHTML = badgesHtml;
 
-    // 6. Configurar botones de acción
-    const btnEditar = document.getElementById('btn-editar');
-    const btnEstatus = document.getElementById('btn-estatus');
+    // 6. Pre-poblar los campos de la pestaña "Editar Perfil"
+    const inputDetId = document.getElementById('det-input-id');
+    if (inputDetId) {
+        document.getElementById('det-input-id').value = id;
+        document.getElementById('det-input-nombre').value = nombre;
+        document.getElementById('det-input-email').value = email;
+        document.getElementById('det-select-rol').value = rol;
+        document.getElementById('det-check-activo').checked = activo;
+        
+        // Reset password fields in edit tab
+        const detPass = document.getElementById('det-input-password-temporal');
+        if (detPass) {
+            detPass.value = '';
+            detPass.disabled = true;
+        }
+        const detBadge = document.getElementById('det-badge-pass-generado');
+        if (detBadge) detBadge.classList.add('hidden');
 
-    if (btnEditar) {
-        btnEditar.onclick = () => {
-            const gerenciaId = cardElement.getAttribute('data-gerencia-id');
-            const materiasIdsStr = cardElement.getAttribute('data-materias-ids');
-            const materiasIdsArray = materiasIdsStr ? materiasIdsStr.split(',').map(Number) : [];
-            editarUsuario(id, nombre, email, rol, gerenciaId, activo, materiasIdsArray);
-        };
+        materiasUsuarioEdicion = materiasIdsArray || [];
+        if (gerenciaId) {
+            document.getElementById('det-select-gerencia').value = gerenciaId;
+            cargarMateriasDeGerenciaEdicion();
+        } else {
+            document.getElementById('det-select-gerencia').value = '';
+            document.getElementById('det-contenedor-materias').classList.add('hidden');
+        }
     }
 
+    // 7. Configurar botón de estatus (Activar / Desactivar)
+    const btnEstatus = document.getElementById('btn-estatus');
     if (btnEstatus) {
         btnEstatus.innerHTML = activo ? '<i class="fas fa-ban mr-1"></i> Desactivar' : '<i class="fas fa-check-circle mr-1"></i> Activar';
         btnEstatus.className = activo ? 'px-3 py-1.5 bg-white/10 hover:bg-red-500/80 rounded-lg text-sm font-bold transition-colors backdrop-blur-sm border border-white/10' : 'px-3 py-1.5 bg-white/10 hover:bg-green-500/80 rounded-lg text-sm font-bold transition-colors backdrop-blur-sm border border-white/10';
         btnEstatus.onclick = () => confirmarCambioEstatus(id);
     }
-    cambiarTabAbogado('casos');
+    if (document.getElementById('tab-btn-editar')) {
+        cambiarTabAbogado('editar');
+    } else {
+        cambiarTabAbogado('casos');
+    }
 }
 
 // --- 2. LÓGICA DE MODALES (MANTENIDA Y ADAPTADA) ---
@@ -306,38 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// --- 4. NAVEGACIÓN DE PESTAÑAS (DETALLE) ---
-
-function cambiarTabAbogado(tabName) {
-    // 1. Ocultar todos los contenidos de las pestañas
-    document.querySelectorAll('.tab-abogado-content').forEach(el => {
-        el.classList.add('hidden');
-        el.classList.remove('block');
-    });
-
-    // 2. Mostrar el contenido de la pestaña seleccionada
-    const contenidoActivo = document.getElementById('tab-content-' + tabName);
-    if (contenidoActivo) {
-        contenidoActivo.classList.remove('hidden');
-        contenidoActivo.classList.add('block');
-    }
-
-    // 3. Resetear el diseño de todos los botones de las pestañas
-    document.querySelectorAll('.tab-abogado').forEach(btn => {
-        btn.classList.remove('border-gob-guinda', 'text-gob-guinda', 'font-bold');
-        btn.classList.add('border-transparent', 'text-gray-500', 'font-medium');
-    });
-
-    // 4. Activar el diseño del botón presionado
-    const botonActivo = document.getElementById('tab-btn-' + tabName);
-    if (botonActivo) {
-        botonActivo.classList.remove('border-transparent', 'text-gray-500', 'font-medium');
-        botonActivo.classList.add('border-gob-guinda', 'text-gob-guinda', 'font-bold');
-    }
-
-    // Aquí en el futuro agregaremos una llamada Fetch/AJAX para traer los datos:
-    // si (tabName === 'casos') cargarCasosAbogado(usuarioSeleccionadoId);
-}// --- 4. NAVEGACIÓN Y CARGA DE DATOS (PESTAÑAS) ---
+// --- 4. NAVEGACIÓN Y CARGA DE DATOS (PESTAÑAS) ---
 
 function cambiarTabAbogado(tabName) {
     // 1. Ocultar todos y mostrar el activo
@@ -440,41 +435,216 @@ function cargarAgendaAbogado(idUsuario) {
         }).catch(err => console.error(err));
 }
 
+let historialDatosCargados = [];
+
 function cargarHistorialAbogado(idUsuario) {
     const container = document.getElementById('container-historial');
     document.getElementById('container-historial').classList.add('hidden');
     document.getElementById('empty-historial').classList.add('hidden');
     document.getElementById('loading-historial').classList.remove('hidden');
 
+    // Reset Active class on filter buttons
+    document.querySelectorAll('.btn-filtro-historial').forEach(btn => {
+        btn.className = "btn-filtro-historial px-3 py-1.5 text-xs rounded-full bg-white text-slate-600 font-medium border border-slate-200 hover:bg-slate-50 transition-all";
+    });
+    const defaultBtn = document.querySelector('.btn-filtro-historial[onclick*="TODOS"]');
+    if (defaultBtn) {
+        defaultBtn.className = "btn-filtro-historial active px-3 py-1.5 text-xs rounded-full bg-slate-200 text-slate-700 font-bold border border-transparent shadow-sm transition-all";
+    }
+
     fetch(`/abogados/api/${idUsuario}/historial`)
         .then(res => res.json())
         .then(data => {
             document.getElementById('loading-historial').classList.add('hidden');
-            if (data.length === 0) {
-                document.getElementById('empty-historial').classList.remove('hidden');
-            } else {
-                container.innerHTML = '';
-                data.forEach(act => {
-                    container.innerHTML += `
-                        <div class="flex gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                            <div class="flex-shrink-0 w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gob-guinda border border-gray-100">
-                                <i class="fas fa-edit text-sm"></i>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex justify-between items-start">
-                                    <p class="text-sm font-bold text-slate-800 truncate">${act.accion}</p>
-                                    <span class="text-[10px] text-slate-400 whitespace-nowrap ml-2">${act.fecha}</span>
-                                </div>
-                                <p class="text-xs text-slate-600 mt-1">${act.detalles}</p>
-                                ${act.expediente !== 'General' ? `
-                                <p class="text-xs font-medium text-gob-guinda flex items-center gap-1 mt-2">
-                                    <i class="fas fa-file-alt"></i> Exp: ${act.expediente}
-                                </p>` : ''}
-                            </div>
-                        </div>
-                    `;
-                });
-                container.classList.remove('hidden');
+            historialDatosCargados = data;
+            renderizarHistorial(data);
+        }).catch(err => {
+            console.error(err);
+            document.getElementById('loading-historial').classList.add('hidden');
+        });
+}
+
+function renderizarHistorial(data) {
+    const container = document.getElementById('container-historial');
+    if (!data || data.length === 0) {
+        container.innerHTML = '';
+        container.classList.add('hidden');
+        document.getElementById('empty-historial').classList.remove('hidden');
+        return;
+    }
+
+    document.getElementById('empty-historial').classList.add('hidden');
+    container.innerHTML = '';
+
+    data.forEach(act => {
+        let iconClass = 'fa-edit';
+        let bgClass = 'bg-gray-50 text-gray-600 border-gray-100';
+        
+        const cat = act.categoria || 'ACCIONES';
+        if (cat === 'SEGURIDAD') {
+            iconClass = 'fa-shield-alt';
+            bgClass = 'bg-blue-50 text-blue-600 border-blue-100';
+        } else if (cat === 'ASIGNACION') {
+            iconClass = 'fa-user-tag';
+            bgClass = 'bg-purple-50 text-purple-600 border-purple-100';
+        } else if (cat === 'DOCUMENTAL') {
+            iconClass = 'fa-file-signature';
+            bgClass = 'bg-emerald-50 text-emerald-600 border-emerald-100';
+        } else if (cat === 'ACCIONES') {
+            iconClass = 'fa-gavel';
+            bgClass = 'bg-amber-50 text-amber-600 border-amber-100';
+        }
+
+        container.innerHTML += `
+            <div class="flex gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex-shrink-0 w-10 h-10 ${bgClass} rounded-full flex items-center justify-center border">
+                    <i class="fas ${iconClass} text-sm"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-start">
+                        <p class="text-sm font-bold text-slate-800 truncate">${act.accion}</p>
+                        <span class="text-[10px] text-slate-400 whitespace-nowrap ml-2">${act.fecha}</span>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-1">${act.detalles}</p>
+                    ${act.expediente !== 'General' ? `
+                    <p class="text-xs font-medium text-gob-guinda flex items-center gap-1 mt-2">
+                        <i class="fas fa-file-alt"></i> Exp: ${act.expediente}
+                    </p>` : ''}
+                </div>
+            </div>
+        `;
+    });
+    container.classList.remove('hidden');
+}
+
+function filtrarHistorial(categoria) {
+    // 1. Cambiar estilo del botón activo
+    document.querySelectorAll('.btn-filtro-historial').forEach(btn => {
+        if (btn.getAttribute('onclick').includes(`'${categoria}'`)) {
+            btn.className = "btn-filtro-historial active px-3 py-1.5 text-xs rounded-full bg-slate-200 text-slate-700 font-bold border border-transparent shadow-sm transition-all";
+        } else {
+            btn.className = "btn-filtro-historial px-3 py-1.5 text-xs rounded-full bg-white text-slate-600 font-medium border border-slate-200 hover:bg-slate-50 transition-all";
+        }
+    });
+
+    // 2. Filtrar datos
+    if (categoria === 'TODOS') {
+        renderizarHistorial(historialDatosCargados);
+    } else {
+        const filtrados = historialDatosCargados.filter(act => (act.categoria || 'ACCIONES') === categoria);
+        renderizarHistorial(filtrados);
+    }
+}
+
+// --- 5. LÓGICA DE EDICIÓN EN LA PESTAÑA "EDITAR PERFIL" ---
+
+function actualizarFormularioEdicionPorRol() {
+    // Si en el futuro se quiere ocultar/mostrar secciones de adscripción por rol, se implementa aquí.
+}
+
+function cargarMateriasDeGerenciaEdicion() {
+    const gerenciaId = document.getElementById('det-select-gerencia').value;
+    const contenedor = document.getElementById('det-contenedor-materias');
+    const lista = document.getElementById('det-lista-materias-checkboxes');
+
+    if (!gerenciaId) { 
+        contenedor.classList.add('hidden'); 
+        return; 
+    }
+
+    lista.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
+    contenedor.classList.remove('hidden');
+
+    fetch(`/usuarios/api/materias-por-gerencia/${gerenciaId}`)
+        .then(res => res.json())
+        .then(materias => {
+            lista.innerHTML = '';
+            if (materias.length === 0) {
+                lista.innerHTML = '<p class="text-xs text-red-400">Sin materias disponibles.</p>';
+                return;
             }
-        }).catch(err => console.error(err));
+            materias.forEach(m => {
+                const isChecked = materiasUsuarioEdicion.includes(m.id) ? 'checked' : '';
+                lista.innerHTML += `
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" name="materiasIds" value="${m.id}" id="det-mat-${m.id}" ${isChecked} class="rounded text-gob-guinda h-4 w-4 border-gray-300 focus:ring-gob-oro">
+                        <label for="det-mat-${m.id}" class="text-xs text-gray-700 cursor-pointer select-none">${m.nombre}</label>
+                    </div>`;
+            });
+        });
+}
+
+function abrirModalPasswordTemporalEdicion() {
+    const digitos = Math.floor(10000 + Math.random() * 90000);
+    const passGenerada = `Temporal${digitos}`;
+
+    Swal.fire({
+        width: '36rem',
+        title: '<i class="fas fa-key text-gob-guinda mr-2"></i>Contraseña Temporal',
+        html: `
+            <p class="text-sm text-gray-600 mb-6">Se asignará esta contraseña temporal al abogado.<br>Al iniciar sesión se le pedirá cambiarla.</p>
+            <div class="flex items-center gap-6 bg-gray-50 border border-gray-200 rounded-lg px-4 py-6">
+                <code id="swal-pass-code-edicion" class="flex-1 text-left text-lg font-mono font-bold text-gob-guinda tracking-widest select-all">${passGenerada}</code>
+                <button type="button" onclick="copiarPasswordTemporalEdicion('${passGenerada}')"
+                    class="flex-shrink-0 px-3 py-1.5 bg-gob-guinda text-white text-xs font-bold rounded-lg hover:opacity-90 transition-all">
+                    <i class="fas fa-copy mr-1"></i>Copiar
+                </button>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-2">El usuario deberá cambiarla en su próximo inicio de sesión.</p>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '<i class="fas fa-save mr-1"></i> Generar y Enviar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#691228',
+        cancelButtonColor: '#808590ff',
+        focusConfirm: false,
+        customClass: {
+            title: 'text-3xl font-bold pt-6',
+            confirmButton: 'px-8 py-3 text-lg rounded-lg',
+            cancelButton: 'px-8 py-3 text-lg rounded-lg',
+        }
+    }).then(result => {
+        if (result.isConfirmed) {
+            const hiddenPass = document.getElementById('det-input-password-temporal');
+            if (hiddenPass) {
+                hiddenPass.value = passGenerada;
+                hiddenPass.disabled = false;
+            }
+            const badge = document.getElementById('det-badge-pass-generado');
+            if (badge) {
+                badge.classList.remove('hidden');
+            }
+            Swal.fire('¡Contraseña Temporal Generada!', 'La contraseña temporal ha sido preparada. Haz clic en "Guardar Cambios" para aplicarla definitivamente.', 'success');
+        }
+    });
+}
+
+function copiarPasswordTemporalEdicion(pass) {
+    navigator.clipboard.writeText(pass).then(() => {
+        const btn = document.getElementById('swal-pass-code-edicion').nextElementSibling;
+        if (btn) {
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check mr-1"></i>¡Copiado!';
+            btn.classList.add('bg-green-600');
+            btn.classList.remove('bg-gob-guinda');
+            setTimeout(() => { 
+                btn.innerHTML = original; 
+                btn.classList.remove('bg-green-600'); 
+                btn.classList.add('bg-gob-guinda'); 
+            }, 1500);
+        }
+    }).catch(() => {});
+}
+
+function eliminarUsuarioDesdeDetalle() {
+    const id = document.getElementById('det-input-id').value;
+    if (!id) return;
+    Swal.fire({
+        title: '¿Eliminar abogado?', text: "Esta acción no se puede deshacer.", icon: 'error',
+        showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = `/abogados/eliminar/${id}`;
+        }
+    });
 }
