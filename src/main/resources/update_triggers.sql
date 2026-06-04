@@ -111,6 +111,17 @@ BEGIN
             'operacion',           TG_OP
         )::text;
 
+    ELSIF TG_TABLE_NAME = 'actividad_usuarios' THEN
+        v_payload := json_build_object(
+            'tabla',               TG_TABLE_NAME,
+            'id',                  r.id::text,
+            'usuario_id',          r.usuario_id,
+            'titulo',              r.titulo,
+            'descripcion',         r.descripcion,
+            'fecha',               COALESCE(r.fecha_registro, CURRENT_TIMESTAMP),
+            'operacion',           TG_OP
+        )::text;
+
     END IF;
 
     PERFORM pg_notify('canal_notificaciones_realtime', v_payload);
@@ -158,4 +169,9 @@ FOR EACH ROW EXECUTE FUNCTION fn_notify_realtime();
 DROP TRIGGER IF EXISTS trg_actividad_expedientes_realtime ON actividad_expedientes;
 CREATE TRIGGER trg_actividad_expedientes_realtime
 AFTER INSERT OR UPDATE OR DELETE ON actividad_expedientes
+FOR EACH ROW EXECUTE FUNCTION fn_notify_realtime();
+
+DROP TRIGGER IF EXISTS trg_actividad_usuarios_realtime ON actividad_usuarios;
+CREATE TRIGGER trg_actividad_usuarios_realtime
+AFTER INSERT OR UPDATE OR DELETE ON actividad_usuarios
 FOR EACH ROW EXECUTE FUNCTION fn_notify_realtime();
