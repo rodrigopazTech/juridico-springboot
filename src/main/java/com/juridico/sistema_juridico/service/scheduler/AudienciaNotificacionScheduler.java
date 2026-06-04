@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
+import com.juridico.sistema_juridico.Entity.enums.NotificacionEvento;
 import com.juridico.sistema_juridico.Entity.enums.TipoEventoAlerta;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
@@ -50,8 +51,11 @@ public class AudienciaNotificacionScheduler {
             int diasAnticipacion = (int) ChronoUnit.DAYS.between(hoy, audiencia.getFechaAudiencia());
 
             if (destinatario == null || !configuracionAlertaService.debeNotificar(
-                    TipoEventoAlerta.AUDIENCIA, diasAnticipacion, destinatario,
-                    "AUDIENCIA", audiencia.getId().toString())) {
+                    TipoEventoAlerta.AUDIENCIA,
+                    diasAnticipacion,
+                    destinatario,
+                    "AUDIENCIA",
+                    audiencia.getId().toString())) {
                 continue;
             }
 
@@ -62,9 +66,9 @@ public class AudienciaNotificacionScheduler {
             notificacionService.crearNotificacion(
                     destinatario,
                     null,
+                    NotificacionEvento.AUDIENCIA_RECORDATORIO,
                     crearTitulo(diasAnticipacion),
                     mensaje,
-                    "AUDIENCIA",
                     catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
                     String.valueOf(audiencia.getId()),
                     false);
@@ -73,12 +77,12 @@ public class AudienciaNotificacionScheduler {
 
     private String crearTitulo(int diasAnticipacion) {
         if (diasAnticipacion == 0) {
-            return "¡AUDIENCIA ES HOY!";
+            return "AUDIENCIA ES HOY";
         }
         if (diasAnticipacion == 1) {
-            return "¡AUDIENCIA MAÑANA!";
+            return "AUDIENCIA MANANA";
         }
-        return "Audiencia en " + diasAnticipacion + " días";
+        return "Audiencia en " + diasAnticipacion + " dias";
     }
 
     private Usuario obtenerDestinatario(Audiencia audiencia) {

@@ -50,6 +50,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
+import com.juridico.sistema_juridico.Entity.enums.NotificacionEvento;
 import com.juridico.sistema_juridico.Entity.enums.OrigenTermino;
 import com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
@@ -517,9 +518,9 @@ public class TerminosController {
             notificacionService.crearNotificacion(
                     terminoGuardado.getAbogadoResponsable(),
                     actor,
-                    "Término Asignado: " + expedienteNum,
+                    NotificacionEvento.TERMINO_ASIGNADO,
+                    "Termino Asignado: " + expedienteNum,
                     "El usuario " + actor.getNombreCompleto() + " ha vinculado un término a tu expediente: " + terminoGuardado.getAsunto(),
-                    "TERMINO",
                     terminoGuardado.getPrioridad(),
                     terminoGuardado.getId().toString(),
                     false);
@@ -531,9 +532,9 @@ public class TerminosController {
                 notificacionService.crearNotificacion(
                         terminoGuardado.getAbogadoResponsable(),
                         actor,
-                        "Nuevo Término en expediente: " + expedienteNum,
+                        NotificacionEvento.TERMINO_NUEVO,
+                        "Nuevo Termino en expediente: " + expedienteNum,
                         "Haz creado el termino con el asunto: " + terminoGuardado.getAsunto(),
-                        "TERMINO",
                           terminoGuardado.getPrioridad(),
                           terminoGuardado.getId().toString(),
                           false);
@@ -545,9 +546,9 @@ public class TerminosController {
                 notificacionService.crearNotificacion(
                         terminoGuardado.getAbogadoResponsable(),
                         actor,
-                        "Nuevo Término: " + expedienteNum,
+                        NotificacionEvento.TERMINO_NUEVO,
+                        "Nuevo Termino: " + expedienteNum,
                         "El usuario " + actor.getNombreCompleto() + " te ha asignado: " + terminoGuardado.getAsunto(),
-                        "TERMINO",
                           terminoGuardado.getPrioridad(),
                           terminoGuardado.getId().toString(),
                           false);
@@ -704,7 +705,15 @@ public class TerminosController {
 
         for (Usuario u : unicos) {
             if (!u.getId().equals(actor.getId())) {
-                notificacionService.crearNotificacion(u, actor, tituloExp, mensajeBase, "TERMINO", termino.getPrioridad(), termino.getId().toString(), true);
+                notificacionService.crearNotificacion(
+                        u,
+                        actor,
+                        NotificacionEvento.TERMINO_CAMBIO_ETAPA,
+                        tituloExp,
+                        mensajeBase,
+                        termino.getPrioridad(),
+                        termino.getId().toString(),
+                        true);
             }
         }
     }

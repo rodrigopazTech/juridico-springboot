@@ -5,6 +5,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
+import com.juridico.sistema_juridico.Entity.enums.NotificacionEvento;
 
 @Data
 @Builder
@@ -30,6 +31,10 @@ public class Notificacion {
 
     @Column(nullable = false, length = 30)
     private String tipo; // AUDIENCIA, TERMINO...
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 80)
+    private NotificacionEvento evento;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "prioridad_id")

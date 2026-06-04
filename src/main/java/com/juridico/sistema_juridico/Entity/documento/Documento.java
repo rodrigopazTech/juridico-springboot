@@ -84,7 +84,7 @@ public class Documento {
     /** Usuario que movió el documento a la papelera */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_eliminacion_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "passwordHash", "materias"})
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "passwordHash", "materias", "gerencia"})
     private Usuario usuarioEliminacion;
 
     /** ID de la carpeta original antes de ser eliminado (para restauración). */

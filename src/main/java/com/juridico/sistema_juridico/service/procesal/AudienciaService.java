@@ -15,6 +15,7 @@ import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.NotificacionService;
 import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
+import com.juridico.sistema_juridico.Entity.enums.NotificacionEvento;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -140,9 +141,9 @@ public class AudienciaService {
                 notificacionService.crearNotificacion(
                         destinatario,
                         actor,
+                        NotificacionEvento.AUDIENCIA_ACTA_DISPONIBLE,
                         "Acta Disponible: " + expediente,
-                        "El abogado " + nombreAbogado + " ha subido el acta. Requiere validación.",
-                        "AUDIENCIA",
+                        "El abogado " + nombreAbogado + " ha subido el acta. Requiere validación.",
                         catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
                         entidadId,
                         true);
@@ -201,9 +202,9 @@ public class AudienciaService {
             notificacionService.crearNotificacion(
                     abogadoComparece,
                     usuarioActual,
+                    NotificacionEvento.AUDIENCIA_VALIDADA_CONCLUIDA,
                     "Audiencia Validada y Concluida",
-                    "Tu audiencia del expediente " + audiencia.getExpediente().getNumero() + " ha sido validada y concluida.",
-                    "AUDIENCIA",
+                    "Tu audiencia del expediente " + audiencia.getExpediente().getNumero() + " ha sido validada y concluida.",
                     catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                     audiencia.getId().toString(),
                     true
@@ -213,9 +214,9 @@ public class AudienciaService {
             notificacionService.crearNotificacion(
                     abogadoResponsable,
                     usuarioActual,
+                    NotificacionEvento.AUDIENCIA_VALIDADA_CONCLUIDA,
                     "Audiencia Validada y Concluida",
-                    "La audiencia del expediente " + audiencia.getExpediente().getNumero() + " ha sido validada y concluida.",
-                    "AUDIENCIA",
+                    "La audiencia del expediente " + audiencia.getExpediente().getNumero() + " ha sido validada y concluida.",
                     catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                     audiencia.getId().toString(),
                     true
@@ -306,9 +307,9 @@ public class AudienciaService {
                 notificacionService.crearNotificacion(
                         responsable,
                         actor,
+                        NotificacionEvento.AUDIENCIA_NUEVA,
                         tituloBase,
-                        mensajeBase,
-                        "AUDIENCIA",
+                        mensajeBase,
                         catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                         entidadId,
                         false);
@@ -321,9 +322,9 @@ public class AudienciaService {
                     notificacionService.crearNotificacion(
                             comparece,
                             actor,
-                            "Asignación de Comparecencia",
-                            "Has sido asignado para asistir a la audiencia del expediente " + numeroExpediente,
-                            "AUDIENCIA",
+                            NotificacionEvento.AUDIENCIA_COMPARECENCIA_ASIGNADA,
+                            "Asignacion de Comparecencia",
+                            "Has sido asignado para asistir a la audiencia del expediente " + numeroExpediente,
                             catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
                             entidadId,
                             false);

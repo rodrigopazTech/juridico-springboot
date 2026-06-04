@@ -531,7 +531,7 @@ async function cargarDocumentos() {
             }
 
             const documentos = await response.json();
-            renderizarPapelera(documentos);
+            renderizarPapeleraExplorador(documentos);
             return;
         }
 
@@ -726,7 +726,7 @@ function renderizarDocumentos(documentos) {
     renderizarContenido([], documentos);
 }
 
-function renderizarPapelera(documentos) {
+function renderizarPapeleraExplorador(documentos) {
     const vistaLista = document.getElementById('vista-lista');
     const vistaGrid = document.getElementById('vista-grid');
 
@@ -1470,7 +1470,7 @@ async function cargarPapelera() {
         }
 
         const documentos = await response.json();
-        renderizarPapelera(documentos);
+        renderizarPapeleraModal(documentos);
         actualizarBadgePapelera(documentos.length);
 
     } catch (error) {
@@ -1487,7 +1487,7 @@ async function cargarPapelera() {
 /**
  * Renderiza la lista de documentos en la papelera.
  */
-function renderizarPapelera(documentos) {
+function renderizarPapeleraModal(documentos) {
     const contenido = document.getElementById('papelera-contenido');
 
     if (!documentos || documentos.length === 0) {

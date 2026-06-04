@@ -10,6 +10,7 @@ import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -22,7 +23,11 @@ public class GlobalExceptionHandler {
 
     // 1. RECURSO NO ENCONTRADO (404)
     @ExceptionHandler(ResourceNotFoundException.class)
-    public RedirectView handleResourceNotFound(ResourceNotFoundException ex, RedirectAttributes attrs, HttpServletRequest request) {
+    public Object handleResourceNotFound(ResourceNotFoundException ex, RedirectAttributes attrs, HttpServletRequest request) {
+        if (isApiRequest(request)) {
+            return jsonError(HttpStatus.NOT_FOUND, ex.getMessage());
+        }
+
         attrs.addFlashAttribute("mensaje", ex.getMessage());
         attrs.addFlashAttribute("tipo", "error"); // Alerta Roja
         return new RedirectView(getRefererOrHome(request));
@@ -30,7 +35,11 @@ public class GlobalExceptionHandler {
 
     // 2. PERMISOS (403)
     @ExceptionHandler({ForbiddenException.class, UnauthorizedException.class})
-    public RedirectView handleSecurityErrors(RuntimeException ex, RedirectAttributes attrs, HttpServletRequest request) {
+    public Object handleSecurityErrors(RuntimeException ex, RedirectAttributes attrs, HttpServletRequest request) {
+        if (isApiRequest(request)) {
+            return jsonError(HttpStatus.FORBIDDEN, "Acceso Denegado: " + ex.getMessage());
+        }
+
         attrs.addFlashAttribute("mensaje", "Acceso Denegado: " + ex.getMessage());
         attrs.addFlashAttribute("tipo", "warning"); // Alerta Amarilla
         return new RedirectView(getRefererOrHome(request));
@@ -38,7 +47,11 @@ public class GlobalExceptionHandler {
 
     // 3. ERRORES DE LÓGICA (400)
     @ExceptionHandler({BadRequestException.class, ConflictException.class})
-    public RedirectView handleLogicErrors(RuntimeException ex, RedirectAttributes attrs, HttpServletRequest request) {
+    public Object handleLogicErrors(RuntimeException ex, RedirectAttributes attrs, HttpServletRequest request) {
+        if (isApiRequest(request)) {
+            return jsonError(HttpStatus.BAD_REQUEST, ex.getMessage());
+        }
+
         attrs.addFlashAttribute("mensaje", ex.getMessage());
         attrs.addFlashAttribute("tipo", "info"); // Alerta Azul
         return new RedirectView(getRefererOrHome(request));
@@ -46,7 +59,12 @@ public class GlobalExceptionHandler {
 
     // 4. ERROR DE BASE DE DATOS (Integridad / FK)
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public RedirectView handleDatabaseError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
+    public Object handleDatabaseError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
+        if (isApiRequest(request)) {
+            return jsonError(HttpStatus.CONFLICT,
+                    "No se puede realizar la accion: El registro esta vinculado a otros datos o ya existe.");
+        }
+
         attrs.addFlashAttribute("mensaje", "No se puede realizar la acción: El registro está vinculado a otros datos o ya existe.");
         attrs.addFlashAttribute("tipo", "error");
         return new RedirectView(getRefererOrHome(request));
@@ -54,11 +72,15 @@ public class GlobalExceptionHandler {
 
     // 5. ERROR GENERAL (Cualquier otra cosa)
     @ExceptionHandler(Exception.class)
-    public RedirectView handleGeneralError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
+    public Object handleGeneralError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
         // Imprimimos el error real en la consola
         System.err.println("--- ERROR CAPTURADO POR GLOBAL HANDLER ---");
         System.err.println("Mensaje: " + ex.getMessage());
         ex.printStackTrace();
+
+        if (isApiRequest(request)) {
+            return jsonError(HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrio un error inesperado en el sistema.");
+        }
         
         attrs.addFlashAttribute("mensaje", "Ocurrió un error inesperado en el sistema.");
         attrs.addFlashAttribute("tipo", "error");
@@ -72,5 +94,13 @@ public class GlobalExceptionHandler {
             return "/notificaciones";
         }
         return referer != null ? referer : "/";
+    }
+
+    private boolean isApiRequest(HttpServletRequest request) {
+        return request.getRequestURI().startsWith("/api/");
+    }
+
+    private ResponseEntity<Map<String, String>> jsonError(HttpStatus status, String mensaje) {
+        return ResponseEntity.status(status).body(Map.of("error", mensaje));
     }
 }

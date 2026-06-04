@@ -1,11 +1,13 @@
 package com.juridico.sistema_juridico.controller;
 
+import com.juridico.sistema_juridico.Entity.enums.NotificacionEvento;
 import com.juridico.sistema_juridico.Entity.usuario.PreferenciaNotificacion;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.dto.response.notificaciones.GrupoPreferenciaNotificacionResponse;
 import com.juridico.sistema_juridico.repository.Usuarios.PreferenciaNotificacionRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
-import com.juridico.sistema_juridico.security.CustomUserDetails; // Importante para actualizar la sesión
-
+import com.juridico.sistema_juridico.security.CustomUserDetails;
+import com.juridico.sistema_juridico.service.PreferenciaNotificacionEventoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -13,8 +15,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/perfil")
@@ -27,9 +34,11 @@ public class PerfilController {
     private PreferenciaNotificacionRepository preferenciaRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder; // Inyectamos el encriptador de contraseñas
+    private PasswordEncoder passwordEncoder;
 
-    // --- 1. VER PERFIL ---
+    @Autowired
+    private PreferenciaNotificacionEventoService preferenciaEventoService;
+
     @GetMapping
     public String verPerfil(
             @RequestParam(value = "tab", defaultValue = "datos") String tab,
@@ -39,47 +48,35 @@ public class PerfilController {
 
         PreferenciaNotificacion prefs = preferenciaRepository.findByUsuarioId(usuario.getId())
                 .orElseGet(() -> PreferenciaNotificacion.builder().usuario(usuario).build());
+        List<GrupoPreferenciaNotificacionResponse> gruposPreferencias = preferenciaEventoService.construirVista(usuario);
 
         model.addAttribute("usuario", usuario);
         model.addAttribute("preferencias", prefs);
+        model.addAttribute("gruposPreferencias", gruposPreferencias);
         model.addAttribute("pageTitle", "Mi Cuenta");
         model.addAttribute("activePage", "perfil");
-        model.addAttribute("tabInicial", tab); // "datos", "notif", "seguridad"
+        model.addAttribute("tabInicial", tab);
 
         return "views/perfil/index";
     }
 
-    // --- 2. GUARDAR PREFERENCIAS (Solución Checkboxes) ---
     @PostMapping("/preferencias/guardar")
     public String guardarPreferencias(
-            @RequestParam(value = "notificarNuevaAudiencia", defaultValue = "false") boolean notificarNuevaAudiencia,
-            @RequestParam(value = "notificarTerminoVencer", defaultValue = "false") boolean notificarTerminoVencer,
-            @RequestParam(value = "notificarNuevoTermino", defaultValue = "false") boolean notificarNuevoTermino,
-            @RequestParam(value = "notificarReasignacion", defaultValue = "false") boolean notificarReasignacion,
+            @RequestParam(value = "eventos", required = false) List<NotificacionEvento> eventos,
             RedirectAttributes redirectAttrs) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
-        PreferenciaNotificacion preferencias = preferenciaRepository.findByUsuarioId(usuario.getId())
-                .orElseGet(() -> PreferenciaNotificacion.builder().usuario(usuario).build());
-
-        // Al usar RequestParam con defaultValue="false", forzamos a Spring a entender
-        // cuando se desmarcan
-        preferencias.setNotificarNuevaAudiencia(notificarNuevaAudiencia);
-        preferencias.setNotificarTerminoVencer(notificarTerminoVencer);
-        preferencias.setNotificarNuevoTermino(notificarNuevoTermino);
-        preferencias.setNotificarReasignacion(notificarReasignacion);
-
-        preferenciaRepository.save(preferencias);
+        preferenciaEventoService.guardarPreferencias(usuario, eventos);
 
         redirectAttrs.addFlashAttribute("mensaje", "Preferencias actualizadas correctamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
+        redirectAttrs.addFlashAttribute("origenMensaje", "preferencias");
 
         return "redirect:/perfil";
     }
 
-    // --- 3. ACTUALIZAR CONTRASEÑA ---
     @PostMapping("/password/actualizar")
     public String actualizarPassword(
             @RequestParam("passwordActual") String passwordActual,
@@ -91,28 +88,25 @@ public class PerfilController {
         String email = auth.getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
-        // A. Validar que la contraseña actual sea la correcta
         if (!passwordEncoder.matches(passwordActual, usuario.getPassword())) {
-            redirectAttrs.addFlashAttribute("mensaje", "La contraseña actual es incorrecta.");
+            redirectAttrs.addFlashAttribute("mensaje", "La contrasena actual es incorrecta.");
             redirectAttrs.addFlashAttribute("tipo", "error");
+            redirectAttrs.addFlashAttribute("origenMensaje", "password");
             return "redirect:/perfil";
         }
-        
 
-        // B. Validar que las contraseñas nuevas coincidan
         if (!nuevoPassword.equals(confirmarPassword)) {
-            redirectAttrs.addFlashAttribute("mensaje", "Las nuevas contraseñas no coinciden.");
+            redirectAttrs.addFlashAttribute("mensaje", "Las nuevas contrasenas no coinciden.");
             redirectAttrs.addFlashAttribute("tipo", "warning");
+            redirectAttrs.addFlashAttribute("origenMensaje", "password");
             return "redirect:/perfil";
         }
 
-        // C. Actualizar y guardar en base de datos
         usuario.setPassword(passwordEncoder.encode(nuevoPassword));
         usuario.setForcePasswordChange(false);
-        usuario.setPasswordUpdatedAt(java.time.LocalDateTime.now()); // Registro de caducidad
+        usuario.setPasswordUpdatedAt(java.time.LocalDateTime.now());
         usuarioRepository.save(usuario);
 
-        // D. Actualizar la sesión de Spring Security para no desloguear al usuario
         if (auth.getPrincipal() instanceof CustomUserDetails) {
             CustomUserDetails principal = (CustomUserDetails) auth.getPrincipal();
             CustomUserDetails updatedPrincipal = new CustomUserDetails(
@@ -129,10 +123,9 @@ public class PerfilController {
             SecurityContextHolder.getContext().setAuthentication(newAuth);
         }
 
-        redirectAttrs.addFlashAttribute("mensaje", "Contraseña actualizada exitosamente.");
+        redirectAttrs.addFlashAttribute("mensaje", "Contrasena actualizada exitosamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
-        // Redirige de vuelta a la pestaña de seguridad; el frontend
-        // muestra el modal de éxito 4 s y luego redirige a /logout.
+        redirectAttrs.addFlashAttribute("origenMensaje", "password");
         return "redirect:/perfil?tab=seguridad";
     }
 }

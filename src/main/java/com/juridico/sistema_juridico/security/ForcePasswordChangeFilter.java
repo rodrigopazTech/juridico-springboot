@@ -23,6 +23,7 @@ public class ForcePasswordChangeFilter extends OncePerRequestFilter {
 
     /** Política: la contraseña vence a los 3 meses (92 días). */
     private static final int DIAS_VIGENCIA = 92;
+    private static final String CONTENT_TYPE_JSON = "application/json;charset=UTF-8";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -33,6 +34,7 @@ public class ForcePasswordChangeFilter extends OncePerRequestFilter {
         if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof CustomUserDetails) {
             CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
             String path = request.getRequestURI();
+            boolean esApi = path.startsWith("/api/");
 
             // Rutas siempre permitidas (assets estáticos, logout, cambio de contraseña)
             // IMPORTANTE: /perfil/password/actualizar debe estar aquí para que usuarios con
@@ -55,6 +57,12 @@ public class ForcePasswordChangeFilter extends OncePerRequestFilter {
 
             // --- A. Cambio OBLIGATORIO por admin (primera vez) ---
             if (userDetails.isForcePasswordChange()) {
+                if (esApi) {
+                    responderJsonBloqueoPassword(response, "primera-vez",
+                            "Debe cambiar su contrasena antes de continuar.");
+                    return;
+                }
+
                 response.sendRedirect(request.getContextPath() + "/cambiar-password?razon=primera-vez");
                 return;
             }
@@ -69,6 +77,12 @@ public class ForcePasswordChangeFilter extends OncePerRequestFilter {
                 if (referencia != null) {
                     boolean estaVencida = referencia.plusDays(DIAS_VIGENCIA).isBefore(LocalDateTime.now());
                     if (estaVencida) {
+                        if (esApi) {
+                            responderJsonBloqueoPassword(response, "vencida",
+                                    "Su contrasena esta vencida. Debe actualizarla antes de continuar.");
+                            return;
+                        }
+
                         response.sendRedirect(request.getContextPath() + "/cambiar-password?razon=vencida");
                         return;
                     }
@@ -77,5 +91,12 @@ public class ForcePasswordChangeFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void responderJsonBloqueoPassword(HttpServletResponse response, String razon, String mensaje)
+            throws IOException {
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setContentType(CONTENT_TYPE_JSON);
+        response.getWriter().write("{\"error\":\"" + mensaje + "\",\"razon\":\"" + razon + "\"}");
     }
 }

@@ -169,7 +169,7 @@
     <!-- ═══════════════════════════════════════════════
          Script 3: Alertas Emergentes (Backend Feedback)
     ═══════════════════════════════════════════════ -->
-    <script th:if="${mensaje != null}" th:inline="javascript">
+    <script th:if="${mensaje != null and origenMensaje == 'password'}" th:inline="javascript">
         document.addEventListener('DOMContentLoaded', function () {
             const mensaje = /*[[${mensaje}]]*/ '';
             const tipo = /*[[${tipo}]]*/ '';

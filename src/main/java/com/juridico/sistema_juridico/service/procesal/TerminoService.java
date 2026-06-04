@@ -1,6 +1,7 @@
 package com.juridico.sistema_juridico.service.procesal;
 
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
+import com.juridico.sistema_juridico.Entity.enums.NotificacionEvento;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import com.juridico.sistema_juridico.Entity.procesal.TerminoPresentado;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
@@ -126,9 +127,9 @@ public class TerminoService {
             notificacionService.crearNotificacion(
                     abogadoResponsable,
                     usuarioActor,
-                    "Término Validado y Concluido",
-                    "El término '" + termino.getAsunto() + "' " + descExpediente + " ha sido marcado como presentado y concluido.",
-                    "TERMINO",
+                    NotificacionEvento.TERMINO_VALIDADO_CONCLUIDO,
+                    "Termino Validado y Concluido",
+                    "El término '" + termino.getAsunto() + "' " + descExpediente + " ha sido marcado como presentado y concluido.",
                     catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                     termino.getId().toString(),
                     true
@@ -138,9 +139,9 @@ public class TerminoService {
             notificacionService.crearNotificacion(
                     responsableTermino,
                     usuarioActor,
-                    "Término Validado y Concluido",
-                    "El término '" + termino.getAsunto() + "' " + descExpediente + " ha sido marcado como presentado y concluido.",
-                    "TERMINO",
+                    NotificacionEvento.TERMINO_VALIDADO_CONCLUIDO,
+                    "Termino Validado y Concluido",
+                    "El término '" + termino.getAsunto() + "' " + descExpediente + " ha sido marcado como presentado y concluido.",
                     catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                     termino.getId().toString(),
                     true

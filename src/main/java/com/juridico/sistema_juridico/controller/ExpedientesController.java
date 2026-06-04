@@ -2,6 +2,7 @@ package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
+import com.juridico.sistema_juridico.Entity.enums.NotificacionEvento;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.expediente.ActividadExpediente;
@@ -457,9 +458,9 @@ public class ExpedientesController {
 
                         notificacionService.crearNotificacion(
                                 guardado.getAbogadoResponsable(),
+                                NotificacionEvento.EXPEDIENTE_REASIGNADO,
                                 "Expediente Reasignado",
                                 "Se te ha reasignado el expediente " + guardado.getNumero() + " para su atención.",
-                                "ASIGNACION",
                                 catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
                                 guardado.getId().toString());
                     }
@@ -545,9 +546,9 @@ public class ExpedientesController {
         for (Usuario u : new HashSet<>(destinatarios)) {
             notificacionService.crearNotificacion(
                     u,
+                    NotificacionEvento.EXPEDIENTE_NUEVO,
                     titulo,
                     mensaje,
-                    "EXPEDIENTE",
                     prioAlta,
                     exp.getId().toString());
         }
@@ -692,9 +693,9 @@ public class ExpedientesController {
                         notificacionService.crearNotificacion(
                                 dest,
                                 usuario, // El autor
+                                NotificacionEvento.EXPEDIENTE_OBSERVACION_NUEVA,
                                 tituloNotif,
                                 mensajeNotif,
-                                "OBSERVACION", // Tipo de notificación
                                 prioMedia,
                                 exp.getId().toString(),
                                 true // Silenciar el reenvío automático a jefes/superiores que hace NotificacionService

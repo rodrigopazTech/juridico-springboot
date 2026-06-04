@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
+import com.juridico.sistema_juridico.Entity.enums.NotificacionEvento;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.enums.TipoEventoAlerta;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
@@ -82,9 +83,9 @@ public class NotificacionAutomaticaService {
                 notificacionService.crearNotificacion(
                         usuario,
                         null,
+                        NotificacionEvento.TERMINO_RECORDATORIO,
                         tituloNotif,
-                        mensaje,
-                        "TERMINO",
+                        mensaje,
                         prioridad,
                         termino.getId().toString(),
                         true);

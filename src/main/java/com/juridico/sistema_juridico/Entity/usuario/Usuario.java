@@ -5,6 +5,7 @@ import lombok.*; // Importa todo lombok
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.HashSet;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
@@ -16,6 +17,7 @@ import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Table(name = "usuarios", indexes = {
         @Index(name = "idx_usuarios_email", columnList = "email"),
         @Index(name = "idx_usuarios_rol", columnList = "rol")

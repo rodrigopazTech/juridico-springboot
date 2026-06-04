@@ -120,6 +120,36 @@ END;
 $function$;
 
 -- 2. Crear disparadores (triggers) si no existen
+DROP TRIGGER IF EXISTS trg_expedientes_realtime ON expedientes;
+CREATE TRIGGER trg_expedientes_realtime
+AFTER INSERT OR UPDATE ON expedientes
+FOR EACH ROW EXECUTE FUNCTION fn_notify_realtime();
+
+DROP TRIGGER IF EXISTS trg_notificaciones_realtime ON notificaciones;
+CREATE TRIGGER trg_notificaciones_realtime
+AFTER INSERT ON notificaciones
+FOR EACH ROW EXECUTE FUNCTION fn_notify_realtime();
+
+DROP TRIGGER IF EXISTS trg_terminos_realtime ON terminos;
+CREATE TRIGGER trg_terminos_realtime
+AFTER INSERT OR UPDATE OR DELETE ON terminos
+FOR EACH ROW EXECUTE FUNCTION fn_notify_realtime();
+
+DROP TRIGGER IF EXISTS trg_audiencias_realtime ON audiencias;
+CREATE TRIGGER trg_audiencias_realtime
+AFTER INSERT OR UPDATE OR DELETE ON audiencias
+FOR EACH ROW EXECUTE FUNCTION fn_notify_realtime();
+
+DROP TRIGGER IF EXISTS trg_documentos_realtime ON documentos;
+CREATE TRIGGER trg_documentos_realtime
+AFTER INSERT OR UPDATE OR DELETE ON documentos
+FOR EACH ROW EXECUTE FUNCTION fn_notify_realtime();
+
+DROP TRIGGER IF EXISTS trg_carpetas_realtime ON carpetas;
+CREATE TRIGGER trg_carpetas_realtime
+AFTER INSERT OR UPDATE OR DELETE ON carpetas
+FOR EACH ROW EXECUTE FUNCTION fn_notify_realtime();
+
 DROP TRIGGER IF EXISTS trg_comentarios_realtime ON comentarios;
 CREATE TRIGGER trg_comentarios_realtime
 AFTER INSERT OR UPDATE OR DELETE ON comentarios

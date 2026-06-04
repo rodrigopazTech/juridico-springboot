@@ -1,51 +1,38 @@
 <div th:fragment="form">
     <form th:action="@{/perfil/preferencias/guardar}" method="post">
-        <div class="space-y-5">
-            
-            <div class="flex items-center justify-between p-4 rounded-2xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
+        <div class="space-y-8">
+            <div th:each="grupo : ${gruposPreferencias}" class="space-y-3">
                 <div>
-                    <p class="text-sm font-bold text-gray-800">Nuevas Audiencias</p>
-                    <p class="text-xs text-gray-500">Alertas al programar eventos donde participas.</p>
+                    <p class="text-xs font-bold uppercase tracking-[0.18em] text-gray-400" th:text="${grupo.categoria}">Categoria</p>
                 </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" name="notificarNuevaAudiencia" class="sr-only peer" th:checked="${preferencias.notificarNuevaAudiencia}">
-                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:outline-none peer-checked:after:translate-x-full peer-checked:bg-green-500 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                </label>
-            </div>
 
-            <div class="flex items-center justify-between p-4 rounded-2xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
-                <div>
-                    <p class="text-sm font-bold text-gray-800">Términos por Vencer</p>
-                    <p class="text-xs text-gray-500">Recordatorios de vencimiento (Sistema de semáforo 3 y 1 días).</p>
+                <div th:each="item : ${grupo.eventos}"
+                     class="flex items-center justify-between p-4 rounded-2xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
+                    <div class="pr-4">
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-bold text-gray-800" th:text="${item.nombre}">Nombre evento</p>
+                            <span th:if="${!item.configurable}"
+                                  class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+                                Obligatoria
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-500" th:text="${item.descripcion}">Descripcion del evento.</p>
+                    </div>
+
+                    <label th:if="${item.configurable}" class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox"
+                               name="eventos"
+                               th:value="${item.evento}"
+                               class="sr-only peer"
+                               th:checked="${item.habilitada}">
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:outline-none peer-checked:after:translate-x-full peer-checked:bg-green-500 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                    </label>
+
+                    <div th:if="${!item.configurable}" class="w-11 h-6 rounded-full bg-amber-200/80 relative">
+                        <div class="absolute top-[2px] right-[2px] h-5 w-5 rounded-full bg-white shadow-sm"></div>
+                    </div>
                 </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" name="notificarTerminoVencer" class="sr-only peer" th:checked="${preferencias.notificarTerminoVencer}">
-                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:outline-none peer-checked:after:translate-x-full peer-checked:bg-green-500 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                </label>
             </div>
-
-            <div class="flex items-center justify-between p-4 rounded-2xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
-                <div>
-                    <p class="text-sm font-bold text-gray-800">Nuevos Términos Asignados</p>
-                    <p class="text-xs text-gray-500">Alertas cuando se te asigne un nuevo término o actuación.</p>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" name="notificarNuevoTermino" class="sr-only peer" th:checked="${preferencias.notificarNuevoTermino}">
-                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:outline-none peer-checked:after:translate-x-full peer-checked:bg-green-500 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                </label>
-            </div>
-
-            <div class="flex items-center justify-between p-4 rounded-2xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
-                <div>
-                    <p class="text-sm font-bold text-gray-800">Reasignación de Expedientes</p>
-                    <p class="text-xs text-gray-500">Notificar cuando la titularidad de un expediente cambie hacia ti.</p>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" name="notificarReasignacion" class="sr-only peer" th:checked="${preferencias.notificarReasignacion}">
-                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:outline-none peer-checked:after:translate-x-full peer-checked:bg-green-500 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                </label>
-            </div>
-
         </div>
 
         <div class="mt-8 flex justify-end">
