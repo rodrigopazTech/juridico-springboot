@@ -30,7 +30,7 @@ function seleccionarAbogado(cardElement) {
 
     const materiasStr = cardElement.getAttribute('data-materias-nombres');
     const materiasNombres = materiasStr ? materiasStr.split('|') : [];
-    
+
     const materiasIdsStr = cardElement.getAttribute('data-materias-ids');
     const materiasIdsArray = materiasIdsStr ? materiasIdsStr.split(',').map(Number) : [];
 
@@ -77,7 +77,7 @@ function seleccionarAbogado(cardElement) {
         document.getElementById('det-input-email').value = email;
         document.getElementById('det-select-rol').value = rol;
         document.getElementById('det-check-activo').checked = activo;
-        
+
         // Reset password fields in edit tab
         const detPass = document.getElementById('det-input-password-temporal');
         if (detPass) {
@@ -479,7 +479,7 @@ function renderizarHistorial(data) {
     data.forEach(act => {
         let iconClass = 'fa-edit';
         let bgClass = 'bg-gray-50 text-gray-600 border-gray-100';
-        
+
         const cat = act.categoria || 'ACCIONES';
         if (cat === 'SEGURIDAD') {
             iconClass = 'fa-shield-alt';
@@ -547,9 +547,9 @@ function cargarMateriasDeGerenciaEdicion() {
     const contenedor = document.getElementById('det-contenedor-materias');
     const lista = document.getElementById('det-lista-materias-checkboxes');
 
-    if (!gerenciaId) { 
-        contenedor.classList.add('hidden'); 
-        return; 
+    if (!gerenciaId) {
+        contenedor.classList.add('hidden');
+        return;
     }
 
     lista.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
@@ -605,16 +605,58 @@ function abrirModalPasswordTemporalEdicion() {
         }
     }).then(result => {
         if (result.isConfirmed) {
-            const hiddenPass = document.getElementById('det-input-password-temporal');
-            if (hiddenPass) {
-                hiddenPass.value = passGenerada;
-                hiddenPass.disabled = false;
+            const userId = document.getElementById('det-input-id').value;
+            if (!userId) {
+                Swal.fire('Error', 'No se ha podido identificar al abogado seleccionado.', 'error');
+                return;
             }
-            const badge = document.getElementById('det-badge-pass-generado');
-            if (badge) {
-                badge.classList.remove('hidden');
-            }
-            Swal.fire('¡Contraseña Temporal Generada!', 'La contraseña temporal ha sido preparada. Haz clic en "Guardar Cambios" para aplicarla definitivamente.', 'success');
+
+            Swal.fire({
+                title: 'Guardando contraseña...',
+                html: 'Guardando la contraseña temporal en la base de datos...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const formData = new FormData();
+            formData.append('id', userId);
+            formData.append('password', passGenerada);
+
+            fetch('/abogados/api/password-temporal', {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(data => {
+                            throw new Error(data.mensaje || 'Error al guardar la contraseña.');
+                        });
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    const badge = document.getElementById('det-badge-pass-generado');
+                    if (badge) {
+                        badge.innerHTML = '<i class="fas fa-check-circle text-sm"></i> Contraseña Temporal Actualizada';
+                        badge.classList.remove('hidden');
+                    }
+                    Swal.fire({
+                        title: '¡Contraseña Temporal Actualizada!',
+                        text: 'La contraseña temporal ha sido actualizada de manera correcta, ya no es necesario que guardes los cambios del perfil',
+                        icon: 'success',
+                        confirmButtonColor: '#691228'
+                    });
+                })
+                .catch(err => {
+                    Swal.fire({
+                        title: 'Error',
+                        text: err.message || 'No se pudo guardar la contraseña temporal.',
+                        icon: 'error',
+                        confirmButtonColor: '#691228'
+                    });
+                });
         }
     });
 }
@@ -627,13 +669,13 @@ function copiarPasswordTemporalEdicion(pass) {
             btn.innerHTML = '<i class="fas fa-check mr-1"></i>¡Copiado!';
             btn.classList.add('bg-green-600');
             btn.classList.remove('bg-gob-guinda');
-            setTimeout(() => { 
-                btn.innerHTML = original; 
-                btn.classList.remove('bg-green-600'); 
-                btn.classList.add('bg-gob-guinda'); 
+            setTimeout(() => {
+                btn.innerHTML = original;
+                btn.classList.remove('bg-green-600');
+                btn.classList.add('bg-gob-guinda');
             }, 1500);
         }
-    }).catch(() => {});
+    }).catch(() => { });
 }
 
 function eliminarUsuarioDesdeDetalle() {
