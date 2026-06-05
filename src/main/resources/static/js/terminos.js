@@ -371,6 +371,7 @@ function iniciarTerminosWebSocket() {
         boton.style.padding = "10px 20px";
         boton.style.marginTop = "20px";
         boton.style.cursor = "pointer";
+        boton.style.boderColor="Black";  
         boton.onclick = () => {
             intentos = 0;
             seguirIntentando = true;
@@ -386,7 +387,7 @@ function iniciarTerminosWebSocket() {
 
     function conectar() {
         if (!seguirIntentando) {
-            console.warn("Reconexión detenida manualmente.");
+            console.warn("Reconexión detenida.");
             return;
         }
 

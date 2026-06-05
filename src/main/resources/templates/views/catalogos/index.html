@@ -113,6 +113,15 @@
                     </li>
 
                     <li class="mr-1">
+                        <button type="button" data-tab="tipos-expediente"
+                            class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            <i class="fas fa-folder"></i> Tipos de Expediente
+                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
+                                th:text="${#lists.size(listaTiposExpediente)}">0</span>
+                        </button>
+                    </li>
+
+                    <li class="mr-1">
                         <button type="button" data-tab="sedes"
                             class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
                             <i class="fas fa-map-marker-alt"></i> Sedes/Estados
@@ -324,6 +333,71 @@
                                     <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
                                         <i class="fas fa-folder-open text-2xl mb-2 block"></i>
                                         No hay tipos de audiencia registrados.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+
+                <!-- ===================== TAB: TIPOS EXPEDIENTE ===================== -->
+                <div id="panel-tipos-expediente" class="tab-panel hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div
+                            class="px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 bg-gray-50/50">
+                            <h3 class="text-lg font-bold text-gob-gris flex items-center gap-2">
+                                <i class="fas fa-folder text-indigo-500"></i> Tipos de Expediente
+                            </h3>
+                            <div class="flex gap-2 items-center">
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i
+                                            class="fas fa-search text-xs"></i></span>
+                                    <input type="text" id="search-tipos-expediente" placeholder="Buscar..."
+                                        class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-52 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all">
+                                </div>
+                                <button th:if="${puedeEditar}" onclick="abrirModalNuevo('tipo-expediente')"
+                                    class="bg-gob-guinda text-white px-4 py-2 rounded-lg text-sm hover:bg-opacity-90 shadow-sm transition-all flex items-center gap-2">
+                                    <i class="fas fa-plus"></i> Nuevo
+                                </button>
+                            </div>
+                        </div>
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-6 py-3 font-bold">Nombre</th>
+                                    <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-tipos-expediente" class="divide-y divide-gray-100">
+                                <tr th:each="te : ${listaTiposExpediente}" class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <span class="font-semibold text-gray-800" th:text="${te.nombre}">Nombre</span>
+                                        <span th:if="${te.createdAt != null and te.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
+                                    </td>
+                                    <td th:if="${puedeEditar}" class="px-6 py-4 text-center">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <button th:data-id="${te.id}" th:data-nombre="${te.nombre}"
+                                                onclick="editarItem('tipo-expediente', this)"
+                                                class="text-gob-oro hover:text-gob-guinda transition-colors p-1.5 rounded-lg hover:bg-gob-oro/10"
+                                                title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button th:data-id="${te.id}"
+                                                th:data-nombre="${te.nombre}"
+                                                onclick="eliminarItem('tipo-expediente', this)"
+                                                class="text-red-400 hover:text-red-600 transition-colors p-1.5 rounded-lg hover:bg-red-50"
+                                                title="Eliminar">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(listaTiposExpediente)}">
+                                    <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
+                                        <i class="fas fa-folder-open text-2xl mb-2 block"></i>
+                                        No hay tipos de expediente registrados.
                                     </td>
                                 </tr>
                             </tbody>

@@ -16,6 +16,7 @@ export class CalendarioModule {
         this.setupEventListeners();
         await this.loadEvents();
         this.render();
+        this.initWebSocket();
     }
 
     setupEventListeners() {
@@ -800,5 +801,47 @@ export class CalendarioModule {
         }
 
         return dateStr;
+    }
+
+    /**
+     * Inicia la conexión WebSocket para recibir actualizaciones en tiempo real.
+     * Escucha el canal /topic/alertas y recarga los eventos cuando detecta
+     * cambios en las tablas 'terminos' o 'audiencias'.
+     */
+    initWebSocket() {
+        const TABLA_RELEVANTES = ['terminos', 'audiencias'];
+
+        const intentarConectar = () => {
+            if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
+                setTimeout(intentarConectar, 1000);
+                return;
+            }
+
+            const socket = new SockJS('/ws-realtime');
+            const stompClient = Stomp.over(socket);
+            stompClient.debug = null;
+
+            stompClient.connect({}, (frame) => {
+                console.log('[Calendario] Conectado a WebSockets en tiempo real.');
+
+                stompClient.subscribe('/topic/alertas', (message) => {
+                    try {
+                        const payload = JSON.parse(message.body);
+                        if (TABLA_RELEVANTES.includes(payload.tabla)) {
+                            console.log(`[Calendario] Cambio detectado en '${payload.tabla}', recargando eventos...`);
+                            this.loadEvents().then(() => this.render());
+                        }
+                    } catch (e) {
+                        console.error('[Calendario] Error parseando mensaje WS:', e);
+                    }
+                });
+            }, (error) => {
+                console.warn('[Calendario] Conexión WS perdida. Reconectando en 5s...');
+                setTimeout(intentarConectar, 5000);
+            });
+        };
+
+        // Retrasar ligeramente para no competir con el WS del Navbar
+        setTimeout(intentarConectar, 2500);
     }
 }

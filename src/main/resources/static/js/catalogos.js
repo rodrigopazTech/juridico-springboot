@@ -22,7 +22,6 @@ function cambiarTab(tabName) {
     const panel = document.getElementById('panel-' + tabName);
     if (panel) {
         panel.classList.remove('hidden');
-        // Trigger animation
         void panel.offsetWidth;
         panel.classList.add('animate-fade-slide');
     }
@@ -38,11 +37,32 @@ function cambiarTab(tabName) {
     const url = new URL(window.location);
     url.searchParams.set('tab', tabName);
     window.history.replaceState({}, '', url);
+
+    // Si el tab estaba marcado como sucio (cambio mientras estaba oculto), refrescarlo ahora
+    const tbodyId = `tbody-${tabName}`;
+    if (dirtyTabs.has(tbodyId)) {
+        dirtyTabs.delete(tbodyId);
+        const tabla = Object.keys(TABLA_A_TBODY).find(k => TABLA_A_TBODY[k] === tbodyId);
+        if (tabla) refrescarTablaCatalogo(tabla, true);
+    }
 }
 
 // ====================================================================
 // MODAL UNIVERSAL
 // ====================================================================
+
+/** Mapa tipo JS → tabla de BD (para saber qué tbody refrescar al guardar) */
+const TIPO_A_TABLA = {
+    'organo':           'organos_jurisdiccionales',
+    'tipo-audiencia':   'tipos_audiencia',
+    'tipo-expediente':  'tipos_expediente',
+    'sede':             'cat_estados',
+    'materia':          'materias'
+};
+
+/** Tabs que recibieron un evento WS mientras estaban ocultos */
+const dirtyTabs = new Set();
+
 const TIPOS_CONFIG = {
     'organo': {
         titulo: 'Órgano Jurisdiccional',
@@ -160,7 +180,13 @@ function guardarItem() {
                 showConfirmButton: false
             });
             cerrarModal();
-            setTimeout(() => location.reload(), 800);
+            // Refrescar la tabla vía AJAX en lugar de recargar toda la página
+            const tablaAfectada = TIPO_A_TABLA[tipo];
+            if (tablaAfectada) {
+                setTimeout(() => refrescarTablaCatalogo(tablaAfectada, true), 400);
+            } else {
+                setTimeout(() => location.reload(), 800);
+            }
         } else {
             Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'Error desconocido.', confirmButtonColor: '#9D2449' });
         }
@@ -203,13 +229,17 @@ function eliminarItem(tipo, btn) {
                             timer: 1500,
                             showConfirmButton: false
                         });
-                        // Remover la fila visualmente
+                        // Remover la fila visualmente y actualizar badge
                         const row = btn.closest('tr');
+                        const tbodyEl = btn.closest('tbody');
                         if (row) {
                             row.style.transition = 'all 0.3s ease';
                             row.style.opacity = '0';
                             row.style.transform = 'translateX(20px)';
-                            setTimeout(() => row.remove(), 300);
+                            setTimeout(() => {
+                                row.remove();
+                                if (tbodyEl) actualizarBadgeTab(tbodyEl.id);
+                            }, 300);
                         }
                     } else {
                         Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'No se pudo eliminar.', confirmButtonColor: '#9D2449' });
@@ -275,4 +305,105 @@ document.addEventListener('DOMContentLoaded', () => {
             guardarItem();
         }
     });
+
+    // Iniciar WebSocket en tiempo real
+    initWebSocketCatalogos();
 });
+
+// ====================================================================
+// WEBSOCKET: ACTUALIZACIÓN EN TIEMPO REAL PARA CATÁLOGOS
+// ====================================================================
+
+/** Mapa: tabla de BD → id del tbody en el HTML */
+const TABLA_A_TBODY = {
+    'organos_jurisdiccionales': 'tbody-organos',
+    'tipos_audiencia':          'tbody-tipos-audiencia',
+    'tipos_expediente':         'tbody-tipos-expediente',
+    'materias':                 'tbody-materias',
+    'cat_estados':              'tbody-sedes'
+};
+
+/**
+ * Actualiza el badge de conteo en el botón del tab.
+ * Cuenta las filas reales (sin colspan = sin la fila de estado vacío).
+ */
+function actualizarBadgeTab(tbodyId) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    const dataRows = Array.from(tbody.querySelectorAll('tr')).filter(r => !r.querySelector('td[colspan]'));
+    const tabName = tbodyId.replace('tbody-', '');
+    const tabBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+    if (!tabBtn) return;
+    const badge = tabBtn.querySelector('span');
+    if (badge) badge.textContent = dataRows.length;
+}
+
+/**
+ * Hace fetch de la página actual y reemplaza el tbody del catálogo afectado.
+ * Siempre actualiza el tbody y el badge, incluso si el panel está oculto.
+ * @param {string} tabla   - Nombre de la tabla de BD.
+ * @param {boolean} force  - Parámetro mantenido por compatibilidad (ya no limita la ejecución).
+ */
+async function refrescarTablaCatalogo(tabla, force = false) {
+    const tbodyId = TABLA_A_TBODY[tabla];
+    if (!tbodyId) return;
+
+    const tbodyActual = document.getElementById(tbodyId);
+    if (!tbodyActual) return;
+
+    try {
+        const res = await fetch(window.location.href, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if (!res.ok) return;
+        const html = await res.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const tbodyNuevo = doc.getElementById(tbodyId);
+        if (tbodyNuevo) {
+            tbodyActual.innerHTML = tbodyNuevo.innerHTML;
+            // Actualizar buscador y badge de conteo (siempre, incluso si el panel está oculto)
+            setupSearch(tbodyId.replace('tbody-', 'search-'), tbodyId);
+            actualizarBadgeTab(tbodyId);
+            // Limpiar el flag dirty: ya está actualizado, no hace falta un segundo fetch al abrir el tab
+            dirtyTabs.delete(tbodyId);
+            console.log(`[Catálogos] Tabla '${tbodyId}' actualizada en tiempo real.`);
+        }
+    } catch (e) {
+        console.error('[Catálogos] Error refrescando tabla:', e);
+        // Si falla el fetch, marcar como sucio para reintentar al cambiar de tab
+        dirtyTabs.add(tbodyId);
+    }
+}
+
+function initWebSocketCatalogos() {
+    const intentarConectar = () => {
+        if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
+            setTimeout(intentarConectar, 1000);
+            return;
+        }
+
+        const socket = new SockJS('/ws-realtime');
+        const stompClient = Stomp.over(socket);
+        stompClient.debug = null;
+
+        stompClient.connect({}, (frame) => {
+            console.log('[Catálogos] Conectado a WebSockets en tiempo real.');
+
+            stompClient.subscribe('/topic/catalogos', (message) => {
+                try {
+                    const payload = JSON.parse(message.body);
+                    console.log(`[Catálogos] Cambio detectado en '${payload.tabla}' (${payload.operacion})`);
+                    refrescarTablaCatalogo(payload.tabla);
+                } catch (e) {
+                    console.error('[Catálogos] Error parseando mensaje WS:', e);
+                }
+            });
+        }, (error) => {
+            console.warn('[Catálogos] Conexión WS perdida. Reconectando en 5s...');
+            setTimeout(intentarConectar, 5000);
+        });
+    };
+
+    // Retrasar ligeramente para no competir con el WS del Navbar
+    setTimeout(intentarConectar, 2500);
+}

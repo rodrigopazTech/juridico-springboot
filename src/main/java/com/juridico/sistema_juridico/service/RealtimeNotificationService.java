@@ -164,6 +164,12 @@ public class RealtimeNotificationService {
                     }
                     return;
                 }
+            } else if ("organos_jurisdiccionales".equals(tabla) || "tipos_audiencia".equals(tabla)
+                    || "tipos_expediente".equals(tabla) || "materias".equals(tabla)
+                    || "cat_estados".equals(tabla)) {
+                log.info("Despachando evento de catálogo '{}' al canal '/topic/catalogos'", tabla);
+                this.messagingTemplate.convertAndSend("/topic/catalogos", jsonPayload);
+                return;
             }
         } catch (Exception e) {
             log.error("Error al procesar el payload de notificación para envío segmentado", e);
