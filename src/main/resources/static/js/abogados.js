@@ -270,8 +270,37 @@ function abrirModalPasswordTemporal() {
     });
 }
 
+function ejecutarCopiado(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text);
+    } else {
+        return new Promise((resolve, reject) => {
+            try {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.top = "0";
+                textArea.style.left = "0";
+                textArea.style.opacity = "0";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                const successful = document.execCommand('copy');
+                document.body.removeChild(textArea);
+                if (successful) {
+                    resolve();
+                } else {
+                    reject(new Error("Copiado fallido"));
+                }
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+}
+
 function copiarPasswordTemporal(pass) {
-    navigator.clipboard.writeText(pass).then(() => {
+    ejecutarCopiado(pass).then(() => {
         const btn = document.querySelector('#swal-pass-code + button') ||
             document.querySelector('[onclick*="copiarPasswordTemporal"]');
         if (btn) {
@@ -281,7 +310,7 @@ function copiarPasswordTemporal(pass) {
             btn.classList.remove('bg-gob-guinda');
             setTimeout(() => { btn.innerHTML = original; btn.classList.remove('bg-green-600'); btn.classList.add('bg-gob-guinda'); }, 1500);
         }
-    }).catch(() => { /* fallback silencioso */ });
+    }).catch((err) => { console.error("Error al copiar:", err); });
 }
 
 function eliminarUsuarioDesdeModal() {
@@ -662,7 +691,7 @@ function abrirModalPasswordTemporalEdicion() {
 }
 
 function copiarPasswordTemporalEdicion(pass) {
-    navigator.clipboard.writeText(pass).then(() => {
+    ejecutarCopiado(pass).then(() => {
         const btn = document.getElementById('swal-pass-code-edicion').nextElementSibling;
         if (btn) {
             const original = btn.innerHTML;
@@ -675,7 +704,7 @@ function copiarPasswordTemporalEdicion(pass) {
                 btn.classList.add('bg-gob-guinda');
             }, 1500);
         }
-    }).catch(() => { });
+    }).catch((err) => { console.error("Error al copiar:", err); });
 }
 
 function eliminarUsuarioDesdeDetalle() {
