@@ -1,5 +1,6 @@
 package com.juridico.sistema_juridico.security;
 
+import com.juridico.sistema_juridico.Entity.enums.PermisoSistema;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +11,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -25,7 +27,14 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
 
         // 2. Convertimos tu Rol (Enum) a una autoridad de Spring Security
-        GrantedAuthority authority = new SimpleGrantedAuthority(usuario.getRol().name());
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(usuario.getRol().name()));
+
+        if (usuario.getPermisosAdicionales() != null) {
+            for (PermisoSistema permiso : usuario.getPermisosAdicionales()) {
+                authorities.add(new SimpleGrantedAuthority(permiso.getAuthority()));
+            }
+        }
 
         // 3. Retornamos el objeto CustomUserDetails
         return new CustomUserDetails(
@@ -35,7 +44,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 true, // Account Non Expired
                 true, // Credentials Non Expired
                 true, // Account Non Locked
-                Collections.singletonList(authority), // Lista de roles
+                authorities, // Lista de roles y permisos adicionales
                 usuario.getForcePasswordChange() != null && usuario.getForcePasswordChange() // Propiedad force password
         );
     }

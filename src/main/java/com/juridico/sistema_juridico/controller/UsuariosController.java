@@ -1,12 +1,15 @@
 package com.juridico.sistema_juridico.controller;
 
+import com.juridico.sistema_juridico.Entity.enums.PermisoSistema;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional;
 import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
+import com.juridico.sistema_juridico.dto.usuarios.PermisoCategoriaView;
 import com.juridico.sistema_juridico.service.UsuarioService;
+import com.juridico.sistema_juridico.service.PermisoUsuarioService;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 
@@ -23,6 +26,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 
 import java.util.stream.Collectors;
+import java.util.Comparator;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +39,8 @@ public class UsuariosController {
     private UsuarioService usuarioService;
     @Autowired
     private UsuarioRepository usuarioRepository;
+    @Autowired
+    private PermisoUsuarioService permisoUsuarioService;
 
     @GetMapping
     public String index(Model model,
@@ -90,6 +96,65 @@ public class UsuariosController {
         model.addAttribute("activePage", "usuarios");
 
         return "views/usuarios/index";
+    }
+
+    @GetMapping("/permisos")
+    public String panelPermisos(
+            @RequestParam(value = "usuarioId", required = false) Integer usuarioId,
+            Model model) {
+
+        Usuario actor = obtenerUsuarioActual();
+        List<Usuario> usuariosVisibles = listarUsuariosVisibles(actor);
+
+        Usuario usuarioSeleccionado = null;
+        if (!usuariosVisibles.isEmpty()) {
+            usuarioSeleccionado = usuariosVisibles.stream()
+                    .filter(usuario -> usuarioId != null && usuario.getId().equals(usuarioId))
+                    .findFirst()
+                    .orElse(usuariosVisibles.get(0));
+        }
+
+        List<PermisoCategoriaView> permisosVista = usuarioSeleccionado != null
+                ? permisoUsuarioService.construirVistaPermisos(actor, usuarioSeleccionado)
+                : List.of();
+
+        model.addAttribute("pageTitle", "Panel de Permisos");
+        model.addAttribute("activePage", "usuarios");
+        model.addAttribute("usuarioActual", actor);
+        model.addAttribute("usuariosVisibles", usuariosVisibles);
+        model.addAttribute("usuarioSeleccionado", usuarioSeleccionado);
+        model.addAttribute("permisosVista", permisosVista);
+        model.addAttribute("permisosBaseSeleccionado", usuarioSeleccionado != null
+                ? permisoUsuarioService.obtenerPermisosBase(usuarioSeleccionado.getRol()).size()
+                : 0);
+        model.addAttribute("permisosExtrasSeleccionado", usuarioSeleccionado != null
+                ? usuarioSeleccionado.getPermisosAdicionales().size()
+                : 0);
+        model.addAttribute("permisosEfectivosSeleccionado", usuarioSeleccionado != null
+                ? permisoUsuarioService.obtenerPermisosEfectivos(usuarioSeleccionado).size()
+                : 0);
+
+        return "views/usuarios/permisos";
+    }
+
+    @PostMapping("/permisos/guardar")
+    public String guardarPermisosUsuario(
+            @RequestParam("usuarioId") Integer usuarioId,
+            @RequestParam(value = "permisosAdicionales", required = false) List<PermisoSistema> permisosAdicionales,
+            RedirectAttributes redirectAttrs) {
+
+        Usuario actor = obtenerUsuarioActual();
+        Usuario objetivo = usuarioService.buscarPorId(usuarioId);
+
+        if (!esUsuarioVisibleParaActor(actor, objetivo)) {
+            throw new ResourceNotFoundException("No tienes permisos para administrar este usuario.");
+        }
+
+        permisoUsuarioService.guardarPermisosAdicionales(usuarioId, permisosAdicionales, actor);
+
+        redirectAttrs.addFlashAttribute("mensaje", "Permisos actualizados correctamente.");
+        redirectAttrs.addFlashAttribute("tipo", "success");
+        return "redirect:/usuarios/permisos?usuarioId=" + usuarioId;
     }
 
     @PostMapping("/guardar")
@@ -230,5 +295,29 @@ public class UsuariosController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al guardar materia");
         }
+    }
+
+    private Usuario obtenerUsuarioActual() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario actual no encontrado en la base de datos."));
+    }
+
+    private List<Usuario> listarUsuariosVisibles(Usuario actor) {
+        return usuarioService.listarUsuarios().stream()
+                .filter(usuario -> esUsuarioVisibleParaActor(actor, usuario))
+                .sorted(Comparator.comparing(Usuario::getNombreCompleto, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    private boolean esUsuarioVisibleParaActor(Usuario actor, Usuario usuarioObjetivo) {
+        if (actor.getRol() != RolUsuario.GERENTE) {
+            return true;
+        }
+        if (actor.getGerencia() == null) {
+            return false;
+        }
+        return usuarioObjetivo.getGerencia() != null
+                && actor.getGerencia().getId().equals(usuarioObjetivo.getGerencia().getId());
     }
 }

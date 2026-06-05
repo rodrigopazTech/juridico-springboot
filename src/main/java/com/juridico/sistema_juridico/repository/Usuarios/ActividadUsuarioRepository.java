@@ -8,4 +8,5 @@ import java.util.List;
 @Repository
 public interface ActividadUsuarioRepository extends JpaRepository<ActividadUsuario, Long> {
     List<ActividadUsuario> findTop15ByUsuarioIdOrderByFechaRegistroDesc(Integer usuarioId);
+    List<ActividadUsuario> findTop100ByUsuarioIdOrderByFechaRegistroDesc(Integer usuarioId);
 }
