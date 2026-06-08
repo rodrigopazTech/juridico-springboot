@@ -55,7 +55,7 @@ function cambiarTab(tabName) {
 const TIPO_A_TABLA = {
     'organo':           'organos_jurisdiccionales',
     'tipo-audiencia':   'tipos_audiencia',
-    'tipo-expediente':  'tipos_expediente',
+    'tipo-expediente':  'cat_tipo_expediente',
     'sede':             'cat_estados',
     'materia':          'materias'
 };
@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
 const TABLA_A_TBODY = {
     'organos_jurisdiccionales': 'tbody-organos',
     'tipos_audiencia':          'tbody-tipos-audiencia',
-    'tipos_expediente':         'tbody-tipos-expediente',
+    'cat_tipo_expediente':      'tbody-tipos-expediente',
     'materias':                 'tbody-materias',
     'cat_estados':              'tbody-sedes'
 };
