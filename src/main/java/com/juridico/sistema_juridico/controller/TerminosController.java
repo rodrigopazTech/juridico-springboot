@@ -645,11 +645,18 @@ public class TerminosController {
             termino.setFechaPresentacion(LocalDate.now());
         }
 
+        terminoRepository.save(termino);
+
         if (termino.getExpediente() != null) {
             String desc = "Cambio de estatus de Término a " + siguienteEtapa.getDescripcion()
                     + "). Acción realizada por: " + actor.getNombreCompleto() + " el "
                     + LocalDate.now() + ".";
             auditoriaService.registrar(termino.getExpediente(), "Cambio de Estado (Término)", desc, "EDIT", actor);
+        } else {
+            String desc = "Cambio de estatus de Término '" + termino.getAsunto() + "' a " + siguienteEtapa.getDescripcion()
+                    + ". Acción realizada por: " + actor.getNombreCompleto() + " el "
+                    + LocalDate.now() + ".";
+            auditoriaService.registrarActividadGeneral(actor, "Cambio de Estado (Término)", desc, "EDIT");
         }
 
         notificarCambioDeEtapa(termino, etapaAnterior, siguienteEtapa, actor);
@@ -659,11 +666,7 @@ public class TerminosController {
     }
 
     private void notificarCambioDeEtapa(Termino termino, EstatusTermino etapaAnterior, EstatusTermino nuevaEtapa, Usuario actor) {
-        if (termino.getExpediente() == null) {
-            return;
-        }
-
-        Gerencia g = termino.getExpediente().getGerencia();
+        Gerencia g = termino.getGerenciaReferencia();
         if (g == null) {
             return;
         }
@@ -700,7 +703,7 @@ public class TerminosController {
         }
 
         Set<Usuario> unicos = new HashSet<>(destinatarios);
-        String expedienteNum = termino.getExpediente().getNumero();
+        String expedienteNum = termino.getNumeroReferencia();
         String tituloExp = titulo + ": " + expedienteNum;
 
         for (Usuario u : unicos) {

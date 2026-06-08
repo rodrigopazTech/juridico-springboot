@@ -122,6 +122,15 @@ public class UsuarioService {
     }
 
     @Transactional
+    public void actualizarPasswordTemporal(Integer usuarioId, String password) {
+        Usuario existente = buscarPorId(usuarioId);
+        existente.setPassword(passwordEncoder.encode(password));
+        existente.setForcePasswordChange(true);
+        usuarioRepository.save(existente);
+    }
+
+
+    @Transactional
     public void eliminarUsuario(Integer id) {
         if (!usuarioRepository.existsById(id)) {
             throw new ResourceNotFoundException("No se puede eliminar: El usuario no existe.");

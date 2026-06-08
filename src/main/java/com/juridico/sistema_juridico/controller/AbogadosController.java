@@ -4,6 +4,7 @@ import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.service.UsuarioService;
+import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 
@@ -46,6 +47,8 @@ public class AbogadosController {
     private UsuarioService usuarioService;
     @Autowired
     private UsuarioRepository usuarioRepository;
+    @Autowired
+    private AuditoriaService auditoriaService;
     @Autowired
     private ExpedienteRepository expedienteRepository;
     @Autowired
@@ -275,5 +278,42 @@ public class AbogadosController {
         List<Map<String, Object>> response = listaCombinada.stream().limit(100).collect(Collectors.toList());
 
         return org.springframework.http.ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/api/password-temporal")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> actualizarPasswordTemporal(
+            @RequestParam("id") Integer id,
+            @RequestParam("password") String password) {
+        try {
+            String actorEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario actor = usuarioRepository.findByEmail(actorEmail)
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuario actual no encontrado."));
+
+            if (actor.getRol() != RolUsuario.DIRECCION && actor.getRol() != RolUsuario.SUBDIRECCION && 
+                actor.getRol() != RolUsuario.ADMIN && actor.getRol() != RolUsuario.GERENTE) {
+                return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                        .body(Map.of("mensaje", "No tienes permisos para realizar esta acción."));
+            }
+
+            Usuario usuarioModificado = usuarioService.buscarPorId(id);
+
+            if (actor.getRol() == RolUsuario.GERENTE) {
+                if (usuarioModificado.getGerencia() == null || 
+                    !usuarioModificado.getGerencia().getId().equals(actor.getGerencia().getId())) {
+                    return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                            .body(Map.of("mensaje", "No tienes permisos para modificar usuarios de otras gerencias."));
+                }
+            }
+
+            usuarioService.actualizarPasswordTemporal(id, password);
+
+            auditoriaService.registrarActividadGeneral(usuarioModificado, "Contraseña Temporal Asignada", 
+                    "Se le ha asignado una nueva contraseña temporal por el usuario: " + actor.getNombreCompleto(), "KEY");
+
+            return org.springframework.http.ResponseEntity.ok(Map.of("mensaje", "Contraseña temporal guardada correctamente en la base de datos."));
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.badRequest().body(Map.of("mensaje", e.getMessage()));
+        }
     }
 }

@@ -89,27 +89,86 @@ import org.springframework.transaction.support.TransactionTemplate;
         @Transactional
         public void registrarDatoEnLote(String tipoDato, Object requestObjeto, String numeroExpediente) {
             try {
-                LoteMigracion loteActivo = obtenerOCrearLoteActivo();
-                String jsonStr = objectMapper.writeValueAsString(requestObjeto);
+                java.util.Map<String, Object> itemMap;
+                if (requestObjeto instanceof java.util.Map) {
+                    itemMap = new java.util.HashMap<>((java.util.Map<String, Object>) requestObjeto);
+                } else {
+                    itemMap = objectMapper.convertValue(requestObjeto, java.util.Map.class);
+                }
                 
-                // PREVENCIÓN DE DUPLICADOS EXACTOS EN EL MISMO LOTE
-                boolean duplicado = registroRepository.findByLoteIdAndEstatusNot(loteActivo.getId(), "RECHAZADO").stream()
-                    .anyMatch(r -> r.getPayloadJson().equals(jsonStr) && 
-                              ( (r.getNumeroExpedienteExtraido() == null && numeroExpediente == null) || 
-                                (r.getNumeroExpedienteExtraido() != null && r.getNumeroExpedienteExtraido().equals(numeroExpediente)) ));
+                // Aseguramos que la gerencia no esté vacía
+                if (!itemMap.containsKey("gerencia") || itemMap.get("gerencia") == null || itemMap.get("gerencia").toString().trim().isEmpty()) {
+                    itemMap.put("gerencia", "POR DEFINIR");
+                }
                 
-                if (duplicado) return; // Si es un duplicado exacto del mismo expediente en el mismo lote, ignoramos.
+                // Si viene el número de expediente por parámetro, lo agregamos/respetamos en el objeto
+                if (numeroExpediente != null && !numeroExpediente.equals("SIN_NUMERO")) {
+                    itemMap.put("numeroExpediente", numeroExpediente);
+                }
 
-                RegistroMigracion registro = new RegistroMigracion();
-                registro.setLote(loteActivo);
-                registro.setTipoDato(tipoDato); 
-                registro.setPayloadJson(jsonStr); 
-                registro.setNumeroExpedienteExtraido(numeroExpediente);
-                registro.setEstatus("PENDIENTE");
-                
-                registroRepository.save(registro);
+                registrarLoteEnLote(tipoDato, java.util.List.of(itemMap));
             } catch (Exception e) {
                 throw new RuntimeException("Error al registrar dato en el Lote: " + e.getMessage());
+            }
+        }
+
+        // 2.5. Guardar una lista de datos en el lote activo de manera eficiente (Batch Insert con O(1) deduplicación)
+        @Transactional
+        public int registrarLoteEnLote(String tipoDato, java.util.List<java.util.Map<String, Object>> items) {
+            try {
+                if (items == null || items.isEmpty()) return 0;
+                
+                LoteMigracion loteActivo = obtenerOCrearLoteActivo();
+                
+                // 1. Obtener registros existentes del lote en una sola query
+                java.util.List<RegistroMigracion> existentes = registroRepository.findByLoteIdAndEstatusNot(loteActivo.getId(), "RECHAZADO");
+                
+                // 2. Construir un Set de firmas para verificación en tiempo O(1)
+                java.util.Set<String> firmasExistentes = existentes.stream()
+                    .map(r -> {
+                        String num = r.getNumeroExpedienteExtraido() != null ? r.getNumeroExpedienteExtraido().trim() : "";
+                        return num + "|||" + r.getPayloadJson();
+                    })
+                    .collect(java.util.stream.Collectors.toCollection(java.util.HashSet::new));
+                
+                java.util.List<RegistroMigracion> nuevosRegistros = new java.util.ArrayList<>();
+                
+                for (java.util.Map<String, Object> item : items) {
+                    // Asegurar consistencia de Gerencia para la Etapa 1
+                    if (!item.containsKey("gerencia") || item.get("gerencia") == null || item.get("gerencia").toString().trim().isEmpty()) {
+                        item.put("gerencia", "POR DEFINIR");
+                    }
+                    
+                    String numeroExpediente = item.containsKey("numeroExpediente") && item.get("numeroExpediente") != null
+                            ? item.get("numeroExpediente").toString().trim()
+                            : "SIN_NUMERO";
+                    
+                    String jsonStr = objectMapper.writeValueAsString(item);
+                    String firmaNuevo = numeroExpediente + "|||" + jsonStr;
+                    
+                    // Si ya existe en BD o en el lote actual procesado, lo ignoramos para evitar duplicados exactos
+                    if (firmasExistentes.contains(firmaNuevo)) {
+                        continue;
+                    }
+                    
+                    RegistroMigracion registro = new RegistroMigracion();
+                    registro.setLote(loteActivo);
+                    registro.setTipoDato(tipoDato); 
+                    registro.setPayloadJson(jsonStr); 
+                    registro.setNumeroExpedienteExtraido(numeroExpediente);
+                    registro.setEstatus("PENDIENTE");
+                    
+                    nuevosRegistros.add(registro);
+                    firmasExistentes.add(firmaNuevo); // Añadir a la caché local del lote actual
+                }
+                
+                if (!nuevosRegistros.isEmpty()) {
+                    registroRepository.saveAll(nuevosRegistros);
+                }
+                
+                return nuevosRegistros.size();
+            } catch (Exception e) {
+                throw new RuntimeException("Error al procesar lote en el Lote: " + e.getMessage());
             }
         }
 

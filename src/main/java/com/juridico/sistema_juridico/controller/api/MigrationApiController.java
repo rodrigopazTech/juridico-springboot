@@ -91,23 +91,13 @@ public class MigrationApiController {
             listaFinal = (java.util.List<Map<String, Object>>) body;
         }
 
-        int count = 0;
-        for (Map<String, Object> item : listaFinal) {
-            // Aseguramos que Gerencia nunca esté vacía para que aparezca la pestaña en la Etapa 1
-            if (!item.containsKey("gerencia") || item.get("gerencia") == null || item.get("gerencia").toString().trim().isEmpty()) {
-                item.put("gerencia", "POR DEFINIR");
-            }
-            String numExp = item.containsKey("numeroExpediente") && item.get("numeroExpediente") != null
-                    ? item.get("numeroExpediente").toString()
-                    : "SIN_NUMERO";
-            loteMigracionService.registrarDatoEnLote("TERMINO", item, numExp);
-            count++;
-        }
+        int insertados = loteMigracionService.registrarLoteEnLote("TERMINO", listaFinal);
 
         return ResponseEntity.ok(Map.of(
                 "status", "success",
-                "registros", count,
-                "mensaje", String.format("%d términos procesados y enviados al asistente.", count)
+                "registros_recibidos", listaFinal.size(),
+                "registros_nuevos", insertados,
+                "mensaje", String.format("%d términos procesados (nuevos: %d) y enviados al asistente.", listaFinal.size(), insertados)
         ));
     }
 
@@ -135,23 +125,13 @@ public class MigrationApiController {
             listaFinal = (java.util.List<Map<String, Object>>) body;
         }
 
-        int count = 0;
-        for (Map<String, Object> item : listaFinal) {
-            // Aseguramos que Gerencia nunca esté vacía para que aparezca la pestaña en la Etapa 1
-            if (!item.containsKey("gerencia") || item.get("gerencia") == null || item.get("gerencia").toString().trim().isEmpty()) {
-                item.put("gerencia", "POR DEFINIR");
-            }
-            String numExp = item.containsKey("numeroExpediente") && item.get("numeroExpediente") != null
-                    ? item.get("numeroExpediente").toString()
-                    : "SIN_NUMERO";
-            loteMigracionService.registrarDatoEnLote("AUDIENCIA", item, numExp);
-            count++;
-        }
+        int insertados = loteMigracionService.registrarLoteEnLote("AUDIENCIA", listaFinal);
 
         return ResponseEntity.ok(Map.of(
                 "status", "success",
-                "registros", count,
-                "mensaje", String.format("%d audiencias procesadas y enviadas al asistente.", count)
+                "registros_recibidos", listaFinal.size(),
+                "registros_nuevos", insertados,
+                "mensaje", String.format("%d audiencias procesadas (nuevos: %d) y enviadas al asistente.", listaFinal.size(), insertados)
         ));
     }
 }
