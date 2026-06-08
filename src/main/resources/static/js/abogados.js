@@ -114,13 +114,26 @@ function seleccionarAbogado(cardElement) {
 // --- 2. LÓGICA DE MODALES (MANTENIDA Y ADAPTADA) ---
 
 function abrirModalUsuario() {
-    document.getElementById('titulo-modal-usuario').innerHTML = '<i class="fas fa-user-plus mr-2"></i> Nuevo Abogado';
-    document.getElementById('input-usuario-id').value = '';
-    document.getElementById('input-usuario-nombre').value = '';
-    document.getElementById('input-usuario-email').value = '';
-    document.getElementById('select-usuario-rol').value = '';
-    document.getElementById('select-usuario-gerencia').value = '';
-    document.getElementById('check-usuario-activo').checked = true;
+    const titulo = document.getElementById('titulo-modal-usuario');
+    if (titulo) titulo.innerHTML = '<i class="fas fa-user-plus mr-2"></i> Nuevo Abogado';
+
+    const inputId = document.getElementById('input-usuario-id');
+    if (inputId) inputId.value = '';
+
+    const inputNombre = document.getElementById('input-usuario-nombre');
+    if (inputNombre) inputNombre.value = '';
+
+    const inputEmail = document.getElementById('input-usuario-email');
+    if (inputEmail) inputEmail.value = '';
+
+    const selectRol = document.getElementById('select-usuario-rol');
+    if (selectRol) selectRol.value = '';
+
+    const selectGerencia = document.getElementById('select-usuario-gerencia');
+    if (selectGerencia) selectGerencia.value = '';
+
+    const checkActivo = document.getElementById('check-usuario-activo');
+    if (checkActivo) checkActivo.checked = true;
 
     // CREACIÓN: mostrar campo de contraseña normal, ocultar bloque temporal
     const bloqueNuevo = document.getElementById('bloque-password-nuevo');
@@ -144,33 +157,50 @@ function abrirModalUsuario() {
     if (fpcOld) fpcOld.remove();
 
     materiasUsuarioActual = [];
-    document.getElementById('contenedor-materias').classList.add('hidden');
-    document.getElementById('lista-materias-checkboxes').innerHTML = '';
-    document.getElementById('seccion-asignacion').classList.remove('hidden');
-    document.getElementById('btn-eliminar-usuario').classList.add('hidden');
+    
+    const contMaterias = document.getElementById('contenedor-materias');
+    if (contMaterias) contMaterias.classList.add('hidden');
+
+    const listaMaterias = document.getElementById('lista-materias-checkboxes');
+    if (listaMaterias) listaMaterias.innerHTML = '';
+
+    const seccionAsignacion = document.getElementById('seccion-asignacion');
+    if (seccionAsignacion) seccionAsignacion.classList.remove('hidden');
+
+    const btnEliminar = document.getElementById('btn-eliminar-usuario');
+    if (btnEliminar) btnEliminar.classList.add('hidden');
 
     const modal = document.getElementById('modal-usuario');
-    modal.classList.remove('hidden'); modal.classList.add('flex');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
 }
 
 function actualizarFormularioPorRol() {
     const seccion = document.getElementById('seccion-asignacion');
-    seccion.classList.remove('hidden');
+    if (seccion) seccion.classList.remove('hidden');
 }
 
 function cargarMateriasDeGerencia() {
-    const gerenciaId = document.getElementById('select-usuario-gerencia').value;
+    const selectGerencia = document.getElementById('select-usuario-gerencia');
+    if (!selectGerencia) return;
+    const gerenciaId = selectGerencia.value;
     const contenedor = document.getElementById('contenedor-materias');
     const lista = document.getElementById('lista-materias-checkboxes');
 
-    if (!gerenciaId) { contenedor.classList.add('hidden'); return; }
+    if (!gerenciaId) { 
+        if (contenedor) contenedor.classList.add('hidden'); 
+        return; 
+    }
 
-    lista.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
-    contenedor.classList.remove('hidden');
+    if (lista) lista.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
+    if (contenedor) contenedor.classList.remove('hidden');
 
     fetch(`/usuarios/api/materias-por-gerencia/${gerenciaId}`)
         .then(res => res.json())
         .then(materias => {
+            if (!lista) return;
             lista.innerHTML = '';
             if (materias.length === 0) {
                 lista.innerHTML = '<p class="text-xs text-red-400">Sin materias.</p>';
@@ -189,12 +219,24 @@ function cargarMateriasDeGerencia() {
 
 function editarUsuario(id, nombre, email, rol, gerenciaId, activo, materiasIdsArray) {
     abrirModalUsuario();
-    document.getElementById('titulo-modal-usuario').innerHTML = '<i class="fas fa-user-edit mr-2"></i> Editar Abogado';
-    document.getElementById('input-usuario-id').value = id;
-    document.getElementById('input-usuario-nombre').value = nombre;
-    document.getElementById('input-usuario-email').value = email;
-    document.getElementById('select-usuario-rol').value = rol;
-    document.getElementById('check-usuario-activo').checked = activo;
+    
+    const titulo = document.getElementById('titulo-modal-usuario');
+    if (titulo) titulo.innerHTML = '<i class="fas fa-user-edit mr-2"></i> Editar Abogado';
+
+    const inputId = document.getElementById('input-usuario-id');
+    if (inputId) inputId.value = id;
+
+    const inputNombre = document.getElementById('input-usuario-nombre');
+    if (inputNombre) inputNombre.value = nombre;
+
+    const inputEmail = document.getElementById('input-usuario-email');
+    if (inputEmail) inputEmail.value = email;
+
+    const selectRol = document.getElementById('select-usuario-rol');
+    if (selectRol) selectRol.value = rol;
+
+    const checkActivo = document.getElementById('check-usuario-activo');
+    if (checkActivo) checkActivo.checked = activo;
 
     // EDICIÓN: ocultar campo de contraseña normal y mostrar botón de generación temporal
     const bloqueNuevo = document.getElementById('bloque-password-nuevo');
@@ -217,11 +259,14 @@ function editarUsuario(id, nombre, email, rol, gerenciaId, activo, materiasIdsAr
     materiasUsuarioActual = materiasIdsArray || [];
     actualizarFormularioPorRol();
 
-    if (gerenciaId) {
-        document.getElementById('select-usuario-gerencia').value = gerenciaId;
+    const selectGerencia = document.getElementById('select-usuario-gerencia');
+    if (gerenciaId && selectGerencia) {
+        selectGerencia.value = gerenciaId;
         cargarMateriasDeGerencia();
     }
-    document.getElementById('btn-eliminar-usuario').classList.remove('hidden');
+    
+    const btnEliminar = document.getElementById('btn-eliminar-usuario');
+    if (btnEliminar) btnEliminar.classList.remove('hidden');
 }
 
 // ── MODAL DE CONTRASEÑA TEMPORAL ──────────────────────────────────────────
