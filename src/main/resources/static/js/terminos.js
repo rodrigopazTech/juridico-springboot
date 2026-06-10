@@ -255,7 +255,7 @@ function initSearchTerminos() {
 
 // --- MENÚS DESPLEGABLES ---
 function toggleMenu(id) {
-    document.querySelectorAll('[id^="menu-"]').forEach(menu => {
+    document.querySelectorAll('[id^="menu-"]:not([id^="menu-mob-"])').forEach(menu => {
         if (menu.id !== 'menu-' + id) {
             menu.classList.add('hidden');
         }
@@ -270,7 +270,7 @@ function toggleMenu(id) {
 // Cierra el menú si haces clic fuera de él
 window.addEventListener('click', function (e) {
     if (!e.target.closest('td.relative')) {
-        document.querySelectorAll('[id^="menu-"]').forEach(menu => {
+        document.querySelectorAll('[id^="menu-"]:not([id^="menu-mob-"])').forEach(menu => {
             menu.classList.add('hidden');
         });
     }

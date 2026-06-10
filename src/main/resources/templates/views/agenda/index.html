@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Agenda General - Sistema Legal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
@@ -25,11 +26,11 @@
 
         <!-- Main Content with padding to avoid overlapping -->
         <!-- Main Content with padding to avoid overlapping -->
-        <main class="p-4 md:p-6 flex-1 animate-fade-in" style="padding-top: 100px !important;">
+        <main class="p-4 md:p-6 flex-1 animate-fade-in pt-[116px] sm:pt-[116px] md:pt-[116px] lg:pt-[116px]">
 
             <div class="grid grid-cols-12 gap-8">
                 <!-- Columna Izquierda: Filtros -->
-                <aside class="col-span-12 lg:col-span-3 space-y-6 lg:sticky lg:top-24 lg:self-start z-20">
+                <aside class="col-span-12 xl:col-span-3 space-y-6 xl:sticky xl:top-24 xl:self-start z-20">
                     <div
                         class="bg-gob-guinda text-white p-6 rounded-2xl shadow-lg shadow-gob-guinda/10 relative overflow-hidden flex flex-col gap-6">
                         <div class="relative z-10">
@@ -40,7 +41,7 @@
                 </aside>
 
                 <!-- Columna Derecha: Tabla -->
-                <div class="col-span-12 lg:col-span-9 space-y-6">
+                <div class="col-span-12 xl:col-span-9 space-y-6">
 
                     <!-- Selector de Vista Horizontal (Pill Switcher) -->
                     <div
