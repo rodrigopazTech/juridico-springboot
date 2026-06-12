@@ -2,7 +2,10 @@
 <html xmlns:th="http://www.thymeleaf.org">
 
 <head>
+    <link rel="manifest" th:href="@{/manifest.json}" />
+    <meta name="theme-color" content="#691228" />
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gestión de Audiencias - Agenda Legal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
@@ -22,13 +25,13 @@
         <div th:replace="~{fragments/navbar :: navbar}"></div>
 
         <!-- Main Content with padding to avoid overlapping -->
-        <main class="p-4 md:p-6 flex-1" style="padding-top: 100px !important;">
+        <main class="p-4 md:p-6 flex-1 pt-[116px] sm:pt-[116px] md:pt-[116px] lg:pt-[116px]">
 
 
 
             <div class="grid grid-cols-12 gap-8">
                 <!-- Sidebar Columna Izquierda: Calendario / Filtros (Tabbed) -->
-                <aside class="col-span-12 lg:col-span-3 space-y-4 lg:sticky lg:top-24 lg:self-start z-20">
+                <aside class="col-span-12 xl:col-span-3 space-y-4 xl:sticky xl:top-24 xl:self-start z-20">
                     
                     <!-- Selector de Vista Horizontal -->
                     <div class="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 flex gap-1 items-center">
@@ -60,7 +63,7 @@
                 </aside>
 
                     <!-- SECCIÓN DINÁMICA: KPIs + Listado -->
-                    <div id="grid-maestro-audiencias" th:fragment="gridMaestro" class="col-span-12 lg:col-span-9 space-y-6">
+                    <div id="grid-maestro-audiencias" th:fragment="gridMaestro" class="col-span-12 xl:col-span-9 space-y-6">
                                               <!-- Tarjetas de KPIs Compactas (ROD-186: Ahora son botones de filtrado) -->
                         <div id="contenedor-kpis-audiencias" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             <!-- Total -->

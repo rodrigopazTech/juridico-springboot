@@ -28,6 +28,9 @@ public class NotificacionService {
     private NotificacionRepository notificacionRepository;
 
     @Autowired
+    private WebPushService webPushService;
+
+    @Autowired
     private PreferenciaNotificacionEventoService preferenciaEventoService;
 
     @Autowired
@@ -86,6 +89,8 @@ public class NotificacionService {
                 .createdAt(LocalDateTime.now())
                 .build();
         notificacionRepository.save(notif);
+
+        webPushService.enviarNotificacion(usuario, titulo, mensaje, "/notificaciones/leer/" + notif.getId());
 
         if (!silenciarSuperiores) {
             notificarASuperiores(usuario, actor, evento, prioridad, entidadId);
@@ -168,6 +173,7 @@ public class NotificacionService {
                     .createdAt(LocalDateTime.now())
                     .build();
             notificacionRepository.save(notifJefe);
+            webPushService.enviarNotificacion(jefe, tituloJefe, mensajeJefe, "/notificaciones/leer/" + notifJefe.getId());
         }
     }
 

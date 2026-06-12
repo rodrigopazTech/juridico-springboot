@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
+    <link rel="manifest" th:href="@{/manifest.json}" />
+    <meta name="theme-color" content="#691228" />
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Abogados | Sistema Jurídico</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
@@ -18,7 +21,7 @@
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <div class="p-6 sm:ml-64 pt-24 h-full flex flex-col">
+    <div class="p-4 sm:p-6 sm:ml-64 pt-[116px] sm:pt-[116px] md:pt-[116px] lg:pt-[116px] h-full flex flex-col">
        <div class="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 overflow-hidden">
             
             <div th:replace="~{fragments/abogados/lista :: lista}"></div>

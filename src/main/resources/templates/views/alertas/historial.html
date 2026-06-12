@@ -2,7 +2,10 @@
 <html xmlns:th="http://www.thymeleaf.org">
 
 <head>
+    <link rel="manifest" th:href="@{/manifest.json}" />
+    <meta name="theme-color" content="#691228" />
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Centro de Notificaciones | Sistema Jurídico</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
@@ -14,34 +17,34 @@
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <div class="p-6 sm:ml-64" style="padding-top: 100px !important;">
+    <div class="p-4 sm:p-6 sm:ml-64 pt-[116px] sm:pt-[116px] md:pt-[116px] lg:pt-[116px]">
 
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-                <h1 class="text-4xl font-extrabold text-gob-guinda font-headings" 
+                <h1 class="text-2xl sm:text-4xl font-extrabold text-gob-guinda font-headings" 
                     th:text="${esPapelera ? 'Notificaciones ya leídas' : 'Notificaciones'}">Notificaciones</h1>
-                <p class="text-gray-500 mt-1" 
+                <p class="text-gray-500 mt-1 text-sm sm:text-base" 
                    th:text="${esPapelera ? 'Notificaciones que pueden ser eliminadas o restauradas.' : 'Avisos automáticos sobre expedientes, términos y audiencias.'}">
                     Avisos automáticos sobre expedientes, términos y audiencias.
                 </p>
             </div>
 
             <!-- Botones de navegación / Acción -->
-            <div class="flex items-center gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex flex-wrap items-center gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-gray-100">
                 <a th:href="@{/notificaciones}" 
-                   class="px-5 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center gap-2"
+                   class="px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-2"
                    th:classappend="${!esPapelera ? 'bg-gob-guinda text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}">
                    <i class="fas fa-inbox"></i> Recientes </a>
                 <a th:href="@{/notificaciones/papelera}" 
-                   class="px-5 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center gap-2"
+                   class="px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-2"
                    th:classappend="${esPapelera ? 'bg-gob-guinda text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}">
                    <i class="fas fa-eye"></i> Vistos</a>
 
-                <div th:if="${esPapelera and !notificaciones.empty}" class="ml-4 pl-4 border-l border-gray-100">
+                <div th:if="${esPapelera and !notificaciones.empty}" class="ml-2 sm:ml-4 pl-2 sm:pl-4 border-l border-gray-100">
                     <a th:href="@{/notificaciones/vaciar}" 
                        onclick="return confirm('¿Estás seguro de que deseas vaciar la papelera? Esta acción no se puede deshacer.')"
-                       class="px-5 py-2.5 bg-red-50 text-red-600 rounded-lg text-sm font-bold hover:bg-red-600 hover:text-white transition-all flex items-center gap-2">
-                        <i class="fas fa-broom"></i> Vaciar Papelera
+                       class="px-3 sm:px-5 py-2 sm:py-2.5 bg-red-50 text-red-600 rounded-lg text-xs sm:text-sm font-bold hover:bg-red-600 hover:text-white transition-all flex items-center gap-2">
+                        <i class="fas fa-broom"></i> <span class="hidden sm:inline">Vaciar</span> Papelera
                     </a>
                 </div>
             </div>
@@ -52,8 +55,8 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead
-                        class="bg-gray-50 text-gray-400 text-xs font-bold uppercase tracking-widest border-b border-gray-100">
-                        <tr>
+                        class="bg-gray-50 text-white text-xs font-bold uppercase tracking-widest border-b border-gray-100">
+                        <tr class="bg-gob-guinda  rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                             <th class="px-6 py-4">Evento</th>
                             <th class="px-6 py-4">Tipo</th>
                             <th class="px-6 py-4">Detalles</th>

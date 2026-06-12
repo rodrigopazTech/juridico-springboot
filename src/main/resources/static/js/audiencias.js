@@ -13,7 +13,7 @@ function toggleMenu(id) {
     if (!menu) return;
 
     // Cerramos todos los demás
-    document.querySelectorAll('[id^="menu-"]').forEach(m => {
+    document.querySelectorAll('[id^="menu-"]:not([id^="menu-mob-"])').forEach(m => {
         if (m !== menu) m.classList.add('hidden');
     });
 
@@ -24,7 +24,7 @@ function toggleMenu(id) {
 // Cerrar menús al hacer clic fuera
 window.addEventListener('click', function (e) {
     if (!e.target.closest('[id^="menu-"]') && !e.target.closest('[onclick*="toggleMenu"]') && !e.target.closest('[data-audiencia-id]')) {
-        document.querySelectorAll('[id^="menu-"]').forEach(m => m.classList.add('hidden'));
+        document.querySelectorAll('[id^="menu-"]:not([id^="menu-mob-"])').forEach(m => m.classList.add('hidden'));
     }
 });
 

@@ -299,4 +299,11 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
         List<Object[]> contarAudienciasPorUsuarioYGerenciaYMateriaIn(@Param("gerenciaId") Long gerenciaId, @Param("materiaIds") List<Integer> materiaIds);
 
         List<Audiencia> findByExpedienteAndFechaAudienciaAndHoraAudiencia(com.juridico.sistema_juridico.Entity.expediente.Expediente expediente, java.time.LocalDate fechaAudiencia, java.time.LocalTime horaAudiencia);
+
+        @Query("SELECT COUNT(a) > 0 FROM Audiencia a WHERE a.expediente.id = :expedienteId AND a.abogadoComparece.id = :usuarioId AND a.fechaAudiencia BETWEEN :fechaInicio AND :fechaFin")
+        boolean existsByExpedienteIdAndAbogadoCompareceIdAndFechaAudienciaBetween(
+                        @Param("expedienteId") UUID expedienteId,
+                        @Param("usuarioId") Integer usuarioId,
+                        @Param("fechaInicio") LocalDate fechaInicio,
+                        @Param("fechaFin") LocalDate fechaFin);
 }

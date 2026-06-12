@@ -2,7 +2,10 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 
 <head>
+    <link rel="manifest" th:href="@{/manifest.json}" />
+    <meta name="theme-color" content="#691228" />
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Detalle Expediente | Sistema Jurídico</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
@@ -22,7 +25,7 @@
         <div th:replace="~{fragments/navbar :: navbar}"></div>
 
         <!-- Main Content with padding to avoid overlapping -->
-        <main class="p-6 md:p-10 flex-1 animate-fade-in" style="padding-top: 100px !important;">
+        <main class="p-4 sm:p-6 md:p-10 flex-1 animate-fade-in pt-[116px] sm:pt-[116px] md:pt-[116px] lg:pt-[116px]">
             <div class="container mx-auto px-4">
                 <div id="encabezado-detalle-container" th:replace="~{fragments/expedientes/encabezado-detalle :: encabezado(${expediente})}"></div>
 

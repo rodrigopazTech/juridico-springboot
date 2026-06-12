@@ -2,6 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
+    <link rel="manifest" th:href="@{/manifest.json}" />
+    <meta name="theme-color" content="#691228" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Migración Inteligente - Agenda Legal</title>
@@ -19,7 +21,7 @@
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
 
-    <main class="p-4 sm:ml-64 min-h-screen" style="padding-top: 100px !important;">
+    <main class="p-4 sm:ml-64 min-h-screen pt-[116px] sm:pt-[116px] md:pt-[116px] lg:pt-[116px]">
         <div class="p-4">
 
             <div class="mb-6 flex flex-col items-center justify-center border-b border-gray-200 pb-4 text-center">
