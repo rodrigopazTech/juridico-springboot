@@ -10,10 +10,57 @@ let vistaActual = 'list';
 let mostrandoPapelera = false;
 
 // ========================================
+// MANEJO DE ERRORES DE API
+// ========================================
+
+async function verificarRespuestaApi(response) {
+    if (response.redirected && response.url.includes('/login')) {
+        mostrarNotificacion('Tu sesión ha expirado. Redirigiendo al inicio de sesión...', 'warning');
+        setTimeout(() => window.location.href = '/', 2500);
+        throw new Error('SESION_EXPIRADA');
+    }
+    if (response.status === 401) {
+        mostrarNotificacion('Tu sesión ha expirado. Redirigiendo...', 'warning');
+        setTimeout(() => window.location.href = '/', 2500);
+        throw new Error('SESION_EXPIRADA');
+    }
+    if (response.status === 403) {
+        throw new Error('SIN_PERMISO');
+    }
+    if (!response.ok) {
+        throw new Error('ERROR_SERVIDOR_' + response.status);
+    }
+    return response;
+}
+
+function obtenerMensajeError(error) {
+    if (error.message === 'SESION_EXPIRADA') return null;
+    if (error.message === 'SIN_PERMISO') {
+        return {
+            icono: 'fa-lock',
+            color: 'text-amber-500',
+            texto: 'No tienes permiso para ver los documentos de este expediente.'
+        };
+    }
+    return {
+        icono: 'fa-exclamation-triangle',
+        color: 'text-red-500',
+        texto: 'Error al cargar contenido. Intenta cerrar y volver a abrir el gestor.'
+    };
+}
+
+
+// ========================================
 // INICIALIZACIÓN
 // ========================================
 
 function openGestorDocumental(expedienteId, numeroExpediente) {
+    // Validar que el expedienteId sea válido antes de continuar
+    if (!expedienteId || expedienteId === 'null' || String(expedienteId).trim() === '') {
+        mostrarNotificacion('No se pudo identificar el expediente. Intenta recargar la página.', 'error');
+        return;
+    }
+
     expedienteIdGlobal = expedienteId;
     numeroExpedienteGlobal = numeroExpediente || 'Expediente';
     carpetaActualId = null;
@@ -51,17 +98,15 @@ function closeGestorDocumental() {
 async function cargarArbolCarpetas() {
     try {
         const response = await fetch(`/api/carpetas/expedientes/${expedienteIdGlobal}/arbol`);
-
-        if (!response.ok) {
-            throw new Error('Error al cargar carpetas');
-        }
+        await verificarRespuestaApi(response);
 
         arbolCarpetasGlobal = await response.json();
         renderizarArbolCarpetas();
         actualizarSelectoresCarpetas();
 
     } catch (error) {
-        console.error('Error:', error);
+        if (error.message === 'SESION_EXPIRADA') return;
+        console.error('Error al cargar árbol de carpetas:', error);
         document.getElementById('arbol-carpetas').innerHTML = `
             <div class="text-center text-red-500 py-8">
                 <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
@@ -566,13 +611,17 @@ async function cargarDocumentos() {
         renderizarContenido(subcarpetas, documentos);
 
     } catch (error) {
-        console.error('Error:', error);
-        vistaLista.innerHTML = `
-            <div class="text-center text-red-500 py-12">
-                <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
-                <p>Error al cargar contenido</p>
-            </div>
-        `;
+        if (error.message === 'SESION_EXPIRADA') return;
+        console.error('Error al cargar documentos:', error);
+        const info = obtenerMensajeError(error);
+        if (info) {
+            vistaLista.innerHTML = `
+                <div class="text-center ${info.color} py-12">
+                    <i class="fas ${info.icono} text-3xl mb-2"></i>
+                    <p>${info.texto}</p>
+                </div>
+            `;
+        }
     }
 }
 

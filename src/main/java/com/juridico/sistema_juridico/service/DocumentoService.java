@@ -47,7 +47,8 @@ public class DocumentoService {
     public boolean tienePermiso(Usuario usuario, UUID expedienteId) {
         RolUsuario rol = usuario.getRol();
 
-        if (rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
+        // 1. Roles con acceso global
+        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
             return true;
         }
 
@@ -56,20 +57,34 @@ public class DocumentoService {
             return false;
         }
 
+        // 2. Abogado responsable del expediente
         if (expediente.getAbogadoResponsable() != null &&
                 expediente.getAbogadoResponsable().getId().equals(usuario.getId())) {
             return true;
         }
 
-        if (rol == RolUsuario.ABOGADO) {
-            List<Audiencia> audienciasHoy = audienciaRepository
-                    .findByExpedienteIdAndFechaAudiencia(expedienteId, LocalDate.now());
+        // 3. Acceso por Gerencia (GERENTE)
+        if (rol == RolUsuario.GERENTE) {
+            if (expediente.getGerencia() != null && usuario.getGerencia() != null &&
+                    expediente.getGerencia().getId().equals(usuario.getGerencia().getId())) {
+                return true;
+            }
+        }
 
-            for (Audiencia audiencia : audienciasHoy) {
-                if (audiencia.getAbogadoComparece() != null &&
-                        audiencia.getAbogadoComparece().getId().equals(usuario.getId())) {
-                    return true;
-                }
+        // 4. Acceso por Materias asignadas (JEFE_DEPTO)
+        if (rol == RolUsuario.JEFE_DEPTO) {
+            if (expediente.getMateria() != null && usuario.tieneMateria(expediente.getMateria().getId())) {
+                return true;
+            }
+        }
+
+        // 5. Abogado invitado (con audiencias recientes/futuras)
+        if (rol == RolUsuario.ABOGADO) {
+            LocalDate hace30Dias = LocalDate.now().minusDays(30);
+            LocalDate en7Dias = LocalDate.now().plusDays(7);
+            if (audienciaRepository.existsByExpedienteIdAndAbogadoCompareceIdAndFechaAudienciaBetween(
+                    expedienteId, usuario.getId(), hace30Dias, en7Dias)) {
+                return true;
             }
         }
 
