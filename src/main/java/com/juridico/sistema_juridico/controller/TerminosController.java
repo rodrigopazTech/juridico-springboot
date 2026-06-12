@@ -137,7 +137,7 @@ public class TerminosController {
         ORDEN_ETAPAS.put(EstatusTermino.CONCLUIDO, 7);
     }
 
-    @GetMapping
+    @GetMapping({"", "/"})
     public String index(Model model,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) Integer id,

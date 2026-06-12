@@ -162,7 +162,7 @@ public class ExpedientesController {
         excelExporter.export(response);
     }
 
-    @GetMapping
+    @GetMapping({"", "/"})
     public String index(Model model,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String keyword,

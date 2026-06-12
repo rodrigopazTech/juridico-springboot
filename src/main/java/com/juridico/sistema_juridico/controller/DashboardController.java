@@ -34,7 +34,7 @@ public class DashboardController {
         this.usuarioService = usuarioService;
     }
 
-    @GetMapping
+    @GetMapping({"", "/"})
     public String dashboard(Model model,
             @RequestParam(value = "gerenciaId", required = false) Long gerenciaId,
             @RequestParam(value = "grupoGerencia", required = false) String grupoGerencia,

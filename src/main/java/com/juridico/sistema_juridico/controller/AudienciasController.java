@@ -83,7 +83,7 @@ public class AudienciasController {
     @Autowired
     private OrganoJurisdiccionalRepository organoJurisdiccionalRepository;
 
-    @GetMapping
+    @GetMapping({"", "/"})
     public String index(Model model,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "id", required = false) Integer id,
