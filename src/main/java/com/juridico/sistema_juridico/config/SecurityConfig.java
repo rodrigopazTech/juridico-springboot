@@ -53,7 +53,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 1. Recursos Públicos
                         .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**", "/lib/**").permitAll()
-                        .requestMatchers("/", "/login", "/register", "/api/auth/**", "/error", "/cambiar-password", "/ws-realtime/**")
+                        .requestMatchers("/", "/login", "/register", "/api/auth/**", "/error", "/cambiar-password", "/ws-realtime/**", "/sw.js")
                         .permitAll()
 
                         // 2. NIVEL ALTO
@@ -95,7 +95,15 @@ public class SecurityConfig {
                             usuarioRepository.findByEmail(email).ifPresent(u -> {
                                 auditoriaService.registrarActividadGeneral(u, "Inicio de Sesión", "El usuario ha ingresado al sistema.", "CLOCK");
                             });
-                            response.sendRedirect("/dashboard");
+                            org.springframework.security.web.savedrequest.HttpSessionRequestCache requestCache = 
+                                new org.springframework.security.web.savedrequest.HttpSessionRequestCache();
+                            org.springframework.security.web.savedrequest.SavedRequest savedRequest = 
+                                requestCache.getRequest(request, response);
+                            if (savedRequest != null) {
+                                response.sendRedirect(savedRequest.getRedirectUrl());
+                            } else {
+                                response.sendRedirect("/dashboard");
+                            }
                         })
                         .failureUrl("/?error=true")
                         .permitAll())

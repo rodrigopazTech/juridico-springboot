@@ -412,7 +412,7 @@
                                     titulo: payload.titulo,
                                     mensaje: payload.mensaje,
                                     tipo: payload.etapa_procesal || 'SISTEMA',
-                                    prioridad: 'MEDIA',
+                                    prioridad: payload.prioridad || 'MEDIA',
                                     fecha: new Date(payload.fecha).toLocaleDateString(),
                                     hora: new Date(payload.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
                                 };

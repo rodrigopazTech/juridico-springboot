@@ -37,6 +37,7 @@ BEGIN
             'id',                  r.id::text,
             'usuario_id',          r.usuario_id,
             'etapa_procesal',      COALESCE(r.tipo, 'ALERTA'),
+            'prioridad',           (SELECT nombre FROM cat_prioridad WHERE id = r.prioridad_id),
             'titulo',              r.titulo,
             'mensaje',             r.mensaje,
             'usuario_modificador', v_usuario_modificador,
