@@ -47,7 +47,7 @@ public class DocumentoService {
     public boolean tienePermiso(Usuario usuario, UUID expedienteId) {
         RolUsuario rol = usuario.getRol();
 
-        if (rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
+        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
             return true;
         }
 
@@ -56,21 +56,33 @@ public class DocumentoService {
             return false;
         }
 
+        // Si es el abogado responsable directo, tiene acceso
         if (expediente.getAbogadoResponsable() != null &&
                 expediente.getAbogadoResponsable().getId().equals(usuario.getId())) {
             return true;
         }
 
-        if (rol == RolUsuario.ABOGADO) {
-            List<Audiencia> audienciasHoy = audienciaRepository
-                    .findByExpedienteIdAndFechaAudiencia(expedienteId, LocalDate.now());
-
-            for (Audiencia audiencia : audienciasHoy) {
-                if (audiencia.getAbogadoComparece() != null &&
-                        audiencia.getAbogadoComparece().getId().equals(usuario.getId())) {
-                    return true;
-                }
+        // Restricción de Gerencia para roles no globales
+        if (usuario.getGerencia() != null) {
+            if (expediente.getGerencia() == null ||
+                    !expediente.getGerencia().getId().equals(usuario.getGerencia().getId())) {
+                return false;
             }
+        } else {
+            return false;
+        }
+
+        // Restricciones específicas por rol
+        if (rol == RolUsuario.JEFE_DEPTO) {
+            if (expediente.getMateria() == null || usuario.getMaterias().isEmpty()) {
+                return false;
+            }
+            return usuario.getMaterias().stream()
+                    .anyMatch(m -> m.getId().equals(expediente.getMateria().getId()));
+        }
+
+        if (rol == RolUsuario.GERENTE || rol == RolUsuario.ABOGADO) {
+            return true;
         }
 
         return false;

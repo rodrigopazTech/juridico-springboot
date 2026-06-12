@@ -143,7 +143,8 @@ public class AudienciaService {
                         actor,
                         NotificacionEvento.AUDIENCIA_ACTA_DISPONIBLE,
                         "Acta Disponible: " + expediente,
-                        "El abogado " + nombreAbogado + " ha subido el acta. Requiere validación.",
+                        "El abogado " + nombreAbogado + " ha subido el acta. Requiere validación.",
+
                         catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
                         entidadId,
                         true);
@@ -204,7 +205,8 @@ public class AudienciaService {
                     usuarioActual,
                     NotificacionEvento.AUDIENCIA_VALIDADA_CONCLUIDA,
                     "Audiencia Validada y Concluida",
-                    "Tu audiencia del expediente " + audiencia.getExpediente().getNumero() + " ha sido validada y concluida.",
+                    "Tu audiencia del expediente " + audiencia.getExpediente().getNumero() + " ha sido validada y concluida.",
+
                     catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                     audiencia.getId().toString(),
                     true
@@ -216,7 +218,8 @@ public class AudienciaService {
                     usuarioActual,
                     NotificacionEvento.AUDIENCIA_VALIDADA_CONCLUIDA,
                     "Audiencia Validada y Concluida",
-                    "La audiencia del expediente " + audiencia.getExpediente().getNumero() + " ha sido validada y concluida.",
+                    "La audiencia del expediente " + audiencia.getExpediente().getNumero() + " ha sido validada y concluida.",
+
                     catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                     audiencia.getId().toString(),
                     true
@@ -233,10 +236,14 @@ public class AudienciaService {
             return;
         }
 
-        // 2. Abogados no pueden concluir
+        // 2. Abogados pueden concluir si es de su gerencia
         if (rol.equals("ABOGADO")) {
-            throw new com.juridico.sistema_juridico.exception.ForbiddenException(
-                    "Acceso denegado: Los abogados no pueden concluir audiencias. Requiere validación de Jefatura.");
+            if (usuario.getGerencia() == null || audiencia.getExpediente().getGerencia() == null ||
+                    !usuario.getGerencia().getId().equals(audiencia.getExpediente().getGerencia().getId())) {
+                throw new com.juridico.sistema_juridico.exception.ForbiddenException(
+                        "Acceso denegado: Solo los abogados de la gerencia correspondiente pueden concluir esta audiencia.");
+            }
+            return;
         }
 
         // 3. Gerentes deben ser de la misma Gerencia
@@ -309,7 +316,8 @@ public class AudienciaService {
                         actor,
                         NotificacionEvento.AUDIENCIA_NUEVA,
                         tituloBase,
-                        mensajeBase,
+                        mensajeBase,
+
                         catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                         entidadId,
                         false);
@@ -324,7 +332,8 @@ public class AudienciaService {
                             actor,
                             NotificacionEvento.AUDIENCIA_COMPARECENCIA_ASIGNADA,
                             "Asignacion de Comparecencia",
-                            "Has sido asignado para asistir a la audiencia del expediente " + numeroExpediente,
+                            "Has sido asignado para asistir a la audiencia del expediente " + numeroExpediente,
+
                             catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
                             entidadId,
                             false);

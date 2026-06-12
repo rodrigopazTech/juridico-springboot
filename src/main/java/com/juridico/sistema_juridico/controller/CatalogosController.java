@@ -48,8 +48,8 @@ public class CatalogosController {
         boolean esGerente = (rol == RolUsuario.GERENTE || rol == RolUsuario.JEFE_DEPTO);
         boolean esAbogado = (rol == RolUsuario.ABOGADO);
 
-        // Puede realizar acciones? (Admin, Dir, SubDir, Gerente, JefeDepto)
-        boolean puedeEditar = !esAbogado;
+        // Puede realizar acciones? (Todos los roles autorizados)
+        boolean puedeEditar = true;
 
         List<Gerencia> gerenciasDisponibles;
         Gerencia gerenciaSeleccionada = null;

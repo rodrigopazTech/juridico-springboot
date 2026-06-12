@@ -95,8 +95,8 @@
 
                         <select
                             class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white disabled:bg-gray-100"
-                            required th:disabled="${rolActual != null and rolActual.name() == 'GERENTE'}"
-                            th:name="${rolActual != null and rolActual.name() == 'GERENTE' ? '' : 'gerencia.id'}">
+                            required th:disabled="${rolActual != null and (rolActual.name() == 'GERENTE' or rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ABOGADO')}"
+                            th:name="${rolActual != null and (rolActual.name() == 'GERENTE' or rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ABOGADO') ? '' : 'gerencia.id'}">
 
                             <option value="">Selecciona...</option>
                             <option th:each="g : ${gerencias}" th:value="${g.id}" th:text="${g.nombre}"
@@ -105,7 +105,7 @@
                         </select>
 
                         <input type="hidden" name="gerencia.id"
-                            th:if="${rolActual != null and rolActual.name() == 'GERENTE' and expediente.gerencia != null}"
+                            th:if="${rolActual != null and (rolActual.name() == 'GERENTE' or rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ABOGADO') and expediente.gerencia != null}"
                             th:value="${expediente.gerencia.id}">
                     </div>
                     <div>

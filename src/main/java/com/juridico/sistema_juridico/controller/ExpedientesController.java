@@ -129,24 +129,27 @@ public class ExpedientesController {
 
         if (usuario.getRol() == RolUsuario.ADMIN) {
             // Admin sigue viendo todo
-        } else if (usuario.getRol() == RolUsuario.GERENTE || usuario.getRol() == RolUsuario.DIRECCION
-                || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+        } else if (usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
             if (usuario.getGerencia() != null)
                 secGerenciaId = usuario.getGerencia().getId();
+        } else if (usuario.getRol() == RolUsuario.GERENTE || usuario.getRol() == RolUsuario.ABOGADO) {
+            if (usuario.getGerencia() != null) {
+                secGerenciaId = usuario.getGerencia().getId();
+            } else {
+                secGerenciaId = -1; // Evita listar todo si no tiene gerencia asignada
+            }
         } else if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
             // Jefe de Depto: ve expedientes de sus materias dentro de su gerencia
-            if (usuario.getGerencia() != null)
+            if (usuario.getGerencia() != null) {
                 secGerenciaId = usuario.getGerencia().getId();
+            } else {
+                secGerenciaId = -1;
+            }
             if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
                 secMateriaIds = usuario.getMaterias().stream().map(m -> m.getId()).collect(Collectors.toList());
             } else {
                 secMateriaIds = Collections.emptyList();
             }
-        } else {
-            // ABOGADO: solo ve sus propios expedientes
-            if (usuario.getGerencia() != null)
-                secGerenciaId = usuario.getGerencia().getId();
-            secMateriaIds = Collections.emptyList();
         }
 
         // Buscamos todos los expedientes que coincidan con los filtros (sin paginación)
@@ -179,25 +182,27 @@ public class ExpedientesController {
 
         if (usuario.getRol() == RolUsuario.ADMIN) {
             // Ven todo
-        } else if (usuario.getRol() == RolUsuario.GERENTE || usuario.getRol() == RolUsuario.DIRECCION
-                || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+        } else if (usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
             if (usuario.getGerencia() != null)
                 secGerenciaId = usuario.getGerencia().getId();
+        } else if (usuario.getRol() == RolUsuario.GERENTE || usuario.getRol() == RolUsuario.ABOGADO) {
+            if (usuario.getGerencia() != null) {
+                secGerenciaId = usuario.getGerencia().getId();
+            } else {
+                secGerenciaId = -1; // Evita listar todo si no tiene gerencia asignada
+            }
         } else if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
             // Jefe de Depto: ve expedientes de sus materias dentro de su gerencia
-            if (usuario.getGerencia() != null)
+            if (usuario.getGerencia() != null) {
                 secGerenciaId = usuario.getGerencia().getId();
+            } else {
+                secGerenciaId = -1;
+            }
             if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
                 secMateriaIds = usuario.getMaterias().stream().map(m -> m.getId()).collect(Collectors.toList());
             } else {
                 secMateriaIds = Collections.emptyList();
             }
-        } else {
-            // ABOGADO: solo ve sus propios expedientes (donde es abogadoResponsable)
-            // Las materias asignadas no expanden su visibilidad
-            if (usuario.getGerencia() != null)
-                secGerenciaId = usuario.getGerencia().getId();
-            secMateriaIds = Collections.emptyList();
         }
 
         Pageable pageable = PageRequest.of(page, 20, Sort.by("createdAt").descending());
@@ -305,21 +310,19 @@ public class ExpedientesController {
             Expediente expedienteReal;
 
             if (esNuevo) {
-                // Validación de Roles para Creación
                 String rol = usuario.getRol().name();
-                if (!rol.equals("ADMIN") && !rol.equals("DIRECCION") && !rol.equals("SUBDIRECCION")) {
-                    throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                            "No tienes permiso para crear expedientes.");
-                }
 
                 expedienteReal = expedienteForm;
                 expedienteReal.setCreatedAt(LocalDateTime.now());
                 expedienteReal.setEtapaProcesal(EtapaProcesal.TRAMITE);
 
                 // Inyectar relaciones reales de la base de datos (Creación)
-                if (expedienteForm.getGerencia() != null && expedienteForm.getGerencia().getId() != null)
+                if (!rol.equals("ADMIN") && !rol.equals("DIRECCION") && !rol.equals("SUBDIRECCION")) {
+                    expedienteReal.setGerencia(usuario.getGerencia());
+                } else if (expedienteForm.getGerencia() != null && expedienteForm.getGerencia().getId() != null) {
                     expedienteReal.setGerencia(
                             gerenciaRepository.findById(expedienteForm.getGerencia().getId()).orElse(null));
+                }
                 if (expedienteForm.getMateria() != null && expedienteForm.getMateria().getId() != null)
                     expedienteReal
                             .setMateria(materiaRepository.findById(expedienteForm.getMateria().getId()).orElse(null));
@@ -573,7 +576,7 @@ public class ExpedientesController {
 
         if (rol.equals("ADMIN") || rol.equals("DIRECCION") || rol.equals("SUBDIRECCION")) {
             tienePermiso = true;
-        } else if (rol.equals("GERENTE") 
+        } else if ((rol.equals("GERENTE") || rol.equals("ABOGADO")) 
                 && usuario.getGerencia() != null
                 && expediente.getGerencia() != null
                 && expediente.getGerencia().getId().equals(usuario.getGerencia().getId())) {
