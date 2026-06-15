@@ -78,6 +78,15 @@ async function initWebPush() {
     }
 }
 
+function getOrCreateDeviceId() {
+    let deviceId = localStorage.getItem('webpush_device_id');
+    if (!deviceId) {
+        deviceId = 'device-' + Math.random().toString(36).substring(2, 15) + '-' + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('webpush_device_id', deviceId);
+    }
+    return deviceId;
+}
+
 async function sendSubscriptionToBackend(subscription) {
     const rawKeys = subscription.toJSON().keys;
     
@@ -95,6 +104,7 @@ async function sendSubscriptionToBackend(subscription) {
 
     const payload = {
         endpoint: subscription.endpoint,
+        deviceId: getOrCreateDeviceId(),
         keys: {
             p256dh: rawKeys.p256dh,
             auth: rawKeys.auth

@@ -199,13 +199,13 @@
     </div>
 
     <!-- VISTA MÓVIL (Tarjetas Premium Adaptativas) -->
-    <div class="block lg:hidden space-y-4">
+    <div class="block lg:hidden bg-gray-100 p-2 space-y-2">
         <div th:if="${terminos.empty}" class="bg-white p-12 rounded-2xl text-center border border-dashed border-gray-200">
             <i class="fas fa-hourglass-empty text-4xl text-gray-200 mb-4"></i>
             <p class="text-gray-400 text-sm">No hay términos registrados.</p>
         </div>
 
-        <div th:each="t : ${terminos}" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-3 relative hover:shadow-md transition duration-300">
+        <div th:each="t : ${terminos}" class="bg-white rounded-2xl border border-gray-200 p-5 shadow-md space-y-3 relative">
             
             <!-- Encabezado de la Tarjeta (Vencimiento + Prioridad) -->
             <div class="flex items-center justify-between">

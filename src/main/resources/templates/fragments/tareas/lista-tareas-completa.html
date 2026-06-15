@@ -1,4 +1,7 @@
-<div th:fragment="lista" class="overflow-x-auto bg-white rounded-2xl shadow-sm border border-gray-100">
+<div th:fragment="lista" class="space-y-0">
+
+    <!-- VISTA ESCRITORIO (tabla) -->
+    <div class="hidden lg:block overflow-x-auto bg-white rounded-2xl shadow-sm border border-gray-100">
     <table class="w-full text-left border-collapse min-w-[800px] table-fixed">
         <thead class="bg-gray-50/80 text-gray-400 text-[10px] font-bold uppercase tracking-widest border-b border-gray-100">
             <tr>
@@ -82,4 +85,71 @@
             </tr>
         </tbody>
     </table>
+    </div><!-- /VISTA ESCRITORIO -->
+
+    <!-- VISTA MÓVIL / TABLET (Tarjetas) -->
+    <div class="block lg:hidden bg-gray-100 p-2 space-y-2" id="body-tareas-mobile">
+
+        <!-- Sin tareas -->
+        <div th:if="${recordatoriosTodos.empty}" class="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+            <p class="text-gray-400 font-bold">No tienes tareas registradas</p>
+        </div>
+
+        <!-- Tarjeta por tarea -->
+        <div th:each="r : ${recordatoriosTodos}"
+             class="bg-white rounded-2xl border border-gray-200 shadow-md overflow-hidden fila-tarea"
+             th:data-estado="${r.completado ? 'completada' : 'pendiente'}"
+             th:classappend="${r.completado ? 'opacity-60' : ''}">
+
+            <!-- Encabezado: check + título -->
+            <div class="flex items-start gap-3 p-4">
+                <button th:onclick="'toggleTarea(' + ${r.id} + ')'"
+                        class="w-7 h-7 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all mt-0.5 focus:outline-none"
+                        th:classappend="${r.completado ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 hover:border-gob-guinda text-transparent hover:text-gob-guinda/30'}">
+                    <i class="fas fa-check text-[10px]"></i>
+                </button>
+                <div class="flex-1 min-w-0">
+                    <p class="font-bold text-gray-800 text-sm"
+                       th:text="${r.titulo}"
+                       th:classappend="${r.completado ? 'line-through text-gray-400' : ''}">
+                        Título de la tarea
+                    </p>
+                    <p class="text-xs text-gray-500 mt-0.5 truncate" th:text="${r.detalles}"></p>
+                </div>
+            </div>
+
+            <!-- Pie: fecha/hora + prioridad + estado + eliminar -->
+            <div class="flex items-center justify-between px-4 pb-3 gap-2 flex-wrap">
+                <div class="flex items-center gap-3">
+                    <!-- Fecha -->
+                    <div class="flex items-center gap-1.5 text-xs text-gray-500">
+                        <i class="far fa-calendar-alt text-gray-300"></i>
+                        <span th:text="${#temporals.format(r.fechaRecordatorio, 'dd/MM/yyyy')}"></span>
+                    </div>
+                    <!-- Hora -->
+                    <div class="flex items-center gap-1.5 text-xs font-bold text-gray-500 bg-gray-50 px-2 py-0.5 rounded">
+                        <i class="far fa-clock text-gob-oro text-[10px]"></i>
+                        <span th:text="${r.horaRecordatorio}"></span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <!-- Prioridad -->
+                    <span th:if="${r.prioridad != null}" th:text="${r.prioridad.nombre}"
+                          class="text-[9px] px-2 py-0.5 rounded font-extrabold tracking-wider border"
+                          th:classappend="${r.prioridad.nombre == 'ALTA' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-blue-50 text-blue-600 border-blue-100'}">
+                    </span>
+                    <!-- Estado -->
+                    <span th:if="${!r.completado}" class="text-[9px] px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-600 border border-amber-100">Pendiente</span>
+                    <span th:if="${r.completado}" class="text-[9px] px-2 py-0.5 rounded-full font-bold bg-green-50 text-green-600 border border-green-100">Completada</span>
+                    <!-- Eliminar -->
+                    <button th:onclick="'confirmarEliminarTarea(' + ${r.id} + ')'"
+                            class="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Eliminar">
+                        <i class="fas fa-trash-alt text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div><!-- /VISTA MÓVIL -->
+
 </div>

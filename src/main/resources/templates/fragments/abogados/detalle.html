@@ -1,5 +1,5 @@
-<div th:fragment="detalle"
-    class="w-full lg:w-2/3 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden relative">
+<div th:fragment="detalle" id="panel-detalle-container"
+    class="w-full lg:w-2/3 bg-white rounded-2xl shadow-sm border border-gray-200 hidden lg:flex flex-col overflow-hidden relative">
 
     <div id="panel-vacio" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/50 z-10">
         <div class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4 opacity-50">
@@ -11,19 +11,27 @@
 
     <div id="panel-detalle" class="hidden flex flex-col h-full animate-fade-in">
 
-        <div class="p-6 border-b border-gray-100 bg-gob-verde text-white relative overflow-hidden flex-shrink-0">
+        <div class="p-4 sm:p-6 border-b border-gray-100 bg-gob-verde text-white relative overflow-hidden flex-shrink-0">
             <div class="absolute top-0 right-0 -mr-8 -mt-8 w-48 h-48 bg-white/5 rounded-full blur-2xl"></div>
 
-            <div class="relative z-10 flex flex-col md:flex-row items-start justify-between gap-4">
-                <div class="flex items-center gap-4 flex-1 min-w-0">
+            <!-- Botón de regresar en móvil -->
+            <div class="relative z-20 lg:hidden mb-3">
+                <button type="button" onclick="regresarALista()"
+                    class="flex items-center gap-2 text-white/80 hover:text-white text-xs font-bold bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 transition-all">
+                    <i class="fas fa-arrow-left"></i> Regresar al listado
+                </button>
+            </div>
+
+            <div class="relative z-10 flex flex-row items-center justify-between gap-3 sm:gap-4">
+                <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                     <div id="det-avatar"
-                        class="w-16 h-16 flex-shrink-0 rounded-full bg-gradient-to-br from-gob-oro to-yellow-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg border-2 border-white/20">
+                        class="w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 rounded-full bg-gradient-to-br from-gob-oro to-yellow-600 flex items-center justify-center text-white font-bold text-lg sm:text-2xl shadow-lg border-2 border-white/20">
                         U
                     </div>
                     <div class="flex-1 min-w-0">
-                        <h2 id="det-nombre" class="text-2xl font-bold tracking-tight truncate">Nombre Completo</h2>
-                        <p id="det-email" class="text-sm text-gray-300 truncate">correo@ejemplo.com</p>
-                        <div class="flex flex-wrap gap-2 mt-2" id="det-badges">
+                        <h2 id="det-nombre" class="text-lg sm:text-2xl font-bold tracking-tight truncate">Nombre Completo</h2>
+                        <p id="det-email" class="text-xs sm:text-sm text-gray-300 truncate">correo@ejemplo.com</p>
+                        <div class="flex flex-wrap gap-1.5 mt-1 sm:mt-2" id="det-badges">
                         </div>
                     </div>
                 </div>
@@ -31,41 +39,41 @@
                 <div class="flex gap-2 flex-shrink-0"
                     th:if="${usuarioActual.rol.name() == 'DIRECCION' or usuarioActual.rol.name() == 'SUBDIRECCION' or usuarioActual.rol.name() == 'ADMIN'}">
                     <button id="btn-estatus"
-                        class="px-3 py-1.5 bg-white/10 hover:bg-red-500/80 rounded-lg text-sm font-bold transition-colors backdrop-blur-sm border border-white/10 shadow-sm"><i
+                        class="px-2.5 py-1.5 bg-white/10 hover:bg-red-500/80 rounded-lg text-xs sm:text-sm font-bold transition-colors backdrop-blur-sm border border-white/10 shadow-sm"><i
                             class="fas fa-ban mr-1"></i> Desactivar</button>
                 </div>
             </div>
         </div>
 
-        <div class="flex border-b border-gray-200 bg-gray-50 flex-shrink-0 px-6">
+        <div class="flex border-b border-gray-200 bg-gray-50 flex-shrink-0 px-4 sm:px-6 overflow-x-auto whitespace-nowrap scrollbar-none">
             <button th:if="${usuarioActual.rol.name() == 'DIRECCION' or usuarioActual.rol.name() == 'SUBDIRECCION' or usuarioActual.rol.name() == 'ADMIN'}" 
                 id="tab-btn-editar" onclick="cambiarTabAbogado('editar')"
-                class="tab-abogado py-3 px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors">
+                class="tab-abogado py-2.5 px-3 sm:py-3 sm:px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-xs sm:text-sm font-medium transition-colors">
                 <i class="fas fa-user-cog mr-1"></i> Editar Perfil
             </button>
             <button id="tab-btn-casos" onclick="cambiarTabAbogado('casos')"
-                class="tab-abogado py-3 px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors">
+                class="tab-abogado py-2.5 px-3 sm:py-3 sm:px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-xs sm:text-sm font-medium transition-colors">
                 <i class="fas fa-folder-open mr-1"></i> Expedientes
             </button>
             <button id="tab-btn-terminos" onclick="cambiarTabAbogado('terminos')"
-                class="tab-abogado py-3 px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors">
+                class="tab-abogado py-2.5 px-3 sm:py-3 sm:px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-xs sm:text-sm font-medium transition-colors">
                 <i class="fas fa-gavel mr-1"></i> Términos y Audiencias
             </button>
             <button id="tab-btn-historial" onclick="cambiarTabAbogado('historial')"
-                class="tab-abogado py-3 px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors">
+                class="tab-abogado py-2.5 px-3 sm:py-3 sm:px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-xs sm:text-sm font-medium transition-colors">
                 <i class="fas fa-history mr-1"></i> Historial
             </button>
             <button id="tab-btn-permisos" type="button" disabled
-                class="py-3 px-4 border-b-2 border-transparent text-gray-300 text-sm font-medium transition-colors cursor-not-allowed inline-flex items-center gap-2">
+                class="py-2.5 px-3 sm:py-3 sm:px-4 border-b-2 border-transparent text-gray-300 text-xs sm:text-sm font-medium transition-colors cursor-not-allowed inline-flex items-center gap-2">
                 <span><i class="fas fa-user-shield mr-1"></i> Permisos</span>
                 <span
-                    class="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-gray-400">
+                    class="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.16em] text-gray-400">
                     Proximamente
                 </span>
             </button>
         </div>
 
-        <div class="p-6 flex-1 overflow-y-auto bg-gray-50/30 relative">
+        <div class="p-4 sm:p-6 flex-1 overflow-y-auto bg-gray-50/30 relative">
 
             <div id="tab-content-casos" class="tab-abogado-content block animate-fade-in">
                 <div id="loading-casos" class="text-center py-12 hidden">

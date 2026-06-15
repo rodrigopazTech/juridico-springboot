@@ -109,6 +109,28 @@ function seleccionarAbogado(cardElement) {
     } else {
         cambiarTabAbogado('casos');
     }
+
+    // Ocultar listado y mostrar detalle en móvil
+    const panelLista = document.getElementById('panel-lista');
+    const panelDetalleContainer = document.getElementById('panel-detalle-container');
+    if (window.innerWidth < 1024) {
+        if (panelLista) panelLista.classList.add('hidden');
+        if (panelDetalleContainer) panelDetalleContainer.classList.remove('hidden');
+    }
+}
+
+function regresarALista() {
+    const panelLista = document.getElementById('panel-lista');
+    const panelDetalleContainer = document.getElementById('panel-detalle-container');
+    
+    if (panelLista) panelLista.classList.remove('hidden');
+    if (panelDetalleContainer) panelDetalleContainer.classList.add('hidden');
+    
+    // Limpiar el estado activo de las tarjetas
+    document.querySelectorAll('.abogado-card').forEach(card => {
+        card.classList.remove('bg-red-50', 'border-red-100');
+        card.classList.add('border-transparent');
+    });
 }
 
 // --- 2. LÓGICA DE MODALES (MANTENIDA Y ADAPTADA) ---

@@ -33,6 +33,9 @@ public class PushSubscription {
     @Column(nullable = false, length = 255)
     private String auth;
 
+    @Column(name = "device_id", length = 255)
+    private String deviceId;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

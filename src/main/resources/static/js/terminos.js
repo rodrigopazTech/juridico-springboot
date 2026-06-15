@@ -299,36 +299,55 @@ function toggleTimeline(id) {
 // Parpadeo local de la etapa cuando se navega desde una notificación
 function animarEtapaPorEstatus(estatusObj) {
     try {
-        // estatus puede venir como nombre del enum o como ordinal; intentamos ambos
-        const target = document.getElementById('etapa-' + estatusObj) ||
-            document.querySelector('[data-etapa-hidden="true"][value="' + estatusObj + '"]')?.parentElement;
+        const targets = [];
+        const targetDesk = document.getElementById('etapa-' + estatusObj);
+        const targetMob = document.getElementById('etapa-mob-' + estatusObj);
 
-        if (!target) return;
+        if (targetDesk) targets.push(targetDesk);
+        if (targetMob) targets.push(targetMob);
 
-        // Scroll al contenedor de la línea de tiempo para que el usuario lo vea
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (targets.length === 0) {
+            const fallbacks = document.querySelectorAll('[data-etapa-hidden="true"][value="' + estatusObj + '"]');
+            fallbacks.forEach(fb => {
+                if (fb.parentElement) {
+                    targets.push(fb.parentElement);
+                }
+            });
+        }
 
-        // Efecto parpadeo más “iluminado”
-        target.classList.remove('ring-4', 'ring-gob-guinda/60');
-        target.classList.add('ring-2', 'ring-cyan');
-        target.classList.add('shadow-[0_0_30px_cyan]');
+        if (targets.length === 0) return;
+
+        // Scroll al primer elemento que esté visible en la pantalla
+        const firstVisible = targets.find(t => t.offsetWidth > 0 || t.offsetHeight > 0) || targets[0];
+        firstVisible.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        targets.forEach(target => {
+            target.classList.remove('ring-4', 'ring-gob-guinda/60');
+            target.classList.add('ring-2', 'ring-cyan');
+            target.classList.add('shadow-[0_0_30px_cyan]');
+        });
 
         let toggles = 0;
         const interval = setInterval(() => {
-            if (!target.isConnected) {
+            const connectedTargets = targets.filter(t => t.isConnected);
+            if (connectedTargets.length === 0) {
                 clearInterval(interval);
                 return;
             }
 
             if (toggles >= 12) {
                 clearInterval(interval);
-                target.classList.remove('ring-2', 'ring-cyan', 'shadow-[0_0_30px_cyan]');
-                target.classList.remove('ring-4');
+                connectedTargets.forEach(target => {
+                    target.classList.remove('ring-2', 'ring-cyan', 'shadow-[0_0_30px_cyan]');
+                    target.classList.remove('ring-4');
+                });
                 return;
             }
 
-            target.classList.toggle('ring-4');
-            target.classList.toggle('ring-2');
+            connectedTargets.forEach(target => {
+                target.classList.toggle('ring-4');
+                target.classList.toggle('ring-2');
+            });
             toggles++;
 
         }, 250);

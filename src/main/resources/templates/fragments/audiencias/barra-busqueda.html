@@ -28,7 +28,8 @@
             th:classappend="${#strings.isEmpty(keyword) && #strings.isEmpty(param.tipo) && #strings.isEmpty(param.gerencia) && #strings.isEmpty(param.materia) && #strings.isEmpty(param.estatus) && #strings.isEmpty(param.periodo) && #strings.isEmpty(param.abogadoId) && #strings.isEmpty(param.mes) ? 
            'text-gray-400 border-transparent hover:bg-gray-100' : 
            'bg-gob-guinda text-white border-gob-guinda shadow-md font-bold hover:bg-gob-guinda/90'}">
-            <i class="fas fa-list-ul"></i> VerTodos
+            <i class="fas fa-list-ul"></i>
+            <span class="hidden sm:inline">Ver Todos</span>
         </a>
 
         <div class="flex gap-2 w-full md:w-auto">
@@ -41,13 +42,15 @@
                 periodo=${paramPeriodo},
                 abogadoId=${paramAbogadoId}
            )}" class="flex-1 md:flex-none text-gob-gris bg-white border border-gray-300 hover:bg-gray-50 font-medium rounded-lg text-sm px-4 py-2.5 shadow-sm transition-colors flex items-center justify-center decoration-0"
-                title="Descargar Reporte Excel">
-                <i class="fas fa-file-excel text-green-600 mr-2"></i> Exportar
+                 title="Descargar Reporte Excel">
+                <i class="fas fa-file-excel text-green-600"></i>
+                <span class="hidden sm:inline ml-1">Exportar</span>
             </a>
 
             <button onclick="abrirModalAudiencia()"
-                class="flex-1 md:flex-none text-white bg-gob-guinda hover:bg-gob-guindaDark font-bold rounded-lg text-sm px-5 py-2.5 shadow-md transition-colors flex items-center justify-center gap-2">
-                <i class="fas fa-plus"></i> Nueva Audiencia
+                class="flex-1 md:flex-none text-white bg-gob-guinda hover:bg-gob-guindaDark font-bold rounded-lg text-sm px-4 sm:px-5 py-2.5 shadow-md transition-colors flex items-center justify-center gap-2">
+                <i class="fas fa-plus"></i>
+                <span class="hidden sm:inline">Nueva Audiencia</span>
             </button>
         </div>
     </div>

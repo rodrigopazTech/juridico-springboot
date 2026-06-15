@@ -49,24 +49,42 @@ public class WebPushController {
             return ResponseEntity.badRequest().body(Map.of("error", "Datos de suscripción inválidos"));
         }
 
-        Optional<PushSubscription> existing = subscriptionRepository.findByEndpoint(request.getEndpoint());
-        if (existing.isPresent()) {
-            PushSubscription sub = existing.get();
-            sub.setUsuario(usuario);
-            sub.setP256dh(request.getKeys().getP256dh());
-            sub.setAuth(request.getKeys().getAuth());
-            subscriptionRepository.save(sub);
-            log.info("Suscripción Web Push actualizada para el usuario: {}", email);
+        // Buscar si ya existe una suscripción para este usuario en este dispositivo (deviceId)
+        Optional<PushSubscription> existingByDevice = Optional.empty();
+        if (request.getDeviceId() != null && !request.getDeviceId().trim().isEmpty()) {
+            existingByDevice = subscriptionRepository.findByUsuarioIdAndDeviceId(usuario.getId(), request.getDeviceId());
+        }
+
+        // Buscar si existe una suscripción por el endpoint
+        Optional<PushSubscription> existingByEndpoint = subscriptionRepository.findByEndpoint(request.getEndpoint());
+
+        PushSubscription subToSave;
+
+        if (existingByDevice.isPresent()) {
+            subToSave = existingByDevice.get();
+            subToSave.setEndpoint(request.getEndpoint());
+            subToSave.setP256dh(request.getKeys().getP256dh());
+            subToSave.setAuth(request.getKeys().getAuth());
+            log.info("Actualizando suscripción Web Push por Device ID para el usuario: {}", email);
+        } else if (existingByEndpoint.isPresent()) {
+            subToSave = existingByEndpoint.get();
+            subToSave.setUsuario(usuario);
+            subToSave.setDeviceId(request.getDeviceId());
+            subToSave.setP256dh(request.getKeys().getP256dh());
+            subToSave.setAuth(request.getKeys().getAuth());
+            log.info("Reutilizando suscripción Web Push por Endpoint para el usuario: {}", email);
         } else {
-            PushSubscription sub = PushSubscription.builder()
+            subToSave = PushSubscription.builder()
                     .usuario(usuario)
                     .endpoint(request.getEndpoint())
                     .p256dh(request.getKeys().getP256dh())
                     .auth(request.getKeys().getAuth())
+                    .deviceId(request.getDeviceId())
                     .build();
-            subscriptionRepository.save(sub);
             log.info("Nueva suscripción Web Push registrada para el usuario: {}", email);
         }
+
+        subscriptionRepository.save(subToSave);
 
         return ResponseEntity.ok(Map.of("success", true));
     }
@@ -89,10 +107,13 @@ public class WebPushController {
 
     public static class SubscriptionRequest {
         private String endpoint;
+        private String deviceId;
         private Keys keys;
 
         public String getEndpoint() { return endpoint; }
         public void setEndpoint(String endpoint) { this.endpoint = endpoint; }
+        public String getDeviceId() { return deviceId; }
+        public void setDeviceId(String deviceId) { this.deviceId = deviceId; }
         public Keys getKeys() { return keys; }
         public void setKeys(Keys keys) { this.keys = keys; }
 

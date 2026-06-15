@@ -90,8 +90,9 @@
 
                     <li class="mr-1">
                         <button type="button" data-tab="materias"
-                            class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
-                            <i class="fas fa-balance-scale"></i> Materias
+                            class="tab-btn inline-flex items-center gap-2 px-3 sm:px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            <i class="fas fa-balance-scale"></i>
+                            <span class="hidden sm:inline">Materias</span>
                             <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
                                 th:text="${#lists.size(listaMaterias)}">0</span>
                         </button>
@@ -99,8 +100,9 @@
 
                     <li class="mr-1">
                         <button type="button" data-tab="organos"
-                            class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
-                            <i class="fas fa-landmark"></i> Órganos Jurisdiccionales
+                            class="tab-btn inline-flex items-center gap-2 px-3 sm:px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            <i class="fas fa-landmark"></i>
+                            <span class="hidden sm:inline">Órganos Jurisdiccionales</span>
                             <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
                                 th:text="${#lists.size(listaOrganos)}">0</span>
                         </button>
@@ -108,8 +110,9 @@
 
                     <li class="mr-1">
                         <button type="button" data-tab="tipos-audiencia"
-                            class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
-                            <i class="fas fa-gavel"></i> Tipos de Audiencia
+                            class="tab-btn inline-flex items-center gap-2 px-3 sm:px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            <i class="fas fa-gavel"></i>
+                            <span class="hidden sm:inline">Tipos de Audiencia</span>
                             <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
                                 th:text="${#lists.size(listaTiposAudiencia)}">0</span>
                         </button>
@@ -117,8 +120,9 @@
 
                     <li class="mr-1">
                         <button type="button" data-tab="tipos-expediente"
-                            class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
-                            <i class="fas fa-folder"></i> Tipos de Expediente
+                            class="tab-btn inline-flex items-center gap-2 px-3 sm:px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            <i class="fas fa-folder"></i>
+                            <span class="hidden sm:inline">Tipos de Expediente</span>
                             <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
                                 th:text="${#lists.size(listaTiposExpediente)}">0</span>
                         </button>
@@ -126,8 +130,9 @@
 
                     <li class="mr-1">
                         <button type="button" data-tab="sedes"
-                            class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
-                            <i class="fas fa-map-marker-alt"></i> Sedes/Estados
+                            class="tab-btn inline-flex items-center gap-2 px-3 sm:px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span class="hidden sm:inline">Sedes/Estados</span>
                             <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
                                 th:text="${#lists.size(listaSedes)}">0</span>
                         </button>
@@ -135,8 +140,9 @@
 
                     <li class="mr-1">
                         <button type="button" data-tab="abogados"
-                            class="tab-btn inline-flex items-center gap-2 px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
-                            <i class="fas fa-users"></i> Usuarios/Abogados
+                            class="tab-btn inline-flex items-center gap-2 px-3 sm:px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            <i class="fas fa-users"></i>
+                            <span class="hidden sm:inline">Usuarios/Abogados</span>
                             <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
                                 th:text="${#lists.size(listaAbogados)}">0</span>
                         </button>
@@ -165,7 +171,7 @@
                                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i
                                             class="fas fa-search text-xs"></i></span>
                                     <input type="text" id="search-materias" placeholder="Buscar..."
-                                        class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-52 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all">
+                                        class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-full sm:w-52 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all">
                                 </div>
                                 <button th:if="${puedeEditar}" onclick="abrirModalNuevo('materia')"
                                     class="bg-gob-guinda text-white px-4 py-2 rounded-lg text-sm hover:bg-opacity-90 shadow-sm transition-all flex items-center gap-2">
@@ -173,22 +179,25 @@
                                 </button>
                             </div>
                         </div>
-                        <table class="w-full text-sm text-left">
-                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                        <table class="w-full text-sm text-left block sm:table">
+                            <thead class="hidden sm:table-header-group text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th class="px-6 py-3 font-bold">Nombre</th>
                                     <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody id="tbody-materias" class="divide-y divide-gray-100">
-                                <tr th:each="m : ${listaMaterias}" class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-4">
-                                        <span class="font-semibold text-gray-800" th:text="${m.nombre}">Nombre</span>
-                                        <span th:if="${m.createdAt != null and m.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
+                            <tbody id="tbody-materias" class="grid grid-cols-1 sm:table-row-group gap-3 p-3 sm:p-0 bg-gray-50 sm:bg-transparent">
+                                <tr th:each="m : ${listaMaterias}" class="bg-white border border-gray-200 sm:border-0 sm:border-b sm:border-gray-100 shadow-sm sm:shadow-none rounded-xl p-4 sm:p-0 flex flex-col justify-between gap-2.5 sm:table-row hover:bg-gray-50 transition-colors">
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fas fa-balance-scale text-purple-400 sm:hidden"></i>
+                                            <span class="font-semibold text-gray-800 text-sm sm:text-base" th:text="${m.nombre}">Nombre</span>
+                                            <span th:if="${m.createdAt != null and m.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
+                                        </div>
                                     </td>
-                                    <td th:if="${puedeEditar}" class="px-6 py-4 text-center">
-                                        <div class="flex items-center justify-center gap-2">
+                                    <td th:if="${puedeEditar}" class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
+                                        <div class="flex items-center justify-end sm:justify-center gap-2">
                                             <button th:data-id="${m.id}" th:data-nombre="${m.nombre}"
                                                 onclick="editarItem('materia', this)"
                                                 class="text-gob-oro hover:text-gob-guinda transition-colors p-1.5 rounded-lg hover:bg-gob-oro/10"
@@ -204,8 +213,8 @@
                                         </div>
                                     </td>
                                 </tr>
-                                <tr th:if="${#lists.isEmpty(listaMaterias)}">
-                                    <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
+                                <tr th:if="${#lists.isEmpty(listaMaterias)}" class="block sm:table-row">
+                                    <td colspan="2" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
                                         <i class="fas fa-folder-open text-2xl mb-2 block"></i>
                                         No hay materias registradas en el sistema.
                                     </td>
@@ -237,22 +246,25 @@
                                 </button>
                             </div>
                         </div>
-                        <table class="w-full text-sm text-left">
-                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                        <table class="w-full text-sm text-left block sm:table">
+                            <thead class="hidden sm:table-header-group text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th class="px-6 py-3 font-bold">Nombre</th>
                                     <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody id="tbody-organos" class="divide-y divide-gray-100">
-                                <tr th:each="o : ${listaOrganos}" class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-4">
-                                        <span class="font-semibold text-gray-800" th:text="${o.nombre}">Nombre</span>
-                                        <span th:if="${o.createdAt != null and o.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
+                            <tbody id="tbody-organos" class="grid grid-cols-1 sm:table-row-group gap-3 p-3 sm:p-0 bg-gray-50 sm:bg-transparent">
+                                <tr th:each="o : ${listaOrganos}" class="bg-white border border-gray-200 sm:border-0 sm:border-b sm:border-gray-100 shadow-sm sm:shadow-none rounded-xl p-4 sm:p-0 flex flex-col justify-between gap-2.5 sm:table-row hover:bg-gray-50 transition-colors">
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fas fa-landmark text-blue-400 sm:hidden"></i>
+                                            <span class="font-semibold text-gray-800 text-sm sm:text-base" th:text="${o.nombre}">Nombre</span>
+                                            <span th:if="${o.createdAt != null and o.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
+                                        </div>
                                     </td>
-                                    <td th:if="${puedeEditar}" class="px-6 py-4 text-center">
-                                        <div class="flex items-center justify-center gap-2">
+                                    <td th:if="${puedeEditar}" class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
+                                        <div class="flex items-center justify-end sm:justify-center gap-2">
                                             <button th:data-id="${o.id}" th:data-nombre="${o.nombre}"
                                                 onclick="editarItem('organo', this)"
                                                 class="text-gob-oro hover:text-gob-guinda transition-colors p-1.5 rounded-lg hover:bg-gob-oro/10"
@@ -268,8 +280,8 @@
                                         </div>
                                     </td>
                                 </tr>
-                                <tr th:if="${#lists.isEmpty(listaOrganos)}">
-                                    <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
+                                <tr th:if="${#lists.isEmpty(listaOrganos)}" class="block sm:table-row">
+                                    <td colspan="2" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
                                         <i class="fas fa-folder-open text-2xl mb-2 block"></i>
                                         No hay órganos jurisdiccionales registrados en esta gerencia.
                                     </td>
@@ -300,22 +312,25 @@
                                 </button>
                             </div>
                         </div>
-                        <table class="w-full text-sm text-left">
-                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                        <table class="w-full text-sm text-left block sm:table">
+                            <thead class="hidden sm:table-header-group text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th class="px-6 py-3 font-bold">Nombre</th>
                                     <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody id="tbody-tipos-audiencia" class="divide-y divide-gray-100">
-                                <tr th:each="t : ${listaTiposAudiencia}" class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-4">
-                                        <span class="font-semibold text-gray-800" th:text="${t.nombre}">Nombre</span>
-                                        <span th:if="${t.createdAt != null and t.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
+                            <tbody id="tbody-tipos-audiencia" class="grid grid-cols-1 sm:table-row-group gap-3 p-3 sm:p-0 bg-gray-50 sm:bg-transparent">
+                                <tr th:each="t : ${listaTiposAudiencia}" class="bg-white border border-gray-200 sm:border-0 sm:border-b sm:border-gray-100 shadow-sm sm:shadow-none rounded-xl p-4 sm:p-0 flex flex-col justify-between gap-2.5 sm:table-row hover:bg-gray-50 transition-colors">
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fas fa-gavel text-amber-400 sm:hidden"></i>
+                                            <span class="font-semibold text-gray-800 text-sm sm:text-base" th:text="${t.nombre}">Nombre</span>
+                                            <span th:if="${t.createdAt != null and t.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
+                                        </div>
                                     </td>
-                                    <td th:if="${puedeEditar}" class="px-6 py-4 text-center">
-                                        <div class="flex items-center justify-center gap-2">
+                                    <td th:if="${puedeEditar}" class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
+                                        <div class="flex items-center justify-end sm:justify-center gap-2">
                                             <button th:data-id="${t.id}" th:data-nombre="${t.nombre}"
                                                 onclick="editarItem('tipo-audiencia', this)"
                                                 class="text-gob-oro hover:text-gob-guinda transition-colors p-1.5 rounded-lg hover:bg-gob-oro/10"
@@ -332,8 +347,8 @@
                                         </div>
                                     </td>
                                 </tr>
-                                <tr th:if="${#lists.isEmpty(listaTiposAudiencia)}">
-                                    <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
+                                <tr th:if="${#lists.isEmpty(listaTiposAudiencia)}" class="block sm:table-row">
+                                    <td colspan="2" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
                                         <i class="fas fa-folder-open text-2xl mb-2 block"></i>
                                         No hay tipos de audiencia registrados.
                                     </td>
@@ -365,22 +380,25 @@
                                 </button>
                             </div>
                         </div>
-                        <table class="w-full text-sm text-left">
-                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                        <table class="w-full text-sm text-left block sm:table">
+                            <thead class="hidden sm:table-header-group text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th class="px-6 py-3 font-bold">Nombre</th>
                                     <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody id="tbody-tipos-expediente" class="divide-y divide-gray-100">
-                                <tr th:each="te : ${listaTiposExpediente}" class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-4">
-                                        <span class="font-semibold text-gray-800" th:text="${te.nombre}">Nombre</span>
-                                        <span th:if="${te.createdAt != null and te.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
+                            <tbody id="tbody-tipos-expediente" class="grid grid-cols-1 sm:table-row-group gap-3 p-3 sm:p-0 bg-gray-50 sm:bg-transparent">
+                                <tr th:each="te : ${listaTiposExpediente}" class="bg-white border border-gray-200 sm:border-0 sm:border-b sm:border-gray-100 shadow-sm sm:shadow-none rounded-xl p-4 sm:p-0 flex flex-col justify-between gap-2.5 sm:table-row hover:bg-gray-50 transition-colors">
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fas fa-folder text-indigo-400 sm:hidden"></i>
+                                            <span class="font-semibold text-gray-800 text-sm sm:text-base" th:text="${te.nombre}">Nombre</span>
+                                            <span th:if="${te.createdAt != null and te.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
+                                        </div>
                                     </td>
-                                    <td th:if="${puedeEditar}" class="px-6 py-4 text-center">
-                                        <div class="flex items-center justify-center gap-2">
+                                    <td th:if="${puedeEditar}" class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
+                                        <div class="flex items-center justify-end sm:justify-center gap-2">
                                             <button th:data-id="${te.id}" th:data-nombre="${te.nombre}"
                                                 onclick="editarItem('tipo-expediente', this)"
                                                 class="text-gob-oro hover:text-gob-guinda transition-colors p-1.5 rounded-lg hover:bg-gob-oro/10"
@@ -397,8 +415,8 @@
                                         </div>
                                     </td>
                                 </tr>
-                                <tr th:if="${#lists.isEmpty(listaTiposExpediente)}">
-                                    <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
+                                <tr th:if="${#lists.isEmpty(listaTiposExpediente)}" class="block sm:table-row">
+                                    <td colspan="2" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
                                         <i class="fas fa-folder-open text-2xl mb-2 block"></i>
                                         No hay tipos de expediente registrados.
                                     </td>
@@ -430,35 +448,35 @@
                             <i class="fas fa-info-circle mr-1"></i> Para gestionar usuarios completos, usa la sección de
                             <a href="/usuarios" class="underline font-bold hover:text-blue-800">Usuarios</a>.
                         </div>
-                        <table class="w-full text-sm text-left">
-                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                        <table class="w-full text-sm text-left block sm:table">
+                            <thead class="hidden sm:table-header-group text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th class="px-6 py-3 font-bold">Nombre</th>
                                     <th class="px-6 py-3 font-bold text-center w-36">Rol</th>
                                 </tr>
                             </thead>
-                            <tbody id="tbody-abogados" class="divide-y divide-gray-100">
-                                <tr th:each="u : ${listaAbogados}" class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-4">
+                            <tbody id="tbody-abogados" class="grid grid-cols-1 sm:table-row-group gap-3 p-3 sm:p-0 bg-gray-50 sm:bg-transparent">
+                                <tr th:each="u : ${listaAbogados}" class="bg-white border border-gray-200 sm:border-0 sm:border-b sm:border-gray-100 shadow-sm sm:shadow-none rounded-xl p-4 sm:p-0 flex flex-col justify-between gap-2.5 sm:table-row hover:bg-gray-50 transition-colors">
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4">
                                         <div class="flex items-center gap-3">
-                                            <div class="w-8 h-8 bg-gob-guinda/10 text-gob-guinda rounded-full flex items-center justify-center text-xs font-bold"
+                                            <div class="w-8 h-8 bg-gob-guinda/10 text-gob-guinda rounded-full flex items-center justify-center text-xs font-bold animate-pulse"
                                                 th:text="${#strings.substring(u.nombreCompleto, 0, 1)}">A</div>
                                             <div>
-                                                <span class="font-semibold text-gray-800"
+                                                <span class="font-semibold text-gray-800 text-sm sm:text-base"
                                                     th:text="${u.nombreCompleto}">Nombre</span>
                                                 <div class="text-xs text-gray-400" th:text="${u.email}">email</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 text-center">
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-right sm:text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
                                         <span class="text-xs px-2 py-1 rounded-full font-bold"
                                             th:classappend="${u.rol.name() == 'GERENTE' ? 'bg-purple-100 text-purple-700' : 
                                                            (u.rol.name() == 'JEFE_DEPTO' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700')}"
                                             th:text="${u.rol.name()}">ROL</span>
                                     </td>
                                 </tr>
-                                <tr th:if="${#lists.isEmpty(listaAbogados)}">
-                                    <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
+                                <tr th:if="${#lists.isEmpty(listaAbogados)}" class="block sm:table-row">
+                                    <td colspan="2" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
                                         <i class="fas fa-folder-open text-2xl mb-2 block"></i>
                                         No hay usuarios asignados a esta gerencia.
                                     </td>
@@ -489,22 +507,25 @@
                                 </button>
                             </div>
                         </div>
-                        <table class="w-full text-sm text-left">
-                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                        <table class="w-full text-sm text-left block sm:table">
+                            <thead class="hidden sm:table-header-group text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th class="px-6 py-3 font-bold">Nombre</th>
                                     <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody id="tbody-sedes" class="divide-y divide-gray-100">
-                                <tr th:each="s : ${listaSedes}" class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-4">
-                                        <span class="font-semibold text-gray-800" th:text="${s.nombre}">Nombre</span>
-                                        <span th:if="${s.createdAt != null and s.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
+                            <tbody id="tbody-sedes" class="grid grid-cols-1 sm:table-row-group gap-3 p-3 sm:p-0 bg-gray-50 sm:bg-transparent">
+                                <tr th:each="s : ${listaSedes}" class="bg-white border border-gray-200 sm:border-0 sm:border-b sm:border-gray-100 shadow-sm sm:shadow-none rounded-xl p-4 sm:p-0 flex flex-col justify-between gap-2.5 sm:table-row hover:bg-gray-50 transition-colors">
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fas fa-map-marker-alt text-red-400 sm:hidden"></i>
+                                            <span class="font-semibold text-gray-800 text-sm sm:text-base" th:text="${s.nombre}">Nombre</span>
+                                            <span th:if="${s.createdAt != null and s.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
+                                        </div>
                                     </td>
-                                    <td th:if="${puedeEditar}" class="px-6 py-4 text-center">
-                                        <div class="flex items-center justify-center gap-2">
+                                    <td th:if="${puedeEditar}" class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
+                                        <div class="flex items-center justify-end sm:justify-center gap-2">
                                             <button th:data-id="${s.id}" th:data-nombre="${s.nombre}"
                                                 onclick="editarItem('sede', this)"
                                                 class="text-gob-oro hover:text-gob-guinda transition-colors p-1.5 rounded-lg hover:bg-gob-oro/10"
@@ -520,8 +541,8 @@
                                         </div>
                                     </td>
                                 </tr>
-                                <tr th:if="${#lists.isEmpty(listaSedes)}">
-                                    <td colspan="2" class="px-6 py-8 text-center text-gray-400 italic">
+                                <tr th:if="${#lists.isEmpty(listaSedes)}" class="block sm:table-row">
+                                    <td colspan="2" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
                                         <i class="fas fa-folder-open text-2xl mb-2 block"></i>
                                         No hay sedes/estados registrados.
                                     </td>

@@ -1,5 +1,7 @@
 <div th:fragment="lista" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-    <div class="overflow-x-auto">
+
+    <!-- VISTA ESCRITORIO (tabla) -->
+    <div class="hidden sm:block overflow-x-auto">
         <table class="w-full text-sm text-left text-gray-500">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -50,5 +52,55 @@
                 </tr>
             </tbody>
         </table>
-    </div>
+    </div><!-- /VISTA ESCRITORIO -->
+
+    <!-- VISTA MÓVIL (Tarjetas compactas) -->
+    <div class="block sm:hidden bg-gray-100 p-2 space-y-2">
+
+        <!-- Sin notificaciones -->
+        <div th:if="${notificaciones.empty}" class="px-5 py-12 text-center text-gray-400">
+            <i class="fas fa-check-circle text-4xl mb-3 block text-green-100"></i>
+            Estás al día.
+        </div>
+
+        <!-- Tarjeta por notificación -->
+        <div th:each="n : ${notificaciones}"
+             class="bg-white rounded-2xl border border-gray-200 shadow-md p-4"
+             th:classappend="${!n.leida ? 'bg-yellow-50/40' : ''}">
+
+            <div class="flex items-start gap-3">
+                <!-- Icono tipo -->
+                <div class="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm shadow-sm"
+                     th:classappend="${n.tipo == 'AUDIENCIA' ? 'bg-blue-500' : (n.tipo == 'TERMINO' ? 'bg-red-500' : 'bg-amber-500')}">
+                    <i class="fas" th:classappend="${n.tipo == 'AUDIENCIA' ? 'fa-gavel' : (n.tipo == 'TERMINO' ? 'fa-hourglass-end' : 'fa-bell')}"></i>
+                </div>
+
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-2">
+                        <a th:href="@{/notificaciones/leer/{id}(id=${n.id})}"
+                           class="text-sm font-bold text-gray-800 hover:text-gob-guinda transition-colors truncate"
+                           th:text="${n.titulo}">Título</a>
+                        <!-- Archivar -->
+                        <a th:href="@{/notificaciones/archivar/{id}(id=${n.id})}"
+                           class="text-gray-300 hover:text-red-500 transition-colors flex-shrink-0" title="Archivar">
+                            <i class="fas fa-times text-sm"></i>
+                        </a>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-0.5 line-clamp-2" th:text="${n.mensaje}"></p>
+                    <div class="flex items-center gap-2 mt-1.5">
+                        <!-- Badge tipo -->
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border"
+                              th:classappend="${n.tipo == 'AUDIENCIA' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                               (n.tipo == 'TERMINO' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200')}"
+                              th:text="${n.tipo}">TIPO</span>
+                        <!-- Fecha -->
+                        <span class="text-[10px] text-gray-400"
+                              th:text="${#temporals.format(n.notificarEn, 'dd MMM · HH:mm')}">25 Ene · 10:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><!-- /VISTA MÓVIL -->
+
 </div>
+

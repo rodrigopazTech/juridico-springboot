@@ -103,7 +103,7 @@
                 <div th:replace="~{fragments/expedientes/barra-busqueda :: barra}" class="flex-1"></div>
             </div>
             <div id="grid-resultados" th:fragment="gridResultados">
-                <div class="overflow-x-auto custom-scrollbar">
+                <div class="hidden lg:block overflow-x-auto custom-scrollbar">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr
@@ -213,6 +213,92 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- ===== VISTA MÓVIL / TABLET (Tarjetas) ===== -->
+                <div class="block lg:hidden bg-gray-100 p-2 space-y-2">
+
+                    <!-- Sin resultados -->
+                    <div th:if="${expedientes.empty}" class="py-16 text-center">
+                        <div class="flex flex-col items-center gap-3 opacity-30">
+                            <i class="fas fa-search text-5xl"></i>
+                            <p class="text-lg font-bold italic">No se encontraron expedientes</p>
+                        </div>
+                    </div>
+
+                    <!-- Tarjeta por expediente -->
+                    <div th:each="exp : ${expedientes.content}"
+                         class="bg-white rounded-2xl border border-gray-200 shadow-md overflow-hidden">
+
+                        <!-- Encabezado de tarjeta -->
+                        <div class="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-50">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-gob-guinda/10 flex items-center justify-center text-gob-guinda">
+                                    <i class="fas fa-file-invoice text-lg"></i>
+                                </div>
+                                <div>
+                                    <p class="font-extrabold text-gray-900 text-sm" th:text="${exp.numero}">EXP-000</p>
+                                    <p class="text-[10px] text-gray-400 font-medium"
+                                       th:text="${#temporals.format(exp.createdAt, 'dd/MM/yyyy')}">01/01/2023</p>
+                                </div>
+                            </div>
+                            <!-- Badge Prioridad -->
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-extrabold border shadow-sm"
+                                  th:classappend="${exp.prioridad != null ? exp.prioridad.color : 'text-gray-500 bg-gray-100 border-gray-200'}"
+                                  th:text="${exp.prioridad != null ? exp.prioridad.nombre : 'S/N'}">
+                                PRIORIDAD
+                            </span>
+                        </div>
+
+                        <!-- Cuerpo de tarjeta -->
+                        <div class="px-4 py-3 space-y-2">
+
+                            <!-- Partes -->
+                            <div class="flex items-start gap-2">
+                                <i class="fas fa-users text-gray-300 text-xs mt-1 w-4 flex-shrink-0"></i>
+                                <p class="text-xs text-gray-600 font-semibold line-clamp-2 leading-relaxed"
+                                   th:text="${exp.partes != null and !#strings.isEmpty(exp.partes) ? exp.partes : 'SIN PARTES REGISTRADAS'}">
+                                    Partes Procesales
+                                </p>
+                            </div>
+
+                            <!-- Materia -->
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-balance-scale text-gray-300 text-xs w-4 flex-shrink-0"></i>
+                                <span class="text-[10px] text-gray-500 font-extrabold uppercase tracking-wider"
+                                      th:text="${exp.materia != null ? exp.materia.nombre : 'Sin Materia'}">
+                                    MATERIA
+                                </span>
+                            </div>
+
+                            <!-- Abogado -->
+                            <div class="flex items-center gap-2">
+                                <div class="w-5 h-5 rounded-full bg-gob-oro text-white text-[9px] font-bold flex items-center justify-center flex-shrink-0"
+                                     th:text="${exp.abogadoResponsable != null and exp.abogadoResponsable.nombreCompleto != null ? #strings.substring(exp.abogadoResponsable.nombreCompleto, 0, 1).toUpperCase() : '?'}">
+                                    X
+                                </div>
+                                <span class="text-xs text-gray-600 font-medium truncate"
+                                      th:text="${exp.abogadoResponsable != null ? exp.abogadoResponsable.nombreCompleto : 'SIN ASIGNAR'}">
+                                    Abogado
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Pie de tarjeta -->
+                        <div class="flex items-center justify-between px-4 py-3 bg-gray-50/60 border-t border-gray-100">
+                            <!-- Badge Etapa -->
+                            <span class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-widest border"
+                                  th:classappend="${exp.etapaProcesal != null and exp.etapaProcesal.name() == 'CONCLUIDO' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gob-oro/10 text-gob-oro border-gob-oro/20'}"
+                                  th:text="${exp.etapaProcesal != null ? exp.etapaProcesal.name() : 'DESCONOCIDO'}">
+                                TRAMITE
+                            </span>
+                            <!-- Botón Ver -->
+                            <a th:href="@{/expedientes/{id}(id=${exp.id})}"
+                               class="inline-flex items-center gap-2 px-4 py-2 bg-gob-guinda text-white text-xs font-bold rounded-xl hover:bg-gob-guindaDark transition-all shadow-sm">
+                                <i class="fas fa-eye"></i> Ver
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- ===== PAGINATION ===== -->

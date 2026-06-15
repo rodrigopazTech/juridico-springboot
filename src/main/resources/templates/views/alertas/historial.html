@@ -52,7 +52,8 @@
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
 
-            <div class="overflow-x-auto">
+            <!-- ===== VISTA ESCRITORIO (tabla) ===== -->
+            <div class="hidden sm:block overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead
                         class="bg-gray-50 text-white text-xs font-bold uppercase tracking-widest border-b border-gray-100">
@@ -169,7 +170,102 @@
                         </tr>
                     </tbody>
                 </table>
-            </div>
+            </div><!-- /VISTA ESCRITORIO -->
+
+            <!-- ===== VISTA MÓVIL (Tarjetas diferenciadas) ===== -->
+            <div class="block sm:hidden bg-gray-100 p-2 space-y-2">
+
+                <!-- Sin notificaciones -->
+                <div th:if="${notificaciones.empty}" class="px-6 py-16 text-center text-gray-400">
+                    <i class="fas text-5xl mb-4 block opacity-20"
+                       th:classappend="${esPapelera ? 'fa-trash-restore' : 'fa-bell-slash'}"></i>
+                    <p class="font-bold text-sm" th:text="${esPapelera ? 'Tu papelera está vacía.' : 'No hay notificaciones nuevas.'}"></p>
+                </div>
+
+                <!-- Tarjeta por notificación -->
+                <div th:each="n : ${notificaciones.content}"
+                     class="relative rounded-2xl overflow-hidden shadow-md transition-all duration-200"
+                     th:classappend="${!n.leida ? 'bg-gob-verde border border-gob-oro/40' : 'bg-white border border-gray-200'}">
+
+                    <!-- Barra lateral izquierda de estado -->
+                    <div class="absolute left-0 top-0 bottom-0 w-1 rounded-r"
+                         th:classappend="${!n.leida ? 'bg-gob-oro' : 'bg-gray-200'}"></div>
+
+                    <div class="pl-5 pr-4 py-4">
+
+                        <!-- Fila superior: Tipo badge + fecha + estado -->
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <div class="flex items-center gap-2">
+                                <!-- Badge tipo -->
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-extrabold border"
+                                      th:classappend="${n.tipo == 'AUDIENCIA' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                      (n.tipo == 'TERMINO' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gob-oro/15 text-gob-oro border-gob-oro/50')}">
+                                    <i class="fas" th:classappend="${n.tipo == 'AUDIENCIA' ? 'fa-gavel' : (n.tipo == 'TERMINO' ? 'fa-hourglass-end' : 'fa-info-circle')}"></i>
+                                    <span th:text="${n.tipo}">TIPO</span>
+                                </span>
+                                <!-- Badge LEÍDA -->
+                                <span th:if="${n.leida}"
+                                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-orange-50 text-orange-600 border border-orange-200">
+                                    <i class="fas fa-check-double text-[8px]"></i> LEÍDA
+                                </span>
+                            </div>
+                            <!-- Fecha y hora -->
+                            <div class="text-right flex-shrink-0">
+                                <p class="text-[11px] font-bold"
+                                   th:classappend="${!n.leida ? 'text-yellow-100' : 'text-gray-600'}"
+                                   th:text="${#temporals.format(n.createdAt, 'dd MMM, yyyy')}">Fecha</p>
+                                <p class="text-[10px]"
+                                   th:classappend="${!n.leida ? 'text-yellow-100/60' : 'text-gray-400'}"
+                                   th:text="${#temporals.format(n.createdAt, 'HH:mm')}">Hora</p>
+                            </div>
+                        </div>
+
+                        <!-- Título y mensaje -->
+                        <p class="text-sm font-bold leading-tight mb-1"
+                           th:classappend="${!n.leida ? 'text-yellow-50' : 'text-gray-800'}"
+                           th:text="${n.titulo}">Título de la Notificación</p>
+                        <p class="text-xs line-clamp-2"
+                           th:classappend="${!n.leida ? 'text-yellow-100/75' : 'text-gray-500'}"
+                           th:text="${n.mensaje}">Mensaje descriptivo de la notificación.</p>
+
+                        <!-- Acciones -->
+                        <div class="flex items-center gap-2 mt-3 flex-wrap">
+
+                            <!-- Acciones: Vista Recientes -->
+                            <th:block th:if="${!esPapelera}">
+                                <a th:href="@{/notificaciones/leer/{id}(id=${n.id})}"
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all"
+                                   th:classappend="${!n.leida ? 'border-gob-oro/40 text-gob-oro hover:bg-white/10' : 'border-gob-guinda/20 text-gob-guinda hover:bg-gob-guinda/5'}"
+                                   title="Ver detalle">
+                                    <i class="fas fa-external-link-alt text-[9px]"></i> Ver
+                                </a>
+                                <a th:href="@{/notificaciones/archivar/{id}(id=${n.id})}"
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all"
+                                   th:classappend="${!n.leida ? 'border-yellow-100/20 text-yellow-100 hover:bg-white/10' : 'border-gray-200 text-gray-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200'}"
+                                   title="Marcar como leída">
+                                    <i class="fas fa-eye text-[9px]"></i> Marcar leída
+                                </a>
+                            </th:block>
+
+                            <!-- Acciones: Vista Papelera -->
+                            <th:block th:if="${esPapelera}">
+                                <a th:href="@{/notificaciones/restaurar/{id}(id=${n.id})}"
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border border-gob-oro/30 text-gob-oro hover:bg-gob-oro/10 transition-all">
+                                    <i class="fas fa-undo text-[9px]"></i> Restaurar
+                                </a>
+                                <a th:href="@{/notificaciones/eliminar/{id}(id=${n.id})}"
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border border-red-200 text-red-500 hover:bg-red-50 transition-all"
+                                   onclick="return confirm('¿Eliminar esta notificación permanentemente?')">
+                                    <i class="fas fa-times-circle text-[9px]"></i> Eliminar
+                                </a>
+                            </th:block>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /VISTA MÓVIL -->
+
         </div>
     </div>
 
