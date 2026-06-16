@@ -55,25 +55,31 @@ self.addEventListener('notificationclick', function(event) {
     }
 
     // Para "ver" o clic directo en el cuerpo, navegar a la URL
-    let clickUrl = event.notification.data.url;
-
-    // Garantizar que la URL sea absoluta dentro de la aplicación
-    if (clickUrl && !clickUrl.startsWith('http')) {
-        clickUrl = new URL(clickUrl, self.location.origin).href;
-    }
+    const urlRelativa = event.notification.data.url;
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(windowClients) {
-            // Si ya hay una pestaña abierta de nuestro sitio, redirigirla y enfocarla
+            // Usar el origen del cliente activo para evitar que quede hardcodeado
+            // el origen de ngrok u otro túnel que se haya usado previamente
+            const origenReal = windowClients.length > 0
+                ? new URL(windowClients[0].url).origin
+                : self.location.origin;
+
+            let clickUrl = urlRelativa;
+            if (clickUrl && !clickUrl.startsWith('http')) {
+                clickUrl = new URL(clickUrl, origenReal).href;
+            }
+
+            // Si ya hay una ventana abierta, redirigirla y enfocarla
             for (var i = 0; i < windowClients.length; i++) {
                 var client = windowClients[i];
-                if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+                if ('focus' in client) {
                     return client.focus().then(function() {
                         return client.navigate(clickUrl);
                     });
                 }
             }
-            // Si no hay pestañas abiertas, abrir una nueva
+            // Si no hay ventanas abiertas, abrir una nueva
             if (clients.openWindow) {
                 return clients.openWindow(clickUrl);
             }

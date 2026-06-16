@@ -138,7 +138,10 @@ public class SecurityConfig {
                             jwtCookie.setPath("/");
                             response.addCookie(jwtCookie);
                         })
-                        .logoutSuccessUrl("/?logout")
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            request.getSession().setAttribute("logoutSuccess", true);
+                            response.sendRedirect("/");
+                        })
                         .deleteCookies("JSESSIONID")
                         .permitAll())
                 .sessionManagement(session -> session
