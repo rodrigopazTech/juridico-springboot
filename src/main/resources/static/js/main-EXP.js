@@ -64,18 +64,32 @@ function cargarMateriasExpediente(arg1 = '', arg2 = '', arg3 = '', materiaIdSele
     const gerenciaId = gerenciaEl.value;
 
     // 1. Limpiar y bloquear selectores hijos
-    selectMateria.innerHTML = '<option value="">Cargando materias...</option>';
-    selectMateria.disabled = true;
-    selectMateria.classList.add('bg-gray-50');
+    if (selectMateria.tomselect) {
+        updateTomSelectOptions(selectMateria.tomselect, [], 'Cargando materias...');
+        selectMateria.tomselect.disable();
+    } else {
+        selectMateria.innerHTML = '<option value="">Cargando materias...</option>';
+        selectMateria.disabled = true;
+        selectMateria.classList.add('bg-gray-50');
+    }
 
     if (selectAbogado) {
-        selectAbogado.innerHTML = '<option value="">Primero selecciona una materia...</option>';
-        selectAbogado.disabled = true;
-        selectAbogado.classList.add('bg-gray-50');
+        if (selectAbogado.tomselect) {
+            updateTomSelectOptions(selectAbogado.tomselect, [], 'Primero selecciona una materia...');
+            selectAbogado.tomselect.disable();
+        } else {
+            selectAbogado.innerHTML = '<option value="">Primero selecciona una materia...</option>';
+            selectAbogado.disabled = true;
+            selectAbogado.classList.add('bg-gray-50');
+        }
     }
 
     if (!gerenciaId) {
-        selectMateria.innerHTML = '<option value="">Primero selecciona una gerencia...</option>';
+        if (selectMateria.tomselect) {
+            updateTomSelectOptions(selectMateria.tomselect, [], 'Primero selecciona una gerencia...');
+        } else {
+            selectMateria.innerHTML = '<option value="">Primero selecciona una gerencia...</option>';
+        }
         return Promise.resolve();
     }
 
@@ -83,21 +97,31 @@ function cargarMateriasExpediente(arg1 = '', arg2 = '', arg3 = '', materiaIdSele
     return fetch(`/usuarios/api/materias-por-gerencia/${gerenciaId}`)
         .then(res => res.json())
         .then(materias => {
-            selectMateria.innerHTML = '<option value="">Selecciona materia...</option>';
-            materias.forEach(m => {
-                const selected = (materiaIdSeleccionado && m.id == materiaIdSeleccionado) ? 'selected' : '';
-                selectMateria.innerHTML += `<option value="${m.id}" ${selected}>${m.nombre}</option>`;
-            });
-
-            // Desbloquear selector
-            selectMateria.disabled = false;
-            selectMateria.classList.remove('bg-gray-50');
+            if (selectMateria.tomselect) {
+                updateTomSelectOptions(selectMateria.tomselect, materias.map(m => ({ value: m.id, text: m.nombre })), 'Selecciona materia...');
+                selectMateria.tomselect.enable();
+                if (materiaIdSeleccionado) {
+                    selectMateria.tomselect.setValue(materiaIdSeleccionado);
+                }
+            } else {
+                selectMateria.innerHTML = '<option value="">Selecciona materia...</option>';
+                materias.forEach(m => {
+                    const selected = (materiaIdSeleccionado && m.id == materiaIdSeleccionado) ? 'selected' : '';
+                    selectMateria.innerHTML += `<option value="${m.id}" ${selected}>${m.nombre}</option>`;
+                });
+                selectMateria.disabled = false;
+                selectMateria.classList.remove('bg-gray-50');
+            }
 
             return materias;
         })
         .catch(error => {
             console.error("Error:", error);
-            selectMateria.innerHTML = '<option value="">Error al cargar materias</option>';
+            if (selectMateria.tomselect) {
+                updateTomSelectOptions(selectMateria.tomselect, [], 'Error al cargar materias');
+            } else {
+                selectMateria.innerHTML = '<option value="">Error al cargar materias</option>';
+            }
         });
 }
 
@@ -119,37 +143,61 @@ function cargarOrganosExpediente(arg1 = '', arg2 = '', organoIdSeleccionado = nu
 
     const gerenciaId = gerenciaEl.value;
 
-    selectOrgano.innerHTML = '<option value="">Cargando órganos...</option>';
-    selectOrgano.disabled = true;
-    selectOrgano.classList.add('bg-gray-50');
+    if (selectOrgano.tomselect) {
+        updateTomSelectOptions(selectOrgano.tomselect, [], 'Cargando órganos...');
+        selectOrgano.tomselect.disable();
+    } else {
+        selectOrgano.innerHTML = '<option value="">Cargando órganos...</option>';
+        selectOrgano.disabled = true;
+        selectOrgano.classList.add('bg-gray-50');
+    }
 
     if (!gerenciaId) {
-        selectOrgano.innerHTML = '<option value="">Primero selecciona una gerencia...</option>';
+        if (selectOrgano.tomselect) {
+            updateTomSelectOptions(selectOrgano.tomselect, [], 'Primero selecciona una gerencia...');
+        } else {
+            selectOrgano.innerHTML = '<option value="">Primero selecciona una gerencia...</option>';
+        }
         return Promise.resolve();
     }
 
     return fetch(`/expedientes/api/organos-por-gerencia/${gerenciaId}`)
         .then(res => res.json())
         .then(organos => {
-            if (organos.length === 0) {
-                // Sin órganos disponibles: habilitar con opción vacía para no bloquear el form
-                selectOrgano.innerHTML = '<option value="">-- Sin órgano jurisdiccional --</option>';
-                selectOrgano.disabled = false;
-                selectOrgano.classList.remove('bg-gray-50');
+            if (selectOrgano.tomselect) {
+                if (organos.length === 0) {
+                    updateTomSelectOptions(selectOrgano.tomselect, [], '-- Sin órgano jurisdiccional --');
+                } else {
+                    updateTomSelectOptions(selectOrgano.tomselect, organos.map(o => ({ value: o.id, text: o.nombre })), 'Selecciona órgano...');
+                    if (organoIdSeleccionado) {
+                        selectOrgano.tomselect.setValue(organoIdSeleccionado);
+                    }
+                }
+                selectOrgano.tomselect.enable();
             } else {
-                selectOrgano.innerHTML = '<option value="">Selecciona órgano...</option>';
-                organos.forEach(o => {
-                    const selected = (organoIdSeleccionado && o.id == organoIdSeleccionado) ? 'selected' : '';
-                    selectOrgano.innerHTML += `<option value="${o.id}" ${selected}>${o.nombre}</option>`;
-                });
-                selectOrgano.disabled = false;
-                selectOrgano.classList.remove('bg-gray-50');
+                if (organos.length === 0) {
+                    selectOrgano.innerHTML = '<option value="">-- Sin órgano jurisdiccional --</option>';
+                    selectOrgano.disabled = false;
+                    selectOrgano.classList.remove('bg-gray-50');
+                } else {
+                    selectOrgano.innerHTML = '<option value="">Selecciona órgano...</option>';
+                    organos.forEach(o => {
+                        const selected = (organoIdSeleccionado && o.id == organoIdSeleccionado) ? 'selected' : '';
+                        selectOrgano.innerHTML += `<option value="${o.id}" ${selected}>${o.nombre}</option>`;
+                    });
+                    selectOrgano.disabled = false;
+                    selectOrgano.classList.remove('bg-gray-50');
+                }
             }
             return organos;
         })
         .catch(error => {
             console.error("Error al cargar organos:", error);
-            selectOrgano.innerHTML = '<option value="">Error al cargar órganos</option>';
+            if (selectOrgano.tomselect) {
+                updateTomSelectOptions(selectOrgano.tomselect, [], 'Error al cargar órganos');
+            } else {
+                selectOrgano.innerHTML = '<option value="">Error al cargar órganos</option>';
+            }
         });
 }
 
@@ -167,48 +215,119 @@ function cargarAbogadosExpediente(arg1 = '', arg2 = '', arg3 = '', abogadoIdSele
         abogId = arg3;
     }
 
-    const gerenciaId = document.getElementById(gerId) ? document.getElementById(gerId).value : null;
-    const materiaId = document.getElementById(matId) ? document.getElementById(matId).value : null;
+    const gerenciaEl = document.getElementById(gerId);
+    const materiaEl = document.getElementById(matId);
+    const gerenciaId = gerenciaEl ? gerenciaEl.value : null;
+    const materiaId = materiaEl ? materiaEl.value : null;
     const selectAbogado = document.getElementById(abogId);
 
     if (!selectAbogado) return;
 
-    // 1. Limpiar y bloquear
-    selectAbogado.innerHTML = '<option value="">Buscando abogados...</option>';
-    selectAbogado.disabled = true;
-    selectAbogado.classList.add('bg-gray-50');
+    if (selectAbogado.tomselect) {
+        updateTomSelectOptions(selectAbogado.tomselect, [], 'Buscando abogados...');
+        selectAbogado.tomselect.disable();
+    } else {
+        selectAbogado.innerHTML = '<option value="">Buscando abogados...</option>';
+        selectAbogado.disabled = true;
+        selectAbogado.classList.add('bg-gray-50');
+    }
 
     if (!materiaId || !gerenciaId) {
-        selectAbogado.innerHTML = '<option value="">Primero selecciona una materia...</option>';
+        if (selectAbogado.tomselect) {
+            updateTomSelectOptions(selectAbogado.tomselect, [], 'Primero selecciona una materia...');
+        } else {
+            selectAbogado.innerHTML = '<option value="">Primero selecciona una materia...</option>';
+        }
         return;
     }
 
-    // 2. Traer abogados filtrados (Backend ahora incluye Gerentes, Abogados y Jefes con lógica de materia)
     return fetch(`/expedientes/api/abogados?gerenciaId=${gerenciaId}&materiaId=${materiaId}`)
         .then(res => res.json())
         .then(abogados => {
-            selectAbogado.innerHTML = '<option value="">Asignar abogado...</option>';
-
-            if (abogados.length === 0) {
-                selectAbogado.innerHTML = '<option value="">No hay abogados para esta materia</option>';
+            if (selectAbogado.tomselect) {
+                if (abogados.length === 0) {
+                    updateTomSelectOptions(selectAbogado.tomselect, [], 'No hay abogados para esta materia');
+                } else {
+                    updateTomSelectOptions(selectAbogado.tomselect, abogados.map(a => ({ value: a.id, text: a.nombreCompleto })), 'Asignar abogado...');
+                    if (abogadoIdSeleccionado) {
+                        selectAbogado.tomselect.setValue(abogadoIdSeleccionado);
+                    }
+                }
+                selectAbogado.tomselect.enable();
             } else {
-                abogados.forEach(a => {
-                    const selected = (abogadoIdSeleccionado && a.id == abogadoIdSeleccionado) ? 'selected' : '';
-                    selectAbogado.innerHTML += `<option value="${a.id}" ${selected}>${a.nombreCompleto}</option>`;
-                });
-                selectAbogado.disabled = false;
-                selectAbogado.classList.remove('bg-gray-50');
+                selectAbogado.innerHTML = '<option value="">Asignar abogado...</option>';
+                if (abogados.length === 0) {
+                    selectAbogado.innerHTML = '<option value="">No hay abogados para esta materia</option>';
+                } else {
+                    abogados.forEach(a => {
+                        const selected = (abogadoIdSeleccionado && a.id == abogadoIdSeleccionado) ? 'selected' : '';
+                        selectAbogado.innerHTML += `<option value="${a.id}" ${selected}>${a.nombreCompleto}</option>`;
+                    });
+                    selectAbogado.disabled = false;
+                    selectAbogado.classList.remove('bg-gray-50');
+                }
             }
             return abogados;
         })
         .catch(error => {
             console.error("Error:", error);
-            selectAbogado.innerHTML = '<option value="">Error al cargar abogados</option>';
+            if (selectAbogado.tomselect) {
+                updateTomSelectOptions(selectAbogado.tomselect, [], 'Error al cargar abogados');
+            } else {
+                selectAbogado.innerHTML = '<option value="">Error al cargar abogados</option>';
+            }
         });
+}
+
+function inicializarSelectsNuevoExpediente() {
+    const selectGerencia = document.getElementById('select-gerencia-exp');
+    const selectSede = document.getElementById('select-sede-exp');
+    const selectMateria = document.getElementById('select-materia-exp');
+    const selectOrgano = document.getElementById('select-organo-exp');
+    const selectAbogado = document.getElementById('select-abogado-exp');
+
+    if (selectGerencia && !selectGerencia.tomselect) {
+        initSearchableSelect(selectGerencia, { 
+            tipo: 'gerencia',
+            onChange: function() {
+                cargarMateriasExpediente();
+                cargarOrganosExpediente();
+            }
+        });
+    }
+
+    if (selectSede && !selectSede.tomselect) {
+        initSearchableSelect(selectSede, { tipo: 'sede', createInline: true, useTextAsValue: true });
+    }
+
+    if (selectMateria && !selectMateria.tomselect) {
+        initSearchableSelect(selectMateria, { 
+            tipo: 'materia', 
+            createInline: true, 
+            gerenciaSelector: '#select-gerencia-exp',
+            onChange: function() {
+                cargarAbogadosExpediente();
+            }
+        });
+    }
+
+    if (selectOrgano && !selectOrgano.tomselect) {
+        initSearchableSelect(selectOrgano, { 
+            tipo: 'organo', 
+            createInline: true, 
+            gerenciaSelector: '#select-gerencia-exp' 
+        });
+    }
+
+    if (selectAbogado && !selectAbogado.tomselect) {
+        initSearchableSelect(selectAbogado, { tipo: 'abogado' });
+    }
 }
 
 // AUTO-INICIALIZACIÓN PARA GERENTES
 document.addEventListener('DOMContentLoaded', function () {
+    inicializarSelectsNuevoExpediente();
+
     const gerenciaSelect = document.getElementById('select-gerencia-exp');
 
     // Si existe el select y ya tiene un valor (porque Thymeleaf lo pre-seleccionó)

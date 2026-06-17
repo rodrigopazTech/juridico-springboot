@@ -48,8 +48,8 @@ public class CatalogosController {
         boolean esGerente = (rol == RolUsuario.GERENTE || rol == RolUsuario.JEFE_DEPTO);
         boolean esAbogado = (rol == RolUsuario.ABOGADO);
 
-        // Puede realizar acciones? (Todos los roles autorizados)
-        boolean puedeEditar = true;
+        // Puede realizar acciones? (Todos los roles autorizados excepto ABOGADO)
+        boolean puedeEditar = (rol != RolUsuario.ABOGADO);
 
         List<Gerencia> gerenciasDisponibles;
         Gerencia gerenciaSeleccionada = null;
@@ -174,6 +174,13 @@ public class CatalogosController {
                 organo = usuarioService.buscarOrganoPorId(Integer.parseInt(idStr));
                 organo.setNombre(nombre.trim());
             } else {
+                // CREACIÓN: Primero verificar si ya existe uno ACTIVO
+                Optional<OrganoJurisdiccional> activoOpt = organoRepository.findByNombreIgnoreCase(nombre.trim())
+                    .filter(o -> Boolean.TRUE.equals(o.getActivo()));
+                if (activoOpt.isPresent()) {
+                    return ResponseEntity.ok(Map.of("status", "exists", "id", activoOpt.get().getId(), "mensaje", "El Órgano Jurisdiccional ya existe."));
+                }
+
                 // CREACIÓN: buscar si ya existe uno inactivo con el mismo nombre
                 organo = organoRepository.findByNombreIgnoreCase(nombre.trim())
                     .filter(o -> Boolean.FALSE.equals(o.getActivo()))
@@ -197,7 +204,7 @@ public class CatalogosController {
 
             usuarioService.guardarOrgano(organo);
             syncService.sincronizarNombreOrgano(organo);
-            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Órgano guardado correctamente."));
+            return ResponseEntity.ok(Map.of("status", "ok", "id", organo.getId(), "mensaje", "Órgano guardado correctamente."));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
@@ -240,6 +247,13 @@ public class CatalogosController {
                 tipo = usuarioService.buscarTipoAudienciaPorId(Integer.parseInt(idStr));
                 tipo.setNombre(nombre.trim());
             } else {
+                // CREACIÓN: Primero verificar si ya existe uno ACTIVO
+                Optional<TipoAudiencia> activoOpt = tipoAudienciaRepository.findByNombreIgnoreCase(nombre.trim())
+                    .filter(t -> Boolean.TRUE.equals(t.getActivo()));
+                if (activoOpt.isPresent()) {
+                    return ResponseEntity.ok(Map.of("status", "exists", "id", activoOpt.get().getId(), "mensaje", "El Tipo de Audiencia ya existe."));
+                }
+
                 // CREACIÓN: buscar si ya existe uno inactivo con el mismo nombre
                 tipo = tipoAudienciaRepository.findByNombreIgnoreCase(nombre.trim())
                     .filter(t -> Boolean.FALSE.equals(t.getActivo()))
@@ -262,7 +276,7 @@ public class CatalogosController {
             }
 
             usuarioService.guardarTipoAudiencia(tipo);
-            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Tipo de Audiencia guardado correctamente."));
+            return ResponseEntity.ok(Map.of("status", "ok", "id", tipo.getId(), "mensaje", "Tipo de Audiencia guardado correctamente."));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
@@ -371,6 +385,13 @@ public class CatalogosController {
                     .orElseThrow(() -> new RuntimeException("Sede no encontrada."));
                 estado.setNombre(nombre.trim());
             } else {
+                // CREACIÓN: Primero verificar si ya existe uno ACTIVO
+                Optional<Estado> activoOpt = estadoRepository.findByNombreIgnoreCase(nombre.trim())
+                    .filter(e -> Boolean.TRUE.equals(e.getActivo()));
+                if (activoOpt.isPresent()) {
+                    return ResponseEntity.ok(Map.of("status", "exists", "id", activoOpt.get().getId(), "mensaje", "La Sede/Estado ya existe."));
+                }
+
                 // CREACIÓN: buscar si ya existe uno inactivo con el mismo nombre
                 estado = estadoRepository.findByNombreIgnoreCase(nombre.trim())
                     .filter(e -> Boolean.FALSE.equals(e.getActivo()))
@@ -401,7 +422,7 @@ public class CatalogosController {
                 syncService.sincronizarNombreSede(nombreViejo, estado.getNombre());
             }
             
-            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Sede/Estado guardado correctamente."));
+            return ResponseEntity.ok(Map.of("status", "ok", "id", estado.getId(), "mensaje", "Sede/Estado guardado correctamente."));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
@@ -456,28 +477,51 @@ public class CatalogosController {
                     .orElseThrow(() -> new RuntimeException("Materia no encontrada."));
                 materia.setNombre(nombre.trim());
             } else {
-                // CREACIÓN: buscar si existe inactiva
-                materia = materiaRepository.findByNombreIgnoreCase(nombre.trim())
-                    .filter(m -> Boolean.FALSE.equals(m.getActivo()))
-                    .orElse(null);
+                Integer gerenciaId = (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) ? Integer.parseInt(gerenciaIdStr) : null;
+                
+                // CREACIÓN: Primero verificar si ya existe uno ACTIVO (filtrado por gerencia si aplica)
+                if (gerenciaId != null) {
+                    Optional<Materia> activoOpt = materiaRepository.findByNombreIgnoreCaseAndGerenciaId(nombre.trim(), gerenciaId)
+                        .filter(m -> Boolean.TRUE.equals(m.getActivo()));
+                    if (activoOpt.isPresent()) {
+                        return ResponseEntity.ok(Map.of("status", "exists", "id", activoOpt.get().getId(), "mensaje", "La Materia ya existe en esta Gerencia."));
+                    }
+                } else {
+                    Optional<Materia> activoOpt = materiaRepository.findByNombreIgnoreCase(nombre.trim())
+                        .filter(m -> Boolean.TRUE.equals(m.getActivo()));
+                    if (activoOpt.isPresent()) {
+                        return ResponseEntity.ok(Map.of("status", "exists", "id", activoOpt.get().getId(), "mensaje", "La Materia ya existe."));
+                    }
+                }
+
+                // CREACIÓN: buscar si existe inactiva (filtrada por gerencia si aplica, de lo contrario global)
+                if (gerenciaId != null) {
+                    materia = materiaRepository.findByNombreIgnoreCaseAndGerenciaId(nombre.trim(), gerenciaId)
+                        .filter(m -> Boolean.FALSE.equals(m.getActivo()))
+                        .orElse(null);
+                } else {
+                    materia = materiaRepository.findByNombreIgnoreCase(nombre.trim())
+                        .filter(m -> Boolean.FALSE.equals(m.getActivo()))
+                        .orElse(null);
+                }
 
                 if (materia != null) {
                     materia.setActivo(true);
-                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
-                        materia.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                    if (gerenciaId != null) {
+                        materia.setGerencia(gerenciaRepository.findById(gerenciaId).orElse(null));
                     }
                 } else {
                     materia = new Materia();
                     materia.setNombre(nombre.trim());
                     materia.setActivo(true);
-                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
-                        materia.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
+                    if (gerenciaId != null) {
+                        materia.setGerencia(gerenciaRepository.findById(gerenciaId).orElse(null));
                     }
                 }
             }
 
             materiaRepository.save(materia);
-            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Materia guardada correctamente."));
+            return ResponseEntity.ok(Map.of("status", "ok", "id", materia.getId(), "mensaje", "Materia guardada correctamente."));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }

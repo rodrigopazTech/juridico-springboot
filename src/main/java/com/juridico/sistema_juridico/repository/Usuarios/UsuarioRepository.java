@@ -38,6 +38,22 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
     // 5. Para jerarquía de notificaciones (Superiores de la misma gerencia)
     List<Usuario> findByGerenciaIdAndRolInAndActivoTrue(Integer gerenciaId, List<RolUsuario> roles);
 
-    // 4. Para filtro de usuarios por gerencia
+    // 6. Para filtro de usuarios por gerencia
     List<Usuario> findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(Integer gerenciaId);
+
+    // 7. Búsqueda por keyword (nombre, email, rol) con paginación — para el buscador del módulo Usuarios
+    @Query("SELECT u FROM Usuario u WHERE " +
+           "LOWER(u.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(CAST(u.rol AS string)) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    Page<Usuario> buscarPorKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+    // 8. Búsqueda por keyword restringida a una gerencia (para GERENTE)
+    @Query("SELECT u FROM Usuario u WHERE u.gerencia = :gerencia AND (" +
+           "LOWER(u.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(CAST(u.rol AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Usuario> buscarPorKeywordYGerencia(@Param("keyword") String keyword,
+                                             @Param("gerencia") Gerencia gerencia,
+                                             Pageable pageable);
 }

@@ -102,6 +102,8 @@ public class TerminosController {
     @Autowired
     private NotificacionService notificacionService;
     @Autowired
+    private com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository colaboradorExpedienteRepository;
+    @Autowired
     private GerenciaRepository gerenciaRepository;
     @Autowired
     private MateriaRepository materiaRepository;
@@ -180,6 +182,9 @@ public class TerminosController {
                 }
                 break;
             case ABOGADO:
+                filtroAbogadoSeguro = usuarioActual.getId();
+                filtroGerenciaSeguro = null;
+                break;
             case GERENTE:
                 if (usuarioActual.getGerencia() != null) {
                     filtroGerenciaSeguro = usuarioActual.getGerencia().getId();
@@ -388,11 +393,19 @@ public class TerminosController {
         }
 
         if (origenTermino == OrigenTermino.ASUNTO_UNICO) {
-            if (actor.getRol() == RolUsuario.ABOGADO || actor.getRol() == RolUsuario.JEFE_DEPTO) {
+            if (actor.getRol() == RolUsuario.JEFE_DEPTO) {
                 Set<Integer> misMateriasIds = actor.getMaterias().stream()
                         .map(Materia::getId)
                         .collect(Collectors.toSet());
                 if (contextoMateriaId == null || !misMateriasIds.contains(contextoMateriaId)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No tienes acceso a la materia seleccionada.");
+                }
+            } else if (actor.getRol() == RolUsuario.ABOGADO || actor.getRol() == RolUsuario.GERENTE) {
+                if (actor.getGerencia() == null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El usuario no tiene una gerencia asignada.");
+                }
+                Materia mat = materiaRepository.findById(contextoMateriaId).orElse(null);
+                if (mat == null || mat.getGerencia() == null || !mat.getGerencia().getId().equals(actor.getGerencia().getId())) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No tienes acceso a la materia seleccionada.");
                 }
             }
@@ -936,6 +949,9 @@ public class TerminosController {
             } else {
                 secMateriaIds = Collections.emptyList();
             }
+        } else if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
+            secGerenciaId = null;
+            secMateriaIds = Collections.emptyList();
         } else {
             if (usuarioActual.getGerencia() != null) {
                 secGerenciaId = usuarioActual.getGerencia().getId();
@@ -1112,17 +1128,33 @@ public class TerminosController {
     }
 
     private void validarAccesoExpediente(Expediente e, Usuario usuario) {
-        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+        RolUsuario rol = usuario.getRol();
+        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
             return;
         }
-        if (usuario.getGerencia() != null && (e.getGerencia() == null || !e.getGerencia().getId().equals(usuario.getGerencia().getId()))) {
-            throw new ForbiddenException("No tienes acceso a esta gerencia.");
+        // El responsable directo del expediente siempre tiene acceso prioritario
+        if (e.getAbogadoResponsable() != null && e.getAbogadoResponsable().getId().equals(usuario.getId())) {
+            return;
         }
-        if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
-            if (e.getMateria() == null || usuario.getMaterias().stream().noneMatch(m -> m.getId().equals(e.getMateria().getId()))) {
-                throw new ForbiddenException("No tienes acceso a esta materia.");
+        if (rol == RolUsuario.GERENTE) {
+            if (usuario.getGerencia() != null && e.getGerencia() != null 
+                    && e.getGerencia().getId().equals(usuario.getGerencia().getId())) {
+                return;
+            }
+        } else if (rol == RolUsuario.JEFE_DEPTO) {
+            if (usuario.getGerencia() != null && e.getGerencia() != null 
+                    && e.getGerencia().getId().equals(usuario.getGerencia().getId())
+                    && e.getMateria() != null 
+                    && usuario.getMaterias().stream().anyMatch(m -> m.getId().equals(e.getMateria().getId()))) {
+                return;
+            }
+        } else if (rol == RolUsuario.ABOGADO) {
+            if (colaboradorExpedienteRepository.existsByExpedienteIdAndUsuarioIdAndFechaExpiracionAfter(
+                    e.getId(), usuario.getId(), LocalDateTime.now())) {
+                return;
             }
         }
+        throw new ForbiddenException("No tienes acceso a este expediente.");
     }
 
     @GetMapping("/api/materias-por-gerencia/{gerenciaId}")
@@ -1132,7 +1164,7 @@ public class TerminosController {
             Usuario usuarioActual = getUsuarioActual();
             List<Materia> materias = materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(gerenciaId);
             
-            if (usuarioActual.getRol() == RolUsuario.ABOGADO || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+            if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
                 Set<Integer> misMateriasIds = usuarioActual.getMaterias().stream()
                         .map(Materia::getId)
                         .collect(Collectors.toSet());

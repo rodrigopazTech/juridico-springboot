@@ -12,6 +12,10 @@ function openModal(modalId) {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         document.body.style.overflow = 'hidden';
+        
+        if (modalId === 'modal-editar') {
+            inicializarSelectsEdicionExpediente();
+        }
     }
 }
 
@@ -442,5 +446,68 @@ async function cargarArchivosRecientes() {
                 Error al cargar archivos recientes.
             </div>
         `;
+    }
+}
+
+function inicializarSelectsEdicionExpediente() {
+    const selectGerencia = document.getElementById('select-gerencia-exp-edit');
+    const selectSede = document.getElementById('select-sede-exp-edit');
+    const selectMateria = document.getElementById('select-materia-exp-edit');
+    const selectAbogado = document.getElementById('select-abogado-exp-edit');
+
+    if (selectGerencia && !selectGerencia.tomselect) {
+        const tsGer = initSearchableSelect(selectGerencia, { tipo: 'gerencia' });
+        
+        if (tsGer) {
+            tsGer.on('change', function() {
+                const gerId = tsGer.getValue();
+                const tsMat = selectMateria ? selectMateria.tomselect : null;
+                if (tsMat && gerId) {
+                    tsMat.disable();
+                    fetch(`/usuarios/api/materias-por-gerencia/${gerId}`)
+                        .then(res => res.json())
+                        .then(materias => {
+                            updateTomSelectOptions(tsMat, materias.map(m => ({ value: m.id, text: m.nombre })), 'Selecciona materia...');
+                            tsMat.enable();
+                        });
+                }
+            });
+        }
+    }
+
+    if (selectSede && !selectSede.tomselect) {
+        initSearchableSelect(selectSede, { tipo: 'sede', createInline: true, useTextAsValue: true });
+    }
+
+    if (selectMateria && !selectMateria.tomselect) {
+        const tsMat = initSearchableSelect(selectMateria, { 
+            tipo: 'materia', 
+            createInline: true, 
+            gerenciaSelector: '#select-gerencia-exp-edit' 
+        });
+        
+        if (tsMat) {
+            tsMat.on('change', function() {
+                const tsGer = selectGerencia ? selectGerencia.tomselect : null;
+                const tsAbg = selectAbogado ? selectAbogado.tomselect : null;
+                if (tsGer && tsAbg) {
+                    const gerId = tsGer.getValue();
+                    const matId = tsMat.getValue();
+                    if (gerId && matId) {
+                        tsAbg.disable();
+                        fetch(`/expedientes/api/abogados?gerenciaId=${gerId}&materiaId=${matId}`)
+                            .then(res => res.json())
+                            .then(abogados => {
+                                updateTomSelectOptions(tsAbg, abogados.map(a => ({ value: a.id, text: a.nombreCompleto })), 'Asignar abogado...');
+                                tsAbg.enable();
+                            });
+                    }
+                }
+            });
+        }
+    }
+
+    if (selectAbogado && !selectAbogado.tomselect) {
+        initSearchableSelect(selectAbogado, { tipo: 'abogado' });
     }
 }

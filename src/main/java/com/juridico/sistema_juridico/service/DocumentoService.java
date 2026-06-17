@@ -44,6 +44,9 @@ public class DocumentoService {
     @Autowired
     private AuditoriaService auditoriaService;
 
+    @Autowired
+    private com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository colaboradorExpedienteRepository;
+
     public boolean tienePermiso(Usuario usuario, UUID expedienteId) {
         RolUsuario rol = usuario.getRol();
 
@@ -81,8 +84,13 @@ public class DocumentoService {
                     .anyMatch(m -> m.getId().equals(expediente.getMateria().getId()));
         }
 
-        if (rol == RolUsuario.GERENTE || rol == RolUsuario.ABOGADO) {
+        if (rol == RolUsuario.GERENTE) {
             return true;
+        }
+
+        if (rol == RolUsuario.ABOGADO) {
+            return colaboradorExpedienteRepository.existsByExpedienteIdAndUsuarioIdAndFechaExpiracionAfter(
+                    expedienteId, usuario.getId(), LocalDateTime.now());
         }
 
         return false;

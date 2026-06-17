@@ -60,6 +60,9 @@ public class AudienciaService {
     @Autowired
     private CatPrioridadRepository catPrioridadRepository;
 
+    @Autowired
+    private com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository colaboradorExpedienteRepository;
+
     // 1. PASO INTERMEDIO: SUBIR ACTA (Cambia a CON_ACTA)
     @Transactional
     @SuppressWarnings("null")
@@ -236,12 +239,25 @@ public class AudienciaService {
             return;
         }
 
-        // 2. Abogados pueden concluir si es de su gerencia
+        // 2. Abogados pueden concluir si son responsables del caso, comparecientes o colaboradores activos
         if (rol.equals("ABOGADO")) {
-            if (usuario.getGerencia() == null || audiencia.getExpediente().getGerencia() == null ||
-                    !usuario.getGerencia().getId().equals(audiencia.getExpediente().getGerencia().getId())) {
+            boolean tienePermiso = false;
+            if (audiencia.getExpediente() != null) {
+                Expediente exp = audiencia.getExpediente();
+                if (exp.getAbogadoResponsable() != null && exp.getAbogadoResponsable().getId().equals(usuario.getId())) {
+                    tienePermiso = true;
+                } else if (colaboradorExpedienteRepository.existsByExpedienteIdAndUsuarioIdAndFechaExpiracionAfter(
+                        exp.getId(), usuario.getId(), LocalDateTime.now())) {
+                    tienePermiso = true;
+                }
+            }
+            if (audiencia.getAbogadoComparece() != null && audiencia.getAbogadoComparece().getId().equals(usuario.getId())) {
+                tienePermiso = true;
+            }
+            
+            if (!tienePermiso) {
                 throw new com.juridico.sistema_juridico.exception.ForbiddenException(
-                        "Acceso denegado: Solo los abogados de la gerencia correspondiente pueden concluir esta audiencia.");
+                        "Acceso denegado: Solo el abogado responsable, compareciente o colaborador activo puede concluir esta audiencia.");
             }
             return;
         }
