@@ -1,0 +1,13 @@
+{
+  "appId": "com.finabien.siaj",
+  "appName": "Sistema Jurídico",
+  "webDir": "src/main/resources/static",
+  "server": {
+    "url": "http://172.16.143.50:8080",
+    "cleartext": true,
+    "allowNavigation": [
+      "https://shorter-unproven-uncut.ngrok-free.dev",
+      "http://172.16.143.50:8080"
+    ]
+  }
+}

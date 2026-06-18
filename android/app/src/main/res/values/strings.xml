@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sistema Jurídico</string>
+    <string name="title_activity_main">Sistema Jurídico</string>
+    <string name="package_name">com.finabien.siaj</string>
+    <string name="custom_url_scheme">com.finabien.siaj</string>
+</resources>

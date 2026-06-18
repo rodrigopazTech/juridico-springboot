@@ -263,8 +263,12 @@
                 }).join('');
             }
 
-            // ---- Mostrar Toast ----
+            // ---- Mostrar Toast (navegador) + Notificación nativa (Android/Capacitor) ----
             function mostrarToast(n) {
+                // Lanzar notificación nativa si corre en la app Android
+                if (typeof window.mostrarNotificacionNativa === 'function') {
+                    window.mostrarNotificacionNativa(n);
+                }
                 const meta    = getMeta(n.tipo);
                 const priMeta = getPriMeta(n.prioridad);
                 const priHTML = priMeta
@@ -485,6 +489,7 @@
         })();
         </script>
         <script th:src="@{/js/webpush-client.js}" defer></script>
+        <script th:src="@{/js/utils.js}" defer></script>
     </th:block>
 
 </body>
