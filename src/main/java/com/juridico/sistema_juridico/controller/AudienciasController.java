@@ -95,7 +95,9 @@ public class AudienciasController {
             @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
             @RequestParam(value = "periodo", required = false) PeriodoFiltro periodo,
             @RequestParam(value = "mes", required = false) Integer mes,
-            @RequestParam(value = "anio", required = false) Integer anio) {
+            @RequestParam(value = "anio", required = false) Integer anio,
+            @RequestParam(value = "sortBy", defaultValue = "fechaAudiencia") String sortBy,
+            @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir) {
 
         if (keyword != null && keyword.contains("?keyword=")) {
             // Nos quedamos solo con lo que esté después del último igual (=)
@@ -171,7 +173,9 @@ public class AudienciasController {
         }
 
         // 4. CONSULTA CON PAGINACIÓN (Standard: 10 por página)
-        Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaAudiencia").descending());
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort sort = Sort.by(direction, sortBy);
+        Pageable pageable = PageRequest.of(page, 10, sort);
 
         // --- OPTIMIZACIÓN ROD-185: Si hay búsqueda, ignoramos fechas para que las KPIs y la tabla coincidan ---
         if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
@@ -263,6 +267,8 @@ public class AudienciasController {
         model.addAttribute("paramPeriodo", periodo);
         model.addAttribute("usuarioActual", usuario);
         model.addAttribute("listaEstatus", EstatusAudiencia.values());
+        model.addAttribute("sortBy", sortBy);
+        model.addAttribute("sortDir", sortDir);
 
         // --- 6. CONTEOS PARA KPIs ---
         List<Object[]> rawCounts = audienciaRepository.contarPorEstatusConFiltros(

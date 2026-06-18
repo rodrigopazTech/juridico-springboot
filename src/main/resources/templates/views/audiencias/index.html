@@ -12,6 +12,23 @@
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="stylesheet" th:href="@{/css/calendario.css}">
+    <style>
+        /* Scrollbar estilizado para contenedores con scroll horizontal */
+        .scrollbar-thin::-webkit-scrollbar {
+            height: 6px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: #f3f4f6;
+            border-radius: 4px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 text-gray-800 font-sans overflow-x-hidden">
@@ -131,7 +148,7 @@
                         <!-- Contenedor de Listado -->
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
                             <div
-                                class="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-start gap-8">
+                                class="p-6 border-b border-gray-50 flex flex-col lg:flex-row lg:items-center justify-start gap-4 lg:gap-8">
                                 <h2 class="text-gray-400 font-bold uppercase tracking-tighter text-[10px] leading-none flex flex-col">
                                     <span>Listado de</span>
                                     <span class="text-xl text-gray-800 font-black">Audiencias</span>
