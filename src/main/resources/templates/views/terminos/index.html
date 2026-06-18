@@ -21,6 +21,22 @@
         .z-50 {
             z-index: 50;
         }
+
+        /* Scrollbar estilizado para contenedores con scroll horizontal */
+        .scrollbar-thin::-webkit-scrollbar {
+            height: 6px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: #f3f4f6;
+            border-radius: 4px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 </head>
 
@@ -77,7 +93,7 @@
                     <!-- Contenedor de Listado -->
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
                         <div
-                            class="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-start gap-8">
+                            class="p-6 border-b border-gray-50 flex flex-col lg:flex-row lg:items-center justify-start gap-4 lg:gap-8">
                             <h2 class="text-gray-400 font-bold uppercase tracking-tighter text-[10px] leading-none flex flex-col">
                                 <span>Listado de</span>
                                 <span class="text-xl text-gray-800 font-black">Términos</span>

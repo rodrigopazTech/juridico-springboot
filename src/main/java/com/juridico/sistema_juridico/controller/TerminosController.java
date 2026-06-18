@@ -146,7 +146,7 @@ public class TerminosController {
 
     @GetMapping
     public String index(Model model,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(required = false) Integer id,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) EstatusTermino estatus,
@@ -156,7 +156,9 @@ public class TerminosController {
             @RequestParam(required = false) Integer materiaId,
             @RequestParam(required = false) PeriodoFiltro periodo,
             @RequestParam(required = false) Integer mes,
-            @RequestParam(required = false) Integer anio) {
+            @RequestParam(required = false) Integer anio,
+            @RequestParam(defaultValue = "fechaVencimiento") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
 
         // --- 1. LIMPIEZA DE URL (Fix Notificaciones) ---
         if (keyword != null && keyword.contains("?keyword=")) {
@@ -164,7 +166,9 @@ public class TerminosController {
         }
 
         Usuario usuarioActual = getUsuarioActual();
-        Pageable pageable = PageRequest.of(page, 10, Sort.by("fechaVencimiento").descending());
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort sort = Sort.by(direction, sortBy);
+        Pageable pageable = PageRequest.of(page, 10, sort);
 
         // --- 2. FILTROS DE SEGURIDAD (TABLA) ---
         Integer filtroAbogadoSeguro = abogadoId;
@@ -306,6 +310,8 @@ public class TerminosController {
         model.addAttribute("paramGerenciaId", gerenciaId);
         model.addAttribute("paramMateriaId", materiaId);
         model.addAttribute("paramPeriodo", periodo != null ? periodo.name() : null);
+        model.addAttribute("sortBy", sortBy);
+        model.addAttribute("sortDir", sortDir);
 
         // --- 6. CONTEOS PARA LA LÍNEA DE TIEMPO (NUEVO) ---
         List<Object[]> rawCounts = terminoRepository.contarPorEtapaConFiltros(

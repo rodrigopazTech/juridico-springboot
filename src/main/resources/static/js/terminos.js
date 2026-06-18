@@ -163,6 +163,13 @@ function actualizarTablaAsincrono(keywordForzado = null) {
 
     const urlParams = new URLSearchParams();
 
+    // Preservar ordenamiento actual de la barra de direcciones
+    const currentParams = new URLSearchParams(window.location.search);
+    const sortBy = currentParams.get('sortBy');
+    const sortDir = currentParams.get('sortDir');
+    if (sortBy) urlParams.set('sortBy', sortBy);
+    if (sortDir) urlParams.set('sortDir', sortDir);
+
     // 1. Keyword (Buscador o Fecha del Calendario)
     const valKeyword = keywordForzado !== null ? keywordForzado : (input ? input.value : '');
     if (valKeyword) urlParams.set('keyword', valKeyword);
