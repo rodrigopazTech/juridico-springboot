@@ -5,6 +5,7 @@
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log("Sistema de Audiencias Cargado");
+    inicializarSelectsAudiencias();
 });
 
 // --- MENÚS Y NAVEGACIÓN ---
@@ -44,11 +45,30 @@ function abrirModalAudiencia() {
     const titulo = document.getElementById('modal-titulo-audiencia');
     if (titulo) titulo.innerHTML = '<i class="fas fa-gavel"></i> Nueva Audiencia';
 
+    // Resetear Tom Selects
+    const expSelect = document.getElementById('input-expediente');
+    if (expSelect && expSelect.tomselect) {
+        expSelect.tomselect.setValue('');
+    }
+    const tipoSelect = document.getElementById('input-tipo');
+    if (tipoSelect && tipoSelect.tomselect) {
+        tipoSelect.tomselect.setValue('');
+    }
+    const salaSelect = document.getElementById('input-sala');
+    if (salaSelect && salaSelect.tomselect) {
+        salaSelect.tomselect.setValue('');
+    }
+
     // Resetear selector de abogados
     const abogadoSelect = document.getElementById('input-abogado');
     if (abogadoSelect) {
-        abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
-        abogadoSelect.disabled = false;
+        if (abogadoSelect.tomselect) {
+            updateTomSelectOptions(abogadoSelect.tomselect, [], 'Seleccione expediente primero...');
+            abogadoSelect.tomselect.setValue('');
+        } else {
+            abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
+            abogadoSelect.disabled = false;
+        }
     }
 
     toggleUbicacion(false);
@@ -68,14 +88,26 @@ function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala
 
     // A. Llenar campos básicos
     setValueIfExists('input-audiencia-id', id);
-    setValueIfExists('input-expediente', expedienteId);
-    setValueIfExists('input-tipo', tipoId);
+    
+    const expSelect = document.getElementById('input-expediente');
+    if (expSelect && expSelect.tomselect) {
+        expSelect.tomselect.setValue(expedienteId);
+    } else {
+        setValueIfExists('input-expediente', expedienteId);
+    }
+
+    const tipoSelect = document.getElementById('input-tipo');
+    if (tipoSelect && tipoSelect.tomselect) {
+        tipoSelect.tomselect.setValue(tipoId);
+    } else {
+        setValueIfExists('input-tipo', tipoId);
+    }
+
     setValueIfExists('input-fecha', fecha);
     setValueIfExists('input-hora', hora);
     setValueIfExists('input-observaciones-aud', observaciones);
 
     // B. Configurar Modalidad (Virtual/Presencial)
-    // Convertimos a booleano real por si viene como string "true"
     const esVirtualBool = (String(isVirtual) === 'true');
 
     const radio = document.querySelector(`input[name="esVirtual"][value="${esVirtualBool}"]`);
@@ -86,11 +118,15 @@ function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala
     if (esVirtualBool) {
         setValueIfExists('input-url', link);
     } else {
-        setValueIfExists('input-sala', sala);
+        const salaSelect = document.getElementById('input-sala');
+        if (salaSelect && salaSelect.tomselect) {
+            salaSelect.tomselect.setValue(sala);
+        } else {
+            setValueIfExists('input-sala', sala);
+        }
     }
 
-    // C. CARGAR Y SELECCIONAR ABOGADO (La parte crítica)
-    // Llamamos a la API usando el expediente seleccionado y le pasamos el abogado actual para que lo pre-seleccione
+    // C. CARGAR Y SELECCIONAR ABOGADO
     if (expedienteId) {
         cargarAbogadosPosibles(abogadoId);
     }
@@ -311,141 +347,226 @@ function cargarAbogadosPosibles(idPreseleccionado = null) {
 
     if (!expSelect || !abogadoSelect) return;
 
-    const expId = expSelect.value;
+    const expId = expSelect.tomselect ? expSelect.tomselect.getValue() : expSelect.value;
 
-    // Filtrar Tipos de Audiencia por Gerencia
+    // Obtener gerenciaId: primero del DOM, si no del mapa de Tom Select (opciones virtualizadas)
+    let gerenciaId = null;
+    const optElDOM = expSelect.querySelector(`option[value="${expId}"]`);
+    if (optElDOM) {
+        gerenciaId = optElDOM.getAttribute('data-gerencia-id');
+    } else if (expSelect.tomselect && expId && expSelect.tomselect.options[expId]) {
+        gerenciaId = expSelect.tomselect.options[expId].gerenciaId || null;
+    }
+
+    // Filtrar Tipos de Audiencia por Gerencia (preservar opciones creadas inline)
     const tipoSelect = document.getElementById('input-tipo');
     if (tipoSelect) {
-        const selectedOption = expSelect.options[expSelect.selectedIndex];
-        const gerenciaId = selectedOption ? selectedOption.getAttribute('data-gerencia-id') : null;
-
-        Array.from(tipoSelect.options).forEach(opt => {
-            if (opt.value === "") return; // Option disabled selected
-            const optGerenciaId = opt.getAttribute('data-gerencia-id');
-
-            // Si no hay gerencia seleccionada (no hay expediente), ocultar todos
-            if (!gerenciaId) {
-                opt.style.display = 'none';
-                opt.hidden = true;
+        const baseFiltered = (window.allTiposAudiencia || []).filter(t => !gerenciaId || !t.gerenciaId || t.gerenciaId === gerenciaId);
+        if (tipoSelect.tomselect) {
+            // Preservar opciones inline (creadas por el usuario, no están en allTiposAudiencia)
+            const originalValues = new Set((window.allTiposAudiencia || []).map(t => String(t.value)));
+            const inlineOpts = Object.values(tipoSelect.tomselect.options)
+                .filter(o => o.value && !originalValues.has(String(o.value)))
+                .map(o => ({ value: o.value, text: o.text, gerenciaId: '' }));
+            updateTomSelectOptions(tipoSelect.tomselect, [...baseFiltered, ...inlineOpts], 'Seleccione tipo de audiencia...');
+        } else {
+            Array.from(tipoSelect.options).forEach(opt => {
+                if (opt.value === "") return;
+                const optGerenciaId = opt.getAttribute('data-gerencia-id');
+                if (!gerenciaId) {
+                    opt.style.display = 'none';
+                    opt.hidden = true;
+                } else if (!optGerenciaId || optGerenciaId === gerenciaId) {
+                    opt.style.display = '';
+                    opt.hidden = false;
+                } else {
+                    opt.style.display = 'none';
+                    opt.hidden = true;
+                }
+            });
+            const currentTipo = tipoSelect.options[tipoSelect.selectedIndex];
+            if (currentTipo && currentTipo.hidden) {
+                tipoSelect.value = '';
             }
-            // Si hay gerenciaId, mostrar solo los que tengan la misma
-            else if (!optGerenciaId || optGerenciaId === gerenciaId) {
-                opt.style.display = '';
-                opt.hidden = false;
-            } else {
-                opt.style.display = 'none';
-                opt.hidden = true;
-            }
-        });
-
-        // Si el tipo actual está oculto, resetear
-        const currentTipo = tipoSelect.options[tipoSelect.selectedIndex];
-        if (currentTipo && currentTipo.hidden) {
-            tipoSelect.value = '';
         }
     }
 
-    // Filtrar Organos Jurisdiccionales (input-sala) por Gerencia
+    // Filtrar Organos Jurisdiccionales (input-sala) por Gerencia (preservar opciones creadas inline)
     const salaSelect = document.getElementById('input-sala');
-    if (salaSelect && salaSelect.tagName === 'SELECT') {
-        const selectedOption = expSelect.options[expSelect.selectedIndex];
-        const gerenciaId = selectedOption ? selectedOption.getAttribute('data-gerencia-id') : null;
-
-        Array.from(salaSelect.options).forEach(opt => {
-            if (opt.value === "") return; // Option disabled selected
-            const optGerenciaId = opt.getAttribute('data-gerencia-id');
-
-            // Si no hay gerencia seleccionada, ocultar
-            if (!gerenciaId) {
-                opt.style.display = 'none';
-                opt.hidden = true;
+    if (salaSelect) {
+        const baseFilteredSalas = (window.allSalas || []).filter(s => !gerenciaId || !s.gerenciaId || s.gerenciaId === gerenciaId);
+        if (salaSelect.tomselect) {
+            // Preservar opciones inline (creadas por el usuario, no están en allSalas)
+            const originalSalaValues = new Set((window.allSalas || []).map(s => String(s.value)));
+            const inlineSalas = Object.values(salaSelect.tomselect.options)
+                .filter(o => o.value && !originalSalaValues.has(String(o.value)))
+                .map(o => ({ value: o.value, text: o.text, gerenciaId: '' }));
+            updateTomSelectOptions(salaSelect.tomselect, [...baseFilteredSalas, ...inlineSalas], 'Seleccione órgano jurisdiccional...');
+        } else {
+            Array.from(salaSelect.options).forEach(opt => {
+                if (opt.value === "") return;
+                const optGerenciaId = opt.getAttribute('data-gerencia-id');
+                if (!gerenciaId) {
+                    opt.style.display = 'none';
+                    opt.hidden = true;
+                } else if (!optGerenciaId || optGerenciaId === gerenciaId) {
+                    opt.style.display = '';
+                    opt.hidden = false;
+                } else {
+                    opt.style.display = 'none';
+                    opt.hidden = true;
+                }
+            });
+            const currentSala = salaSelect.options[salaSelect.selectedIndex];
+            if (currentSala && currentSala.hidden) {
+                salaSelect.value = '';
             }
-            // Si hay gerenciaId, mostrar solo los que tengan la misma
-            else if (!optGerenciaId || optGerenciaId === gerenciaId) {
-                opt.style.display = '';
-                opt.hidden = false;
-            } else {
-                opt.style.display = 'none';
-                opt.hidden = true;
-            }
-        });
-
-        // Resetear si la opción seleccionada quedó oculta
-        const currentSala = salaSelect.options[salaSelect.selectedIndex];
-        if (currentSala && currentSala.hidden) {
-            salaSelect.value = '';
         }
     }
 
     if (!expId) {
-        abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
+        if (abogadoSelect.tomselect) {
+            updateTomSelectOptions(abogadoSelect.tomselect, [], 'Seleccione expediente primero...');
+        } else {
+            abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
+        }
         return;
     }
 
-    // Feedback de carga
-    abogadoSelect.innerHTML = '<option>Buscando abogados disponibles...</option>';
-    // No lo deshabilitamos totalmente en edición para no bloquear la UI, pero visualmente ayuda
-    // abogadoSelect.disabled = true; 
-
-    // Obtener ID del usuario actual de un campo oculto en el modal
-    const currentUserIdEl = document.getElementById('current-user-id');
-    const currentUserId = currentUserIdEl ? currentUserIdEl.value : null;
+    if (abogadoSelect.tomselect) {
+        updateTomSelectOptions(abogadoSelect.tomselect, [], 'Buscando abogados disponibles...');
+    } else {
+        abogadoSelect.innerHTML = '<option>Buscando abogados disponibles...</option>';
+    }
 
     fetch(`/audiencias/api/abogados-disponibles/${expId}`)
         .then(response => response.json())
         .then(abogados => {
-            abogadoSelect.innerHTML = '';
+            if (abogadoSelect.tomselect) {
+                const options = abogados.map(a => {
+                    return {
+                        value: a.id,
+                        text: a.esTitular ? `⭐ ${a.nombre} (Titular)` : a.nombre
+                    };
+                });
+                updateTomSelectOptions(abogadoSelect.tomselect, options, '-- Seleccione quien asistirá (Opcional) --');
+                
+                const titular = abogados.find(a => a.esTitular);
+                if (idPreseleccionado) {
+                    abogadoSelect.tomselect.setValue(idPreseleccionado);
+                } else if (titular) {
+                    abogadoSelect.tomselect.setValue(titular.id);
+                } else {
+                    abogadoSelect.tomselect.setValue('');
+                }
+            } else {
+                abogadoSelect.innerHTML = '';
 
-            if (abogados.length === 0) {
-                abogadoSelect.innerHTML = '<option value="">No hay abogados en esta gerencia</option>';
-                return;
-            }
+                if (abogados.length === 0) {
+                    abogadoSelect.innerHTML = '<option value="">No hay abogados en esta gerencia</option>';
+                    return;
+                }
 
-            // Agregar opción por defecto (Opcional)
-            const defaultOption = document.createElement('option');
-            defaultOption.value = "";
-            defaultOption.text = "-- Seleccione quien asistirá (Opcional) --";
-            abogadoSelect.appendChild(defaultOption);
+                const defaultOption = document.createElement('option');
+                defaultOption.value = "";
+                defaultOption.text = "-- Seleccione quien asistirá (Opcional) --";
+                abogadoSelect.appendChild(defaultOption);
 
-            let titularEncontrado = false;
+                abogados.forEach(a => {
+                    const option = document.createElement('option');
+                    option.value = a.id;
 
-            abogados.forEach(a => {
-                const option = document.createElement('option');
-                option.value = a.id;
+                    if (a.esTitular) {
+                        option.text = `⭐ ${a.nombre} (Titular)`;
+                        option.style.fontWeight = 'bold';
+                        if (!idPreseleccionado) {
+                            option.selected = true;
+                        }
+                    } else {
+                        option.text = a.nombre;
+                    }
 
-                // Distinguir visualmente al titular
-                if (a.esTitular) {
-                    option.text = `⭐ ${a.nombre} (Titular)`;
-                    option.style.fontWeight = 'bold';
-
-                    // LÓGICA DE AUTO-SELECCIÓN (ROD-146 Mejorado):
-                    // Si estamos creando (idPreseleccionado es null), sugerimos siempre al Titular
-                    if (!idPreseleccionado && a.esTitular) {
+                    if (idPreseleccionado && String(a.id) === String(idPreseleccionado)) {
                         option.selected = true;
                     }
-                    titularEncontrado = true;
-                } else {
-                    option.text = a.nombre;
-                }
 
-                // LÓGICA DE EDICIÓN: Si el ID coincide con el que ya tenía la audiencia
-                if (idPreseleccionado && String(a.id) === String(idPreseleccionado)) {
-                    option.selected = true;
-                }
-
-                abogadoSelect.appendChild(option);
-            });
-
-            // Si no se auto-seleccionó nada (porque no es el titular o estamos editando otro), 
-            // y no teníamos un idPreseleccionado, queda en "Seleccione..."
-            if (!idPreseleccionado && !abogadoSelect.value) {
-                abogadoSelect.value = "";
+                    abogadoSelect.appendChild(option);
+                });
             }
         })
         .catch(err => {
             console.error(err);
-            abogadoSelect.innerHTML = '<option value="">Error al cargar abogados</option>';
+            if (abogadoSelect.tomselect) {
+                updateTomSelectOptions(abogadoSelect.tomselect, [], 'Error al cargar abogados');
+            } else {
+                abogadoSelect.innerHTML = '<option value="">Error al cargar abogados</option>';
+            }
         });
+}
+
+function inicializarSelectsAudiencias() {
+    const tipoSelect = document.getElementById('input-tipo');
+    if (tipoSelect) {
+        window.allTiposAudiencia = Array.from(tipoSelect.options)
+            .filter(o => o.value !== "")
+            .map(o => ({ value: o.value, text: o.text, gerenciaId: o.getAttribute('data-gerencia-id') }));
+    }
+    const salaSelect = document.getElementById('input-sala');
+    if (salaSelect) {
+        window.allSalas = Array.from(salaSelect.options)
+            .filter(o => o.value !== "")
+            .map(o => ({ value: o.value, text: o.text, gerenciaId: o.getAttribute('data-gerencia-id') }));
+    }
+
+    const selectExpediente = document.getElementById('input-expediente');
+    const selectTipo = document.getElementById('input-tipo');
+    const selectSala = document.getElementById('input-sala');
+    const selectAbogado = document.getElementById('input-abogado');
+
+    if (selectExpediente && !selectExpediente.tomselect) {
+        // Leer opciones con data-gerencia-id ANTES de que Tom Select las virtualice
+        const expedienteOptions = Array.from(selectExpediente.options).map(o => ({
+            value: o.value,
+            text: o.text,
+            gerenciaId: o.getAttribute('data-gerencia-id') || ''
+        }));
+        initSearchableSelect(selectExpediente, { 
+            tipo: 'expediente',
+            onChange: function() {
+                cargarAbogadosPosibles();
+            }
+        });
+        // Inyectar gerenciaId en el mapa de opciones de Tom Select para que custom-selects pueda leerlo
+        if (selectExpediente.tomselect) {
+            expedienteOptions.forEach(opt => {
+                const tsOpt = selectExpediente.tomselect.options[opt.value];
+                if (tsOpt && opt.gerenciaId) {
+                    tsOpt.gerenciaId = opt.gerenciaId;
+                }
+            });
+        }
+    }
+
+    if (selectTipo && !selectTipo.tomselect) {
+        initSearchableSelect(selectTipo, { 
+            tipo: 'tipo-audiencia',
+            createInline: true,
+            gerenciaSelector: '#input-expediente'
+        });
+    }
+
+    if (selectSala && !selectSala.tomselect) {
+        initSearchableSelect(selectSala, { 
+            tipo: 'organo',
+            createInline: true,
+            gerenciaSelector: '#input-expediente',
+            useTextAsValue: true
+        });
+    }
+
+    if (selectAbogado && !selectAbogado.tomselect) {
+        initSearchableSelect(selectAbogado, { tipo: 'abogado' });
+    }
 }
 
 // 4. CONFIRMAR ELIMINAR AUDIENCIA

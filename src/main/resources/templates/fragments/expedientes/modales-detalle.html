@@ -93,10 +93,10 @@
                     <div>
                         <label class="block font-bold text-gray-600 mb-1">Gerencia*</label>
 
-                        <select
+                        <select id="select-gerencia-exp-edit"
                             class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white disabled:bg-gray-100"
-                            required th:disabled="${rolActual != null and rolActual.name() == 'GERENTE'}"
-                            th:name="${rolActual != null and rolActual.name() == 'GERENTE' ? '' : 'gerencia.id'}">
+                            required th:disabled="${rolActual != null and (rolActual.name() == 'GERENTE' or rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ABOGADO')}"
+                            th:name="${rolActual != null and (rolActual.name() == 'GERENTE' or rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ABOGADO') ? '' : 'gerencia.id'}">
 
                             <option value="">Selecciona...</option>
                             <option th:each="g : ${gerencias}" th:value="${g.id}" th:text="${g.nombre}"
@@ -105,12 +105,12 @@
                         </select>
 
                         <input type="hidden" name="gerencia.id"
-                            th:if="${rolActual != null and rolActual.name() == 'GERENTE' and expediente.gerencia != null}"
+                            th:if="${rolActual != null and (rolActual.name() == 'GERENTE' or rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ABOGADO') and expediente.gerencia != null}"
                             th:value="${expediente.gerencia.id}">
                     </div>
                     <div>
                         <label class="block font-bold text-gray-600 mb-1">Estado / Sede*</label>
-                        <select name="sede"
+                        <select name="sede" id="select-sede-exp-edit"
                             class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white"
                             required>
                             <option value="">Seleccione estado...</option>
@@ -123,7 +123,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block font-bold text-gray-600 mb-1">Materia*</label>
-                        <select name="materia.id"
+                        <select name="materia.id" id="select-materia-exp-edit"
                             class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white"
                             required>
                             <option value="">Selecciona...</option>
@@ -135,7 +135,7 @@
 
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Abogado Responsable*</label>
-                    <select name="abogadoResponsable.id"
+                    <select name="abogadoResponsable.id" id="select-abogado-exp-edit"
                         class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
                         <option value="">Asignar abogado...</option>
                         <option th:each="a : ${usuarios}" th:value="${a.id}" th:text="${a.nombreCompleto}"

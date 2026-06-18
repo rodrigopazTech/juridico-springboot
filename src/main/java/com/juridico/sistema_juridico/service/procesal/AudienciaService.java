@@ -60,6 +60,9 @@ public class AudienciaService {
     @Autowired
     private CatPrioridadRepository catPrioridadRepository;
 
+    @Autowired
+    private com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository colaboradorExpedienteRepository;
+
     // 1. PASO INTERMEDIO: SUBIR ACTA (Cambia a CON_ACTA)
     @Transactional
     @SuppressWarnings("null")
@@ -143,7 +146,8 @@ public class AudienciaService {
                         actor,
                         NotificacionEvento.AUDIENCIA_ACTA_DISPONIBLE,
                         "Acta Disponible: " + expediente,
-                        "El abogado " + nombreAbogado + " ha subido el acta. Requiere validación.",
+                        "El abogado " + nombreAbogado + " ha subido el acta. Requiere validación.",
+
                         catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
                         entidadId,
                         true);
@@ -204,7 +208,8 @@ public class AudienciaService {
                     usuarioActual,
                     NotificacionEvento.AUDIENCIA_VALIDADA_CONCLUIDA,
                     "Audiencia Validada y Concluida",
-                    "Tu audiencia del expediente " + audiencia.getExpediente().getNumero() + " ha sido validada y concluida.",
+                    "Tu audiencia del expediente " + audiencia.getExpediente().getNumero() + " ha sido validada y concluida.",
+
                     catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                     audiencia.getId().toString(),
                     true
@@ -216,7 +221,8 @@ public class AudienciaService {
                     usuarioActual,
                     NotificacionEvento.AUDIENCIA_VALIDADA_CONCLUIDA,
                     "Audiencia Validada y Concluida",
-                    "La audiencia del expediente " + audiencia.getExpediente().getNumero() + " ha sido validada y concluida.",
+                    "La audiencia del expediente " + audiencia.getExpediente().getNumero() + " ha sido validada y concluida.",
+
                     catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                     audiencia.getId().toString(),
                     true
@@ -233,10 +239,27 @@ public class AudienciaService {
             return;
         }
 
-        // 2. Abogados no pueden concluir
+        // 2. Abogados pueden concluir si son responsables del caso, comparecientes o colaboradores activos
         if (rol.equals("ABOGADO")) {
-            throw new com.juridico.sistema_juridico.exception.ForbiddenException(
-                    "Acceso denegado: Los abogados no pueden concluir audiencias. Requiere validación de Jefatura.");
+            boolean tienePermiso = false;
+            if (audiencia.getExpediente() != null) {
+                Expediente exp = audiencia.getExpediente();
+                if (exp.getAbogadoResponsable() != null && exp.getAbogadoResponsable().getId().equals(usuario.getId())) {
+                    tienePermiso = true;
+                } else if (colaboradorExpedienteRepository.existsByExpedienteIdAndUsuarioIdAndFechaExpiracionAfter(
+                        exp.getId(), usuario.getId(), LocalDateTime.now())) {
+                    tienePermiso = true;
+                }
+            }
+            if (audiencia.getAbogadoComparece() != null && audiencia.getAbogadoComparece().getId().equals(usuario.getId())) {
+                tienePermiso = true;
+            }
+            
+            if (!tienePermiso) {
+                throw new com.juridico.sistema_juridico.exception.ForbiddenException(
+                        "Acceso denegado: Solo el abogado responsable, compareciente o colaborador activo puede concluir esta audiencia.");
+            }
+            return;
         }
 
         // 3. Gerentes deben ser de la misma Gerencia
@@ -309,7 +332,8 @@ public class AudienciaService {
                         actor,
                         NotificacionEvento.AUDIENCIA_NUEVA,
                         tituloBase,
-                        mensajeBase,
+                        mensajeBase,
+
                         catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                         entidadId,
                         false);
@@ -324,7 +348,8 @@ public class AudienciaService {
                             actor,
                             NotificacionEvento.AUDIENCIA_COMPARECENCIA_ASIGNADA,
                             "Asignacion de Comparecencia",
-                            "Has sido asignado para asistir a la audiencia del expediente " + numeroExpediente,
+                            "Has sido asignado para asistir a la audiencia del expediente " + numeroExpediente,
+
                             catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
                             entidadId,
                             false);

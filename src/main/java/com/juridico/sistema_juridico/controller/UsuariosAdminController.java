@@ -1,0 +1,327 @@
+package com.juridico.sistema_juridico.controller;
+
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
+import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.catalogo.Materia;
+import com.juridico.sistema_juridico.service.UsuarioService;
+import com.juridico.sistema_juridico.service.AuditoriaService;
+import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
+import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
+import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
+import com.juridico.sistema_juridico.repository.Expediente.ActividadExpedienteRepository;
+import com.juridico.sistema_juridico.Entity.expediente.Expediente;
+import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
+import com.juridico.sistema_juridico.Entity.procesal.Termino;
+import com.juridico.sistema_juridico.Entity.expediente.ActividadExpediente;
+
+import java.util.stream.Collectors;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
+import java.time.format.DateTimeFormatter;
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.Comparator;
+
+@Controller
+@RequestMapping("/usuarios-admin")
+public class UsuariosAdminController {
+
+    @Autowired
+    private UsuarioService usuarioService;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+    @Autowired
+    private AuditoriaService auditoriaService;
+    @Autowired
+    private ExpedienteRepository expedienteRepository;
+    @Autowired
+    private AudienciaRepository audienciaRepository;
+    @Autowired
+    private TerminoRepository terminoRepository;
+    @Autowired
+    private ActividadExpedienteRepository actividadRepository;
+    @Autowired
+    private com.juridico.sistema_juridico.service.CatalogosSyncService syncService;
+
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a");
+
+    @GetMapping
+    public String index(Model model,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "q", defaultValue = "") String q) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuarioActual = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario actual no encontrado."));
+
+        Pageable pageUs = PageRequest.of(page, 10, Sort.by("nombreCompleto").ascending());
+        Page<Usuario> usuariosPage;
+
+        boolean hayBusqueda = q != null && !q.trim().isEmpty();
+
+        if (hayBusqueda) {
+            // Búsqueda en servidor — siempre empieza en página 0 implícitamente al cambiar keyword
+            if (usuarioActual.getRol() == RolUsuario.GERENTE && usuarioActual.getGerencia() != null) {
+                usuariosPage = usuarioRepository.buscarPorKeywordYGerencia(q.trim(), usuarioActual.getGerencia(), pageUs);
+            } else {
+                usuariosPage = usuarioRepository.buscarPorKeyword(q.trim(), pageUs);
+            }
+        } else {
+            if (usuarioActual.getRol() == RolUsuario.GERENTE && usuarioActual.getGerencia() != null) {
+                usuariosPage = usuarioRepository.findByGerencia(usuarioActual.getGerencia(), pageUs);
+            } else {
+                usuariosPage = usuarioService.listarUsuariosPaginados(pageUs);
+            }
+        }
+
+        model.addAttribute("listaUsuarios", usuariosPage);
+        model.addAttribute("q", q);
+
+        if (usuarioActual.getRol() == RolUsuario.GERENTE) {
+            model.addAttribute("allGerencias", Arrays.asList(usuarioActual.getGerencia()));
+            model.addAttribute("listaRoles", Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO));
+        } else {
+            model.addAttribute("allGerencias", usuarioService.listarGerencias());
+            model.addAttribute("listaRoles", RolUsuario.values());
+        }
+
+        model.addAttribute("usuarioActual", usuarioActual);
+        model.addAttribute("nuevoUsuario", new Usuario());
+        model.addAttribute("pageTitle", "Gestión de Usuarios");
+        model.addAttribute("activePage", "usuarios-admin");
+
+        return "views/usuarios-admin/index";
+    }
+
+    @PostMapping("/guardar")
+    public String guardarUsuario(@ModelAttribute Usuario usuario,
+            @RequestParam(value = "materiasIds", required = false) List<Integer> materiasIds,
+            RedirectAttributes redirectAttrs) {
+        usuarioService.guardarUsuario(usuario, materiasIds);
+        syncService.sincronizarNombreUsuario(usuario);
+        redirectAttrs.addFlashAttribute("mensaje", "Usuario guardado correctamente.");
+        redirectAttrs.addFlashAttribute("tipo", "success");
+        return "redirect:/usuarios-admin";
+    }
+
+    @GetMapping("/toggle/{id}")
+    public String toggleStatusUsuario(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
+        Usuario usuario = usuarioService.buscarPorId(id);
+        usuario.setActivo(!usuario.getActivo());
+        List<Integer> materiasIds = usuario.getMaterias().stream().map(Materia::getId).collect(Collectors.toList());
+        usuarioService.guardarUsuario(usuario, materiasIds);
+        String estado = usuario.getActivo() ? "activado" : "desactivado";
+        redirectAttrs.addFlashAttribute("mensaje", "Usuario " + estado + " correctamente.");
+        redirectAttrs.addFlashAttribute("tipo", "success");
+        return "redirect:/usuarios-admin";
+    }
+
+    @GetMapping("/eliminar/{id}")
+    public String eliminarUsuario(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
+        usuarioService.eliminarUsuario(id);
+        redirectAttrs.addFlashAttribute("mensaje", "Usuario eliminado.");
+        redirectAttrs.addFlashAttribute("tipo", "success");
+        return "redirect:/usuarios-admin";
+    }
+
+    // ====================================================================
+    // --- APIS PARA EL PANEL DE DETALLE (MAESTRO-DETALLE) ---
+    // ====================================================================
+
+    @GetMapping("/api/{id}/casos")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<List<Map<String, Object>>> obtenerCasosReal(
+            @PathVariable("id") Integer id) {
+
+        List<Expediente> expedientes = expedienteRepository.findAllByAbogadoResponsableId(id);
+        List<Map<String, Object>> response = expedientes.stream().map(e -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("numero", e.getNumero());
+            map.put("asunto", e.getDescripcion() != null ? (e.getDescripcion().length() > 50 ? e.getDescripcion().substring(0, 47) + "..." : e.getDescripcion()) : "Sin asunto");
+            map.put("cliente", e.getPartes() != null ? e.getPartes() : "No especificado");
+            map.put("estatus", e.getEtapaProcesal() != null ? e.getEtapaProcesal().toString() : "N/A");
+            map.put("fecha", e.getCreatedAt() != null ? e.getCreatedAt().format(dateFormatter) : "-");
+            return map;
+        }).collect(Collectors.toList());
+
+        return org.springframework.http.ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/api/{id}/agenda")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<List<Map<String, Object>>> obtenerAgendaReal(
+            @PathVariable("id") Integer id) {
+
+        List<Map<String, Object>> agenda = new ArrayList<>();
+
+        // Cargar Audiencias
+        List<Audiencia> audiencias = audienciaRepository.findByUsuarioId(id);
+        for (Audiencia a : audiencias) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("tipo", "Audiencia");
+            item.put("descripcion", (a.getTipoAudiencia() != null ? a.getTipoAudiencia().getNombre() : "Audiencia") +
+                                   " - Exp: " + (a.getExpediente() != null ? a.getExpediente().getNumero() : "S/N"));
+
+            String fechaStr = "";
+            if (a.getFechaAudiencia() != null) {
+                fechaStr = a.getFechaAudiencia().format(dateFormatter);
+                if (a.getHoraAudiencia() != null) {
+                    fechaStr += " " + a.getHoraAudiencia().toString();
+                }
+            }
+            item.put("fecha", fechaStr);
+            item.put("estatus", a.getEstatusAudiencia() != null ? a.getEstatusAudiencia().toString() : "PENDIENTE");
+            item.put("_raw_date", a.getFechaAudiencia());
+            agenda.add(item);
+        }
+
+        // Cargar Términos
+        List<Termino> terminos = terminoRepository.findByUsuarioId(id);
+        for (Termino t : terminos) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("tipo", "Término");
+            item.put("descripcion", (t.getAsunto() != null ? t.getAsunto() : "Término") +
+                                   " - Exp: " + (t.getExpediente() != null ? t.getExpediente().getNumero() : "S/N"));
+            item.put("fecha", t.getFechaVencimiento() != null ? t.getFechaVencimiento().format(dateFormatter) : "-");
+            item.put("estatus", t.getEstatusTermino() != null ? t.getEstatusTermino().toString() : "ACTIVO");
+            item.put("_raw_date", t.getFechaVencimiento());
+            agenda.add(item);
+        }
+
+        // Ordenar por fecha cronológica
+        agenda.sort((m1, m2) -> {
+            Object d1 = m1.get("_raw_date");
+            Object d2 = m2.get("_raw_date");
+            if (d1 == null) return 1;
+            if (d2 == null) return -1;
+            if (d1 instanceof java.time.LocalDate && d2 instanceof java.time.LocalDate) {
+                return ((java.time.LocalDate) d1).compareTo((java.time.LocalDate) d2);
+            }
+            return 0;
+        });
+
+        return org.springframework.http.ResponseEntity.ok(agenda);
+    }
+
+    @Autowired
+    private com.juridico.sistema_juridico.repository.Usuarios.ActividadUsuarioRepository actividadUsuarioRepository;
+
+    private String categorizarAccion(String titulo) {
+        if (titulo == null) return "ACCIONES";
+        String t = titulo.toUpperCase();
+        if (t.contains("INICIO") || t.contains("CIERRE") || t.contains("SESIÓN") || t.contains("SESION") ||
+            t.contains("CONTRASEÑA") || t.contains("CONTRASENA") || t.contains("ROL") || t.contains("PERMISOS") ||
+            t.contains("ACTIVAR") || t.contains("DESACTIVAR") || t.contains("FALLIDO") || t.contains("BLOQUEO")) {
+            return "SEGURIDAD";
+        }
+        if (t.contains("ASIGNADO") || t.contains("ASIGNACION") || t.contains("ASIGNACIÓN") || t.contains("RESPONSABLE") ||
+            t.contains("DESASIGNADO") || t.contains("REASIGNADO")) {
+            return "ASIGNACION";
+        }
+        if (t.contains("ARCHIVO") || t.contains("DOCUMENTO") || t.contains("PAPELERA") ||
+            t.contains("ELIMINADO") || t.contains("RESTAURADO") || t.contains("SUBIDA") ||
+            t.contains("UPLOAD") || t.contains("CARGADO")) {
+            return "DOCUMENTAL";
+        }
+        return "ACCIONES";
+    }
+
+    @GetMapping("/api/{id}/historial")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<List<Map<String, Object>>> obtenerHistorialReal(
+            @PathVariable("id") Integer id) {
+
+        List<ActividadExpediente> actExp = actividadRepository.findTop100ByUsuarioIdOrderByFechaRegistroDesc(id);
+        List<com.juridico.sistema_juridico.Entity.usuario.ActividadUsuario> actUs = actividadUsuarioRepository.findTop100ByUsuarioIdOrderByFechaRegistroDesc(id);
+
+        List<Map<String, Object>> listaCombinada = new ArrayList<>();
+
+        for (ActividadExpediente act : actExp) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("accion", act.getTitulo());
+            map.put("detalles", act.getDescripcion());
+            map.put("expediente", act.getExpediente() != null ? act.getExpediente().getNumero() : "N/A");
+            map.put("fecha", act.getFechaRegistro() != null ? act.getFechaRegistro().format(dateTimeFormatter) : "-");
+            map.put("_raw_date", act.getFechaRegistro());
+            map.put("categoria", categorizarAccion(act.getTitulo()));
+            listaCombinada.add(map);
+        }
+
+        for (com.juridico.sistema_juridico.Entity.usuario.ActividadUsuario act : actUs) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("accion", act.getTitulo());
+            map.put("detalles", act.getDescripcion());
+            map.put("expediente", "General");
+            map.put("fecha", act.getFechaRegistro() != null ? act.getFechaRegistro().format(dateTimeFormatter) : "-");
+            map.put("_raw_date", act.getFechaRegistro());
+            map.put("categoria", categorizarAccion(act.getTitulo()));
+            listaCombinada.add(map);
+        }
+
+        listaCombinada.sort((m1, m2) -> {
+            java.time.LocalDateTime d1 = (java.time.LocalDateTime) m1.get("_raw_date");
+            java.time.LocalDateTime d2 = (java.time.LocalDateTime) m2.get("_raw_date");
+            if (d1 == null) return 1;
+            if (d2 == null) return -1;
+            return d2.compareTo(d1);
+        });
+
+        List<Map<String, Object>> response = listaCombinada.stream().limit(100).collect(Collectors.toList());
+
+        return org.springframework.http.ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/api/password-temporal")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> actualizarPasswordTemporal(
+            @RequestParam("id") Integer id,
+            @RequestParam("password") String password) {
+        try {
+            String actorEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario actor = usuarioRepository.findByEmail(actorEmail)
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuario actual no encontrado."));
+
+            if (actor.getRol() != RolUsuario.DIRECCION && actor.getRol() != RolUsuario.SUBDIRECCION &&
+                actor.getRol() != RolUsuario.ADMIN && actor.getRol() != RolUsuario.GERENTE) {
+                return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                        .body(Map.of("mensaje", "No tienes permisos para realizar esta acción."));
+            }
+
+            Usuario usuarioModificado = usuarioService.buscarPorId(id);
+
+            if (actor.getRol() == RolUsuario.GERENTE) {
+                if (usuarioModificado.getGerencia() == null ||
+                    !usuarioModificado.getGerencia().getId().equals(actor.getGerencia().getId())) {
+                    return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                            .body(Map.of("mensaje", "No tienes permisos para modificar usuarios de otras gerencias."));
+                }
+            }
+
+            usuarioService.actualizarPasswordTemporal(id, password);
+
+            auditoriaService.registrarActividadGeneral(usuarioModificado, "Contraseña Temporal Asignada",
+                    "Se le ha asignado una nueva contraseña temporal por el usuario: " + actor.getNombreCompleto(), "KEY");
+
+            return org.springframework.http.ResponseEntity.ok(Map.of("mensaje", "Contraseña temporal guardada correctamente en la base de datos."));
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.badRequest().body(Map.of("mensaje", e.getMessage()));
+        }
+    }
+}

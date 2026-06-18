@@ -44,10 +44,12 @@ public class DocumentoService {
     @Autowired
     private AuditoriaService auditoriaService;
 
+    @Autowired
+    private com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository colaboradorExpedienteRepository;
+
     public boolean tienePermiso(Usuario usuario, UUID expedienteId) {
         RolUsuario rol = usuario.getRol();
 
-        // 1. Roles con acceso global
         if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
             return true;
         }
@@ -57,35 +59,38 @@ public class DocumentoService {
             return false;
         }
 
-        // 2. Abogado responsable del expediente
+        // Si es el abogado responsable directo, tiene acceso
         if (expediente.getAbogadoResponsable() != null &&
                 expediente.getAbogadoResponsable().getId().equals(usuario.getId())) {
             return true;
         }
 
-        // 3. Acceso por Gerencia (GERENTE)
-        if (rol == RolUsuario.GERENTE) {
-            if (expediente.getGerencia() != null && usuario.getGerencia() != null &&
-                    expediente.getGerencia().getId().equals(usuario.getGerencia().getId())) {
-                return true;
+        // Restricción de Gerencia para roles no globales
+        if (usuario.getGerencia() != null) {
+            if (expediente.getGerencia() == null ||
+                    !expediente.getGerencia().getId().equals(usuario.getGerencia().getId())) {
+                return false;
             }
+        } else {
+            return false;
         }
 
-        // 4. Acceso por Materias asignadas (JEFE_DEPTO)
+        // Restricciones específicas por rol
         if (rol == RolUsuario.JEFE_DEPTO) {
-            if (expediente.getMateria() != null && usuario.tieneMateria(expediente.getMateria().getId())) {
-                return true;
+            if (expediente.getMateria() == null || usuario.getMaterias().isEmpty()) {
+                return false;
             }
+            return usuario.getMaterias().stream()
+                    .anyMatch(m -> m.getId().equals(expediente.getMateria().getId()));
         }
 
-        // 5. Abogado invitado (con audiencias recientes/futuras)
+        if (rol == RolUsuario.GERENTE) {
+            return true;
+        }
+
         if (rol == RolUsuario.ABOGADO) {
-            LocalDate hace30Dias = LocalDate.now().minusDays(30);
-            LocalDate en7Dias = LocalDate.now().plusDays(7);
-            if (audienciaRepository.existsByExpedienteIdAndAbogadoCompareceIdAndFechaAudienciaBetween(
-                    expedienteId, usuario.getId(), hace30Dias, en7Dias)) {
-                return true;
-            }
+            return colaboradorExpedienteRepository.existsByExpedienteIdAndUsuarioIdAndFechaExpiracionAfter(
+                    expedienteId, usuario.getId(), LocalDateTime.now());
         }
 
         return false;

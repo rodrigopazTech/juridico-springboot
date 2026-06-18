@@ -52,7 +52,13 @@ function abrirModalUsuario() {
     document.getElementById('input-usuario-password').placeholder = "";
 
     document.getElementById('select-usuario-rol').value = "";
-    document.getElementById('select-usuario-gerencia').value = "";
+    
+    const gerSelect = document.getElementById('select-usuario-gerencia');
+    if (gerSelect) {
+        if (gerSelect.tomselect) gerSelect.tomselect.setValue('');
+        else gerSelect.value = "";
+    }
+
     document.getElementById('check-usuario-activo').checked = true;
 
     materiasUsuarioActual = [];
@@ -75,7 +81,8 @@ function actualizarFormularioPorRol() {
 }
 
 function cargarMateriasDeGerencia() {
-    const gerenciaId = document.getElementById('select-usuario-gerencia').value;
+    const selectGer = document.getElementById('select-usuario-gerencia');
+    const gerenciaId = selectGer ? (selectGer.tomselect ? selectGer.tomselect.getValue() : selectGer.value) : '';
     const contenedor = document.getElementById('contenedor-materias');
     const listaCheckboxes = document.getElementById('lista-materias-checkboxes');
 
@@ -125,10 +132,18 @@ function editarUsuario(id, nombre, email, rol, gerenciaId, activo, materiasIdsAr
     actualizarFormularioPorRol();
 
     if (gerenciaId) {
-        selectGerencia.value = gerenciaId;
+        if (selectGerencia.tomselect) {
+            selectGerencia.tomselect.setValue(gerenciaId);
+        } else {
+            selectGerencia.value = gerenciaId;
+        }
         cargarMateriasDeGerencia();
     } else {
-        selectGerencia.value = "";
+        if (selectGerencia.tomselect) {
+            selectGerencia.tomselect.setValue('');
+        } else {
+            selectGerencia.value = "";
+        }
         document.getElementById('contenedor-materias').classList.add('hidden');
     }
 
@@ -313,6 +328,8 @@ function filtrarTabla(inputId, tbodyId) {
 
 // Inicializar Listeners
 document.addEventListener('DOMContentLoaded', function () {
+    inicializarSelectsUsuarios();
+
     // Buscador Usuarios
     const searchUser = document.getElementById('input-search-usuarios');
     if (searchUser) {
@@ -465,4 +482,16 @@ const params = new URLSearchParams(window.location.search);
 const tabParam = params.get('tab');
 if (tabParam) {
     cambiarTab(tabParam);
+}
+
+function inicializarSelectsUsuarios() {
+    const selectGerencia = document.getElementById('select-usuario-gerencia');
+    if (selectGerencia && !selectGerencia.tomselect) {
+        initSearchableSelect(selectGerencia, {
+            tipo: 'gerencia',
+            onChange: function() {
+                cargarMateriasDeGerencia();
+            }
+        });
+    }
 }

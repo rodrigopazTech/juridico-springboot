@@ -4,6 +4,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', function () {
+    inicializarSelectsTerminos();
     //console.log("Sistema de Terminos Cargado");
     initMiniCalendar();
     initSearchTerminos();
@@ -791,21 +792,31 @@ function abrirModalNuevo() {
 
     // Limpiar campos
     if (idInput) idInput.value = "";
-    if (expSelect) expSelect.value = "";
+    if (expSelect) {
+        if (expSelect.tomselect) expSelect.tomselect.setValue('');
+        else expSelect.value = "";
+    }
     if (asuntoInput) asuntoInput.value = "";
     if (vencimientoInput) vencimientoInput.value = "";
     if (observacionesInput) observacionesInput.value = "";
     ['select-contexto-materia', 'input-contexto-descripcion', 'input-contexto-partes', 'input-contexto-referencia']
         .forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.value = "";
+            if (el) {
+                if (el.tomselect) el.tomselect.setValue('');
+                else el.value = "";
+            }
         });
     const gerenciaSelect = document.getElementById('select-contexto-gerencia');
     if (gerenciaSelect) {
-        if (gerenciaSelect.options.length === 2) {
-            gerenciaSelect.selectedIndex = 1;
+        if (gerenciaSelect.tomselect) {
+            gerenciaSelect.tomselect.setValue('');
         } else {
-            gerenciaSelect.value = "";
+            if (gerenciaSelect.options.length === 2) {
+                gerenciaSelect.selectedIndex = 1;
+            } else {
+                gerenciaSelect.value = "";
+            }
         }
     }
 
@@ -816,9 +827,14 @@ function abrirModalNuevo() {
 
     // Resetear abogado
     if (abogadoSelect) {
-        abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
-        abogadoSelect.classList.add('cursor-not-allowed');
-        abogadoSelect.classList.add('bg-gray-50');
+        if (abogadoSelect.tomselect) {
+            updateTomSelectOptions(abogadoSelect.tomselect, [], 'Seleccione expediente primero...');
+            abogadoSelect.tomselect.disable();
+        } else {
+            abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
+            abogadoSelect.classList.add('cursor-not-allowed');
+            abogadoSelect.classList.add('bg-gray-50');
+        }
     }
 
     // Resetear prioridad
@@ -862,36 +878,54 @@ function toggleOrigenTermino() {
     });
 
     if (esAsuntoUnico && abogadoSelect) {
-        abogadoSelect.removeAttribute('readonly');
-        abogadoSelect.classList.remove('cursor-not-allowed', 'bg-gray-50');
-        abogadoSelect.classList.add('bg-white');
+        if (abogadoSelect.tomselect) {
+            abogadoSelect.tomselect.enable();
+        } else {
+            abogadoSelect.removeAttribute('readonly');
+            abogadoSelect.classList.remove('cursor-not-allowed', 'bg-gray-50');
+            abogadoSelect.classList.add('bg-white');
+        }
         
         const gerenciaSelect = document.getElementById('select-contexto-gerencia');
         if (gerenciaSelect) {
+            const currentGerenciaVal = gerenciaSelect.tomselect ? gerenciaSelect.tomselect.getValue() : gerenciaSelect.value;
             // Auto-seleccionar si solo hay 1 opción
-            if (gerenciaSelect.options.length === 2 && !gerenciaSelect.value) {
+            if (!gerenciaSelect.tomselect && gerenciaSelect.options.length === 2 && !gerenciaSelect.value) {
                 gerenciaSelect.selectedIndex = 1;
             }
             
             if (userRol === 'ABOGADO') {
                 const myId = document.getElementById('hdnUsuarioId')?.value;
                 const myName = document.getElementById('hdnUsuarioNombre')?.value;
-                abogadoSelect.innerHTML = `<option value="${myId}" selected>${myName}</option>`;
-                abogadoSelect.value = myId;
+                if (abogadoSelect.tomselect) {
+                    abogadoSelect.tomselect.addOption({ value: myId, text: myName });
+                    abogadoSelect.tomselect.setValue(myId);
+                } else {
+                    abogadoSelect.innerHTML = `<option value="${myId}" selected>${myName}</option>`;
+                    abogadoSelect.value = myId;
+                }
             }
             
             // Cargar materias y abogados dinámicamente si hay una gerencia seleccionada
-            if (gerenciaSelect.value) {
-                cargarMateriasYAbogadosPorGerencia(gerenciaSelect.value);
+            if (currentGerenciaVal) {
+                cargarMateriasYAbogadosPorGerencia(currentGerenciaVal);
             } else {
                 cargarMateriasYAbogadosPorGerencia('');
             }
         }
-    } else if (abogadoSelect && !expSelect?.value) {
-        abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
-        abogadoSelect.classList.add('cursor-not-allowed', 'bg-gray-50');
-        abogadoSelect.classList.remove('bg-white');
-        abogadoSelect.setAttribute('readonly', 'true');
+    } else if (abogadoSelect) {
+        const currentExpVal = expSelect ? (expSelect.tomselect ? expSelect.tomselect.getValue() : expSelect.value) : '';
+        if (!currentExpVal) {
+            if (abogadoSelect.tomselect) {
+                updateTomSelectOptions(abogadoSelect.tomselect, [], 'Seleccione expediente primero...');
+                abogadoSelect.tomselect.disable();
+            } else {
+                abogadoSelect.innerHTML = '<option value="">Seleccione expediente primero...</option>';
+                abogadoSelect.classList.add('cursor-not-allowed', 'bg-gray-50');
+                abogadoSelect.classList.remove('bg-white');
+                abogadoSelect.setAttribute('readonly', 'true');
+            }
+        }
     }
 
     ajustarVisibilidadCamposPorRolYOrigen();
@@ -949,59 +983,100 @@ function cargarMateriasYAbogadosPorGerencia(gerenciaId, callbackMateria = null, 
 
     if (!gerenciaId) {
         if (materiaSelect) {
-            materiaSelect.innerHTML = '<option value="">Seleccione gerencia primero...</option>';
-            materiaSelect.disabled = true;
+            if (materiaSelect.tomselect) {
+                updateTomSelectOptions(materiaSelect.tomselect, [], 'Seleccione gerencia primero...');
+                materiaSelect.tomselect.disable();
+            } else {
+                materiaSelect.innerHTML = '<option value="">Seleccione gerencia primero...</option>';
+                materiaSelect.disabled = true;
+            }
         }
         if (abogadoSelect) {
-            abogadoSelect.innerHTML = '<option value="">Seleccione gerencia primero...</option>';
-            abogadoSelect.disabled = true;
+            if (abogadoSelect.tomselect) {
+                updateTomSelectOptions(abogadoSelect.tomselect, [], 'Seleccione gerencia primero...');
+                abogadoSelect.tomselect.disable();
+            } else {
+                abogadoSelect.innerHTML = '<option value="">Seleccione gerencia primero...</option>';
+                abogadoSelect.disabled = true;
+            }
         }
         return;
     }
 
     if (materiaSelect) {
-        materiaSelect.disabled = false;
-        materiaSelect.innerHTML = '<option value="">Cargando materias...</option>';
+        if (materiaSelect.tomselect) {
+            updateTomSelectOptions(materiaSelect.tomselect, [], 'Cargando materias...');
+            materiaSelect.tomselect.disable();
+        } else {
+            materiaSelect.disabled = false;
+            materiaSelect.innerHTML = '<option value="">Cargando materias...</option>';
+        }
         fetch(`/terminos/api/materias-por-gerencia/${gerenciaId}`)
             .then(res => res.json())
             .then(data => {
-                materiaSelect.innerHTML = '<option value="">Seleccione materia...</option>';
-                data.forEach(m => {
-                    const opt = document.createElement('option');
-                    opt.value = m.id;
-                    opt.text = m.nombre;
-                    materiaSelect.appendChild(opt);
-                });
+                if (materiaSelect.tomselect) {
+                    updateTomSelectOptions(materiaSelect.tomselect, data.map(m => ({ value: m.id, text: m.nombre })), 'Seleccione materia...');
+                    materiaSelect.tomselect.enable();
+                } else {
+                    materiaSelect.innerHTML = '<option value="">Seleccione materia...</option>';
+                    data.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m.id;
+                        opt.text = m.nombre;
+                        materiaSelect.appendChild(opt);
+                    });
+                }
                 if (callbackMateria) callbackMateria();
             })
             .catch(err => {
                 console.error("Error al cargar materias:", err);
-                materiaSelect.innerHTML = '<option value="">Error al cargar materias</option>';
+                if (materiaSelect.tomselect) {
+                    updateTomSelectOptions(materiaSelect.tomselect, [], 'Error al cargar materias');
+                } else {
+                    materiaSelect.innerHTML = '<option value="">Error al cargar materias</option>';
+                }
             });
     }
 
     if (abogadoSelect) {
-        abogadoSelect.disabled = false;
-        abogadoSelect.innerHTML = '<option value="">Cargando abogados...</option>';
+        if (abogadoSelect.tomselect) {
+            updateTomSelectOptions(abogadoSelect.tomselect, [], 'Cargando abogados...');
+            abogadoSelect.tomselect.disable();
+        } else {
+            abogadoSelect.disabled = false;
+            abogadoSelect.innerHTML = '<option value="">Cargando abogados...</option>';
+        }
         fetch(`/terminos/api/abogados-por-gerencia/${gerenciaId}`)
             .then(res => res.json())
             .then(data => {
-                abogadoSelect.innerHTML = '<option value="">Seleccione abogado...</option>';
-                data.forEach(a => {
-                    const opt = document.createElement('option');
-                    opt.value = a.id;
-                    opt.text = a.nombre;
-                    abogadoSelect.appendChild(opt);
-                });
-                // Auto-seleccionar si solo hay 1 abogado disponible (ej. rol Abogado)
-                if (abogadoSelect.options.length === 2) {
-                    abogadoSelect.selectedIndex = 1;
+                if (abogadoSelect.tomselect) {
+                    updateTomSelectOptions(abogadoSelect.tomselect, data.map(a => ({ value: a.id, text: a.nombre })), 'Seleccione abogado...');
+                    abogadoSelect.tomselect.enable();
+                    if (data.length === 1) {
+                        abogadoSelect.tomselect.setValue(data[0].id);
+                    }
+                } else {
+                    abogadoSelect.innerHTML = '<option value="">Seleccione abogado...</option>';
+                    data.forEach(a => {
+                        const opt = document.createElement('option');
+                        opt.value = a.id;
+                        opt.text = a.nombre;
+                        abogadoSelect.appendChild(opt);
+                    });
+                    // Auto-seleccionar si solo hay 1 abogado disponible (ej. rol Abogado)
+                    if (abogadoSelect.options.length === 2) {
+                        abogadoSelect.selectedIndex = 1;
+                    }
                 }
                 if (callbackAbogado) callbackAbogado();
             })
             .catch(err => {
                 console.error("Error al cargar abogados:", err);
-                abogadoSelect.innerHTML = '<option value="">Error al cargar abogados</option>';
+                if (abogadoSelect.tomselect) {
+                    updateTomSelectOptions(abogadoSelect.tomselect, [], 'Error al cargar abogados');
+                } else {
+                    abogadoSelect.innerHTML = '<option value="">Error al cargar abogados</option>';
+                }
             });
     }
 }
@@ -1040,41 +1115,68 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
 
     if (origenTermino === 'ASUNTO_UNICO') {
         if (gerenciaSelect) {
-            if (gerenciaId) {
-                gerenciaSelect.value = gerenciaId;
-            } else if (gerenciaSelect.options.length === 2) {
-                gerenciaSelect.selectedIndex = 1;
+            if (gerenciaSelect.tomselect) {
+                if (gerenciaId) {
+                    gerenciaSelect.tomselect.setValue(gerenciaId);
+                } else {
+                    gerenciaSelect.tomselect.setValue('');
+                }
             } else {
-                gerenciaSelect.value = "";
+                if (gerenciaId) {
+                    gerenciaSelect.value = gerenciaId;
+                } else if (gerenciaSelect.options.length === 2) {
+                    gerenciaSelect.selectedIndex = 1;
+                } else {
+                    gerenciaSelect.value = "";
+                }
             }
         }
         toggleOrigenTermino();
         
-        const currentGerenciaId = gerenciaSelect ? gerenciaSelect.value : '';
+        const currentGerenciaId = gerenciaSelect ? (gerenciaSelect.tomselect ? gerenciaSelect.tomselect.getValue() : gerenciaSelect.value) : '';
         cargarMateriasYAbogadosPorGerencia(currentGerenciaId, () => {
-            if (materiaSelect && materiaId) materiaSelect.value = materiaId;
+            if (materiaSelect) {
+                if (materiaSelect.tomselect && materiaId) materiaSelect.tomselect.setValue(materiaId);
+                else if (materiaId) materiaSelect.value = materiaId;
+            }
         }, () => {
-            if (abogadoSelect && abogadoId) abogadoSelect.value = abogadoId;
+            if (abogadoSelect) {
+                if (abogadoSelect.tomselect && abogadoId) abogadoSelect.tomselect.setValue(abogadoId);
+                else if (abogadoId) abogadoSelect.value = abogadoId;
+            }
         });
     } else {
         toggleOrigenTermino();
         if (expSelect && expedienteId) {
-            // Verificar si la opción ya existe en la lista del select actual (por filtro de roles)
-            let optionExists = Array.from(expSelect.options).some(opt => opt.value == expedienteId);
-
-            // Si no existe, agregarla dinámicamente para que el 'required' del select no bloquee el guardado
-            if (!optionExists) {
-                const opt = document.createElement('option');
-                opt.value = expedienteId;
-                opt.text = expedienteNum + " (Autoseleccionado)";
-                expSelect.add(opt);
+            if (expSelect.tomselect) {
+                const optionExists = Object.keys(expSelect.tomselect.options).includes(String(expedienteId));
+                if (!optionExists) {
+                    expSelect.tomselect.addOption({ value: expedienteId, text: expedienteNum + " (Autoseleccionado)" });
+                }
+                expSelect.tomselect.setValue(expedienteId);
+                vincularAbogadoTermino();
+            } else {
+                let optionExists = Array.from(expSelect.options).some(opt => opt.value == expedienteId);
+                if (!optionExists) {
+                    const opt = document.createElement('option');
+                    opt.value = expedienteId;
+                    opt.text = expedienteNum + " (Autoseleccionado)";
+                    expSelect.add(opt);
+                }
+                expSelect.value = expedienteId;
+                vincularAbogadoTermino();
             }
-
-            expSelect.value = expedienteId;
-            vincularAbogadoTermino(); // Cargar abogado automáticamente
         }
         if (abogadoSelect && abogadoId) {
-            abogadoSelect.value = abogadoId;
+            if (abogadoSelect.tomselect) {
+                const optionExists = Object.keys(abogadoSelect.tomselect.options).includes(String(abogadoId));
+                if (!optionExists) {
+                    abogadoSelect.tomselect.addOption({ value: abogadoId, text: "Abogado Autoseleccionado" });
+                }
+                abogadoSelect.tomselect.setValue(abogadoId);
+            } else {
+                abogadoSelect.value = abogadoId;
+            }
         }
     }
 
@@ -1171,10 +1273,14 @@ function vincularAbogadoTermino() {
 
     if (!expSelect || !abogadoSelect) return;
 
-    const expId = expSelect.value;
+    const expId = expSelect.tomselect ? expSelect.tomselect.getValue() : expSelect.value;
     if (!expId) return;
 
-    abogadoSelect.innerHTML = '<option>Cargando...</option>';
+    if (abogadoSelect.tomselect) {
+        updateTomSelectOptions(abogadoSelect.tomselect, [], 'Cargando...');
+    } else {
+        abogadoSelect.innerHTML = '<option>Cargando...</option>';
+    }
 
     fetch(`/terminos/api/responsable-expediente/${expId}`)
         .then(response => {
@@ -1182,20 +1288,71 @@ function vincularAbogadoTermino() {
             return response.json();
         })
         .then(data => {
-            abogadoSelect.innerHTML = '';
-            const option = document.createElement('option');
-            option.value = data.id;
-            option.text = data.nombre;
-            option.selected = true;
-            abogadoSelect.appendChild(option);
+            if (abogadoSelect.tomselect) {
+                updateTomSelectOptions(abogadoSelect.tomselect, [{ value: data.id, text: data.nombre }], 'Asignar abogado...');
+                abogadoSelect.tomselect.setValue(data.id);
+                abogadoSelect.tomselect.enable();
+            } else {
+                abogadoSelect.innerHTML = '';
+                const option = document.createElement('option');
+                option.value = data.id;
+                option.text = data.nombre;
+                option.selected = true;
+                abogadoSelect.appendChild(option);
 
-            abogadoSelect.classList.remove('cursor-not-allowed', 'bg-gray-50');
-            abogadoSelect.classList.add('bg-white');
+                abogadoSelect.classList.remove('cursor-not-allowed', 'bg-gray-50');
+                abogadoSelect.classList.add('bg-white');
+            }
         })
         .catch(err => {
             console.error(err);
-            abogadoSelect.innerHTML = '<option value="">Sin abogado asignado</option>';
+            if (abogadoSelect.tomselect) {
+                updateTomSelectOptions(abogadoSelect.tomselect, [], 'Sin abogado asignado');
+            } else {
+                abogadoSelect.innerHTML = '<option value="">Sin abogado asignado</option>';
+            }
         });
+}
+
+function inicializarSelectsTerminos() {
+    const selectExpediente = document.getElementById('select-expediente-termino');
+    const selectGerencia = document.getElementById('select-contexto-gerencia');
+    const selectMateria = document.getElementById('select-contexto-materia');
+    const selectAbogado = document.getElementById('select-abogado-termino');
+
+    if (selectExpediente && !selectExpediente.tomselect) {
+        initSearchableSelect(selectExpediente, { 
+            tipo: 'expediente',
+            onChange: function() {
+                vincularAbogadoTermino();
+            }
+        });
+    }
+
+    if (selectGerencia && !selectGerencia.tomselect) {
+        initSearchableSelect(selectGerencia, { 
+            tipo: 'gerencia',
+            onChange: function() {
+                const origen = document.querySelector('input[name="origenTermino"]:checked')?.value || 'EXPEDIENTE';
+                if (origen === 'ASUNTO_UNICO') {
+                    const val = selectGerencia.tomselect.getValue();
+                    cargarMateriasYAbogadosPorGerencia(val);
+                }
+            }
+        });
+    }
+
+    if (selectMateria && !selectMateria.tomselect) {
+        initSearchableSelect(selectMateria, { 
+            tipo: 'materia', 
+            createInline: true, 
+            gerenciaSelector: '#select-contexto-gerencia' 
+        });
+    }
+
+    if (selectAbogado && !selectAbogado.tomselect) {
+        initSearchableSelect(selectAbogado, { tipo: 'abogado' });
+    }
 }
 // ABRIR MODAL PARA CONCLUIR TÉRMINO
 function abrirModalConcluir(idTermino) {

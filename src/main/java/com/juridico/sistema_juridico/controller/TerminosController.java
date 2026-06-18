@@ -102,6 +102,8 @@ public class TerminosController {
     @Autowired
     private NotificacionService notificacionService;
     @Autowired
+    private com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository colaboradorExpedienteRepository;
+    @Autowired
     private GerenciaRepository gerenciaRepository;
     @Autowired
     private MateriaRepository materiaRepository;
@@ -116,20 +118,13 @@ public class TerminosController {
     private static final Map<EstatusTermino, List<RolUsuario>> PERMISOS_ETAPAS = new HashMap<>();
 
     static {
-        PERMISOS_ETAPAS.put(EstatusTermino.PROYECTISTA,
-                Arrays.asList(RolUsuario.ABOGADO, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO,
-                        RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION, RolUsuario.ADMIN));
-        PERMISOS_ETAPAS.put(EstatusTermino.REVISION,
-                Arrays.asList(RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE, RolUsuario.DIRECCION,
-                        RolUsuario.SUBDIRECCION, RolUsuario.ADMIN));
-        PERMISOS_ETAPAS.put(EstatusTermino.GERENCIA,
-                Arrays.asList(RolUsuario.GERENTE, RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION, RolUsuario.ADMIN));
-        PERMISOS_ETAPAS.put(EstatusTermino.DIRECCION, Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION, RolUsuario.ADMIN));
-        PERMISOS_ETAPAS.put(EstatusTermino.LIBERADO,
-                Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE,
-                        RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION, RolUsuario.ADMIN));
-        PERMISOS_ETAPAS.put(EstatusTermino.PRESENTADO, Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION,
-                RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ADMIN));
+        List<RolUsuario> todosLosRoles = Arrays.asList(RolUsuario.values());
+        PERMISOS_ETAPAS.put(EstatusTermino.PROYECTISTA, todosLosRoles);
+        PERMISOS_ETAPAS.put(EstatusTermino.REVISION, todosLosRoles);
+        PERMISOS_ETAPAS.put(EstatusTermino.GERENCIA, todosLosRoles);
+        PERMISOS_ETAPAS.put(EstatusTermino.DIRECCION, todosLosRoles);
+        PERMISOS_ETAPAS.put(EstatusTermino.LIBERADO, todosLosRoles);
+        PERMISOS_ETAPAS.put(EstatusTermino.PRESENTADO, todosLosRoles);
     }
 
     private static final Map<EstatusTermino, Integer> ORDEN_ETAPAS = new HashMap<>();
@@ -144,7 +139,7 @@ public class TerminosController {
         ORDEN_ETAPAS.put(EstatusTermino.CONCLUIDO, 7);
     }
 
-    @GetMapping
+    @GetMapping({"", "/"})
     public String index(Model model,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(required = false) Integer id,
@@ -176,20 +171,31 @@ public class TerminosController {
         List<Integer> filtroMateriaIds = null;
 
         switch (usuarioActual.getRol()) {
-            case ABOGADO:
-                filtroAbogadoSeguro = usuarioActual.getId();
-                break;
             case JEFE_DEPTO:
                 if (usuarioActual.getGerencia() != null) {
                     filtroGerenciaSeguro = usuarioActual.getGerencia().getId();
+                } else {
+                    filtroGerenciaSeguro = -1;
                 }
                 if (usuarioActual.getMaterias() != null && !usuarioActual.getMaterias().isEmpty()) {
                     filtroMateriaIds = usuarioActual.getMaterias().stream()
                             .map(m -> m.getId())
                             .collect(Collectors.toList());
+                } else {
+                    filtroMateriaIds = java.util.Collections.emptyList();
                 }
                 break;
+            case ABOGADO:
+                filtroAbogadoSeguro = usuarioActual.getId();
+                filtroGerenciaSeguro = null;
+                break;
             case GERENTE:
+                if (usuarioActual.getGerencia() != null) {
+                    filtroGerenciaSeguro = usuarioActual.getGerencia().getId();
+                } else {
+                    filtroGerenciaSeguro = -1;
+                }
+                break;
             case DIRECCION:
             case SUBDIRECCION:
                 if (usuarioActual.getGerencia() != null) {
@@ -274,13 +280,7 @@ public class TerminosController {
         // --- 5. LOGICA ANTI-FANTASMAS (EXPEDIENTES DISPONIBLES) - OPTIMIZADA ---
         List<Expediente> expedientesParaDropdown;
 
-        if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
-            List<Expediente> misExpedientes = expedienteRepository.findAllByAbogadoResponsableId(usuarioActual.getId());
-            List<Expediente> expedientesPorAudiencia = audienciaRepository.findExpedientesByAbogadoInvitadoActivo(usuarioActual.getId());
-            Set<Expediente> conjunto = new HashSet<>(misExpedientes);
-            conjunto.addAll(expedientesPorAudiencia);
-            expedientesParaDropdown = new ArrayList<>(conjunto);
-        } else if (usuarioActual.getRol() == RolUsuario.GERENTE) {
+        if (usuarioActual.getRol() == RolUsuario.ABOGADO || usuarioActual.getRol() == RolUsuario.GERENTE) {
             if (usuarioActual.getGerencia() != null) {
                 expedientesParaDropdown = expedienteRepository.findAllByGerenciaId(usuarioActual.getGerencia().getId());
             } else {
@@ -368,34 +368,7 @@ public class TerminosController {
     }
 
     private List<EstatusTermino> getEtapasAsignadasPorRol(RolUsuario rol) {
-        if (rol == null) {
-            return new ArrayList<>();
-        }
-        List<EstatusTermino> etapas = new ArrayList<>();
-        switch (rol) {
-            case ABOGADO:
-                etapas.addAll(Arrays.asList(EstatusTermino.PROYECTISTA, EstatusTermino.LIBERADO));
-                break;
-            case JEFE_DEPTO:
-                etapas.addAll(Arrays.asList(EstatusTermino.REVISION, EstatusTermino.PRESENTADO));
-                break;
-            case GERENTE:
-                etapas.addAll(Arrays.asList(EstatusTermino.GERENCIA, EstatusTermino.PRESENTADO));
-                break;
-            case DIRECCION:
-                etapas.addAll(Arrays.asList(EstatusTermino.DIRECCION, EstatusTermino.PRESENTADO));
-                break;
-            case SUBDIRECCION:
-                etapas.addAll(Arrays.asList(EstatusTermino.DIRECCION, EstatusTermino.PRESENTADO, EstatusTermino.CONCLUIDO));
-                break;
-            case ADMIN:
-                etapas.addAll(Arrays.asList(EstatusTermino.values()));
-                break;
-        }
-        if (!etapas.contains(EstatusTermino.CONCLUIDO)) {
-            etapas.add(EstatusTermino.CONCLUIDO);
-        }
-        return etapas;
+        return Arrays.asList(EstatusTermino.values());
     }
 
     @PostMapping("/guardar")
@@ -426,11 +399,19 @@ public class TerminosController {
         }
 
         if (origenTermino == OrigenTermino.ASUNTO_UNICO) {
-            if (actor.getRol() == RolUsuario.ABOGADO || actor.getRol() == RolUsuario.JEFE_DEPTO) {
+            if (actor.getRol() == RolUsuario.JEFE_DEPTO) {
                 Set<Integer> misMateriasIds = actor.getMaterias().stream()
                         .map(Materia::getId)
                         .collect(Collectors.toSet());
                 if (contextoMateriaId == null || !misMateriasIds.contains(contextoMateriaId)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No tienes acceso a la materia seleccionada.");
+                }
+            } else if (actor.getRol() == RolUsuario.ABOGADO || actor.getRol() == RolUsuario.GERENTE) {
+                if (actor.getGerencia() == null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El usuario no tiene una gerencia asignada.");
+                }
+                Materia mat = materiaRepository.findById(contextoMateriaId).orElse(null);
+                if (mat == null || mat.getGerencia() == null || !mat.getGerencia().getId().equals(actor.getGerencia().getId())) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No tienes acceso a la materia seleccionada.");
                 }
             }
@@ -974,6 +955,9 @@ public class TerminosController {
             } else {
                 secMateriaIds = Collections.emptyList();
             }
+        } else if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
+            secGerenciaId = null;
+            secMateriaIds = Collections.emptyList();
         } else {
             if (usuarioActual.getGerencia() != null) {
                 secGerenciaId = usuarioActual.getGerencia().getId();
@@ -1139,39 +1123,44 @@ public class TerminosController {
         }
         Expediente e = termino.getExpediente();
         if (e == null) {
+            if (termino.getContexto() != null && termino.getContexto().getGerencia() != null && usuario.getGerencia() != null) {
+                if (!termino.getContexto().getGerencia().getId().equals(usuario.getGerencia().getId())) {
+                    throw new ForbiddenException("No tienes acceso a la gerencia de este término.");
+                }
+            }
             return;
         }
         validarAccesoExpediente(e, usuario);
-        if (usuario.getRol() == RolUsuario.ABOGADO) {
-            boolean esResponsableTermino = termino.getAbogadoResponsable() != null && termino.getAbogadoResponsable().getId().equals(usuario.getId());
-            boolean esResponsableExp = e.getAbogadoResponsable() != null && e.getAbogadoResponsable().getId().equals(usuario.getId());
-            boolean esInvitado = audienciaRepository.findExpedientesByAbogadoInvitadoActivo(usuario.getId()).stream().anyMatch(exp -> exp.getId().equals(e.getId()));
-            if (!esResponsableTermino && !esResponsableExp && !esInvitado) {
-                throw new ForbiddenException("No tienes acceso a este término.");
-            }
-        }
     }
 
     private void validarAccesoExpediente(Expediente e, Usuario usuario) {
-        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+        RolUsuario rol = usuario.getRol();
+        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
             return;
         }
-        if (usuario.getGerencia() != null && (e.getGerencia() == null || !e.getGerencia().getId().equals(usuario.getGerencia().getId()))) {
-            if (usuario.getRol() != RolUsuario.ABOGADO) {
-                throw new ForbiddenException("No tienes acceso a esta gerencia.");
+        // El responsable directo del expediente siempre tiene acceso prioritario
+        if (e.getAbogadoResponsable() != null && e.getAbogadoResponsable().getId().equals(usuario.getId())) {
+            return;
+        }
+        if (rol == RolUsuario.GERENTE) {
+            if (usuario.getGerencia() != null && e.getGerencia() != null 
+                    && e.getGerencia().getId().equals(usuario.getGerencia().getId())) {
+                return;
+            }
+        } else if (rol == RolUsuario.JEFE_DEPTO) {
+            if (usuario.getGerencia() != null && e.getGerencia() != null 
+                    && e.getGerencia().getId().equals(usuario.getGerencia().getId())
+                    && e.getMateria() != null 
+                    && usuario.getMaterias().stream().anyMatch(m -> m.getId().equals(e.getMateria().getId()))) {
+                return;
+            }
+        } else if (rol == RolUsuario.ABOGADO) {
+            if (colaboradorExpedienteRepository.existsByExpedienteIdAndUsuarioIdAndFechaExpiracionAfter(
+                    e.getId(), usuario.getId(), LocalDateTime.now())) {
+                return;
             }
         }
-        if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
-            if (e.getMateria() == null || usuario.getMaterias().stream().noneMatch(m -> m.getId().equals(e.getMateria().getId()))) {
-                throw new ForbiddenException("No tienes acceso a esta materia.");
-            }
-        } else if (usuario.getRol() == RolUsuario.ABOGADO) {
-            boolean esResponsable = e.getAbogadoResponsable() != null && e.getAbogadoResponsable().getId().equals(usuario.getId());
-            boolean esInvitado = audienciaRepository.findExpedientesByAbogadoInvitadoActivo(usuario.getId()).stream().anyMatch(exp -> exp.getId().equals(e.getId()));
-            if (!esResponsable && !esInvitado) {
-                throw new ForbiddenException("No tienes acceso a este expediente.");
-            }
-        }
+        throw new ForbiddenException("No tienes acceso a este expediente.");
     }
 
     @GetMapping("/api/materias-por-gerencia/{gerenciaId}")
@@ -1181,7 +1170,7 @@ public class TerminosController {
             Usuario usuarioActual = getUsuarioActual();
             List<Materia> materias = materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(gerenciaId);
             
-            if (usuarioActual.getRol() == RolUsuario.ABOGADO || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+            if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
                 Set<Integer> misMateriasIds = usuarioActual.getMaterias().stream()
                         .map(Materia::getId)
                         .collect(Collectors.toSet());

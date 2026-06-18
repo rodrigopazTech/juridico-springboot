@@ -124,7 +124,22 @@ async function sendSubscriptionToBackend(subscription) {
     }
 }
 
-// Iniciar Web Push al cargar el DOM
+// Función para detectar si el cliente es un dispositivo móvil o tablet
+function isMobileDevice() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    // Detección por expresión regular del User Agent
+    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    // Detección por tamaño de pantalla (móviles y tablets suelen tener anchos <= 1024px)
+    const isSmallScreen = window.matchMedia && window.matchMedia('(max-width: 1024px)').matches;
+    return isMobileUA || isSmallScreen;
+}
+
+// Iniciar Web Push al cargar el DOM solo si es un dispositivo móvil
 document.addEventListener('DOMContentLoaded', () => {
-    initWebPush();
+    if (isMobileDevice()) {
+        console.log('[WebPush] Dispositivo móvil detectado. Inicializando registro de Service Worker y suscripción push...');
+        initWebPush();
+    } else {
+        console.log('[WebPush] Entorno de escritorio detectado. Notificaciones en segundo plano Web Push omitidas de manera silenciosa.');
+    }
 });

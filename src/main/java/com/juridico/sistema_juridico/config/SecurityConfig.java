@@ -115,11 +115,20 @@ public class SecurityConfig {
                                 new org.springframework.security.web.savedrequest.HttpSessionRequestCache();
                             org.springframework.security.web.savedrequest.SavedRequest savedRequest =
                                 requestCache.getRequest(request, response);
-                            if (savedRequest != null) {
-                                response.sendRedirect(savedRequest.getRedirectUrl());
-                            } else {
-                                response.sendRedirect("/dashboard");
-                            }
+                             if (savedRequest != null) {
+                                 String redirectUrl = savedRequest.getRedirectUrl();
+                                 if (redirectUrl.contains(".well-known") ||
+                                         redirectUrl.contains("favicon") ||
+                                         redirectUrl.contains("manifest.json") ||
+                                         redirectUrl.contains("sw.js") ||
+                                         redirectUrl.contains("/api/")) {
+                                     response.sendRedirect("/dashboard");
+                                 } else {
+                                     response.sendRedirect(redirectUrl);
+                                 }
+                             } else {
+                                 response.sendRedirect("/dashboard");
+                             }
                         })
                         .failureUrl("/?error=true")
                         .permitAll())

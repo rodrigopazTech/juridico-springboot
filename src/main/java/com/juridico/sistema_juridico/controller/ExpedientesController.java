@@ -98,9 +98,43 @@ public class ExpedientesController {
     private AuditoriaService auditoriaService;
     @Autowired
     private CarpetaService carpetaService;
+    @Autowired
+    private com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository colaboradorExpedienteRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    private void validarAccesoExpediente(Expediente expediente, Usuario usuario) {
+        RolUsuario rol = usuario.getRol();
+        boolean tienePermiso = false;
+
+        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
+            tienePermiso = true;
+        } else if (rol == RolUsuario.GERENTE) {
+            if (expediente.getGerencia() != null && usuario.getGerencia() != null 
+                    && expediente.getGerencia().getId().equals(usuario.getGerencia().getId())) {
+                tienePermiso = true;
+            }
+        } else if (rol == RolUsuario.JEFE_DEPTO) {
+            if (expediente.getGerencia() != null && usuario.getGerencia() != null 
+                    && expediente.getGerencia().getId().equals(usuario.getGerencia().getId())
+                    && expediente.getMateria() != null 
+                    && usuario.getMaterias().stream().anyMatch(m -> m.getId().equals(expediente.getMateria().getId()))) {
+                tienePermiso = true;
+            }
+        } else if (rol == RolUsuario.ABOGADO) {
+            if (expediente.getAbogadoResponsable() != null && expediente.getAbogadoResponsable().getId().equals(usuario.getId())) {
+                tienePermiso = true;
+            } else if (colaboradorExpedienteRepository.existsByExpedienteIdAndUsuarioIdAndFechaExpiracionAfter(
+                    expediente.getId(), usuario.getId(), LocalDateTime.now())) {
+                tienePermiso = true;
+            }
+        }
+
+        if (!tienePermiso) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para acceder a este expediente.");
+        }
+    }
 
     @GetMapping("/exportar-excel")
     public void exportarExcel(HttpServletResponse response,
@@ -129,24 +163,31 @@ public class ExpedientesController {
 
         if (usuario.getRol() == RolUsuario.ADMIN) {
             // Admin sigue viendo todo
-        } else if (usuario.getRol() == RolUsuario.GERENTE || usuario.getRol() == RolUsuario.DIRECCION
-                || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+        } else if (usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
             if (usuario.getGerencia() != null)
                 secGerenciaId = usuario.getGerencia().getId();
+        } else if (usuario.getRol() == RolUsuario.GERENTE) {
+            if (usuario.getGerencia() != null) {
+                secGerenciaId = usuario.getGerencia().getId();
+            } else {
+                secGerenciaId = -1; // Evita listar todo si no tiene gerencia asignada
+            }
+        } else if (usuario.getRol() == RolUsuario.ABOGADO) {
+            // Modelo restrictivo: solo casos asignados/colaboraciones
+            secGerenciaId = null;
+            secMateriaIds = List.of(-1);
         } else if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
             // Jefe de Depto: ve expedientes de sus materias dentro de su gerencia
-            if (usuario.getGerencia() != null)
+            if (usuario.getGerencia() != null) {
                 secGerenciaId = usuario.getGerencia().getId();
+            } else {
+                secGerenciaId = -1;
+            }
             if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
                 secMateriaIds = usuario.getMaterias().stream().map(m -> m.getId()).collect(Collectors.toList());
             } else {
                 secMateriaIds = Collections.emptyList();
             }
-        } else {
-            // ABOGADO: solo ve sus propios expedientes
-            if (usuario.getGerencia() != null)
-                secGerenciaId = usuario.getGerencia().getId();
-            secMateriaIds = Collections.emptyList();
         }
 
         // Buscamos todos los expedientes que coincidan con los filtros (sin paginación)
@@ -159,7 +200,7 @@ public class ExpedientesController {
         excelExporter.export(response);
     }
 
-    @GetMapping
+    @GetMapping({"", "/"})
     public String index(Model model,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String keyword,
@@ -179,25 +220,31 @@ public class ExpedientesController {
 
         if (usuario.getRol() == RolUsuario.ADMIN) {
             // Ven todo
-        } else if (usuario.getRol() == RolUsuario.GERENTE || usuario.getRol() == RolUsuario.DIRECCION
-                || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+        } else if (usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
             if (usuario.getGerencia() != null)
                 secGerenciaId = usuario.getGerencia().getId();
+        } else if (usuario.getRol() == RolUsuario.GERENTE) {
+            if (usuario.getGerencia() != null) {
+                secGerenciaId = usuario.getGerencia().getId();
+            } else {
+                secGerenciaId = -1; // Evita listar todo si no tiene gerencia asignada
+            }
+        } else if (usuario.getRol() == RolUsuario.ABOGADO) {
+            // Modelo restrictivo: solo casos asignados/colaboraciones
+            secGerenciaId = null;
+            secMateriaIds = List.of(-1);
         } else if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
             // Jefe de Depto: ve expedientes de sus materias dentro de su gerencia
-            if (usuario.getGerencia() != null)
+            if (usuario.getGerencia() != null) {
                 secGerenciaId = usuario.getGerencia().getId();
+            } else {
+                secGerenciaId = -1;
+            }
             if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
                 secMateriaIds = usuario.getMaterias().stream().map(m -> m.getId()).collect(Collectors.toList());
             } else {
                 secMateriaIds = Collections.emptyList();
             }
-        } else {
-            // ABOGADO: solo ve sus propios expedientes (donde es abogadoResponsable)
-            // Las materias asignadas no expanden su visibilidad
-            if (usuario.getGerencia() != null)
-                secGerenciaId = usuario.getGerencia().getId();
-            secMateriaIds = Collections.emptyList();
         }
 
         Pageable pageable = PageRequest.of(page, 20, Sort.by("createdAt").descending());
@@ -305,21 +352,19 @@ public class ExpedientesController {
             Expediente expedienteReal;
 
             if (esNuevo) {
-                // Validación de Roles para Creación
                 String rol = usuario.getRol().name();
-                if (!rol.equals("ADMIN") && !rol.equals("DIRECCION") && !rol.equals("SUBDIRECCION")) {
-                    throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                            "No tienes permiso para crear expedientes.");
-                }
 
                 expedienteReal = expedienteForm;
                 expedienteReal.setCreatedAt(LocalDateTime.now());
                 expedienteReal.setEtapaProcesal(EtapaProcesal.TRAMITE);
 
                 // Inyectar relaciones reales de la base de datos (Creación)
-                if (expedienteForm.getGerencia() != null && expedienteForm.getGerencia().getId() != null)
+                if (!rol.equals("ADMIN") && !rol.equals("DIRECCION") && !rol.equals("SUBDIRECCION")) {
+                    expedienteReal.setGerencia(usuario.getGerencia());
+                } else if (expedienteForm.getGerencia() != null && expedienteForm.getGerencia().getId() != null) {
                     expedienteReal.setGerencia(
                             gerenciaRepository.findById(expedienteForm.getGerencia().getId()).orElse(null));
+                }
                 if (expedienteForm.getMateria() != null && expedienteForm.getMateria().getId() != null)
                     expedienteReal
                             .setMateria(materiaRepository.findById(expedienteForm.getMateria().getId()).orElse(null));
@@ -568,33 +613,7 @@ public class ExpedientesController {
                 .orElseThrow(() -> new ResourceNotFoundException("Expediente no encontrado con ID: " + id));
 
         // --- PREVENCIÓN DE IDOR ---
-        boolean tienePermiso = false;
-        String rol = usuario.getRol().name();
-
-        if (rol.equals("ADMIN") || rol.equals("DIRECCION") || rol.equals("SUBDIRECCION")) {
-            tienePermiso = true;
-        } else if (rol.equals("GERENTE") 
-                && usuario.getGerencia() != null
-                && expediente.getGerencia() != null
-                && expediente.getGerencia().getId().equals(usuario.getGerencia().getId())) {
-            tienePermiso = true;
-        } else if (rol.equals("JEFE_DEPTO") && !usuario.getMaterias().isEmpty()
-                && expediente.getMateria() != null) {
-            boolean materiaCoincide = usuario.getMaterias().stream()
-                    .anyMatch(m -> m.getId().equals(expediente.getMateria().getId()));
-            if (materiaCoincide) {
-                tienePermiso = true;
-            }
-        } else if (expediente.getAbogadoResponsable() != null
-                && expediente.getAbogadoResponsable().getId().equals(usuario.getId())) {
-            tienePermiso = true;
-        }
-
-        if (!tienePermiso) {
-            throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.FORBIDDEN,
-                    "No tienes permiso para ver este expediente.");
-        }
+        validarAccesoExpediente(expediente, usuario);
         // --- FIN PREVENCIÓN DE IDOR ---
 
         model.addAttribute("expediente", expediente);
@@ -639,72 +658,75 @@ public class ExpedientesController {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
 
+        UUID expId;
+        try {
+            expId = UUID.fromString(id);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("ID de expediente no válido");
+        }
+
+        Expediente exp = expedienteRepository.findById(expId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expediente no encontrado"));
+        
+        validarAccesoExpediente(exp, usuario);
+
         nuevo.setEntidadTipo("EXPEDIENTE");
         nuevo.setEntidadId(id);
         nuevo.setCreatedAt(LocalDateTime.now());
         nuevo.setUsuario(usuario);
         nuevo.setUsuarioNombre(usuario != null ? usuario.getNombreCompleto() : "Sistema");
+        nuevo.setEtapaProcesal(exp.getEtapaProcesal());
 
-        // Capturar la etapa procesal actual del expediente
-        try {
-            UUID expId = UUID.fromString(id);
-            expedienteRepository.findById(expId).ifPresent(exp -> {
-                nuevo.setEtapaProcesal(exp.getEtapaProcesal());
+        auditoriaService.registrar(exp, "Nueva Observación",
+                "Se agregó una nota: "
+                        + (nuevo.getComentario().length() > 50 ? nuevo.getComentario().substring(0, 47) + "..."
+                                : nuevo.getComentario()),
+                "EDIT", usuario);
 
-                auditoriaService.registrar(exp, "Nueva Observación",
-                        "Se agregó una nota: "
-                                + (nuevo.getComentario().length() > 50 ? nuevo.getComentario().substring(0, 47) + "..."
-                                        : nuevo.getComentario()),
-                        "EDIT", usuario);
+        // Enviar notificaciones a otros involucrados
+        List<Usuario> destinatarios = new ArrayList<>();
+        if (exp.getAbogadoResponsable() != null) {
+            destinatarios.add(exp.getAbogadoResponsable());
+        }
+        if (exp.getGerencia() != null) {
+            destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(
+                    com.juridico.sistema_juridico.Entity.enums.RolUsuario.GERENTE, exp.getGerencia()));
+        }
+        if (exp.getMateria() != null) {
+            destinatarios.addAll(usuarioRepository.findByRolAndMateriaId(
+                    RolUsuario.JEFE_DEPTO, exp.getMateria().getId()));
+        }
 
-                // Enviar notificaciones a otros involucrados
-                List<Usuario> destinatarios = new ArrayList<>();
-                if (exp.getAbogadoResponsable() != null) {
-                    destinatarios.add(exp.getAbogadoResponsable());
-                }
-                if (exp.getGerencia() != null) {
-                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(
-                            com.juridico.sistema_juridico.Entity.enums.RolUsuario.GERENTE, exp.getGerencia()));
-                }
-                if (exp.getMateria() != null) {
-                    destinatarios.addAll(usuarioRepository.findByRolAndMateriaId(
-                            RolUsuario.JEFE_DEPTO, exp.getMateria().getId()));
-                }
+        // Directores y Subdirectores (Tienen visibilidad global)
+        destinatarios.addAll(usuarioRepository.findByRolInAndActivoTrue(
+                List.of(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
 
-                // Directores y Subdirectores (Tienen visibilidad global)
-                destinatarios.addAll(usuarioRepository.findByRolInAndActivoTrue(
-                        List.of(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
+        // Filtrar para no enviársela al autor y que no se repitan
+        List<Usuario> destinatariosUnicos = destinatarios.stream()
+                .filter(u -> u != null && !u.getId().equals(usuario.getId()))
+                .distinct()
+                .toList();
 
-                // Filtrar para no enviársela al autor y que no se repitan
-                List<Usuario> destinatariosUnicos = destinatarios.stream()
-                        .filter(u -> u != null && !u.getId().equals(usuario.getId()))
-                        .distinct()
-                        .toList();
+        if (!destinatariosUnicos.isEmpty()) {
+            CatPrioridad prioMedia = catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null);
+            String tituloNotif = "Nueva Observación";
+            String mensajeNotif = String.format("El usuario %s agregó una nota en el expediente %s: \"%s\"",
+                    usuario.getNombreCompleto(),
+                    exp.getNumero(),
+                    nuevo.getComentario().length() > 60 ? nuevo.getComentario().substring(0, 57) + "..." : nuevo.getComentario());
 
-                if (!destinatariosUnicos.isEmpty()) {
-                    CatPrioridad prioMedia = catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null);
-                    String tituloNotif = "Nueva Observación";
-                    String mensajeNotif = String.format("El usuario %s agregó una nota en el expediente %s: \"%s\"",
-                            usuario.getNombreCompleto(),
-                            exp.getNumero(),
-                            nuevo.getComentario().length() > 60 ? nuevo.getComentario().substring(0, 57) + "..." : nuevo.getComentario());
-
-                    for (Usuario dest : destinatariosUnicos) {
-                        notificacionService.crearNotificacion(
-                                dest,
-                                usuario, // El autor
-                                NotificacionEvento.EXPEDIENTE_OBSERVACION_NUEVA,
-                                tituloNotif,
-                                mensajeNotif,
-                                prioMedia,
-                                exp.getId().toString(),
-                                true // Silenciar el reenvío automático a jefes/superiores que hace NotificacionService
-                        );
-                    }
-                }
-            });
-        } catch (Exception e) {
-            // Ignorar si el ID no es de expediente
+            for (Usuario dest : destinatariosUnicos) {
+                notificacionService.crearNotificacion(
+                        dest,
+                        usuario, // El autor
+                        NotificacionEvento.EXPEDIENTE_OBSERVACION_NUEVA,
+                        tituloNotif,
+                        mensajeNotif,
+                        prioMedia,
+                        exp.getId().toString(),
+                        true // Silenciar el reenvío automático a jefes/superiores que hace NotificacionService
+                );
+            }
         }
 
         comentarioRepository.save(nuevo);
@@ -721,7 +743,11 @@ public class ExpedientesController {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
 
-        Expediente exp = expedienteRepository.findById(id).orElseThrow();
+        Expediente exp = expedienteRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expediente no encontrado"));
+        
+        validarAccesoExpediente(exp, usuario);
+
         EtapaProcesal anterior = exp.getEtapaProcesal();
 
         exp.setEtapaProcesal(etapa);

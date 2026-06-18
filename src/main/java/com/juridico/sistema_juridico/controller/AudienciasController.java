@@ -72,6 +72,8 @@ public class AudienciasController {
     private UsuarioRepository usuarioRepository;
     @Autowired
     private AudienciaService audienciaService;
+    @Autowired
+    private com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository colaboradorExpedienteRepository;
 
     // @Autowired private ColaboradorExpedienteRepository colaboradorRepository;
     @Autowired
@@ -83,7 +85,37 @@ public class AudienciasController {
     @Autowired
     private OrganoJurisdiccionalRepository organoJurisdiccionalRepository;
 
-    @GetMapping
+    private void validarAccesoExpediente(Expediente e, Usuario usuario) {
+        RolUsuario rol = usuario.getRol();
+        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
+            return;
+        }
+        // El responsable directo del expediente siempre tiene acceso prioritario
+        if (e.getAbogadoResponsable() != null && e.getAbogadoResponsable().getId().equals(usuario.getId())) {
+            return;
+        }
+        if (rol == RolUsuario.GERENTE) {
+            if (usuario.getGerencia() != null && e.getGerencia() != null 
+                    && e.getGerencia().getId().equals(usuario.getGerencia().getId())) {
+                return;
+            }
+        } else if (rol == RolUsuario.JEFE_DEPTO) {
+            if (usuario.getGerencia() != null && e.getGerencia() != null 
+                    && e.getGerencia().getId().equals(usuario.getGerencia().getId())
+                    && e.getMateria() != null 
+                    && usuario.getMaterias().stream().anyMatch(m -> m.getId().equals(e.getMateria().getId()))) {
+                return;
+            }
+        } else if (rol == RolUsuario.ABOGADO) {
+            if (colaboradorExpedienteRepository.existsByExpedienteIdAndUsuarioIdAndFechaExpiracionAfter(
+                    e.getId(), usuario.getId(), java.time.LocalDateTime.now())) {
+                return;
+            }
+        }
+        throw new ForbiddenException("No tienes acceso a este expediente.");
+    }
+
+    @GetMapping({"", "/"})
     public String index(Model model,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "id", required = false) Integer id,
@@ -117,18 +149,29 @@ public class AudienciasController {
         switch (usuario.getRol()) {
             case ABOGADO:
                 filtroUsuarioId = usuario.getId();
+                filtroGerenciaId = null;
+                break;
+            case GERENTE:
+                if (usuario.getGerencia() != null) {
+                    filtroGerenciaId = usuario.getGerencia().getId();
+                } else {
+                    filtroGerenciaId = -1;
+                }
                 break;
             case JEFE_DEPTO:
                 if (usuario.getGerencia() != null) {
                     filtroGerenciaId = usuario.getGerencia().getId();
+                } else {
+                    filtroGerenciaId = -1;
                 }
                 if (usuario.getMaterias() != null && !usuario.getMaterias().isEmpty()) {
                     filtroMateriaIds = usuario.getMaterias().stream()
                             .map(m -> m.getId())
                             .collect(Collectors.toList());
+                } else {
+                    filtroMateriaIds = Collections.emptyList();
                 }
                 break;
-            case GERENTE:
             case DIRECCION:
             case SUBDIRECCION:
                 if (usuario.getGerencia() != null) {
@@ -302,8 +345,9 @@ public class AudienciasController {
     }
 @PostMapping("/guardar")
 public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes redirectAttrs) {
-    // NOTA: Ya no necesitamos el try-catch envolvente.
-    // Si algo falla, el GlobalExceptionHandler se encarga.
+    String email = SecurityContextHolder.getContext().getAuthentication().getName();
+    Usuario usuario = usuarioRepository.findByEmail(email)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
 
     boolean esNueva = (audiencia.getId() == null);
 
@@ -314,52 +358,68 @@ public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes re
         throw new BadRequestException("El tipo de audiencia es obligatorio.");
     }
 
+    Expediente exp = null;
+
     if (!esNueva) {
-            // Lógica de EDICIÓN:
-            // Buscamos la audiencia. Si no existe, lanzamos la excepción y el sistema
-            // redirige al usuario con la alerta roja.
-            Audiencia audienciaExistente = audienciaRepository.findById(audiencia.getId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "No se puede editar: La audiencia con ID " + audiencia.getId() + " no existe."));
+        Audiencia audienciaExistente = audienciaRepository.findById(audiencia.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No se puede editar: La audiencia con ID " + audiencia.getId() + " no existe."));
 
-            // Preservamos los datos que no vienen en el formulario simple
-            audiencia.setEstatusAudiencia(audienciaExistente.getEstatusAudiencia());
-            audiencia.setActaDocumento(audienciaExistente.getActaDocumento());
+        // Validar acceso al expediente original
+        if (audienciaExistente.getExpediente() != null) {
+            validarAccesoExpediente(audienciaExistente.getExpediente(), usuario);
+        }
 
-            // Preservar observaciones si no se enviaron nuevas
-            if (audiencia.getObservaciones() == null && audienciaExistente.getObservaciones() != null) {
-                audiencia.setObservaciones(audienciaExistente.getObservaciones());
-            }
-            if (audiencia.getExpediente() == null && audienciaExistente.getExpediente() != null) {
-                audiencia.setExpediente(audienciaExistente.getExpediente());
-            }
+        // Preservamos los datos que no vienen en el formulario simple
+        audiencia.setEstatusAudiencia(audienciaExistente.getEstatusAudiencia());
+        audiencia.setActaDocumento(audienciaExistente.getActaDocumento());
+
+        // Preservar observaciones si no se enviaron nuevas
+        if (audiencia.getObservaciones() == null && audienciaExistente.getObservaciones() != null) {
+            audiencia.setObservaciones(audienciaExistente.getObservaciones());
+        }
+        
+        if (audiencia.getExpediente() != null && audiencia.getExpediente().getId() != null) {
+            exp = expedienteRepository.findById(audiencia.getExpediente().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("El expediente asociado no existe."));
         } else {
-            // Lógica de CREACIÓN
-            audiencia.setEstatusAudiencia(EstatusAudiencia.PENDIENTE);
+            exp = audienciaExistente.getExpediente();
+            audiencia.setExpediente(exp);
         }
-
-        // Corrección para evitar conflictos con Hibernate si el ID del abogado viene
-        // vacío
-        if (audiencia.getAbogadoComparece() != null && audiencia.getAbogadoComparece().getId() == null) {
-            audiencia.setAbogadoComparece(null);
+    } else {
+        if (audiencia.getExpediente() == null || audiencia.getExpediente().getId() == null) {
+            throw new BadRequestException("El expediente es obligatorio.");
         }
-
-        // GUARDADO (Si falla la BD, se va al ExceptionHandler genérico)
-        Audiencia guardada = audienciaRepository.save(audiencia);
-
-        // Notificación (Solo si es nueva)
-        if (esNueva) {
-            audienciaService.notificarCreacionAudiencia(guardada);
-        } else {
-            audienciaService.registrarEdicionAudiencia(guardada);
-        }
-
-        // Mensaje de Éxito (Solo definimos el camino feliz)
-        redirectAttrs.addFlashAttribute("mensaje", "Audiencia guardada correctamente.");
-        redirectAttrs.addFlashAttribute("tipo", "success");
-
-        return "redirect:/audiencias";
+        exp = expedienteRepository.findById(audiencia.getExpediente().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("El expediente asociado no existe."));
+        audiencia.setEstatusAudiencia(EstatusAudiencia.PENDIENTE);
     }
+
+    if (exp == null) {
+        throw new BadRequestException("El expediente es obligatorio.");
+    }
+    validarAccesoExpediente(exp, usuario);
+
+    // Corrección para evitar conflictos con Hibernate si el ID del abogado viene vacío
+    if (audiencia.getAbogadoComparece() != null && audiencia.getAbogadoComparece().getId() == null) {
+        audiencia.setAbogadoComparece(null);
+    }
+
+    // GUARDADO
+    Audiencia guardada = audienciaRepository.save(audiencia);
+
+    // Notificación (Solo si es nueva)
+    if (esNueva) {
+        audienciaService.notificarCreacionAudiencia(guardada);
+    } else {
+        audienciaService.registrarEdicionAudiencia(guardada);
+    }
+
+    redirectAttrs.addFlashAttribute("mensaje", "Audiencia guardada correctamente.");
+    redirectAttrs.addFlashAttribute("tipo", "success");
+
+    return "redirect:/audiencias";
+}
 
     @GetMapping("/obtener/{id}")
     @ResponseBody
@@ -374,6 +434,14 @@ public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes re
             @RequestParam("archivo") MultipartFile archivo,
             RedirectAttributes redirectAttrs) {
         try {
+            Audiencia aud = audienciaRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Audiencia no encontrada"));
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+            if (aud.getExpediente() != null) {
+                validarAccesoExpediente(aud.getExpediente(), usuario);
+            }
+
             audienciaService.subirActa(id, archivo);
             redirectAttrs.addFlashAttribute("mensaje", "Acta subida correctamente. Estatus actualizado.");
             redirectAttrs.addFlashAttribute("tipo", "success");
@@ -412,10 +480,13 @@ public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes re
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         try {
             // 1. VALIDACIÓN LIMPIA
-            if (!audienciaRepository.existsById(id)) {
-                response.put("success", false);
-                response.put("message", "La audiencia no existe.");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            Audiencia aud = audienciaRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("La audiencia no existe."));
+
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+            if (aud.getExpediente() != null) {
+                validarAccesoExpediente(aud.getExpediente(), usuario);
             }
 
             // 2. LÓGICA FELIZ (Sin try-catch interno)
@@ -425,6 +496,14 @@ public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes re
             response.put("message", "Audiencia eliminada correctamente.");
             return ResponseEntity.ok(response);
 
+        } catch (ResourceNotFoundException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (ForbiddenException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error al eliminar la audiencia.");
@@ -437,6 +516,12 @@ public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes re
         try {
             Audiencia audiencia = audienciaRepository.findById(id)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Audiencia no encontrada"));
+
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+            if (audiencia.getExpediente() != null) {
+                validarAccesoExpediente(audiencia.getExpediente(), usuario);
+            }
 
             if (audiencia.getActaDocumento() == null) {
                 return ResponseEntity.notFound().build();

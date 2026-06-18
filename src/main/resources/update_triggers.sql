@@ -145,7 +145,7 @@ BEGIN
             'operacion',           TG_OP
         )::text;
 
-    ELSIF TG_TABLE_NAME = 'tipos_expediente' THEN
+    ELSIF TG_TABLE_NAME = 'cat_tipo_expediente' THEN
         v_payload := json_build_object(
             'tabla',               TG_TABLE_NAME,
             'id',                  r.id,
@@ -241,9 +241,9 @@ CREATE TRIGGER trg_tipos_audiencia_realtime
 AFTER INSERT OR UPDATE OR DELETE ON tipos_audiencia
 FOR EACH ROW EXECUTE FUNCTION fn_notify_realtime();
 
-DROP TRIGGER IF EXISTS trg_tipos_expediente_realtime ON tipos_expediente;
+DROP TRIGGER IF EXISTS trg_tipos_expediente_realtime ON cat_tipo_expediente;
 CREATE TRIGGER trg_tipos_expediente_realtime
-AFTER INSERT OR UPDATE OR DELETE ON tipos_expediente
+AFTER INSERT OR UPDATE OR DELETE ON cat_tipo_expediente
 FOR EACH ROW EXECUTE FUNCTION fn_notify_realtime();
 
 DROP TRIGGER IF EXISTS trg_materias_realtime ON materias;
