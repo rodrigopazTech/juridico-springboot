@@ -72,6 +72,7 @@ public class SecurityConfig {
                         .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO", "ABOGADO",
                                 "PERM_CATALOGOS_VER")
                         .requestMatchers("/admin/**").hasAnyAuthority("ADMIN", "PERM_ADMIN_PANEL")
+                        .requestMatchers("/usuarios/api/materias-por-gerencia/**").authenticated()
                         .requestMatchers("/usuarios", "/usuarios/**")
                         .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "PERM_USUARIOS_VER")
 
@@ -121,6 +122,7 @@ public class SecurityConfig {
                                          redirectUrl.contains("favicon") ||
                                          redirectUrl.contains("manifest.json") ||
                                          redirectUrl.contains("sw.js") ||
+                                          redirectUrl.contains("/error") ||
                                          redirectUrl.contains("/api/")) {
                                      response.sendRedirect("/dashboard");
                                  } else {

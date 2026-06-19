@@ -42,7 +42,7 @@
 
                 <div th:if="${esPapelera and !notificaciones.empty}" class="ml-2 sm:ml-4 pl-2 sm:pl-4 border-l border-gray-100">
                     <a th:href="@{/notificaciones/vaciar}" 
-                       onclick="return confirm('¿Estás seguro de que deseas vaciar la papelera? Esta acción no se puede deshacer.')"
+                       th:onclick="confirmarAccion(event, this.getAttribute('href'), '¿Vaciar la papelera?', 'Esta acción no se puede deshacer y borrará permanentemente todas las notificaciones vistas.', true)"
                        class="px-3 sm:px-5 py-2 sm:py-2.5 bg-red-50 text-red-600 rounded-lg text-xs sm:text-sm font-bold hover:bg-red-600 hover:text-white transition-all flex items-center gap-2">
                         <i class="fas fa-broom"></i> <span class="hidden sm:inline">Vaciar</span> Papelera
                     </a>
@@ -160,7 +160,7 @@
                                         <a th:href="@{/notificaciones/eliminar/{id}(id=${n.id})}"
                                             class="text-gray-300 hover:text-red-600 transition-colors p-2 rounded hover:bg-red-100"
                                             title="Eliminar permanentemente"
-                                            onclick="return confirm('¿Eliminar esta notificación permanentemente?')">
+                                            th:onclick="confirmarAccion(event, this.getAttribute('href'), '¿Eliminar notificación?', 'Esta acción no se puede deshacer.', true)">
                                             <i class="fas fa-times-circle"></i>
                                         </a>
                                     </th:block>
@@ -255,7 +255,7 @@
                                 </a>
                                 <a th:href="@{/notificaciones/eliminar/{id}(id=${n.id})}"
                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border border-red-200 text-red-500 hover:bg-red-50 transition-all"
-                                   onclick="return confirm('¿Eliminar esta notificación permanentemente?')">
+                                   th:onclick="confirmarAccion(event, this.getAttribute('href'), '¿Eliminar notificación?', 'Esta acción no se puede deshacer.', true)">
                                     <i class="fas fa-times-circle text-[9px]"></i> Eliminar
                                 </a>
                             </th:block>
@@ -268,6 +268,82 @@
 
         </div>
     </div>
+
+    <!-- MODAL CONFIRMACIÓN GENÉRICO PARA HISTORIAL -->
+    <div id="modal-confirmar-generico"
+        class="fixed inset-0 z-[70] hidden items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+        <div id="modal-confirmar-border" class="relative w-full max-w-sm bg-white rounded-lg shadow-2xl border-t-4 border-red-600">
+            <div class="p-6 text-center">
+                <div id="modal-confirmar-icon-bg" class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i id="modal-confirmar-icon" class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+                </div>
+                <h3 id="modal-confirmar-titulo" class="text-lg font-bold text-gray-900 mb-2">¿Confirmar acción?</h3>
+                <p id="modal-confirmar-texto" class="text-sm text-gray-600 mb-4">¿Desea continuar con esta operación?</p>
+            </div>
+            <div class="flex gap-3 p-4 border-t">
+                <button onclick="cerrarModalConfirmarGenerico()"
+                    class="flex-1 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-100">
+                    Cancelar
+                </button>
+                <button onclick="ejecutarAccionConfirmada()" id="btn-modal-confirmar-accion"
+                    class="flex-1 px-4 py-2 text-sm font-bold text-white bg-red-600 rounded hover:bg-red-700 shadow-md">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let enlaceAConfirmar = null;
+
+        function confirmarAccion(event, url, titulo, texto, esPeligro) {
+            event.preventDefault();
+            enlaceAConfirmar = url;
+            
+            document.getElementById('modal-confirmar-titulo').textContent = titulo;
+            document.getElementById('modal-confirmar-texto').textContent = texto;
+
+            const borderEl = document.getElementById('modal-confirmar-border');
+            const iconBgEl = document.getElementById('modal-confirmar-icon-bg');
+            const iconEl = document.getElementById('modal-confirmar-icon');
+            const btnAccion = document.getElementById('btn-modal-confirmar-accion');
+
+            if (esPeligro) {
+                borderEl.className = "relative w-full max-w-sm bg-white rounded-lg shadow-2xl border-t-4 border-red-600";
+                iconBgEl.className = "w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4";
+                iconEl.className = "fas fa-exclamation-triangle text-red-600 text-2xl";
+                btnAccion.className = "flex-1 px-4 py-2 text-sm font-bold text-white bg-red-600 rounded hover:bg-red-700 shadow-md";
+                btnAccion.textContent = "Eliminar";
+            } else {
+                borderEl.className = "relative w-full max-w-sm bg-white rounded-lg shadow-2xl border-t-4 border-amber-500";
+                iconBgEl.className = "w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4";
+                iconEl.className = "fas fa-exclamation-triangle text-amber-600 text-2xl";
+                btnAccion.className = "flex-1 px-4 py-2 text-sm font-bold text-white bg-gob-guinda rounded hover:bg-opacity-95 shadow-md";
+                btnAccion.textContent = "Aceptar";
+            }
+
+            const modal = document.getElementById('modal-confirmar-generico');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function cerrarModalConfirmarGenerico() {
+            enlaceAConfirmar = null;
+            const modal = document.getElementById('modal-confirmar-generico');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function ejecutarAccionConfirmada() {
+            if (enlaceAConfirmar) {
+                window.location.href = enlaceAConfirmar;
+            }
+        }
+    </script>
 
     <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
 </body>

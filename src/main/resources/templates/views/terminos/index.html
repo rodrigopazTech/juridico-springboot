@@ -102,8 +102,10 @@
                             <div th:replace="~{fragments/terminos/barra-busqueda :: barra}" class="flex-1"></div>
                         </div>
                         <div class="p-6 pt-0">
-                            <div class="mt-0">
+                            <div class="mt-0 space-y-6">
                                 <div th:replace="~{fragments/terminos/tabla :: tabla-resultados}"></div>
+                                <div th:replace="~{fragments/terminos/tabla :: tabla-resultados-movil}"></div>
+                                <div th:replace="~{fragments/terminos/tabla :: paginacion}"></div>
                             </div>
                         </div>
                     </div>

@@ -1,103 +1,105 @@
 <div th:fragment="tabla-resultados" id="tabla-resultados-container">
     <!-- VISTA ESCRITORIO (Tabla Clásica) -->
-    <div class="hidden lg:block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto scrollbar-thin">
-            <div class="rounded-t-lg">
-                <table class="w-full text-sm text-left text-gray-600 border-collapse min-w-[950px]">
-                    <thead
-                        class="bg-gray-50/50 text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 sticky top-0 z-10 shadow-sm">
-                        <tr>
-                            <th class="px-4 py-3 bg-gray-50">
-                                <a th:href="@{/terminos(page=${terminos.number}, keyword=${keyword}, estatus=${paramEstatus}, prioridadId=${paramPrioridadId}, abogadoId=${paramAbogadoId}, materiaId=${paramMateriaId}, gerenciaId=${paramGerenciaId}, periodo=${paramPeriodo}, mes=${param.mes}, anio=${param.anio}, sortBy='id', sortDir=${sortBy == 'id' && sortDir == 'asc' ? 'desc' : 'asc'})}"
-                                   class="pagina-link-ter flex items-center gap-1 hover:text-gob-guinda transition justify-center">
-                                    <span title="ID del término">#ID</span>
-                                    <i th:if="${sortBy == 'id'}" th:class="${sortDir == 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'}"></i>
-                                    <i th:if="${sortBy != 'id'}" class="fas fa-sort text-gray-300 text-[10px]"></i>
-                                </a>
-                            </th>
-                            <th class="px-4 py-3 bg-gray-50">Expediente</th>
-                            <th class="px-4 py-3 bg-gray-50">
-                                <a th:href="@{/terminos(page=${terminos.number}, keyword=${keyword}, estatus=${paramEstatus}, prioridadId=${paramPrioridadId}, abogadoId=${paramAbogadoId}, materiaId=${paramMateriaId}, gerenciaId=${paramGerenciaId}, periodo=${paramPeriodo}, mes=${param.mes}, anio=${param.anio}, sortBy='fechaVencimiento', sortDir=${sortBy == 'fechaVencimiento' && sortDir == 'asc' ? 'desc' : 'asc'})}"
-                                   class="pagina-link-ter flex items-center gap-1 hover:text-gob-guinda transition">
-                                    <span>Vencimiento</span>
-                                    <i th:if="${sortBy == 'fechaVencimiento'}" th:class="${sortDir == 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'}"></i>
-                                    <i th:if="${sortBy != 'fechaVencimiento'}" class="fas fa-sort text-gray-300 text-[10px]"></i>
-                                </a>
-                            </th>
-                            <th class="px-4 py-3 bg-gray-50">Prioridad</th>
-                            <th class="px-4 py-3 bg-gray-50 w-48 max-w-[192px]">Actuación</th>
-                            <th class="px-4 py-3 bg-gray-50">Abogado</th>
-                            <th class="px-4 py-3 text-right bg-gray-50">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-terminos-body">
-                        <tr th:if="${terminos.empty}">
-                            <td colspan="7" class="px-4 py-6 text-center text-gray-400">No hay términos registrados.</td>
-                        </tr>
+    <div class="hidden lg:block bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div class="rounded-t-lg">
+            <table class="w-full text-sm text-left text-gray-600 border-collapse">
+                <thead
+                    class="bg-gray-50/50 text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 sticky top-0 z-10 shadow-sm">
+                    <tr>
+                        <th class="px-2 py-3 bg-gray-50 rounded-tl-2xl">
+                            <a th:href="@{/terminos(page=${terminos.number}, keyword=${keyword}, estatus=${paramEstatus}, prioridadId=${paramPrioridadId}, abogadoId=${paramAbogadoId}, materiaId=${paramMateriaId}, gerenciaId=${paramGerenciaId}, periodo=${paramPeriodo}, mes=${param.mes}, anio=${param.anio}, sortBy='id', sortDir=${sortBy == 'id' && sortDir == 'asc' ? 'desc' : 'asc'})}"
+                               class="pagina-link-ter flex items-center gap-1 hover:text-gob-guinda transition justify-center">
+                                <span title="ID del término">#ID</span>
+                                <i th:if="${sortBy == 'id'}" th:class="${sortDir == 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'}"></i>
+                                <i th:if="${sortBy != 'id'}" class="fas fa-sort text-gray-300 text-[10px]"></i>
+                            </a>
+                        </th>
+                        <th class="px-2.5 py-3 bg-gray-50">Expediente</th>
+                        <th class="px-2.5 py-3 bg-gray-50">
+                            <a th:href="@{/terminos(page=${terminos.number}, keyword=${keyword}, estatus=${paramEstatus}, prioridadId=${paramPrioridadId}, abogadoId=${paramAbogadoId}, materiaId=${paramMateriaId}, gerenciaId=${paramGerenciaId}, periodo=${paramPeriodo}, mes=${param.mes}, anio=${param.anio}, sortBy='fechaVencimiento', sortDir=${sortBy == 'fechaVencimiento' && sortDir == 'asc' ? 'desc' : 'asc'})}"
+                               class="pagina-link-ter flex items-center gap-1 hover:text-gob-guinda transition">
+                                <span>Vencimiento</span>
+                                <i th:if="${sortBy == 'fechaVencimiento'}" th:class="${sortDir == 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'}"></i>
+                                <i th:if="${sortBy != 'fechaVencimiento'}" class="fas fa-sort text-gray-300 text-[10px]"></i>
+                            </a>
+                        </th>
+                        <th class="px-2.5 py-3 bg-gray-50">Prioridad</th>
+                        <th class="px-2.5 py-3 bg-gray-50 w-44 max-w-[176px]">Actuación</th>
+                        <th class="px-2.5 py-3 bg-gray-50">Abogado</th>
+                        <th class="px-2 py-3 text-right bg-gray-50 rounded-tr-2xl">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-terminos-body">
+                    <tr th:if="${terminos.empty}">
+                        <td colspan="7" class="px-4 py-6 text-center text-gray-400">No hay términos registrados.</td>
+                    </tr>
 
-                        <th:block th:each="t : ${terminos}">
-                            <tr class="border-b hover:bg-gray-50 transition relative">
+                    <th:block th:each="t : ${terminos}">
+                        <tr class="border-b hover:bg-gray-50 transition relative">
 
-                                <td class="px-4 py-3 font-bold text-gray-600 text-center" th:text="${t.id}">
-                                    1
-                                </td>
+                            <td class="px-2 py-3 font-bold text-gray-600 text-center" th:text="${t.id}">
+                                1
+                            </td>
 
-                                <td class="px-4 py-3">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-3 h-3 rounded-full shadow-sm border border-gray-200 flex-shrink-0"
-                                            th:classappend="${t.semaforoColor}"
-                                            th:title="${t.diasRestantesTexto}">
-                                        </div>
-                                        <div class="flex flex-col max-w-[180px]">
-                                            <a th:if="${t.expediente != null}"
-                                                th:href="@{/expedientes/{id}(id=${t.expediente?.id})}"
-                                                class="font-bold text-gob-guinda hover:underline text-sm truncate"
-                                                th:title="'Ver expediente: ' + ${t.expediente?.numero}"
-                                                th:text="${t.expediente?.numero}">EXP-001</a>
-
-                                            <span class="text-xs text-gray-400 truncate cursor-help"
-                                                th:if="${t.expediente != null}" th:title="${t.expediente?.partes}"
-                                                th:text="${t.expediente?.partes}">Partes</span>
-
-                                            <span class="font-bold text-gob-guinda text-sm truncate"
-                                                th:if="${t.expediente == null}"
-                                                th:title="${t.descripcionReferencia}"
-                                                th:text="${t.numeroReferencia}">Asunto único</span>
-
-                                            <span class="text-xs text-gray-400 truncate cursor-help"
-                                                th:if="${t.expediente == null}" th:title="${t.partesReferencia}"
-                                                th:text="${t.partesReferencia != null ? t.partesReferencia : 'Sin expediente'}">Sin expediente</span>
-                                        </div>
+                            <td class="px-2.5 py-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full shadow-sm border border-gray-200 flex-shrink-0"
+                                        th:classappend="${t.semaforoColor}"
+                                        th:title="${t.diasRestantesTexto}">
                                     </div>
-                                </td>
+                                    <div class="flex flex-col max-w-[140px]">
+                                        <a th:if="${t.expediente != null}"
+                                            th:href="@{/expedientes/{id}(id=${t.expediente?.id})}"
+                                            class="font-bold text-gob-guinda hover:underline text-sm truncate"
+                                            th:title="'Ver expediente: ' + ${t.expediente?.numero}"
+                                            th:text="${t.expediente?.numero}">EXP-001</a>
 
-                                <td class="px-4 py-3 font-bold text-gray-800">
-                                    <span th:text="${#temporals.format(t.fechaVencimiento, 'yyyy-MM-dd')}"
-                                        th:classappend="${t.semaforoColor == 'bg-red-800' || t.semaforoColor == 'bg-red-500' ? 'text-red-600' : ''}">
-                                        2026-01-01
+                                        <span class="text-xs text-gray-400 truncate cursor-help"
+                                            th:if="${t.expediente != null}" th:title="${t.expediente?.partes}"
+                                            th:text="${t.expediente?.partes}">Partes</span>
+
+                                        <span class="font-bold text-gob-guinda text-sm truncate"
+                                            th:if="${t.expediente == null}"
+                                            th:title="${t.descripcionReferencia}"
+                                            th:text="${t.numeroReferencia}">Asunto único</span>
+
+                                        <span class="text-xs text-gray-400 truncate cursor-help"
+                                            th:if="${t.expediente == null}" th:title="${t.partesReferencia}"
+                                            th:text="${t.partesReferencia != null ? t.partesReferencia : 'Sin expediente'}">Sin expediente</span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td class="px-2.5 py-3 font-bold text-gray-800">
+                                <span th:text="${#temporals.format(t.fechaVencimiento, 'yyyy-MM-dd')}"
+                                    th:classappend="${t.semaforoColor == 'bg-red-800' || t.semaforoColor == 'bg-red-500' ? 'text-red-600' : ''}">
+                                    2026-01-01
+                                </span>
+                            </td>
+
+                            <td class="px-2.5 py-3">
+                                <div class="flex items-center gap-1.5 inline-flex px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-tight"
+                                    th:classappend="${t.prioridad != null ? t.prioridad.color : 'bg-gray-100 text-gray-800'}">
+                                    <i class="fas fa-circle text-[8px] opacity-70"></i>
+                                    <span th:text="${t.prioridad != null ? t.prioridad.nombre : 'MEDIA'}">
+                                        MEDIA
                                     </span>
-                                </td>
+                                </div>
+                            </td>
 
-                                <td class="px-4 py-3">
-                                    <div class="flex items-center gap-1.5 inline-flex px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-tight"
-                                        th:classappend="${t.prioridad != null ? t.prioridad.color : 'bg-gray-100 text-gray-800'}">
-                                        <i class="fas fa-circle text-[8px] opacity-70"></i>
-                                        <span th:text="${t.prioridad != null ? t.prioridad.nombre : 'MEDIA'}">
-                                            MEDIA
-                                        </span>
-                                    </div>
-                                </td>
+                            <td class="px-2.5 py-3 w-44 max-w-[176px] truncate"
+                                th:text="${t.asunto != null ? t.asunto : 'Sin Actuación'}"
+                                th:title="${t.asunto}">
+                                Actuación</td>
 
-                                <td class="px-4 py-3 w-48 max-w-[192px] truncate"
-                                    th:text="${t.asunto != null ? #strings.abbreviate(t.asunto, 45) : 'Sin Actuación'}"
-                                    th:title="${t.asunto}">
-                                    Actuación</td>
+                            <td class="px-2.5 py-3">
+                                <div class="max-w-[125px] truncate"
+                                    th:text="${t.abogadoResponsable?.nombreCompleto ?: (t.expediente?.abogadoResponsable?.nombreCompleto ?: 'Sin Asignar')}"
+                                    th:title="${t.abogadoResponsable?.nombreCompleto ?: (t.expediente?.abogadoResponsable?.nombreCompleto ?: 'Sin Asignar')}">
+                                </div>
+                            </td>
 
-                                <td class="px-4 py-3"
-                                    th:text="${t.abogadoResponsable?.nombreCompleto ?: (t.expediente?.abogadoResponsable?.nombreCompleto ?: 'Sin Asignar')}">
-                                </td>
-
-                                <td class="px-4 py-3 text-right relative">
+                            <td class="px-2 py-3 text-right relative">
                                     <button
                                         th:if="${t.estatusTermino?.name() != 'LIBERADO' && t.estatusTermino?.name() != 'PRESENTADO' && t.estatusTermino?.name() != 'CONCLUIDO'}"
                                         th:onclick="editarTermino([[${t.id}]], [[${t.asunto}]], [[${t.fechaVencimiento}]], [[${t.expediente?.id ?: ''}]], [[${t.expediente?.numero ?: 'Sin Número'}]], [[${t.abogadoResponsable?.id ?: ''}]], [[${t.prioridad?.id ?: ''}]], [[${t.observaciones != null ? #strings.escapeJavaScript(t.observaciones) : ''}]], [[${t.contexto?.origen ?: 'EXPEDIENTE'}]], [[${t.contexto?.materia?.id ?: ''}]], [[${t.contexto?.gerencia?.id ?: ''}]], [[${t.contexto?.descripcion != null ? #strings.escapeJavaScript(t.contexto?.descripcion) : ''}]] , [[${t.contexto?.partes != null ? #strings.escapeJavaScript(t.contexto?.partes) : ''}]], [[${t.contexto?.numeroExpedienteSnapshot != null ? #strings.escapeJavaScript(t.contexto?.numeroExpedienteSnapshot) : ''}]])"
@@ -215,8 +217,9 @@
     </div>
 
     <!-- VISTA MÓVIL (Tarjetas Premium Adaptativas) -->
-    <div class="block lg:hidden bg-gray-100 p-2 space-y-2">
-        <div th:if="${terminos.empty}" class="bg-white p-12 rounded-2xl text-center border border-dashed border-gray-200">
+    <div th:fragment="tabla-resultados-movil" id="tabla-resultados-movil-container">
+        <div class="block lg:hidden bg-gray-100 p-2 space-y-2">
+            <div th:if="${terminos.empty}" class="bg-white p-12 rounded-2xl text-center border border-dashed border-gray-200">
             <i class="fas fa-hourglass-empty text-4xl text-gray-200 mb-4"></i>
             <p class="text-gray-400 text-sm">No hay términos registrados.</p>
         </div>
@@ -394,6 +397,24 @@
         </div>
     </div>
 
+    <script th:inline="none">
+    function toggleMenuMob(id) {
+        const menu = document.getElementById('menu-mob-' + id);
+        if (!menu) return;
+        const wasHidden = menu.classList.contains('hidden');
+        document.querySelectorAll('[id^="menu-mob-"]').forEach(function(m) { m.classList.add('hidden'); });
+        if (wasHidden) menu.classList.remove('hidden');
+    }
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('[id^="menu-mob-"]') && !e.target.closest('button[onclick*="toggleMenuMob"]')) {
+            document.querySelectorAll('[id^="menu-mob-"]').forEach(function(m) { m.classList.add('hidden'); });
+        }
+    });
+    </script>
+</div>
+
+<!-- PAGINACIÓN -->
+<div th:fragment="paginacion" id="paginacion-container">
     <div class="mt-4 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500"
         th:if="${!terminos.empty}">
         <span class="mb-2 sm:mb-0">
@@ -415,19 +436,4 @@
             </a>
         </div>
     </div>
-
-    <script th:inline="none">
-    function toggleMenuMob(id) {
-        const menu = document.getElementById('menu-mob-' + id);
-        if (!menu) return;
-        const wasHidden = menu.classList.contains('hidden');
-        document.querySelectorAll('[id^="menu-mob-"]').forEach(function(m) { m.classList.add('hidden'); });
-        if (wasHidden) menu.classList.remove('hidden');
-    }
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('[id^="menu-mob-"]') && !e.target.closest('button[onclick*="toggleMenuMob"]')) {
-            document.querySelectorAll('[id^="menu-mob-"]').forEach(function(m) { m.classList.add('hidden'); });
-        }
-    });
-    </script>
 </div>

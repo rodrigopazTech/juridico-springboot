@@ -500,46 +500,43 @@ public class TerminosController {
         Termino terminoGuardado = terminoRepository.save(terminoGuardar);
         Usuario usuarioActualN = getUsuarioActual();
 
-        if (expedienteCambiado && terminoGuardado.getAbogadoResponsable() != null) {
+        Gerencia g = terminoGuardado.getGerenciaReferencia();
+        if (g != null) {
+            List<Usuario> destinatarios = usuarioRepository.findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(g.getId());
             String expedienteNum = terminoGuardado.getNumeroReferencia();
-            notificacionService.crearNotificacion(
-                    terminoGuardado.getAbogadoResponsable(),
-                    actor,
-                    NotificacionEvento.TERMINO_ASIGNADO,
-                    "Termino Asignado: " + expedienteNum,
-                    "El usuario " + actor.getNombreCompleto() + " ha vinculado un término a tu expediente: " + terminoGuardado.getAsunto(),
-                    terminoGuardado.getPrioridad(),
-                    terminoGuardado.getId().toString(),
-                    false);
-        }
 
-        if (usuarioActualN.getRol() == RolUsuario.ABOGADO) {
-            if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
-                String expedienteNum = terminoGuardado.getNumeroReferencia();
-                notificacionService.crearNotificacion(
-                        terminoGuardado.getAbogadoResponsable(),
-                        actor,
-                        NotificacionEvento.TERMINO_NUEVO,
-                        "Nuevo Termino en expediente: " + expedienteNum,
-                        "Haz creado el termino con el asunto: " + terminoGuardado.getAsunto(),
-                          terminoGuardado.getPrioridad(),
-                          terminoGuardado.getId().toString(),
-                          false);
+            if (esNuevo) {
+                for (Usuario u : destinatarios) {
+                    String msg = u.getId().equals(actor.getId())
+                            ? "Has creado el término con el asunto: " + terminoGuardado.getAsunto()
+                            : "El usuario " + actor.getNombreCompleto() + " ha creado el término: " + terminoGuardado.getAsunto();
 
-            }
-        } else {
-            if (esNuevo && terminoGuardado.getAbogadoResponsable() != null) {
-                String expedienteNum = terminoGuardado.getNumeroReferencia();
-                notificacionService.crearNotificacion(
-                        terminoGuardado.getAbogadoResponsable(),
-                        actor,
-                        NotificacionEvento.TERMINO_NUEVO,
-                        "Nuevo Termino: " + expedienteNum,
-                        "El usuario " + actor.getNombreCompleto() + " te ha asignado: " + terminoGuardado.getAsunto(),
-                          terminoGuardado.getPrioridad(),
-                          terminoGuardado.getId().toString(),
-                          false);
+                    notificacionService.crearNotificacion(
+                            u,
+                            actor,
+                            NotificacionEvento.TERMINO_NUEVO,
+                            "Nuevo Término: " + expedienteNum,
+                            msg,
+                            terminoGuardado.getPrioridad(),
+                            terminoGuardado.getId().toString(),
+                            true);
+                }
+            } else if (expedienteCambiado) {
+                for (Usuario u : destinatarios) {
+                    String msg = u.getId().equals(actor.getId())
+                            ? "Has vinculado el término a tu expediente/gerencia: " + terminoGuardado.getAsunto()
+                            : "El usuario " + actor.getNombreCompleto() + " ha vinculado un término a tu expediente/gerencia: " + terminoGuardado.getAsunto();
 
+                    notificacionService.crearNotificacion(
+                            u,
+                            actor,
+                            NotificacionEvento.TERMINO_ASIGNADO,
+                            "Término Vinculado: " + expedienteNum,
+                            msg,
+                            terminoGuardado.getPrioridad(),
+                            terminoGuardado.getId().toString(),
+                            true);
+                }
             }
         }
 
@@ -658,53 +655,32 @@ public class TerminosController {
             return;
         }
 
-        String titulo = "Término en " + nuevaEtapa.getDescripcion();
-        String mensajeBase = String.format("Movimiento de '%s' a '%s' por %s", etapaAnterior.getDescripcion(), nuevaEtapa.getDescripcion(), actor.getNombreCompleto());
+        String titulo = (nuevaEtapa == EstatusTermino.CONCLUIDO)
+                ? "Término Concluido"
+                : "Término en " + nuevaEtapa.getDescripcion();
 
-        List<Usuario> destinatarios = new ArrayList<>();
-        switch (nuevaEtapa) {
-            case REVISION:
-                destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, g));
-                break;
-            case GERENCIA:
-                destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE, g));
-                break;
-            case DIRECCION:
-                // Dirección/Subdirección deben recibir solo de la misma gerencia del término
-                destinatarios.addAll(usuarioRepository.findByGerenciaIdAndRolInAndActivoTrue(g.getId(),
-                        Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
-                break;
+        String mensajeBase = String.format("Movimiento de '%s' a '%s' por %s", 
+                etapaAnterior.getDescripcion(), nuevaEtapa.getDescripcion(), actor.getNombreCompleto());
 
-            case LIBERADO:
-                if (termino.getAbogadoResponsable() != null) {
-                    destinatarios.add(termino.getAbogadoResponsable());
-                }
-                destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, g));
-                break;
-            case PRESENTADO:
-                // Dirección debe recibir solo de la misma gerencia del término
-                destinatarios.addAll(usuarioRepository.findByGerenciaIdAndRolInAndActivoTrue(g.getId(),
-                        Arrays.asList(RolUsuario.DIRECCION)));
-                break;
-
-        }
-
+        List<Usuario> destinatarios = usuarioRepository.findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(g.getId());
         Set<Usuario> unicos = new HashSet<>(destinatarios);
         String expedienteNum = termino.getNumeroReferencia();
         String tituloExp = titulo + ": " + expedienteNum;
 
         for (Usuario u : unicos) {
-            if (!u.getId().equals(actor.getId())) {
-                notificacionService.crearNotificacion(
-                        u,
-                        actor,
-                        NotificacionEvento.TERMINO_CAMBIO_ETAPA,
-                        tituloExp,
-                        mensajeBase,
-                        termino.getPrioridad(),
-                        termino.getId().toString(),
-                        true);
-            }
+            NotificacionEvento evento = (nuevaEtapa == EstatusTermino.CONCLUIDO)
+                    ? NotificacionEvento.TERMINO_VALIDADO_CONCLUIDO
+                    : NotificacionEvento.TERMINO_CAMBIO_ETAPA;
+
+            notificacionService.crearNotificacion(
+                    u,
+                    actor,
+                    evento,
+                    tituloExp,
+                    mensajeBase,
+                    termino.getPrioridad(),
+                    termino.getId().toString(),
+                    true);
         }
     }
 
@@ -826,6 +802,8 @@ public class TerminosController {
                 }
                 termino.setUpdatedAt(LocalDateTime.now());
                 terminoRepository.save(termino);
+
+                notificarCambioDeEtapa(termino, EstatusTermino.PRESENTADO, EstatusTermino.CONCLUIDO, actor);
 
                 String logDesc = "El término ha sido marcado como CONCLUIDO y archivado.";
                 if (observaciones != null && !observaciones.trim().isEmpty()) {

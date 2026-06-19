@@ -141,7 +141,7 @@ BEGIN
             'nombre',              r.nombre,
             'gerencia_id',         r.gerencia_id,
             'usuario_modificador', v_usuario_modificador,
-            'fecha',               COALESCE(r.updated_at, r.created_at, CURRENT_TIMESTAMP),
+            'fecha',               COALESCE(r.created_at, CURRENT_TIMESTAMP),
             'operacion',           TG_OP
         )::text;
 

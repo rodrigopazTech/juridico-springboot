@@ -38,4 +38,8 @@ public class TipoAudiencia {
     protected void onCreate() {
         if (createdAt == null) createdAt = LocalDateTime.now();
     }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
+    private com.juridico.sistema_juridico.Entity.usuario.Usuario usuario;
 }

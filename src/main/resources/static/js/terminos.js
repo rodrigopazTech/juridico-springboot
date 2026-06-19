@@ -228,11 +228,25 @@ function actualizarTablaAsincrono(keywordForzado = null) {
                 kpisActuales.innerHTML = kpisNuevos.innerHTML;
             }
 
-            // 2. ACTUALIZAR TABLA DE RESULTADOS (Lo más importante)
+            // 2. ACTUALIZAR TABLA DE RESULTADOS ESCRITORIO
             const tablaNueva = doc.getElementById('tabla-resultados-container');
             const tablaActual = document.getElementById('tabla-resultados-container');
             if (tablaNueva && tablaActual) {
                 tablaActual.innerHTML = tablaNueva.innerHTML;
+            }
+
+            // 2b. ACTUALIZAR VISTA MÓVIL
+            const movilNuevo = doc.getElementById('tabla-resultados-movil-container');
+            const movilActual = document.getElementById('tabla-resultados-movil-container');
+            if (movilNuevo && movilActual) {
+                movilActual.innerHTML = movilNuevo.innerHTML;
+            }
+
+            // 2c. ACTUALIZAR PAGINACIÓN
+            const paginacionNueva = doc.getElementById('paginacion-container');
+            const paginacionActual = document.getElementById('paginacion-container');
+            if (paginacionNueva && paginacionActual) {
+                paginacionActual.innerHTML = paginacionNueva.innerHTML;
             }
 
             // 3. ACTUALIZAR ACCIONES (VerTodos y Exportar que dependen de filtros)
@@ -266,12 +280,28 @@ function toggleMenu(id) {
     document.querySelectorAll('[id^="menu-"]:not([id^="menu-mob-"])').forEach(menu => {
         if (menu.id !== 'menu-' + id) {
             menu.classList.add('hidden');
+            menu.removeAttribute('style');
         }
     });
 
     const menu = document.getElementById('menu-' + id);
-    if (menu) {
-        menu.classList.toggle('hidden');
+    if (!menu) return;
+
+    const isHidden = menu.classList.contains('hidden');
+    if (isHidden) {
+        menu.classList.remove('hidden');
+        const btn = menu.parentElement.querySelector('button[onclick*="toggleMenu"]');
+        if (btn) {
+            const rect = btn.getBoundingClientRect();
+            menu.style.position = 'fixed';
+            menu.style.zIndex = '9999';
+            menu.style.top = `${rect.bottom + 4}px`;
+            const menuWidth = 256; // Ancho del menú (w-64)
+            menu.style.left = `${rect.right - menuWidth}px`;
+        }
+    } else {
+        menu.classList.add('hidden');
+        menu.removeAttribute('style');
     }
 }
 
@@ -280,8 +310,24 @@ window.addEventListener('click', function (e) {
     if (!e.target.closest('td.relative')) {
         document.querySelectorAll('[id^="menu-"]:not([id^="menu-mob-"])').forEach(menu => {
             menu.classList.add('hidden');
+            menu.removeAttribute('style');
         });
     }
+});
+
+// Cerrar menús al hacer scroll o cambiar tamaño de pantalla para evitar desalineación
+window.addEventListener('scroll', function () {
+    document.querySelectorAll('[id^="menu-"]:not([id^="menu-mob-"])').forEach(menu => {
+        menu.classList.add('hidden');
+        menu.removeAttribute('style');
+    });
+}, { passive: true });
+
+window.addEventListener('resize', function () {
+    document.querySelectorAll('[id^="menu-"]:not([id^="menu-mob-"])').forEach(menu => {
+        menu.classList.add('hidden');
+        menu.removeAttribute('style');
+    });
 });
 
 // --- LÍNEA DE TIEMPO (NUEVO) ---

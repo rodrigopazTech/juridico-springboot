@@ -38,4 +38,8 @@ public class Estado {
     
     @Builder.Default
     private Boolean activo = true;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
+    private com.juridico.sistema_juridico.Entity.usuario.Usuario usuario;
 }

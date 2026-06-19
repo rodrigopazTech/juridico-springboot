@@ -380,27 +380,88 @@ function copiarPasswordTemporal(pass) {
     }).catch((err) => { console.error("Error al copiar:", err); });
 }
 
+let accionConfirmadaCallback = null;
+
+function abrirModalConfirmarGenerico(opciones) {
+    const { titulo, texto, advertencia, esPeligro, callback } = opciones;
+
+    document.getElementById('modal-confirmar-titulo').textContent = titulo;
+    document.getElementById('modal-confirmar-texto').textContent = texto;
+
+    const advBox = document.getElementById('modal-confirmar-advertencia-box');
+    if (advertencia) {
+        document.getElementById('modal-confirmar-advertencia').textContent = advertencia;
+        advBox.classList.remove('hidden');
+    } else {
+        advBox.classList.add('hidden');
+    }
+
+    const borderEl = document.getElementById('modal-confirmar-border');
+    const iconBgEl = document.getElementById('modal-confirmar-icon-bg');
+    const iconEl = document.getElementById('modal-confirmar-icon');
+    const btnAccion = document.getElementById('btn-modal-confirmar-accion');
+
+    if (esPeligro) {
+        borderEl.className = "relative w-full max-w-sm bg-white rounded-lg shadow-2xl border-t-4 border-red-600";
+        iconBgEl.className = "w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4";
+        iconEl.className = "fas fa-exclamation-triangle text-red-600 text-2xl";
+        btnAccion.className = "flex-1 px-4 py-2 text-sm font-bold text-white bg-red-600 rounded hover:bg-red-700 shadow-md";
+        btnAccion.textContent = "Eliminar";
+    } else {
+        borderEl.className = "relative w-full max-w-sm bg-white rounded-lg shadow-2xl border-t-4 border-amber-500";
+        iconBgEl.className = "w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4";
+        iconEl.className = "fas fa-exclamation-triangle text-amber-600 text-2xl";
+        btnAccion.className = "flex-1 px-4 py-2 text-sm font-bold text-white bg-gob-guinda rounded hover:bg-opacity-95 shadow-md";
+        btnAccion.textContent = "Aceptar";
+    }
+
+    accionConfirmadaCallback = callback;
+
+    const modal = document.getElementById('modal-confirmar-generico');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+}
+
+function cerrarModalConfirmarGenerico() {
+    accionConfirmadaCallback = null;
+    const modal = document.getElementById('modal-confirmar-generico');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
+function ejecutarAccionConfirmada() {
+    if (accionConfirmadaCallback) {
+        accionConfirmadaCallback();
+    }
+}
+
 function eliminarUsuarioDesdeModal() {
     const id = document.getElementById('input-usuario-id').value;
     if (!id) return;
-    Swal.fire({
-        title: '¿Eliminar abogado?', text: "Esta acción no se puede deshacer.", icon: 'error',
-        showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
+    abrirModalConfirmarGenerico({
+        titulo: '¿Eliminar abogado?',
+        texto: 'Esta acción no se puede deshacer.',
+        advertencia: 'Se borrarán los accesos y registros asociados permanentemente.',
+        esPeligro: true,
+        callback: () => {
             window.location.href = `/abogados/eliminar/${id}`;
         }
     });
 }
 
 function confirmarCambioEstatus(id) {
-    Swal.fire({
-        title: '¿Cambiar acceso al sistema?',
-        text: 'El abogado perderá/recuperará acceso a la plataforma.',
-        icon: 'warning', showCancelButton: true,
-        confirmButtonColor: '#9D2449', confirmButtonText: 'Sí, cambiar', cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) window.location.href = `/abogados/toggle/${id}`;
+    abrirModalConfirmarGenerico({
+        titulo: '¿Cambiar acceso al sistema?',
+        texto: 'El abogado perderá/recuperará acceso a la plataforma.',
+        advertencia: 'El cambio afectará la disponibilidad del registro en el sistema.',
+        esPeligro: false,
+        callback: () => {
+            window.location.href = `/abogados/toggle/${id}`;
+        }
     });
 }
 
@@ -777,11 +838,12 @@ function copiarPasswordTemporalEdicion(pass) {
 function eliminarUsuarioDesdeDetalle() {
     const id = document.getElementById('det-input-id').value;
     if (!id) return;
-    Swal.fire({
-        title: '¿Eliminar abogado?', text: "Esta acción no se puede deshacer.", icon: 'error',
-        showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
+    abrirModalConfirmarGenerico({
+        titulo: '¿Eliminar abogado?',
+        texto: 'Esta acción no se puede deshacer.',
+        advertencia: 'Se borrarán los accesos y registros asociados permanentemente.',
+        esPeligro: true,
+        callback: () => {
             window.location.href = `/abogados/eliminar/${id}`;
         }
     });

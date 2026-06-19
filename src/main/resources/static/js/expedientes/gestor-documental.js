@@ -472,13 +472,36 @@ async function renombrarCarpeta(carpetaId, nombreActual) {
     }
 }
 
-async function eliminarCarpeta(carpetaId) {
-    if (!confirm('¿Está seguro de eliminar esta carpeta? Solo se pueden eliminar carpetas vacías.')) {
-        return;
+let carpetaIdAEliminar = null;
+
+function eliminarCarpeta(carpetaId) {
+    carpetaIdAEliminar = carpetaId;
+    const modal = document.getElementById('modal-confirmar-eliminar-carpeta');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+}
+
+function cerrarConfirmarEliminarCarpeta() {
+    carpetaIdAEliminar = null;
+    const modal = document.getElementById('modal-confirmar-eliminar-carpeta');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
+async function confirmarEliminarCarpeta() {
+    if (!carpetaIdAEliminar) return;
+    const btn = document.getElementById('btn-confirmar-eliminar-carpeta');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Eliminando...';
     }
 
     try {
-        const response = await fetch(`/api/carpetas/${carpetaId}`, {
+        const response = await fetch(`/api/carpetas/${carpetaIdAEliminar}`, {
             method: 'DELETE'
         });
 
@@ -487,8 +510,10 @@ async function eliminarCarpeta(carpetaId) {
             throw new Error(error.error || 'Error al eliminar carpeta');
         }
 
+        cerrarConfirmarEliminarCarpeta();
+        
         // Si estábamos en esta carpeta, volver a raíz
-        if (carpetaActualId === carpetaId) {
+        if (carpetaActualId === carpetaIdAEliminar) {
             carpetaActualId = null;
         }
 
@@ -500,6 +525,12 @@ async function eliminarCarpeta(carpetaId) {
     } catch (error) {
         console.error('Error:', error);
         alert(error.message);
+        cerrarConfirmarEliminarCarpeta();
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-trash mr-1"></i> Eliminar';
+        }
     }
 }
 
@@ -970,13 +1001,36 @@ async function subirDocumento() {
     }
 }
 
-async function eliminarDocumento(documentoId) {
-    if (!confirm('El documento se movera a la papelera y podra recuperarse durante 90 dias. ¿Desea continuar?')) {
-        return;
+let documentoIdAEliminar = null;
+
+function eliminarDocumento(documentoId) {
+    documentoIdAEliminar = documentoId;
+    const modal = document.getElementById('modal-confirmar-eliminar-documento');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+}
+
+function cerrarConfirmarEliminarDoc() {
+    documentoIdAEliminar = null;
+    const modal = document.getElementById('modal-confirmar-eliminar-documento');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
+async function confirmarEliminarDoc() {
+    if (!documentoIdAEliminar) return;
+    const btn = document.getElementById('btn-confirmar-eliminar-doc');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Moviendo...';
     }
 
     try {
-        const response = await fetch(`/api/documentos/${documentoId}`, {
+        const response = await fetch(`/api/documentos/${documentoIdAEliminar}`, {
             method: 'DELETE'
         });
 
@@ -984,6 +1038,8 @@ async function eliminarDocumento(documentoId) {
             const error = await response.json();
             throw new Error(error.error || 'Error al eliminar documento');
         }
+
+        cerrarConfirmarEliminarDoc();
 
         // Recargar documentos y espacio
         await cargarDocumentos();
@@ -996,6 +1052,12 @@ async function eliminarDocumento(documentoId) {
     } catch (error) {
         console.error('Error:', error);
         alert(error.message);
+        cerrarConfirmarEliminarDoc();
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-trash mr-1"></i> Mover';
+        }
     }
 }
 

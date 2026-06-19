@@ -199,6 +199,8 @@ function guardarItem() {
 // ====================================================================
 // ELIMINAR
 // ====================================================================
+let itemAEliminar = null;
+
 function eliminarItem(tipo, btn) {
     const cfg = TIPOS_CONFIG[tipo];
     if (!cfg) return;
@@ -206,50 +208,76 @@ function eliminarItem(tipo, btn) {
     const id = btn.dataset.id;
     const nombre = btn.dataset.nombre;
 
-    Swal.fire({
-        title: '¿Eliminar este registro?',
-        html: `<p class="text-sm text-gray-600">Se eliminará <strong>"${nombre}"</strong> de todo el sistema.<br>Esta acción no se puede deshacer.</p>`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#DC2626',
-        cancelButtonColor: '#6B7280',
-        confirmButtonText: '<i class="fas fa-trash-alt mr-1"></i> Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-    }).then(result => {
-        if (result.isConfirmed) {
-            fetch(cfg.urlEliminar + id, { method: 'DELETE' })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'ok') {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Eliminado',
-                            text: data.mensaje,
-                            confirmButtonColor: '#9D2449',
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
-                        // Remover la fila visualmente y actualizar badge
-                        const row = btn.closest('tr');
-                        const tbodyEl = btn.closest('tbody');
-                        if (row) {
-                            row.style.transition = 'all 0.3s ease';
-                            row.style.opacity = '0';
-                            row.style.transform = 'translateX(20px)';
-                            setTimeout(() => {
-                                row.remove();
-                                if (tbodyEl) actualizarBadgeTab(tbodyEl.id);
-                            }, 300);
-                        }
-                    } else {
-                        Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'No se pudo eliminar.', confirmButtonColor: '#9D2449' });
-                    }
-                })
-                .catch(err => {
-                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo conectar con el servidor.', confirmButtonColor: '#9D2449' });
+    itemAEliminar = { tipo, id, nombre, btn };
+    document.getElementById('nombre-registro-eliminar').textContent = nombre;
+
+    const modal = document.getElementById('modal-confirmar-eliminar-registro');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+}
+
+function cerrarConfirmarEliminarRegistro() {
+    itemAEliminar = null;
+    const modal = document.getElementById('modal-confirmar-eliminar-registro');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
+function confirmarEliminarRegistro() {
+    if (!itemAEliminar) return;
+    const { tipo, id, btn } = itemAEliminar;
+    const cfg = TIPOS_CONFIG[tipo];
+
+    const btnConfirmar = document.getElementById('btn-confirmar-eliminar-registro');
+    if (btnConfirmar) {
+        btnConfirmar.disabled = true;
+        btnConfirmar.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Eliminando...';
+    }
+
+    fetch(cfg.urlEliminar + id, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                cerrarConfirmarEliminarRegistro();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Eliminado',
+                    text: data.mensaje,
+                    confirmButtonColor: '#9D2449',
+                    timer: 1500,
+                    showConfirmButton: false
                 });
-        }
-    });
+                // Remover la fila visualmente y actualizar badge
+                const row = btn.closest('tr');
+                const tbodyEl = btn.closest('tbody');
+                if (row) {
+                    row.style.transition = 'all 0.3s ease';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(20px)';
+                    setTimeout(() => {
+                        row.remove();
+                        if (tbodyEl) actualizarBadgeTab(tbodyEl.id);
+                    }, 300);
+                }
+            } else {
+                cerrarConfirmarEliminarRegistro();
+                Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'No se pudo eliminar.', confirmButtonColor: '#9D2449' });
+            }
+        })
+        .catch(err => {
+            cerrarConfirmarEliminarRegistro();
+            Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo conectar con el servidor.', confirmButtonColor: '#9D2449' });
+        })
+        .finally(() => {
+            if (btnConfirmar) {
+                btnConfirmar.disabled = false;
+                btnConfirmar.innerHTML = '<i class="fas fa-trash mr-1"></i> Eliminar';
+            }
+        });
 }
 
 // ====================================================================
@@ -334,7 +362,7 @@ function actualizarBadgeTab(tbodyId) {
     const tabName = tbodyId.replace('tbody-', '');
     const tabBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
     if (!tabBtn) return;
-    const badge = tabBtn.querySelector('span');
+    const badge = tabBtn.querySelector('span.rounded-full');
     if (badge) badge.textContent = dataRows.length;
 }
 

@@ -183,8 +183,9 @@
                             <thead class="hidden sm:table-header-group text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th class="px-6 py-3 font-bold">Nombre</th>
-                                    <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones
-                                    </th>
+                                    <th class="px-6 py-3 font-bold">Creado Por</th>
+                                    <th class="px-6 py-3 font-bold text-center">Rol</th>
+                                    <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-materias" class="grid grid-cols-1 sm:table-row-group gap-3 p-3 sm:p-0 bg-gray-50 sm:bg-transparent">
@@ -195,6 +196,24 @@
                                             <span class="font-semibold text-gray-800 text-sm sm:text-base" th:text="${m.nombre}">Nombre</span>
                                             <span th:if="${m.createdAt != null and m.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
                                         </div>
+                                    </td>
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4">
+                                        <div th:if="${m.usuario != null}" class="flex items-center gap-3">
+                                            <div class="w-8 h-8 bg-gob-guinda/10 text-gob-guinda rounded-full flex items-center justify-center text-xs font-bold"
+                                                th:text="${#strings.substring(m.usuario.nombreCompleto, 0, 1)}">U</div>
+                                            <div>
+                                                <span class="font-semibold text-gray-800 text-sm" th:text="${m.usuario.nombreCompleto}">Nombre</span>
+                                                <div class="text-xs text-gray-400" th:text="${m.usuario.email}">email</div>
+                                            </div>
+                                        </div>
+                                        <span th:unless="${m.usuario != null}" class="text-xs text-gray-400 italic">Simbólico / Sistema</span>
+                                    </td>
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-right sm:text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
+                                        <span th:if="${m.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold"
+                                            th:classappend="${m.usuario.rol.name() == 'GERENTE' ? 'bg-purple-100 text-purple-700' : 
+                                                           (m.usuario.rol.name() == 'JEFE_DEPTO' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700')}"
+                                            th:text="${m.usuario.rol.name()}">ROL</span>
+                                        <span th:unless="${m.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold bg-gray-100 text-gray-500">SISTEMA</span>
                                     </td>
                                     <td th:if="${puedeEditar}" class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
                                         <div class="flex items-center justify-end sm:justify-center gap-2">
@@ -214,7 +233,7 @@
                                     </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(listaMaterias)}" class="block sm:table-row">
-                                    <td colspan="2" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
+                                    <td colspan="4" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
                                         <i class="fas fa-folder-open text-2xl mb-2 block"></i>
                                         No hay materias registradas en el sistema.
                                     </td>
@@ -250,8 +269,9 @@
                             <thead class="hidden sm:table-header-group text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th class="px-6 py-3 font-bold">Nombre</th>
-                                    <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones
-                                    </th>
+                                    <th class="px-6 py-3 font-bold">Creado Por</th>
+                                    <th class="px-6 py-3 font-bold text-center">Rol</th>
+                                    <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-organos" class="grid grid-cols-1 sm:table-row-group gap-3 p-3 sm:p-0 bg-gray-50 sm:bg-transparent">
@@ -262,6 +282,24 @@
                                             <span class="font-semibold text-gray-800 text-sm sm:text-base" th:text="${o.nombre}">Nombre</span>
                                             <span th:if="${o.createdAt != null and o.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
                                         </div>
+                                    </td>
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4">
+                                        <div th:if="${o.usuario != null}" class="flex items-center gap-3">
+                                            <div class="w-8 h-8 bg-gob-guinda/10 text-gob-guinda rounded-full flex items-center justify-center text-xs font-bold"
+                                                th:text="${#strings.substring(o.usuario.nombreCompleto, 0, 1)}">U</div>
+                                            <div>
+                                                <span class="font-semibold text-gray-800 text-sm" th:text="${o.usuario.nombreCompleto}">Nombre</span>
+                                                <div class="text-xs text-gray-400" th:text="${o.usuario.email}">email</div>
+                                            </div>
+                                        </div>
+                                        <span th:unless="${o.usuario != null}" class="text-xs text-gray-400 italic">Simbólico / Sistema</span>
+                                    </td>
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-right sm:text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
+                                        <span th:if="${o.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold"
+                                            th:classappend="${o.usuario.rol.name() == 'GERENTE' ? 'bg-purple-100 text-purple-700' : 
+                                                           (o.usuario.rol.name() == 'JEFE_DEPTO' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700')}"
+                                            th:text="${o.usuario.rol.name()}">ROL</span>
+                                        <span th:unless="${o.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold bg-gray-100 text-gray-500">SISTEMA</span>
                                     </td>
                                     <td th:if="${puedeEditar}" class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
                                         <div class="flex items-center justify-end sm:justify-center gap-2">
@@ -281,7 +319,7 @@
                                     </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(listaOrganos)}" class="block sm:table-row">
-                                    <td colspan="2" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
+                                    <td colspan="4" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
                                         <i class="fas fa-folder-open text-2xl mb-2 block"></i>
                                         No hay órganos jurisdiccionales registrados en esta gerencia.
                                     </td>
@@ -316,8 +354,9 @@
                             <thead class="hidden sm:table-header-group text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th class="px-6 py-3 font-bold">Nombre</th>
-                                    <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones
-                                    </th>
+                                    <th class="px-6 py-3 font-bold">Creado Por</th>
+                                    <th class="px-6 py-3 font-bold text-center">Rol</th>
+                                    <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-tipos-audiencia" class="grid grid-cols-1 sm:table-row-group gap-3 p-3 sm:p-0 bg-gray-50 sm:bg-transparent">
@@ -328,6 +367,24 @@
                                             <span class="font-semibold text-gray-800 text-sm sm:text-base" th:text="${t.nombre}">Nombre</span>
                                             <span th:if="${t.createdAt != null and t.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
                                         </div>
+                                    </td>
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4">
+                                        <div th:if="${t.usuario != null}" class="flex items-center gap-3">
+                                            <div class="w-8 h-8 bg-gob-guinda/10 text-gob-guinda rounded-full flex items-center justify-center text-xs font-bold"
+                                                th:text="${#strings.substring(t.usuario.nombreCompleto, 0, 1)}">U</div>
+                                            <div>
+                                                <span class="font-semibold text-gray-800 text-sm" th:text="${t.usuario.nombreCompleto}">Nombre</span>
+                                                <div class="text-xs text-gray-400" th:text="${t.usuario.email}">email</div>
+                                            </div>
+                                        </div>
+                                        <span th:unless="${t.usuario != null}" class="text-xs text-gray-400 italic">Simbólico / Sistema</span>
+                                    </td>
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-right sm:text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
+                                        <span th:if="${t.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold"
+                                            th:classappend="${t.usuario.rol.name() == 'GERENTE' ? 'bg-purple-100 text-purple-700' : 
+                                                           (t.usuario.rol.name() == 'JEFE_DEPTO' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700')}"
+                                            th:text="${t.usuario.rol.name()}">ROL</span>
+                                        <span th:unless="${t.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold bg-gray-100 text-gray-500">SISTEMA</span>
                                     </td>
                                     <td th:if="${puedeEditar}" class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
                                         <div class="flex items-center justify-end sm:justify-center gap-2">
@@ -348,7 +405,7 @@
                                     </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(listaTiposAudiencia)}" class="block sm:table-row">
-                                    <td colspan="2" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
+                                    <td colspan="4" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
                                         <i class="fas fa-folder-open text-2xl mb-2 block"></i>
                                         No hay tipos de audiencia registrados.
                                     </td>
@@ -384,8 +441,9 @@
                             <thead class="hidden sm:table-header-group text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th class="px-6 py-3 font-bold">Nombre</th>
-                                    <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones
-                                    </th>
+                                    <th class="px-6 py-3 font-bold">Creado Por</th>
+                                    <th class="px-6 py-3 font-bold text-center">Rol</th>
+                                    <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-tipos-expediente" class="grid grid-cols-1 sm:table-row-group gap-3 p-3 sm:p-0 bg-gray-50 sm:bg-transparent">
@@ -396,6 +454,24 @@
                                             <span class="font-semibold text-gray-800 text-sm sm:text-base" th:text="${te.nombre}">Nombre</span>
                                             <span th:if="${te.createdAt != null and te.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
                                         </div>
+                                    </td>
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4">
+                                        <div th:if="${te.usuario != null}" class="flex items-center gap-3">
+                                            <div class="w-8 h-8 bg-gob-guinda/10 text-gob-guinda rounded-full flex items-center justify-center text-xs font-bold"
+                                                th:text="${#strings.substring(te.usuario.nombreCompleto, 0, 1)}">U</div>
+                                            <div>
+                                                <span class="font-semibold text-gray-800 text-sm" th:text="${te.usuario.nombreCompleto}">Nombre</span>
+                                                <div class="text-xs text-gray-400" th:text="${te.usuario.email}">email</div>
+                                            </div>
+                                        </div>
+                                        <span th:unless="${te.usuario != null}" class="text-xs text-gray-400 italic">Simbólico / Sistema</span>
+                                    </td>
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-right sm:text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
+                                        <span th:if="${te.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold"
+                                            th:classappend="${te.usuario.rol.name() == 'GERENTE' ? 'bg-purple-100 text-purple-700' : 
+                                                           (te.usuario.rol.name() == 'JEFE_DEPTO' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700')}"
+                                            th:text="${te.usuario.rol.name()}">ROL</span>
+                                        <span th:unless="${te.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold bg-gray-100 text-gray-500">SISTEMA</span>
                                     </td>
                                     <td th:if="${puedeEditar}" class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
                                         <div class="flex items-center justify-end sm:justify-center gap-2">
@@ -416,7 +492,7 @@
                                     </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(listaTiposExpediente)}" class="block sm:table-row">
-                                    <td colspan="2" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
+                                    <td colspan="4" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
                                         <i class="fas fa-folder-open text-2xl mb-2 block"></i>
                                         No hay tipos de expediente registrados.
                                     </td>
@@ -511,8 +587,9 @@
                             <thead class="hidden sm:table-header-group text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th class="px-6 py-3 font-bold">Nombre</th>
-                                    <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones
-                                    </th>
+                                    <th class="px-6 py-3 font-bold">Creado Por</th>
+                                    <th class="px-6 py-3 font-bold text-center">Rol</th>
+                                    <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-sedes" class="grid grid-cols-1 sm:table-row-group gap-3 p-3 sm:p-0 bg-gray-50 sm:bg-transparent">
@@ -523,6 +600,24 @@
                                             <span class="font-semibold text-gray-800 text-sm sm:text-base" th:text="${s.nombre}">Nombre</span>
                                             <span th:if="${s.createdAt != null and s.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
                                         </div>
+                                    </td>
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4">
+                                        <div th:if="${s.usuario != null}" class="flex items-center gap-3">
+                                            <div class="w-8 h-8 bg-gob-guinda/10 text-gob-guinda rounded-full flex items-center justify-center text-xs font-bold"
+                                                th:text="${#strings.substring(s.usuario.nombreCompleto, 0, 1)}">U</div>
+                                            <div>
+                                                <span class="font-semibold text-gray-800 text-sm" th:text="${s.usuario.nombreCompleto}">Nombre</span>
+                                                <div class="text-xs text-gray-400" th:text="${s.usuario.email}">email</div>
+                                            </div>
+                                        </div>
+                                        <span th:unless="${s.usuario != null}" class="text-xs text-gray-400 italic">Simbólico / Sistema</span>
+                                    </td>
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-right sm:text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
+                                        <span th:if="${s.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold"
+                                            th:classappend="${s.usuario.rol.name() == 'GERENTE' ? 'bg-purple-100 text-purple-700' : 
+                                                           (s.usuario.rol.name() == 'JEFE_DEPTO' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700')}"
+                                            th:text="${s.usuario.rol.name()}">ROL</span>
+                                        <span th:unless="${s.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold bg-gray-100 text-gray-500">SISTEMA</span>
                                     </td>
                                     <td th:if="${puedeEditar}" class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
                                         <div class="flex items-center justify-end sm:justify-center gap-2">
@@ -542,7 +637,7 @@
                                     </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(listaSedes)}" class="block sm:table-row">
-                                    <td colspan="2" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
+                                    <td colspan="4" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
                                         <i class="fas fa-folder-open text-2xl mb-2 block"></i>
                                         No hay sedes/estados registrados.
                                     </td>
@@ -601,6 +696,34 @@
                         <i class="fas fa-save mr-1"></i> Guardar
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMACIÓN ELIMINAR REGISTRO -->
+    <div id="modal-confirmar-eliminar-registro"
+        class="fixed inset-0 z-[70] hidden items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+        <div class="relative w-full max-w-sm bg-white rounded-lg shadow-2xl border-t-4 border-red-600">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">¿Eliminar este registro?</h3>
+                <p class="text-sm text-gray-600 mb-1">Esta acción no se puede deshacer.</p>
+                <p id="nombre-registro-eliminar" class="text-sm font-semibold text-gray-800 truncate px-4 mb-4"></p>
+                <p class="text-xs text-red-600 bg-red-50 rounded p-2">
+                    <i class="fas fa-warning mr-1"></i>El registro se borrará definitivamente de todo el sistema.
+                </p>
+            </div>
+            <div class="flex gap-3 p-4 border-t">
+                <button onclick="cerrarConfirmarEliminarRegistro()"
+                    class="flex-1 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-100">
+                    Cancelar
+                </button>
+                <button onclick="confirmarEliminarRegistro()" id="btn-confirmar-eliminar-registro"
+                    class="flex-1 px-4 py-2 text-sm font-bold text-white bg-red-600 rounded hover:bg-red-700 shadow-md">
+                    <i class="fas fa-trash mr-1"></i> Eliminar
+                </button>
             </div>
         </div>
     </div>

@@ -15,18 +15,55 @@ function toggleMenu(id) {
 
     // Cerramos todos los demás
     document.querySelectorAll('[id^="menu-"]:not([id^="menu-mob-"])').forEach(m => {
-        if (m !== menu) m.classList.add('hidden');
+        if (m !== menu) {
+            m.classList.add('hidden');
+            m.removeAttribute('style');
+        }
     });
 
     // Alternamos el actual
-    menu.classList.toggle('hidden');
+    const isHidden = menu.classList.contains('hidden');
+    if (isHidden) {
+        menu.classList.remove('hidden');
+        const btn = menu.parentElement.querySelector('button[onclick*="toggleMenu"]') || 
+                    menu.parentElement.querySelector('[data-audiencia-id]');
+        if (btn) {
+            const rect = btn.getBoundingClientRect();
+            menu.style.position = 'fixed';
+            menu.style.zIndex = '9999';
+            menu.style.top = `${rect.bottom + 4}px`;
+            const menuWidth = 256;
+            menu.style.left = `${rect.right - menuWidth}px`;
+        }
+    } else {
+        menu.classList.add('hidden');
+        menu.removeAttribute('style');
+    }
 }
 
 // Cerrar menús al hacer clic fuera
 window.addEventListener('click', function (e) {
     if (!e.target.closest('[id^="menu-"]') && !e.target.closest('[onclick*="toggleMenu"]') && !e.target.closest('[data-audiencia-id]')) {
-        document.querySelectorAll('[id^="menu-"]:not([id^="menu-mob-"])').forEach(m => m.classList.add('hidden'));
+        document.querySelectorAll('[id^="menu-"]:not([id^="menu-mob-"])').forEach(m => {
+            m.classList.add('hidden');
+            m.removeAttribute('style');
+        });
     }
+});
+
+// Cerrar menús al hacer scroll o cambiar tamaño de pantalla para evitar desalineación
+window.addEventListener('scroll', function () {
+    document.querySelectorAll('[id^="menu-"]:not([id^="menu-mob-"])').forEach(m => {
+        m.classList.add('hidden');
+        m.removeAttribute('style');
+    });
+}, { passive: true });
+
+window.addEventListener('resize', function () {
+    document.querySelectorAll('[id^="menu-"]:not([id^="menu-mob-"])').forEach(m => {
+        m.classList.add('hidden');
+        m.removeAttribute('style');
+    });
 });
 
 // --- FUNCIONES DEL MODAL (CRUD) ---

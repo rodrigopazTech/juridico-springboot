@@ -357,22 +357,76 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // --- 5. CAMBIO DE ESTATUS (Eliminado Lógico) ---
 
+let accionConfirmadaCallback = null;
+
+function abrirModalConfirmarGenerico(opciones) {
+    const { titulo, texto, advertencia, esPeligro, callback } = opciones;
+
+    document.getElementById('modal-confirmar-titulo').textContent = titulo;
+    document.getElementById('modal-confirmar-texto').textContent = texto;
+
+    const advBox = document.getElementById('modal-confirmar-advertencia-box');
+    if (advertencia) {
+        document.getElementById('modal-confirmar-advertencia').textContent = advertencia;
+        advBox.classList.remove('hidden');
+    } else {
+        advBox.classList.add('hidden');
+    }
+
+    const borderEl = document.getElementById('modal-confirmar-border');
+    const iconBgEl = document.getElementById('modal-confirmar-icon-bg');
+    const iconEl = document.getElementById('modal-confirmar-icon');
+    const btnAccion = document.getElementById('btn-modal-confirmar-accion');
+
+    if (esPeligro) {
+        borderEl.className = "relative w-full max-w-sm bg-white rounded-lg shadow-2xl border-t-4 border-red-600";
+        iconBgEl.className = "w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4";
+        iconEl.className = "fas fa-exclamation-triangle text-red-600 text-2xl";
+        btnAccion.className = "flex-1 px-4 py-2 text-sm font-bold text-white bg-red-600 rounded hover:bg-red-700 shadow-md";
+        btnAccion.textContent = "Eliminar";
+    } else {
+        borderEl.className = "relative w-full max-w-sm bg-white rounded-lg shadow-2xl border-t-4 border-amber-500";
+        iconBgEl.className = "w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4";
+        iconEl.className = "fas fa-exclamation-triangle text-amber-600 text-2xl";
+        btnAccion.className = "flex-1 px-4 py-2 text-sm font-bold text-white bg-gob-guinda rounded hover:bg-opacity-95 shadow-md";
+        btnAccion.textContent = "Aceptar";
+    }
+
+    accionConfirmadaCallback = callback;
+
+    const modal = document.getElementById('modal-confirmar-generico');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+}
+
+function cerrarModalConfirmarGenerico() {
+    accionConfirmadaCallback = null;
+    const modal = document.getElementById('modal-confirmar-generico');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
+function ejecutarAccionConfirmada() {
+    if (accionConfirmadaCallback) {
+        accionConfirmadaCallback();
+    }
+}
+
 function confirmarCambioEstatus(id, tipo) {
     let titulo = tipo === 'usuario' ? '¿Cambiar acceso del usuario?' : '¿Cambiar estatus de gerencia?';
     let texto = "El registro cambiará de Activo a Inactivo (o viceversa).";
     let url = tipo === 'usuario' ? `/usuarios/toggle/${id}` : `/usuarios/gerencias/toggle/${id}`;
 
-    Swal.fire({
-        title: titulo,
-        text: texto,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#9D2449', // Color Guinda
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sí, cambiar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
+    abrirModalConfirmarGenerico({
+        titulo: titulo,
+        texto: texto,
+        advertencia: "El cambio afectará la disponibilidad del registro en el sistema.",
+        esPeligro: false,
+        callback: () => {
             window.location.href = url;
         }
     });
@@ -390,90 +444,83 @@ function confirmarCambioEstatusCatalogo(id, tipo) {
         url = `/usuarios/tipos-audiencia/toggle/${id}`;
     }
 
-    Swal.fire({
-        title: titulo,
-        text: "El registro cambiará su disponibilidad en el sistema.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#9D2449',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sí, cambiar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
+    abrirModalConfirmarGenerico({
+        titulo: titulo,
+        texto: "El registro cambiará su disponibilidad en el sistema.",
+        advertencia: "Puedes revertir este cambio en cualquier momento.",
+        esPeligro: false,
+        callback: () => {
             window.location.href = url;
         }
     });
 }
 
 function eliminarMateriaJS(materiaId, gerenciaId) {
-    if (!confirm("¿Seguro que deseas eliminar esta materia?")) return;
-
-    fetch(`/usuarios/gerencias/materias/eliminar/${materiaId}`, {
-        method: 'DELETE',
-        // headers: { 'X-CSRF-TOKEN': ... } // Si activas CSRF en el futuro
-    })
-        .then(response => {
-            if (response.ok) {
-                // Recargamos la lista para ver que desapareció
-                cargarListaMaterias(gerenciaId);
-            } else {
-                alert("No se pudo eliminar. Verifica que no tenga expedientes vinculados.");
-            }
-        })
-        .catch(error => console.error("Error:", error));
+    abrirModalConfirmarGenerico({
+        titulo: "¿Eliminar materia?",
+        texto: "¿Seguro que deseas eliminar esta materia?",
+        advertencia: "Esta acción no se puede deshacer.",
+        esPeligro: true,
+        callback: () => {
+            cerrarModalConfirmarGenerico();
+            fetch(`/usuarios/gerencias/materias/eliminar/${materiaId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    cargarListaMaterias(gerenciaId);
+                } else {
+                    alert("No se pudo eliminar. Verifica que no tenga expedientes vinculados.");
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    });
 }
 
 function eliminarUsuarioDesdeModal() {
     const id = document.getElementById('input-usuario-id').value;
+    if (!id) return;
 
-    if (!id) return; // Seguridad
-
-    Swal.fire({
-        title: '¿Eliminar usuario definitivamente?',
-        text: "Esta acción no se puede deshacer. Si el usuario tiene historial, no se podrá borrar.",
-        icon: 'error',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
+    abrirModalConfirmarGenerico({
+        titulo: "¿Eliminar usuario definitivamente?",
+        texto: "Esta acción no se puede deshacer. Si el usuario tiene historial, no se podrá borrar.",
+        advertencia: "Se borrarán los accesos y registros asociados permanentemente.",
+        esPeligro: true,
+        callback: () => {
+            cerrarModalConfirmarGenerico();
             fetch(`/usuarios/eliminar/${id}`, {
                 method: 'DELETE'
             })
-                .then(async response => {
-                    if (response.ok) {
-                        // Éxito: Usamos un toast
-                        const Toast = Swal.mixin({
-                            toast: true,
-                            position: 'bottom-end',
-                            showConfirmButton: false,
-                            timer: 2000,
-                            //timerProgressBar: true
-                        });
+            .then(async response => {
+                if (response.ok) {
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'bottom-end',
+                        showConfirmButton: false,
+                        timer: 2000,
+                    });
 
-                        Toast.fire({
-                            icon: 'success',
-                            title: 'Eliminado correctamente',
-                            iconColor: '#22c55e',
-                            background: '#f0fdf4',
-                            customClass: {
-                                title: 'text-green-800 text-sm font-bold'
-                            }
-                        }).then(() => {
-                            location.reload();
-                        });
-                    } else {
-                        const msg = await response.text();
-                        Swal.fire('Error', msg || 'No se pudo eliminar el usuario.', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error(error);
-                    Swal.fire('Error', 'Ocurrió un error inesperado.', 'error');
-                });
+                    Toast.fire({
+                        icon: 'success',
+                        title: 'Eliminado correctamente',
+                        iconColor: '#22c55e',
+                        background: '#f0fdf4',
+                        customClass: {
+                            title: 'text-green-800 text-sm font-bold'
+                        }
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    const msg = await response.text();
+                    Swal.fire('Error', msg || 'No se pudo eliminar el usuario.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                Swal.fire('Error', 'Ocurrió un error inesperado.', 'error');
+            });
         }
     });
 }

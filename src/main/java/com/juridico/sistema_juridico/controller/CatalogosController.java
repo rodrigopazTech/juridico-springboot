@@ -168,6 +168,9 @@ public class CatalogosController {
                 return ResponseEntity.badRequest().body(Map.of("error", "El nombre es obligatorio."));
             }
 
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuarioActual = usuarioRepository.findByEmail(email).orElseThrow();
+
             OrganoJurisdiccional organo;
             if (idStr != null && !idStr.isEmpty()) {
                 // EDICIÓN
@@ -189,6 +192,7 @@ public class CatalogosController {
                 if (organo != null) {
                     // Reactivar el existente
                     organo.setActivo(true);
+                    organo.setUsuario(usuarioActual);
                     if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
                         organo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
                     }
@@ -196,6 +200,7 @@ public class CatalogosController {
                     organo = new OrganoJurisdiccional();
                     organo.setNombre(nombre.trim());
                     organo.setActivo(true);
+                    organo.setUsuario(usuarioActual);
                     if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
                         organo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
                     }
@@ -241,6 +246,9 @@ public class CatalogosController {
                 return ResponseEntity.badRequest().body(Map.of("error", "El nombre es obligatorio."));
             }
 
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuarioActual = usuarioRepository.findByEmail(email).orElseThrow();
+
             TipoAudiencia tipo;
             if (idStr != null && !idStr.isEmpty()) {
                 // EDICIÓN
@@ -262,6 +270,7 @@ public class CatalogosController {
                 if (tipo != null) {
                     // Reactivar el existente
                     tipo.setActivo(true);
+                    tipo.setUsuario(usuarioActual);
                     if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
                         tipo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
                     }
@@ -269,6 +278,7 @@ public class CatalogosController {
                     tipo = new TipoAudiencia();
                     tipo.setNombre(nombre.trim());
                     tipo.setActivo(true);
+                    tipo.setUsuario(usuarioActual);
                     if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
                         tipo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
                     }
@@ -313,6 +323,9 @@ public class CatalogosController {
                 return ResponseEntity.badRequest().body(Map.of("error", "El nombre es obligatorio."));
             }
 
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuarioActual = usuarioRepository.findByEmail(email).orElseThrow();
+
             TipoExpediente tipo;
             if (idStr != null && !idStr.isEmpty()) {
                 // EDICIÓN
@@ -327,6 +340,7 @@ public class CatalogosController {
 
                 if (tipo != null) {
                     tipo.setActivo(true);
+                    tipo.setUsuario(usuarioActual);
                     if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
                         tipo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
                     }
@@ -334,6 +348,7 @@ public class CatalogosController {
                     tipo = new TipoExpediente();
                     tipo.setNombre(nombre.trim());
                     tipo.setActivo(true);
+                    tipo.setUsuario(usuarioActual);
                     if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
                         tipo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
                     }
@@ -378,6 +393,9 @@ public class CatalogosController {
                 return ResponseEntity.badRequest().body(Map.of("error", "El nombre es obligatorio."));
             }
 
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuarioActual = usuarioRepository.findByEmail(email).orElseThrow();
+
             Estado estado;
             if (idStr != null && !idStr.isEmpty()) {
                 // EDICIÓN
@@ -400,6 +418,7 @@ public class CatalogosController {
                 if (estado != null) {
                     // Reactivar el existente
                     estado.setActivo(true);
+                    estado.setUsuario(usuarioActual);
                     if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
                         estado.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
                     }
@@ -407,6 +426,7 @@ public class CatalogosController {
                     estado = new Estado();
                     estado.setNombre(nombre.trim());
                     estado.setActivo(true);
+                    estado.setUsuario(usuarioActual);
                     if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
                         estado.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
                     }
@@ -470,6 +490,9 @@ public class CatalogosController {
                 return ResponseEntity.badRequest().body(Map.of("error", "El nombre es obligatorio."));
             }
 
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuarioActual = usuarioRepository.findByEmail(email).orElseThrow();
+
             Materia materia;
             if (idStr != null && !idStr.isEmpty()) {
                 // EDICIÓN
@@ -507,6 +530,7 @@ public class CatalogosController {
 
                 if (materia != null) {
                     materia.setActivo(true);
+                    materia.setUsuario(usuarioActual);
                     if (gerenciaId != null) {
                         materia.setGerencia(gerenciaRepository.findById(gerenciaId).orElse(null));
                     }
@@ -514,6 +538,7 @@ public class CatalogosController {
                     materia = new Materia();
                     materia.setNombre(nombre.trim());
                     materia.setActivo(true);
+                    materia.setUsuario(usuarioActual);
                     if (gerenciaId != null) {
                         materia.setGerencia(gerenciaRepository.findById(gerenciaId).orElse(null));
                     }
