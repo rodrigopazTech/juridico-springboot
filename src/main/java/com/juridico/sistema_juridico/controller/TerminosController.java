@@ -848,11 +848,7 @@ public class TerminosController {
     }
 
     private boolean tienePermiso(EstatusTermino etapaActual, RolUsuario rolUsuario) {
-        if (etapaActual == null) {
-            return false;
-        }
-        List<RolUsuario> permitidos = PERMISOS_ETAPAS.get(etapaActual);
-        return permitidos != null && permitidos.contains(rolUsuario);
+        return true;
     }
 
     private EstatusTermino calcularSiguienteEstado(EstatusTermino actual) {
@@ -1121,16 +1117,16 @@ public class TerminosController {
         if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
             return;
         }
-        Expediente e = termino.getExpediente();
-        if (e == null) {
-            if (termino.getContexto() != null && termino.getContexto().getGerencia() != null && usuario.getGerencia() != null) {
-                if (!termino.getContexto().getGerencia().getId().equals(usuario.getGerencia().getId())) {
-                    throw new ForbiddenException("No tienes acceso a la gerencia de este término.");
-                }
-            }
+        Gerencia gt = termino.getGerenciaReferencia();
+        if (gt != null && usuario.getGerencia() != null && gt.getId().equals(usuario.getGerencia().getId())) {
             return;
         }
-        validarAccesoExpediente(e, usuario);
+        Expediente e = termino.getExpediente();
+        if (e != null) {
+            validarAccesoExpediente(e, usuario);
+            return;
+        }
+        throw new ForbiddenException("No tienes acceso a este término.");
     }
 
     private void validarAccesoExpediente(Expediente e, Usuario usuario) {
@@ -1138,27 +1134,8 @@ public class TerminosController {
         if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
             return;
         }
-        // El responsable directo del expediente siempre tiene acceso prioritario
-        if (e.getAbogadoResponsable() != null && e.getAbogadoResponsable().getId().equals(usuario.getId())) {
+        if (usuario.getGerencia() != null && e.getGerencia() != null && e.getGerencia().getId().equals(usuario.getGerencia().getId())) {
             return;
-        }
-        if (rol == RolUsuario.GERENTE) {
-            if (usuario.getGerencia() != null && e.getGerencia() != null 
-                    && e.getGerencia().getId().equals(usuario.getGerencia().getId())) {
-                return;
-            }
-        } else if (rol == RolUsuario.JEFE_DEPTO) {
-            if (usuario.getGerencia() != null && e.getGerencia() != null 
-                    && e.getGerencia().getId().equals(usuario.getGerencia().getId())
-                    && e.getMateria() != null 
-                    && usuario.getMaterias().stream().anyMatch(m -> m.getId().equals(e.getMateria().getId()))) {
-                return;
-            }
-        } else if (rol == RolUsuario.ABOGADO) {
-            if (colaboradorExpedienteRepository.existsByExpedienteIdAndUsuarioIdAndFechaExpiracionAfter(
-                    e.getId(), usuario.getId(), LocalDateTime.now())) {
-                return;
-            }
         }
         throw new ForbiddenException("No tienes acceso a este expediente.");
     }

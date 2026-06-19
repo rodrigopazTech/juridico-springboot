@@ -69,7 +69,7 @@ public class SecurityConfig {
                         .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO",
                                 "PERM_AGENDA_VER")
                         .requestMatchers("/catalogos", "/catalogos/**")
-                        .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO",
+                        .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO", "ABOGADO",
                                 "PERM_CATALOGOS_VER")
                         .requestMatchers("/admin/**").hasAnyAuthority("ADMIN", "PERM_ADMIN_PANEL")
                         .requestMatchers("/usuarios", "/usuarios/**")
