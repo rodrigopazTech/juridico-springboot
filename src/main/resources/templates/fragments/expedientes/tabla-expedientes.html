@@ -29,14 +29,7 @@
                                 th:text="${exp.numero}">EXP-000</span>
                             <span class="text-[10px] text-gray-400 font-medium pb-1"
                                 th:text="${#temporals.format(exp.createdAt, 'dd/MM/yyyy')}">01/01/2023</span>
-                            <div class="flex flex-wrap gap-1 mt-1">
-                                <span th:each="et : ${exp.etiquetas}"
-                                    class="px-2 py-0.5 rounded text-[9px] font-bold border"
-                                    th:classappend="${et.color != null ? et.color : 'bg-gray-100 text-gray-600 border-gray-200'}"
-                                    th:text="${et.nombre}">
-                                    TAG
-                                </span>
-                            </div>
+
                         </div>
                     </td>
 

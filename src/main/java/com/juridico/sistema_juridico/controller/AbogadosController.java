@@ -72,7 +72,7 @@ public class AbogadosController {
         Pageable pageUs = PageRequest.of(page, 10, Sort.by("nombreCompleto").ascending());
         Page<Usuario> usuariosPage;
 
-        if (usuarioActual.getRol() == RolUsuario.GERENTE && usuarioActual.getGerencia() != null) {
+        if (usuarioActual.getRol() != RolUsuario.ADMIN && usuarioActual.getGerencia() != null) {
             usuariosPage = usuarioRepository.findByGerencia(usuarioActual.getGerencia(), pageUs);
         } else {
             usuariosPage = usuarioService.listarUsuariosPaginados(pageUs);
@@ -80,9 +80,13 @@ public class AbogadosController {
 
         model.addAttribute("listaUsuarios", usuariosPage);
 
-        if (usuarioActual.getRol() == RolUsuario.GERENTE) {
+        if (usuarioActual.getRol() != RolUsuario.ADMIN && usuarioActual.getGerencia() != null) {
             model.addAttribute("allGerencias", Arrays.asList(usuarioActual.getGerencia()));
-            model.addAttribute("listaRoles", Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO));
+            if (usuarioActual.getRol() == RolUsuario.GERENTE) {
+                model.addAttribute("listaRoles", Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO));
+            } else {
+                model.addAttribute("listaRoles", RolUsuario.values());
+            }
         } else {
             model.addAttribute("allGerencias", usuarioService.listarGerencias());
             model.addAttribute("listaRoles", RolUsuario.values());

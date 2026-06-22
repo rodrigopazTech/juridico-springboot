@@ -3,6 +3,53 @@
  * con autocompletado, creación inline y control de duplicados.
  */
 
+// Inyección de estilos premium para Tom Select en Expedientes, Términos y Audiencias
+(function() {
+    const path = window.location.pathname;
+    if (path.includes('/expedientes') || path.includes('/terminos') || path.includes('/audiencias')) {
+        const styleId = 'ts-premium-styles';
+        if (document.getElementById(styleId)) return;
+        const styleEl = document.createElement('style');
+        styleEl.id = styleId;
+        styleEl.innerHTML = `
+            .ts-dropdown {
+              border-radius: 0.75rem !important;
+              box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+              border: 1px solid rgba(229, 231, 235, 0.8) !important;
+              z-index: 9999 !important;
+              margin-top: 4px !important;
+              background-color: #ffffff !important;
+            }
+            .ts-dropdown-content {
+              padding: 4px !important;
+              max-height: 250px !important;
+            }
+            .ts-dropdown .option, .ts-dropdown .create {
+              padding: 8px 12px !important;
+              border-radius: 0.375rem !important;
+              font-size: 0.875rem !important;
+              color: #374151 !important;
+              transition: all 0.2s ease !important;
+            }
+            .ts-dropdown .active, .ts-dropdown .create:hover {
+              background-color: #9D2449 !important;
+              color: #ffffff !important;
+            }
+            .ts-control {
+              border-radius: 0.5rem !important;
+              border: 1px solid #d1d5db !important;
+              padding: 8px 12px !important;
+              transition: all 0.2s ease !important;
+            }
+            .ts-wrapper.focus .ts-control {
+              border-color: #9D2449 !important;
+              box-shadow: 0 0 0 3px rgba(157, 36, 73, 0.15) !important;
+            }
+        `;
+        document.head.appendChild(styleEl);
+    }
+})();
+
 const SELECT_URLS = {
     'organo': '/catalogos/organos/guardar',
     'tipo-audiencia': '/catalogos/tipos-audiencia/guardar',

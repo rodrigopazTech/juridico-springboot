@@ -10,11 +10,11 @@ import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Catalogo.CatPrioridadRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.EstadoRepository;
-import com.juridico.sistema_juridico.repository.Catalogo.EtiquetaRepository;
+
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRepository;
-import com.juridico.sistema_juridico.Entity.catalogo.Etiqueta;
+
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
@@ -81,8 +81,7 @@ public class ExpedientesController {
     private TerminoRepository terminoRepository;
     @Autowired
     private ComentarioRepository comentarioRepository;
-    @Autowired
-    private EtiquetaRepository etiquetaRepository;
+
     @Autowired
     private CatPrioridadRepository catPrioridadRepository;
     @Autowired
@@ -108,8 +107,15 @@ public class ExpedientesController {
         RolUsuario rol = usuario.getRol();
         boolean tienePermiso = false;
 
-        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
+        if (rol == RolUsuario.ADMIN) {
             tienePermiso = true;
+        } else if (rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
+            if (usuario.getGerencia() == null) {
+                tienePermiso = true;
+            } else if (expediente.getGerencia() != null && 
+                    expediente.getGerencia().getId().equals(usuario.getGerencia().getId())) {
+                tienePermiso = true;
+            }
         } else if (rol == RolUsuario.GERENTE) {
             if (expediente.getGerencia() != null && usuario.getGerencia() != null 
                     && expediente.getGerencia().getId().equals(usuario.getGerencia().getId())) {
@@ -143,8 +149,7 @@ public class ExpedientesController {
             @RequestParam(required = false) Integer materiaId,
             @RequestParam(required = false) Integer prioridadId,
             @RequestParam(required = false) EtapaProcesal etapa,
-            @RequestParam(required = false) Integer abogadoId,
-            @RequestParam(required = false) Integer etiquetaId) throws IOException {
+            @RequestParam(required = false) Integer abogadoId) throws IOException {
 
         response.setContentType("application/octet-stream");
         DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
@@ -192,7 +197,7 @@ public class ExpedientesController {
 
         // Buscamos todos los expedientes que coincidan con los filtros (sin paginación)
         List<Expediente> listaExpedientes = expedienteRepository.buscarConSeguridad(
-                keyword, gerenciaId, materiaId, prioridadId, etapa, abogadoId, etiquetaId,
+                keyword, gerenciaId, materiaId, prioridadId, etapa, abogadoId,
                 secGerenciaId, secMateriaIds, secUsuarioId,
                 Pageable.unpaged()).getContent();
 
@@ -208,8 +213,7 @@ public class ExpedientesController {
             @RequestParam(required = false) Integer materiaId,
             @RequestParam(required = false) Integer prioridadId,
             @RequestParam(required = false) EtapaProcesal etapa,
-            @RequestParam(required = false) Integer abogadoId,
-            @RequestParam(required = false) Integer etiquetaId) {
+            @RequestParam(required = false) Integer abogadoId) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
@@ -250,19 +254,19 @@ public class ExpedientesController {
         Pageable pageable = PageRequest.of(page, 20, Sort.by("createdAt").descending());
 
         Page<Expediente> paginaExpedientes = expedienteRepository.buscarConSeguridad(
-                keyword, gerenciaId, materiaId, prioridadId, etapa, abogadoId, etiquetaId,
+                keyword, gerenciaId, materiaId, prioridadId, etapa, abogadoId,
                 secGerenciaId, secMateriaIds, secUsuarioId,
                 pageable);
 
         // Conteos para resumen (Respetando seguridad)
         Integer idAlta = catPrioridadRepository.findByNombreIgnoreCase("ALTA").map(CatPrioridad::getId).orElse(null);
         long totalAlta = expedienteRepository.buscarConSeguridad(
-                null, null, null, idAlta, null, null, null,
+                null, null, null, idAlta, null, null,
                 secGerenciaId, secMateriaIds, secUsuarioId,
                 PageRequest.of(0, 1)).getTotalElements();
 
         long totalTramite = expedienteRepository.buscarConSeguridad(
-                null, null, null, null, EtapaProcesal.TRAMITE, null, null,
+                null, null, null, null, EtapaProcesal.TRAMITE, null,
                 secGerenciaId, secMateriaIds, secUsuarioId,
                 PageRequest.of(0, 1)).getTotalElements();
 
@@ -277,7 +281,7 @@ public class ExpedientesController {
         model.addAttribute("paramPrioridadId", prioridadId);
         model.addAttribute("paramEtapa", etapa != null ? etapa.name() : null);
         model.addAttribute("paramAbogadoId", abogadoId);
-        model.addAttribute("paramEtiquetaId", etiquetaId);
+
         model.addAttribute("pageTitle", "Gestión de Expedientes");
         model.addAttribute("activePage", "expedientes");
 
@@ -317,7 +321,7 @@ public class ExpedientesController {
         model.addAttribute("organos", organoRepository.findByActivoTrue());
         model.addAttribute("prioridades", catPrioridadRepository.findAll());
         model.addAttribute("estados", estadoRepository.findAllByActivoTrueOrderByNombreAsc());
-        model.addAttribute("etiquetas", etiquetaRepository.findAll());
+
         model.addAttribute("tiposExpediente", tipoExpedienteRepository.findAll());
         model.addAttribute("usuarioActual", usuario);
 
@@ -337,7 +341,6 @@ public class ExpedientesController {
     @PostMapping("/guardar")
     @Transactional
     public String guardar(@ModelAttribute Expediente expedienteForm,
-            @RequestParam(value = "etiquetasNombres", required = false) List<String> etiquetasNombres,
             RedirectAttributes redirectAttrs) {
 
         UUID idParaRedirigir = null;
@@ -372,10 +375,13 @@ public class ExpedientesController {
                         && expedienteForm.getOrganoJurisdiccional().getId() != null)
                     expedienteReal.setOrganoJurisdiccional(
                             organoRepository.findById(expedienteForm.getOrganoJurisdiccional().getId()).orElse(null));
-                if (expedienteForm.getAbogadoResponsable() != null
-                        && expedienteForm.getAbogadoResponsable().getId() != null)
+                if (rol.equals("ABOGADO")) {
+                    expedienteReal.setAbogadoResponsable(usuario);
+                } else if (expedienteForm.getAbogadoResponsable() != null
+                        && expedienteForm.getAbogadoResponsable().getId() != null) {
                     expedienteReal.setAbogadoResponsable(
                             usuarioRepository.findById(expedienteForm.getAbogadoResponsable().getId()).orElse(null));
+                }
 
                 // ── VALIDACIÓN DE DUPLICADOS (Regla de Negocio) ──────────────────────────
                 // Si el número NO es S/N, aplicamos la regla clásica: número único.
@@ -454,26 +460,14 @@ public class ExpedientesController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El Órgano Jurisdiccional es obligatorio.");
             }
 
-            // ====== PROCESAMIENTO DE ETIQUETAS ======
-            Set<Etiqueta> etiquetasEntidad = new HashSet<>();
-            if (etiquetasNombres != null && !etiquetasNombres.isEmpty()) {
-                for (String nombreTag : etiquetasNombres) {
-                    if (nombreTag == null || nombreTag.trim().isEmpty())
-                        continue;
-                    String nombreLimpio = nombreTag.trim();
-                    Etiqueta tag = etiquetaRepository.findByNombreIgnoreCase(nombreLimpio)
-                            .orElseGet(() -> {
-                                Etiqueta nueva = Etiqueta.builder()
-                                        .nombre(nombreLimpio)
-                                        .color("bg-gray-100 text-gray-800")
-                                        .build();
-                                return etiquetaRepository.save(nueva);
-                            });
-                    etiquetasEntidad.add(tag);
+            if (expedienteReal.getMateria() != null && expedienteReal.getGerencia() != null) {
+                if (expedienteReal.getMateria().getGerencia() == null || 
+                        !expedienteReal.getMateria().getGerencia().getId().equals(expedienteReal.getGerencia().getId())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La materia no pertenece a la gerencia del expediente.");
                 }
             }
-            expedienteReal.setEtiquetas(etiquetasEntidad);
-            // ==========================================
+
+
 
             expedienteReal.setUpdatedAt(LocalDateTime.now());
             Expediente guardado = expedienteRepository.save(expedienteReal);

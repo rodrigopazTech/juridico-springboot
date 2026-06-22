@@ -78,13 +78,13 @@ public class UsuariosAdminController {
 
         if (hayBusqueda) {
             // Búsqueda en servidor — siempre empieza en página 0 implícitamente al cambiar keyword
-            if (usuarioActual.getRol() == RolUsuario.GERENTE && usuarioActual.getGerencia() != null) {
+            if (usuarioActual.getRol() != RolUsuario.ADMIN && usuarioActual.getGerencia() != null) {
                 usuariosPage = usuarioRepository.buscarPorKeywordYGerencia(q.trim(), usuarioActual.getGerencia(), pageUs);
             } else {
                 usuariosPage = usuarioRepository.buscarPorKeyword(q.trim(), pageUs);
             }
         } else {
-            if (usuarioActual.getRol() == RolUsuario.GERENTE && usuarioActual.getGerencia() != null) {
+            if (usuarioActual.getRol() != RolUsuario.ADMIN && usuarioActual.getGerencia() != null) {
                 usuariosPage = usuarioRepository.findByGerencia(usuarioActual.getGerencia(), pageUs);
             } else {
                 usuariosPage = usuarioService.listarUsuariosPaginados(pageUs);
@@ -94,9 +94,13 @@ public class UsuariosAdminController {
         model.addAttribute("listaUsuarios", usuariosPage);
         model.addAttribute("q", q);
 
-        if (usuarioActual.getRol() == RolUsuario.GERENTE) {
+        if (usuarioActual.getRol() != RolUsuario.ADMIN && usuarioActual.getGerencia() != null) {
             model.addAttribute("allGerencias", Arrays.asList(usuarioActual.getGerencia()));
-            model.addAttribute("listaRoles", Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO));
+            if (usuarioActual.getRol() == RolUsuario.GERENTE) {
+                model.addAttribute("listaRoles", Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO));
+            } else {
+                model.addAttribute("listaRoles", RolUsuario.values());
+            }
         } else {
             model.addAttribute("allGerencias", usuarioService.listarGerencias());
             model.addAttribute("listaRoles", RolUsuario.values());

@@ -16,7 +16,7 @@ import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
-import com.juridico.sistema_juridico.Entity.catalogo.Etiqueta;
+
 import java.util.Set;
 import java.util.HashSet;
 
@@ -92,10 +92,7 @@ public class Expediente {
     @OneToMany(mappedBy = "expediente", cascade = CascadeType.ALL)
     private List<Termino> terminos;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "expediente_etiquetas", joinColumns = @JoinColumn(name = "expediente_id"), inverseJoinColumns = @JoinColumn(name = "etiqueta_id"))
-    @Builder.Default
-    private Set<Etiqueta> etiquetas = new HashSet<>();
+
 
     // =========================
     // FECHAS (OPCIÓN 2)

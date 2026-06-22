@@ -313,13 +313,13 @@
 
                     <div class="flex gap-2">
                         <a th:if="${expedientes.hasPrevious()}"
-                            th:href="@{/expedientes(page=${expedientes.number - 1}, keyword=${keyword}, gerenciaId=${param.gerenciaId}, materiaId=${param.materiaId}, abogadoId=${param.abogadoId}, etapa=${param.etapa}, etiquetaId=${param.etiquetaId}, prioridadId=${param.prioridadId}, tipoId=${param.tipoId})}"
+                            th:href="@{/expedientes(page=${expedientes.number - 1}, keyword=${keyword}, gerenciaId=${param.gerenciaId}, materiaId=${param.materiaId}, abogadoId=${param.abogadoId}, etapa=${param.etapa}, prioridadId=${param.prioridadId}, tipoId=${param.tipoId})}"
                             class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 bg-white shadow-sm transition-all flex items-center gap-1 pagina-link">
                             <i class="fas fa-chevron-left text-xs"></i> Anterior
                         </a>
 
                         <a th:if="${expedientes.hasNext()}"
-                            th:href="@{/expedientes(page=${expedientes.number + 1}, keyword=${keyword}, gerenciaId=${param.gerenciaId}, materiaId=${param.materiaId}, abogadoId=${param.abogadoId}, etapa=${param.etapa}, etiquetaId=${param.etiquetaId}, prioridadId=${param.prioridadId}, tipoId=${param.tipoId})}"
+                            th:href="@{/expedientes(page=${expedientes.number + 1}, keyword=${keyword}, gerenciaId=${param.gerenciaId}, materiaId=${param.materiaId}, abogadoId=${param.abogadoId}, etapa=${param.etapa}, prioridadId=${param.prioridadId}, tipoId=${param.tipoId})}"
                             class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 bg-white shadow-sm transition-all flex items-center gap-1 pagina-link">
                             Siguiente <i class="fas fa-chevron-right text-xs"></i>
                         </a>

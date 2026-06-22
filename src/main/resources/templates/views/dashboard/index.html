@@ -65,12 +65,12 @@
                 <div class="flex items-center space-x-3 w-full md:w-auto">
 
                     <div th:if="${#strings.contains('DIRECTOR,SUBDIRECTOR,DIRECCION,SUBDIRECCION', usuario.rol.name())}"
-                        class="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-white p-2 rounded shadow-sm border border-gray-200 w-full md:w-auto">
+                        class="flex flex-row items-center gap-2 w-full md:w-auto">
                         <label for="filtroGerencia" class="text-sm font-semibold text-gray-600 whitespace-nowrap flex-shrink-0">
                             <i class="fas fa-filter text-gob-oro mr-1"></i> Filtrar:
                         </label>
                         <select id="filtroGerencia"
-                            class="border-gray-300 rounded text-sm p-1 focus:ring-gob-guinda focus:border-gob-guinda outline-none w-full sm:min-w-[200px] sm:max-w-xs">
+                            class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gob-guinda outline-none bg-white text-gray-700 w-full sm:min-w-[200px] sm:max-w-xs">
                             <option value="">Todas las Gerencias</option>
                             <th:block th:each="gerencia : ${gerencias}">
                                 <option th:value="${gerencia.id}" th:text="${gerencia.nombre}"

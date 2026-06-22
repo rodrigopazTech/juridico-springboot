@@ -56,7 +56,7 @@ public class UsuariosController {
         // Paginación Usuarios
         Pageable pageUs = PageRequest.of(pageUsuarios, 10, Sort.by("nombreCompleto").ascending());
         Page<Usuario> usuariosPage;
-        if (usuarioActual.getRol() == RolUsuario.GERENTE && usuarioActual.getGerencia() != null) {
+        if (usuarioActual.getRol() != RolUsuario.ADMIN && usuarioActual.getGerencia() != null) {
             usuariosPage = usuarioRepository.findByGerencia(usuarioActual.getGerencia(), pageUs);
         } else {
             usuariosPage = usuarioService.listarUsuariosPaginados(pageUs);
@@ -79,9 +79,13 @@ public class UsuariosController {
         model.addAttribute("listaOrganos", organosPage);
         model.addAttribute("listaTiposAudiencia", tiposAudienciaPage);
 
-        if (usuarioActual.getRol() == RolUsuario.GERENTE) {
+        if (usuarioActual.getRol() != RolUsuario.ADMIN && usuarioActual.getGerencia() != null) {
             model.addAttribute("allGerencias", Arrays.asList(usuarioActual.getGerencia()));
-            model.addAttribute("listaRoles", Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO));
+            if (usuarioActual.getRol() == RolUsuario.GERENTE) {
+                model.addAttribute("listaRoles", Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO));
+            } else {
+                model.addAttribute("listaRoles", RolUsuario.values());
+            }
         } else {
             model.addAttribute("allGerencias", usuarioService.listarGerencias());
             model.addAttribute("listaRoles", RolUsuario.values());
@@ -311,13 +315,13 @@ public class UsuariosController {
     }
 
     private boolean esUsuarioVisibleParaActor(Usuario actor, Usuario usuarioObjetivo) {
-        if (actor.getRol() != RolUsuario.GERENTE) {
+        if (actor.getRol() == RolUsuario.ADMIN) {
             return true;
         }
-        if (actor.getGerencia() == null) {
-            return false;
+        if (actor.getGerencia() != null) {
+            return usuarioObjetivo.getGerencia() != null
+                    && actor.getGerencia().getId().equals(usuarioObjetivo.getGerencia().getId());
         }
-        return usuarioObjetivo.getGerencia() != null
-                && actor.getGerencia().getId().equals(usuarioObjetivo.getGerencia().getId());
+        return actor.getRol() == RolUsuario.DIRECCION || actor.getRol() == RolUsuario.SUBDIRECCION;
     }
 }

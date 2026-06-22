@@ -223,6 +223,10 @@ function cargarAbogadosExpediente(arg1 = '', arg2 = '', arg3 = '', abogadoIdSele
 
     if (!selectAbogado) return;
 
+    if (selectAbogado.dataset.locked === 'true') {
+        return;
+    }
+
     if (selectAbogado.tomselect) {
         updateTomSelectOptions(selectAbogado.tomselect, [], 'Buscando abogados...');
         selectAbogado.tomselect.disable();
@@ -319,7 +323,7 @@ function inicializarSelectsNuevoExpediente() {
         });
     }
 
-    if (selectAbogado && !selectAbogado.tomselect) {
+    if (selectAbogado && !selectAbogado.tomselect && selectAbogado.dataset.locked !== 'true') {
         initSearchableSelect(selectAbogado, { tipo: 'abogado' });
     }
 }
@@ -338,33 +342,7 @@ document.addEventListener('DOMContentLoaded', function () {
         cargarOrganosExpediente();
     }
 
-    // Inicializar selectores de Etiquetas (Tags)
-    if (typeof Choices !== 'undefined') {
-        const choicesConfig = {
-            removeItemButton: true,
-            allowHTML: true,
-            placeholderValue: 'Seleccione o escriba...',
-            searchPlaceholderValue: 'Buscar o añadir etiqueta',
-            noResultsText: 'No se encontraron etiquetas con ese nombre',
-            noChoicesText: 'No hay más etiquetas para escoger',
-            itemSelectText: 'Presione para seleccionar',
-            addItems: true,
-            addChoices: true,
-            duplicateItemsAllowed: false,
-        };
 
-        const elNuevo = document.getElementById('etiquetas-nuevo');
-        if (elNuevo) {
-            new Choices(elNuevo, choicesConfig);
-        }
-
-        const elEditar = document.getElementById('etiquetas-editar');
-        if (elEditar) {
-            new Choices(elEditar, choicesConfig);
-        }
-    } else {
-        console.warn("La librería Choices.js no se cargó correctamente.");
-    }
 
     // Inicializar barra de búsqueda (local & server)
     const inputExp = document.getElementById('input-search-expedientes');

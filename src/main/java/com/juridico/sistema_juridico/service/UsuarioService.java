@@ -235,9 +235,7 @@ public class UsuarioService {
         if (usuario == null || usuario.getRol() == null) {
             return;
         }
-        if (usuario.getRol() == RolUsuario.ADMIN
-                || usuario.getRol() == RolUsuario.DIRECCION
-                || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+        if (usuario.getRol() == RolUsuario.ADMIN) {
             usuario.setGerencia(null);
         }
     }

@@ -394,48 +394,121 @@
                 }
             }
 
+            // ---- Administrador Global de WebSockets ----
+            window.WebSocketManager = {
+                stompClient: null,
+                isConnecting: false,
+                connectedCallbacks: [],
+                subscriptions: new Map(), // topic -> Set of callbacks
+                stompSubscriptions: new Map(), // callback -> STOMP subscription object
+
+                connect() {
+                    if (this.stompClient && this.stompClient.connected) {
+                        return;
+                    }
+                    if (this.isConnecting) {
+                        return;
+                    }
+                    this.isConnecting = true;
+                    const self = this;
+
+                    loadScripts([
+                        'https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js',
+                        'https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js'
+                    ], function() {
+                        const socket = new SockJS('/ws-realtime');
+                        const stompClient = Stomp.over(socket);
+                        stompClient.debug = null; // Silenciar logs de debug en consola
+
+                        stompClient.connect({}, function (frame) {
+                            self.stompClient = stompClient;
+                            self.isConnecting = false;
+                            
+                            // Ejecutar callbacks de conexión exitosa
+                            self.connectedCallbacks.forEach(cb => cb(frame));
+                            self.connectedCallbacks = [];
+
+                            // Registrar todas las suscripciones acumuladas
+                            self.subscriptions.forEach((callbacks, topic) => {
+                                callbacks.forEach(cb => {
+                                    if (!self.stompSubscriptions.has(cb)) {
+                                        const sub = stompClient.subscribe(topic, cb);
+                                        self.stompSubscriptions.set(cb, sub);
+                                    }
+                                });
+                            });
+                        }, function (error) {
+                            self.stompClient = null;
+                            self.isConnecting = false;
+                            self.stompSubscriptions.clear();
+                            // Reconectar automáticamente en 5 segundos ante fallos de conexión
+                            setTimeout(() => self.connect(), 5000);
+                        });
+                    });
+                },
+
+                subscribe(topic, callback) {
+                    if (!this.subscriptions.has(topic)) {
+                        this.subscriptions.set(topic, new Set());
+                    }
+                    this.subscriptions.get(topic).add(callback);
+
+                    // Si ya está conectado, realizar la suscripción inmediatamente en STOMP
+                    if (this.stompClient && this.stompClient.connected) {
+                        if (!this.stompSubscriptions.has(callback)) {
+                            const sub = this.stompClient.subscribe(topic, callback);
+                            this.stompSubscriptions.set(callback, sub);
+                        }
+                    } else {
+                        this.connect();
+                    }
+
+                    // Retornar función para cancelar la suscripción
+                    return () => {
+                        const callbacks = this.subscriptions.get(topic);
+                        if (callbacks) {
+                            callbacks.delete(callback);
+                            if (callbacks.size === 0) {
+                                this.subscriptions.delete(topic);
+                            }
+                        }
+                        const sub = this.stompSubscriptions.get(callback);
+                        if (sub) {
+                            sub.unsubscribe();
+                            this.stompSubscriptions.delete(callback);
+                        }
+                    };
+                }
+            };
+
             // ---- Conexión WebSocket Realtime ----
             function iniciarWebSocket() {
-                loadScripts([
-                    'https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js',
-                    'https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js'
-                ], function() {
-                    const socket = new SockJS('/ws-realtime');
-                    const stompClient = Stomp.over(socket);
-                    stompClient.debug = null; // Silenciar logs de debug en consola
+                window.WebSocketManager.subscribe('/user/queue/alertas', function (message) {
+                    const payload = JSON.parse(message.body);
+                    
+                    // Validar que el evento sea de inserción en notificaciones
+                    if (payload.tabla === 'notificaciones' && payload.operacion === 'INSERT') {
+                        const notifId = String(payload.id); // Normalizar a string (el trigger envía el id como texto)
+                        const nuevaNotif = {
+                            id: notifId,
+                            titulo: payload.titulo,
+                            mensaje: payload.mensaje,
+                            tipo: payload.etapa_procesal || 'SISTEMA',
+                            prioridad: payload.prioridad || 'MEDIA',
+                            fecha: new Date(payload.fecha).toLocaleDateString(),
+                            hora: new Date(payload.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                        };
 
-                    stompClient.connect({}, function (frame) {
-                        stompClient.subscribe('/user/queue/alertas', function (message) {
-                            const payload = JSON.parse(message.body);
-                            
-                            // Validar que el evento sea de inserción en notificaciones
-                            if (payload.tabla === 'notificaciones' && payload.operacion === 'INSERT') {
-                                const notifId = String(payload.id); // Normalizar a string (el trigger envía el id como texto)
-                                const nuevaNotif = {
-                                    id: notifId,
-                                    titulo: payload.titulo,
-                                    mensaje: payload.mensaje,
-                                    tipo: payload.etapa_procesal || 'SISTEMA',
-                                    prioridad: payload.prioridad || 'MEDIA',
-                                    fecha: new Date(payload.fecha).toLocaleDateString(),
-                                    hora: new Date(payload.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                                };
-
-                                // Mostrar toast solo si es un ID nuevo (no existía al cargar la página)
-                                if (!seenIds.has(notifId)) {
-                                    seenIds.add(notifId);
-                                    if (initialIdsLoaded) {
-                                        mostrarToast(nuevaNotif);
-                                        incrementarContadorBadge();
-                                        actualizarListaDropdownSiAbierto();
-                                    }
-                                }
+                        // Mostrar toast solo si es un ID nuevo (no existía al cargar la página)
+                        if (!seenIds.has(notifId)) {
+                            seenIds.add(notifId);
+                            if (initialIdsLoaded) {
+                                mostrarToast(nuevaNotif);
+                                incrementarContadorBadge();
+                                actualizarListaDropdownSiAbierto();
                             }
-                        });
-                    }, function(error) {
-                        // Reconexión automática con retraso de 5 segundos ante fallos de conexión
-                        setTimeout(iniciarWebSocket, 5000);
-                    });
+                        }
+                    }
                 });
             }
 

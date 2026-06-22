@@ -38,7 +38,6 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
                         "LEFT JOIN e.materia m " +
                         "LEFT JOIN e.abogadoResponsable a " +
                         "LEFT JOIN e.organoJurisdiccional o " +
-                        "LEFT JOIN e.etiquetas et " +
                         "LEFT JOIN ColaboradorExpediente c ON c.expediente.id = e.id " +
                         "WHERE " +
                         "(:keyword IS NULL OR :keyword = '' OR " +
@@ -49,7 +48,6 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
                         "LOWER(o.nombre) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
                         "AND (:gerenciaId IS NULL OR g.id = :gerenciaId) " +
                         "AND (:materiaId IS NULL OR m.id = :materiaId) " +
-                        "AND (:etiquetaId IS NULL OR et.id = :etiquetaId) " +
                         "AND (:prioridadId IS NULL OR e.prioridad.id = :prioridadId) " +
                         "AND (:etapa IS NULL OR e.etapaProcesal = :etapa) " +
                         "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
@@ -67,7 +65,6 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
                         @Param("prioridadId") Integer prioridadId,
                         @Param("etapa") EtapaProcesal etapa,
                         @Param("abogadoId") Integer abogadoId,
-                        @Param("etiquetaId") Integer etiquetaId,
                         @Param("secGerenciaId") Integer secGerenciaId,
                         @Param("secMateriaIds") List<Integer> secMateriaIds,
                         @Param("secUsuarioId") Integer secUsuarioId,

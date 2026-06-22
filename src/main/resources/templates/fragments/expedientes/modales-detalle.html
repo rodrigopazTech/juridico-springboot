@@ -127,7 +127,7 @@
                             class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white"
                             required>
                             <option value="">Selecciona...</option>
-                            <option th:each="m : ${materias}" th:value="${m.id}" th:text="${m.nombre}"
+                            <option th:each="m : ${materias}" th:if="${m.gerencia != null and expediente.gerencia != null and m.gerencia.id == expediente.gerencia.id}" th:value="${m.id}" th:text="${m.nombre}"
                                 th:selected="${expediente.materia != null and expediente.materia.id == m.id}"></option>
                         </select>
                     </div>
@@ -135,13 +135,18 @@
 
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Abogado Responsable*</label>
-                    <select name="abogadoResponsable.id" id="select-abogado-exp-edit"
-                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
+                    <select id="select-abogado-exp-edit"
+                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white disabled:bg-gray-100 disabled:text-gray-500"
+                        required th:disabled="${rolActual != null and rolActual.name() == 'ABOGADO'}"
+                        th:name="${rolActual != null and rolActual.name() == 'ABOGADO' ? '' : 'abogadoResponsable.id'}">
                         <option value="">Asignar abogado...</option>
                         <option th:each="a : ${usuarios}" th:value="${a.id}" th:text="${a.nombreCompleto}"
                             th:selected="${expediente.abogadoResponsable != null and expediente.abogadoResponsable.id == a.id}">
                         </option>
                     </select>
+                    <input type="hidden" name="abogadoResponsable.id"
+                        th:if="${rolActual != null and rolActual.name() == 'ABOGADO' and expediente.abogadoResponsable != null}"
+                        th:value="${expediente.abogadoResponsable.id}">
                 </div>
 
                 <div>

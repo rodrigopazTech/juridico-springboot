@@ -410,176 +410,101 @@ function animarEtapaPorEstatus(estatusObj) {
     }
 }
 
-// --- CONEXIÓN WEBSOCKET PARA ACTUALIZACIÓN EN TIEMPO REAL ---
-
-
-let intentos = 0;
-let maxIntentos = 5;
-let seguirIntentando = true;
-let terminosStompClient = null;
-let activeLocks = {};
-let stompClient = null;
+// --- CONEXIÓN WEBlet activeLocks = {};
 
 function iniciarTerminosWebSocket() {
-    function crearPaginaFinal() {
-        // Limpiar todo el body
-        document.body.innerHTML = "";
-
-        // Crear contenedor principal
-        const contenedor = document.createElement("div");
-        contenedor.style.fontFamily = "Arial, sans-serif";
-        contenedor.style.margin = "40px";
-        contenedor.style.textAlign = "center";
-
-        const titulo = document.createElement("h1");
-        titulo.textContent = "No Hubo respuesta del servidor";
-        titulo.style.color = "#721c24";
-
-        const mensaje = document.createElement("p");
-        mensaje.textContent = "Se intentó reconectar más de " + maxIntentos + " veces sin éxito.";
-        mensaje.style.fontSize = "18px";
-
-        const boton = document.createElement("button");
-        boton.textContent = "Reintentar conexión";
-        boton.style.padding = "10px 20px";
-        boton.style.marginTop = "20px";
-        boton.style.cursor = "pointer";
-        boton.style.boderColor="Black";  
-        boton.onclick = () => {
-            intentos = 0;
-            seguirIntentando = true;
-            iniciarTerminosWebSocket();
-        };
-
-        contenedor.appendChild(titulo);
-        contenedor.appendChild(mensaje);
-        contenedor.appendChild(boton);
-
-        document.body.appendChild(contenedor);
+    if (typeof window.WebSocketManager === 'undefined') {
+        console.warn("WebSocketManager global no encontrado. Reintentando en 500ms...");
+        setTimeout(iniciarTerminosWebSocket, 500);
+        return;
     }
 
-    function conectar() {
-        if (!seguirIntentando) {
-            console.warn("Reconexión detenida.");
-            return;
-        }
+    // Suscribirse a alertas globales de términos
+    window.WebSocketManager.subscribe('/topic/alertas', function (message) {
+        try {
+            const payload = JSON.parse(message.body);
+            if (payload.tabla === 'terminos') {
+                actualizarTablaAsincrono();
 
-        if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
-            setTimeout(conectar, 500);
-            return;
-        }
-
-        const socket = new SockJS('/ws-realtime');
-        stompClient = Stomp.over(socket);
-        stompClient.debug = null;
-
-        stompClient.connect({}, function (frame) {
-            intentos = 0;
-            terminosStompClient = stompClient;
-
-            stompClient.subscribe('/topic/alertas', function (message) {
-                try {
-                    const payload = JSON.parse(message.body);
-                    if (payload.tabla === 'terminos') {
-                        actualizarTablaAsincrono();
-
-                        // Notificación de eliminación en tiempo real para otros usuarios
-                        if (payload.operacion === 'DELETE') {
-                            if (window.justDeletedTermId !== payload.id) {
-                                Toast.fire({
-                                    icon: 'info',
-                                    title: `El término "${payload.titulo}" ha sido eliminado.`
-                                });
-                            } else {
-                                delete window.justDeletedTermId;
-                            }
-                        }
-
-                        // Advertencia de modificación en tiempo real para el usuario que tiene abierto el modal
-                        if (payload.operacion === 'UPDATE') {
-                            const idInput = document.getElementById('input-termino-id');
-                            if (idInput && idInput.value && parseInt(idInput.value) === parseInt(payload.id)) {
-                                const banner = document.getElementById('banner-concurrencia');
-                                const mensaje = document.getElementById('mensaje-concurrencia');
-                                
-                                // Bloquear botón de guardar
-                                const btnGuardar = document.getElementById('btn-guardar-termino');
-                                if (btnGuardar) {
-                                    btnGuardar.disabled = true;
-                                    btnGuardar.classList.add('opacity-50', 'cursor-not-allowed');
-                                }
-
-                                if (banner && mensaje) {
-                                    mensaje.innerHTML = `⚠️ Atención: Este término ha sido modificado recientemente por otro usuario. El botón de guardar se ha desactivado. <button type="button" onclick="recargarDatosTerminoActual()" class="underline font-bold text-red-900 hover:text-red-950 ml-2">Recargar Datos</button>`;
-                                    banner.classList.remove('hidden');
-                                    banner.classList.remove('bg-yellow-50', 'border-yellow-400', 'text-yellow-700');
-                                    banner.classList.add('bg-red-50', 'border-red-500', 'text-red-700');
-                                }
-                                
-                                // Mostrar Toast de advertencia crítica con opción de recargar de inmediato
-                                Swal.fire({
-                                    title: 'Término Modificado',
-                                    text: 'Este término ha sido modificado en la base de datos por otro usuario. El botón de guardar se ha desactivado temporalmente para evitar sobrescribir los datos.',
-                                    icon: 'warning',
-                                    showCancelButton: true,
-                                    confirmButtonText: 'Recargar datos',
-                                    cancelButtonText: 'Entendido',
-                                    confirmButtonColor: '#bc955c',
-                                    cancelButtonColor: '#6b7280'
-                                }).then((result) => {
-                                    if (result.isConfirmed) {
-                                        recargarDatosTerminoActual();
-                                    }
-                                });
-                            }
-                        }
-
-                        if (payload.etapa_procesal) {
-                            setTimeout(() => {
-                                animarEtapaPorEstatus(payload.etapa_procesal);
-                            }, 1000);
-                        }
+                // Notificación de eliminación en tiempo real para otros usuarios
+                if (payload.operacion === 'DELETE') {
+                    if (window.justDeletedTermId !== payload.id) {
+                        Toast.fire({
+                            icon: 'info',
+                            title: `El término "${payload.titulo}" ha sido eliminado.`
+                        });
+                    } else {
+                        delete window.justDeletedTermId;
                     }
-                } catch (e) {
-                    console.error("Error al procesar mensaje de WebSocket:", e);
                 }
-            });
 
-            // Suscribirse a bloqueos de edición de términos
-            stompClient.subscribe('/topic/terminos/locks', function (message) {
-                try {
-                    const locks = JSON.parse(message.body);
-                    onLocksReceived(locks);
-                } catch (e) {
-                    console.error("Error al procesar mensaje de locks:", e);
+                // Advertencia de modificación en tiempo real para el usuario que tiene abierto el modal
+                if (payload.operacion === 'UPDATE') {
+                    const idInput = document.getElementById('input-termino-id');
+                    if (idInput && idInput.value && parseInt(idInput.value) === parseInt(payload.id)) {
+                        const banner = document.getElementById('banner-concurrencia');
+                        const mensaje = document.getElementById('mensaje-concurrencia');
+                        
+                        // Bloquear botón de guardar
+                        const btnGuardar = document.getElementById('btn-guardar-termino');
+                        if (btnGuardar) {
+                            btnGuardar.disabled = true;
+                            btnGuardar.classList.add('opacity-50', 'cursor-not-allowed');
+                        }
+
+                        if (banner && mensaje) {
+                            mensaje.innerHTML = `⚠️ Atención: Este término ha sido modificado recientemente por otro usuario. El botón de guardar se ha desactivado. <button type="button" onclick="recargarDatosTerminoActual()" class="underline font-bold text-red-900 hover:text-red-950 ml-2">Recargar Datos</button>`;
+                            banner.classList.remove('hidden');
+                            banner.classList.remove('bg-yellow-50', 'border-yellow-400', 'text-yellow-700');
+                            banner.classList.add('bg-red-50', 'border-red-500', 'text-red-700');
+                        }
+                        
+                        // Mostrar Toast de advertencia crítica con opción de recargar de inmediato
+                        Swal.fire({
+                            title: 'Término Modificado',
+                            text: 'Este término ha sido modificado en la base de datos por otro usuario. El botón de guardar se ha desactivado temporalmente para evitar sobrescribir los datos.',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Recargar datos',
+                            cancelButtonText: 'Entendido',
+                            confirmButtonColor: '#bc955c',
+                            cancelButtonColor: '#6b7280'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                recargarDatosTerminoActual();
+                            }
+                        });
+                    }
                 }
-            });
-        }, function (error) {
-            intentos++;
-            console.warn("Conexión perdida, reintentando en 5s...", error);
 
-            if (intentos >= maxIntentos) {
-                console.error(`Se ha tratado de conectar más de ${maxIntentos} veces`);
-                console.log("Deteniendo reconexión de WebSocket...");
-                seguirIntentando = false;
-
-                // En lugar de recargar la página, generamos el HTML dinámico
-                crearPaginaFinal();
-                return;
+                if (payload.etapa_procesal) {
+                    setTimeout(() => {
+                        animarEtapaPorEstatus(payload.etapa_procesal);
+                    }, 1000);
+                }
             }
+        } catch (e) {
+            console.error("Error al procesar mensaje de WebSocket:", e);
+        }
+    });
 
-            setTimeout(conectar, 5000);
-        });
-    }
-
-    conectar();
+    // Suscribirse a bloqueos de edición de términos
+    window.WebSocketManager.subscribe('/topic/terminos/locks', function (message) {
+        try {
+            const locks = JSON.parse(message.body);
+            onLocksReceived(locks);
+        } catch (e) {
+            console.error("Error al procesar mensaje de locks:", e);
+        }
+    });
 }
 
 function sendTerminoLock(terminoId) {
-    if (terminosStompClient && terminosStompClient.connected) {
+    const stomp = window.WebSocketManager && window.WebSocketManager.stompClient;
+    if (stomp && stomp.connected) {
         const nombreInput = document.getElementById('hdnUsuarioNombre');
         const nombre = nombreInput ? nombreInput.value : '';
-        terminosStompClient.send('/app/terminos/lock', {}, JSON.stringify({
+        stomp.send('/app/terminos/lock', {}, JSON.stringify({
             terminoId: terminoId,
             nombreCompleto: nombre
         }));
@@ -587,8 +512,9 @@ function sendTerminoLock(terminoId) {
 }
 
 function sendTerminoUnlock(terminoId) {
-    if (terminosStompClient && terminosStompClient.connected) {
-        terminosStompClient.send('/app/terminos/unlock', {}, JSON.stringify({
+    const stomp = window.WebSocketManager && window.WebSocketManager.stompClient;
+    if (stomp && stomp.connected) {
+        stomp.send('/app/terminos/unlock', {}, JSON.stringify({
             terminoId: terminoId
         }));
     }
