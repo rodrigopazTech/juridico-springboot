@@ -60,6 +60,10 @@ public class GlobalExceptionHandler {
     // 4. ERROR DE BASE DE DATOS (Integridad / FK)
     @ExceptionHandler(DataIntegrityViolationException.class)
     public Object handleDatabaseError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
+        System.err.println("--- ERROR DE INTEGRIDAD DE DATOS CAPTURADO POR GLOBAL HANDLER ---");
+        System.err.println("Mensaje: " + ex.getMessage());
+        ex.printStackTrace();
+
         if (isApiRequest(request)) {
             return jsonError(HttpStatus.CONFLICT,
                     "No se puede realizar la accion: El registro esta vinculado a otros datos o ya existe.");

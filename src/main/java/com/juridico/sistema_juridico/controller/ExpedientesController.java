@@ -1,5 +1,7 @@
 package com.juridico.sistema_juridico.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.Entity.enums.NotificacionEvento;
@@ -61,6 +63,8 @@ import java.util.*;
 @Controller
 @RequestMapping("/expedientes")
 public class ExpedientesController {
+
+    private static final Logger log = LoggerFactory.getLogger(ExpedientesController.class);
 
     @Autowired
     private ExpedienteRepository expedienteRepository;
@@ -383,6 +387,15 @@ public class ExpedientesController {
                             usuarioRepository.findById(expedienteForm.getAbogadoResponsable().getId()).orElse(null));
                 }
 
+                if (expedienteForm.getPrioridad() != null && expedienteForm.getPrioridad().getId() != null) {
+                    expedienteReal.setPrioridad(
+                            catPrioridadRepository.findById(expedienteForm.getPrioridad().getId()).orElse(null));
+                }
+                if (expedienteForm.getTipoExpediente() != null && expedienteForm.getTipoExpediente().getId() != null) {
+                    expedienteReal.setTipoExpediente(
+                            tipoExpedienteRepository.findById(expedienteForm.getTipoExpediente().getId()).orElse(null));
+                }
+
                 // ── VALIDACIÓN DE DUPLICADOS (Regla de Negocio) ──────────────────────────
                 // Si el número NO es S/N, aplicamos la regla clásica: número único.
                 // Si el número ES S/N (u otro valor repetido), permitimos duplicarlo SOLO si
@@ -421,7 +434,6 @@ public class ExpedientesController {
 
                 // Actualizar SÓLO los campos de texto
                 expedienteReal.setNumero(expedienteForm.getNumero());
-                expedienteReal.setPrioridad(expedienteForm.getPrioridad());
                 expedienteReal.setSede(expedienteForm.getSede());
                 expedienteReal.setPartes(expedienteForm.getPartes());
                 expedienteReal.setDescripcion(expedienteForm.getDescripcion());
@@ -431,6 +443,20 @@ public class ExpedientesController {
                 }
 
                 // Inyectar relaciones reales (evita errores de Hibernate por objetos "huecos")
+                if (expedienteForm.getPrioridad() != null && expedienteForm.getPrioridad().getId() != null) {
+                    expedienteReal.setPrioridad(
+                            catPrioridadRepository.findById(expedienteForm.getPrioridad().getId()).orElse(null));
+                } else {
+                    expedienteReal.setPrioridad(null);
+                }
+
+                if (expedienteForm.getTipoExpediente() != null && expedienteForm.getTipoExpediente().getId() != null) {
+                    expedienteReal.setTipoExpediente(
+                            tipoExpedienteRepository.findById(expedienteForm.getTipoExpediente().getId()).orElse(null));
+                } else {
+                    expedienteReal.setTipoExpediente(null);
+                }
+
                 if (expedienteForm.getGerencia() != null && expedienteForm.getGerencia().getId() != null)
                     expedienteReal.setGerencia(
                             gerenciaRepository.findById(expedienteForm.getGerencia().getId()).orElse(null));
@@ -510,10 +536,11 @@ public class ExpedientesController {
             redirectAttrs.addFlashAttribute("tipo", "success");
 
         } catch (DataIntegrityViolationException e) {
+            log.error("Error de integridad de datos al guardar expediente: {}", e.getMessage(), e);
             redirectAttrs.addFlashAttribute("mensaje", "Error de integridad al guardar el expediente. Verifica que los datos sean correctos.");
             redirectAttrs.addFlashAttribute("tipo", "error");
         } catch (Exception e) {
-            System.out.println("Error al guardar: " + e.getMessage());
+            log.error("Error inesperado al guardar expediente: {}", e.getMessage(), e);
             redirectAttrs.addFlashAttribute("mensaje", "Ocurrió un error interno al guardar.");
             redirectAttrs.addFlashAttribute("tipo", "error");
         }

@@ -669,8 +669,44 @@ const miniCalendarState = {
     selectedDate: new Date(),
     isDateFilterActive: false, // Nueva bandera para saber si filtrar por fecha o ver todo (ROD-185)
     names: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
-    events: [] // Para los puntos indicadores (opcional por ahora)
+    events: []
 };
+
+function fetchMiniCalendarEvents() {
+    const urlParams = new URLSearchParams();
+    urlParams.set('tipo', 'audiencia'); // Filtrar solo por eventos tipo "audiencia"
+
+    // Obtener filtros del Sidebar de Audiencias
+    const formFiltros = document.getElementById('form-filtros-aud');
+    if (formFiltros) {
+        const fd = new FormData(formFiltros);
+        const mapping = {
+            'tipo': 'tipoAudiencia', // Mapear el filtro de subtipo 'tipo' a 'tipoAudiencia' para evitar conflicto con el tipo de evento
+            'estatus': 'estatus',
+            'abogadoId': 'usuario',
+            'gerencia': 'gerencia',
+            'materia': 'materia'
+        };
+        for (const [formKey, apiKey] of Object.entries(mapping)) {
+            const val = fd.get(formKey);
+            if (val && val !== 'null' && val !== '') {
+                urlParams.set(apiKey, val);
+            }
+        }
+    }
+
+    return fetch('/api/calendario/eventos?' + urlParams.toString(), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+        .then(res => res.json())
+        .then(events => {
+            miniCalendarState.events = events || [];
+        })
+        .catch(err => {
+            console.error("Error al cargar eventos del mini calendario:", err);
+            miniCalendarState.events = [];
+        });
+}
 
 function initMiniCalendar() {
     const prevBtn = document.getElementById('miniPrev');
@@ -702,7 +738,6 @@ function initMiniCalendar() {
             date.setMonth(date.getMonth() - 1);
             const searchInput = document.getElementById('input-search-audiencias');
             if (searchInput) searchInput.value = '';
-            renderMiniCalendar();
             miniCalendarState.isDateFilterActive = true; // Activar filtro al navegar meses
             actualizarTablaAsincrono();
         };
@@ -711,13 +746,14 @@ function initMiniCalendar() {
             date.setMonth(date.getMonth() + 1);
             const searchInput = document.getElementById('input-search-audiencias');
             if (searchInput) searchInput.value = '';
-            renderMiniCalendar();
             miniCalendarState.isDateFilterActive = true; // Activar filtro al navegar meses
             actualizarTablaAsincrono();
         };
     }
 
-    renderMiniCalendar();
+    fetchMiniCalendarEvents().then(() => {
+        renderMiniCalendar();
+    });
 }
 
 /**
@@ -832,6 +868,11 @@ function actualizarTablaAsincrono(keywordForzado = null) {
                 if (keywordForzado) btnClear?.classList.remove('hidden');
                 else btnClear?.classList.add('hidden');
             }
+
+            // Actualizar también los eventos e indicadores del mini calendario de audiencias
+            fetchMiniCalendarEvents().then(() => {
+                renderMiniCalendar();
+            });
         })
         .catch(err => {
             if (err.name === 'AbortError') return; // Ignorar si fue abortada
@@ -896,10 +937,14 @@ function renderMiniCalendar() {
             cell.classList.add('mini-day-selected');
         }
 
-        cell.onclick = () => {
-            // Al hacer clic en un día, forzamos el keyword con la fecha YYYY-MM-DD
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        // Lógica de eventos (Puntos indicadores bajo el día)
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const hasEvents = miniCalendarState.events.some(e => e.fecha === dateStr);
+        if (hasEvents) {
+            cell.classList.add('mini-has-events');
+        }
 
+        cell.onclick = () => {
             // Actualizar estado visual
             miniCalendarState.selectedDate = new Date(year, month, day);
             miniCalendarState.isDateFilterActive = true; // ACTIVAR filtro de fecha

@@ -99,6 +99,14 @@
                         th:if="${rolActual.name() == 'ABOGADO'}"
                         th:value="${usuarioActual.id}">
                 </div>
+                <div>
+                    <label class="block font-bold text-gray-600 mb-1">Tipo de Expediente*</label>
+                    <select name="tipoExpediente.id" required
+                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
+                        <option value="">Selecciona tipo...</option>
+                        <option th:each="te : ${tiposExpediente}" th:value="${te.id}" th:text="${te.nombre}"></option>
+                    </select>
+                </div>
             </div>
 
             <div>

@@ -63,7 +63,7 @@
                     </div>
                     <div>
                         <label class="block font-bold text-gray-600 mb-1">Prioridad*</label>
-                        <select name="prioridad"
+                        <select name="prioridad.id"
                             class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
                             <option th:each="p : ${prioridades}" th:value="${p.id}" th:text="${p.nombre}"
                                 th:selected="${expediente.prioridad != null and expediente.prioridad.id == p.id}">
@@ -129,6 +129,15 @@
                             <option value="">Selecciona...</option>
                             <option th:each="m : ${materias}" th:if="${m.gerencia != null and expediente.gerencia != null and m.gerencia.id == expediente.gerencia.id}" th:value="${m.id}" th:text="${m.nombre}"
                                 th:selected="${expediente.materia != null and expediente.materia.id == m.id}"></option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-600 mb-1">Tipo de Expediente*</label>
+                        <select name="tipoExpediente.id" required
+                            class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
+                            <option value="">Selecciona tipo...</option>
+                            <option th:each="te : ${tiposExpediente}" th:value="${te.id}" th:text="${te.nombre}"
+                                th:selected="${expediente.tipoExpediente != null and expediente.tipoExpediente.id == te.id}"></option>
                         </select>
                     </div>
                 </div>

@@ -23,5 +23,8 @@ public class EventoResponse {
     private String detalles;
     private Integer materiaId;
     private String materiaNombre;
+    private String estatus;
+    private Integer prioridadId;
+    private String tipoAudiencia;
 }
 

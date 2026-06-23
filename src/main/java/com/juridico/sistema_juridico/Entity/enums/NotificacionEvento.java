@@ -114,7 +114,15 @@ public enum NotificacionEvento {
             NotificacionCategoria.SEGURIDAD,
             "Contrasena por vencer",
             "Te recuerda actualizar tu contrasena antes del vencimiento.",
-            false);
+            false),
+    TAREA_RECORDATORIO(
+            "TAREA",
+            "RECORDATORIO",
+            "tarea",
+            NotificacionCategoria.TERMINOS,
+            "Recordatorio de tarea",
+            "Te recuerda tus tareas personales programadas para el dia.",
+            true);
 
     private final String tipoVisual;
     private final String entidadTipo;

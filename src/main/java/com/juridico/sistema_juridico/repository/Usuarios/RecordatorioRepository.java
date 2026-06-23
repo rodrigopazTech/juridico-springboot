@@ -1,6 +1,7 @@
 package com.juridico.sistema_juridico.repository.Usuarios;
 
 import java.util.List;
+import java.time.LocalDate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import com.juridico.sistema_juridico.Entity.usuario.Recordatorio;
@@ -18,4 +19,6 @@ public interface RecordatorioRepository extends JpaRepository<Recordatorio, Inte
 
      // Agrega esta línea debajo de las demás
      List<Recordatorio> findByUsuarioOrderByFechaRecordatorioDesc(Usuario usuario);
+
+     List<Recordatorio> findByFechaRecordatorioAndCompletadoFalse(LocalDate fechaRecordatorio);
 }

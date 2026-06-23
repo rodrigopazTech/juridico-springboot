@@ -12,6 +12,7 @@ import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
+import com.juridico.sistema_juridico.service.scheduler.RecordatorioNotificacionScheduler;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -48,6 +49,8 @@ public class NotificacionesController {
     private ExpedienteRepository expedienteRepository;
     @Autowired
     private AudienciaRepository audienciaRepository;
+    @Autowired
+    private RecordatorioNotificacionScheduler recordatorioNotificacionScheduler;
 
     // Listado general de notificaciones (Solo No Leídas)
     @GetMapping
@@ -362,4 +365,5 @@ public class NotificacionesController {
         response.put("notificaciones", resultado);
         return ResponseEntity.ok(response);
     }
+
 }

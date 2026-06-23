@@ -34,6 +34,9 @@ public class CalendarioRestController {
             @RequestParam(required = false, defaultValue = "todos") String gerencia,
             @RequestParam(required = false, defaultValue = "todos") String usuario,
             @RequestParam(required = false, defaultValue = "todos") String materia,
+            @RequestParam(required = false, defaultValue = "todos") String estatus,
+            @RequestParam(required = false, defaultValue = "todos") String prioridadId,
+            @RequestParam(required = false, defaultValue = "todos") String tipoAudiencia,
             @RequestParam(required = false, defaultValue = "false") boolean misAsuntos) {
         
         // Obtener usuario autenticado
@@ -44,13 +47,14 @@ public class CalendarioRestController {
             usuarioActual = usuarioRepository.findByEmail(auth.getName()).orElse(null);
         }
         
-        // Determinar gerenciaId a filtrar
+        // Determinar gerenciaId y gerenciaNombre a filtrar
         Long gerenciaId = null;
+        String gerenciaNombre = null;
         if (gerencia != null && !"todos".equals(gerencia)) {
             try {
                 gerenciaId = Long.parseLong(gerencia);
             } catch (NumberFormatException e) {
-                // Ignorar si no es un número válido
+                gerenciaNombre = gerencia;
             }
         }
         
@@ -58,6 +62,7 @@ public class CalendarioRestController {
         if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.GERENTE) {
             if (usuarioActual.getGerencia() != null) {
                 gerenciaId = usuarioActual.getGerencia().getId().longValue();
+                gerenciaNombre = usuarioActual.getGerencia().getNombre();
             }
         }
         
@@ -65,6 +70,7 @@ public class CalendarioRestController {
         if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
             if (usuarioActual.getGerencia() != null) {
                 gerenciaId = usuarioActual.getGerencia().getId().longValue();
+                gerenciaNombre = usuarioActual.getGerencia().getNombre();
             }
         }
         
@@ -72,6 +78,7 @@ public class CalendarioRestController {
         if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.ABOGADO) {
             if (usuarioActual.getGerencia() != null) {
                 gerenciaId = usuarioActual.getGerencia().getId().longValue();
+                gerenciaNombre = usuarioActual.getGerencia().getNombre();
             }
         }
         
@@ -87,9 +94,30 @@ public class CalendarioRestController {
                 // Ignorar si no es un número válido
             }
         }
+
+        // Determinar materiaId y/o materiaNombre a filtrar
+        Integer materiaId = null;
+        String materiaNombre = null;
+        if (materia != null && !"todos".equals(materia)) {
+            try {
+                materiaId = Integer.parseInt(materia);
+            } catch (NumberFormatException e) {
+                materiaNombre = materia;
+            }
+        }
+
+        // Determinar prioridadId a filtrar
+        Integer priorityId = null;
+        if (prioridadId != null && !"todos".equals(prioridadId)) {
+            try {
+                priorityId = Integer.parseInt(prioridadId);
+            } catch (NumberFormatException e) {
+                // Ignorar si no es un número válido
+            }
+        }
         
         List<EventoResponse> eventos = calendarioService.obtenerEventosCalendario(
-                usuarioActual, tipo, gerenciaId, usuarioId, materia);
+                usuarioActual, tipo, gerenciaId, gerenciaNombre, usuarioId, materiaNombre, materiaId, estatus, priorityId, tipoAudiencia);
         
         return ResponseEntity.ok(eventos);
     }

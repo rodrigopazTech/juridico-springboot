@@ -31,18 +31,36 @@ public class CalendarioService {
     private RecordatorioRepository recordatorioRepository;
 
     public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo) {
-        return obtenerEventosCalendario(usuarioActual, filtroTipo, null, null, null);
+        return obtenerEventosCalendario(usuarioActual, filtroTipo, null, null, null, null, null, null, null, null);
     }
 
     public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo, Long filtroGerenciaId) {
-        return obtenerEventosCalendario(usuarioActual, filtroTipo, filtroGerenciaId, null, null);
+        return obtenerEventosCalendario(usuarioActual, filtroTipo, filtroGerenciaId, null, null, null, null, null, null, null);
     }
 
     public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo, Long filtroGerenciaId, Long filtroUsuarioId) {
-        return obtenerEventosCalendario(usuarioActual, filtroTipo, filtroGerenciaId, filtroUsuarioId, null);
+        return obtenerEventosCalendario(usuarioActual, filtroTipo, filtroGerenciaId, null, filtroUsuarioId, null, null, null, null, null);
     }
 
     public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo, Long filtroGerenciaId, Long filtroUsuarioId, String filtroMateria) {
+        return obtenerEventosCalendario(usuarioActual, filtroTipo, filtroGerenciaId, null, filtroUsuarioId, filtroMateria, null, null, null, null);
+    }
+
+    public List<EventoResponse> obtenerEventosCalendario(Usuario usuarioActual, String filtroTipo, Long filtroGerenciaId, Long filtroUsuarioId, String filtroMateria, Integer filtroMateriaId, String filtroEstatus, Integer filtroPrioridadId) {
+        return obtenerEventosCalendario(usuarioActual, filtroTipo, filtroGerenciaId, null, filtroUsuarioId, filtroMateria, filtroMateriaId, filtroEstatus, filtroPrioridadId, null);
+    }
+
+    public List<EventoResponse> obtenerEventosCalendario(
+            Usuario usuarioActual, 
+            String filtroTipo, 
+            Long filtroGerenciaId, 
+            String filtroGerenciaNombre,
+            Long filtroUsuarioId, 
+            String filtroMateria, 
+            Integer filtroMateriaId, 
+            String filtroEstatus, 
+            Integer filtroPrioridadId,
+            String filtroTipoAudiencia) {
         List<EventoResponse> eventos = new ArrayList<>();
 
         // --- FILTRO DE SEGURIDAD MANDATORIO ---
@@ -58,6 +76,9 @@ public class CalendarioService {
                 if (usuarioActual.getGerencia() != null) {
                     gerenciaIdRestriccion = usuarioActual.getGerencia().getId();
                 }
+            }
+            if (rol == RolUsuario.ABOGADO) {
+                abogadoIdRestriccion = usuarioActual.getId();
             }
         }
 
@@ -159,10 +180,20 @@ public class CalendarioService {
         }
 
         // Aplicar filtros adicionales de UI (tipo, gerencia elegida, usuario elegido, materia)
-        return aplicarFiltros(eventos, filtroTipo, filtroGerenciaId, filtroUsuarioId, filtroMateria);
+        return aplicarFiltros(eventos, filtroTipo, filtroGerenciaId, filtroGerenciaNombre, filtroUsuarioId, filtroMateria, filtroMateriaId, filtroEstatus, filtroPrioridadId, filtroTipoAudiencia);
     }
 
-    private List<EventoResponse> aplicarFiltros(List<EventoResponse> eventos, String filtroTipo, Long filtroGerenciaId, Long filtroUsuarioId, String filtroMateria) {
+    private List<EventoResponse> aplicarFiltros(
+            List<EventoResponse> eventos, 
+            String filtroTipo, 
+            Long filtroGerenciaId, 
+            String filtroGerenciaNombre,
+            Long filtroUsuarioId, 
+            String filtroMateria, 
+            Integer filtroMateriaId, 
+            String filtroEstatus, 
+            Integer filtroPrioridadId,
+            String filtroTipoAudiencia) {
         return eventos.stream()
             .filter(e -> {
                 // Filtro por tipo
@@ -171,9 +202,15 @@ public class CalendarioService {
                         return false;
                     }
                 }
-                // Filtro por gerencia (solo si se especifica y no es "todos")
+                // Filtro por gerencia ID
                 if (filtroGerenciaId != null && filtroGerenciaId > 0) {
                     if (e.getGerenciaId() == null || !e.getGerenciaId().equals(filtroGerenciaId)) {
+                        return false;
+                    }
+                }
+                // Filtro por gerencia nombre
+                if (filtroGerenciaNombre != null && !filtroGerenciaNombre.isEmpty() && !"todos".equals(filtroGerenciaNombre)) {
+                    if (e.getGerenciaNombre() == null || !e.getGerenciaNombre().equalsIgnoreCase(filtroGerenciaNombre)) {
                         return false;
                     }
                 }
@@ -186,6 +223,30 @@ public class CalendarioService {
                 // Filtro por materia (solo si se especifica y no es "todos")
                 if (filtroMateria != null && !filtroMateria.isEmpty() && !"todos".equals(filtroMateria)) {
                     if (e.getMateriaNombre() == null || !e.getMateriaNombre().equalsIgnoreCase(filtroMateria)) {
+                        return false;
+                    }
+                }
+                // Filtro por materiaId (solo si se especifica)
+                if (filtroMateriaId != null && filtroMateriaId > 0) {
+                    if (e.getMateriaId() == null || !e.getMateriaId().equals(filtroMateriaId)) {
+                        return false;
+                    }
+                }
+                // Filtro por estatus (solo si se especifica y no es "todos")
+                if (filtroEstatus != null && !filtroEstatus.isEmpty() && !"todos".equals(filtroEstatus)) {
+                    if (e.getEstatus() == null || !e.getEstatus().equalsIgnoreCase(filtroEstatus)) {
+                        return false;
+                    }
+                }
+                // Filtro por prioridadId (solo si se especifica)
+                if (filtroPrioridadId != null && filtroPrioridadId > 0) {
+                    if (e.getPrioridadId() == null || !e.getPrioridadId().equals(filtroPrioridadId)) {
+                        return false;
+                    }
+                }
+                // Filtro por tipo de audiencia (subtipo)
+                if (filtroTipoAudiencia != null && !filtroTipoAudiencia.isEmpty() && !"todos".equals(filtroTipoAudiencia)) {
+                    if (e.getTipoAudiencia() == null || !e.getTipoAudiencia().equalsIgnoreCase(filtroTipoAudiencia)) {
                         return false;
                     }
                 }
@@ -232,6 +293,8 @@ public class CalendarioService {
                 .expediente(a.getExpediente() != null ? a.getExpediente().getNumero() : "")
                 .materiaId(materiaId)
                 .materiaNombre(materiaNombre)
+                .estatus(a.getEstatusAudiencia() != null ? a.getEstatusAudiencia().name() : null)
+                .tipoAudiencia(a.getTipoAudiencia() != null ? a.getTipoAudiencia().getNombre() : null)
                 .build();
     }
 
@@ -273,21 +336,30 @@ public class CalendarioService {
                 .expediente(t.getNumeroReferencia())
                 .materiaId(materiaId)
                 .materiaNombre(materiaNombre)
+                .estatus(t.getEstatusTermino() != null ? t.getEstatusTermino().name() : null)
+                .prioridadId(t.getPrioridad() != null ? t.getPrioridad().getId() : null)
                 .build();
     }
 
     private EventoResponse mapToRecordatorioResponse(Recordatorio r) {
+        Long gerenciaId = null;
+        String gerenciaNombre = "";
+        if (r.getUsuario() != null && r.getUsuario().getGerencia() != null) {
+            gerenciaId = r.getUsuario().getGerencia().getId().longValue();
+            gerenciaNombre = r.getUsuario().getGerencia().getNombre();
+        }
         return EventoResponse.builder()
                 .id(r.getId() != null ? r.getId().longValue() : null)
-                .titulo(r.getTitulo())
+                .titulo("Tarea: " + r.getTitulo())
                 .tipo("recordatorio")
                 .fecha(r.getFechaRecordatorio() != null ? r.getFechaRecordatorio().toString() : "")
                 .hora(r.getHoraRecordatorio() != null ? r.getHoraRecordatorio().toString() : "")
-                .gerenciaId(null)
-                .gerenciaNombre("")
+                .gerenciaId(gerenciaId)
+                .gerenciaNombre(gerenciaNombre)
                 .usuarioId(r.getUsuario() != null ? r.getUsuario().getId().longValue() : null)
                 .usuarioNombre(r.getUsuario() != null ? r.getUsuario().getNombreCompleto() : "")
                 .detalles(r.getDetalles())
+                .prioridadId(r.getPrioridad() != null ? r.getPrioridad().getId() : null)
                 .build();
     }
 }

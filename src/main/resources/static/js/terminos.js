@@ -264,6 +264,11 @@ function actualizarTablaAsincrono(keywordForzado = null) {
                 if (keywordForzado) btnClear?.classList.remove('hidden');
                 else btnClear?.classList.add('hidden');
             }
+
+            // Actualizar también los eventos e indicadores del mini calendario
+            fetchMiniCalendarEvents().then(() => {
+                renderMiniCalendar();
+            });
         })
         .catch(err => {
             if (err.name === 'AbortError') return; // Ignorar si fue abortada
@@ -1374,6 +1379,42 @@ const miniCalendarState = {
     events: []
 };
 
+function fetchMiniCalendarEvents() {
+    const urlParams = new URLSearchParams();
+    urlParams.set('tipo', 'termino');
+
+    // Obtener filtros del Sidebar
+    const formFiltros = document.getElementById('form-filtros');
+    if (formFiltros) {
+        const fd = new FormData(formFiltros);
+        const mapping = {
+            'gerenciaId': 'gerencia',
+            'abogadoId': 'usuario',
+            'materiaId': 'materia',
+            'estatus': 'estatus',
+            'prioridadId': 'prioridadId'
+        };
+        for (const [formKey, apiKey] of Object.entries(mapping)) {
+            const val = fd.get(formKey);
+            if (val && val !== 'null' && val !== '') {
+                urlParams.set(apiKey, val);
+            }
+        }
+    }
+
+    return fetch('/api/calendario/eventos?' + urlParams.toString(), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+        .then(res => res.json())
+        .then(events => {
+            miniCalendarState.events = events || [];
+        })
+        .catch(err => {
+            console.error("Error al cargar eventos del mini calendario:", err);
+            miniCalendarState.events = [];
+        });
+}
+
 function initMiniCalendar() {
     const prevBtn = document.getElementById('miniPrev');
     const nextBtn = document.getElementById('miniNext');
@@ -1408,7 +1449,6 @@ function initMiniCalendar() {
                 const btnClear = document.getElementById('btn-clear-search-terminos');
                 if (btnClear) btnClear.classList.add('hidden');
             }
-            renderMiniCalendar();
             miniCalendarState.isDateFilterActive = true; // Activar al navegar meses
             actualizarTablaAsincrono();
         };
@@ -1421,13 +1461,14 @@ function initMiniCalendar() {
                 const btnClear = document.getElementById('btn-clear-search-terminos');
                 if (btnClear) btnClear.classList.add('hidden');
             }
-            renderMiniCalendar();
             miniCalendarState.isDateFilterActive = true; // Activar al navegar meses
             actualizarTablaAsincrono();
         };
     }
 
-    renderMiniCalendar();
+    fetchMiniCalendarEvents().then(() => {
+        renderMiniCalendar();
+    });
 }
 
 function renderMiniCalendar() {
@@ -1484,8 +1525,14 @@ function renderMiniCalendar() {
             cell.classList.add('mini-day-selected');
         }
 
+        // Lógica de eventos (Puntos indicadores bajo el día)
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const hasEvents = miniCalendarState.events.some(e => e.fecha === dateStr);
+        if (hasEvents) {
+            cell.classList.add('mini-has-events');
+        }
+
         cell.onclick = () => {
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             miniCalendarState.selectedDate = new Date(year, month, day);
             miniCalendarState.isDateFilterActive = true; // ACTIVAR filtro de fecha
             renderMiniCalendar();

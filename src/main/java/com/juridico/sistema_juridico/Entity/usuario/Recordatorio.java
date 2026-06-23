@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
 
@@ -31,9 +32,11 @@ public class Recordatorio {
     @Column(columnDefinition = "TEXT")
     private String detalles;
 
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     @Column(name = "fecha_recordatorio", nullable = false)
     private LocalDate fechaRecordatorio;
 
+    @DateTimeFormat(pattern = "HH:mm")
     @Column(name = "hora_recordatorio", nullable = false)
     private LocalTime horaRecordatorio;
 
