@@ -612,11 +612,13 @@ public class ExpedientesController {
         for (Usuario u : new HashSet<>(destinatarios)) {
             notificacionService.crearNotificacion(
                     u,
+                    null,
                     NotificacionEvento.EXPEDIENTE_NUEVO,
                     titulo,
                     mensaje,
                     prioAlta,
-                    exp.getId().toString());
+                    exp.getId().toString(),
+                    true);
         }
     }
 

@@ -14,6 +14,10 @@ public interface NotificacionRepository extends JpaRepository<Notificacion, Inte
     
     boolean existsByEventoAndEntidadId(NotificacionEvento evento, String entidadId);
     
+    boolean existsByUsuarioAndEventoAndEntidadId(Usuario usuario, NotificacionEvento evento, String entidadId);
+    
+    boolean existsByUsuarioAndEventoAndEntidadIdAndTitulo(Usuario usuario, NotificacionEvento evento, String entidadId, String titulo);
+    
     // Busca notificaciones NO LEÍDAS para el historial principal
     Page<Notificacion> findByUsuarioAndLeidaFalseOrderByCreatedAtDesc(Usuario usuario, Pageable pageable);
 

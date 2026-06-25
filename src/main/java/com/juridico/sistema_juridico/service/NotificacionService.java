@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.enums.NotificacionEvento;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
@@ -71,6 +72,10 @@ public class NotificacionService {
             return;
         }
 
+        if (notificacionRepository.existsByUsuarioAndEventoAndEntidadIdAndTitulo(usuario, evento, entidadId, titulo)) {
+            return;
+        }
+
         if (!preferenciaEventoService.permiteRecibir(usuario, evento)) {
             return;
         }
@@ -128,6 +133,23 @@ public class NotificacionService {
                 subordinado.getGerencia().getId(), rolesSuperiores));
         jefes = jefes.stream().distinct().toList();
 
+        Materia materiaAsunto = resolverMateria(evento, entidadId);
+        List<Usuario> jefesFiltrados = new ArrayList<>();
+        for (Usuario jefe : jefes) {
+            if (jefe.getRol() == RolUsuario.JEFE_DEPTO) {
+                if (materiaAsunto != null) {
+                    boolean tieneMateria = jefe.getMaterias().stream()
+                            .anyMatch(m -> m.getId().equals(materiaAsunto.getId()));
+                    if (!tieneMateria) {
+                        continue;
+                    }
+                } else {
+                    continue;
+                }
+            }
+            jefesFiltrados.add(jefe);
+        }
+
         String etiquetaAutor = (actor != null) ? actor.getRol().toString() : "SISTEMA";
         String tituloJefe = "[" + etiquetaAutor + "] Asignacion a " + rolDestinatario;
 
@@ -150,12 +172,16 @@ public class NotificacionService {
                     numExpediente);
         }
 
-        for (Usuario jefe : jefes) {
+        for (Usuario jefe : jefesFiltrados) {
             if (jefe.getId().equals(subordinado.getId()) || (actor != null && jefe.getId().equals(actor.getId()))) {
                 continue;
             }
 
             if (!preferenciaEventoService.permiteRecibir(jefe, evento)) {
+                continue;
+            }
+
+            if (notificacionRepository.existsByUsuarioAndEventoAndEntidadIdAndTitulo(jefe, evento, entidadId, tituloJefe)) {
                 continue;
             }
 
@@ -213,5 +239,32 @@ public class NotificacionService {
 
     public long contarNoLeidas(Usuario usuario) {
         return notificacionRepository.countByUsuarioAndLeidaFalse(usuario);
+    }
+
+    private Materia resolverMateria(NotificacionEvento evento, String entidadId) {
+        if (entidadId == null || entidadId.trim().isEmpty()) {
+            return null;
+        }
+
+        try {
+            if ("TERMINO".equals(evento.getEntidadTipo())) {
+                Termino termino = terminoRepository.findById(Integer.valueOf(entidadId)).orElse(null);
+                return (termino != null && termino.getExpediente() != null) ? termino.getExpediente().getMateria() : null;
+            }
+
+            if ("AUDIENCIA".equals(evento.getEntidadTipo())) {
+                Audiencia audiencia = audienciaRepository.findById(Integer.valueOf(entidadId)).orElse(null);
+                return (audiencia != null && audiencia.getExpediente() != null) ? audiencia.getExpediente().getMateria() : null;
+            }
+
+            if ("EXPEDIENTE".equals(evento.getEntidadTipo())) {
+                Expediente expediente = expedienteRepository.findById(UUID.fromString(entidadId)).orElse(null);
+                return expediente != null ? expediente.getMateria() : null;
+            }
+        } catch (Exception ignored) {
+            return null;
+        }
+
+        return null;
     }
 }
