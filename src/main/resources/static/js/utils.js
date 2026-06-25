@@ -134,3 +134,94 @@ window.mostrarNotificacionNativa = async function (notif) {
         console.warn('[Capacitor] Error al mostrar notificación nativa:', e);
     }
 };
+
+/**
+ * Valida un archivo seleccionado por el usuario del lado del cliente.
+ * Muestra una alerta SweetAlert2 si el formato o tamaño de 1GB no son válidos.
+ * 
+ * @param {File} file - El archivo a validar.
+ * @returns {boolean} - true si es válido, false en caso contrario.
+ */
+window.validarArchivoCliente = function(file) {
+    if (!file) return true;
+
+    // Límite de 1GB en bytes (1024 * 1024 * 1024)
+    const maxSizeBytes = 1024 * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Archivo demasiado grande',
+                text: `El archivo "${file.name}" excede el límite máximo permitido de 1GB.`,
+                confirmButtonColor: '#691228'
+            });
+        } else {
+            alert(`El archivo "${file.name}" excede el límite máximo permitido de 1GB.`);
+        }
+        return false;
+    }
+
+    const nombreOriginal = file.name;
+    if (!nombreOriginal || !nombreOriginal.includes('.')) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Archivo inválido',
+                text: `El archivo "${file.name}" no tiene una extensión válida.`,
+                confirmButtonColor: '#691228'
+            });
+        } else {
+            alert(`El archivo "${file.name}" no tiene una extensión válida.`);
+        }
+        return false;
+    }
+
+    const extension = nombreOriginal.split('.').pop().toLowerCase();
+    const extensionesPermitidas = [
+        // PDF
+        "pdf",
+        // Word
+        "doc", "docx", "docm",
+        // Excel
+        "xls", "xlsx", "xlsm", "xlsb",
+        // PowerPoint
+        "ppt", "pptx",
+        // Imágenes
+        "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "svg",
+        // Videos
+        "mp4", "avi", "mkv", "mov", "wmv", "flv", "webm", "mpeg", "3gp",
+        // Audio
+        "mp3", "wav", "ogg", "m4a", "aac", "flac", "wma"
+    ];
+
+    if (!extensionesPermitidas.includes(extension)) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Formato no permitido',
+                html: `El formato del archivo <b>.${extension}</b> no está permitido.<br><br>Solo se admiten archivos PDF, Office (Word, Excel, PowerPoint), imágenes, videos y audio.`,
+                confirmButtonColor: '#691228'
+            });
+        } else {
+            alert(`El formato del archivo .${extension} no está permitido. Solo se admiten archivos PDF, Office, imágenes, videos y audio.`);
+        }
+        return false;
+    }
+
+    return true;
+};
+
+// Escuchador global para validar cualquier cambio de input tipo archivo en el DOM
+document.addEventListener('change', function(event) {
+    if (event.target && event.target.type === 'file') {
+        const files = event.target.files;
+        if (files && files.length > 0) {
+            for (let i = 0; i < files.length; i++) {
+                if (!window.validarArchivoCliente(files[i])) {
+                    event.target.value = ''; // Resetear el input para impedir subida/envío
+                    break;
+                }
+            }
+        }
+    }
+});

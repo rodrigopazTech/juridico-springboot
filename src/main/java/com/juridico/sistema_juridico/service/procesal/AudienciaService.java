@@ -14,6 +14,7 @@ import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository
 import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.NotificacionService;
+import com.juridico.sistema_juridico.service.FileStorageService;
 import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import com.juridico.sistema_juridico.Entity.enums.NotificacionEvento;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
@@ -63,6 +64,9 @@ public class AudienciaService {
     @Autowired
     private com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository colaboradorExpedienteRepository;
 
+    @Autowired
+    private FileStorageService fileStorageService;
+
     // 1. PASO INTERMEDIO: SUBIR ACTA (Cambia a CON_ACTA)
     @Transactional
     @SuppressWarnings("null")
@@ -70,27 +74,31 @@ public class AudienciaService {
         Audiencia audiencia = audienciaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
 
-        if (!archivo.isEmpty()) {
-            String carpeta = "uploads/audiencias/";
-            Path ruta = Paths.get(carpeta);
-            if (!Files.exists(ruta))
-                Files.createDirectories(ruta);
-
-            String nombreArchivo = id + "_ACTA_" + archivo.getOriginalFilename();
-            Files.copy(archivo.getInputStream(), ruta.resolve(nombreArchivo), StandardCopyOption.REPLACE_EXISTING);
-
-            audiencia.setActaDocumento(nombreArchivo);
-            // Lógica de Estatus: Si estaba pendiente, ahora tiene acta
-            if (EstatusAudiencia.PENDIENTE.equals(audiencia.getEstatusAudiencia())) {
-                audiencia.setEstatusAudiencia(EstatusAudiencia.CON_ACTA);
-                notificarSubidaActa(audiencia);
-            }
-            audienciaRepository.save(audiencia);
-
-            registrarActividad(audiencia.getExpediente(), "ARCHIVO CARGADO",
-                    "Acta: " + archivo.getOriginalFilename(),
-                    "UPLOAD");
+        if (archivo == null || archivo.isEmpty()) {
+            throw new com.juridico.sistema_juridico.exception.BadRequestException("Por favor selecciona un archivo.");
         }
+
+        fileStorageService.validarArchivo(archivo);
+
+        String carpeta = "uploads/audiencias/";
+        Path ruta = Paths.get(carpeta);
+        if (!Files.exists(ruta))
+            Files.createDirectories(ruta);
+
+        String nombreArchivo = id + "_ACTA_" + archivo.getOriginalFilename();
+        Files.copy(archivo.getInputStream(), ruta.resolve(nombreArchivo), StandardCopyOption.REPLACE_EXISTING);
+
+        audiencia.setActaDocumento(nombreArchivo);
+        // Lógica de Estatus: Si estaba pendiente, ahora tiene acta
+        if (EstatusAudiencia.PENDIENTE.equals(audiencia.getEstatusAudiencia())) {
+            audiencia.setEstatusAudiencia(EstatusAudiencia.CON_ACTA);
+            notificarSubidaActa(audiencia);
+        }
+        audienciaRepository.save(audiencia);
+
+        registrarActividad(audiencia.getExpediente(), "ARCHIVO CARGADO",
+                "Acta: " + archivo.getOriginalFilename(),
+                "UPLOAD");
     }
 
     // Método privado para enviar la alerta

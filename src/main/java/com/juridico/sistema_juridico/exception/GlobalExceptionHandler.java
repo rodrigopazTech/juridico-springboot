@@ -92,6 +92,19 @@ public class GlobalExceptionHandler {
         return new RedirectView(getRefererOrHome(request));
     }
 
+    // 6. TAMAÑO DE ARCHIVO EXCEDIDO (1GB)
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public Object handleMaxUploadSizeExceeded(org.springframework.web.multipart.MaxUploadSizeExceededException ex, RedirectAttributes attrs, HttpServletRequest request) {
+        String mensaje = "El archivo excede el tamaño máximo permitido de 1GB.";
+        if (isApiRequest(request)) {
+            return jsonError(HttpStatus.BAD_REQUEST, mensaje);
+        }
+
+        attrs.addFlashAttribute("mensaje", mensaje);
+        attrs.addFlashAttribute("tipo", "error");
+        return new RedirectView(getRefererOrHome(request));
+    }
+
     private String getRefererOrHome(HttpServletRequest request) {
         String referer = request.getHeader("Referer");
         if (referer != null && (referer.contains("/notificaciones/leer") || referer.contains("/leer/"))) {

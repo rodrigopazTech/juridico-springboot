@@ -1,5 +1,6 @@
 package com.juridico.sistema_juridico.service;
 
+import com.juridico.sistema_juridico.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -10,12 +11,58 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
+import java.util.Set;
 
 @Service
 public class FileStorageService {
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
+
+    /**
+     * Valida si el archivo cumple con las extensiones permitidas y el límite de tamaño de 1GB.
+     *
+     * @param file Archivo a validar
+     */
+    public void validarArchivo(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException("El archivo está vacío.");
+        }
+
+        // Límite de 1GB en bytes
+        long maxSizeBytes = 1024L * 1024 * 1024;
+        if (file.getSize() > maxSizeBytes) {
+            throw new BadRequestException("El archivo excede el tamaño máximo permitido de 1GB.");
+        }
+
+        String nombreOriginal = file.getOriginalFilename();
+        if (nombreOriginal == null || !nombreOriginal.contains(".")) {
+            throw new BadRequestException("El archivo no tiene una extensión válida.");
+        }
+
+        String extension = nombreOriginal.substring(nombreOriginal.lastIndexOf(".") + 1).toLowerCase();
+
+        Set<String> extensionesPermitidas = Set.of(
+            // PDF
+            "pdf",
+            // Word
+            "doc", "docx", "docm",
+            // Excel
+            "xls", "xlsx", "xlsm", "xlsb",
+            // PowerPoint
+            "ppt", "pptx",
+            // Imágenes
+            "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "svg",
+            // Videos
+            "mp4", "avi", "mkv", "mov", "wmv", "flv", "webm", "mpeg", "3gp",
+            // Audio
+            "mp3", "wav", "ogg", "m4a", "aac", "flac", "wma"
+        );
+
+        if (!extensionesPermitidas.contains(extension)) {
+            throw new BadRequestException("El formato de archivo '." + extension + "' no está permitido. Solo se admiten archivos PDF, Office (Word, Excel, PowerPoint), imágenes, videos y audio.");
+        }
+    }
 
     /**
      * Guarda un archivo en el filesystem
@@ -26,6 +73,8 @@ public class FileStorageService {
      * @return Ruta relativa del archivo guardado
      */
     public String guardarArchivo(MultipartFile file, UUID expedienteId, String categoria) throws IOException {
+        validarArchivo(file);
+
         // Crear estructura de directorios:
         // uploads/expedientes/{expedienteId}/{categoria}/
         Path directorioExpediente = Paths.get(uploadDir, "expedientes", expedienteId.toString(), categoria);
@@ -55,6 +104,8 @@ public class FileStorageService {
      * @return Ruta relativa final del archivo guardado
      */
     public String guardarArchivoEnRutaRelativa(MultipartFile file, String rutaRelativaBase) throws IOException {
+        validarArchivo(file);
+
         Path base = Paths.get(uploadDir).resolve(rutaRelativaBase).normalize();
         Files.createDirectories(base);
 

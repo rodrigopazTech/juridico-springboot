@@ -74,7 +74,7 @@ public class DocumentoController {
 
             return ResponseEntity.ok(documento);
 
-        } catch (IllegalArgumentException e) {
+        } catch (com.juridico.sistema_juridico.exception.BadRequestException | IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage()));
         } catch (IOException e) {
