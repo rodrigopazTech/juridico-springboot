@@ -1376,7 +1376,8 @@ const miniCalendarState = {
     selectedDate: new Date(),
     isDateFilterActive: false, // ROD-185: Bandera para saber si filtramos por fecha o vemos todo
     names: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
-    events: []
+    events: [],
+    view: 'month'
 };
 
 function fetchMiniCalendarEvents() {
@@ -1439,30 +1440,77 @@ function initMiniCalendar() {
         miniCalendarState.selectedDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
     }
 
+    const viewMonthBtn = document.getElementById('miniViewMonth');
+    const viewWeekBtn = document.getElementById('miniViewWeek');
+    if (viewMonthBtn && viewWeekBtn) {
+        viewMonthBtn.onclick = () => {
+            miniCalendarState.view = 'month';
+            renderMiniCalendar();
+        };
+        viewWeekBtn.onclick = () => {
+            miniCalendarState.view = 'week';
+            renderMiniCalendar();
+        };
+    }
+
     if (prevBtn && nextBtn) {
         prevBtn.onclick = () => {
-            const date = miniCalendarState.currentDate;
-            date.setMonth(date.getMonth() - 1);
-            const searchInput = document.getElementById('input-search-terminos');
-            if (searchInput) {
-                searchInput.value = '';
-                const btnClear = document.getElementById('btn-clear-search-terminos');
-                if (btnClear) btnClear.classList.add('hidden');
+            if (miniCalendarState.view === 'week') {
+                const date = (miniCalendarState.selectedDate && miniCalendarState.selectedDate.getTime() > 0) ? miniCalendarState.selectedDate : new Date(miniCalendarState.currentDate);
+                date.setDate(date.getDate() - 7);
+                miniCalendarState.selectedDate = new Date(date);
+                miniCalendarState.currentDate = new Date(date);
+                const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                
+                const searchInput = document.getElementById('input-search-terminos');
+                if (searchInput) {
+                    searchInput.value = '';
+                    const btnClear = document.getElementById('btn-clear-search-terminos');
+                    if (btnClear) btnClear.classList.add('hidden');
+                }
+                miniCalendarState.isDateFilterActive = true;
+                actualizarTablaAsincrono(dateStr);
+            } else {
+                const date = miniCalendarState.currentDate;
+                date.setMonth(date.getMonth() - 1);
+                const searchInput = document.getElementById('input-search-terminos');
+                if (searchInput) {
+                    searchInput.value = '';
+                    const btnClear = document.getElementById('btn-clear-search-terminos');
+                    if (btnClear) btnClear.classList.add('hidden');
+                }
+                miniCalendarState.isDateFilterActive = true; // Activar al navegar meses
+                actualizarTablaAsincrono();
             }
-            miniCalendarState.isDateFilterActive = true; // Activar al navegar meses
-            actualizarTablaAsincrono();
         };
         nextBtn.onclick = () => {
-            const date = miniCalendarState.currentDate;
-            date.setMonth(date.getMonth() + 1);
-            const searchInput = document.getElementById('input-search-terminos');
-            if (searchInput) {
-                searchInput.value = '';
-                const btnClear = document.getElementById('btn-clear-search-terminos');
-                if (btnClear) btnClear.classList.add('hidden');
+            if (miniCalendarState.view === 'week') {
+                const date = (miniCalendarState.selectedDate && miniCalendarState.selectedDate.getTime() > 0) ? miniCalendarState.selectedDate : new Date(miniCalendarState.currentDate);
+                date.setDate(date.getDate() + 7);
+                miniCalendarState.selectedDate = new Date(date);
+                miniCalendarState.currentDate = new Date(date);
+                const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                
+                const searchInput = document.getElementById('input-search-terminos');
+                if (searchInput) {
+                    searchInput.value = '';
+                    const btnClear = document.getElementById('btn-clear-search-terminos');
+                    if (btnClear) btnClear.classList.add('hidden');
+                }
+                miniCalendarState.isDateFilterActive = true;
+                actualizarTablaAsincrono(dateStr);
+            } else {
+                const date = miniCalendarState.currentDate;
+                date.setMonth(date.getMonth() + 1);
+                const searchInput = document.getElementById('input-search-terminos');
+                if (searchInput) {
+                    searchInput.value = '';
+                    const btnClear = document.getElementById('btn-clear-search-terminos');
+                    if (btnClear) btnClear.classList.add('hidden');
+                }
+                miniCalendarState.isDateFilterActive = true; // Activar al navegar meses
+                actualizarTablaAsincrono();
             }
-            miniCalendarState.isDateFilterActive = true; // Activar al navegar meses
-            actualizarTablaAsincrono();
         };
     }
 
@@ -1486,6 +1534,9 @@ function renderMiniCalendar() {
     monthLabel.onclick = () => {
         // Al hacer clic en el mes, queremos ver TODO el mes
         miniCalendarState.selectedDate = new Date(0);
+        if (miniCalendarState.view === 'week') {
+            miniCalendarState.view = 'month';
+        }
         const searchInput = document.getElementById('input-search-terminos');
         if (searchInput) {
             searchInput.value = '';
@@ -1497,49 +1548,106 @@ function renderMiniCalendar() {
         actualizarTablaAsincrono();
     };
 
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    // Celdas vacías
-    for (let i = 0; i < firstDay; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'mini-day-cell mini-empty';
-        grid.appendChild(emptyCell);
+    // Update active/inactive switcher buttons class
+    const viewMonthBtn = document.getElementById('miniViewMonth');
+    const viewWeekBtn = document.getElementById('miniViewWeek');
+    if (viewMonthBtn && viewWeekBtn) {
+        if (miniCalendarState.view === 'month') {
+            viewMonthBtn.className = "flex-1 text-center py-1 font-semibold rounded-md transition-all bg-white shadow-sm text-gob-guinda";
+            viewWeekBtn.className = "flex-1 text-center py-1 font-semibold rounded-md transition-all text-gray-500 hover:text-gob-guinda";
+        } else {
+            viewWeekBtn.className = "flex-1 text-center py-1 font-semibold rounded-md transition-all bg-white shadow-sm text-gob-guinda";
+            viewMonthBtn.className = "flex-1 text-center py-1 font-semibold rounded-md transition-all text-gray-500 hover:text-gob-guinda";
+        }
     }
 
-    // Días del mes
     const today = new Date();
-    for (let day = 1; day <= daysInMonth; day++) {
-        const cell = document.createElement('div');
-        cell.className = 'mini-day-cell';
-        cell.innerText = day;
 
-        const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-        if (isToday) cell.classList.add('mini-day-today');
+    if (miniCalendarState.view === 'week') {
+        const referenceDate = (miniCalendarState.selectedDate && miniCalendarState.selectedDate.getTime() > 0) ? miniCalendarState.selectedDate : miniCalendarState.currentDate;
+        const startOfWeek = new Date(referenceDate);
+        const dayOfWeek = startOfWeek.getDay();
+        startOfWeek.setDate(startOfWeek.getDate() - dayOfWeek);
 
-        // Lógica de Selección (Fondo Guinda Sólido)
-        const isSelected = day === miniCalendarState.selectedDate.getDate() &&
-            month === miniCalendarState.selectedDate.getMonth() &&
-            year === miniCalendarState.selectedDate.getFullYear();
-        if (isSelected) {
-            cell.classList.add('mini-day-selected');
+        for (let i = 0; i < 7; i++) {
+            const loopDate = new Date(startOfWeek);
+            loopDate.setDate(startOfWeek.getDate() + i);
+
+            const cell = document.createElement('div');
+            cell.className = 'mini-day-cell';
+            cell.innerText = loopDate.getDate();
+
+            const isToday = loopDate.getDate() === today.getDate() &&
+                           loopDate.getMonth() === today.getMonth() &&
+                           loopDate.getFullYear() === today.getFullYear();
+            if (isToday) cell.classList.add('mini-day-today');
+
+            const isSelected = loopDate.getDate() === miniCalendarState.selectedDate.getDate() &&
+                               loopDate.getMonth() === miniCalendarState.selectedDate.getMonth() &&
+                               loopDate.getFullYear() === miniCalendarState.selectedDate.getFullYear();
+            if (isSelected) {
+                cell.classList.add('mini-day-selected');
+            }
+
+            const dateStr = `${loopDate.getFullYear()}-${String(loopDate.getMonth() + 1).padStart(2, '0')}-${String(loopDate.getDate()).padStart(2, '0')}`;
+            const hasEvents = miniCalendarState.events.some(e => e.fecha === dateStr);
+            if (hasEvents) {
+                cell.classList.add('mini-has-events');
+            }
+
+            cell.onclick = () => {
+                miniCalendarState.selectedDate = new Date(loopDate);
+                miniCalendarState.isDateFilterActive = true;
+                renderMiniCalendar();
+                actualizarTablaAsincrono(dateStr);
+            };
+
+            grid.appendChild(cell);
+        }
+    } else {
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // Celdas vacías
+        for (let i = 0; i < firstDay; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'mini-day-cell mini-empty';
+            grid.appendChild(emptyCell);
         }
 
-        // Lógica de eventos (Puntos indicadores bajo el día)
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const hasEvents = miniCalendarState.events.some(e => e.fecha === dateStr);
-        if (hasEvents) {
-            cell.classList.add('mini-has-events');
+        // Días del mes
+        for (let day = 1; day <= daysInMonth; day++) {
+            const cell = document.createElement('div');
+            cell.className = 'mini-day-cell';
+            cell.innerText = day;
+
+            const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+            if (isToday) cell.classList.add('mini-day-today');
+
+            // Lógica de Selección (Fondo Guinda Sólido)
+            const isSelected = day === miniCalendarState.selectedDate.getDate() &&
+                month === miniCalendarState.selectedDate.getMonth() &&
+                year === miniCalendarState.selectedDate.getFullYear();
+            if (isSelected) {
+                cell.classList.add('mini-day-selected');
+            }
+
+            // Lógica de eventos (Puntos indicadores bajo el día)
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const hasEvents = miniCalendarState.events.some(e => e.fecha === dateStr);
+            if (hasEvents) {
+                cell.classList.add('mini-has-events');
+            }
+
+            cell.onclick = () => {
+                miniCalendarState.selectedDate = new Date(year, month, day);
+                miniCalendarState.isDateFilterActive = true; // ACTIVAR filtro de fecha
+                renderMiniCalendar();
+                actualizarTablaAsincrono(dateStr);
+            };
+
+            grid.appendChild(cell);
         }
-
-        cell.onclick = () => {
-            miniCalendarState.selectedDate = new Date(year, month, day);
-            miniCalendarState.isDateFilterActive = true; // ACTIVAR filtro de fecha
-            renderMiniCalendar();
-            actualizarTablaAsincrono(dateStr);
-        };
-
-        grid.appendChild(cell);
     }
 }
 

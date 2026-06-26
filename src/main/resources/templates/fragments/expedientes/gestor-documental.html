@@ -1,6 +1,86 @@
 <!-- Fragmento Modal Gestor Documental -->
 <div th:fragment="gestor-documental">
 
+    <!-- Estilos personalizados para el explorador de carpetas (Jerarquía y Alineación) -->
+    <style>
+        .explorer-tree {
+            padding: 8px 12px;
+        }
+        .explorer-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            margin: 2px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            position: relative;
+        }
+        .explorer-item:hover {
+            background-color: #f3f4f6;
+        }
+        /* Estado seleccionado premium */
+        .explorer-item.selected {
+            background-color: #fcf8f2 !important;
+            border-left: 3px solid #b38e5d !important;
+            padding-left: 5px !important;
+        }
+        .explorer-item.selected .explorer-label {
+            color: #691228 !important;
+            font-weight: 600 !important;
+        }
+        /* Contenedor del chevron para alineación perfecta */
+        .explorer-chevron-box {
+            width: 16px;
+            height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 4px;
+            flex-shrink: 0;
+        }
+        /* Contenedor de subcarpetas (guías de jerarquía) */
+        .explorer-children {
+            margin-left: 14px;
+            border-left: 1px dashed #cbd5e1;
+            padding-left: 4px;
+            transition: all 0.2s ease;
+        }
+        /* Botones de acción en hover */
+        .explorer-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: auto;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .explorer-item:hover .explorer-actions {
+            opacity: 1;
+        }
+        .explorer-action {
+            padding: 2px;
+            color: #9ca3af;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .explorer-action:hover {
+            color: #4b5563;
+            background-color: #e5e7eb;
+        }
+        /* Estilos premium para arrastrar y soltar */
+        .explorer-item.explorer-item-drag-hover {
+            background-color: rgba(179, 142, 93, 0.15) !important;
+            outline: 2px dashed #b38e5d !important;
+            outline-offset: -2px;
+        }
+        .folder-card-drag-hover {
+            background-color: rgba(179, 142, 93, 0.15) !important;
+            border: 2px dashed #b38e5d !important;
+        }
+    </style>
+
     <!-- MODAL GESTOR DOCUMENTAL -->
     <div id="modal-gestor-documental"
         class="fixed inset-0 z-50 hidden items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">

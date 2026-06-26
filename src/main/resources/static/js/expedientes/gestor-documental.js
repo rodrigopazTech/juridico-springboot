@@ -176,16 +176,24 @@ function renderizarArbolCarpetas() {
         return;
     }
 
-    // Crear nodo raíz del expediente
+    // Crear nodo raíz del expediente con flecha funcional
     let html = `
         <div class="explorer-tree">
-            <div class="explorer-item ${carpetaActualId === null ? 'selected' : ''}" 
+            <div class="explorer-item group ${carpetaActualId === null ? 'selected' : ''}" 
+                 data-carpeta-id="raiz"
+                 ondragover="handleFolderDragOver(event)"
+                 ondragenter="handleFolderDragEnter(event)"
+                 ondragleave="handleFolderDragLeave(event)"
+                 ondrop="handleFolderDrop(event, null)"
                  onclick="seleccionarCarpeta(null)">
-                <span class="explorer-indent"></span>
-                <i class="fas fa-chevron-down text-[10px] text-gray-400 mr-1"></i>
-                <i class="fas fa-folder text-amber-500 text-sm mr-1.5"></i>
-                <span class="explorer-label text-gray-700 font-medium">${numeroExpedienteGlobal}</span>
+                <div class="explorer-chevron-box">
+                    <i class="fas fa-chevron-down text-[10px] text-gray-400 explorer-toggle cursor-pointer"
+                       onclick="event.stopPropagation(); toggleCarpeta(event, 'raiz')"></i>
+                </div>
+                <i class="fas fa-folder-open text-gob-guinda text-sm mr-1.5"></i>
+                <span class="explorer-label text-gray-800 font-bold">${numeroExpedienteGlobal}</span>
             </div>
+            <div class="explorer-children" id="children-raiz">
     `;
 
     // Renderizar carpetas recursivamente
@@ -193,7 +201,8 @@ function renderizarArbolCarpetas() {
         html += renderizarNodoCarpeta(carpeta, 1);
     });
 
-    html += `</div>`;
+    html += `    </div>
+        </div>`;
 
     container.innerHTML = html;
 }
@@ -202,18 +211,24 @@ function renderizarNodoCarpeta(carpeta, nivel) {
     const tieneSubcarpetas = carpeta.subcarpetas && carpeta.subcarpetas.length > 0;
     const estaSeleccionada = carpetaActualId === carpeta.id;
     const expandido = true;
-    const indent = nivel * 12;
 
     let html = `
         <div class="explorer-group">
-            <div class="explorer-item ${estaSeleccionada ? 'selected' : ''}" 
+            <div class="explorer-item group ${estaSeleccionada ? 'selected' : ''}" 
                  data-carpeta-id="${carpeta.id}"
-                 onclick="seleccionarCarpeta('${carpeta.id}')"
-                 style="padding-left: ${indent}px">
-                ${tieneSubcarpetas ? `
-                    <i class="fas fa-chevron-${expandido ? 'down' : 'right'} text-[10px] text-gray-400 mr-1 explorer-toggle cursor-pointer" 
-                       onclick="event.stopPropagation(); toggleCarpeta('${carpeta.id}')"></i>
-                ` : '<span class="w-3 mr-1"></span>'}
+                 draggable="true"
+                 ondragstart="handleFolderDragStart(event, '${carpeta.id}')"
+                 ondragover="handleFolderDragOver(event)"
+                 ondragenter="handleFolderDragEnter(event)"
+                 ondragleave="handleFolderDragLeave(event)"
+                 ondrop="handleFolderDrop(event, '${carpeta.id}')"
+                 onclick="seleccionarCarpeta('${carpeta.id}')">
+                <div class="explorer-chevron-box">
+                    ${tieneSubcarpetas ? `
+                        <i class="fas fa-chevron-${expandido ? 'down' : 'right'} text-[10px] text-gray-400 explorer-toggle cursor-pointer" 
+                           onclick="event.stopPropagation(); toggleCarpeta(event, '${carpeta.id}')"></i>
+                    ` : ''}
+                </div>
                 <i class="fas fa-folder${tieneSubcarpetas && expandido ? '-open' : ''} text-amber-500 text-sm mr-1.5"></i>
                 <span class="explorer-label text-gray-600 flex-1 truncate">${carpeta.nombre}</span>
                 ${carpeta.cantidadDocumentos > 0 ? `
@@ -226,7 +241,7 @@ function renderizarNodoCarpeta(carpeta, nivel) {
                             <i class="fas fa-edit"></i>
                         </button>
                         <button onclick="event.stopPropagation(); eliminarCarpeta('${carpeta.id}')" 
-                                class="explorer-action" title="Eliminar">
+                                class="explorer-action text-red-500 hover:text-red-600" title="Eliminar">
                             <i class="fas fa-trash"></i>
                         </button>
                     ` : ''}
@@ -247,13 +262,27 @@ function renderizarNodoCarpeta(carpeta, nivel) {
     return html;
 }
 
-function toggleCarpeta(carpetaId) {
+function toggleCarpeta(event, carpetaId) {
     const childrenDiv = document.getElementById(`children-${carpetaId}`);
-    const toggleIcon = event.target.classList.contains('explorer-toggle') 
-        ? event.target 
-        : event.target.closest('.explorer-toggle');
+    if (!childrenDiv) return;
+
+    let toggleIcon = null;
+    if (event && event.target) {
+        toggleIcon = event.target.classList.contains('explorer-toggle') 
+            ? event.target 
+            : event.target.closest('.explorer-toggle');
+    }
+
+    if (!toggleIcon) {
+        const itemDiv = document.querySelector(`[data-carpeta-id="${carpetaId}"]`);
+        if (itemDiv) {
+            toggleIcon = itemDiv.querySelector('.explorer-toggle');
+        }
+    }
+
+    if (!toggleIcon) return;
     
-    const folderIcon = toggleIcon.parentElement.querySelector('.fa-folder, .fa-folder-open');
+    const folderIcon = toggleIcon.closest('.explorer-item').querySelector('.fa-folder, .fa-folder-open');
 
     if (childrenDiv.classList.contains('hidden')) {
         childrenDiv.classList.remove('hidden');
@@ -743,7 +772,14 @@ function renderizarContenido(subcarpetas, documentos) {
     subcarpetas.forEach(carpeta => {
         const cantidadItems = (carpeta.subcarpetas?.length || 0) + (carpeta.cantidadDocumentos || 0);
         htmlLista += `
-            <div class="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg hover:shadow-md hover:bg-amber-100 transition-all cursor-pointer"
+            <div class="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg hover:shadow-md hover:bg-amber-100 transition-all cursor-pointer folder-drop-target"
+                 data-carpeta-id="${carpeta.id}"
+                 draggable="true"
+                 ondragstart="handleFolderDragStart(event, '${carpeta.id}')"
+                 ondragover="handleFolderDragOver(event)"
+                 ondragenter="handleFolderDragEnter(event)"
+                 ondragleave="handleFolderDragLeave(event)"
+                 ondrop="handleFolderDrop(event, '${carpeta.id}')"
                  onclick="seleccionarCarpeta('${carpeta.id}')">
                 <div class="flex items-center gap-3 flex-1">
                     <div class="text-3xl">📁</div>
@@ -766,7 +802,9 @@ function renderizarContenido(subcarpetas, documentos) {
         const fecha = new Date(doc.fechaSubida).toLocaleDateString('es-MX');
 
         htmlLista += `
-            <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                 draggable="true"
+                 ondragstart="handleDocumentDragStart(event, '${doc.id}')">
                 <div class="flex items-center gap-3 flex-1">
                     <div class="text-3xl">${icono}</div>
                     <div class="flex-1 min-w-0">
@@ -805,7 +843,14 @@ function renderizarContenido(subcarpetas, documentos) {
     subcarpetas.forEach(carpeta => {
         const cantidadItems = (carpeta.subcarpetas?.length || 0) + (carpeta.cantidadDocumentos || 0);
         htmlGrid += `
-            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 hover:shadow-lg hover:bg-amber-100 transition-all text-center cursor-pointer"
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 hover:shadow-lg hover:bg-amber-100 transition-all text-center cursor-pointer folder-drop-target"
+                 data-carpeta-id="${carpeta.id}"
+                 draggable="true"
+                 ondragstart="handleFolderDragStart(event, '${carpeta.id}')"
+                 ondragover="handleFolderDragOver(event)"
+                 ondragenter="handleFolderDragEnter(event)"
+                 ondragleave="handleFolderDragLeave(event)"
+                 ondrop="handleFolderDrop(event, '${carpeta.id}')"
                  onclick="seleccionarCarpeta('${carpeta.id}')">
                 <div class="text-5xl mb-3">📁</div>
                 <p class="font-semibold text-sm text-gray-900 truncate mb-2">${carpeta.nombre}</p>
@@ -820,7 +865,9 @@ function renderizarContenido(subcarpetas, documentos) {
         const tamanio = formatearTamanio(doc.tamanioBytes);
 
         htmlGrid += `
-            <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow text-center">
+            <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow text-center"
+                 draggable="true"
+                 ondragstart="handleDocumentDragStart(event, '${doc.id}')">
                 <div class="text-5xl mb-3">${icono}</div>
                 <p class="font-semibold text-sm text-gray-900 truncate mb-2">${doc.nombreOriginal}</p>
                 <p class="text-xs text-gray-500 mb-3">${tamanio}</p>
@@ -1374,8 +1421,19 @@ function previsualizarDocumento(documentoId) {
 
 let dragCounter = 0;
 
+function isLocalFileDrag(event) {
+    if (event.dataTransfer && event.dataTransfer.types) {
+        for (let i = 0; i < event.dataTransfer.types.length; i++) {
+            if (event.dataTransfer.types[i] === 'Files') {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 function handleDragEnter(event) {
-    if (mostrandoPapelera) {
+    if (mostrandoPapelera || !isLocalFileDrag(event)) {
         return;
     }
 
@@ -1406,7 +1464,7 @@ function handleDragEnter(event) {
 }
 
 function handleDragOver(event) {
-    if (mostrandoPapelera) {
+    if (mostrandoPapelera || !isLocalFileDrag(event)) {
         return;
     }
     event.preventDefault();
@@ -1414,7 +1472,7 @@ function handleDragOver(event) {
 }
 
 function handleDragLeave(event) {
-    if (mostrandoPapelera) {
+    if (mostrandoPapelera || !isLocalFileDrag(event)) {
         return;
     }
     event.preventDefault();
@@ -1432,7 +1490,7 @@ function handleDragLeave(event) {
 }
 
 async function handleDrop(event) {
-    if (mostrandoPapelera) {
+    if (mostrandoPapelera || !isLocalFileDrag(event)) {
         return;
     }
 
@@ -1919,9 +1977,25 @@ function debounce(func, wait) {
 }
 
 function mostrarNotificacion(mensaje, tipo = 'success') {
-    // Implementación simple con alert
-    // Puedes mejorar esto con una librería de notificaciones
-    console.log(`[${tipo.toUpperCase()}] ${mensaje}`);
+    if (typeof Swal !== 'undefined') {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+        Toast.fire({
+            icon: tipo,
+            title: mensaje
+        });
+    } else {
+        console.log(`[${tipo.toUpperCase()}] ${mensaje}`);
+    }
 }
 
 // ========================================
@@ -2258,6 +2332,233 @@ async function ejecutarVaciarPapelera() {
             btnVaciar.disabled = false;
             btnVaciar.innerHTML = '<i class="fas fa-trash-alt mr-1.5"></i> Vaciar papelera';
         }
+    }
+}
+
+// ========================================
+// FUNCIONES AUXILIARES DE CARGA (SWEETALERT)
+// ========================================
+
+function mostrarCargando(mensaje = "Cargando...") {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: mensaje,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            allowEnterKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+    }
+}
+
+function ocultarCargando() {
+    if (typeof Swal !== 'undefined') {
+        Swal.close();
+    }
+}
+
+// ========================================
+// FUNCIONES DE DRAG & DROP INTERNO
+// ========================================
+
+function handleFolderDragStart(event, folderId) {
+    if (mostrandoPapelera) return;
+    event.dataTransfer.setData("text/plain", JSON.stringify({ type: 'folder', id: folderId }));
+    event.dataTransfer.effectAllowed = "move";
+    
+    // Crear imagen de arrastre mini personalizada
+    const target = event.currentTarget;
+    let folderName = "Carpeta";
+    const labelEl = target.querySelector('.explorer-label') || target.querySelector('.font-semibold');
+    if (labelEl) folderName = labelEl.textContent.trim();
+    
+    const dragImage = document.createElement('div');
+    dragImage.className = 'bg-white border border-amber-200 rounded-lg shadow-lg p-2 flex items-center gap-2 pointer-events-none text-xs font-semibold text-gray-800';
+    dragImage.style.position = 'absolute';
+    dragImage.style.top = '-1000px';
+    dragImage.style.left = '-1000px';
+    dragImage.style.borderLeft = '4px solid #f59e0b';
+    dragImage.innerHTML = `<span>📁</span> <span style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${folderName}</span>`;
+    document.body.appendChild(dragImage);
+    event.dataTransfer.setDragImage(dragImage, 15, 15);
+    setTimeout(() => dragImage.remove(), 0);
+}
+
+function handleDocumentDragStart(event, docId) {
+    if (mostrandoPapelera) return;
+    event.dataTransfer.setData("text/plain", JSON.stringify({ type: 'document', id: docId }));
+    event.dataTransfer.effectAllowed = "move";
+    
+    // Crear imagen de arrastre mini personalizada
+    const target = event.currentTarget;
+    let docName = "Documento";
+    let icon = "📄";
+    const titleEl = target.querySelector('.font-semibold');
+    if (titleEl) docName = titleEl.textContent.trim();
+    
+    const iconEl = target.querySelector('.text-3xl') || target.querySelector('.text-5xl');
+    if (iconEl) icon = iconEl.textContent.trim() || "📄";
+    
+    const dragImage = document.createElement('div');
+    dragImage.className = 'bg-white border border-gray-200 rounded-lg shadow-lg p-2 flex items-center gap-2 pointer-events-none text-xs font-semibold text-gray-800';
+    dragImage.style.position = 'absolute';
+    dragImage.style.top = '-1000px';
+    dragImage.style.left = '-1000px';
+    dragImage.style.borderLeft = '4px solid #691228';
+    dragImage.innerHTML = `<span style="font-size: 1.125rem;">${icon}</span> <span style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${docName}</span>`;
+    document.body.appendChild(dragImage);
+    event.dataTransfer.setDragImage(dragImage, 15, 15);
+    setTimeout(() => dragImage.remove(), 0);
+}
+
+function handleFolderDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+}
+
+function handleFolderDragEnter(event) {
+    event.preventDefault();
+    const target = event.currentTarget;
+    if (target.classList.contains('explorer-item')) {
+        target.classList.add('explorer-item-drag-hover');
+    } else {
+        target.classList.add('folder-card-drag-hover');
+    }
+}
+
+function handleFolderDragLeave(event) {
+    const target = event.currentTarget;
+    target.classList.remove('explorer-item-drag-hover', 'folder-card-drag-hover');
+}
+
+async function handleFolderDrop(event, targetFolderId) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const target = event.currentTarget;
+    target.classList.remove('explorer-item-drag-hover', 'folder-card-drag-hover');
+    
+    try {
+        const dataStr = event.dataTransfer.getData("text/plain");
+        if (!dataStr) return;
+        const data = JSON.parse(dataStr);
+        if (!data || !data.id || !data.type) return;
+        
+        const sourceId = data.id;
+        const sourceType = data.type;
+        
+        if (sourceType === 'folder') {
+            if (sourceId === targetFolderId) {
+                mostrarNotificacion("No puedes mover una carpeta dentro de sí misma", "error");
+                return;
+            }
+            if (targetFolderId && esDescendiente(sourceId, targetFolderId)) {
+                mostrarNotificacion("No puedes mover una carpeta dentro de una de sus subcarpetas", "error");
+                return;
+            }
+            
+            await ejecutarMoverCarpeta(sourceId, targetFolderId);
+        } else if (sourceType === 'document') {
+            if (carpetaActualId === targetFolderId || (carpetaActualId === null && targetFolderId === null)) {
+                return;
+            }
+            await ejecutarMoverDocumento(sourceId, targetFolderId);
+        }
+    } catch (e) {
+        console.error("Error al procesar el drop:", e);
+    }
+}
+
+function esDescendiente(parentFolderId, targetFolderId) {
+    if (!arbolCarpetasGlobal) return false;
+    const parentFolder = encontrarCarpeta(arbolCarpetasGlobal, parentFolderId);
+    if (!parentFolder || !parentFolder.subcarpetas) return false;
+    
+    return checkSubfolderContains(parentFolder.subcarpetas, targetFolderId);
+}
+
+function encontrarCarpeta(carpetas, id) {
+    for (const folder of carpetas) {
+        if (folder.id === id || String(folder.id) === String(id)) {
+            return folder;
+        }
+        if (folder.subcarpetas && folder.subcarpetas.length > 0) {
+            const found = encontrarCarpeta(folder.subcarpetas, id);
+            if (found) return found;
+        }
+    }
+    return null;
+}
+
+function checkSubfolderContains(subcarpetas, targetFolderId) {
+    for (const sub of subcarpetas) {
+        if (sub.id === targetFolderId || String(sub.id) === String(targetFolderId)) {
+            return true;
+        }
+        if (sub.subcarpetas && sub.subcarpetas.length > 0) {
+            if (checkSubfolderContains(sub.subcarpetas, targetFolderId)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+async function ejecutarMoverCarpeta(carpetaId, nuevaCarpetaPadreId) {
+    mostrarCargando("Moviendo carpeta...");
+    try {
+        let url = `/api/carpetas/${carpetaId}/mover`;
+        if (nuevaCarpetaPadreId) {
+            url += `?nuevaCarpetaPadreId=${nuevaCarpetaPadreId}`;
+        }
+        
+        const response = await fetch(url, {
+            method: 'PUT'
+        });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || "No se pudo mover la carpeta");
+        }
+        
+        mostrarNotificacion("Carpeta movida correctamente", "success");
+        await cargarArbolCarpetas();
+        await cargarDocumentos();
+    } catch (error) {
+        console.error("Error al mover carpeta:", error);
+        mostrarNotificacion(error.message || "Error al mover la carpeta. Verifique el límite de profundidad.", "error");
+    } finally {
+        ocultarCargando();
+    }
+}
+
+async function ejecutarMoverDocumento(documentoId, carpetaDestinoId) {
+    mostrarCargando("Moviendo documento...");
+    try {
+        let url = `/api/documentos/${documentoId}/mover`;
+        if (carpetaDestinoId) {
+            url += `?carpetaId=${carpetaDestinoId}`;
+        }
+        
+        const response = await fetch(url, {
+            method: 'PUT'
+        });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || "No se pudo mover el documento");
+        }
+        
+        mostrarNotificacion("Documento movido correctamente", "success");
+        await cargarArbolCarpetas();
+        await cargarDocumentos();
+    } catch (error) {
+        console.error("Error al mover documento:", error);
+        mostrarNotificacion(error.message || "Error al mover el documento.", "error");
+    } finally {
+        ocultarCargando();
     }
 }
 
