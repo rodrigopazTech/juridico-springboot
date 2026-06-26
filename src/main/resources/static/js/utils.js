@@ -145,18 +145,18 @@ window.mostrarNotificacionNativa = async function (notif) {
 window.validarArchivoCliente = function(file) {
     if (!file) return true;
 
-    // Límite de 1GB en bytes (1024 * 1024 * 1024)
-    const maxSizeBytes = 1024 * 1024 * 1024;
+    // Límite de 1.2GB en bytes (1200 * 1024 * 1024)
+    const maxSizeBytes = 1200 * 1024 * 1024;
     if (file.size > maxSizeBytes) {
         if (typeof Swal !== 'undefined') {
             Swal.fire({
                 icon: 'error',
                 title: 'Archivo demasiado grande',
-                text: `El archivo "${file.name}" excede el límite máximo permitido de 1GB.`,
+                html: `El archivo <b>"${file.name}"</b> excede el tamaño máximo permitido de <b>1.2GB</b>.<br><br>Por favor, reduce su tamaño o selecciona otro archivo.`,
                 confirmButtonColor: '#691228'
             });
         } else {
-            alert(`El archivo "${file.name}" excede el límite máximo permitido de 1GB.`);
+            alert(`El archivo "${file.name}" excede el límite máximo permitido de 1.2GB.`);
         }
         return false;
     }
@@ -178,6 +178,8 @@ window.validarArchivoCliente = function(file) {
 
     const extension = nombreOriginal.split('.').pop().toLowerCase();
     const extensionesPermitidas = [
+        // txt
+        "txt",
         // PDF
         "pdf",
         // Word

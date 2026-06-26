@@ -463,4 +463,30 @@ public class DocumentoController {
                     .body(Map.of("error", "Error al eliminar permanentemente: " + e.getMessage()));
         }
     }
+
+    /**
+     * Vaciar la papelera de un expediente
+     */
+    @DeleteMapping("/expedientes/{expedienteId}/papelera")
+    public ResponseEntity<?> vaciarPapelera(@PathVariable UUID expedienteId) {
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+
+            if (!documentoService.tienePermiso(usuario, expedienteId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "No tiene permisos para vaciar la papelera de este expediente"));
+            }
+
+            documentoService.vaciarPapelera(expedienteId, usuario);
+            return ResponseEntity.ok(Map.of("message", "Papelera vaciada correctamente"));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al vaciar la papelera: " + e.getMessage()));
+        }
+    }
 }

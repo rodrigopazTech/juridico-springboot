@@ -435,4 +435,30 @@ public class DocumentoService {
 
         return guardado;
     }
+
+    /**
+     * Elimina permanentemente todos los documentos de la papelera para un expediente.
+     */
+    @Transactional
+    public void vaciarPapelera(UUID expedienteId, Usuario usuario) {
+        List<Documento> documentosEnPapelera = documentoRepository
+                .findByExpedienteIdAndEliminadoTrueAndEliminadoDefinitivoFalseOrderByFechaEliminacionDesc(expedienteId);
+        
+        for (Documento doc : documentosEnPapelera) {
+            try {
+                fileStorageService.eliminarArchivo(doc.getRutaArchivo());
+            } catch (IOException e) {
+                System.err.println("No se pudo eliminar el archivo físico: " + e.getMessage());
+            }
+            documentoRepository.delete(doc);
+        }
+
+        // Auditoría general
+        Expediente exp = expedienteRepository.findById(expedienteId).orElse(null);
+        if (exp != null) {
+            auditoriaService.registrar(exp, "PAPELERA VACIADA",
+                    "Se han eliminado permanentemente todos los documentos de la papelera.",
+                    "TRASH", usuario);
+        }
+    }
 }

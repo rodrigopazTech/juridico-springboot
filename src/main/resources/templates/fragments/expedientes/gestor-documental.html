@@ -116,11 +116,12 @@
 
                     <!-- Lista de Documentos -->
                     <div class="flex-1 overflow-y-auto p-6 relative" id="area-documentos"
+                        ondragenter="handleDragEnter(event)"
                         ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
                         ondrop="handleDrop(event)">
 
                         <!-- Overlay para drag & drop -->
-                        <div id="drop-zone-overlay"
+                        <div id="drop-zone-overlay" style="pointer-events: none;"
                             class="hidden absolute inset-0 bg-gob-guinda/10 border-4 border-dashed border-gob-guinda rounded-lg z-10 flex items-center justify-center">
                             <div class="text-center">
                                 <i class="fas fa-cloud-upload-alt text-5xl text-gob-guinda mb-3"></i>
@@ -337,10 +338,16 @@
                     <i class="fas fa-info-circle mr-1"></i>
                     Los archivos restaurados vuelven a su carpeta original. Si la carpeta ya no existe, se restauran en la raíz.
                 </p>
-                <button onclick="cerrarPapelera()"
-                    class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-100">
-                    Cerrar
-                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="vaciarPapeleraConfirmacion()" id="btn-vaciar-papelera"
+                        class="px-4 py-2 text-sm font-semibold text-white bg-red-600 border border-transparent rounded hover:bg-red-700 transition-colors flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed">
+                        <i class="fas fa-trash-alt"></i> Vaciar papelera
+                    </button>
+                    <button onclick="cerrarPapelera()"
+                        class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-100">
+                        Cerrar
+                    </button>
+                </div>
             </div>
         </div>
     </div>

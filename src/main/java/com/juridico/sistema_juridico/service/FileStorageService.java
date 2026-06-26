@@ -1,17 +1,18 @@
 package com.juridico.sistema_juridico.service;
 
-import com.juridico.sistema_juridico.exception.BadRequestException;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.UUID;
 import java.util.Set;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.juridico.sistema_juridico.exception.BadRequestException;
 
 @Service
 public class FileStorageService {
@@ -43,6 +44,8 @@ public class FileStorageService {
         String extension = nombreOriginal.substring(nombreOriginal.lastIndexOf(".") + 1).toLowerCase();
 
         Set<String> extensionesPermitidas = Set.of(
+            //txt
+            "txt",
             // PDF
             "pdf",
             // Word

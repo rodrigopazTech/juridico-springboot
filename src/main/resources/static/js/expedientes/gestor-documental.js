@@ -8,6 +8,53 @@ let carpetaActualId = null;
 let arbolCarpetasGlobal = [];
 let vistaActual = 'list';
 let mostrandoPapelera = false;
+let documentosActualesGlobal = [];
+
+// Inyectar estilos para la animación de deslizamiento tipo toast en la esquina inferior derecha
+(function() {
+    if (typeof document !== 'undefined' && !document.getElementById('custom-upload-progress-style')) {
+        const style = document.createElement('style');
+        style.id = 'custom-upload-progress-style';
+        style.innerHTML = `
+            @keyframes slideInRight {
+                from {
+                    transform: translate3d(100%, 0, 0);
+                    opacity: 0;
+                }
+                to {
+                    transform: translate3d(0, 0, 0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOutRight {
+                from {
+                    transform: translate3d(0, 0, 0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translate3d(100%, 0, 0);
+                    opacity: 0;
+                }
+            }
+            .swal-slide-in-right {
+                animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+            }
+            .swal-slide-out-right {
+                animation: slideOutRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+            }
+            /* Estilización premium para el contenedor flotante */
+            .swal2-container.swal2-bottom-end {
+                padding: 1.5rem !important;
+            }
+            .swal2-container.swal2-bottom-end .swal2-popup {
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+                border: 1px solid rgba(229, 231, 235, 0.8) !important;
+                border-radius: 1rem !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+})();
 
 // ========================================
 // MANEJO DE ERRORES DE API
@@ -639,6 +686,7 @@ async function cargarDocumentos() {
         }
 
         const documentos = await response.json();
+        documentosActualesGlobal = documentos || [];
         renderizarContenido(subcarpetas, documentos);
 
     } catch (error) {
@@ -925,62 +973,271 @@ function cerrarModalSubirDocumento() {
     modal.classList.remove('flex');
 }
 
+function mostrarModalDuplicado(nombreArchivo) {
+    return new Promise((resolve) => {
+        if (typeof Swal === 'undefined') {
+            const confirmacion = confirm(`Ya existe un archivo con el nombre "${nombreArchivo}". ¿Deseas reemplazarlo?\n(Aceptar = Reemplazar, Cancelar = Crear una copia)`);
+            resolve(confirmacion ? 'replace' : 'copy');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Archivo duplicado',
+            html: `
+                <div class="text-left font-sans text-sm text-gray-700">
+                    <p class="mb-2">Ya existe un archivo activo con el nombre <strong class="text-gob-guinda">${nombreArchivo}</strong> en esta ubicación.</p>
+                    <p class="text-xs text-gray-500">Elige la acción que deseas realizar:</p>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: '<i class="fas fa-exchange-alt mr-1"></i> Reemplazar',
+            denyButtonText: '<i class="fas fa-copy mr-1"></i> Subir como copia',
+            cancelButtonText: '<i class="fas fa-times mr-1"></i> Cancelar',
+            confirmButtonColor: '#691228',
+            denyButtonColor: '#B38E5D',
+            cancelButtonColor: '#9ca3af',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            customClass: {
+                popup: 'rounded-xl shadow-2xl'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                resolve('replace');
+            } else if (result.isDenied) {
+                resolve('copy');
+            } else {
+                resolve('cancel');
+            }
+        });
+    });
+}
+
+function generarNombreUnicoCopia(nombreOriginal, listaDocumentos) {
+    const puntoIdx = nombreOriginal.lastIndexOf('.');
+    let base = puntoIdx !== -1 ? nombreOriginal.substring(0, puntoIdx) : nombreOriginal;
+    const ext = puntoIdx !== -1 ? nombreOriginal.substring(puntoIdx) : '';
+    
+    let contador = 1;
+    let nuevoNombre = `${base} (${contador})${ext}`;
+    
+    while (listaDocumentos.some(doc => doc.nombreOriginal === nuevoNombre)) {
+        contador++;
+        nuevoNombre = `${base} (${contador})${ext}`;
+    }
+    return nuevoNombre;
+}
+
+function subirArchivoConProgreso(archivo, index, total, carpetaId, descripcion) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const formData = new FormData();
+        formData.append('file', archivo);
+        if (carpetaId) {
+            formData.append('carpetaId', carpetaId);
+        }
+        if (descripcion && total === 1) {
+            formData.append('descripcion', descripcion);
+        }
+
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                let percent = Math.round((e.loaded / e.total) * 100);
+                if (percent >= 98) {
+                    percent = 98; // Limitar visualmente a 98% mientras se procesa en backend
+                }
+                const progressBar = document.getElementById('upload-progress-bar');
+                const progressText = document.getElementById('upload-progress-text');
+                const progressTitle = document.getElementById('upload-progress-title');
+                
+                if (progressBar) progressBar.style.width = percent + '%';
+                if (progressText) {
+                    if (percent >= 98) {
+                        progressText.innerText = "98% - Procesando y guardando en el servidor...";
+                    } else {
+                        progressText.innerText = `${percent}%`;
+                    }
+                }
+                if (progressTitle) {
+                    if (total > 1) {
+                        progressTitle.innerText = `Subiendo archivo ${index + 1} de ${total}: ${archivo.name}`;
+                    } else {
+                        progressTitle.innerText = `Subiendo: ${archivo.name}`;
+                    }
+                }
+            }
+        });
+
+        xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                const progressBar = document.getElementById('upload-progress-bar');
+                const progressText = document.getElementById('upload-progress-text');
+                if (progressBar) progressBar.style.width = '100%';
+                if (progressText) progressText.innerText = '100% - ¡Completado!';
+
+                // Esperar 400ms antes de cerrar y resolver para que el usuario pueda ver el "¡Completado!"
+                setTimeout(() => {
+                    try {
+                        const res = JSON.parse(xhr.responseText);
+                        resolve(res);
+                    } catch (e) {
+                        resolve({ success: true });
+                    }
+                }, 400);
+            } else {
+                try {
+                    const err = JSON.parse(xhr.responseText);
+                    reject(new Error(err.error || `Error del servidor (${xhr.status})`));
+                } catch (e) {
+                    reject(new Error(`Error del servidor (${xhr.status})`));
+                }
+            }
+        };
+
+        xhr.onerror = () => {
+            console.error("Error en petición XHR de subida:", xhr);
+            reject(new Error("Error de conexión a la red o el servidor rechazó el archivo."));
+        };
+
+        xhr.open('POST', `/api/documentos/expedientes/${expedienteIdGlobal}`);
+        xhr.withCredentials = true; // Asegurar el envío de cookies en entornos híbridos o de desarrollo
+        xhr.send(formData);
+    });
+}
+
 async function subirDocumento() {
     const fileInput = document.getElementById('doc-file-gestor');
     const carpetaId = document.getElementById('doc-carpeta-gestor').value || null;
     const descripcion = document.getElementById('doc-descripcion-gestor').value;
 
     if (!fileInput.files || fileInput.files.length === 0) {
-        alert('Por favor seleccione al menos un archivo');
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Seleccione un archivo',
+                text: 'Por favor seleccione al menos un archivo para subir.',
+                confirmButtonColor: '#691228'
+            });
+        } else {
+            alert('Por favor seleccione al menos un archivo');
+        }
         return;
+    }
+
+    // Validar archivos del lado del cliente
+    for (let i = 0; i < fileInput.files.length; i++) {
+        if (window.validarArchivoCliente && !window.validarArchivoCliente(fileInput.files[i])) {
+            return;
+        }
     }
 
     const btn = document.getElementById('btn-subir-documento-gestor');
     btn.disabled = true;
+
+    // Verificar duplicados y preguntar qué hacer (Opción A)
+    const archivosASubir = [];
+    let docsTemporales = [...documentosActualesGlobal];
+
+    for (let i = 0; i < fileInput.files.length; i++) {
+        const archivo = fileInput.files[i];
+        const existingDoc = docsTemporales.find(doc => doc.nombreOriginal === archivo.name);
+
+        if (existingDoc) {
+            const accion = await mostrarModalDuplicado(archivo.name);
+            if (accion === 'replace') {
+                archivosASubir.push({ file: archivo, replaceId: existingDoc.id });
+            } else if (accion === 'copy') {
+                const nuevoNombre = generarNombreUnicoCopia(archivo.name, docsTemporales);
+                const archivoCopia = new File([archivo], nuevoNombre, { type: archivo.type });
+                docsTemporales.push({ nombreOriginal: nuevoNombre });
+                archivosASubir.push({ file: archivoCopia, replaceId: null });
+            } else {
+                // Cancelar/omitir este archivo
+                continue;
+            }
+        } else {
+            archivosASubir.push({ file: archivo, replaceId: null });
+        }
+    }
+
+    if (archivosASubir.length === 0) {
+        btn.disabled = false;
+        return;
+    }
     
-    const totalArchivos = fileInput.files.length;
     let archivosSubidos = 0;
     let errores = [];
 
-    try {
-        for (let i = 0; i < totalArchivos; i++) {
-            const archivo = fileInput.files[i];
-            btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1"></i> Subiendo ${i + 1} de ${totalArchivos}...`;
-            
-            const formData = new FormData();
-            formData.append('file', archivo);
-            if (carpetaId) {
-                formData.append('carpetaId', carpetaId);
+    // Mostrar modal de progreso
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Subiendo archivos',
+            html: `
+                <div class="font-sans text-sm mb-3 text-gray-700 text-left" id="upload-progress-title">Preparando subida...</div>
+                <div class="w-full bg-gray-200 rounded-full h-4 mb-2 overflow-hidden">
+                    <div id="upload-progress-bar" class="h-4 rounded-full transition-all duration-300" style="width: 0%; background-color: #691228;"></div>
+                </div>
+                <div id="upload-progress-text" class="text-xs text-gray-500 font-bold text-center">0%</div>
+            `,
+            position: 'bottom-end',
+            backdrop: false,
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            allowEnterKey: false,
+            showClass: {
+                popup: 'swal-slide-in-right'
+            },
+            hideClass: {
+                popup: 'swal-slide-out-right'
             }
-            if (descripcion && totalArchivos === 1) {
-                // Solo agregar descripción si es un solo archivo
-                formData.append('descripcion', descripcion);
+        });
+    }
+
+    try {
+        for (let i = 0; i < archivosASubir.length; i++) {
+            const item = archivosASubir[i];
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1"></i> Subiendo ${i + 1} de ${archivosASubir.length}...`;
+            
+            // Si el usuario eligió reemplazar, eliminar lógicamente el archivo previo primero
+            if (item.replaceId) {
+                try {
+                    const deleteResponse = await fetch(`/api/documentos/${item.replaceId}`, {
+                        method: 'DELETE'
+                    });
+                    if (!deleteResponse.ok) {
+                        console.warn("No se pudo mover a la papelera el archivo a reemplazar:", item.file.name);
+                    }
+                } catch (e) {
+                    console.error("Error al reemplazar archivo duplicado:", e);
+                }
             }
 
             try {
-                const response = await fetch(`/api/documentos/expedientes/${expedienteIdGlobal}`, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    errores.push(`${archivo.name}: ${error.error || 'Error desconocido'}`);
-                } else {
-                    archivosSubidos++;
-                }
+                await subirArchivoConProgreso(item.file, i, archivosASubir.length, carpetaId, descripcion);
+                archivosSubidos++;
             } catch (err) {
-                errores.push(`${archivo.name}: ${err.message}`);
+                errores.push(`${item.file.name}: ${err.message}`);
             }
         }
 
-        // Cerrar modal
+        // Cerrar modal de progreso
+        if (typeof Swal !== 'undefined') {
+            Swal.close();
+        }
+
+        // Cerrar modal de formulario
         cerrarModalSubirDocumento();
 
         // Recargar documentos y espacio
         await cargarDocumentos();
         await cargarEspacioOcupado();
         await cargarArbolCarpetas(); // Actualizar contadores
+        if (typeof actualizarBadgePapelera === 'function') {
+            actualizarBadgePapelera();
+        }
 
         // Mostrar resultado
         if (errores.length === 0) {
@@ -989,12 +1246,31 @@ async function subirDocumento() {
             mostrarNotificacion(`${archivosSubidos} subido(s), ${errores.length} error(es)`, 'warning');
             console.error('Errores al subir:', errores);
         } else {
-            alert('Error al subir los documentos:\\n' + errores.join('\\n'));
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al subir los documentos',
+                    html: `<div class="text-left font-sans text-sm"><p class="mb-2">No se pudieron subir los siguientes archivos:</p><ul class="list-disc pl-5 space-y-1 text-red-600">${errores.map(e => `<li>${e}</li>`).join('')}</ul></div>`,
+                    confirmButtonColor: '#691228'
+                });
+            } else {
+                alert('Error al subir los documentos:\n' + errores.join('\n'));
+            }
         }
 
     } catch (error) {
         console.error('Error:', error);
-        alert(error.message);
+        if (typeof Swal !== 'undefined') {
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: 'Error inesperado',
+                text: error.message,
+                confirmButtonColor: '#691228'
+            });
+        } else {
+            alert(error.message);
+        }
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-upload mr-1"></i> Subir Ahora';
@@ -1093,10 +1369,12 @@ function previsualizarDocumento(documentoId) {
 }
 
 // ========================================
-// DRAG & DROP
+// DRAG & DROP (CONTADOR DE ARRASTRE)
 // ========================================
 
-function handleDragOver(event) {
+let dragCounter = 0;
+
+function handleDragEnter(event) {
     if (mostrandoPapelera) {
         return;
     }
@@ -1104,33 +1382,52 @@ function handleDragOver(event) {
     event.preventDefault();
     event.stopPropagation();
     
-    const overlay = document.getElementById('drop-zone-overlay');
-    const carpetaLabel = document.getElementById('drop-zone-carpeta');
-    
-    // Mostrar overlay
-    overlay.classList.remove('hidden');
-    overlay.classList.add('flex');
-    
-    // Actualizar texto con carpeta actual
-    if (carpetaActualId) {
-        const nombreCarpeta = buscarNombreCarpeta(carpetaActualId, arbolCarpetasGlobal);
-        carpetaLabel.textContent = `Se subirán a: ${nombreCarpeta}`;
-    } else {
-        carpetaLabel.textContent = `Se subirán a: ${numeroExpedienteGlobal || 'Raíz'}`;
+    dragCounter++;
+    if (dragCounter === 1) {
+        const overlay = document.getElementById('drop-zone-overlay');
+        const carpetaLabel = document.getElementById('drop-zone-carpeta');
+        
+        // Mostrar overlay
+        if (overlay) {
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+        
+        // Actualizar texto con carpeta actual
+        if (carpetaLabel) {
+            if (carpetaActualId) {
+                const nombreCarpeta = buscarNombreCarpeta(carpetaActualId, arbolCarpetasGlobal);
+                carpetaLabel.textContent = `Se subirán a: ${nombreCarpeta}`;
+            } else {
+                carpetaLabel.textContent = `Se subirán a: ${numeroExpedienteGlobal || 'Raíz'}`;
+            }
+        }
     }
 }
 
+function handleDragOver(event) {
+    if (mostrandoPapelera) {
+        return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+}
+
 function handleDragLeave(event) {
+    if (mostrandoPapelera) {
+        return;
+    }
     event.preventDefault();
     event.stopPropagation();
     
-    // Solo ocultar si salimos del área principal
-    const rect = document.getElementById('area-documentos').getBoundingClientRect();
-    if (event.clientX < rect.left || event.clientX > rect.right || 
-        event.clientY < rect.top || event.clientY > rect.bottom) {
+    dragCounter--;
+    if (dragCounter <= 0) {
+        dragCounter = 0;
         const overlay = document.getElementById('drop-zone-overlay');
-        overlay.classList.add('hidden');
-        overlay.classList.remove('flex');
+        if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        }
     }
 }
 
@@ -1142,9 +1439,12 @@ async function handleDrop(event) {
     event.preventDefault();
     event.stopPropagation();
     
+    dragCounter = 0;
     const overlay = document.getElementById('drop-zone-overlay');
-    overlay.classList.add('hidden');
-    overlay.classList.remove('flex');
+    if (overlay) {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('flex');
+    }
     
     const files = event.dataTransfer.files;
     if (!files || files.length === 0) return;
@@ -1153,44 +1453,121 @@ async function handleDrop(event) {
     await subirArchivosDirecto(files, carpetaActualId);
 }
 
+
 async function subirArchivosDirecto(files, carpetaId) {
     const totalArchivos = files.length;
     let archivosSubidos = 0;
     let errores = [];
     
-    // Mostrar notificación de inicio
-    mostrarNotificacion(`Subiendo ${totalArchivos} archivo(s)...`, 'info');
-    
+    // Validar archivos antes de subirlos
+    const archivosValidos = [];
     for (let i = 0; i < totalArchivos; i++) {
         const archivo = files[i];
-        
-        const formData = new FormData();
-        formData.append('file', archivo);
-        if (carpetaId) {
-            formData.append('carpetaId', carpetaId);
+        if (window.validarArchivoCliente && !window.validarArchivoCliente(archivo)) {
+            continue;
         }
-        
-        try {
-            const response = await fetch(`/api/documentos/expedientes/${expedienteIdGlobal}`, {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (!response.ok) {
-                const error = await response.json();
-                errores.push(`${archivo.name}: ${error.error || 'Error'}`);
+        archivosValidos.push(archivo);
+    }
+    
+    if (archivosValidos.length === 0) {
+        return;
+    }
+    
+    // Verificar duplicados y preguntar qué hacer (Opción A)
+    const archivosASubir = [];
+    let docsTemporales = [...documentosActualesGlobal];
+
+    for (let i = 0; i < archivosValidos.length; i++) {
+        const archivo = archivosValidos[i];
+        const existingDoc = docsTemporales.find(doc => doc.nombreOriginal === archivo.name);
+
+        if (existingDoc) {
+            const accion = await mostrarModalDuplicado(archivo.name);
+            if (accion === 'replace') {
+                archivosASubir.push({ file: archivo, replaceId: existingDoc.id });
+            } else if (accion === 'copy') {
+                const nuevoNombre = generarNombreUnicoCopia(archivo.name, docsTemporales);
+                const archivoCopia = new File([archivo], nuevoNombre, { type: archivo.type });
+                docsTemporales.push({ nombreOriginal: nuevoNombre });
+                archivosASubir.push({ file: archivoCopia, replaceId: null });
             } else {
-                archivosSubidos++;
+                // Cancelar/omitir este archivo
+                continue;
             }
+        } else {
+            archivosASubir.push({ file: archivo, replaceId: null });
+        }
+    }
+
+    if (archivosASubir.length === 0) {
+        return;
+    }
+
+    // Mostrar modal de progreso
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Subiendo archivos',
+            html: `
+                <div class="font-sans text-sm mb-3 text-gray-700 text-left" id="upload-progress-title">Preparando subida...</div>
+                <div class="w-full bg-gray-200 rounded-full h-4 mb-2 overflow-hidden">
+                    <div id="upload-progress-bar" class="h-4 rounded-full transition-all duration-300" style="width: 0%; background-color: #691228;"></div>
+                </div>
+                <div id="upload-progress-text" class="text-xs text-gray-500 font-bold text-center">0%</div>
+            `,
+            position: 'bottom-end',
+            backdrop: false,
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            allowEnterKey: false,
+            showClass: {
+                popup: 'swal-slide-in-right'
+            },
+            hideClass: {
+                popup: 'swal-slide-out-right'
+            }
+        });
+    } else {
+        mostrarNotificacion(`Subiendo ${archivosASubir.length} archivo(s)...`, 'info');
+    }
+    
+    for (let i = 0; i < archivosASubir.length; i++) {
+        const item = archivosASubir[i];
+        
+        // Si el usuario eligió reemplazar, eliminar lógicamente el archivo previo primero
+        if (item.replaceId) {
+            try {
+                const deleteResponse = await fetch(`/api/documentos/${item.replaceId}`, {
+                    method: 'DELETE'
+                });
+                if (!deleteResponse.ok) {
+                    console.warn("No se pudo mover a la papelera el archivo a reemplazar:", item.file.name);
+                }
+            } catch (e) {
+                console.error("Error al reemplazar archivo duplicado:", e);
+            }
+        }
+
+        try {
+            await subirArchivoConProgreso(item.file, i, archivosASubir.length, carpetaId, null);
+            archivosSubidos++;
         } catch (err) {
-            errores.push(`${archivo.name}: ${err.message}`);
+            errores.push(`${item.file.name}: ${err.message}`);
         }
     }
     
+    // Cerrar modal de progreso
+    if (typeof Swal !== 'undefined') {
+        Swal.close();
+    }
+
     // Recargar datos
     await cargarDocumentos();
     await cargarEspacioOcupado();
     await cargarArbolCarpetas();
+    if (typeof actualizarBadgePapelera === 'function') {
+        actualizarBadgePapelera();
+    }
     
     // Mostrar resultado
     if (errores.length === 0) {
@@ -1455,6 +1832,14 @@ document.addEventListener('DOMContentLoaded', function () {
         // Conectar el canal de tiempo real para documentos/carpetas
         iniciarWebSocketDocumentos();
     }
+
+    // Prevenir comportamiento por defecto de arrastrar y soltar en la ventana
+    window.addEventListener("dragover", function (e) {
+        e.preventDefault();
+    }, false);
+    window.addEventListener("drop", function (e) {
+        e.preventDefault();
+    }, false);
 });
 
 async function buscarDocumentos() {
@@ -1600,8 +1985,13 @@ async function cargarPapelera() {
  */
 function renderizarPapeleraModal(documentos) {
     const contenido = document.getElementById('papelera-contenido');
+    const btnVaciar = document.getElementById('btn-vaciar-papelera');
 
     if (!documentos || documentos.length === 0) {
+        if (btnVaciar) {
+            btnVaciar.disabled = true;
+            btnVaciar.classList.add('opacity-40', 'cursor-not-allowed');
+        }
         contenido.innerHTML = `
             <div class="text-center text-gray-400 py-12">
                 <i class="fas fa-trash-alt text-5xl mb-3 opacity-30"></i>
@@ -1610,6 +2000,11 @@ function renderizarPapeleraModal(documentos) {
             </div>
         `;
         return;
+    }
+
+    if (btnVaciar) {
+        btnVaciar.disabled = false;
+        btnVaciar.classList.remove('opacity-40', 'cursor-not-allowed');
     }
 
     let html = `<div class="space-y-2">`;
@@ -1792,6 +2187,77 @@ async function confirmarEliminarPermanente() {
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-trash mr-1"></i> Eliminar';
+    }
+}
+
+/**
+ * Solicita confirmación para vaciar la papelera de este expediente.
+ */
+function vaciarPapeleraConfirmacion() {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: '¿Vaciar la papelera?',
+            text: 'Todos los documentos en la papelera serán eliminados permanentemente y de manera física. Esta acción no se puede deshacer.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, vaciar papelera',
+            cancelButtonText: 'Cancelar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                await ejecutarVaciarPapelera();
+            }
+        });
+    } else {
+        if (confirm('¿Estás seguro de que deseas vaciar permanentemente todos los documentos de la papelera?')) {
+            ejecutarVaciarPapelera();
+        }
+    }
+}
+
+/**
+ * Ejecuta el borrado masivo de la papelera mediante petición DELETE.
+ */
+async function ejecutarVaciarPapelera() {
+    const btnVaciar = document.getElementById('btn-vaciar-papelera');
+    if (btnVaciar) {
+        btnVaciar.disabled = true;
+        btnVaciar.innerHTML = '<i class="fas fa-spinner fa-spin mr-1.5"></i> Vaciando...';
+    }
+
+    try {
+        const response = await fetch(`/api/documentos/expedientes/${expedienteIdGlobal}/papelera`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Error al vaciar la papelera');
+        }
+
+        await cargarPapelera();
+        await cargarEspacioOcupado();
+        
+        mostrarNotificacion('La papelera ha sido vaciada correctamente', 'success');
+
+    } catch (error) {
+        console.error('Error:', error);
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message,
+                confirmButtonColor: '#691228'
+            });
+        } else {
+            alert(error.message);
+        }
+    } finally {
+        if (btnVaciar) {
+            btnVaciar.disabled = false;
+            btnVaciar.innerHTML = '<i class="fas fa-trash-alt mr-1.5"></i> Vaciar papelera';
+        }
     }
 }
 
