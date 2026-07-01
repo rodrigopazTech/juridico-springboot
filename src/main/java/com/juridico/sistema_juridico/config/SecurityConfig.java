@@ -61,8 +61,11 @@ public class SecurityConfig {
                                 new AntPathRequestMatcher("/api/**")))
                 .authorizeHttpRequests(auth -> auth
                         // 1. Recursos Públicos
-                        .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**", "/lib/**").permitAll()
-                        .requestMatchers("/", "/login", "/register", "/api/auth/**", "/error", "/cambiar-password", "/ws-realtime/**", "/sw.js", "/manifest.json")
+                        .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**", "/lib/**", "/manifest.json",
+                                "/sw.js")
+                        .permitAll()
+                        .requestMatchers("/", "/login", "/register", "/api/auth/**", "/error", "/cambiar-password",
+                                "/ws-realtime/**")
                         .permitAll()
 
                         // 2. NIVEL ALTO
@@ -103,7 +106,8 @@ public class SecurityConfig {
                         .successHandler((request, response, authentication) -> {
                             String email = authentication.getName();
                             usuarioRepository.findByEmail(email).ifPresent(u -> {
-                                auditoriaService.registrarActividadGeneral(u, "Inicio de Sesión", "El usuario ha ingresado al sistema.", "CLOCK");
+                                auditoriaService.registrarActividadGeneral(u, "Inicio de Sesión",
+                                        "El usuario ha ingresado al sistema.", "CLOCK");
                             });
                             // Generar cookie JWT para sincronizar sesión con peticiones /api/**
                             String jwt = jwtTokenProvider.generateToken(authentication);
@@ -113,25 +117,24 @@ public class SecurityConfig {
                             jwtCookie.setMaxAge((int) (jwtExpirationMs / 1000));
                             response.addCookie(jwtCookie);
                             // Redirigir a la URL solicitada originalmente o al dashboard
-                            org.springframework.security.web.savedrequest.HttpSessionRequestCache requestCache =
-                                new org.springframework.security.web.savedrequest.HttpSessionRequestCache();
-                            org.springframework.security.web.savedrequest.SavedRequest savedRequest =
-                                requestCache.getRequest(request, response);
-                             if (savedRequest != null) {
-                                 String redirectUrl = savedRequest.getRedirectUrl();
-                                 if (redirectUrl.contains(".well-known") ||
-                                         redirectUrl.contains("favicon") ||
-                                         redirectUrl.contains("manifest.json") ||
-                                         redirectUrl.contains("sw.js") ||
-                                          redirectUrl.contains("/error") ||
-                                         redirectUrl.contains("/api/")) {
-                                     response.sendRedirect("/dashboard");
-                                 } else {
-                                     response.sendRedirect(redirectUrl);
-                                 }
-                             } else {
-                                 response.sendRedirect("/dashboard");
-                             }
+                            org.springframework.security.web.savedrequest.HttpSessionRequestCache requestCache = new org.springframework.security.web.savedrequest.HttpSessionRequestCache();
+                            org.springframework.security.web.savedrequest.SavedRequest savedRequest = requestCache
+                                    .getRequest(request, response);
+                            if (savedRequest != null) {
+                                String redirectUrl = savedRequest.getRedirectUrl();
+                                if (redirectUrl.contains(".well-known") ||
+                                        redirectUrl.contains("favicon") ||
+                                        redirectUrl.contains("manifest.json") ||
+                                        redirectUrl.contains("sw.js") ||
+                                        redirectUrl.contains("/error") ||
+                                        redirectUrl.contains("/api/")) {
+                                    response.sendRedirect("/dashboard");
+                                } else {
+                                    response.sendRedirect(redirectUrl);
+                                }
+                            } else {
+                                response.sendRedirect("/dashboard");
+                            }
                         })
                         .failureUrl("/?error=true")
                         .permitAll())
@@ -141,7 +144,8 @@ public class SecurityConfig {
                             if (authentication != null) {
                                 String email = authentication.getName();
                                 usuarioRepository.findByEmail(email).ifPresent(u -> {
-                                    auditoriaService.registrarActividadGeneral(u, "Cierre de Sesión", "El usuario ha salido del sistema.", "CLOCK");
+                                    auditoriaService.registrarActividadGeneral(u, "Cierre de Sesión",
+                                            "El usuario ha salido del sistema.", "CLOCK");
                                 });
                             }
                             // Limpiar cookie JWT al cerrar sesión
