@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     Swal.close();
                     if (res.ok) {
                         showSuccessToast('¡Etapa avanzada correctamente!');
+                        actualizarTablaAsincrono();
                     } else {
                         showErrorModal('No se pudo avanzar la etapa del término.');
                     }
