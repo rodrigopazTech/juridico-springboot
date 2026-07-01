@@ -1,10 +1,5 @@
 package com.juridico.sistema_juridico.config;
 
-import com.juridico.sistema_juridico.security.CustomUserDetailsService;
-import com.juridico.sistema_juridico.security.JwtAuthenticationFilter;
-import com.juridico.sistema_juridico.security.JwtAuthenticationEntryPoint;
-import com.juridico.sistema_juridico.security.ForcePasswordChangeFilter;
-import com.juridico.sistema_juridico.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,8 +11,14 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; // <-- Importación necesaria
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+import com.juridico.sistema_juridico.security.CustomUserDetailsService;
+import com.juridico.sistema_juridico.security.ForcePasswordChangeFilter;
+import com.juridico.sistema_juridico.security.JwtAuthenticationEntryPoint;
+import com.juridico.sistema_juridico.security.JwtAuthenticationFilter; // <-- Importación necesaria
+import com.juridico.sistema_juridico.security.JwtTokenProvider;
 
 @Configuration
 @EnableWebSecurity
@@ -61,7 +62,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 1. Recursos Públicos
                         .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**", "/lib/**").permitAll()
-                        .requestMatchers("/", "/login", "/register", "/api/auth/**", "/error", "/cambiar-password", "/ws-realtime/**", "/sw.js")
+                        .requestMatchers("/", "/login", "/register", "/api/auth/**", "/error", "/cambiar-password", "/ws-realtime/**", "/sw.js", "/manifest.json")
                         .permitAll()
 
                         // 2. NIVEL ALTO

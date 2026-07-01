@@ -16,42 +16,35 @@ function urlBase64ToUint8Array(base64String) {
     return outputArray;
 }
 
-async function initWebPush() {
-    // Comprobar soporte
+let serviceWorkerRegistration = null;
+
+// Registra el Service Worker de forma silenciosa al cargar la página
+async function registerServiceWorkerOnly() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
         console.warn('[WebPush] Las notificaciones Push no son soportadas en este navegador.');
-        return;
+        return null;
     }
-
     try {
-        // Registrar Service Worker (sw.js en la raíz del contexto de Spring Boot)
         const registration = await navigator.serviceWorker.register('/sw.js');
         console.log('[WebPush] Service Worker registrado con éxito en scope:', registration.scope);
+        serviceWorkerRegistration = registration;
+        return registration;
+    } catch (error) {
+        console.error('[WebPush] Error al registrar Service Worker:', error);
+        return null;
+    }
+}
 
-        // Esperar a que el service worker esté listo
-        await navigator.serviceWorker.ready;
+// Realiza la suscripción al servidor una vez concedido el permiso
+async function subscribeUser() {
+    try {
+        const registration = serviceWorkerRegistration || await navigator.serviceWorker.ready;
+        if (!registration) return;
 
-        // Comprobar estado de permisos de notificación
-        if (Notification.permission === 'denied') {
-            console.warn('[WebPush] El permiso para recibir notificaciones está denegado.');
-            return;
-        }
-
-        if (Notification.permission === 'default') {
-            // Solicitar permisos de manera nativa al usuario
-            const permission = await Notification.requestPermission();
-            if (permission !== 'granted') {
-                console.warn('[WebPush] Permiso para notificaciones denegado.');
-                return;
-            }
-        }
-
-        // Obtener suscripción actual si existe
         let subscription = await registration.pushManager.getSubscription();
 
         if (!subscription) {
             console.log('[WebPush] Creando nueva suscripción...');
-            // Obtener la clave pública VAPID desde el backend
             const response = await fetch('/api/webpush/public-key');
             if (!response.ok) {
                 throw new Error('[WebPush] No se pudo obtener la clave pública VAPID del backend.');
@@ -59,7 +52,6 @@ async function initWebPush() {
             const data = await response.json();
             const publicKey = urlBase64ToUint8Array(data.publicKey);
 
-            // Registrar suscripción en el navegador
             subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: publicKey
@@ -69,12 +61,111 @@ async function initWebPush() {
             await sendSubscriptionToBackend(subscription);
         } else {
             console.log('[WebPush] Suscripción existente detectada.');
-            // Enviar de todas formas para verificar coherencia del lado del servidor
             await sendSubscriptionToBackend(subscription);
         }
-
     } catch (error) {
-        console.error('[WebPush] Error al inicializar notificaciones push:', error);
+        console.error('[WebPush] Error al suscribir al usuario:', error);
+    }
+}
+
+// Muestra el popover flotante apuntando a la campana
+function showPushPopover() {
+    // Verificar si es móvil, permiso es default y no ha sido descartado previamente por el usuario
+    if (!isMobileDevice() || Notification.permission !== 'default' || localStorage.getItem('webpush_popover_dismissed') === 'true') {
+        return;
+    }
+
+    const wrapper = document.getElementById('notif-bell-wrapper');
+    if (!wrapper) return;
+
+    // Evitar duplicados
+    if (document.getElementById('webpush-popover')) return;
+
+    const popover = document.createElement('div');
+    popover.id = 'webpush-popover';
+    
+    // Estilos premium: posicionado debajo de la campana, con sombra, transición y flecha indicadora
+    popover.className = 'absolute top-[60px] right-0 z-[60] w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 flex flex-col gap-2.5 transition-all duration-300 transform scale-95 opacity-0';
+    popover.innerHTML = `
+        <!-- Flechita apuntando a la campana -->
+        <div class="absolute -top-1.5 right-4.5 w-3 h-3 rotate-45 bg-white border-t border-l border-gray-100"></div>
+        
+        <div class="flex items-start gap-2.5">
+            <div class="w-8 h-8 rounded-full bg-gob-oro/10 flex items-center justify-center text-gob-oro flex-shrink-0">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold text-gray-800">Notificaciones en tiempo real</p>
+                <p class="text-[11px] text-gray-500 mt-1 leading-normal">Recibe alertas al instante sobre tus audiencias, términos y expedientes.</p>
+                <p class="text-[10px] text-gob-oro font-bold mt-1.5 flex items-center gap-1">
+                    <i class="fas fa-info-circle text-[9px]"></i> Se recomienda activar esta opción
+                </p>
+            </div>
+        </div>
+        
+        <div class="flex justify-end gap-2 mt-1.5 border-t border-gray-100 pt-2">
+            <button id="webpush-popover-dismiss" class="px-2.5 py-1 text-gray-400 hover:text-gray-600 text-[11px] font-bold transition-colors">
+                Ahora no
+            </button>
+            <button id="webpush-popover-activate" class="px-3.5 py-1 bg-gob-guinda text-white text-[11px] font-bold rounded-lg hover:bg-red-800 transition-colors shadow-sm">
+                Activar
+            </button>
+        </div>
+    `;
+
+    wrapper.appendChild(popover);
+
+    // Animación de entrada fluida
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            popover.classList.remove('scale-95', 'opacity-0');
+            popover.classList.add('scale-100', 'opacity-100');
+        });
+    });
+
+    const btnActivate = popover.querySelector('#webpush-popover-activate');
+    const btnDismiss = popover.querySelector('#webpush-popover-dismiss');
+
+    btnActivate.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        btnActivate.disabled = true;
+        btnActivate.textContent = 'Activando...';
+        
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                console.log('[WebPush] Permiso concedido por el usuario.');
+                dismissPopover();
+                await subscribeUser();
+            } else {
+                console.warn('[WebPush] Permiso denegado por el usuario o navegador.');
+                btnActivate.textContent = 'Denegado';
+                setTimeout(dismissPopover, 1500);
+            }
+        } catch (err) {
+            console.error('[WebPush] Error al solicitar permiso:', err);
+            btnActivate.disabled = false;
+            btnActivate.textContent = 'Activar';
+        }
+    });
+
+    btnDismiss.addEventListener('click', (e) => {
+        e.stopPropagation();
+        localStorage.setItem('webpush_popover_dismissed', 'true');
+        dismissPopover();
+    });
+
+    // Función para cerrar con animación de salida
+    function dismissPopover() {
+        popover.classList.remove('scale-100', 'opacity-100');
+        popover.classList.add('scale-95', 'opacity-0');
+        popover.addEventListener('transitionend', () => popover.remove(), { once: true });
+    }
+
+    // Ocultar si el usuario abre el menú real de la campana
+    const bellBtn = document.getElementById('notif-bell-btn');
+    if (bellBtn) {
+        bellBtn.addEventListener('click', dismissPopover, { once: true });
     }
 }
 
@@ -124,6 +215,52 @@ async function sendSubscriptionToBackend(subscription) {
     }
 }
 
+// Desuscribirse del Web Push antes de hacer logout
+async function unsubscribeUserBeforeLogout(e) {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        return;
+    }
+    
+    // Prevenir la redirección inmediata del logout
+    e.preventDefault();
+    const logoutUrl = e.currentTarget.getAttribute('href') || '/logout';
+
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        if (registration) {
+            const subscription = await registration.pushManager.getSubscription();
+            if (subscription) {
+                console.log('[WebPush] Desuscribiendo del servidor...');
+                // 1. Enviar petición al backend para eliminarla de la BD
+                const csrfTokenEl = document.querySelector('meta[name="_csrf"]');
+                const csrfHeaderEl = document.querySelector('meta[name="_csrf_header"]');
+                
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                if (csrfTokenEl && csrfHeaderEl) {
+                    headers[csrfHeaderEl.content] = csrfTokenEl.content;
+                }
+
+                await fetch('/api/webpush/unsubscribe', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ endpoint: subscription.endpoint })
+                });
+
+                // 2. Desuscribir en el navegador
+                await subscription.unsubscribe();
+                console.log('[WebPush] Desuscrito con éxito del navegador.');
+            }
+        }
+    } catch (err) {
+        console.error('[WebPush] Error durante la desuscripción de cierre de sesión:', err);
+    } finally {
+        // Proceder con la redirección al logout original
+        window.location.href = logoutUrl;
+    }
+}
+
 // Función para detectar si el cliente es un dispositivo móvil o tablet
 function isMobileDevice() {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
@@ -137,9 +274,25 @@ function isMobileDevice() {
 // Iniciar Web Push al cargar el DOM solo si es un dispositivo móvil
 document.addEventListener('DOMContentLoaded', () => {
     if (isMobileDevice()) {
-        console.log('[WebPush] Dispositivo móvil detectado. Inicializando registro de Service Worker y suscripción push...');
-        initWebPush();
+        console.log('[WebPush] Dispositivo móvil detectado. Inicializando registro de Service Worker...');
+        registerServiceWorkerOnly().then(() => {
+            if (Notification.permission === 'granted') {
+                console.log('[WebPush] Permiso ya concedido previamente. Suscribiendo...');
+                subscribeUser();
+            } else if (Notification.permission === 'default') {
+                // Mostrar el popover flotante después de 1.5 segundos para que la carga sea fluida
+                setTimeout(showPushPopover, 1500);
+            }
+        });
     } else {
         console.log('[WebPush] Entorno de escritorio detectado. Notificaciones en segundo plano Web Push omitidas de manera silenciosa.');
     }
+
+    // Interceptar clics en enlaces de logout para desuscribir (funciona en móvil y PC)
+    document.addEventListener('click', (e) => {
+        const logoutLink = e.target.closest('a[href*="/logout"]');
+        if (logoutLink) {
+            unsubscribeUserBeforeLogout(e);
+        }
+    });
 });
