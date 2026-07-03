@@ -216,22 +216,25 @@ async function sendSubscriptionToBackend(subscription) {
 }
 
 // Desuscribirse del Web Push antes de hacer logout
-async function unsubscribeUserBeforeLogout(e) {
+async function unsubscribeUserBeforeLogout(e, logoutLink) {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
         return;
     }
     
     // Prevenir la redirección inmediata del logout
     e.preventDefault();
-    const logoutUrl = e.currentTarget.getAttribute('href') || '/logout';
+    const targetLink = logoutLink || (e.target && e.target.closest('a[href*="/logout"]'));
+    const logoutUrl = (targetLink && typeof targetLink.getAttribute === 'function')
+        ? targetLink.getAttribute('href')
+        : '/logout';
 
     try {
-        const registration = await navigator.serviceWorker.ready;
+        // Obtenemos el registro activo de forma inmediata sin quedarnos esperando colgados si no existe
+        const registration = await navigator.serviceWorker.getRegistration();
         if (registration) {
             const subscription = await registration.pushManager.getSubscription();
             if (subscription) {
                 console.log('[WebPush] Desuscribiendo del servidor...');
-                // 1. Enviar petición al backend para eliminarla de la BD
                 const csrfTokenEl = document.querySelector('meta[name="_csrf"]');
                 const csrfHeaderEl = document.querySelector('meta[name="_csrf_header"]');
                 
@@ -242,13 +245,24 @@ async function unsubscribeUserBeforeLogout(e) {
                     headers[csrfHeaderEl.content] = csrfTokenEl.content;
                 }
 
-                await fetch('/api/webpush/unsubscribe', {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify({ endpoint: subscription.endpoint })
-                });
+                // Definimos un límite de tiempo de 3 segundos para la petición al servidor
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-                // 2. Desuscribir en el navegador
+                try {
+                    await fetch('/api/webpush/unsubscribe', {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify({ endpoint: subscription.endpoint }),
+                        signal: controller.signal
+                    });
+                } catch (fetchErr) {
+                    console.error('[WebPush] Error o tiempo de espera agotado al desuscribir del servidor:', fetchErr);
+                } finally {
+                    clearTimeout(timeoutId);
+                }
+
+                // Desuscribir en el navegador
                 await subscription.unsubscribe();
                 console.log('[WebPush] Desuscrito con éxito del navegador.');
             }
@@ -292,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (e) => {
         const logoutLink = e.target.closest('a[href*="/logout"]');
         if (logoutLink) {
-            unsubscribeUserBeforeLogout(e);
+            unsubscribeUserBeforeLogout(e, logoutLink);
         }
     });
 });
