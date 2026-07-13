@@ -171,8 +171,8 @@ public class ConfiguracionAlertasController {
     }
 
     private void validarAccesoAsunto(Usuario actor, TipoEventoAlerta tipoEvento, String asuntoId) {
-        if (actor.getRol() == RolUsuario.ADMIN || actor.getRol() == RolUsuario.DIRECCION
-                || actor.getRol() == RolUsuario.SUBDIRECCION) {
+        if (actor.getRol() == RolUsuario.ADMIN || actor.getRol() == RolUsuario.DIRECTOR_PRINCIPAL
+                || actor.getRol() == RolUsuario.DIRECTOR || actor.getRol() == RolUsuario.SUBDIRECTOR) {
             return;
         }
         if (tipoEvento == TipoEventoAlerta.TERMINO) {

@@ -107,12 +107,13 @@ public class AudienciaService {
             // 1. Obtener destinatarios: Dirección, Subdirección
             List<Usuario> destinatarios = usuarioRepository.findAll().stream()
                     .filter(u -> u.getActivo())
-                    .filter(u -> u.getRol() == RolUsuario.DIRECCION || u.getRol() == RolUsuario.SUBDIRECCION)
+                    .filter(u -> u.getRol() == RolUsuario.DIRECTOR || u.getRol() == RolUsuario.SUBDIRECTOR)
                     .collect(Collectors.toList());
 
             // 2. Agregar Gerentes de la misma Gerencia
-            if (audiencia.getExpediente().getGerencia() != null) {
-                Integer gerenciaId = audiencia.getExpediente().getGerencia().getId();
+            com.juridico.sistema_juridico.Entity.catalogo.Gerencia ger = audiencia.getGerenciaReferencia();
+            if (ger != null) {
+                Integer gerenciaId = ger.getId();
                 List<Usuario> gerentes = usuarioRepository.findAll().stream()
                         .filter(u -> u.getActivo() && u.getRol() == RolUsuario.GERENTE)
                         .filter(u -> u.getGerencia() != null && u.getGerencia().getId().equals(gerenciaId))
@@ -121,8 +122,9 @@ public class AudienciaService {
             }
 
             // 3. Agregar Jefes de Departamento de la misma Materia
-            if (audiencia.getExpediente().getMateria() != null) {
-                Integer materiaId = audiencia.getExpediente().getMateria().getId();
+            com.juridico.sistema_juridico.Entity.catalogo.Materia mat = audiencia.getMateriaReferencia();
+            if (mat != null) {
+                Integer materiaId = mat.getId();
                 List<Usuario> jefes = usuarioRepository.findAll().stream()
                         .filter(u -> u.getActivo() && u.getRol() == RolUsuario.JEFE_DEPTO)
                         .filter(u -> u.tieneMateria(materiaId))
@@ -133,14 +135,15 @@ public class AudienciaService {
             // Eliminar duplicados si los hay
             destinatarios = destinatarios.stream().distinct().collect(Collectors.toList());
 
-            String expediente = (audiencia.getExpediente() != null) ? audiencia.getExpediente().getNumero()
-                    : "Desconocido";
+            String expediente = audiencia.getNumeroReferencia();
 
             String nombreAbogado;
             if (audiencia.getAbogadoComparece() != null) {
                 nombreAbogado = audiencia.getAbogadoComparece().getNombreCompleto();
-            } else {
+            } else if (audiencia.getExpediente() != null && audiencia.getExpediente().getAbogadoResponsable() != null) {
                 nombreAbogado = audiencia.getExpediente().getAbogadoResponsable().getNombreCompleto();
+            } else {
+                nombreAbogado = "Sin asignar";
             }
 
             String entidadId = audiencia.getId().toString();
@@ -185,7 +188,7 @@ public class AudienciaService {
         // Crear registro en Histórico
         AudienciaDesahogada historico = AudienciaDesahogada.builder()
                 .audiencia(audiencia)
-                .expedienteNumero(audiencia.getExpediente().getNumero())
+                .expedienteNumero(audiencia.getNumeroReferencia())
                 .fechaAudiencia(audiencia.getFechaAudiencia())
                 .horaAudiencia(audiencia.getHoraAudiencia())
                 .fechaDesahogo(LocalDate.now())
@@ -207,7 +210,7 @@ public class AudienciaService {
         registrarActividad(audiencia.getExpediente(), "Audiencia Concluida", desc, "CHECK");
 
         // Notificar al abogado responsable si la audiencia fue concluida por un superior
-        Usuario abogadoResponsable = audiencia.getExpediente().getAbogadoResponsable();
+        Usuario abogadoResponsable = (audiencia.getExpediente() != null) ? audiencia.getExpediente().getAbogadoResponsable() : null;
         Usuario abogadoComparece = audiencia.getAbogadoComparece(); // Si existe
 
         if (abogadoComparece != null && !abogadoComparece.getId().equals(usuarioActual.getId())) {
@@ -216,7 +219,7 @@ public class AudienciaService {
                     usuarioActual,
                     NotificacionEvento.AUDIENCIA_VALIDADA_CONCLUIDA,
                     "Audiencia Validada y Concluida",
-                    "Tu audiencia del expediente " + audiencia.getExpediente().getNumero() + " ha sido validada y concluida.",
+                    "Tu audiencia " + (audiencia.getNumeroReferencia() != null ? "de ref: " + audiencia.getNumeroReferencia() : "") + " ha sido validada y concluida.",
 
                     catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                     audiencia.getId().toString(),
@@ -243,7 +246,7 @@ public class AudienciaService {
         String rol = usuario.getRol().name();
 
         // 1. Admin y Dirección pueden concluir todo
-        if (rol.equals("ADMIN") || rol.equals("DIRECCION") || rol.equals("SUBDIRECCION")) {
+        if (rol.equals("ADMIN") || rol.equals("DIRECTOR") || rol.equals("DIRECTOR_PRINCIPAL") || rol.equals("SUBDIRECTOR")) {
             return;
         }
 
@@ -272,8 +275,9 @@ public class AudienciaService {
 
         // 3. Gerentes deben ser de la misma Gerencia
         if (rol.equals("GERENTE")) {
-            if (usuario.getGerencia() == null || audiencia.getExpediente().getGerencia() == null ||
-                    !usuario.getGerencia().getId().equals(audiencia.getExpediente().getGerencia().getId())) {
+            com.juridico.sistema_juridico.Entity.catalogo.Gerencia ger = audiencia.getGerenciaReferencia();
+            if (usuario.getGerencia() == null || ger == null ||
+                    !usuario.getGerencia().getId().equals(ger.getId())) {
                 throw new com.juridico.sistema_juridico.exception.ForbiddenException(
                         "Acceso denegado: Solo el Gerente del área correspondiente puede concluir esta audiencia.");
             }
@@ -282,8 +286,8 @@ public class AudienciaService {
 
         // 4. Jefes de Departamento deben tener la materia asignada
         if (rol.equals("JEFE_DEPTO")) {
-            if (audiencia.getExpediente().getMateria() == null ||
-                    !usuario.tieneMateria(audiencia.getExpediente().getMateria().getId())) {
+            com.juridico.sistema_juridico.Entity.catalogo.Materia mat = audiencia.getMateriaReferencia();
+            if (mat == null || !usuario.tieneMateria(mat.getId())) {
                 throw new com.juridico.sistema_juridico.exception.ForbiddenException(
                         "Acceso denegado: Solo el Jefe de Departamento de la materia correspondiente puede concluir esta audiencia.");
             }
@@ -305,12 +309,7 @@ public class AudienciaService {
             // 2. RECUPERAR DATOS FALTANTES (Corrección del NULL)
 
             // A) Expediente: Forzamos la búsqueda del número real
-            String numeroExpediente = "Desconocido";
-            if (a.getExpediente() != null) {
-                numeroExpediente = expedienteRepository.findById(a.getExpediente().getId())
-                        .map(Expediente::getNumero)
-                        .orElse("Desconocido");
-            }
+            String numeroExpediente = a.getNumeroReferencia();
 
             // B) Usuarios: Recuperación explícita
             Usuario responsable = null;
@@ -327,7 +326,7 @@ public class AudienciaService {
             // 3. Preparar datos de la notificación
             String emailCreador = org.springframework.security.core.context.SecurityContextHolder.getContext()
                     .getAuthentication().getName();
-            String tituloBase = "Nueva Audiencia: " + numeroExpediente;
+            String tituloBase = "Nueva Audiencia: " + (numeroExpediente != null ? numeroExpediente : "Asunto Único");
             String mensajeBase = "Programada para el " + a.getFechaAudiencia() + " a las " + a.getHoraAudiencia();
             String entidadId = a.getId().toString();
 
@@ -356,7 +355,7 @@ public class AudienciaService {
                             actor,
                             NotificacionEvento.AUDIENCIA_COMPARECENCIA_ASIGNADA,
                             "Asignacion de Comparecencia",
-                            "Has sido asignado para asistir a la audiencia del expediente " + numeroExpediente,
+                            "Has sido asignado para asistir a la audiencia " + (numeroExpediente != null ? "del expediente " + numeroExpediente : "de Asunto Único"),
 
                             catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
                             entidadId,
@@ -382,10 +381,45 @@ public class AudienciaService {
     }
 
     @Transactional
+    public void notificarDelegacion(Audiencia audiencia, Usuario actor) {
+        try {
+            Audiencia a = audienciaRepository.findById(audiencia.getId())
+                    .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
+
+            if (a.getUsuarioDelegado() == null) return;
+
+            Usuario delegado = usuarioRepository.findById(a.getUsuarioDelegado().getId()).orElse(null);
+            if (delegado == null) return;
+
+            String numeroExpediente = a.getNumeroReferencia();
+
+            String fechaAud = (a.getFechaAudiencia() != null) ? a.getFechaAudiencia().toString() : "fecha por confirmar";
+
+            notificacionService.crearNotificacion(
+                    delegado,
+                    actor,
+                    NotificacionEvento.AUDIENCIA_DELEGADA,
+                    "Audiencia Delegada: " + (numeroExpediente != null ? numeroExpediente : "Asunto Único"),
+                    "Se te ha delegado la audiencia " + (numeroExpediente != null ? "del expediente " + numeroExpediente : "de Asunto Único")
+                            + " programada para el " + fechaAud
+                            + ". Tendrás acceso completo al expediente hasta 2 días después.",
+                    catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
+                    a.getId().toString(),
+                    true);
+
+        } catch (Exception e) {
+            System.err.println("Error al notificar delegación: " + e.getMessage());
+        }
+    }
+
+    @Transactional
     public Audiencia guardarAudiencia(AudienciaRequest request) {
-        // 1. Conversión de ID a UUID
-        Expediente exp = expedienteRepository.findById(UUID.fromString(request.getAsuntoId().toString()))
-                .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
+        Expediente exp = null;
+        if (request.getAsuntoId() != null) {
+            // 1. Conversión de ID a UUID
+            exp = expedienteRepository.findById(UUID.fromString(request.getAsuntoId().toString()))
+                    .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
+        }
 
         // 2. Buscar el objeto TipoAudiencia del catálogo
         com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia tipo = tipoAudienciaRepository.findAll().stream()

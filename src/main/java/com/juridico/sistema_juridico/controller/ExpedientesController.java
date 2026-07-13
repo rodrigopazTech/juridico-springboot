@@ -111,15 +111,9 @@ public class ExpedientesController {
         RolUsuario rol = usuario.getRol();
         boolean tienePermiso = false;
 
-        if (rol == RolUsuario.ADMIN) {
+        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL 
+                || rol == RolUsuario.DIRECTOR || rol == RolUsuario.SUBDIRECTOR) {
             tienePermiso = true;
-        } else if (rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
-            if (usuario.getGerencia() == null) {
-                tienePermiso = true;
-            } else if (expediente.getGerencia() != null && 
-                    expediente.getGerencia().getId().equals(usuario.getGerencia().getId())) {
-                tienePermiso = true;
-            }
         } else if (rol == RolUsuario.GERENTE) {
             if (expediente.getGerencia() != null && usuario.getGerencia() != null 
                     && expediente.getGerencia().getId().equals(usuario.getGerencia().getId())) {
@@ -170,11 +164,9 @@ public class ExpedientesController {
         List<Integer> secMateriaIds = null;
         Integer secUsuarioId = usuario.getId();
 
-        if (usuario.getRol() == RolUsuario.ADMIN) {
-            // Admin sigue viendo todo
-        } else if (usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
-            if (usuario.getGerencia() != null)
-                secGerenciaId = usuario.getGerencia().getId();
+        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECTOR_PRINCIPAL 
+                || usuario.getRol() == RolUsuario.DIRECTOR || usuario.getRol() == RolUsuario.SUBDIRECTOR) {
+            // Admin/Directores/Subdirectores ven todo
         } else if (usuario.getRol() == RolUsuario.GERENTE) {
             if (usuario.getGerencia() != null) {
                 secGerenciaId = usuario.getGerencia().getId();
@@ -226,11 +218,9 @@ public class ExpedientesController {
         List<Integer> secMateriaIds = null;
         Integer secUsuarioId = usuario.getId();
 
-        if (usuario.getRol() == RolUsuario.ADMIN) {
+        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECTOR_PRINCIPAL 
+                || usuario.getRol() == RolUsuario.DIRECTOR || usuario.getRol() == RolUsuario.SUBDIRECTOR) {
             // Ven todo
-        } else if (usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
-            if (usuario.getGerencia() != null)
-                secGerenciaId = usuario.getGerencia().getId();
         } else if (usuario.getRol() == RolUsuario.GERENTE) {
             if (usuario.getGerencia() != null) {
                 secGerenciaId = usuario.getGerencia().getId();
@@ -292,7 +282,8 @@ public class ExpedientesController {
         model.addAttribute("rolActual", usuario.getRol());
 
         // --- FILTRADO DE CATÁLOGOS SEGÚN ROL ---
-        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECTOR_PRINCIPAL 
+                || usuario.getRol() == RolUsuario.DIRECTOR || usuario.getRol() == RolUsuario.SUBDIRECTOR) {
             model.addAttribute("listaGerencias", gerenciaRepository.findAll());
             model.addAttribute("listaMaterias", materiaRepository.findByActivoTrueOrderByNombreAsc());
             model.addAttribute("listaAbogados", usuarioRepository.findAll());
@@ -303,7 +294,7 @@ public class ExpedientesController {
             Integer gid = (usuario.getGerencia() != null) ? usuario.getGerencia().getId() : null;
             if (gid != null) {
                 List<Materia> mats = materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(gid);
-                List<Usuario> usrs = usuarioRepository.findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(gid);
+                List<Usuario> usrs = usuarioRepository.findByGerenciasIdAndActivoTrueOrderByNombreCompletoAsc(gid);
                 model.addAttribute("listaGerencias", List.of(usuario.getGerencia()));
                 model.addAttribute("gerencias", List.of(usuario.getGerencia()));
                 model.addAttribute("listaMaterias", mats);
@@ -366,7 +357,7 @@ public class ExpedientesController {
                 expedienteReal.setEtapaProcesal(EtapaProcesal.TRAMITE);
 
                 // Inyectar relaciones reales de la base de datos (Creación)
-                if (!rol.equals("ADMIN") && !rol.equals("DIRECCION") && !rol.equals("SUBDIRECCION")) {
+                if (!rol.equals("ADMIN") && !rol.equals("DIRECTOR") && !rol.equals("DIRECTOR_PRINCIPAL") && !rol.equals("SUBDIRECTOR")) {
                     expedienteReal.setGerencia(usuario.getGerencia());
                 } else if (expedienteForm.getGerencia() != null && expedienteForm.getGerencia().getId() != null) {
                     expedienteReal.setGerencia(
@@ -586,8 +577,7 @@ public class ExpedientesController {
 
         // B) Gerente de la Gerencia asignada
         if (exp.getGerencia() != null) {
-            List<Usuario> gerentes = usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE,
-                    exp.getGerencia());
+            List<Usuario> gerentes = usuarioRepository.findByRolAndGerenciasIdAndActivoTrue(RolUsuario.GERENTE, exp.getGerencia().getId());
             destinatarios.addAll(gerentes);
         }
 
@@ -600,7 +590,7 @@ public class ExpedientesController {
 
         // D) Directores y Subdirectores (Tienen visibilidad global)
         List<Usuario> directivos = usuarioRepository.findByRolInAndActivoTrue(
-                List.of(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
+                List.of(RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR, RolUsuario.DIRECTOR_PRINCIPAL));
         destinatarios.addAll(directivos);
 
         // Enviar notificaciones
@@ -712,8 +702,8 @@ public class ExpedientesController {
             destinatarios.add(exp.getAbogadoResponsable());
         }
         if (exp.getGerencia() != null) {
-            destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(
-                    com.juridico.sistema_juridico.Entity.enums.RolUsuario.GERENTE, exp.getGerencia()));
+            destinatarios.addAll(usuarioRepository.findByRolAndGerenciasIdAndActivoTrue(
+                    com.juridico.sistema_juridico.Entity.enums.RolUsuario.GERENTE, exp.getGerencia().getId()));
         }
         if (exp.getMateria() != null) {
             destinatarios.addAll(usuarioRepository.findByRolAndMateriaId(
@@ -722,7 +712,7 @@ public class ExpedientesController {
 
         // Directores y Subdirectores (Tienen visibilidad global)
         destinatarios.addAll(usuarioRepository.findByRolInAndActivoTrue(
-                List.of(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
+                List.of(RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR, RolUsuario.DIRECTOR_PRINCIPAL)));
 
         // Filtrar para no enviársela al autor y que no se repitan
         List<Usuario> destinatariosUnicos = destinatarios.stream()

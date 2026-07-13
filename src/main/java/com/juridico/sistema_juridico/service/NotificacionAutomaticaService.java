@@ -85,7 +85,8 @@ public class NotificacionAutomaticaService {
                         null,
                         NotificacionEvento.TERMINO_RECORDATORIO,
                         tituloNotif,
-                        mensaje,
+                        mensaje,
+
                         prioridad,
                         termino.getId().toString(),
                         true);
@@ -106,28 +107,28 @@ public class NotificacionAutomaticaService {
         if (gerencia != null) {
             switch (termino.getEstatusTermino()) {
                 case REVISION:
-                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, gerencia));
+                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciasIdAndActivoTrue(RolUsuario.JEFE_DEPTO, gerencia.getId()));
                     break;
                 case GERENCIA:
-                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE, gerencia));
+                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciasIdAndActivoTrue(RolUsuario.GERENTE, gerencia.getId()));
                     break;
                 case DIRECCION:
                     destinatarios.addAll(usuarioRepository
-                            .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
+                            .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR)));
                     break;
                 case LIBERADO:
                 case PRESENTADO:
-                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.JEFE_DEPTO, gerencia));
-                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciaAndActivoTrue(RolUsuario.GERENTE, gerencia));
+                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciasIdAndActivoTrue(RolUsuario.JEFE_DEPTO, gerencia.getId()));
+                    destinatarios.addAll(usuarioRepository.findByRolAndGerenciasIdAndActivoTrue(RolUsuario.GERENTE, gerencia.getId()));
                     destinatarios.addAll(usuarioRepository
-                            .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
+                            .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR)));
                     break;
             }
         } else if (termino.getEstatusTermino() == EstatusTermino.DIRECCION
                 || termino.getEstatusTermino() == EstatusTermino.LIBERADO
                 || termino.getEstatusTermino() == EstatusTermino.PRESENTADO) {
             destinatarios.addAll(usuarioRepository
-                    .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION)));
+                    .findByRolInAndActivoTrue(Arrays.asList(RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR)));
         }
 
         return destinatarios;

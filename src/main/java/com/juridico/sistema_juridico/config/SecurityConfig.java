@@ -70,19 +70,23 @@ public class SecurityConfig {
 
                         // 2. NIVEL ALTO
                         .requestMatchers("/agenda", "/agenda/**")
-                        .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO",
+                        .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE", "JEFE_DEPTO",
                                 "PERM_AGENDA_VER")
                         .requestMatchers("/catalogos", "/catalogos/**")
-                        .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO", "ABOGADO",
+                        .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE", "JEFE_DEPTO", "ABOGADO",
                                 "PERM_CATALOGOS_VER")
                         .requestMatchers("/admin/**").hasAnyAuthority("ADMIN", "PERM_ADMIN_PANEL")
                         .requestMatchers("/usuarios/api/materias-por-gerencia/**").authenticated()
                         .requestMatchers("/usuarios", "/usuarios/**")
-                        .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "PERM_USUARIOS_VER")
+                        .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE", "PERM_USUARIOS_VER")
+                        .requestMatchers("/usuarios-admin", "/usuarios-admin/**")
+                        .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE")
+                        .requestMatchers("/abogados", "/abogados/**")
+                        .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE", "JEFE_DEPTO")
 
                         // 3. NIVEL MEDIO
                         .requestMatchers("/dashboard", "/dashboard/**")
-                        .hasAnyAuthority("ADMIN", "DIRECCION", "SUBDIRECCION", "GERENTE", "JEFE_DEPTO", "ABOGADO")
+                        .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE", "JEFE_DEPTO", "ABOGADO")
 
                         // 4. NIVEL OPERATIVO
                         .requestMatchers("/expedientes", "/expedientes/**", "/terminos", "/terminos/**", "/audiencias",

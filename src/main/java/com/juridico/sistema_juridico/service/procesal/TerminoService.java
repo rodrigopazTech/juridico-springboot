@@ -129,7 +129,8 @@ public class TerminoService {
                     usuarioActor,
                     NotificacionEvento.TERMINO_VALIDADO_CONCLUIDO,
                     "Termino Validado y Concluido",
-                    "El término '" + termino.getAsunto() + "' " + descExpediente + " ha sido marcado como presentado y concluido.",
+                    "El término '" + termino.getAsunto() + "' " + descExpediente + " ha sido marcado como presentado y concluido.",
+
                     catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                     termino.getId().toString(),
                     true
@@ -141,7 +142,8 @@ public class TerminoService {
                     usuarioActor,
                     NotificacionEvento.TERMINO_VALIDADO_CONCLUIDO,
                     "Termino Validado y Concluido",
-                    "El término '" + termino.getAsunto() + "' " + descExpediente + " ha sido marcado como presentado y concluido.",
+                    "El término '" + termino.getAsunto() + "' " + descExpediente + " ha sido marcado como presentado y concluido.",
+
                     catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                     termino.getId().toString(),
                     true

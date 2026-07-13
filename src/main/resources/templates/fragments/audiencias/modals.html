@@ -25,14 +25,27 @@
                     <form id="form-audiencia" th:action="@{/audiencias/guardar}" method="post"
                         class="p-6 bg-gray-50/50">
                         <input type="hidden" id="input-audiencia-id" name="id" />
+                        <input type="hidden" id="input-origen-audiencia" name="origenAudiencia" value="EXPEDIENTE" />
                         <input type="hidden" id="current-user-id"
                             th:value="${usuarioActual != null ? usuarioActual.id : ''}" />
 
                         <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
 
-                            <div class="col-span-1 sm:col-span-2">
-                                <label for="input-expediente" class="block text-sm font-bold text-gray-700">Expediente
-                                    *</label>
+                            <!-- TABS PARA SELECCIONAR TIPO DE AUDIENCIA (EXPEDIENTE O ASUNTO UNICO) -->
+                            <div class="col-span-1 sm:col-span-2 flex rounded-lg bg-gray-200/80 p-1 border border-gray-300">
+                                <button type="button" id="tab-expediente" onclick="switchModoRegistro('EXPEDIENTE')"
+                                    class="w-1/2 rounded-md py-1.5 text-xs font-bold transition-all shadow-sm bg-white text-gray-800 focus:outline-none">
+                                    <i class="fas fa-folder-open mr-1"></i> Por Expediente
+                                </button>
+                                <button type="button" id="tab-asunto-unico" onclick="switchModoRegistro('ASUNTO_UNICO')"
+                                    class="w-1/2 rounded-md py-1.5 text-xs font-bold transition-all text-gray-600 hover:text-gray-800 focus:outline-none">
+                                    <i class="fas fa-file-alt mr-1"></i> Asunto Único
+                                </button>
+                            </div>
+
+                            <!-- SECCIÓN: POR EXPEDIENTE -->
+                            <div id="seccion-expediente" class="col-span-1 sm:col-span-2">
+                                <label for="input-expediente" class="block text-sm font-bold text-gray-700">Expediente *</label>
                                 <div class="mt-1 flex rounded-md shadow-sm">
                                     <span
                                         class="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500">
@@ -47,6 +60,64 @@
                                             th:text="${e.numero + ' - ' + (e.materia != null ? e.materia.nombre : '')}">
                                         </option>
                                     </select>
+                                </div>
+                            </div>
+
+                            <!-- SECCIÓN: ASUNTO ÚNICO -->
+                            <div id="seccion-asunto-unico" class="col-span-1 sm:col-span-2 hidden grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-2">
+                                <div class="col-span-1">
+                                    <label class="block text-sm font-bold text-gray-700">Gerencia *</label>
+
+                                    <!-- ABOGADO / JEFE_DEPTO / GERENTE: gerencia fija, no editable -->
+                                    <div th:if="${usuarioActual != null &&
+                                                 (usuarioActual.rol.name() == 'ABOGADO' ||
+                                                  usuarioActual.rol.name() == 'JEFE_DEPTO' ||
+                                                  usuarioActual.rol.name() == 'GERENTE')}">
+                                        <input type="hidden" name="contextoGerenciaId" id="aud-contexto-gerencia"
+                                               th:value="${usuarioActual.gerencia != null ? usuarioActual.gerencia.id : ''}"/>
+                                        <div class="mt-1 block w-full rounded-md border border-gray-200 bg-gray-100 sm:text-sm py-2 px-3 text-gray-700 font-medium"
+                                             th:text="${usuarioActual.gerencia != null ? usuarioActual.gerencia.nombre : 'Sin gerencia asignada'}">
+                                        </div>
+                                    </div>
+
+                                    <!-- Roles superiores: dropdown completo -->
+                                    <select th:unless="${usuarioActual != null &&
+                                                         (usuarioActual.rol.name() == 'ABOGADO' ||
+                                                          usuarioActual.rol.name() == 'JEFE_DEPTO' ||
+                                                          usuarioActual.rol.name() == 'GERENTE')}"
+                                            id="aud-contexto-gerencia" name="contextoGerenciaId"
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm py-2 px-3">
+                                        <option value="">Seleccione gerencia...</option>
+                                        <option th:each="g : ${listaGerencias}" th:value="${g.id}" th:text="${g.nombre}"></option>
+                                    </select>
+                                </div>
+
+                                <div class="col-span-1">
+                                    <label for="aud-contexto-materia" class="block text-sm font-bold text-gray-700">Materia *</label>
+                                    <select id="aud-contexto-materia" name="contextoMateriaId"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm py-2 px-3">
+                                        <option value="">Seleccione materia...</option>
+                                        <option th:each="m : ${listaMaterias}" th:value="${m.id}" th:text="${m.nombre}"
+                                            th:data-gerencia-id="${m.gerencia != null ? m.gerencia.id : ''}"></option>
+                                    </select>
+                                </div>
+
+                                <div class="col-span-1 sm:col-span-2">
+                                    <label for="aud-contexto-referencia" class="block text-sm font-bold text-gray-700">Número de Referencia</label>
+                                    <input type="text" name="contextoNumeroReferencia" id="aud-contexto-referencia" placeholder="Ej. REF-2026-01"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2">
+                                </div>
+
+                                <div class="col-span-1 sm:col-span-2">
+                                    <label for="aud-contexto-partes" class="block text-sm font-bold text-gray-700">Partes Involucradas</label>
+                                    <input type="text" name="contextoPartes" id="aud-contexto-partes" placeholder="Ej. Actor vs Demandado"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2">
+                                </div>
+
+                                <div class="col-span-1 sm:col-span-2">
+                                    <label for="aud-contexto-descripcion" class="block text-sm font-bold text-gray-700">Descripción del Asunto</label>
+                                    <textarea name="contextoDescripcion" id="aud-contexto-descripcion" rows="2" placeholder="Detalles específicos del asunto único..."
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2 resize-none"></textarea>
                                 </div>
                             </div>
 
@@ -97,14 +168,21 @@
                             </div>
 
                             <div id="campo-sala" class="col-span-1 sm:col-span-2">
-                                <label for="input-sala" class="block text-sm font-bold text-gray-700">Órgano Jurisdiccional
+                                <label for="input-sala" class="block text-sm font-bold text-gray-700">Sede / Sala
                                     *</label>
-                                <select name="salaLugar" id="input-sala"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2">
-                                    <option value="" disabled selected>Seleccione órgano jurisdiccional...</option>
-                                    <option th:each="o : ${listaOrganos}" th:value="${o.nombre}" th:text="${o.nombre}"
-                                            th:data-gerencia-id="${o.gerencia != null ? o.gerencia.id : ''}"></option>
-                                </select>
+                                <div class="relative mt-1">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
+                                        <i class="fas fa-map-marker-alt text-sm"></i>
+                                    </span>
+                                    <select name="salaLugar" id="input-sala"
+                                        class="block w-full pl-9 pr-3 rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm py-2 px-3">
+                                        <option value="">Selecciona o cree una sede...</option>
+                                        <option th:each="s : ${listaSedes}" th:value="${s.nombre}" th:text="${s.nombre}"></option>
+                                    </select>
+                                </div>
+                                <p class="mt-1 text-[11px] text-gray-400 italic">
+                                    <i class="fas fa-info-circle"></i> Elige una sede registrada o escribe el nombre de una nueva.
+                                </p>
                             </div>
 
                             <div id="campo-url" class="col-span-1 sm:col-span-2 hidden">
@@ -128,8 +206,12 @@
                                 <select id="input-abogado" name="abogadoComparece.id"
                                     class="block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2">
                                     <option value="">Seleccione expediente primero...</option>
+                                    <!-- Abogados del modelo visibles en modo Asunto Único -->
+                                    <option th:each="abg : ${abogados}" th:value="${abg.id}" th:text="${abg.nombreCompleto}" class="abogado-option-all hidden"></option>
                                 </select>
                             </div>
+
+
 
                             <div class="col-span-1 sm:col-span-2 mt-2">
                                 <label for="input-observaciones-aud" class="block text-sm font-bold text-gray-700">Notas / Observaciones</label>
@@ -137,6 +219,7 @@
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2 resize-none"
                                     placeholder="Agregue comentarios internos o notas preliminares..."></textarea>
                             </div>
+
 
                         </div>
 

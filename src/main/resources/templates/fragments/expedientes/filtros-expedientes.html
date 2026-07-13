@@ -13,7 +13,7 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             <!-- Gerencia -->
-            <div th:if="${rolActual != null and (rolActual.name() == 'ADMIN' or rolActual.name() == 'DIRECCION' or rolActual.name() == 'SUBDIRECCION')}"
+            <div th:if="${rolActual != null and (rolActual.name() == 'ADMIN' or rolActual.name() == 'DIRECTOR' or rolActual.name() == 'DIRECTOR_PRINCIPAL' or rolActual.name() == 'SUBDIRECTOR')}"
                 class="w-full">
                 <select name="gerenciaId" onchange="this.form.submit()"
                     class="w-full border border-gray-200 rounded p-2 text-sm focus:border-gob-guinda outline-none bg-gray-50/50 text-gray-700 font-medium transition-all hover:border-gray-300">

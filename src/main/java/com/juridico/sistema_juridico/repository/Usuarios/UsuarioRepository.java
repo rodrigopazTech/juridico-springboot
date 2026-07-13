@@ -24,7 +24,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
     List<Usuario> findByRolAndActivoTrue(RolUsuario rol);
 
     // 2. Para Notificaciones Dirigidas por Gerencia (Gerentes)
-    List<Usuario> findByRolAndGerenciaAndActivoTrue(RolUsuario rol, Gerencia gerencia);
+    List<Usuario> findByRolAndGerenciasIdAndActivoTrue(RolUsuario rol, Integer gerenciaId);
 
     // 3. Para Notificaciones a Altos Mandos (Dirección/Subdirección)
     List<Usuario> findByRolInAndActivoTrue(List<RolUsuario> roles);
@@ -33,27 +33,74 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
     @Query("SELECT u FROM Usuario u JOIN u.materias m WHERE u.rol = :rol AND m.id = :materiaId AND u.activo = true")
     List<Usuario> findByRolAndMateriaId(@Param("rol") RolUsuario rol, @Param("materiaId") Integer materiaId);
 
-    Page<Usuario> findByGerencia(Gerencia gerencia, Pageable pageable);
+    Page<Usuario> findByGerenciasId(Integer gerenciaId, Pageable pageable);
+    Page<Usuario> findDistinctByGerenciasIdIn(List<Integer> gerenciaIds, Pageable pageable);
 
     // 5. Para jerarquía de notificaciones (Superiores de la misma gerencia)
-    List<Usuario> findByGerenciaIdAndRolInAndActivoTrue(Integer gerenciaId, List<RolUsuario> roles);
+    List<Usuario> findByGerenciasIdAndRolInAndActivoTrue(Integer gerenciaId, List<RolUsuario> roles);
+    List<Usuario> findDistinctByGerenciasIdInAndRolInAndActivoTrue(List<Integer> gerenciaIds, List<RolUsuario> roles);
 
     // 6. Para filtro de usuarios por gerencia
-    List<Usuario> findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(Integer gerenciaId);
+    List<Usuario> findByGerenciasIdAndActivoTrueOrderByNombreCompletoAsc(Integer gerenciaId);
+    List<Usuario> findDistinctByGerenciasIdInAndActivoTrueOrderByNombreCompletoAsc(List<Integer> gerenciaIds);
 
     // 7. Búsqueda por keyword (nombre, email, rol) con paginación — para el buscador del módulo Usuarios
-    @Query("SELECT u FROM Usuario u WHERE " +
+    @Query("SELECT DISTINCT u FROM Usuario u WHERE " +
            "LOWER(u.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(CAST(u.rol AS string)) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<Usuario> buscarPorKeyword(@Param("keyword") String keyword, Pageable pageable);
 
-    // 8. Búsqueda por keyword restringida a una gerencia (para GERENTE)
-    @Query("SELECT u FROM Usuario u WHERE u.gerencia = :gerencia AND (" +
+    // 8. Búsqueda por keyword restringida a múltiples gerencias (para GERENTE)
+    @Query("SELECT DISTINCT u FROM Usuario u JOIN u.gerencias g WHERE g.id IN :gerenciaIds AND (" +
            "LOWER(u.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(CAST(u.rol AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    Page<Usuario> buscarPorKeywordYGerencia(@Param("keyword") String keyword,
-                                             @Param("gerencia") Gerencia gerencia,
-                                             Pageable pageable);
+    Page<Usuario> buscarPorKeywordYGerenciasIn(@Param("keyword") String keyword,
+                                              @Param("gerenciaIds") List<Integer> gerenciaIds,
+                                              Pageable pageable);
+    Page<Usuario> findByRolInAndIdNot(List<RolUsuario> roles, Integer excluidoUsuarioId, Pageable pageable);
+
+    @Query("SELECT DISTINCT u FROM Usuario u JOIN u.gerencias g JOIN u.materias m WHERE g.id IN :gerenciaIds AND m.id IN :materiaIds AND u.rol IN :roles AND u.id != :excluidoUsuarioId")
+    Page<Usuario> findDistinctByGerenciasIdInAndMateriasIdInAndRolInAndIdNot(@Param("gerenciaIds") List<Integer> gerenciaIds,
+                                                                             @Param("materiaIds") List<Integer> materiaIds,
+                                                                             @Param("roles") List<RolUsuario> roles,
+                                                                             @Param("excluidoUsuarioId") Integer excluidoUsuarioId,
+                                                                             Pageable pageable);
+
+    @Query("SELECT DISTINCT u FROM Usuario u WHERE u.rol IN :roles AND u.id != :excluidoUsuarioId AND (" +
+           "LOWER(u.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(CAST(u.rol AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Usuario> buscarPorKeywordAndRolInAndIdNot(@Param("keyword") String keyword,
+                                                   @Param("roles") List<RolUsuario> roles,
+                                                   @Param("excluidoUsuarioId") Integer excluidoUsuarioId,
+                                                   Pageable pageable);
+
+    @Query("SELECT DISTINCT u FROM Usuario u JOIN u.gerencias g JOIN u.materias m WHERE g.id IN :gerenciaIds AND m.id IN :materiaIds AND u.rol IN :roles AND u.id != :excluidoUsuarioId AND (" +
+           "LOWER(u.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(CAST(u.rol AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Usuario> buscarPorKeywordYGerenciasInAndMateriasInAndRolInAndIdNot(@Param("keyword") String keyword,
+                                                                            @Param("gerenciaIds") List<Integer> gerenciaIds,
+                                                                            @Param("materiaIds") List<Integer> materiaIds,
+                                                                            @Param("roles") List<RolUsuario> roles,
+                                                                            @Param("excluidoUsuarioId") Integer excluidoUsuarioId,
+                                                                            Pageable pageable);
+
+    @Query("SELECT DISTINCT u FROM Usuario u JOIN u.gerencias g WHERE g.id IN :gerenciaIds AND u.rol IN :roles AND u.id != :excluidoUsuarioId")
+    Page<Usuario> findDistinctByGerenciasIdInAndRolInAndIdNot(@Param("gerenciaIds") List<Integer> gerenciaIds,
+                                                             @Param("roles") List<RolUsuario> roles,
+                                                             @Param("excluidoUsuarioId") Integer excluidoUsuarioId,
+                                                             Pageable pageable);
+
+    @Query("SELECT DISTINCT u FROM Usuario u JOIN u.gerencias g WHERE g.id IN :gerenciaIds AND u.rol IN :roles AND u.id != :excluidoUsuarioId AND (" +
+           "LOWER(u.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(CAST(u.rol AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Usuario> buscarPorKeywordYGerenciasInAndRolInAndIdNot(@Param("keyword") String keyword,
+                                                              @Param("gerenciaIds") List<Integer> gerenciaIds,
+                                                              @Param("roles") List<RolUsuario> roles,
+                                                              @Param("excluidoUsuarioId") Integer excluidoUsuarioId,
+                                                              Pageable pageable);
 }

@@ -121,7 +121,14 @@
                                                 [[${a.salaLugar}]], 
                                                 [[${a.urlReunion}]],
                                                 [[${a.abogadoComparece?.id ?: ''}]],
-                                                [[${a.observaciones != null ? #strings.escapeJavaScript(a.observaciones) : ''}]]
+                                                [[${a.observaciones != null ? #strings.escapeJavaScript(a.observaciones) : ''}]],
+                                                [[${a.origenAudiencia?.name() ?: 'EXPEDIENTE'}]],
+                                                [[${a.contexto?.gerencia?.id ?: ''}]],
+                                                [[${a.contexto?.materia?.id ?: ''}]],
+                                                [[${a.contexto?.numeroReferencia != null ? #strings.escapeJavaScript(a.contexto.numeroReferencia) : ''}]],
+                                                [[${a.contexto?.sede != null ? #strings.escapeJavaScript(a.contexto.sede) : ''}]],
+                                                [[${a.contexto?.partes != null ? #strings.escapeJavaScript(a.contexto.partes) : ''}]],
+                                                [[${a.contexto?.descripcion != null ? #strings.escapeJavaScript(a.contexto.descripcion) : ''}]]
                                             )">
                                         <i class="fas fa-edit"></i>
                                     </button>
@@ -147,13 +154,13 @@
                                         </a>
                                         <div class="border-t border-gray-50"></div>
                                         <button th:if="${a.estatusAudiencia?.name() == 'CON_ACTA'}"
-                                            sec:authorize="hasAnyAuthority('DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO', 'ADMIN')"
+                                            sec:authorize="hasAnyAuthority('DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO', 'ADMIN')"
                                             th:data-audiencia-id="${a.id}" onclick="abrirModalConcluir(this.dataset.audienciaId)"
                                             class="w-full text-left px-4 py-3 text-sm text-green-700 hover:bg-green-50 flex items-center font-bold transition-colors">
                                             <i class="fas fa-check-circle mr-3 w-4 text-center"></i> Validar y Concluir
                                         </button>
                                         <a th:unless="${a.estatusAudiencia?.name() == 'CONCLUIDA'}"
-                                            sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION')" href="javascript:void(0)"
+                                            sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR')" href="javascript:void(0)"
                                             th:onclick="'confirmarEliminarAudiencia(' + ${a.id} + ')'"
                                             class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors">
                                             <i class="fas fa-trash-alt mr-3 w-4 text-center opacity-70"></i> Eliminar
@@ -252,7 +259,14 @@
                                     [[${a.salaLugar}]], 
                                     [[${a.urlReunion}]],
                                     [[${a.abogadoComparece?.id ?: ''}]],
-                                    [[${a.observaciones != null ? #strings.escapeJavaScript(a.observaciones) : ''}]]
+                                    [[${a.observaciones != null ? #strings.escapeJavaScript(a.observaciones) : ''}]],
+                                    [[${a.origenAudiencia?.name() ?: 'EXPEDIENTE'}]],
+                                    [[${a.contexto?.gerencia?.id ?: ''}]],
+                                    [[${a.contexto?.materia?.id ?: ''}]],
+                                    [[${a.contexto?.numeroReferencia != null ? #strings.escapeJavaScript(a.contexto.numeroReferencia) : ''}]],
+                                    [[${a.contexto?.sede != null ? #strings.escapeJavaScript(a.contexto.sede) : ''}]],
+                                    [[${a.contexto?.partes != null ? #strings.escapeJavaScript(a.contexto.partes) : ''}]],
+                                    [[${a.contexto?.descripcion != null ? #strings.escapeJavaScript(a.contexto.descripcion) : ''}]]
                                 )">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -282,14 +296,14 @@
                             <div class="border-t border-gray-50"></div>
 
                             <button th:if="${a.estatusAudiencia?.name() == 'CON_ACTA'}"
-                                sec:authorize="hasAnyAuthority('DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO', 'ADMIN')"
+                                sec:authorize="hasAnyAuthority('DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO', 'ADMIN')"
                                 th:data-audiencia-id="${a.id}" onclick="abrirModalConcluir(this.dataset.audienciaId)"
                                 class="w-full text-left px-4 py-3 text-sm text-green-700 hover:bg-green-50 flex items-center font-bold transition-colors">
                                 <i class="fas fa-check-circle mr-3 w-4 text-center"></i> Validar y Concluir
                             </button>
 
                             <a th:unless="${a.estatusAudiencia?.name() == 'CONCLUIDA'}"
-                                sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION')" href="javascript:void(0)"
+                                sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR')" href="javascript:void(0)"
                                 th:onclick="'confirmarEliminarAudiencia(' + ${a.id} + ')'"
                                 class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors">
                                 <i class="fas fa-trash-alt mr-3 w-4 text-center opacity-70"></i> Eliminar

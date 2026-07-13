@@ -48,19 +48,22 @@
 
             <div id="seccion-asignacion" class="space-y-4 border-t border-gray-100 pt-4">
 
-                <div>
-                    <label class="block text-sm font-bold text-gob-guinda mb-1">Gerencia Asignada</label>
-                    <select th:field="*{gerencia}" id="select-usuario-gerencia" onchange="cargarMateriasDeGerencia()"
-                        class="w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-blue-50 focus:ring-gob-oro outline-none">
-                        <option value="">-- Seleccione Gerencia --</option>
-
-                        <option th:each="g : ${allGerencias}" th:value="${g.id}" th:text="${g.nombre}"></option>
-
-                    </select>
+                <!-- Oculto para GERENTE y JEFE_DEPTO -->
+                <div id="div-gerencia-asignada" th:classappend="${usuarioActual.rol.name() == 'GERENTE' || usuarioActual.rol.name() == 'JEFE_DEPTO'} ? 'hidden' : ''">
+                    <label class="block text-sm font-bold text-gob-guinda mb-2">Gerencias Asignadas</label>
+                    <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 max-h-32 overflow-y-auto mb-2">
+                        <div th:each="g : ${allGerencias}" class="flex items-center space-x-2">
+                            <input type="checkbox" name="gerenciasIds" th:value="${g.id}" th:id="'ger-' + ${g.id}"
+                                onchange="cargarMateriasDeGerencia()"
+                                class="gerencia-checkbox rounded text-gob-guinda h-4 w-4 border-gray-300 focus:ring-gob-oro">
+                            <label th:for="'ger-' + ${g.id}" class="text-xs text-gray-700 cursor-pointer select-none" th:text="${g.nombre}">Gerencia</label>
+                        </div>
+                    </div>
                     <p class="text-[10px] text-gray-400 mt-1 ml-1">* Requerido para roles operativos.</p>
                 </div>
 
-                <div id="contenedor-materias" class="hidden">
+                <!-- Oculto para JEFE_DEPTO -->
+                <div id="contenedor-materias" th:classappend="${usuarioActual.rol.name() == 'JEFE_DEPTO'} ? 'hidden' : 'hidden'">
                     <label class="block text-xs font-bold text-gob-guinda uppercase mb-2">Materias Autorizadas</label>
                     <div id="lista-materias-checkboxes"
                         class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 max-h-32 overflow-y-auto">

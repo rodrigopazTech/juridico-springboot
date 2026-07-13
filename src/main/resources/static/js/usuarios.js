@@ -330,12 +330,6 @@ function filtrarTabla(inputId, tbodyId) {
 document.addEventListener('DOMContentLoaded', function () {
     inicializarSelectsUsuarios();
 
-    // Buscador Usuarios
-    const searchUser = document.getElementById('input-search-usuarios');
-    if (searchUser) {
-        searchUser.addEventListener('keyup', () => filtrarTabla('input-search-usuarios', 'tabla-usuarios-body'));
-    }
-
     // Buscador Gerencias
     const searchGerencia = document.getElementById('input-search-gerencias');
     if (searchGerencia) {

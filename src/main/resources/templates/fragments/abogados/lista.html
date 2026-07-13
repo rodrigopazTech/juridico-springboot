@@ -5,18 +5,40 @@
             class="w-full bg-gob-guinda text-white py-2.5 rounded-xl text-sm font-bold hover:bg-opacity-90 transition-colors shadow-sm flex justify-center items-center gap-2">
             <i class="fas fa-plus"></i> Agregar Abogado
         </button>
-        <div class="relative">
-            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-            <input type="text" id="input-search-usuarios" placeholder="Buscar abogado..."
-                class="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 transition-all font-medium">
+        <!-- Búsqueda en servidor: al presionar Enter o hacer clic en la lupa se envía el formulario -->
+        <form method="get" th:action="@{/abogados}" class="relative flex items-center gap-2">
+            <div class="relative flex-1">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                <input type="text" name="q" id="input-search-usuarios"
+                    th:value="${q}"
+                    placeholder="Buscar abogado..."
+                    autocomplete="off"
+                    class="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 transition-all font-medium">
+            </div>
+            <button type="submit"
+                class="px-3 py-2 bg-gob-guinda text-white rounded-xl text-sm font-bold hover:bg-opacity-90 transition-colors flex-shrink-0"
+                title="Buscar">
+                <i class="fas fa-search"></i>
+            </button>
+            <a th:if="${q != null and !#strings.isEmpty(q)}" th:href="@{/abogados}"
+                class="px-3 py-2 bg-gray-200 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-300 transition-colors flex-shrink-0"
+                title="Limpiar búsqueda">
+                <i class="fas fa-times"></i>
+            </a>
+        </form>
+        <!-- Indicador de búsqueda activa -->
+        <div th:if="${q != null and !#strings.isEmpty(q)}" class="text-xs text-gob-guinda font-semibold flex items-center gap-1">
+            <i class="fas fa-filter"></i>
+            Mostrando resultados para: "<span th:text="${q}"></span>"
+            &nbsp;·&nbsp; [[${listaUsuarios.totalElements}]] encontrado(s)
         </div>
     </div>
 
     <div class="flex-1 overflow-y-auto thin-scrollbar p-2 space-y-1" id="lista-abogados">
         <button th:each="u : ${listaUsuarios.content}" th:data-id="${u.id}" th:data-nombre="${u.nombreCompleto}"
             th:data-email="${u.email}" th:data-rol="${u.rol}"
-            th:data-gerencia-id="${u.gerencia != null ? u.gerencia.id : ''}"
-            th:data-gerencia-nombre="${u.gerencia != null ? u.gerencia.nombre : 'Sin Gerencia'}"
+            th:data-gerencias-ids="${#strings.listJoin(u.gerencias.![id], ',')}"
+            th:data-gerencia-nombre="${u.gerencias.isEmpty() ? 'Sin Gerencia' : #strings.listJoin(u.gerencias.![nombre], ', ')}"
             th:data-activo="${u.activo}" th:data-materias-ids="${#strings.listJoin(u.materias.![id], ',')}"
             th:data-materias-nombres="${#strings.listJoin(u.materias.![nombre], '|')}"
             onclick="seleccionarAbogado(this)"
@@ -53,13 +75,14 @@
         </button>
     </div>
 
+    <!-- Paginación — incluye el parámetro q para conservar la búsqueda al paginar -->
     <div class="p-3 border-t border-gray-100 bg-white flex justify-between items-center text-xs text-gray-500 flex-shrink-0"
         th:if="${!listaUsuarios.empty}">
-        <a th:if="${listaUsuarios.hasPrevious()}" th:href="@{/abogados(page=${listaUsuarios.number - 1})}"
+        <a th:if="${listaUsuarios.hasPrevious()}" th:href="@{/abogados(page=${listaUsuarios.number - 1}, q=${q})}"
             class="hover:text-gob-guinda"><i class="fas fa-chevron-left mr-1"></i> Ant</a>
         <span th:unless="${listaUsuarios.hasPrevious()}"></span>
         <span>Pág. [[${listaUsuarios.number + 1}]] / [[${listaUsuarios.totalPages}]]</span>
-        <a th:if="${listaUsuarios.hasNext()}" th:href="@{/abogados(page=${listaUsuarios.number + 1})}"
+        <a th:if="${listaUsuarios.hasNext()}" th:href="@{/abogados(page=${listaUsuarios.number + 1}, q=${q})}"
             class="hover:text-gob-guinda">Sig <i class="fas fa-chevron-right ml-1"></i></a>
         <span th:unless="${listaUsuarios.hasNext()}"></span>
     </div>

@@ -61,8 +61,8 @@ public class CalendarioController {
                 userRole = usuarioActual.getRol().name();
 
                 // Lógica de Permisos para Gerencias
-                if (usuarioActual.getRol() == RolUsuario.DIRECCION
-                        || usuarioActual.getRol() == RolUsuario.SUBDIRECCION) {
+                if (usuarioActual.getRol() == RolUsuario.DIRECTOR
+                        || usuarioActual.getRol() == RolUsuario.SUBDIRECTOR) {
                     puedeVerFiltroGerencia = true;
                     // Cargar gerencias desde la base de datos (solo activas)
                     listaGerencias = gerenciaRepository.findByActivoTrueOrderByNombreAsc();
@@ -80,7 +80,7 @@ public class CalendarioController {
 
                     // Filtro de usuario visible para GERENTE (solo usuarios de su gerencia)
                     puedeVerFiltroUsuario = true;
-                    listaUsuarios = usuarioRepository.findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(
+                    listaUsuarios = usuarioRepository.findByGerenciasIdAndActivoTrueOrderByNombreCompletoAsc(
                             usuarioActual.getGerencia().getId());
 
                 } else if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
@@ -106,7 +106,7 @@ public class CalendarioController {
                     puedeVerFiltroUsuario = true;
                     // JEFE_DEPTO ve los usuarios de su gerencia
                     if (usuarioActual.getGerencia() != null) {
-                        listaUsuarios = usuarioRepository.findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(
+                        listaUsuarios = usuarioRepository.findByGerenciasIdAndActivoTrueOrderByNombreCompletoAsc(
                                 usuarioActual.getGerencia().getId());
                     }
                 }

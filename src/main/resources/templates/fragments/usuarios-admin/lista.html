@@ -46,7 +46,7 @@
 
         <button th:each="u : ${listaUsuarios.content}" th:data-id="${u.id}" th:data-nombre="${u.nombreCompleto}"
             th:data-email="${u.email}" th:data-rol="${u.rol}"
-            th:data-gerencia-id="${u.gerencia != null ? u.gerencia.id : ''}"
+            th:data-gerencias-ids="${#strings.listJoin(u.gerencias.![id], ',')}"
             th:data-gerencia-nombre="${u.gerencia != null ? u.gerencia.nombre : 'Sin Gerencia'}"
             th:data-activo="${u.activo}" th:data-materias-ids="${#strings.listJoin(u.materias.![id], ',')}"
             th:data-materias-nombres="${#strings.listJoin(u.materias.![nombre], '|')}"

@@ -21,14 +21,22 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
         // --- 1. BUSQUEDA PAGINADA (INDEX) ---
         @Query("SELECT a FROM Audiencia a " +
                         "LEFT JOIN a.expediente e " +
+                        "LEFT JOIN a.contexto c " +
                         "LEFT JOIN a.tipoAudiencia ta " +
                         "LEFT JOIN e.abogadoResponsable abr " +
                         "LEFT JOIN a.abogadoComparece abc " +
+                        "LEFT JOIN e.gerencia eg " +
+                        "LEFT JOIN c.gerencia cg " +
+                        "LEFT JOIN e.materia em " +
+                        "LEFT JOIN c.materia cm " +
                         "WHERE " +
                         "(:keyword IS NULL OR :keyword = '' OR " +
                         "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(c.numeroExpedienteSnapshot) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(c.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(e.descripcion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(c.descripcion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(ta.nombre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(abr.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -38,17 +46,15 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "CONCAT(a.horaAudiencia, '') LIKE CONCAT('%', :keyword, '%') OR " +
                         "CONCAT(a.id, '') LIKE CONCAT('%', :keyword, '%')) " +
                         "AND (:tipo IS NULL OR :tipo = '' OR ta.nombre = :tipo) " +
-                        "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
-                        "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
+                        "AND (:gerencia IS NULL OR :gerencia = '' OR eg.nombre = :gerencia OR cg.nombre = :gerencia) " +
+                        "AND (:materia IS NULL OR :materia = '' OR em.nombre = :materia OR cm.nombre = :materia) " +
                         "AND (:estatus IS NULL OR a.estatusAudiencia = :estatus) " +
                         "AND (a.fechaAudiencia >= :fechaInicio) " +
                         "AND (a.fechaAudiencia <= :fechaFin) " +
-                        "AND (:targetAbogadoId IS NULL OR (abr.id = :targetAbogadoId OR abc.id = :targetAbogadoId)) "
-                        +
-                        "AND (:filtroUsuarioId IS NULL OR (abr.id = :filtroUsuarioId OR abc.id = :filtroUsuarioId)) "
-                        +
-                        "AND (:filtroGerenciaId IS NULL OR e.gerencia.id = :filtroGerenciaId) " +
-                        "AND ((:filtroMateriaIds) IS NULL OR e.materia.id IN (:filtroMateriaIds)) " +
+                        "AND (:targetAbogadoId IS NULL OR (abr.id = :targetAbogadoId OR abc.id = :targetAbogadoId)) " +
+                        "AND (:filtroUsuarioId IS NULL OR (abr.id = :filtroUsuarioId OR abc.id = :filtroUsuarioId)) " +
+                        "AND (:filtroGerenciaId IS NULL OR eg.id = :filtroGerenciaId OR cg.id = :filtroGerenciaId) " +
+                        "AND ((:filtroMateriaIds) IS NULL OR em.id IN (:filtroMateriaIds) OR cm.id IN (:filtroMateriaIds)) " +
                         "AND (:id IS NULL OR a.id = :id)")
         Page<Audiencia> buscarConFiltros(
                         @Param("id") Integer id,
@@ -68,18 +74,25 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
         // --- 2. LISTADO PARA EXCEL (Sin paginación) ---
         @Query("SELECT a FROM Audiencia a " +
                         "LEFT JOIN a.expediente e " +
+                        "LEFT JOIN a.contexto c " +
                         "LEFT JOIN a.tipoAudiencia ta " +
+                        "LEFT JOIN e.gerencia eg " +
+                        "LEFT JOIN c.gerencia cg " +
+                        "LEFT JOIN e.materia em " +
+                        "LEFT JOIN c.materia cm " +
                         "WHERE a.estatusAudiencia = :estatus " +
                         "AND (:keyword IS NULL OR :keyword = '' OR " +
                         "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(c.numeroExpedienteSnapshot) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(c.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(ta.nombre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "CONCAT(a.id, '') LIKE CONCAT('%', :keyword, '%')) " +
                         "AND a.fechaAudiencia >= :fechaInicio AND a.fechaAudiencia <= :fechaFin " +
-                        "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId) " +
-                        "AND (:materiaId IS NULL OR e.materia.id = :materiaId) " +
-                        "AND (:filtroRoleGerenciaId IS NULL OR e.gerencia.id = :filtroRoleGerenciaId) " +
-                        "AND ((:filtroRoleMateriaIds) IS NULL OR e.materia.id IN (:filtroRoleMateriaIds))")
+                        "AND (:gerenciaId IS NULL OR eg.id = :gerenciaId OR cg.id = :gerenciaId) " +
+                        "AND (:materiaId IS NULL OR em.id = :materiaId OR cm.id = :materiaId) " +
+                        "AND (:filtroRoleGerenciaId IS NULL OR eg.id = :filtroRoleGerenciaId OR cg.id = :filtroRoleGerenciaId) " +
+                        "AND ((:filtroRoleMateriaIds) IS NULL OR em.id IN (:filtroRoleMateriaIds) OR cm.id IN (:filtroRoleMateriaIds))")
         Page<Audiencia> buscarParaHistorial(
                         @Param("keyword") String keyword,
                         @Param("estatus") EstatusAudiencia estatus,
@@ -93,14 +106,22 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
 
         @Query("SELECT a FROM Audiencia a " +
                         "LEFT JOIN a.expediente e " +
+                        "LEFT JOIN a.contexto c " +
                         "LEFT JOIN a.tipoAudiencia ta " +
                         "LEFT JOIN e.abogadoResponsable abr " +
                         "LEFT JOIN a.abogadoComparece abc " +
+                        "LEFT JOIN e.gerencia eg " +
+                        "LEFT JOIN c.gerencia cg " +
+                        "LEFT JOIN e.materia em " +
+                        "LEFT JOIN c.materia cm " +
                         "WHERE " +
                         "(:keyword IS NULL OR :keyword = '' OR " +
                         "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(c.numeroExpedienteSnapshot) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(c.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(e.descripcion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(c.descripcion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(ta.nombre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(abr.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -110,17 +131,15 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "CONCAT(a.horaAudiencia, '') LIKE CONCAT('%', :keyword, '%') OR " +
                         "CONCAT(a.id, '') LIKE CONCAT('%', :keyword, '%')) " +
                         "AND (:tipo IS NULL OR :tipo = '' OR ta.nombre = :tipo) " +
-                        "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
-                        "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
+                        "AND (:gerencia IS NULL OR :gerencia = '' OR eg.nombre = :gerencia OR cg.nombre = :gerencia) " +
+                        "AND (:materia IS NULL OR :materia = '' OR em.nombre = :materia OR cm.nombre = :materia) " +
                         "AND (:estatus IS NULL OR a.estatusAudiencia = :estatus) " +
                         "AND (a.fechaAudiencia >= :fechaInicio) " +
                         "AND (a.fechaAudiencia <= :fechaFin) " +
-                        "AND (:targetAbogadoId IS NULL OR (abr.id = :targetAbogadoId OR abc.id = :targetAbogadoId)) "
-                        +
-                        "AND (:filtroUsuarioId IS NULL OR (abr.id = :filtroUsuarioId OR abc.id = :filtroUsuarioId)) "
-                        +
-                        "AND (:filtroGerenciaId IS NULL OR e.gerencia.id = :filtroGerenciaId) " +
-                        "AND ((:filtroMateriaIds) IS NULL OR e.materia.id IN (:filtroMateriaIds)) " +
+                        "AND (:targetAbogadoId IS NULL OR (abr.id = :targetAbogadoId OR abc.id = :targetAbogadoId)) " +
+                        "AND (:filtroUsuarioId IS NULL OR (abr.id = :filtroUsuarioId OR abc.id = :filtroUsuarioId)) " +
+                        "AND (:filtroGerenciaId IS NULL OR eg.id = :filtroGerenciaId OR cg.id = :filtroGerenciaId) " +
+                        "AND ((:filtroMateriaIds) IS NULL OR em.id IN (:filtroMateriaIds) OR cm.id IN (:filtroMateriaIds)) " +
                         "AND (:id IS NULL OR a.id = :id)")
         List<Audiencia> listarParaExcel(
                         @Param("id") Integer id,
@@ -202,11 +221,11 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
         List<com.juridico.sistema_juridico.Entity.procesal.Audiencia> fetchPendientesByAbogadoIdAndMateriaId(@Param("abogadoId") Integer abogadoId, @Param("materiaId") Integer materiaId);
 
         // Conteo por gerencia individual (solo audiencias pendientes)
-        @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.gerencia.id = :gerenciaId AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
+        @Query("SELECT COUNT(a) FROM Audiencia a LEFT JOIN a.expediente e LEFT JOIN a.contexto c WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId) AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
         long countByExpedienteGerenciaIdAndEstatusPendiente(@Param("gerenciaId") Long gerenciaId);
 
         // Conteo por lista de gerencias (solo audiencias pendientes)
-        @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.gerencia.id IN :gerenciaIds AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
+        @Query("SELECT COUNT(a) FROM Audiencia a LEFT JOIN a.expediente e LEFT JOIN a.contexto c WHERE (e.gerencia.id IN :gerenciaIds OR c.gerencia.id IN :gerenciaIds) AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
         long countByExpedienteGerenciaIdInAndEstatusPendiente(@Param("gerenciaIds") List<Long> gerenciaIds);
 
         // Conteo total audiencias pendientes (sin filtro)
@@ -220,7 +239,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         LocalDate fin,
                         Pageable pageable);
 
-        @Query("SELECT a FROM Audiencia a WHERE a.estatusAudiencia = :estatus AND a.fechaDesahogo BETWEEN :inicio AND :fin AND a.expediente.gerencia.id = :gerenciaId ORDER BY a.fechaDesahogo DESC")
+        @Query("SELECT a FROM Audiencia a LEFT JOIN a.expediente e LEFT JOIN a.contexto c WHERE a.estatusAudiencia = :estatus AND a.fechaDesahogo BETWEEN :inicio AND :fin AND (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId) ORDER BY a.fechaDesahogo DESC")
         Page<Audiencia> findByEstatusGerencia(
                         @Param("estatus") EstatusAudiencia estatus,
                         @Param("inicio") LocalDate inicio,
@@ -228,7 +247,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         @Param("gerenciaId") Long gerenciaId,
                         Pageable pageable);
 
-        @Query("SELECT a FROM Audiencia a WHERE a.estatusAudiencia = :estatus AND a.fechaDesahogo BETWEEN :inicio AND :fin AND a.expediente.materia.id IN :materiaIds ORDER BY a.fechaDesahogo DESC")
+        @Query("SELECT a FROM Audiencia a LEFT JOIN a.expediente e LEFT JOIN a.contexto c WHERE a.estatusAudiencia = :estatus AND a.fechaDesahogo BETWEEN :inicio AND :fin AND (e.materia.id IN :materiaIds OR c.materia.id IN :materiaIds) ORDER BY a.fechaDesahogo DESC")
         Page<Audiencia> findByEstatusMaterias(
                         @Param("estatus") EstatusAudiencia estatus,
                         @Param("inicio") LocalDate inicio,
@@ -238,14 +257,22 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
 
         @Query("SELECT a.estatusAudiencia, COUNT(a) FROM Audiencia a " +
                         "LEFT JOIN a.expediente e " +
+                        "LEFT JOIN a.contexto c " +
                         "LEFT JOIN a.tipoAudiencia ta " +
                         "LEFT JOIN e.abogadoResponsable abr " +
                         "LEFT JOIN a.abogadoComparece abc " +
+                        "LEFT JOIN e.gerencia eg " +
+                        "LEFT JOIN c.gerencia cg " +
+                        "LEFT JOIN e.materia em " +
+                        "LEFT JOIN c.materia cm " +
                         "WHERE " +
                         "(:keyword IS NULL OR :keyword = '' OR " +
                         "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(c.numeroExpedienteSnapshot) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(c.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(e.descripcion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(c.descripcion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(a.salaLugar) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(ta.nombre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(abr.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -255,16 +282,14 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "CONCAT(a.horaAudiencia, '') LIKE CONCAT('%', :keyword, '%') OR " +
                         "CONCAT(a.id, '') LIKE CONCAT('%', :keyword, '%')) " +
                         "AND (:tipo IS NULL OR :tipo = '' OR ta.nombre = :tipo) " +
-                        "AND (:gerencia IS NULL OR :gerencia = '' OR e.gerencia.nombre = :gerencia) " +
-                        "AND (:materia IS NULL OR :materia = '' OR e.materia.nombre = :materia) " +
+                        "AND (:gerencia IS NULL OR :gerencia = '' OR eg.nombre = :gerencia OR cg.nombre = :gerencia) " +
+                        "AND (:materia IS NULL OR :materia = '' OR em.nombre = :materia OR cm.nombre = :materia) " +
                         "AND (a.fechaAudiencia >= :fechaInicio) " +
                         "AND (a.fechaAudiencia <= :fechaFin) " +
-                        "AND (:targetAbogadoId IS NULL OR (abr.id = :targetAbogadoId OR abc.id = :targetAbogadoId)) "
-                        +
-                        "AND (:filtroUsuarioId IS NULL OR (abr.id = :filtroUsuarioId OR abc.id = :filtroUsuarioId)) "
-                        +
-                        "AND (:filtroGerenciaId IS NULL OR e.gerencia.id = :filtroGerenciaId) " +
-                        "AND ((:filtroMateriaIds) IS NULL OR e.materia.id IN (:filtroMateriaIds)) " +
+                        "AND (:targetAbogadoId IS NULL OR (abr.id = :targetAbogadoId OR abc.id = :targetAbogadoId)) " +
+                        "AND (:filtroUsuarioId IS NULL OR (abr.id = :filtroUsuarioId OR abc.id = :filtroUsuarioId)) " +
+                        "AND (:filtroGerenciaId IS NULL OR eg.id = :filtroGerenciaId OR cg.id = :filtroGerenciaId) " +
+                        "AND ((:filtroMateriaIds) IS NULL OR em.id IN (:filtroMateriaIds) OR cm.id IN (:filtroMateriaIds)) " +
                         "GROUP BY a.estatusAudiencia")
         List<Object[]> contarPorEstatusConFiltros(
                         @Param("keyword") String keyword,
@@ -285,7 +310,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
         List<com.juridico.sistema_juridico.Entity.expediente.Expediente> findExpedientesByAbogadoInvitadoActivo(@Param("usuarioId") Integer usuarioId);
 
         // --- MÉTODOS PARA JEFE DE DEPTO (POR MATERIAS) ---
-        @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.gerencia.id = :gerenciaId AND e.materia.id IN :materiaIds AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
+        @Query("SELECT COUNT(a) FROM Audiencia a LEFT JOIN a.expediente e LEFT JOIN a.contexto c WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId) AND (e.materia.id IN :materiaIds OR c.materia.id IN :materiaIds) AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
         long countByExpedienteGerenciaIdAndMateriaIdInAndEstatusPendiente(@Param("gerenciaId") Long gerenciaId, @Param("materiaIds") List<Integer> materiaIds);
 
         @Query("""

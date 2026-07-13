@@ -108,7 +108,7 @@ public class NotificacionService {
             NotificacionEvento evento,
             CatPrioridad prioridad,
             String entidadId) {
-        if (subordinado.getGerencia() == null || subordinado.getRol() == null) {
+        if (subordinado.getGerencias() == null || subordinado.getGerencias().isEmpty() || subordinado.getRol() == null) {
             return;
         }
 
@@ -117,26 +117,46 @@ public class NotificacionService {
 
         if (rolDestinatario == RolUsuario.ABOGADO) {
             rolesSuperiores.addAll(
-                    List.of(RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE, RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
+                    List.of(RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE, RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR, RolUsuario.DIRECTOR_PRINCIPAL));
         } else if (rolDestinatario == RolUsuario.JEFE_DEPTO) {
-            rolesSuperiores.addAll(List.of(RolUsuario.GERENTE, RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
+            rolesSuperiores.addAll(List.of(RolUsuario.GERENTE, RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR, RolUsuario.DIRECTOR_PRINCIPAL));
         } else if (rolDestinatario == RolUsuario.GERENTE) {
-            rolesSuperiores.addAll(List.of(RolUsuario.DIRECCION, RolUsuario.SUBDIRECCION));
+            rolesSuperiores.addAll(List.of(RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR, RolUsuario.DIRECTOR_PRINCIPAL));
+        } else if (rolDestinatario == RolUsuario.SUBDIRECTOR || rolDestinatario == RolUsuario.DIRECTOR) {
+            rolesSuperiores.addAll(List.of(RolUsuario.DIRECTOR_PRINCIPAL));
         }
 
         if (rolesSuperiores.isEmpty()) {
             return;
         }
 
+        List<Integer> gerenciasIds = subordinado.getGerencias().stream()
+                .map(com.juridico.sistema_juridico.Entity.catalogo.Gerencia::getId)
+                .toList();
+
+        List<RolUsuario> rolesTransversales = new ArrayList<>();
+        List<RolUsuario> rolesAcotados = new ArrayList<>();
+        for (RolUsuario r : rolesSuperiores) {
+            if (r == RolUsuario.ADMIN || r == RolUsuario.DIRECTOR_PRINCIPAL 
+                    || r == RolUsuario.DIRECTOR || r == RolUsuario.SUBDIRECTOR) {
+                rolesTransversales.add(r);
+            } else {
+                rolesAcotados.add(r);
+            }
+        }
+
         List<Usuario> jefes = new ArrayList<>();
-        jefes.addAll(usuarioRepository.findByGerenciaIdAndRolInAndActivoTrue(
-                subordinado.getGerencia().getId(), rolesSuperiores));
-        jefes = jefes.stream().distinct().toList();
+        if (!rolesTransversales.isEmpty()) {
+            jefes.addAll(usuarioRepository.findByRolInAndActivoTrue(rolesTransversales));
+        }
+        if (!rolesAcotados.isEmpty() && !gerenciasIds.isEmpty()) {
+            jefes.addAll(usuarioRepository.findDistinctByGerenciasIdInAndRolInAndActivoTrue(gerenciasIds, rolesAcotados));
+        }
 
         Materia materiaAsunto = resolverMateria(evento, entidadId);
         List<Usuario> jefesFiltrados = new ArrayList<>();
         for (Usuario jefe : jefes) {
-            if (jefe.getRol() == RolUsuario.JEFE_DEPTO) {
+            if (jefe.getRol() == RolUsuario.JEFE_DEPTO || jefe.getRol() == RolUsuario.GERENTE) {
                 if (materiaAsunto != null) {
                     boolean tieneMateria = jefe.getMaterias().stream()
                             .anyMatch(m -> m.getId().equals(materiaAsunto.getId()));

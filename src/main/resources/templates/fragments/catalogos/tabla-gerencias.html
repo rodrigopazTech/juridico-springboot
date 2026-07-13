@@ -5,7 +5,7 @@
             <input type="text" id="input-search-gerencias" placeholder="Buscar gerencia..."
                 class="border border-gray-200 rounded-lg p-2 text-sm w-48 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all font-medium bg-white">
 
-            <button th:if="${usuarioActual.rol.name() == 'DIRECCION' or usuarioActual.rol.name() == 'SUBDIRECCION'}"
+            <button th:if="${usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'SUBDIRECTOR'}"
                 onclick="abrirModalGerencia()"
                 class="bg-gob-guinda text-white px-4 py-2 rounded text-sm hover:bg-opacity-90 shadow-sm transition-colors">
                 <i class="fas fa-plus mr-2"></i> Nueva
@@ -36,7 +36,7 @@
                 <td class="px-6 py-4 text-center">
 
                     <div
-                        th:if="${usuarioActual.rol.name() == 'DIRECCION' or usuarioActual.rol.name() == 'SUBDIRECCION' or (usuarioActual.rol.name() == 'GERENTE' and usuarioActual.gerencia != null and g.id == usuarioActual.gerencia.id)}">
+                        th:if="${usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'SUBDIRECTOR' or (usuarioActual.rol.name() == 'GERENTE' and usuarioActual.gerencia != null and g.id == usuarioActual.gerencia.id)}">
 
                         <button th:data-id="${g.id}" th:data-nombre="${g.nombre}" th:data-descripcion="${g.descripcion}"
                             th:data-activo="${g.activo}"
@@ -61,7 +61,7 @@
 
                     </div>
 
-                    <div th:unless="${usuarioActual.rol.name() == 'DIRECCION' or usuarioActual.rol.name() == 'SUBDIRECCION' or (usuarioActual.rol.name() == 'GERENTE' and usuarioActual.gerencia != null and g.id == usuarioActual.gerencia.id)}"
+                    <div th:unless="${usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'SUBDIRECTOR' or (usuarioActual.rol.name() == 'GERENTE' and usuarioActual.gerencia != null and g.id == usuarioActual.gerencia.id)}"
                         class="text-gray-300 bg-gray-50 rounded px-2 py-1 text-xs font-bold inline-block border border-gray-200 cursor-not-allowed">
                         <i class="fas fa-lock mr-1"></i> Bloqueado
                     </div>

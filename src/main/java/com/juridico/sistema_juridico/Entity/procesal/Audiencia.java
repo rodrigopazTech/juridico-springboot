@@ -9,10 +9,13 @@ import java.time.temporal.ChronoUnit;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
+import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
+import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 
 import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
+import com.juridico.sistema_juridico.Entity.enums.OrigenAudiencia;
 import java.time.LocalDateTime;
 
 @Data
@@ -31,8 +34,12 @@ public class Audiencia {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "expediente_id", nullable = false)
+    @JoinColumn(name = "expediente_id", nullable = true)
     private Expediente expediente;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "contexto_id")
+    private AudienciaContexto contexto;
 
     @DateTimeFormat(pattern = "yyyy-MM-dd") 
     @Column(name = "fecha_audiencia", nullable = false)
@@ -76,7 +83,11 @@ public class Audiencia {
 
     @ManyToOne
     @JoinColumn(name = "abogado_comparece_id")
-    private Usuario abogadoComparece; 
+    private Usuario abogadoComparece;
+
+    @ManyToOne
+    @JoinColumn(name = "usuario_delegado_id")
+    private Usuario usuarioDelegado;
 
     @Column(name = "observaciones", columnDefinition = "TEXT")
     private String observaciones; // Resultados o notas de la audiencia
@@ -101,5 +112,52 @@ public class Audiencia {
         if (dias == 1) return "¡MAÑANA!";
         if (dias < 0) return "Fue hace " + Math.abs(dias) + " días";
         return "Faltan " + dias + " días";
+    }
+
+    public String getNumeroReferencia() {
+        if (this.expediente != null) {
+            return this.expediente.getNumero();
+        }
+        if (this.contexto != null
+                && this.contexto.getNumeroExpedienteSnapshot() != null
+                && !this.contexto.getNumeroExpedienteSnapshot().trim().isEmpty()) {
+            return this.contexto.getNumeroExpedienteSnapshot();
+        }
+        return "Asunto único";
+    }
+
+    public String getPartesReferencia() {
+        if (this.expediente != null) {
+            return this.expediente.getPartes();
+        }
+        return this.contexto != null ? this.contexto.getPartes() : null;
+    }
+
+    public Materia getMateriaReferencia() {
+        if (this.expediente != null) {
+            return this.expediente.getMateria();
+        }
+        return this.contexto != null ? this.contexto.getMateria() : null;
+    }
+
+    public Gerencia getGerenciaReferencia() {
+        if (this.expediente != null) {
+            return this.expediente.getGerencia();
+        }
+        return this.contexto != null ? this.contexto.getGerencia() : null;
+    }
+
+    public String getDescripcionReferencia() {
+        if (this.expediente != null) {
+            return this.expediente.getDescripcion();
+        }
+        return this.contexto != null ? this.contexto.getDescripcion() : null;
+    }
+
+    public OrigenAudiencia getOrigenAudiencia() {
+        if (this.contexto != null && this.contexto.getOrigen() != null) {
+            return this.contexto.getOrigen();
+        }
+        return OrigenAudiencia.EXPEDIENTE;
     }
 }

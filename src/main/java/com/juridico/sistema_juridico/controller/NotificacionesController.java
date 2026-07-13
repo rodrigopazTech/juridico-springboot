@@ -150,8 +150,8 @@ public class NotificacionesController {
         }
 
         if (usuario.getRol() == RolUsuario.ADMIN || 
-            usuario.getRol() == RolUsuario.DIRECCION || 
-            usuario.getRol() == RolUsuario.SUBDIRECCION) {
+            usuario.getRol() == RolUsuario.DIRECTOR || 
+            usuario.getRol() == RolUsuario.SUBDIRECTOR) {
             return true;
         }
 
@@ -231,8 +231,8 @@ public class NotificacionesController {
         if (usuario == null || exp == null) return false;
         
         if (usuario.getRol() == RolUsuario.ADMIN || 
-            usuario.getRol() == RolUsuario.DIRECCION || 
-            usuario.getRol() == RolUsuario.SUBDIRECCION) {
+            usuario.getRol() == RolUsuario.DIRECTOR || 
+            usuario.getRol() == RolUsuario.SUBDIRECTOR) {
             return true;
         }
         

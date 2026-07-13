@@ -6,7 +6,6 @@ import java.time.LocalDate;
 
 @Data
 public class AudienciaRequest {
-    @NotNull(message = "El ID del expediente es obligatorio")
     private Integer asuntoId;
     
     @NotBlank(message = "El tipo de audiencia es obligatorio")

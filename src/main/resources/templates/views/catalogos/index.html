@@ -528,6 +528,7 @@
                             <thead class="hidden sm:table-header-group text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th class="px-6 py-3 font-bold">Nombre</th>
+                                    <th class="px-6 py-3 font-bold">Creado Por</th>
                                     <th class="px-6 py-3 font-bold text-center w-36">Rol</th>
                                 </tr>
                             </thead>
@@ -535,7 +536,7 @@
                                 <tr th:each="u : ${listaAbogados}" class="bg-white border border-gray-200 sm:border-0 sm:border-b sm:border-gray-100 shadow-sm sm:shadow-none rounded-xl p-4 sm:p-0 flex flex-col justify-between gap-2.5 sm:table-row hover:bg-gray-50 transition-colors">
                                     <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4">
                                         <div class="flex items-center gap-3">
-                                            <div class="w-8 h-8 bg-gob-guinda/10 text-gob-guinda rounded-full flex items-center justify-center text-xs font-bold animate-pulse"
+                                            <div class="w-8 h-8 bg-gob-guinda/10 text-gob-guinda rounded-full flex items-center justify-center text-xs font-bold"
                                                 th:text="${#strings.substring(u.nombreCompleto, 0, 1)}">A</div>
                                             <div>
                                                 <span class="font-semibold text-gray-800 text-sm sm:text-base"
@@ -543,6 +544,17 @@
                                                 <div class="text-xs text-gray-400" th:text="${u.email}">email</div>
                                             </div>
                                         </div>
+                                    </td>
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4">
+                                        <div th:if="${u.creadoPor != null}" class="flex items-center gap-3">
+                                            <div class="w-8 h-8 bg-gob-guinda/10 text-gob-guinda rounded-full flex items-center justify-center text-xs font-bold"
+                                                th:text="${#strings.substring(u.creadoPor.nombreCompleto, 0, 1)}">U</div>
+                                            <div>
+                                                <span class="font-semibold text-gray-800 text-sm" th:text="${u.creadoPor.nombreCompleto}">Nombre</span>
+                                                <div class="text-xs text-gray-400" th:text="${u.creadoPor.email}">email</div>
+                                            </div>
+                                        </div>
+                                        <span th:unless="${u.creadoPor != null}" class="text-xs text-gray-400 italic">Simbólico / Sistema</span>
                                     </td>
                                     <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-right sm:text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
                                         <span class="text-xs px-2 py-1 rounded-full font-bold"
@@ -552,7 +564,7 @@
                                     </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(listaAbogados)}" class="block sm:table-row">
-                                    <td colspan="2" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
+                                    <td colspan="3" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
                                         <i class="fas fa-folder-open text-2xl mb-2 block"></i>
                                         No hay usuarios asignados a esta gerencia.
                                     </td>

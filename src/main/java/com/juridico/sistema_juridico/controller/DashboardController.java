@@ -108,8 +108,10 @@ public class DashboardController {
     private FiltroResult validarFiltrosPorRol(Usuario usuario, Long gerenciaIdSolicitada,
             String grupoGerenciaSolicitado) {
         // Verifica que los nombres del ENUM coincidan
-        boolean esDirectivo = usuario.getRol() == RolUsuario.DIRECCION ||
-                usuario.getRol() == RolUsuario.SUBDIRECCION;
+        boolean esDirectivo = usuario.getRol() == RolUsuario.DIRECTOR ||
+                usuario.getRol() == RolUsuario.DIRECTOR_PRINCIPAL ||
+                usuario.getRol() == RolUsuario.SUBDIRECTOR ||
+                usuario.getRol() == RolUsuario.ADMIN;
 
         if (esDirectivo) {
             // El director/subdirector puede usar filtros de grupo o gerencia individual

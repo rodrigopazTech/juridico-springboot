@@ -418,7 +418,9 @@
                     ], function() {
                         const socket = new SockJS('/ws-realtime');
                         const stompClient = Stomp.over(socket);
-                        stompClient.debug = null; // Silenciar logs de debug en consola
+                        stompClient.debug = function (str) {
+                            console.log("[STOMP Debug]", str);
+                        };
 
                         stompClient.connect({}, function (frame) {
                             self.stompClient = stompClient;

@@ -50,7 +50,7 @@ public class DocumentoService {
     public boolean tienePermiso(Usuario usuario, UUID expedienteId) {
         RolUsuario rol = usuario.getRol();
 
-        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
+        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL || rol == RolUsuario.DIRECTOR || rol == RolUsuario.SUBDIRECTOR) {
             return true;
         }
 

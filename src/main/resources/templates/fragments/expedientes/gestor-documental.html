@@ -79,6 +79,11 @@
             background-color: rgba(179, 142, 93, 0.15) !important;
             border: 2px dashed #b38e5d !important;
         }
+        /* Evitar interferencias de elementos hijos durante el arrastre */
+        .explorer-item-drag-hover *,
+        .folder-card-drag-hover * {
+            pointer-events: none;
+        }
     </style>
 
     <!-- MODAL GESTOR DOCUMENTAL -->

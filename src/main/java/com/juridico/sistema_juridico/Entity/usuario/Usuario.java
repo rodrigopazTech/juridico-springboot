@@ -18,14 +18,14 @@ import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "creadoPor"})
 @Table(name = "usuarios", indexes = {
         @Index(name = "idx_usuarios_email", columnList = "email"),
         @Index(name = "idx_usuarios_rol", columnList = "rol")
 })
 // --- CAMBIO 2: AGREGAMOS ESTOS 2 PARA EVITAR ERRORES DE GUARDADO ---
-@ToString(exclude = {"materias", "permisosAdicionales"})
-@EqualsAndHashCode(exclude = {"materias", "permisosAdicionales"})
+@ToString(exclude = {"materias", "permisosAdicionales", "creadoPor"})
+@EqualsAndHashCode(exclude = {"materias", "permisosAdicionales", "creadoPor"})
 public class Usuario {
 
     @Id
@@ -47,9 +47,14 @@ public class Usuario {
     @Column(nullable = false, length = 50)
     private RolUsuario rol;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "gerencia_id")
-    private Gerencia gerencia;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "usuario_gerencias",
+        joinColumns = @JoinColumn(name = "usuario_id"),
+        inverseJoinColumns = @JoinColumn(name = "gerencia_id")
+    )
+    @Builder.Default
+    private Set<Gerencia> gerencias = new HashSet<>();
 
     @Builder.Default
     private Boolean activo = true;
@@ -75,6 +80,10 @@ public class Usuario {
     @Column(name = "password_updated_at")
     private LocalDateTime passwordUpdatedAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creado_por_id")
+    private Usuario creadoPor;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "usuario_materias", joinColumns = @JoinColumn(name = "usuario_id"), inverseJoinColumns = @JoinColumn(name = "materia_id"))
     @Builder.Default
@@ -91,6 +100,24 @@ public class Usuario {
         if (this.materias == null)
             return false;
         return this.materias.stream().anyMatch(m -> m.getId().equals(materiaId));
+    }
+
+    // Helper methods para retrocompatibilidad
+    public Gerencia getGerencia() {
+        if (this.gerencias == null || this.gerencias.isEmpty()) {
+            return null;
+        }
+        return this.gerencias.iterator().next();
+    }
+
+    public void setGerencia(Gerencia gerencia) {
+        if (this.gerencias == null) {
+            this.gerencias = new HashSet<>();
+        }
+        this.gerencias.clear();
+        if (gerencia != null) {
+            this.gerencias.add(gerencia);
+        }
     }
 
     @PrePersist

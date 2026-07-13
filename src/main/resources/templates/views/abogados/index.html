@@ -63,6 +63,13 @@
 
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <script th:src="@{/js/custom-selects.js}"></script>
+    <script th:inline="javascript">
+        window.usuarioActual = {
+            id: [[${usuarioActual.id}]],
+            rol: [[${usuarioActual.rol.name()}]],
+            gerenciaId: [[${usuarioActual.gerencia != null ? usuarioActual.gerencia.id : null}]]
+        };
+    </script>
     <script th:src="@{/js/abogados.js}"></script>
     <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
 </body>

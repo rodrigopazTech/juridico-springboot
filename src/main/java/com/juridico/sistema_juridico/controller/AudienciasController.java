@@ -11,11 +11,16 @@ import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.service.procesal.AudienciaService;
-//import com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository;
+import com.juridico.sistema_juridico.Entity.expediente.ColaboradorExpediente;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
+import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.EstadoRepository;
+import com.juridico.sistema_juridico.Entity.procesal.AudienciaContexto;
+import com.juridico.sistema_juridico.repository.procesal.AudienciaContextoRepository;
+import com.juridico.sistema_juridico.Entity.enums.OrigenAudiencia;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -67,6 +72,8 @@ public class AudienciasController {
     @Autowired
     private AudienciaRepository audienciaRepository;
     @Autowired
+    private AudienciaContextoRepository audienciaContextoRepository;
+    @Autowired
     private ExpedienteRepository expedienteRepository;
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -84,10 +91,13 @@ public class AudienciasController {
     private TipoAudienciaRepository tipoAudienciaRepository;
     @Autowired
     private OrganoJurisdiccionalRepository organoJurisdiccionalRepository;
+    @Autowired
+    private EstadoRepository estadoRepository;
 
     private void validarAccesoExpediente(Expediente e, Usuario usuario) {
         RolUsuario rol = usuario.getRol();
-        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
+        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL 
+                || rol == RolUsuario.DIRECTOR || rol == RolUsuario.SUBDIRECTOR) {
             return;
         }
         // El responsable directo del expediente siempre tiene acceso prioritario
@@ -172,11 +182,11 @@ public class AudienciasController {
                     filtroMateriaIds = Collections.emptyList();
                 }
                 break;
-            case DIRECCION:
-            case SUBDIRECCION:
-                if (usuario.getGerencia() != null) {
-                    filtroGerenciaId = usuario.getGerencia().getId();
-                }
+            case ADMIN:
+            case DIRECTOR_PRINCIPAL:
+            case DIRECTOR:
+            case SUBDIRECTOR:
+                // Ven todo
                 break;
         }
 
@@ -274,20 +284,43 @@ public class AudienciasController {
 
         model.addAttribute("listaTiposAudiencia", tipoAudienciaRepository.findByActivoTrue());
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
-        model.addAttribute("listaMaterias", materiaRepository.findByActivoTrueOrderByNombreAsc());
+        // Materias filtradas por gerencia para roles limitados
+        List<com.juridico.sistema_juridico.Entity.catalogo.Materia> listaMaterias;
+        if (usuario.getRol() == RolUsuario.ABOGADO || usuario.getRol() == RolUsuario.JEFE_DEPTO
+                || usuario.getRol() == RolUsuario.GERENTE) {
+            Gerencia gerenciaUsuario = usuario.getGerencia();
+            if (gerenciaUsuario != null) {
+                listaMaterias = materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(gerenciaUsuario.getId());
+            } else {
+                listaMaterias = materiaRepository.findByActivoTrueOrderByNombreAsc();
+            }
+        } else {
+            listaMaterias = materiaRepository.findByActivoTrueOrderByNombreAsc();
+        }
+        model.addAttribute("listaMaterias", listaMaterias);
         model.addAttribute("tipos", tipoAudienciaRepository.findByActivoTrue());
         model.addAttribute("listaOrganos", organoJurisdiccionalRepository.findByActivoTrue());
 
+        // Sedes filtradas por gerencia del usuario (o todas si es nivel alto)
+        List<com.juridico.sistema_juridico.Entity.catalogo.Estado> listaSedes;
+        if (usuario.getRol() == RolUsuario.ABOGADO || usuario.getRol() == RolUsuario.JEFE_DEPTO
+                || usuario.getRol() == RolUsuario.GERENTE) {
+            Gerencia gerenciaUsuario = usuario.getGerencia();
+            if (gerenciaUsuario != null) {
+                listaSedes = estadoRepository.findByGerenciaIdAndActivoTrue(gerenciaUsuario.getId());
+                List<com.juridico.sistema_juridico.Entity.catalogo.Estado> sedesGlobales = estadoRepository.findByGerenciaIsNullAndActivoTrue();
+                listaSedes = new ArrayList<>(listaSedes);
+                listaSedes.addAll(sedesGlobales);
+            } else {
+                listaSedes = estadoRepository.findByActivoTrue();
+            }
+        } else {
+            listaSedes = estadoRepository.findByActivoTrue();
+        }
+        model.addAttribute("listaSedes", listaSedes);
+
         List<Usuario> listaAbogados;
-        if (usuario.getRol() == RolUsuario.ABOGADO) {
-            listaAbogados = Collections.singletonList(usuario);
-        } else if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
-            listaAbogados = usuarioRepository.findAll().stream()
-                    .filter(u -> u.getGerencia() != null && usuario.getGerencia() != null &&
-                            u.getGerencia().getId().equals(usuario.getGerencia().getId()))
-                    .filter(u -> u.getMaterias().stream().anyMatch(m -> usuario.getMaterias().contains(m)))
-                    .collect(Collectors.toList());
-        } else if (usuario.getRol() == RolUsuario.GERENTE || usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+        if (usuario.getRol() == RolUsuario.ABOGADO || usuario.getRol() == RolUsuario.JEFE_DEPTO || usuario.getRol() == RolUsuario.GERENTE) {
             if (usuario.getGerencia() != null) {
                 listaAbogados = usuarioRepository.findAll().stream()
                         .filter(u -> u.getGerencia() != null &&
@@ -297,6 +330,7 @@ public class AudienciasController {
                 listaAbogados = usuarioRepository.findAll();
             }
         } else {
+            // ADMIN, DIRECTOR_PRINCIPAL, DIRECTOR, SUBDIRECTOR
             listaAbogados = usuarioRepository.findAll();
         }
         model.addAttribute("abogados", listaAbogados);
@@ -344,7 +378,9 @@ public class AudienciasController {
         return "views/audiencias/index";
     }
 @PostMapping("/guardar")
-public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes redirectAttrs) {
+public String guardar(@ModelAttribute Audiencia audiencia,
+        @RequestParam(value = "usuarioDelegadoId", required = false) Integer usuarioDelegadoId,
+        RedirectAttributes redirectAttrs) {
     String email = SecurityContextHolder.getContext().getAuthentication().getName();
     Usuario usuario = usuarioRepository.findByEmail(email)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
@@ -378,7 +414,7 @@ public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes re
         if (audiencia.getObservaciones() == null && audienciaExistente.getObservaciones() != null) {
             audiencia.setObservaciones(audienciaExistente.getObservaciones());
         }
-        
+
         if (audiencia.getExpediente() != null && audiencia.getExpediente().getId() != null) {
             exp = expedienteRepository.findById(audiencia.getExpediente().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("El expediente asociado no existe."));
@@ -405,8 +441,57 @@ public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes re
         audiencia.setAbogadoComparece(null);
     }
 
+    // Limpiar delegado si viene vacío
+    if (audiencia.getUsuarioDelegado() != null && audiencia.getUsuarioDelegado().getId() == null) {
+        audiencia.setUsuarioDelegado(null);
+    }
+
+    // Guardar sede si no existe en el catálogo
+    if (audiencia.getSalaLugar() != null && !audiencia.getSalaLugar().trim().isEmpty()) {
+        String sedeNombre = audiencia.getSalaLugar().trim();
+        java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.Estado> sedeOpt = estadoRepository.findByNombreIgnoreCase(sedeNombre);
+        if (!sedeOpt.isPresent()) {
+            com.juridico.sistema_juridico.Entity.catalogo.Estado nuevaSede = new com.juridico.sistema_juridico.Entity.catalogo.Estado();
+            nuevaSede.setNombre(sedeNombre);
+            nuevaSede.setGerencia(usuario.getGerencia());
+            nuevaSede.setUsuario(usuario);
+            nuevaSede.setActivo(true);
+            estadoRepository.save(nuevaSede);
+        }
+    }
+
     // GUARDADO
     Audiencia guardada = audienciaRepository.save(audiencia);
+
+    // DELEGACIÓN: crear/actualizar acceso temporal en colaboradores_expediente
+    if (guardada.getUsuarioDelegado() != null) {
+        Usuario delegado = guardada.getUsuarioDelegado();
+        // Expiración = fecha de audiencia + 2 días, al final del día
+        java.time.LocalDateTime expiracion = guardada.getFechaAudiencia()
+                .plusDays(2)
+                .atTime(23, 59, 59);
+        String motivo = "Delegación de audiencia #" + guardada.getId();
+
+        // Buscar registro previo para este usuario+expediente y actualizar, o crear uno nuevo
+        List<ColaboradorExpediente> previos = colaboradorExpedienteRepository
+                .findByExpedienteIdAndUsuarioId(guardada.getExpediente().getId(), delegado.getId());
+
+        if (!previos.isEmpty()) {
+            ColaboradorExpediente existente = previos.get(0);
+            existente.setFechaExpiracion(expiracion);
+            existente.setMotivo(motivo);
+            colaboradorExpedienteRepository.save(existente);
+        } else {
+            ColaboradorExpediente colaborador = ColaboradorExpediente.builder()
+                    .expediente(guardada.getExpediente())
+                    .usuario(delegado)
+                    .fechaExpiracion(expiracion)
+                    .permisoNivel("LECTURA_TOTAL")
+                    .motivo(motivo)
+                    .build();
+            colaboradorExpedienteRepository.save(colaborador);
+        }
+    }
 
     // Notificación (Solo si es nueva)
     if (esNueva) {
@@ -415,11 +500,129 @@ public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes re
         audienciaService.registrarEdicionAudiencia(guardada);
     }
 
+    // Notificación al delegado (si se asignó uno)
+    if (guardada.getUsuarioDelegado() != null) {
+        audienciaService.notificarDelegacion(guardada, usuario);
+    }
+
     redirectAttrs.addFlashAttribute("mensaje", "Audiencia guardada correctamente.");
     redirectAttrs.addFlashAttribute("tipo", "success");
 
     return "redirect:/audiencias";
 }
+
+    @PostMapping("/guardar-asunto-unico")
+    public String guardarAsuntoUnico(@ModelAttribute Audiencia audiencia,
+            @RequestParam(value = "contextoMateriaId", required = false) Integer contextoMateriaId,
+            @RequestParam(value = "contextoGerenciaId", required = false) Integer contextoGerenciaId,
+            @RequestParam(value = "contextoDescripcion", required = false) String contextoDescripcion,
+            @RequestParam(value = "contextoPartes", required = false) String contextoPartes,
+            @RequestParam(value = "contextoNumeroReferencia", required = false) String contextoNumeroReferencia,
+            RedirectAttributes redirectAttrs) {
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
+
+        boolean esNueva = (audiencia.getId() == null);
+
+        if (audiencia.getFechaAudiencia() == null) {
+            throw new BadRequestException("La fecha de la audiencia es obligatoria.");
+        }
+        if (audiencia.getTipoAudiencia() == null || audiencia.getTipoAudiencia().getId() == null) {
+            throw new BadRequestException("El tipo de audiencia es obligatorio.");
+        }
+
+        AudienciaContexto contexto = null;
+
+        if (!esNueva) {
+            Audiencia audienciaExistente = audienciaRepository.findById(audiencia.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "No se puede editar: La audiencia con ID " + audiencia.getId() + " no existe."));
+
+            // Preservamos los datos que no vienen en el formulario simple
+            audiencia.setEstatusAudiencia(audienciaExistente.getEstatusAudiencia());
+            audiencia.setActaDocumento(audienciaExistente.getActaDocumento());
+
+            // Preservar observaciones si no se enviaron nuevas
+            if (audiencia.getObservaciones() == null && audienciaExistente.getObservaciones() != null) {
+                audiencia.setObservaciones(audienciaExistente.getObservaciones());
+            }
+
+            // Manejar contexto existente o nuevo
+            if (audienciaExistente.getContexto() != null) {
+                contexto = audienciaExistente.getContexto();
+            } else {
+                contexto = new AudienciaContexto();
+            }
+        } else {
+            audiencia.setEstatusAudiencia(EstatusAudiencia.PENDIENTE);
+            contexto = new AudienciaContexto();
+        }
+
+        // Llenar datos del contexto
+        contexto.setOrigen(OrigenAudiencia.ASUNTO_UNICO);
+        if (contextoGerenciaId != null) {
+            contexto.setGerencia(gerenciaRepository.findById(contextoGerenciaId).orElse(null));
+        }
+        if (contextoMateriaId != null) {
+            contexto.setMateria(materiaRepository.findById(contextoMateriaId).orElse(null));
+        }
+        contexto.setDescripcion(contextoDescripcion);
+        contexto.setPartes(contextoPartes);
+        contexto.setNumeroExpedienteSnapshot(contextoNumeroReferencia);
+
+        // Guardar el contexto
+        contexto = audienciaContextoRepository.save(contexto);
+
+        // Asociar el contexto y asegurar que expediente sea nulo
+        audiencia.setContexto(contexto);
+        audiencia.setExpediente(null);
+
+        // Corrección para evitar conflictos con Hibernate si el ID del abogado viene vacío
+        if (audiencia.getAbogadoComparece() != null && audiencia.getAbogadoComparece().getId() == null) {
+            audiencia.setAbogadoComparece(null);
+        }
+
+        // Limpiar delegado si viene vacío
+        if (audiencia.getUsuarioDelegado() != null && audiencia.getUsuarioDelegado().getId() == null) {
+            audiencia.setUsuarioDelegado(null);
+        }
+
+        // Guardar sede si no existe en el catálogo
+        if (audiencia.getSalaLugar() != null && !audiencia.getSalaLugar().trim().isEmpty()) {
+            String sedeNombre = audiencia.getSalaLugar().trim();
+            java.util.Optional<com.juridico.sistema_juridico.Entity.catalogo.Estado> sedeOpt = estadoRepository.findByNombreIgnoreCase(sedeNombre);
+            if (!sedeOpt.isPresent()) {
+                com.juridico.sistema_juridico.Entity.catalogo.Estado nuevaSede = new com.juridico.sistema_juridico.Entity.catalogo.Estado();
+                nuevaSede.setNombre(sedeNombre);
+                nuevaSede.setGerencia(usuario.getGerencia());
+                nuevaSede.setUsuario(usuario);
+                nuevaSede.setActivo(true);
+                estadoRepository.save(nuevaSede);
+            }
+        }
+
+        // GUARDADO
+        Audiencia guardada = audienciaRepository.save(audiencia);
+
+        // Notificación (Solo si es nueva)
+        if (esNueva) {
+            audienciaService.notificarCreacionAudiencia(guardada);
+        } else {
+            audienciaService.registrarEdicionAudiencia(guardada);
+        }
+
+        // Notificación al delegado (si se asignó uno)
+        if (guardada.getUsuarioDelegado() != null) {
+            audienciaService.notificarDelegacion(guardada, usuario);
+        }
+
+        redirectAttrs.addFlashAttribute("mensaje", "Audiencia de asunto único guardada correctamente.");
+        redirectAttrs.addFlashAttribute("tipo", "success");
+
+        return "redirect:/audiencias";
+    }
 
     @GetMapping("/obtener/{id}")
     @ResponseBody
@@ -661,6 +864,35 @@ public String guardar(@ModelAttribute Audiencia audiencia, RedirectAttributes re
 
             return ResponseEntity.ok(resultado);
 
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/api/abogados-por-gerencia/{gerenciaId}")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> obtenerAbogadosPorGerencia(
+            @PathVariable("gerenciaId") Integer gerenciaId) {
+        try {
+            List<Usuario> abogadosGerencia = usuarioRepository.findAll().stream()
+                    .filter(u -> u.getActivo() != null && u.getActivo()
+                            && u.getGerencia() != null && u.getGerencia().getId().equals(gerenciaId))
+                    .filter(u -> u.getRol() == RolUsuario.ABOGADO || u.getRol() == RolUsuario.GERENTE
+                            || u.getRol() == RolUsuario.JEFE_DEPTO)
+                    .collect(Collectors.toList());
+
+            List<Map<String, Object>> resultado = abogadosGerencia.stream()
+                    .map(u -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("id", u.getId());
+                        map.put("nombre", u.getNombreCompleto());
+                        map.put("esTitular", false);
+                        return map;
+                    })
+                    .sorted((a, b) -> ((String) a.get("nombre")).compareToIgnoreCase((String) b.get("nombre")))
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(resultado);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }

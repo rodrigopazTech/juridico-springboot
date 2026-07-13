@@ -20,7 +20,7 @@
             <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Gerencia / Unidad</label>
             <div class="flex items-center gap-2 p-3 bg-gray-50 border border-gray-100 rounded-xl text-gray-700 font-medium">
                 <i class="fas fa-building text-gray-300"></i>
-                <span th:text="${usuario.gerencia != null ? usuario.gerencia.nombre : 'Sin Gerencia'}">Nombre Gerencia</span>
+                <span th:text="${usuario.rol.name() == 'ADMIN' || usuario.rol.name() == 'DIRECTOR_PRINCIPAL' || usuario.rol.name() == 'DIRECTOR' || usuario.rol.name() == 'SUBDIRECTOR' ? 'Todas (Acceso Global)' : (usuario.gerencia != null ? usuario.gerencia.nombre : 'Sin Gerencia')}">Nombre Gerencia</span>
             </div>
         </div>
 
@@ -36,12 +36,20 @@
     <div class="mt-8 pt-6 border-t border-gray-50">
         <label class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-3">Materias bajo mi responsabilidad</label>
         <div class="flex flex-wrap gap-2">
-            <div th:each="materia : ${usuario.materias}" 
-                 class="flex items-center gap-2 px-4 py-2 bg-gob-oro/10 border border-gob-oro/20 rounded-full text-gob-oro text-xs font-extrabold uppercase tracking-tight">
-                <i class="fas fa-balance-scale"></i>
-                <span th:text="${materia.nombre}">Materia</span>
-            </div>
-            <p th:if="${usuario.materias.empty}" class="text-sm text-gray-400 italic">No tienes materias asignadas actualmente.</p>
+            <th:block th:if="${usuario.rol.name() == 'ADMIN' || usuario.rol.name() == 'DIRECTOR_PRINCIPAL' || usuario.rol.name() == 'DIRECTOR' || usuario.rol.name() == 'SUBDIRECTOR'}">
+                <div class="flex items-center gap-2 px-4 py-2 bg-gob-oro/10 border border-gob-oro/20 rounded-full text-gob-oro text-xs font-extrabold uppercase tracking-tight">
+                    <i class="fas fa-balance-scale"></i>
+                    <span>Todas (Acceso Global)</span>
+                </div>
+            </th:block>
+            <th:block th:unless="${usuario.rol.name() == 'ADMIN' || usuario.rol.name() == 'DIRECTOR_PRINCIPAL' || usuario.rol.name() == 'DIRECTOR' || usuario.rol.name() == 'SUBDIRECTOR'}">
+                <div th:each="materia : ${usuario.materias}" 
+                     class="flex items-center gap-2 px-4 py-2 bg-gob-oro/10 border border-gob-oro/20 rounded-full text-gob-oro text-xs font-extrabold uppercase tracking-tight">
+                    <i class="fas fa-balance-scale"></i>
+                    <span th:text="${materia.nombre}">Materia</span>
+                </div>
+                <p th:if="${usuario.materias.empty}" class="text-sm text-gray-400 italic">No tienes materias asignadas actualmente.</p>
+            </th:block>
         </div>
     </div>
 </div>

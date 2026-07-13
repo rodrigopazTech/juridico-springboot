@@ -59,7 +59,7 @@ public class PermisoUsuarioService {
                 PermisoSistema.DOCUMENTOS_SUPERVISION,
                 PermisoSistema.ALERTAS_CONFIGURAR));
 
-        PERMISOS_BASE.put(RolUsuario.DIRECCION, EnumSet.of(
+        PERMISOS_BASE.put(RolUsuario.DIRECTOR, EnumSet.of(
                 PermisoSistema.DASHBOARD_VER,
                 PermisoSistema.AGENDA_VER,
                 PermisoSistema.CATALOGOS_VER,
@@ -73,7 +73,7 @@ public class PermisoUsuarioService {
                 PermisoSistema.DOCUMENTOS_SUPERVISION,
                 PermisoSistema.ALERTAS_CONFIGURAR));
 
-        PERMISOS_BASE.put(RolUsuario.SUBDIRECCION, EnumSet.copyOf(PERMISOS_BASE.get(RolUsuario.DIRECCION)));
+        PERMISOS_BASE.put(RolUsuario.SUBDIRECTOR, EnumSet.copyOf(PERMISOS_BASE.get(RolUsuario.DIRECTOR)));
         PERMISOS_BASE.put(RolUsuario.ADMIN, EnumSet.allOf(PermisoSistema.class));
     }
 

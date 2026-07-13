@@ -4,6 +4,7 @@ import com.juridico.sistema_juridico.Entity.usuario.PushSubscription;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Usuarios.PushSubscriptionRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+import com.juridico.sistema_juridico.service.WebPushService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,31 @@ public class WebPushController {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private WebPushService webPushService;
+
+    // =========================================================================
+    // CODIGO DE PRUEBA: Endpoint temporal para probar el envio de notificaciones push
+    // =========================================================================
+    @GetMapping("/test-send")
+    public ResponseEntity<?> testSend() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+        if (usuario == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Usuario no encontrado"));
+        }
+        
+        webPushService.enviarNotificacion(
+            usuario, 
+            "Notificación de Prueba", 
+            "Esta es una notificación push de prueba enviada a las " + java.time.LocalTime.now(), 
+            "/dashboard"
+        );
+        
+        return ResponseEntity.ok(Map.of("success", true, "mensaje", "Push de prueba enviado a " + email));
+    }
+    // =========================================================================
 
     @GetMapping("/public-key")
     public ResponseEntity<?> getPublicKey() {

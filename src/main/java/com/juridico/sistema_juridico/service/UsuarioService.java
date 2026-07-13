@@ -7,6 +7,8 @@ import com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional;
 import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.ActividadUsuarioRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.PushSubscriptionRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRepository;
@@ -31,6 +33,10 @@ public class UsuarioService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+    @Autowired
+    private ActividadUsuarioRepository actividadUsuarioRepository;
+    @Autowired
+    private PushSubscriptionRepository pushSubscriptionRepository;
     @Autowired
     private GerenciaRepository gerenciaRepository;
     @Autowired
@@ -74,46 +80,125 @@ public class UsuarioService {
         return tipoAudienciaRepository.findAll(pageable);
     }
 
+    public List<RolUsuario> getRolesVisiblesPara(RolUsuario rolActor) {
+        List<RolUsuario> todos = java.util.Arrays.asList(RolUsuario.values());
+        switch (rolActor) {
+            case ADMIN:
+                return todos;
+            case DIRECTOR_PRINCIPAL:
+                return List.of(RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO);
+            case DIRECTOR:
+                return List.of(RolUsuario.SUBDIRECTOR, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO);
+            case SUBDIRECTOR:
+                return List.of(RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO);
+            case GERENTE:
+                return List.of(RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO);
+            case JEFE_DEPTO:
+                return List.of(RolUsuario.ABOGADO);
+            case ABOGADO:
+            default:
+                return List.of();
+        }
+    }
+
     @Transactional
-    public Usuario guardarUsuario(Usuario usuario, List<Integer> materiasIds) {
+    public Usuario guardarUsuario(Usuario usuario, List<Integer> gerenciasIds, List<Integer> materiasIds) {
 
         Set<Materia> materiasSeleccionadas = new HashSet<>();
         if (materiasIds != null && !materiasIds.isEmpty()) {
             materiasSeleccionadas.addAll(materiaRepository.findAllById(materiasIds));
         }
-        normalizarGerenciaPorRol(usuario);
+
+        Set<Gerencia> gerenciasSeleccionadas = new HashSet<>();
+        if (gerenciasIds != null && !gerenciasIds.isEmpty()) {
+            gerenciasSeleccionadas.addAll(gerenciaRepository.findAllById(gerenciasIds));
+        }
+
+        String actorEmail = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario actor = obtenerPorUsername(actorEmail);
+        validarJerarquia(actor, usuario);
+
+        // Si el rol asignado al usuario es directivo o admin, se le asignan automáticamente TODAS las gerencias y materias
+        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECTOR_PRINCIPAL 
+                || usuario.getRol() == RolUsuario.DIRECTOR || usuario.getRol() == RolUsuario.SUBDIRECTOR) {
+            gerenciasSeleccionadas.clear();
+            gerenciasSeleccionadas.addAll(gerenciaRepository.findByActivoTrueOrderByNombreAsc());
+            materiasSeleccionadas.clear();
+            materiasSeleccionadas.addAll(materiaRepository.findByActivoTrueOrderByNombreAsc());
+        }
 
         if (usuario.getId() == null) {
             // CREACIÓN
             if (usuarioRepository.existsByEmail(usuario.getEmail())) {
-                // Aquí podrías lanzar ConflictException si quisieras ser estricto
                 throw new RuntimeException("El correo electrónico ya está registrado.");
             }
+
+            // Aplicar asignaciones por default basadas en el rol del creador
+            if (actor.getRol() == RolUsuario.GERENTE) {
+                usuario.getGerencias().clear();
+                usuario.getGerencias().addAll(actor.getGerencias());
+            } else if (actor.getRol() == RolUsuario.JEFE_DEPTO) {
+                usuario.getGerencias().clear();
+                usuario.getGerencias().addAll(actor.getGerencias());
+                materiasSeleccionadas.clear();
+                materiasSeleccionadas.addAll(actor.getMaterias());
+            } else {
+                // Para creadores directivos/admin, se toman las gerenciasSeleccionadas
+                usuario.getGerencias().clear();
+                usuario.getGerencias().addAll(gerenciasSeleccionadas);
+                
+                // Si no se especificaron materias y no es directivo, auto-asignar todas las materias de las gerencias asignadas
+                if ((materiasIds == null || materiasIds.isEmpty()) && !gerenciasSeleccionadas.isEmpty()
+                    && usuario.getRol() != RolUsuario.ADMIN && usuario.getRol() != RolUsuario.DIRECTOR_PRINCIPAL 
+                    && usuario.getRol() != RolUsuario.DIRECTOR && usuario.getRol() != RolUsuario.SUBDIRECTOR) {
+                    for (Gerencia g : gerenciasSeleccionadas) {
+                        List<Materia> materiasGerencia = materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(g.getId());
+                        materiasSeleccionadas.addAll(materiasGerencia);
+                    }
+                }
+            }
+
             usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
             usuario.setMaterias(materiasSeleccionadas);
+            usuario.setCreadoPor(actor);
             return usuarioRepository.save(usuario);
         } else {
             // EDICIÓN
-            Usuario existente = buscarPorId(usuario.getId()); // Ya lanza 404 si no existe
+            Usuario existente = buscarPorId(usuario.getId());
+
+            // Volver a validar jerarquía de actor sobre destino existente
+            validarJerarquia(actor, existente);
 
             existente.setNombreCompleto(usuario.getNombreCompleto());
             existente.setEmail(usuario.getEmail());
-            existente.setRol(usuario.getRol());
 
-            existente.setGerencia(usuario.getGerencia());
-            normalizarGerenciaPorRol(existente);
-            // Solo actualizar materias si el formulario envió una lista explícita
-            // (materiasIds != null). Si es null, conservar las materias existentes.
-            if (materiasIds != null) {
-                existente.getMaterias().clear();
-                existente.getMaterias().addAll(materiasSeleccionadas);
+            if (actor.getRol() == RolUsuario.GERENTE) {
+                // Gerente puede editar rol (entre JEFE_DEPTO y ABOGADO) y materias, pero no gerencia
+                existente.setRol(usuario.getRol());
+                if (materiasIds != null) {
+                    existente.getMaterias().clear();
+                    existente.getMaterias().addAll(materiasSeleccionadas);
+                }
+            } else if (actor.getRol() == RolUsuario.JEFE_DEPTO) {
+                // Jefe de Departamento no puede cambiar rol, gerencia ni materias del usuario
+            } else {
+                // Roles directivos/admin editan todo
+                existente.setRol(usuario.getRol());
+                existente.getGerencias().clear();
+                existente.getGerencias().addAll(gerenciasSeleccionadas);
+                if (materiasIds != null || existente.getRol() == RolUsuario.ADMIN 
+                        || existente.getRol() == RolUsuario.DIRECTOR_PRINCIPAL 
+                        || existente.getRol() == RolUsuario.DIRECTOR 
+                        || existente.getRol() == RolUsuario.SUBDIRECTOR) {
+                    existente.getMaterias().clear();
+                    existente.getMaterias().addAll(materiasSeleccionadas);
+                }
             }
 
             existente.setActivo(usuario.getActivo());
 
             if (usuario.getPassword() != null && !usuario.getPassword().isBlank()) {
                 existente.setPassword(passwordEncoder.encode(usuario.getPassword()));
-                // Si el admin o director asigna una contraseña manual (temporal), forzar cambio en el próximo login
                 existente.setForcePasswordChange(true);
             }
 
@@ -135,7 +220,88 @@ public class UsuarioService {
         if (!usuarioRepository.existsById(id)) {
             throw new ResourceNotFoundException("No se puede eliminar: El usuario no existe.");
         }
+        Usuario destino = buscarPorId(id);
+        String actorEmail = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario actor = obtenerPorUsername(actorEmail);
+        validarJerarquia(actor, destino);
+
+        // Regla específica: DIRECTOR sin permiso de borrar directivos
+        if (actor.getRol() == RolUsuario.DIRECTOR) {
+            if (destino.getRol() == RolUsuario.ADMIN ||
+                destino.getRol() == RolUsuario.DIRECTOR_PRINCIPAL ||
+                destino.getRol() == RolUsuario.DIRECTOR) {
+                throw new RuntimeException("El DIRECTOR no tiene permisos para eliminar directivos de alto rango (ADMIN, DIRECTOR PRINCIPAL o DIRECTOR).");
+            }
+        }
+
+        // Eliminar en cascada los registros asociados (actividades y suscripciones push)
+        actividadUsuarioRepository.deleteByUsuarioId(id);
+        pushSubscriptionRepository.deleteByUsuarioId(id);
+
         usuarioRepository.deleteById(id);
+    }
+
+    private void validarJerarquia(Usuario actor, Usuario destino) {
+        if (actor.getRol() == RolUsuario.ADMIN) {
+            return;
+        }
+        if (actor.getRol() == RolUsuario.DIRECTOR_PRINCIPAL) {
+            if (destino.getRol() == RolUsuario.ADMIN || destino.getRol() == RolUsuario.DIRECTOR_PRINCIPAL) {
+                throw new RuntimeException("El DIRECTOR_PRINCIPAL no puede administrar a ADMIN o DIRECTOR_PRINCIPAL.");
+            }
+            return;
+        }
+        if (actor.getRol() == RolUsuario.DIRECTOR) {
+            if (destino.getRol() == RolUsuario.ADMIN || destino.getRol() == RolUsuario.DIRECTOR_PRINCIPAL || destino.getRol() == RolUsuario.DIRECTOR) {
+                throw new RuntimeException("El DIRECTOR no puede administrar a ADMIN, DIRECTOR_PRINCIPAL o DIRECTOR.");
+            }
+            return;
+        }
+        if (actor.getRol() == RolUsuario.SUBDIRECTOR) {
+            if (destino.getRol() == RolUsuario.ADMIN || destino.getRol() == RolUsuario.DIRECTOR_PRINCIPAL || destino.getRol() == RolUsuario.DIRECTOR || destino.getRol() == RolUsuario.SUBDIRECTOR) {
+                throw new RuntimeException("El SUBDIRECTOR no puede administrar a ADMIN, DIRECTOR_PRINCIPAL, DIRECTOR o SUBDIRECTOR.");
+            }
+            return;
+        }
+        if (actor.getRol() == RolUsuario.GERENTE) {
+            if (destino.getRol() != RolUsuario.JEFE_DEPTO && destino.getRol() != RolUsuario.ABOGADO) {
+                throw new RuntimeException("El GERENTE solo puede administrar JEFE_DEPTO y ABOGADO.");
+            }
+            if (actor.getGerencias() != null && destino.getGerencias() != null) {
+                boolean hasCommon = actor.getGerencias().stream().anyMatch(gActor -> 
+                    destino.getGerencias().stream().anyMatch(gDest -> gDest.getId().equals(gActor.getId()))
+                );
+                if (!hasCommon && !destino.getGerencias().isEmpty()) {
+                    throw new RuntimeException("El GERENTE solo puede administrar usuarios de su gerencia.");
+                }
+            }
+            return;
+        }
+        if (actor.getRol() == RolUsuario.JEFE_DEPTO) {
+            if (destino.getRol() != RolUsuario.ABOGADO) {
+                throw new RuntimeException("El JEFE_DEPTO solo puede administrar ABOGADO.");
+            }
+            if (actor.getGerencias() != null && destino.getGerencias() != null) {
+                boolean hasCommon = actor.getGerencias().stream().anyMatch(gActor -> 
+                    destino.getGerencias().stream().anyMatch(gDest -> gDest.getId().equals(gActor.getId()))
+                );
+                if (!hasCommon && !destino.getGerencias().isEmpty()) {
+                    throw new RuntimeException("El JEFE_DEPTO solo puede administrar usuarios de su gerencia.");
+                }
+            }
+            if (actor.getMaterias() != null && destino.getMaterias() != null) {
+                boolean hasCommonMat = actor.getMaterias().stream().anyMatch(mActor -> 
+                    destino.getMaterias().stream().anyMatch(mDest -> mDest.getId().equals(mActor.getId()))
+                );
+                if (!hasCommonMat && !destino.getMaterias().isEmpty()) {
+                    throw new RuntimeException("El JEFE_DEPTO solo puede administrar usuarios de su materia.");
+                }
+            }
+            return;
+        }
+        if (actor.getRol() == RolUsuario.ABOGADO) {
+            throw new RuntimeException("El ABOGADO no puede administrar a otros usuarios.");
+        }
     }
 
     // --- GERENCIAS ---
@@ -231,12 +397,4 @@ public class UsuarioService {
         tipoAudienciaRepository.deleteById(id);
     }
 
-    private void normalizarGerenciaPorRol(Usuario usuario) {
-        if (usuario == null || usuario.getRol() == null) {
-            return;
-        }
-        if (usuario.getRol() == RolUsuario.ADMIN) {
-            usuario.setGerencia(null);
-        }
-    }
 }

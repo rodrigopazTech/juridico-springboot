@@ -196,11 +196,11 @@ public class TerminosController {
                     filtroGerenciaSeguro = -1;
                 }
                 break;
-            case DIRECCION:
-            case SUBDIRECCION:
-                if (usuarioActual.getGerencia() != null) {
-                    filtroGerenciaSeguro = usuarioActual.getGerencia().getId();
-                }
+            case ADMIN:
+            case DIRECTOR_PRINCIPAL:
+            case DIRECTOR:
+            case SUBDIRECTOR:
+                // Ven todo
                 break;
         }
 
@@ -243,7 +243,7 @@ public class TerminosController {
         List<Usuario> abogadosParaModal;
         if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
             abogadosParaModal = Collections.singletonList(usuarioActual);
-        } else if (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.DIRECCION || usuarioActual.getRol() == RolUsuario.SUBDIRECCION) {
+        } else if (usuarioActual.getRol() == RolUsuario.GERENTE) {
             if (usuarioActual.getGerencia() != null) {
                 abogadosParaModal = usuarioRepository.findByRolAndActivoTrue(RolUsuario.ABOGADO).stream()
                         .filter(u -> u.getGerencia() != null
@@ -259,6 +259,7 @@ public class TerminosController {
                     .filter(u -> u.getMaterias().stream().anyMatch(m -> usuarioActual.getMaterias().contains(m)))
                     .collect(Collectors.toList());
         } else {
+            // ADMIN, DIRECTOR_PRINCIPAL, DIRECTOR, SUBDIRECTOR
             abogadosParaModal = usuarioRepository.findByRolAndActivoTrue(RolUsuario.ABOGADO);
         }
         model.addAttribute("abogados", abogadosParaModal);
@@ -267,7 +268,9 @@ public class TerminosController {
         model.addAttribute("listaAbogados", usuarioRepository.findAll());
         model.addAttribute("listaGerencias", gerenciaRepository.findAll());
         List<Gerencia> gerenciasParaModal;
-        if (usuarioActual.getRol() == RolUsuario.ADMIN || usuarioActual.getGerencia() == null) {
+        if (usuarioActual.getRol() == RolUsuario.ADMIN || usuarioActual.getRol() == RolUsuario.DIRECTOR_PRINCIPAL 
+                || usuarioActual.getRol() == RolUsuario.DIRECTOR || usuarioActual.getRol() == RolUsuario.SUBDIRECTOR 
+                || usuarioActual.getGerencia() == null) {
             gerenciasParaModal = gerenciaRepository.findAll();
         } else {
             gerenciasParaModal = Collections.singletonList(usuarioActual.getGerencia());
@@ -502,7 +505,7 @@ public class TerminosController {
 
         Gerencia g = terminoGuardado.getGerenciaReferencia();
         if (g != null) {
-            List<Usuario> destinatarios = usuarioRepository.findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(g.getId());
+            List<Usuario> destinatarios = usuarioRepository.findByGerenciasIdAndActivoTrueOrderByNombreCompletoAsc(g.getId());
             String expedienteNum = terminoGuardado.getNumeroReferencia();
 
             if (esNuevo) {
@@ -662,7 +665,7 @@ public class TerminosController {
         String mensajeBase = String.format("Movimiento de '%s' a '%s' por %s", 
                 etapaAnterior.getDescripcion(), nuevaEtapa.getDescripcion(), actor.getNombreCompleto());
 
-        List<Usuario> destinatarios = usuarioRepository.findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(g.getId());
+        List<Usuario> destinatarios = usuarioRepository.findByGerenciasIdAndActivoTrueOrderByNombreCompletoAsc(g.getId());
         Set<Usuario> unicos = new HashSet<>(destinatarios);
         String expedienteNum = termino.getNumeroReferencia();
         String tituloExp = titulo + ": " + expedienteNum;
@@ -915,7 +918,7 @@ public class TerminosController {
         List<Integer> secMateriaIds = null;
         Integer secUsuarioId = usuarioActual.getId();
 
-        if (usuarioActual.getRol() == RolUsuario.ADMIN || usuarioActual.getRol() == RolUsuario.DIRECCION || usuarioActual.getRol() == RolUsuario.SUBDIRECCION) {
+        if (usuarioActual.getRol() == RolUsuario.ADMIN || usuarioActual.getRol() == RolUsuario.DIRECTOR || usuarioActual.getRol() == RolUsuario.SUBDIRECTOR) {
         } else if (usuarioActual.getRol() == RolUsuario.GERENTE) {
             if (usuarioActual.getGerencia() != null) {
                 secGerenciaId = usuarioActual.getGerencia().getId();
@@ -1092,7 +1095,8 @@ public class TerminosController {
     }
 
     private void validarAccesoTermino(Termino termino, Usuario usuario) {
-        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECCION || usuario.getRol() == RolUsuario.SUBDIRECCION) {
+        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECTOR_PRINCIPAL 
+                || usuario.getRol() == RolUsuario.DIRECTOR || usuario.getRol() == RolUsuario.SUBDIRECTOR) {
             return;
         }
         Gerencia gt = termino.getGerenciaReferencia();
@@ -1109,7 +1113,8 @@ public class TerminosController {
 
     private void validarAccesoExpediente(Expediente e, Usuario usuario) {
         RolUsuario rol = usuario.getRol();
-        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION) {
+        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL 
+                || rol == RolUsuario.DIRECTOR || rol == RolUsuario.SUBDIRECTOR) {
             return;
         }
         if (usuario.getGerencia() != null && e.getGerencia() != null && e.getGerencia().getId().equals(usuario.getGerencia().getId())) {
@@ -1151,7 +1156,7 @@ public class TerminosController {
     public ResponseEntity<List<Map<String, Object>>> obtenerAbogadosPorGerencia(@PathVariable("gerenciaId") Integer gerenciaId) {
         try {
             Usuario usuarioActual = getUsuarioActual();
-            List<Usuario> abogados = usuarioRepository.findByGerenciaIdAndActivoTrueOrderByNombreCompletoAsc(gerenciaId).stream()
+            List<Usuario> abogados = usuarioRepository.findByGerenciasIdAndActivoTrueOrderByNombreCompletoAsc(gerenciaId).stream()
                     .filter(u -> u.getRol() == RolUsuario.ABOGADO)
                     .collect(Collectors.toList());
 

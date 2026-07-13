@@ -42,7 +42,7 @@
                 </li>
 
                 <li
-                    sec:authorize="hasAnyAuthority('ADMIN','DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO', 'ABOGADO')">
+                    sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO', 'ABOGADO')">
                     <a th:href="@{/dashboard}"
                         class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
                         th:classappend="${activePage == 'dashboard' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
@@ -52,7 +52,7 @@
                     </a>
                 </li>
 
-                <li sec:authorize="hasAnyAuthority('ADMIN','DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')">
+                <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO')">
                     <a th:href="@{/agenda}"
                         class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
                         th:classappend="${activePage == 'agenda' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
@@ -116,11 +116,11 @@
                     </a>
                 </li>
 
-                <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE')" class="px-6 mt-8 mb-3">
+                <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO')" class="px-6 mt-8 mb-3">
                     <span class="text-[10px] font-extrabold text-white/40 uppercase tracking-widest">Administración</span>
                 </li>
 
-                <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE')">
+                <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO')">
                     <a th:href="@{/abogados}"
                         class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
                         th:classappend="${activePage == 'abogados' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">

@@ -30,6 +30,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.HashSet;
 
 @Controller
 @RequestMapping("/usuarios")
@@ -53,13 +55,35 @@ public class UsuariosController {
         Usuario usuarioActual = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario actual no encontrado en la base de datos."));
 
+        // Roles con acceso total (ven todos los usuarios sin filtro por gerencia)
+        Set<RolUsuario> rolesConAccesoTotal = Set.of(
+                RolUsuario.ADMIN, RolUsuario.DIRECTOR_PRINCIPAL,
+                RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR);
+
         // Paginación Usuarios
         Pageable pageUs = PageRequest.of(pageUsuarios, 10, Sort.by("nombreCompleto").ascending());
         Page<Usuario> usuariosPage;
-        if (usuarioActual.getRol() != RolUsuario.ADMIN && usuarioActual.getGerencia() != null) {
-            usuariosPage = usuarioRepository.findByGerencia(usuarioActual.getGerencia(), pageUs);
+        List<RolUsuario> rolesVisibles = usuarioService.getRolesVisiblesPara(usuarioActual.getRol());
+        if (!rolesConAccesoTotal.contains(usuarioActual.getRol())) {
+            List<Integer> gerIds = usuarioActual.getGerencias().stream()
+                    .map(Gerencia::getId).collect(Collectors.toList());
+            if (usuarioActual.getRol() == RolUsuario.GERENTE) {
+                if (gerIds.isEmpty()) {
+                    usuariosPage = Page.empty(pageUs);
+                } else {
+                    usuariosPage = usuarioRepository.findDistinctByGerenciasIdInAndRolInAndIdNot(gerIds, rolesVisibles, usuarioActual.getId(), pageUs);
+                }
+            } else {
+                List<Integer> matIds = usuarioActual.getMaterias().stream()
+                        .map(Materia::getId).collect(Collectors.toList());
+                if (gerIds.isEmpty() || matIds.isEmpty()) {
+                    usuariosPage = Page.empty(pageUs);
+                } else {
+                    usuariosPage = usuarioRepository.findDistinctByGerenciasIdInAndMateriasIdInAndRolInAndIdNot(gerIds, matIds, rolesVisibles, usuarioActual.getId(), pageUs);
+                }
+            }
         } else {
-            usuariosPage = usuarioService.listarUsuariosPaginados(pageUs);
+            usuariosPage = usuarioRepository.findByRolInAndIdNot(rolesVisibles, usuarioActual.getId(), pageUs);
         }
 
         // Paginación Gerencias
@@ -79,16 +103,26 @@ public class UsuariosController {
         model.addAttribute("listaOrganos", organosPage);
         model.addAttribute("listaTiposAudiencia", tiposAudienciaPage);
 
-        if (usuarioActual.getRol() != RolUsuario.ADMIN && usuarioActual.getGerencia() != null) {
-            model.addAttribute("allGerencias", Arrays.asList(usuarioActual.getGerencia()));
-            if (usuarioActual.getRol() == RolUsuario.GERENTE) {
-                model.addAttribute("listaRoles", Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO));
-            } else {
-                model.addAttribute("listaRoles", RolUsuario.values());
-            }
+        List<RolUsuario> rolesPermitidos = new ArrayList<>();
+        if (usuarioActual.getRol() == RolUsuario.ADMIN) {
+            rolesPermitidos.addAll(Arrays.asList(RolUsuario.values()));
+        } else if (usuarioActual.getRol() == RolUsuario.DIRECTOR_PRINCIPAL) {
+            rolesPermitidos.addAll(Arrays.asList(RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO));
+        } else if (usuarioActual.getRol() == RolUsuario.DIRECTOR) {
+            rolesPermitidos.addAll(Arrays.asList(RolUsuario.SUBDIRECTOR, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO));
+        } else if (usuarioActual.getRol() == RolUsuario.SUBDIRECTOR) {
+            rolesPermitidos.addAll(Arrays.asList(RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO));
+        } else if (usuarioActual.getRol() == RolUsuario.GERENTE) {
+            rolesPermitidos.addAll(Arrays.asList(RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO));
+        } else if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+            rolesPermitidos.add(RolUsuario.ABOGADO);
+        }
+        model.addAttribute("listaRoles", rolesPermitidos);
+
+        if (!rolesConAccesoTotal.contains(usuarioActual.getRol()) && !usuarioActual.getGerencias().isEmpty()) {
+            model.addAttribute("allGerencias", new ArrayList<>(usuarioActual.getGerencias()));
         } else {
             model.addAttribute("allGerencias", usuarioService.listarGerencias());
-            model.addAttribute("listaRoles", RolUsuario.values());
         }
 
         model.addAttribute("usuarioActual", usuarioActual);
@@ -163,9 +197,10 @@ public class UsuariosController {
 
     @PostMapping("/guardar")
     public String guardarUsuario(@ModelAttribute Usuario usuario,
+            @RequestParam(value = "gerenciasIds", required = false) java.util.List<Integer> gerenciasIds,
             @RequestParam(value = "materiasIds", required = false) java.util.List<Integer> materiasIds,
             RedirectAttributes redirectAttrs) {
-        usuarioService.guardarUsuario(usuario, materiasIds);
+        usuarioService.guardarUsuario(usuario, gerenciasIds, materiasIds);
         redirectAttrs.addFlashAttribute("mensaje", "Usuario guardado correctamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
         return "redirect:/usuarios";
@@ -206,8 +241,9 @@ public class UsuariosController {
     public String toggleStatusUsuario(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
         Usuario usuario = usuarioService.buscarPorId(id);
         usuario.setActivo(!usuario.getActivo());
+        List<Integer> gerenciasIds = usuario.getGerencias().stream().map(Gerencia::getId).collect(Collectors.toList());
         List<Integer> materiasIds = usuario.getMaterias().stream().map(Materia::getId).collect(Collectors.toList());
-        usuarioService.guardarUsuario(usuario, materiasIds);
+        usuarioService.guardarUsuario(usuario, gerenciasIds, materiasIds);
         String estado = usuario.getActivo() ? "activado" : "desactivado";
         redirectAttrs.addFlashAttribute("mensaje", "Usuario " + estado + " correctamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
@@ -272,12 +308,16 @@ public class UsuariosController {
 
     // --- API JSON ---
 
-    @GetMapping("/api/materias-por-gerencia/{id}")
+    @GetMapping("/api/materias-por-gerencia/{ids}")
     @ResponseBody
-    public ResponseEntity<List<Materia>> getMateriasJson(@PathVariable("id") Integer id) {
+    public ResponseEntity<List<Materia>> getMateriasJson(@PathVariable("ids") List<Integer> ids) {
         try {
-            Gerencia gerencia = usuarioService.buscarGerenciaPorId(id);
-            return ResponseEntity.ok(new ArrayList<>(gerencia.getMaterias()));
+            Set<Materia> materiasCombinadas = new HashSet<>();
+            for (Integer id : ids) {
+                Gerencia gerencia = usuarioService.buscarGerenciaPorId(id);
+                materiasCombinadas.addAll(gerencia.getMaterias());
+            }
+            return ResponseEntity.ok(new ArrayList<>(materiasCombinadas));
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
@@ -315,13 +355,51 @@ public class UsuariosController {
     }
 
     private boolean esUsuarioVisibleParaActor(Usuario actor, Usuario usuarioObjetivo) {
-        if (actor.getRol() == RolUsuario.ADMIN) {
+        if (actor.getId().equals(usuarioObjetivo.getId())) {
+            return false;
+        }
+        List<RolUsuario> rolesVisibles = usuarioService.getRolesVisiblesPara(actor.getRol());
+        if (!rolesVisibles.contains(usuarioObjetivo.getRol())) {
+            return false;
+        }
+
+        RolUsuario rol = actor.getRol();
+        // Roles directivos tienen visibilidad total
+        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL
+                || rol == RolUsuario.DIRECTOR || rol == RolUsuario.SUBDIRECTOR) {
             return true;
         }
-        if (actor.getGerencia() != null) {
-            return usuarioObjetivo.getGerencia() != null
-                    && actor.getGerencia().getId().equals(usuarioObjetivo.getGerencia().getId());
+
+        // GERENTE: solo ve usuarios con gerencia en común
+        if (rol == RolUsuario.GERENTE) {
+            boolean tieneGerenciaEnComun = false;
+            if (actor.getGerencias() != null && !actor.getGerencias().isEmpty() && usuarioObjetivo.getGerencias() != null) {
+                tieneGerenciaEnComun = actor.getGerencias().stream().anyMatch(g ->
+                    usuarioObjetivo.getGerencias().stream().anyMatch(go -> go.getId().equals(g.getId()))
+                );
+            }
+            return tieneGerenciaEnComun;
         }
-        return actor.getRol() == RolUsuario.DIRECCION || actor.getRol() == RolUsuario.SUBDIRECCION;
+
+        // JEFE_DEPTO: solo ve usuarios con gerencias en común Y materias en común
+        if (rol == RolUsuario.JEFE_DEPTO) {
+            boolean tieneGerenciaEnComun = false;
+            if (actor.getGerencias() != null && !actor.getGerencias().isEmpty() && usuarioObjetivo.getGerencias() != null) {
+                tieneGerenciaEnComun = actor.getGerencias().stream().anyMatch(g ->
+                    usuarioObjetivo.getGerencias().stream().anyMatch(go -> go.getId().equals(g.getId()))
+                );
+            }
+
+            boolean tieneMateriaEnComun = false;
+            if (actor.getMaterias() != null && !actor.getMaterias().isEmpty() && usuarioObjetivo.getMaterias() != null) {
+                tieneMateriaEnComun = actor.getMaterias().stream().anyMatch(m ->
+                    usuarioObjetivo.getMaterias().stream().anyMatch(mo -> mo.getId().equals(m.getId()))
+                );
+            }
+
+            return tieneGerenciaEnComun && tieneMateriaEnComun;
+        }
+
+        return false;
     }
 }

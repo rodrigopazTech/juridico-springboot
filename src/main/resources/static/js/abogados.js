@@ -25,7 +25,8 @@ function seleccionarAbogado(cardElement) {
     const email = cardElement.getAttribute('data-email');
     const rol = cardElement.getAttribute('data-rol');
     const gerenciaNombre = cardElement.getAttribute('data-gerencia-nombre');
-    const gerenciaId = cardElement.getAttribute('data-gerencia-id');
+    const gerenciasIdsStr = cardElement.getAttribute('data-gerencias-ids');
+    const gerenciasIdsArray = gerenciasIdsStr ? gerenciasIdsStr.split(',').map(Number) : [];
     const activo = cardElement.getAttribute('data-activo') === 'true';
 
     const materiasStr = cardElement.getAttribute('data-materias-nombres');
@@ -88,13 +89,12 @@ function seleccionarAbogado(cardElement) {
         if (detBadge) detBadge.classList.add('hidden');
 
         materiasUsuarioEdicion = materiasIdsArray || [];
-        if (gerenciaId) {
-            document.getElementById('det-select-gerencia').value = gerenciaId;
-            cargarMateriasDeGerenciaEdicion();
-        } else {
-            document.getElementById('det-select-gerencia').value = '';
-            document.getElementById('det-contenedor-materias').classList.add('hidden');
-        }
+        document.querySelectorAll('.det-gerencia-checkbox').forEach(cb => {
+            cb.checked = gerenciasIdsArray.includes(Number(cb.value));
+        });
+
+        actualizarFormularioEdicionPorRol();
+        cargarMateriasDeGerenciaEdicion();
     }
 
     // 7. Configurar botón de estatus (Activar / Desactivar)
@@ -151,8 +151,14 @@ function abrirModalUsuario() {
     const selectRol = document.getElementById('select-usuario-rol');
     if (selectRol) selectRol.value = '';
 
-    const selectGerencia = document.getElementById('select-usuario-gerencia');
-    if (selectGerencia) selectGerencia.value = '';
+    document.querySelectorAll('.gerencia-checkbox').forEach(cb => {
+        cb.checked = false;
+    });
+    if (window.usuarioActual && (window.usuarioActual.rol === 'GERENTE' || window.usuarioActual.rol === 'JEFE_DEPTO')) {
+        const creatorGerId = window.usuarioActual.gerenciaId;
+        const cb = document.getElementById(`ger-${creatorGerId}`);
+        if (cb) cb.checked = true;
+    }
 
     const checkActivo = document.getElementById('check-usuario-activo');
     if (checkActivo) checkActivo.checked = true;
@@ -192,6 +198,9 @@ function abrirModalUsuario() {
     const btnEliminar = document.getElementById('btn-eliminar-usuario');
     if (btnEliminar) btnEliminar.classList.add('hidden');
 
+    actualizarFormularioPorRol();
+    cargarMateriasDeGerencia();
+
     const modal = document.getElementById('modal-usuario');
     if (modal) {
         modal.classList.remove('hidden');
@@ -200,35 +209,74 @@ function abrirModalUsuario() {
 }
 
 function actualizarFormularioPorRol() {
-    const seccion = document.getElementById('seccion-asignacion');
-    if (seccion) seccion.classList.remove('hidden');
+    const selectRol = document.getElementById('select-usuario-rol');
+    if (!selectRol) return;
+    const rol = selectRol.value;
+    const divGerencia = document.getElementById('div-gerencia-asignada');
+    const contenedorMaterias = document.getElementById('contenedor-materias');
+
+    if (rol === 'ADMIN' || rol === 'DIRECTOR_PRINCIPAL' || rol === 'DIRECTOR' || rol === 'SUBDIRECTOR') {
+        if (divGerencia) divGerencia.classList.add('hidden');
+        if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
+    } else {
+        const creadorRol = window.usuarioActual ? window.usuarioActual.rol : '';
+        if (creadorRol !== 'GERENTE' && creadorRol !== 'JEFE_DEPTO') {
+            if (divGerencia) divGerencia.classList.remove('hidden');
+        }
+        const checkedGerencias = document.querySelectorAll('.gerencia-checkbox:checked');
+        if (checkedGerencias.length > 0 && creadorRol !== 'JEFE_DEPTO') {
+            if (contenedorMaterias) contenedorMaterias.classList.remove('hidden');
+        } else {
+            if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
+        }
+    }
 }
 
 function cargarMateriasDeGerencia() {
-    const selectGerencia = document.getElementById('select-usuario-gerencia');
-    if (!selectGerencia) return;
-    const gerenciaId = selectGerencia.value;
+    const selectRol = document.getElementById('select-usuario-rol');
+    const rol = selectRol ? selectRol.value : '';
+    if (rol === 'ADMIN' || rol === 'DIRECTOR_PRINCIPAL' || rol === 'DIRECTOR' || rol === 'SUBDIRECTOR') {
+        const contenedor = document.getElementById('contenedor-materias');
+        if (contenedor) contenedor.classList.add('hidden');
+        return;
+    }
+    const checkedGerencias = Array.from(document.querySelectorAll('.gerencia-checkbox:checked')).map(cb => cb.value);
     const contenedor = document.getElementById('contenedor-materias');
     const lista = document.getElementById('lista-materias-checkboxes');
 
-    if (!gerenciaId) { 
+    if (checkedGerencias.length === 0) { 
         if (contenedor) contenedor.classList.add('hidden'); 
+        if (lista) lista.innerHTML = '';
         return; 
     }
 
     if (lista) lista.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
     if (contenedor) contenedor.classList.remove('hidden');
 
-    fetch(`/usuarios/api/materias-por-gerencia/${gerenciaId}`)
-        .then(res => res.json())
-        .then(materias => {
+    const fetchPromises = checkedGerencias.map(gerenciaId => 
+        fetch(`/usuarios/api/materias-por-gerencia/${gerenciaId}`).then(res => res.json())
+    );
+
+    Promise.all(fetchPromises)
+        .then(results => {
+            const todasMaterias = [];
+            const idsVistos = new Set();
+            results.forEach(materias => {
+                materias.forEach(m => {
+                    if (!idsVistos.has(m.id)) {
+                        idsVistos.add(m.id);
+                        todasMaterias.push(m);
+                    }
+                });
+            });
+
             if (!lista) return;
             lista.innerHTML = '';
-            if (materias.length === 0) {
+            if (todasMaterias.length === 0) {
                 lista.innerHTML = '<p class="text-xs text-red-400">Sin materias.</p>';
                 return;
             }
-            materias.forEach(m => {
+            todasMaterias.forEach(m => {
                 const isChecked = materiasUsuarioActual.includes(m.id) ? 'checked' : '';
                 lista.innerHTML += `
                     <div class="flex items-center space-x-2">
@@ -236,10 +284,14 @@ function cargarMateriasDeGerencia() {
                         <label for="mat-${m.id}" class="text-xs text-gray-700 cursor-pointer select-none">${m.nombre}</label>
                     </div>`;
             });
+        })
+        .catch(err => {
+            console.error("Error al cargar materias:", err);
+            if (lista) lista.innerHTML = '<p class="text-xs text-red-400">Error al cargar materias.</p>';
         });
 }
 
-function editarUsuario(id, nombre, email, rol, gerenciaId, activo, materiasIdsArray) {
+function editarUsuario(id, nombre, email, rol, gerenciaIdsArray, activo, materiasIdsArray) {
     abrirModalUsuario();
     
     const titulo = document.getElementById('titulo-modal-usuario');
@@ -279,13 +331,12 @@ function editarUsuario(id, nombre, email, rol, gerenciaId, activo, materiasIdsAr
     if (badge) badge.classList.add('hidden');
 
     materiasUsuarioActual = materiasIdsArray || [];
-    actualizarFormularioPorRol();
+    document.querySelectorAll('.gerencia-checkbox').forEach(cb => {
+        cb.checked = (gerenciaIdsArray || []).includes(Number(cb.value));
+    });
 
-    const selectGerencia = document.getElementById('select-usuario-gerencia');
-    if (gerenciaId && selectGerencia) {
-        selectGerencia.value = gerenciaId;
-        cargarMateriasDeGerencia();
-    }
+    actualizarFormularioPorRol();
+    cargarMateriasDeGerencia();
     
     const btnEliminar = document.getElementById('btn-eliminar-usuario');
     if (btnEliminar) btnEliminar.classList.remove('hidden');
@@ -465,29 +516,8 @@ function confirmarCambioEstatus(id) {
     });
 }
 
-// --- 3. BUSCADOR EN TIEMPO REAL PARA TARJETAS ---
-
-document.addEventListener('DOMContentLoaded', () => {
-    const search = document.getElementById('input-search-usuarios');
-    if (search) {
-        search.addEventListener('keyup', function () {
-            const filter = this.value.toLowerCase();
-            const cards = document.querySelectorAll('.abogado-card');
-
-            cards.forEach(card => {
-                const nombre = card.getAttribute('data-nombre').toLowerCase();
-                const email = card.getAttribute('data-email').toLowerCase();
-                const rol = card.getAttribute('data-rol').toLowerCase();
-
-                if (nombre.includes(filter) || email.includes(filter) || rol.includes(filter)) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        });
-    }
-});
+// --- 3. BÚSQUEDA SERVER-SIDE (via form con parámetro q) ---
+// El filtrado se realiza en el servidor al presionar Enter o el botón de lupa.
 
 // --- 4. NAVEGACIÓN Y CARGA DE DATOS (PESTAÑAS) ---
 
@@ -696,31 +726,74 @@ function filtrarHistorial(categoria) {
 // --- 5. LÓGICA DE EDICIÓN EN LA PESTAÑA "EDITAR PERFIL" ---
 
 function actualizarFormularioEdicionPorRol() {
-    // Si en el futuro se quiere ocultar/mostrar secciones de adscripción por rol, se implementa aquí.
+    const selectRol = document.getElementById('det-select-rol');
+    if (!selectRol) return;
+    const rol = selectRol.value;
+    const divGerencia = document.getElementById('det-div-gerencia-asignada');
+    const contenedorMaterias = document.getElementById('det-contenedor-materias');
+
+    if (rol === 'ADMIN' || rol === 'DIRECTOR_PRINCIPAL' || rol === 'DIRECTOR' || rol === 'SUBDIRECTOR') {
+        if (divGerencia) divGerencia.classList.add('hidden');
+        if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
+    } else {
+        const creadorRol = window.usuarioActual ? window.usuarioActual.rol : '';
+        if (creadorRol !== 'GERENTE' && creadorRol !== 'JEFE_DEPTO') {
+            if (divGerencia) divGerencia.classList.remove('hidden');
+        }
+        const checkedGerencias = document.querySelectorAll('.det-gerencia-checkbox:checked');
+        if (checkedGerencias.length > 0 && creadorRol !== 'JEFE_DEPTO') {
+            if (contenedorMaterias) contenedorMaterias.classList.remove('hidden');
+        } else {
+            if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
+        }
+    }
 }
 
 function cargarMateriasDeGerenciaEdicion() {
-    const gerenciaId = document.getElementById('det-select-gerencia').value;
+    const selectRol = document.getElementById('det-select-rol');
+    const rol = selectRol ? selectRol.value : '';
+    if (rol === 'ADMIN' || rol === 'DIRECTOR_PRINCIPAL' || rol === 'DIRECTOR' || rol === 'SUBDIRECTOR') {
+        const contenedor = document.getElementById('det-contenedor-materias');
+        if (contenedor) contenedor.classList.add('hidden');
+        return;
+    }
+    const checkedGerencias = Array.from(document.querySelectorAll('.det-gerencia-checkbox:checked')).map(cb => cb.value);
     const contenedor = document.getElementById('det-contenedor-materias');
     const lista = document.getElementById('det-lista-materias-checkboxes');
 
-    if (!gerenciaId) {
-        contenedor.classList.add('hidden');
+    if (checkedGerencias.length === 0) {
+        if (contenedor) contenedor.classList.add('hidden');
+        if (lista) lista.innerHTML = '';
         return;
     }
 
-    lista.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
-    contenedor.classList.remove('hidden');
+    if (lista) lista.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
+    if (contenedor) contenedor.classList.remove('hidden');
 
-    fetch(`/usuarios/api/materias-por-gerencia/${gerenciaId}`)
-        .then(res => res.json())
-        .then(materias => {
+    const fetchPromises = checkedGerencias.map(gerenciaId => 
+        fetch(`/usuarios/api/materias-por-gerencia/${gerenciaId}`).then(res => res.json())
+    );
+
+    Promise.all(fetchPromises)
+        .then(results => {
+            const todasMaterias = [];
+            const idsVistos = new Set();
+            results.forEach(materias => {
+                materias.forEach(m => {
+                    if (!idsVistos.has(m.id)) {
+                        idsVistos.add(m.id);
+                        todasMaterias.push(m);
+                    }
+                });
+            });
+
+            if (!lista) return;
             lista.innerHTML = '';
-            if (materias.length === 0) {
+            if (todasMaterias.length === 0) {
                 lista.innerHTML = '<p class="text-xs text-red-400">Sin materias disponibles.</p>';
                 return;
             }
-            materias.forEach(m => {
+            todasMaterias.forEach(m => {
                 const isChecked = materiasUsuarioEdicion.includes(m.id) ? 'checked' : '';
                 lista.innerHTML += `
                     <div class="flex items-center space-x-2">
@@ -728,6 +801,10 @@ function cargarMateriasDeGerenciaEdicion() {
                         <label for="det-mat-${m.id}" class="text-xs text-gray-700 cursor-pointer select-none">${m.nombre}</label>
                     </div>`;
             });
+        })
+        .catch(err => {
+            console.error("Error al cargar materias en edición:", err);
+            if (lista) lista.innerHTML = '<p class="text-xs text-red-400">Error al cargar materias.</p>';
         });
 }
 

@@ -1424,7 +1424,8 @@ let dragCounter = 0;
 function isLocalFileDrag(event) {
     if (event.dataTransfer && event.dataTransfer.types) {
         for (let i = 0; i < event.dataTransfer.types.length; i++) {
-            if (event.dataTransfer.types[i] === 'Files') {
+            const type = event.dataTransfer.types[i].toLowerCase();
+            if (type === 'files' || type === 'application/x-moz-file') {
                 return true;
             }
         }
@@ -2439,6 +2440,15 @@ async function handleFolderDrop(event, targetFolderId) {
     
     const target = event.currentTarget;
     target.classList.remove('explorer-item-drag-hover', 'folder-card-drag-hover');
+    
+    // Si es un arrastre de archivos locales desde el sistema operativo
+    if (isLocalFileDrag(event)) {
+        const files = event.dataTransfer.files;
+        if (files && files.length > 0) {
+            await subirArchivosDirecto(files, targetFolderId);
+        }
+        return;
+    }
     
     try {
         const dataStr = event.dataTransfer.getData("text/plain");

@@ -3,6 +3,7 @@ package com.juridico.sistema_juridico.controller;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
+import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.service.UsuarioService;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
@@ -74,37 +75,80 @@ public class UsuariosAdminController {
         Pageable pageUs = PageRequest.of(page, 10, Sort.by("nombreCompleto").ascending());
         Page<Usuario> usuariosPage;
 
+        // Roles con acceso total (ven todos los usuarios sin filtro por gerencia)
+        java.util.Set<RolUsuario> rolesConAccesoTotal = java.util.Set.of(
+                RolUsuario.ADMIN, RolUsuario.DIRECTOR_PRINCIPAL,
+                RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR);
+
+        List<RolUsuario> rolesVisibles = usuarioService.getRolesVisiblesPara(usuarioActual.getRol());
         boolean hayBusqueda = q != null && !q.trim().isEmpty();
 
         if (hayBusqueda) {
-            // Búsqueda en servidor — siempre empieza en página 0 implícitamente al cambiar keyword
-            if (usuarioActual.getRol() != RolUsuario.ADMIN && usuarioActual.getGerencia() != null) {
-                usuariosPage = usuarioRepository.buscarPorKeywordYGerencia(q.trim(), usuarioActual.getGerencia(), pageUs);
+            if (!rolesConAccesoTotal.contains(usuarioActual.getRol())) {
+                List<Integer> gerenciasIds = usuarioActual.getGerencias().stream().map(g -> g.getId()).toList();
+                if (usuarioActual.getRol() == RolUsuario.GERENTE) {
+                    if (gerenciasIds.isEmpty()) {
+                        usuariosPage = Page.empty(pageUs);
+                    } else {
+                        usuariosPage = usuarioRepository.buscarPorKeywordYGerenciasInAndRolInAndIdNot(q.trim(), gerenciasIds, rolesVisibles, usuarioActual.getId(), pageUs);
+                    }
+                } else {
+                    List<Integer> materiasIds = usuarioActual.getMaterias().stream().map(m -> m.getId()).toList();
+                    if (gerenciasIds.isEmpty() || materiasIds.isEmpty()) {
+                        usuariosPage = Page.empty(pageUs);
+                    } else {
+                        usuariosPage = usuarioRepository.buscarPorKeywordYGerenciasInAndMateriasInAndRolInAndIdNot(q.trim(), gerenciasIds, materiasIds, rolesVisibles, usuarioActual.getId(), pageUs);
+                    }
+                }
             } else {
-                usuariosPage = usuarioRepository.buscarPorKeyword(q.trim(), pageUs);
+                usuariosPage = usuarioRepository.buscarPorKeywordAndRolInAndIdNot(q.trim(), rolesVisibles, usuarioActual.getId(), pageUs);
             }
         } else {
-            if (usuarioActual.getRol() != RolUsuario.ADMIN && usuarioActual.getGerencia() != null) {
-                usuariosPage = usuarioRepository.findByGerencia(usuarioActual.getGerencia(), pageUs);
+            if (!rolesConAccesoTotal.contains(usuarioActual.getRol())) {
+                List<Integer> gerenciasIds = usuarioActual.getGerencias().stream().map(g -> g.getId()).toList();
+                if (usuarioActual.getRol() == RolUsuario.GERENTE) {
+                    if (gerenciasIds.isEmpty()) {
+                        usuariosPage = Page.empty(pageUs);
+                    } else {
+                        usuariosPage = usuarioRepository.findDistinctByGerenciasIdInAndRolInAndIdNot(gerenciasIds, rolesVisibles, usuarioActual.getId(), pageUs);
+                    }
+                } else {
+                    List<Integer> materiasIds = usuarioActual.getMaterias().stream().map(m -> m.getId()).toList();
+                    if (gerenciasIds.isEmpty() || materiasIds.isEmpty()) {
+                        usuariosPage = Page.empty(pageUs);
+                    } else {
+                        usuariosPage = usuarioRepository.findDistinctByGerenciasIdInAndMateriasIdInAndRolInAndIdNot(gerenciasIds, materiasIds, rolesVisibles, usuarioActual.getId(), pageUs);
+                    }
+                }
             } else {
-                usuariosPage = usuarioService.listarUsuariosPaginados(pageUs);
+                usuariosPage = usuarioRepository.findByRolInAndIdNot(rolesVisibles, usuarioActual.getId(), pageUs);
             }
         }
 
         model.addAttribute("listaUsuarios", usuariosPage);
         model.addAttribute("q", q);
 
-        if (usuarioActual.getRol() != RolUsuario.ADMIN && usuarioActual.getGerencia() != null) {
-            model.addAttribute("allGerencias", Arrays.asList(usuarioActual.getGerencia()));
-            if (usuarioActual.getRol() == RolUsuario.GERENTE) {
-                model.addAttribute("listaRoles", Arrays.asList(RolUsuario.ABOGADO, RolUsuario.JEFE_DEPTO));
-            } else {
-                model.addAttribute("listaRoles", RolUsuario.values());
-            }
+        if (!rolesConAccesoTotal.contains(usuarioActual.getRol()) && !usuarioActual.getGerencias().isEmpty()) {
+            model.addAttribute("allGerencias", usuarioActual.getGerencias());
         } else {
             model.addAttribute("allGerencias", usuarioService.listarGerencias());
-            model.addAttribute("listaRoles", RolUsuario.values());
         }
+        
+        List<RolUsuario> rolesPermitidos = new ArrayList<>();
+        if (usuarioActual.getRol() == RolUsuario.ADMIN) {
+            rolesPermitidos.addAll(Arrays.asList(RolUsuario.values()));
+        } else if (usuarioActual.getRol() == RolUsuario.DIRECTOR_PRINCIPAL) {
+            rolesPermitidos.addAll(Arrays.asList(RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO));
+        } else if (usuarioActual.getRol() == RolUsuario.DIRECTOR) {
+            rolesPermitidos.addAll(Arrays.asList(RolUsuario.SUBDIRECTOR, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO));
+        } else if (usuarioActual.getRol() == RolUsuario.SUBDIRECTOR) {
+            rolesPermitidos.addAll(Arrays.asList(RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO));
+        } else if (usuarioActual.getRol() == RolUsuario.GERENTE) {
+            rolesPermitidos.addAll(Arrays.asList(RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO));
+        } else if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+            rolesPermitidos.add(RolUsuario.ABOGADO);
+        }
+        model.addAttribute("listaRoles", rolesPermitidos);
 
         model.addAttribute("usuarioActual", usuarioActual);
         model.addAttribute("nuevoUsuario", new Usuario());
@@ -116,9 +160,10 @@ public class UsuariosAdminController {
 
     @PostMapping("/guardar")
     public String guardarUsuario(@ModelAttribute Usuario usuario,
+            @RequestParam(value = "gerenciasIds", required = false) List<Integer> gerenciasIds,
             @RequestParam(value = "materiasIds", required = false) List<Integer> materiasIds,
             RedirectAttributes redirectAttrs) {
-        usuarioService.guardarUsuario(usuario, materiasIds);
+        usuarioService.guardarUsuario(usuario, gerenciasIds, materiasIds);
         syncService.sincronizarNombreUsuario(usuario);
         redirectAttrs.addFlashAttribute("mensaje", "Usuario guardado correctamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
@@ -129,8 +174,9 @@ public class UsuariosAdminController {
     public String toggleStatusUsuario(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
         Usuario usuario = usuarioService.buscarPorId(id);
         usuario.setActivo(!usuario.getActivo());
+        List<Integer> gerenciasIds = usuario.getGerencias().stream().map(Gerencia::getId).collect(Collectors.toList());
         List<Integer> materiasIds = usuario.getMaterias().stream().map(Materia::getId).collect(Collectors.toList());
-        usuarioService.guardarUsuario(usuario, materiasIds);
+        usuarioService.guardarUsuario(usuario, gerenciasIds, materiasIds);
         String estado = usuario.getActivo() ? "activado" : "desactivado";
         redirectAttrs.addFlashAttribute("mensaje", "Usuario " + estado + " correctamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
@@ -302,7 +348,7 @@ public class UsuariosAdminController {
             Usuario actor = usuarioRepository.findByEmail(actorEmail)
                     .orElseThrow(() -> new ResourceNotFoundException("Usuario actual no encontrado."));
 
-            if (actor.getRol() != RolUsuario.DIRECCION && actor.getRol() != RolUsuario.SUBDIRECCION &&
+            if (actor.getRol() != RolUsuario.DIRECTOR_PRINCIPAL && actor.getRol() != RolUsuario.DIRECTOR && actor.getRol() != RolUsuario.SUBDIRECTOR &&
                 actor.getRol() != RolUsuario.ADMIN && actor.getRol() != RolUsuario.GERENTE) {
                 return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
                         .body(Map.of("mensaje", "No tienes permisos para realizar esta acción."));
@@ -311,8 +357,10 @@ public class UsuariosAdminController {
             Usuario usuarioModificado = usuarioService.buscarPorId(id);
 
             if (actor.getRol() == RolUsuario.GERENTE) {
-                if (usuarioModificado.getGerencia() == null ||
-                    !usuarioModificado.getGerencia().getId().equals(actor.getGerencia().getId())) {
+                boolean gerenciaComun = actor.getGerencias() != null && usuarioModificado.getGerencias() != null &&
+                    actor.getGerencias().stream().anyMatch(gA ->
+                        usuarioModificado.getGerencias().stream().anyMatch(gU -> gU.getId().equals(gA.getId())));
+                if (!gerenciaComun) {
                     return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
                             .body(Map.of("mensaje", "No tienes permisos para modificar usuarios de otras gerencias."));
                 }

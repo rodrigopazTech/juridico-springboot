@@ -44,7 +44,7 @@ public class CatalogosController {
         RolUsuario rol = usuarioActual.getRol();
 
         // --- Determinar qué gerencias puede ver ---
-        boolean esNivelAlto = (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECCION || rol == RolUsuario.SUBDIRECCION);
+        boolean esNivelAlto = (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL || rol == RolUsuario.DIRECTOR || rol == RolUsuario.SUBDIRECTOR);
         boolean esGerente = (rol == RolUsuario.GERENTE || rol == RolUsuario.JEFE_DEPTO);
         boolean esAbogado = (rol == RolUsuario.ABOGADO);
 
@@ -546,6 +546,16 @@ public class CatalogosController {
             }
 
             materiaRepository.save(materia);
+
+            // Auto-asignar la nueva materia al usuario creador si es rol limitado
+            boolean esCreacion = (idStr == null || idStr.isEmpty());
+            if (esCreacion && (usuarioActual.getRol() == RolUsuario.ABOGADO ||
+                               usuarioActual.getRol() == RolUsuario.JEFE_DEPTO ||
+                               usuarioActual.getRol() == RolUsuario.GERENTE)) {
+                usuarioActual.getMaterias().add(materia);
+                usuarioRepository.save(usuarioActual);
+            }
+
             return ResponseEntity.ok(Map.of("status", "ok", "id", materia.getId(), "mensaje", "Materia guardada correctamente."));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));

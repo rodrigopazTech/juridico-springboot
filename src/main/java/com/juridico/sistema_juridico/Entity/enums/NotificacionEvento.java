@@ -83,6 +83,14 @@ public enum NotificacionEvento {
             "Comparecencia asignada",
             "Te avisa cuando quedas asignado a una comparecencia.",
             true),
+    AUDIENCIA_DELEGADA(
+            "AUDIENCIA",
+            "AUDIENCIA",
+            "delegacion de audiencia",
+            NotificacionCategoria.AUDIENCIAS,
+            "Audiencia delegada",
+            "Te avisa cuando se te delega una audiencia para su atención.",
+            true),
     AUDIENCIA_RECORDATORIO(
             "AUDIENCIA",
             "AUDIENCIA",
@@ -187,6 +195,7 @@ public enum NotificacionEvento {
             case TERMINO_ASIGNADO, TERMINO_NUEVO -> preferencias.isNotificarNuevoTermino();
             case TERMINO_RECORDATORIO -> preferencias.isNotificarTerminoVencer();
             case AUDIENCIA_NUEVA,
+                    AUDIENCIA_DELEGADA,
                     AUDIENCIA_COMPARECENCIA_ASIGNADA,
                     AUDIENCIA_RECORDATORIO,
                     AUDIENCIA_ACTA_DISPONIBLE,

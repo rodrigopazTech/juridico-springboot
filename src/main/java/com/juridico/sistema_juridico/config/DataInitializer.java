@@ -1,28 +1,10 @@
 package com.juridico.sistema_juridico.config;
 
-import com.juridico.sistema_juridico.Entity.catalogo.Estado;
-import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
-import com.juridico.sistema_juridico.Entity.catalogo.Materia;
-import com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional;
-import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
-
-import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
-import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
-import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
-import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
-import com.juridico.sistema_juridico.Entity.expediente.Expediente;
-import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
-import com.juridico.sistema_juridico.Entity.usuario.Usuario;
-import com.juridico.sistema_juridico.repository.Catalogo.CatPrioridadRepository;
-import com.juridico.sistema_juridico.repository.Catalogo.EstadoRepository;
-import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
-import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
-import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
-import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRepository;
-import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
-
-import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
-import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -31,11 +13,27 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
+import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.Estado;
+import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
+import com.juridico.sistema_juridico.Entity.catalogo.Materia;
+import com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional;
+import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
+import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
+import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
+import com.juridico.sistema_juridico.Entity.expediente.Expediente;
+import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
+import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.repository.Catalogo.CatPrioridadRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.EstadoRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
+import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 
 @Component
 @ConditionalOnProperty(value = "app.seed.enabled", havingValue = "true")
@@ -142,12 +140,28 @@ public class DataInitializer implements CommandLineRunner {
                                         .orElse(null);
 
                         // 1. NIVEL ALTO (Ve todo)
+                        List<Gerencia> todasGerencias = gerenciaRepository.findAll();
+                        List<Materia> todasMaterias = materiaRepository.findAll();
+
+                        Usuario directorPrincipal = Usuario.builder()
+                                        .nombreCompleto("Director Principal")
+                                        .email("director.principal@juridico.com")
+                                        .password(passwordEncoder.encode("12345"))
+                                        .rol(RolUsuario.DIRECTOR_PRINCIPAL)
+                                        .activo(true)
+                                        .gerencias(new java.util.HashSet<>(todasGerencias))
+                                        .materias(new java.util.HashSet<>(todasMaterias))
+                                        .createdAt(LocalDateTime.now())
+                                        .build();
+
                         Usuario director = Usuario.builder()
                                         .nombreCompleto("Director General")
                                         .email("director@juridico.com")
                                         .password(passwordEncoder.encode("12345"))
-                                        .rol(RolUsuario.DIRECCION)
+                                        .rol(RolUsuario.DIRECTOR)
                                         .activo(true)
+                                        .gerencias(new java.util.HashSet<>(todasGerencias))
+                                        .materias(new java.util.HashSet<>(todasMaterias))
                                         .createdAt(LocalDateTime.now())
                                         .build();
 
@@ -155,8 +169,10 @@ public class DataInitializer implements CommandLineRunner {
                                         .nombreCompleto("Subdirector Jurídico")
                                         .email("subdirector@juridico.com")
                                         .password(passwordEncoder.encode("12345"))
-                                        .rol(RolUsuario.SUBDIRECCION)
+                                        .rol(RolUsuario.SUBDIRECTOR)
                                         .activo(true)
+                                        .gerencias(new java.util.HashSet<>(todasGerencias))
+                                        .materias(new java.util.HashSet<>(todasMaterias))
                                         .createdAt(LocalDateTime.now())
                                         .build();
 
@@ -167,7 +183,7 @@ public class DataInitializer implements CommandLineRunner {
                                         .password(passwordEncoder.encode("12345"))
                                         .rol(RolUsuario.GERENTE)
                                         .activo(true)
-                                        .gerencia(gerenciaDefault)
+                                        .gerencias(new java.util.HashSet<>(java.util.Collections.singletonList(gerenciaDefault)))
                                         .createdAt(LocalDateTime.now())
                                         .build();
 
@@ -178,7 +194,7 @@ public class DataInitializer implements CommandLineRunner {
                                         .password(passwordEncoder.encode("12345"))
                                         .rol(RolUsuario.JEFE_DEPTO)
                                         .activo(true)
-                                        .gerencia(gerenciaDefault) // Asignado a la misma gerencia que los demás
+                                        .gerencias(new java.util.HashSet<>(java.util.Collections.singletonList(gerenciaDefault))) // Asignado a la misma gerencia que los demás
                                         .createdAt(LocalDateTime.now())
                                         .build();
 
@@ -189,11 +205,11 @@ public class DataInitializer implements CommandLineRunner {
                                         .password(passwordEncoder.encode("12345"))
                                         .rol(RolUsuario.ABOGADO)
                                         .activo(true)
-                                        .gerencia(gerenciaDefault)
+                                        .gerencias(new java.util.HashSet<>(java.util.Collections.singletonList(gerenciaDefault)))
                                         .createdAt(LocalDateTime.now())
                                         .build();
 
-                        usuarioRepository.saveAll(List.of(director, subdirector, gerente, abogado, jefe));
+                        usuarioRepository.saveAll(List.of(directorPrincipal, director, subdirector, gerente, abogado, jefe));
                         System.out.println("✅ Usuarios de prueba creados.");
                 }
 
@@ -269,6 +285,8 @@ public class DataInitializer implements CommandLineRunner {
                 }
                 
                 if (usuarioRepository.findByEmail("admin@sistema.com").isEmpty()) {
+                        List<Gerencia> todasGerencias = gerenciaRepository.findAll();
+                        List<Materia> todasMaterias = materiaRepository.findAll();
                         Usuario admin = Usuario.builder()
                                         .nombreCompleto("Administrador del Sistema")
                                         .email("admin@sistema.com")
@@ -276,6 +294,8 @@ public class DataInitializer implements CommandLineRunner {
                                         .password(passwordEncoder.encode("admin123"))
                                         .rol(RolUsuario.ADMIN)
                                         .activo(true)
+                                        .gerencias(new java.util.HashSet<>(todasGerencias))
+                                        .materias(new java.util.HashSet<>(todasMaterias))
                                         .build();
 
                         usuarioRepository.save(admin);

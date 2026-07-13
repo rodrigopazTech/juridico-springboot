@@ -57,7 +57,7 @@
 
             <!-- Abogado (Condicional) -->
             <div th:if="${abogados != null}"
-                sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')" class="space-y-1">
+                sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO')" class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Abogado</label>
                 <select name="abogadoId"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
@@ -68,7 +68,7 @@
             </div>
 
             <!-- Gerencia (Condicional) -->
-            <div th:if="${listaGerencias != null}" sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION')"
+            <div th:if="${listaGerencias != null}" sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR')"
                 class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Gerencia</label>
                 <select name="gerencia"
@@ -81,7 +81,7 @@
 
             <!-- Materia (Condicional) -->
             <div th:if="${listaMaterias != null}"
-                sec:authorize="hasAnyAuthority('ADMIN', 'DIRECCION', 'SUBDIRECCION', 'GERENTE', 'JEFE_DEPTO')" class="space-y-1">
+                sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO')" class="space-y-1">
                 <label class="text-[9px] font-bold text-white/50 uppercase ml-1">Materia</label>
                 <select name="materia"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">

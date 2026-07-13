@@ -5,7 +5,7 @@
             <input type="text" id="input-search-tipos-audiencia" placeholder="Buscar tipo..."
                 class="border border-gray-200 rounded-lg p-2 text-sm w-48 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all font-medium bg-white">
 
-            <button th:if="${usuarioActual.rol.name() == 'DIRECCION' or usuarioActual.rol.name() == 'SUBDIRECCION'}"
+            <button th:if="${usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'SUBDIRECTOR'}"
                 onclick="abrirModalTipoAudiencia()"
                 class="bg-gob-guinda text-white px-4 py-2 rounded text-sm hover:bg-opacity-90 shadow-sm transition-colors">
                 <i class="fas fa-plus mr-2"></i> Nuevo
@@ -33,7 +33,7 @@
 
                 <td class="px-6 py-4 text-center">
                     <div
-                        th:if="${usuarioActual.rol.name() == 'DIRECCION' or usuarioActual.rol.name() == 'SUBDIRECCION'}">
+                        th:if="${usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'SUBDIRECTOR'}">
                         <button th:data-id="${t.id}" th:data-nombre="${t.nombre}" th:data-activo="${t.activo}"
                             onclick="editarTipoAudiencia(this.dataset.id, this.dataset.nombre, this.dataset.activo)"
                             class="text-gob-oro hover:text-gob-guinda transition-colors mx-1">

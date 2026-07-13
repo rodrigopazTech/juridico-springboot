@@ -70,8 +70,8 @@ async function subscribeUser() {
 
 // Muestra el popover flotante apuntando a la campana
 function showPushPopover() {
-    // Verificar si es móvil, permiso es default y no ha sido descartado previamente por el usuario
-    if (!isMobileDevice() || Notification.permission !== 'default' || localStorage.getItem('webpush_popover_dismissed') === 'true') {
+    // Verificar si el permiso es default y no ha sido descartado previamente por el usuario
+    if (Notification.permission !== 'default' || localStorage.getItem('webpush_popover_dismissed') === 'true') {
         return;
     }
 
@@ -89,6 +89,10 @@ function showPushPopover() {
     popover.innerHTML = `
         <!-- Flechita apuntando a la campana -->
         <div class="absolute -top-1.5 right-4.5 w-3 h-3 rotate-45 bg-white border-t border-l border-gray-100"></div>
+        <!-- Botón cerrar (X) -->
+        <button id="webpush-popover-close" class="absolute top-2 right-2 text-gray-300 hover:text-gray-500 text-xs leading-none transition-colors" aria-label="Cerrar">
+            <i class="fas fa-times"></i>
+        </button>
         
         <div class="flex items-start gap-2.5">
             <div class="w-8 h-8 rounded-full bg-gob-oro/10 flex items-center justify-center text-gob-oro flex-shrink-0">
@@ -152,6 +156,12 @@ function showPushPopover() {
     btnDismiss.addEventListener('click', (e) => {
         e.stopPropagation();
         localStorage.setItem('webpush_popover_dismissed', 'true');
+        dismissPopover();
+    });
+
+    const btnClose = popover.querySelector('#webpush-popover-close');
+    btnClose.addEventListener('click', (e) => {
+        e.stopPropagation();
         dismissPopover();
     });
 
@@ -275,32 +285,18 @@ async function unsubscribeUserBeforeLogout(e, logoutLink) {
     }
 }
 
-// Función para detectar si el cliente es un dispositivo móvil o tablet
-function isMobileDevice() {
-    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-    // Detección por expresión regular del User Agent
-    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-    // Detección por tamaño de pantalla (móviles y tablets suelen tener anchos <= 1024px)
-    const isSmallScreen = window.matchMedia && window.matchMedia('(max-width: 1024px)').matches;
-    return isMobileUA || isSmallScreen;
-}
-
-// Iniciar Web Push al cargar el DOM solo si es un dispositivo móvil
+// Iniciar Web Push al cargar el DOM
 document.addEventListener('DOMContentLoaded', () => {
-    if (isMobileDevice()) {
-        console.log('[WebPush] Dispositivo móvil detectado. Inicializando registro de Service Worker...');
-        registerServiceWorkerOnly().then(() => {
-            if (Notification.permission === 'granted') {
-                console.log('[WebPush] Permiso ya concedido previamente. Suscribiendo...');
-                subscribeUser();
-            } else if (Notification.permission === 'default') {
-                // Mostrar el popover flotante después de 1.5 segundos para que la carga sea fluida
-                setTimeout(showPushPopover, 1500);
-            }
-        });
-    } else {
-        console.log('[WebPush] Entorno de escritorio detectado. Notificaciones en segundo plano Web Push omitidas de manera silenciosa.');
-    }
+    console.log('[WebPush] Inicializando registro de Service Worker...');
+    registerServiceWorkerOnly().then(() => {
+        if (Notification.permission === 'granted') {
+            console.log('[WebPush] Permiso ya concedido previamente. Suscribiendo...');
+            subscribeUser();
+        } else if (Notification.permission === 'default') {
+            // Mostrar el popover flotante después de 1.5 segundos para que la carga sea fluida
+            setTimeout(showPushPopover, 1500);
+        }
+    });
 
     // Interceptar clics en enlaces de logout para desuscribir (funciona en móvil y PC)
     document.addEventListener('click', (e) => {
