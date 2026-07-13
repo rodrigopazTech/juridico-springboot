@@ -1,0 +1,158 @@
+<div th:fragment="cruzado" id="cruzado-datos-container" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
+    <div class="border-b border-gray-200 mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 sm:pb-0 gap-4">
+            <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2 font-headings">
+                <i class="fas fa-network-wired text-gob-guinda"></i> Cruzado de Datos
+            </h3>
+            
+            <!-- Tab Headers -->
+            <div class="flex gap-2 bg-gray-100 p-1 rounded-xl w-full sm:w-auto">
+                <button id="tab-btn-terminos" onclick="switchCruzadoTab('terminos')"
+                    class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 bg-gob-guinda text-white shadow-sm">
+                    <i class="fas fa-hourglass-half"></i> Términos
+                    <span class="ml-1.5 px-2 py-0.5 text-[10px] bg-white text-gob-guinda rounded-full font-extrabold" th:text="${terminos.size()}">0</span>
+                </button>
+                <button id="tab-btn-audiencias" onclick="switchCruzadoTab('audiencias')"
+                    class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-gavel"></i> Audiencias
+                    <span class="ml-1.5 px-2 py-0.5 text-[10px] bg-gray-200 text-gray-700 rounded-full font-extrabold" th:text="${audiencias.size()}">0</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Contents -->
+    
+    <!-- PANE 1: TÉRMINOS -->
+    <div id="pane-terminos" class="block animate-fade-in">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-600 border-collapse">
+                <thead class="bg-gray-50/70 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                    <tr>
+                        <th class="px-4 py-3">Vencimiento</th>
+                        <th class="px-4 py-3">Actuación / Asunto</th>
+                        <th class="px-4 py-3">Prioridad</th>
+                        <th class="px-4 py-3">Abogado</th>
+                        <th class="px-4 py-3">Estatus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${terminos.empty}">
+                        <td colspan="5" class="px-4 py-8 text-center text-gray-400 italic">No hay términos asociados a este expediente.</td>
+                    </tr>
+                    <tr th:each="t : ${terminos}" class="border-b border-gray-100 hover:bg-gray-50/50 transition">
+                        <td class="px-4 py-3 font-semibold text-gray-800">
+                            <div class="flex items-center gap-2" th:title="${t.diasRestantesTexto}">
+                                <div class="w-2.5 h-2.5 rounded-full border border-gray-200 shadow-sm" th:classappend="${t.semaforoColor}"></div>
+                                <span th:text="${#temporals.format(t.fechaVencimiento, 'yyyy-MM-dd')}">2026-01-01</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 font-medium text-gray-800" th:text="${t.asunto}">Actuación</td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border"
+                                th:classappend="${t.prioridad != null ? t.prioridad.color : 'bg-gray-100 text-gray-700 border-gray-200'}"
+                                th:text="${t.prioridad != null ? t.prioridad.nombre : 'MEDIA'}">MEDIA</span>
+                        </td>
+                        <td class="px-4 py-3 text-xs" th:text="${t.abogadoResponsable?.nombreCompleto ?: 'Sin asignar'}">Abogado</td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-700" 
+                                th:text="${t.estatusTermino}">PROYECTISTA</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- PANE 2: AUDIENCIAS -->
+    <div id="pane-audiencias" class="hidden animate-fade-in">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-600 border-collapse">
+                <thead class="bg-gray-50/70 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                    <tr>
+                        <th class="px-4 py-3">Fecha / Hora</th>
+                        <th class="px-4 py-3">Tipo Audiencia</th>
+                        <th class="px-4 py-3">Modalidad</th>
+                        <th class="px-4 py-3">Órgano / Enlace</th>
+                        <th class="px-4 py-3">Estatus</th>
+                        <th class="px-4 py-3">Abogado Comparece</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${audiencias.empty}">
+                        <td colspan="6" class="px-4 py-8 text-center text-gray-400 italic">No hay audiencias asociadas a este expediente.</td>
+                    </tr>
+                    <tr th:each="a : ${audiencias}" class="border-b border-gray-100 hover:bg-gray-50/50 transition">
+                        <td class="px-4 py-3 font-semibold text-gray-800">
+                            <div class="flex items-center gap-2" th:title="${a.textoDiasRestantes}">
+                                <div class="w-2.5 h-2.5 rounded-full border border-gray-200 shadow-sm" th:classappend="${a.semaforoColor}"></div>
+                                <span th:text="${#temporals.format(a.fechaAudiencia, 'yyyy-MM-dd') + ' ' + a.horaAudiencia}">2026-01-01 10:00</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 font-medium text-gray-800" th:text="${a.tipoAudiencia?.nombre ?: 'General'}">Tipo</td>
+                        <td class="px-4 py-3">
+                            <span th:if="${a.esVirtual}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                <i class="fas fa-video text-[9px]"></i> Virtual
+                            </span>
+                            <span th:unless="${a.esVirtual}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200">
+                                <i class="fas fa-building text-[9px]"></i> Presencial
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-xs">
+                            <span th:if="${a.esVirtual && a.urlReunion != null}">
+                                <a th:href="${a.urlReunion}" target="_blank" class="text-blue-600 hover:underline font-semibold flex items-center gap-1">
+                                    <i class="fas fa-external-link-alt text-[10px]"></i> Ir a reunión
+                                </a>
+                            </span>
+                            <span th:unless="${a.esVirtual}" th:text="${a.salaLugar}">Juzgado</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                                th:classappend="${a.estatusAudiencia?.name() == 'PENDIENTE' ? 'bg-yellow-50 text-yellow-800 border border-yellow-200' : 
+                                                 a.estatusAudiencia?.name() == 'CON_ACTA' ? 'bg-blue-50 text-blue-800 border border-blue-200' : 
+                                                 'bg-green-50 text-green-800 border border-green-200'}"
+                                th:text="${a.estatusAudiencia}">PENDIENTE</span>
+                        </td>
+                        <td class="px-4 py-3 text-xs" th:text="${a.abogadoComparece?.nombreCompleto ?: 'Sin asignar'}">Abogado</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Switch Tab Javascript -->
+    <script>
+        function switchCruzadoTab(tab) {
+            const btnTerminos = document.getElementById('tab-btn-terminos');
+            const btnAudiencias = document.getElementById('tab-btn-audiencias');
+            const paneTerminos = document.getElementById('pane-terminos');
+            const paneAudiencias = document.getElementById('pane-audiencias');
+
+            if (tab === 'terminos') {
+                btnTerminos.className = "flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 bg-gob-guinda text-white shadow-sm";
+                btnAudiencias.className = "flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700";
+                
+                const badgeT = btnTerminos.querySelector('span');
+                badgeT.className = "ml-1.5 px-2 py-0.5 text-[10px] bg-white text-gob-guinda rounded-full font-extrabold";
+                
+                const badgeA = btnAudiencias.querySelector('span');
+                badgeA.className = "ml-1.5 px-2 py-0.5 text-[10px] bg-gray-200 text-gray-700 rounded-full font-extrabold";
+
+                paneTerminos.classList.remove('hidden');
+                paneAudiencias.classList.add('hidden');
+            } else {
+                btnAudiencias.className = "flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 bg-gob-guinda text-white shadow-sm";
+                btnTerminos.className = "flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700";
+                
+                const badgeA = btnAudiencias.querySelector('span');
+                badgeA.className = "ml-1.5 px-2 py-0.5 text-[10px] bg-white text-gob-guinda rounded-full font-extrabold";
+                
+                const badgeT = btnTerminos.querySelector('span');
+                badgeT.className = "ml-1.5 px-2 py-0.5 text-[10px] bg-gray-200 text-gray-700 rounded-full font-extrabold";
+
+                paneAudiencias.classList.remove('hidden');
+                paneTerminos.classList.add('hidden');
+            }
+        }
+    </script>
+</div>

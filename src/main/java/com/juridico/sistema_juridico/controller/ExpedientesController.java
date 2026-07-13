@@ -428,6 +428,7 @@ public class ExpedientesController {
                 expedienteReal.setSede(expedienteForm.getSede());
                 expedienteReal.setPartes(expedienteForm.getPartes());
                 expedienteReal.setDescripcion(expedienteForm.getDescripcion());
+                expedienteReal.setOrganoJurisdiccionalTexto(expedienteForm.getOrganoJurisdiccionalTexto());
                 // Etapa procesal (desde el select del formulario de edición)
                 if (expedienteForm.getEtapaProcesal() != null) {
                     expedienteReal.setEtapaProcesal(expedienteForm.getEtapaProcesal());
@@ -635,6 +636,11 @@ public class ExpedientesController {
         Audiencia proxima = audienciaRepository.findProximaAudiencia(id, LocalDate.now())
                 .stream().findFirst().orElse(null);
         model.addAttribute("proximaAudiencia", proxima);
+
+        List<com.juridico.sistema_juridico.Entity.procesal.Termino> terminos = terminoRepository.findByExpedienteId(id);
+        List<Audiencia> audiencias = audienciaRepository.findByExpedienteIdOrderByFechaAudienciaDesc(id);
+        model.addAttribute("terminos", terminos);
+        model.addAttribute("audiencias", audiencias);
 
         model.addAttribute("gerencias", gerenciaRepository.findAll());
 

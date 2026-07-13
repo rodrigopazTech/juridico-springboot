@@ -261,7 +261,8 @@ public class AudienciasController {
             List<Expediente> expedientesPorAudiencia = audienciaRepository.findAll().stream()
                     .filter(a -> a.getAbogadoComparece() != null &&
                             a.getAbogadoComparece().getId().equals(usuario.getId()) &&
-                            EstatusAudiencia.CONCLUIDA != a.getEstatusAudiencia())
+                            EstatusAudiencia.CONCLUIDA != a.getEstatusAudiencia() &&
+                            a.getExpediente() != null)
                     .map(Audiencia::getExpediente)
                     .collect(Collectors.toList());
             Set<Expediente> conjunto = new HashSet<>(misExpedientes);
@@ -575,9 +576,52 @@ public String guardar(@ModelAttribute Audiencia audiencia,
         // Guardar el contexto
         contexto = audienciaContextoRepository.save(contexto);
 
-        // Asociar el contexto y asegurar que expediente sea nulo
+        // Buscar o crear Expediente Temporal
+        Expediente expTemporal = null;
+        String ref = (contextoNumeroReferencia != null && !contextoNumeroReferencia.trim().isEmpty())
+                ? contextoNumeroReferencia.trim()
+                : null;
+        if (ref != null) {
+            expTemporal = expedienteRepository.findByNumeroIgnoreCaseAndEsTemporal(ref, true).orElse(null);
+        }
+        if (expTemporal == null) {
+            expTemporal = new Expediente();
+            expTemporal.setNumero(ref != null ? ref : "TEMP-" + java.util.UUID.randomUUID().toString().substring(0, 8));
+            expTemporal.setEsTemporal(true);
+            if (contextoMateriaId != null) {
+                expTemporal.setMateria(materiaRepository.findById(contextoMateriaId).orElse(null));
+            }
+            if (contextoGerenciaId != null) {
+                expTemporal.setGerencia(gerenciaRepository.findById(contextoGerenciaId).orElse(null));
+            } else if (usuario.getGerencia() != null) {
+                expTemporal.setGerencia(usuario.getGerencia());
+            }
+            expTemporal.setDescripcion(contextoDescripcion != null ? contextoDescripcion : "Asunto Único");
+            expTemporal.setPartes(contextoPartes);
+            expTemporal.setAbogadoResponsable(audiencia.getAbogadoComparece() != null ? audiencia.getAbogadoComparece() : usuario);
+            expTemporal = expedienteRepository.save(expTemporal);
+        } else {
+            if (contextoGerenciaId != null) {
+                expTemporal.setGerencia(gerenciaRepository.findById(contextoGerenciaId).orElse(null));
+            }
+            if (contextoMateriaId != null) {
+                expTemporal.setMateria(materiaRepository.findById(contextoMateriaId).orElse(null));
+            }
+            if (contextoDescripcion != null) {
+                expTemporal.setDescripcion(contextoDescripcion);
+            }
+            if (contextoPartes != null) {
+                expTemporal.setPartes(contextoPartes);
+            }
+            if (audiencia.getAbogadoComparece() != null) {
+                expTemporal.setAbogadoResponsable(audiencia.getAbogadoComparece());
+            }
+            expTemporal = expedienteRepository.save(expTemporal);
+        }
+
+        // Asociar el contexto y el expediente temporal
         audiencia.setContexto(contexto);
-        audiencia.setExpediente(null);
+        audiencia.setExpediente(expTemporal);
 
         // Corrección para evitar conflictos con Hibernate si el ID del abogado viene vacío
         if (audiencia.getAbogadoComparece() != null && audiencia.getAbogadoComparece().getId() == null) {

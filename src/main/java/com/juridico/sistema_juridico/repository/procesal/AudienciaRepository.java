@@ -163,6 +163,8 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         LocalTime horaFin,
                         EstatusAudiencia estatusExcluido);
 
+        List<Audiencia> findByExpedienteIdOrderByFechaAudienciaDesc(UUID expedienteId);
+
         @Query("SELECT a FROM Audiencia a " +
                         "WHERE a.expediente.id = :expedienteId " +
                         "AND a.fechaAudiencia >= :fechaActual " +

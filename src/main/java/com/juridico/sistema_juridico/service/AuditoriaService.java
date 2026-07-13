@@ -96,6 +96,12 @@ public class AuditoriaService {
                 String prioridadAct = (actual.getPrioridad() != null) ? actual.getPrioridad().getNombre() : "N/A";
                 compararYAgregar(cambios, actual, anterior, "Prioridad", prioridadAnt, prioridadAct);
 
+                String tipoAnt = (anterior.getTipoExpediente() != null) ? anterior.getTipoExpediente().getNombre() : "N/A";
+                String tipoAct = (actual.getTipoExpediente() != null) ? actual.getTipoExpediente().getNombre() : "N/A";
+                compararYAgregar(cambios, actual, anterior, "Tipo de Expediente", tipoAnt, tipoAct);
+
+                compararYAgregar(cambios, actual, anterior, "Órgano Jurisdiccional (Texto)", anterior.getOrganoJurisdiccionalTexto(), actual.getOrganoJurisdiccionalTexto());
+
                 String etapaAnt = (anterior.getEtapaProcesal() != null) ? anterior.getEtapaProcesal().name() : "N/A";
                 String etapaAct = (actual.getEtapaProcesal() != null) ? actual.getEtapaProcesal().name() : "N/A";
                 compararYAgregar(cambios, actual, anterior, "Etapa Procesal", etapaAnt, etapaAct);

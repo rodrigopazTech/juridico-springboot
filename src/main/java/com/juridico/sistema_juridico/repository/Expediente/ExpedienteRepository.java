@@ -29,6 +29,8 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
         // Validación de duplicado exacto: mismo número Y mismas partes (para S/N)
         Optional<Expediente> findByNumeroIgnoreCaseAndPartesIgnoreCase(String numero, String partes);
 
+        Optional<Expediente> findByNumeroIgnoreCaseAndEsTemporal(String numero, Boolean esTemporal);
+
 
         // ==========================================
         // 🔐 BÚSQUEDA CON SEGURIDAD (HEAD)
@@ -39,7 +41,7 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
                         "LEFT JOIN e.abogadoResponsable a " +
                         "LEFT JOIN e.organoJurisdiccional o " +
                         "LEFT JOIN ColaboradorExpediente c ON c.expediente.id = e.id " +
-                        "WHERE " +
+                        "WHERE (e.esTemporal = false OR e.esTemporal IS NULL) AND " +
                         "(:keyword IS NULL OR :keyword = '' OR " +
                         "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(e.descripcion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -74,6 +76,7 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
         // 🛠️ MÉTODO PARA BUSCADOR Y FILTROS (aurora5)
         // ==========================================
         @Query("SELECT e FROM Expediente e WHERE " +
+                        "(e.esTemporal = false OR e.esTemporal IS NULL) AND " +
                         "(:keyword IS NULL OR :keyword = '' OR LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND "
                         +
                         "(:materiaId IS NULL OR e.materia.id = :materiaId) AND " +

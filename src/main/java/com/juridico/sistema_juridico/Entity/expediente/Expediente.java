@@ -76,6 +76,14 @@ public class Expediente {
     @Builder.Default
     private EtapaProcesal etapaProcesal = EtapaProcesal.TRAMITE;
 
+    @Column(name = "es_temporal", nullable = true)
+    @Builder.Default
+    private Boolean esTemporal = false;
+
+    public Boolean getEsTemporal() {
+        return esTemporal != null && esTemporal;
+    }
+
     @ManyToOne
     @JoinColumn(name = "abogado_responsable_id")
     private Usuario abogadoResponsable;

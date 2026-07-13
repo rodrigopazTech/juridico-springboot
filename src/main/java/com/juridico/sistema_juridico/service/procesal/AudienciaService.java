@@ -18,6 +18,10 @@ import com.juridico.sistema_juridico.service.FileStorageService;
 import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import com.juridico.sistema_juridico.Entity.enums.NotificacionEvento;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
+import com.juridico.sistema_juridico.Entity.documento.Carpeta;
+import com.juridico.sistema_juridico.Entity.documento.Documento;
+import com.juridico.sistema_juridico.repository.documento.CarpetaRepository;
+import com.juridico.sistema_juridico.repository.documento.DocumentoRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -67,6 +71,12 @@ public class AudienciaService {
     @Autowired
     private FileStorageService fileStorageService;
 
+    @Autowired
+    private DocumentoRepository documentoRepository;
+
+    @Autowired
+    private CarpetaRepository carpetaRepository;
+
     // 1. PASO INTERMEDIO: SUBIR ACTA (Cambia a CON_ACTA)
     @Transactional
     @SuppressWarnings("null")
@@ -95,6 +105,58 @@ public class AudienciaService {
             notificarSubidaActa(audiencia);
         }
         audienciaRepository.save(audiencia);
+
+        // Sincronizar con el Gestor Documental
+        if (audiencia.getExpediente() != null) {
+            try {
+                Usuario usuarioSubida = null;
+                try {
+                    String email = SecurityContextHolder.getContext().getAuthentication().getName();
+                    usuarioSubida = usuarioRepository.findByEmail(email).orElse(null);
+                } catch (Exception e) {
+                    // Ignorar si no hay sesión activa
+                }
+
+                Carpeta carpetaSist = carpetaRepository.findByExpedienteIdAndNombreAndCarpetaPadreIsNull(
+                        audiencia.getExpediente().getId(), "Audiencias").orElse(null);
+
+                if (carpetaSist == null) {
+                    carpetaSist = Carpeta.builder()
+                            .expedienteId(audiencia.getExpediente().getId())
+                            .nombre("Audiencias")
+                            .carpetaPadre(null)
+                            .usuarioCreador(usuarioSubida)
+                            .orden(0)
+                            .esSistema(true)
+                            .build();
+                    carpetaSist = carpetaRepository.save(carpetaSist);
+                }
+
+                String nombreOriginal = archivo.getOriginalFilename();
+                boolean existe = documentoRepository.existeNombreDuplicado(
+                        audiencia.getExpediente().getId(),
+                        carpetaSist.getId(),
+                        nombreOriginal);
+
+                if (!existe) {
+                    Documento doc = Documento.builder()
+                            .expedienteId(audiencia.getExpediente().getId())
+                            .nombreArchivo(nombreOriginal)
+                            .nombreOriginal(nombreOriginal)
+                            .rutaArchivo("audiencias/" + nombreArchivo)
+                            .tipoMime(archivo.getContentType())
+                            .tamanioBytes(archivo.getSize())
+                            .carpeta(carpetaSist)
+                            .descripcion("Acta de la audiencia con fecha " + audiencia.getFechaAudiencia())
+                            .usuarioSubida(usuarioSubida)
+                            .eliminado(false)
+                            .build();
+                    documentoRepository.save(doc);
+                }
+            } catch (Exception e) {
+                System.err.println("Error al sincronizar acta de audiencia con expediente: " + e.getMessage());
+            }
+        }
 
         registrarActividad(audiencia.getExpediente(), "ARCHIVO CARGADO",
                 "Acta: " + archivo.getOriginalFilename(),

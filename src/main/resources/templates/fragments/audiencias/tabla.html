@@ -71,14 +71,20 @@
                                     <span class="text-xs font-bold text-gray-600 truncate block max-w-[120px]"
                                         th:title="${a.tipoAudiencia?.nombre ?: 'General'}"
                                         th:text="${a.tipoAudiencia?.nombre ?: 'General'}">Conciliación</span>
-                                    <div class="flex items-center gap-1.5 mt-1"
+                                    <div class="flex flex-col gap-0.5 mt-1"
                                          th:with="organoFallback=${a.expediente?.organoJurisdiccional?.nombre ?: (not #strings.isEmpty(a.expediente?.organoJurisdiccionalTexto) ? a.expediente.organoJurisdiccionalTexto : 'Presencial')},
                                                   nombreOrgano=${not #strings.isEmpty(a.salaLugar) ? a.salaLugar : organoFallback}">
-                                        <i th:if="${a.esVirtual}" class="fas fa-video text-[10px] text-blue-500"></i>
-                                        <i th:unless="${a.esVirtual}" class="fas fa-map-marker-alt text-[10px] text-gray-400"></i>
-                                        <span class="text-[10px] font-medium text-gray-400 truncate block max-w-[120px]"
-                                            th:title="${a.esVirtual ? 'Virtual' : nombreOrgano}"
-                                            th:text="${a.esVirtual ? 'Virtual' : nombreOrgano}">Virtual</span>
+                                        <div class="flex items-center gap-1.5">
+                                            <i th:if="${a.esVirtual}" class="fas fa-video text-[10px] text-blue-500"></i>
+                                            <i th:unless="${a.esVirtual}" class="fas fa-map-marker-alt text-[10px] text-gray-400"></i>
+                                            <span class="text-[10px] font-semibold text-gray-500"
+                                                th:text="${a.esVirtual ? 'Virtual' : nombreOrgano}">Virtual</span>
+                                        </div>
+                                        <div th:if="${a.esVirtual && a.urlReunion != null && !#strings.isEmpty(a.urlReunion)}" class="pl-4">
+                                            <a th:href="${a.urlReunion}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-0.5">
+                                                Ir a reunión <i class="fas fa-external-link-alt text-[8px]"></i>
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -224,14 +230,20 @@
                     </div>
 
                     <!-- Modalidad / Sala / Ubicación -->
-                    <div class="flex items-center gap-1.5 text-xs text-gray-500"
+                    <div class="flex flex-col gap-0.5 text-xs text-gray-500"
                          th:with="organoFallback=${a.expediente?.organoJurisdiccional?.nombre ?: (not #strings.isEmpty(a.expediente?.organoJurisdiccionalTexto) ? a.expediente.organoJurisdiccionalTexto : 'Presencial')},
                                   nombreOrgano=${not #strings.isEmpty(a.salaLugar) ? a.salaLugar : organoFallback}">
-                        <i th:if="${a.esVirtual}" class="fas fa-video text-[10px] text-blue-500"></i>
-                        <i th:unless="${a.esVirtual}" class="fas fa-map-marker-alt text-[10px] text-gray-400"></i>
-                        <span class="text-[10px] font-medium text-gray-500 truncate"
-                            th:title="${a.esVirtual ? 'Virtual' : nombreOrgano}"
-                            th:text="${a.esVirtual ? 'Virtual' : nombreOrgano}">Virtual</span>
+                        <div class="flex items-center gap-1.5">
+                            <i th:if="${a.esVirtual}" class="fas fa-video text-[10px] text-blue-500"></i>
+                            <i th:unless="${a.esVirtual}" class="fas fa-map-marker-alt text-[10px] text-gray-400"></i>
+                            <span class="text-[10px] font-semibold text-gray-500"
+                                th:text="${a.esVirtual ? 'Virtual' : nombreOrgano}">Virtual</span>
+                        </div>
+                        <div th:if="${a.esVirtual && a.urlReunion != null && !#strings.isEmpty(a.urlReunion)}" class="pl-4">
+                            <a th:href="${a.urlReunion}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-0.5">
+                                Ir a reunión <i class="fas fa-external-link-alt text-[8px]"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
 

@@ -421,7 +421,6 @@ public class TerminosController {
             if (actor.getGerencia() != null) {
                 contextoGerenciaId = actor.getGerencia().getId();
             }
-            terminoForm.setExpediente(null);
             terminoForm.setContexto(crearContextoAsuntoUnico(contextoMateriaId, contextoGerenciaId,
                     contextoDescripcion, contextoPartes, contextoNumeroReferencia));
         } else if (expedienteId != null) {
@@ -440,6 +439,51 @@ public class TerminosController {
             terminoForm.setAbogadoResponsable(actor);
         }
 
+        if (origenTermino == OrigenTermino.ASUNTO_UNICO) {
+            Expediente expTemporal = null;
+            String ref = (contextoNumeroReferencia != null && !contextoNumeroReferencia.trim().isEmpty())
+                    ? contextoNumeroReferencia.trim()
+                    : null;
+            if (ref != null) {
+                expTemporal = expedienteRepository.findByNumeroIgnoreCaseAndEsTemporal(ref, true).orElse(null);
+            }
+            if (expTemporal == null) {
+                expTemporal = new Expediente();
+                expTemporal.setNumero(ref != null ? ref : "TEMP-" + java.util.UUID.randomUUID().toString().substring(0, 8));
+                expTemporal.setEsTemporal(true);
+                if (contextoMateriaId != null) {
+                    expTemporal.setMateria(materiaRepository.findById(contextoMateriaId).orElse(null));
+                }
+                if (contextoGerenciaId != null) {
+                    expTemporal.setGerencia(gerenciaRepository.findById(contextoGerenciaId).orElse(null));
+                } else if (actor.getGerencia() != null) {
+                    expTemporal.setGerencia(actor.getGerencia());
+                }
+                expTemporal.setDescripcion(contextoDescripcion != null ? contextoDescripcion : "Asunto Único");
+                expTemporal.setPartes(contextoPartes);
+                expTemporal.setAbogadoResponsable(terminoForm.getAbogadoResponsable() != null ? terminoForm.getAbogadoResponsable() : actor);
+                expTemporal = expedienteRepository.save(expTemporal);
+            } else {
+                if (contextoGerenciaId != null) {
+                    expTemporal.setGerencia(gerenciaRepository.findById(contextoGerenciaId).orElse(null));
+                }
+                if (contextoMateriaId != null) {
+                    expTemporal.setMateria(materiaRepository.findById(contextoMateriaId).orElse(null));
+                }
+                if (contextoDescripcion != null) {
+                    expTemporal.setDescripcion(contextoDescripcion);
+                }
+                if (contextoPartes != null) {
+                    expTemporal.setPartes(contextoPartes);
+                }
+                if (terminoForm.getAbogadoResponsable() != null) {
+                    expTemporal.setAbogadoResponsable(terminoForm.getAbogadoResponsable());
+                }
+                expTemporal = expedienteRepository.save(expTemporal);
+            }
+            terminoForm.setExpediente(expTemporal);
+        }
+
         boolean expedienteCambiado = false;
         if (terminoForm.getId() != null) {
             Termino existente = terminoRepository.findById(terminoForm.getId())
@@ -456,10 +500,10 @@ public class TerminosController {
 
             Expediente expAnterior = existente.getExpediente();
             if (origenTermino == OrigenTermino.ASUNTO_UNICO) {
-                if (expAnterior != null) {
+                if (expAnterior == null || !expAnterior.getId().equals(terminoForm.getExpediente().getId())) {
                     expedienteCambiado = true;
                 }
-                existente.setExpediente(null);
+                existente.setExpediente(terminoForm.getExpediente());
                 existente.setContexto(terminoForm.getContexto());
             } else if (terminoForm.getExpediente() != null) {
                 if (expAnterior == null || !expAnterior.getId().equals(terminoForm.getExpediente().getId())) {
