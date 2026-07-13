@@ -51,8 +51,8 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "AND (:estatus IS NULL OR a.estatusAudiencia = :estatus) " +
                         "AND (a.fechaAudiencia >= :fechaInicio) " +
                         "AND (a.fechaAudiencia <= :fechaFin) " +
-                        "AND (:targetAbogadoId IS NULL OR (abr.id = :targetAbogadoId OR abc.id = :targetAbogadoId)) " +
-                        "AND (:filtroUsuarioId IS NULL OR (abr.id = :filtroUsuarioId OR abc.id = :filtroUsuarioId)) " +
+                        "AND (:targetAbogadoId IS NULL OR (abr.id = :targetAbogadoId OR abc.id = :targetAbogadoId OR a.usuarioDelegado.id = :targetAbogadoId)) " +
+                        "AND (:filtroUsuarioId IS NULL OR (abr.id = :filtroUsuarioId OR abc.id = :filtroUsuarioId OR a.usuarioDelegado.id = :filtroUsuarioId)) " +
                         "AND (:filtroGerenciaId IS NULL OR eg.id = :filtroGerenciaId OR cg.id = :filtroGerenciaId) " +
                         "AND ((:filtroMateriaIds) IS NULL OR em.id IN (:filtroMateriaIds) OR cm.id IN (:filtroMateriaIds)) " +
                         "AND (:id IS NULL OR a.id = :id)")
@@ -136,8 +136,8 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "AND (:estatus IS NULL OR a.estatusAudiencia = :estatus) " +
                         "AND (a.fechaAudiencia >= :fechaInicio) " +
                         "AND (a.fechaAudiencia <= :fechaFin) " +
-                        "AND (:targetAbogadoId IS NULL OR (abr.id = :targetAbogadoId OR abc.id = :targetAbogadoId)) " +
-                        "AND (:filtroUsuarioId IS NULL OR (abr.id = :filtroUsuarioId OR abc.id = :filtroUsuarioId)) " +
+                        "AND (:targetAbogadoId IS NULL OR (abr.id = :targetAbogadoId OR abc.id = :targetAbogadoId OR a.usuarioDelegado.id = :targetAbogadoId)) " +
+                        "AND (:filtroUsuarioId IS NULL OR (abr.id = :filtroUsuarioId OR abc.id = :filtroUsuarioId OR a.usuarioDelegado.id = :filtroUsuarioId)) " +
                         "AND (:filtroGerenciaId IS NULL OR eg.id = :filtroGerenciaId OR cg.id = :filtroGerenciaId) " +
                         "AND ((:filtroMateriaIds) IS NULL OR em.id IN (:filtroMateriaIds) OR cm.id IN (:filtroMateriaIds)) " +
                         "AND (:id IS NULL OR a.id = :id)")
@@ -286,8 +286,8 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "AND (:materia IS NULL OR :materia = '' OR em.nombre = :materia OR cm.nombre = :materia) " +
                         "AND (a.fechaAudiencia >= :fechaInicio) " +
                         "AND (a.fechaAudiencia <= :fechaFin) " +
-                        "AND (:targetAbogadoId IS NULL OR (abr.id = :targetAbogadoId OR abc.id = :targetAbogadoId)) " +
-                        "AND (:filtroUsuarioId IS NULL OR (abr.id = :filtroUsuarioId OR abc.id = :filtroUsuarioId)) " +
+                        "AND (:targetAbogadoId IS NULL OR (abr.id = :targetAbogadoId OR abc.id = :targetAbogadoId OR a.usuarioDelegado.id = :targetAbogadoId)) " +
+                        "AND (:filtroUsuarioId IS NULL OR (abr.id = :filtroUsuarioId OR abc.id = :filtroUsuarioId OR a.usuarioDelegado.id = :filtroUsuarioId)) " +
                         "AND (:filtroGerenciaId IS NULL OR eg.id = :filtroGerenciaId OR cg.id = :filtroGerenciaId) " +
                         "AND ((:filtroMateriaIds) IS NULL OR em.id IN (:filtroMateriaIds) OR cm.id IN (:filtroMateriaIds)) " +
                         "GROUP BY a.estatusAudiencia")
@@ -303,7 +303,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         @Param("filtroGerenciaId") Integer filtroGerenciaId,
                         @Param("filtroMateriaIds") List<Integer> filtroMateriaIds);
 
-        @Query("SELECT a FROM Audiencia a WHERE a.abogadoComparece.id = :usuarioId OR a.expediente.abogadoResponsable.id = :usuarioId")
+        @Query("SELECT a FROM Audiencia a WHERE a.abogadoComparece.id = :usuarioId OR a.expediente.abogadoResponsable.id = :usuarioId OR a.usuarioDelegado.id = :usuarioId")
         List<Audiencia> findByUsuarioId(@Param("usuarioId") Integer usuarioId);
 
         @Query("SELECT DISTINCT a.expediente FROM Audiencia a WHERE a.abogadoComparece.id = :usuarioId AND a.estatusAudiencia != com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.CONCLUIDA")

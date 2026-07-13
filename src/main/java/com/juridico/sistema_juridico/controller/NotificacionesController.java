@@ -205,20 +205,43 @@ public class NotificacionesController {
                 if (aud == null) return false;
                 
                 Expediente exp = aud.getExpediente();
-                if (exp == null) return false;
-                
-                if (!tieneAccesoAExpediente(usuario, exp)) {
-                    return false;
+                if (exp != null) {
+                    if (!tieneAccesoAExpediente(usuario, exp)) {
+                        return false;
+                    }
+                    
+                    if (usuario.getRol() == RolUsuario.ABOGADO) {
+                        boolean esCompareciente = aud.getAbogadoComparece() != null && aud.getAbogadoComparece().getId().equals(usuario.getId());
+                        boolean esResponsableExp = exp.getAbogadoResponsable() != null && exp.getAbogadoResponsable().getId().equals(usuario.getId());
+                        boolean esInvitado = audienciaRepository.findExpedientesByAbogadoInvitadoActivo(usuario.getId()).stream()
+                                .anyMatch(e -> e.getId().equals(exp.getId()));
+                        boolean esDelegado = aud.getUsuarioDelegado() != null && aud.getUsuarioDelegado().getId().equals(usuario.getId());
+                        return esCompareciente || esResponsableExp || esInvitado || esDelegado;
+                    }
+                    return true;
+                } else {
+                    // Audiencia de Asunto Único (sin expediente)
+                    com.juridico.sistema_juridico.Entity.procesal.AudienciaContexto ctx = aud.getContexto();
+                    if (ctx == null) return false;
+
+                    if (usuario.getRol() == RolUsuario.ABOGADO) {
+                        boolean esCompareciente = aud.getAbogadoComparece() != null && aud.getAbogadoComparece().getId().equals(usuario.getId());
+                        boolean esDelegado = aud.getUsuarioDelegado() != null && aud.getUsuarioDelegado().getId().equals(usuario.getId());
+                        return esCompareciente || esDelegado;
+                    }
+
+                    if (usuario.getGerencia() == null || ctx.getGerencia() == null ||
+                        !usuario.getGerencia().getId().equals(ctx.getGerencia().getId())) {
+                        return false;
+                    }
+
+                    if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
+                        if (ctx.getMateria() == null) return false;
+                        Integer matId = ctx.getMateria().getId();
+                        return usuario.getMaterias().stream().anyMatch(m -> m.getId().equals(matId));
+                    }
+                    return true;
                 }
-                
-                if (usuario.getRol() == RolUsuario.ABOGADO) {
-                    boolean esCompareciente = aud.getAbogadoComparece() != null && aud.getAbogadoComparece().getId().equals(usuario.getId());
-                    boolean esResponsableExp = exp.getAbogadoResponsable() != null && exp.getAbogadoResponsable().getId().equals(usuario.getId());
-                    boolean esInvitado = audienciaRepository.findExpedientesByAbogadoInvitadoActivo(usuario.getId()).stream()
-                            .anyMatch(e -> e.getId().equals(exp.getId()));
-                    return esCompareciente || esResponsableExp || esInvitado;
-                }
-                return true;
             }
         } catch (Exception e) {
             return false;
