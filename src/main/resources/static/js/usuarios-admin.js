@@ -232,15 +232,16 @@ function actualizarFormularioPorRol() {
         const selectGerencias = document.getElementById('select-usuario-gerencia');
         const checkedGerencias = selectGerencias ? Array.from(selectGerencias.selectedOptions).map(opt => opt.value) : [];
         
-        if (checkedGerencias.length > 0 && creadorRol !== 'JEFE_DEPTO') {
+        if (checkedGerencias.length > 0) {
             if (contenedorMaterias) contenedorMaterias.classList.remove('hidden');
         } else {
             if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
         }
     }
+    cargarMateriasDeGerencia();
 }
 
-function cargarMateriasDeGerencia() {
+function cargarMateriasDeGerencia(event) {
     const selectRol = document.getElementById('select-usuario-rol');
     const rol = selectRol ? selectRol.value : '';
     if (rol === 'ADMIN' || rol === 'DIRECTOR_PRINCIPAL' || rol === 'DIRECTOR' || rol === 'SUBDIRECTOR') {
@@ -249,6 +250,16 @@ function cargarMateriasDeGerencia() {
         return;
     }
     const selectGerencias = document.getElementById('select-usuario-gerencia');
+    if (selectGerencias && (rol === 'GERENTE' || rol === 'JEFE_DEPTO' || rol === 'ABOGADO')) {
+        const selectedOptions = Array.from(selectGerencias.selectedOptions);
+        if (selectedOptions.length > 1) {
+            const lastSelected = selectedOptions[selectedOptions.length - 1];
+            Array.from(selectGerencias.options).forEach(opt => {
+                opt.selected = (opt === lastSelected);
+            });
+            materiasUsuarioActual = [];
+        }
+    }
     const checkedGerencias = selectGerencias ? Array.from(selectGerencias.selectedOptions).map(opt => opt.value) : [];
     const contenedor = document.getElementById('contenedor-materias');
     const lista = document.getElementById('lista-materias-checkboxes');
@@ -286,10 +297,12 @@ function cargarMateriasDeGerencia() {
                 return;
             }
             todasMaterias.forEach(m => {
-                const isChecked = materiasUsuarioActual.includes(m.id) ? 'checked' : '';
+                const isGerente = (rol === 'GERENTE');
+                const isChecked = (isGerente || materiasUsuarioActual.includes(m.id)) ? 'checked' : '';
+                const clickAttr = isGerente ? 'onclick="return false;" style="pointer-events: none; opacity: 0.7;"' : '';
                 lista.innerHTML += `
                     <div class="flex items-center space-x-2">
-                        <input type="checkbox" name="materiasIds" value="${m.id}" id="mat-${m.id}" ${isChecked} class="rounded text-gob-guinda h-4 w-4 border-gray-300 focus:ring-gob-oro">
+                        <input type="checkbox" name="materiasIds" value="${m.id}" id="mat-${m.id}" ${isChecked} ${clickAttr} class="rounded text-gob-guinda h-4 w-4 border-gray-300 focus:ring-gob-oro">
                         <label for="mat-${m.id}" class="text-xs text-gray-700 cursor-pointer select-none">${m.nombre}</label>
                     </div>`;
             });
@@ -742,15 +755,16 @@ function actualizarFormularioEdicionPorRol() {
             if (divGerencia) divGerencia.classList.remove('hidden');
         }
         const checkedGerencias = document.querySelectorAll('.det-gerencia-checkbox:checked');
-        if (checkedGerencias.length > 0 && creadorRol !== 'JEFE_DEPTO') {
+        if (checkedGerencias.length > 0) {
             if (contenedorMaterias) contenedorMaterias.classList.remove('hidden');
         } else {
             if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
         }
     }
+    cargarMateriasDeGerenciaEdicion();
 }
 
-function cargarMateriasDeGerenciaEdicion() {
+function cargarMateriasDeGerenciaEdicion(event) {
     const selectRol = document.getElementById('det-select-rol');
     const rol = selectRol ? selectRol.value : '';
     if (rol === 'ADMIN' || rol === 'DIRECTOR_PRINCIPAL' || rol === 'DIRECTOR' || rol === 'SUBDIRECTOR') {
@@ -758,6 +772,17 @@ function cargarMateriasDeGerenciaEdicion() {
         if (contenedor) contenedor.classList.add('hidden');
         return;
     }
+
+    const target = event ? event.target : null;
+    if (target && target.checked) {
+        document.querySelectorAll('.det-gerencia-checkbox').forEach(cb => {
+            if (cb !== target) {
+                cb.checked = false;
+            }
+        });
+        materiasUsuarioEdicion = [];
+    }
+
     const checkedGerencias = Array.from(document.querySelectorAll('.det-gerencia-checkbox:checked')).map(cb => cb.value);
     const contenedor = document.getElementById('det-contenedor-materias');
     const lista = document.getElementById('det-lista-materias-checkboxes');
@@ -795,10 +820,12 @@ function cargarMateriasDeGerenciaEdicion() {
                 return;
             }
             todasMaterias.forEach(m => {
-                const isChecked = materiasUsuarioEdicion.includes(m.id) ? 'checked' : '';
+                const isGerente = (rol === 'GERENTE');
+                const isChecked = (isGerente || materiasUsuarioEdicion.includes(m.id)) ? 'checked' : '';
+                const clickAttr = isGerente ? 'onclick="return false;" style="pointer-events: none; opacity: 0.7;"' : '';
                 lista.innerHTML += `
                     <div class="flex items-center space-x-2">
-                        <input type="checkbox" name="materiasIds" value="${m.id}" id="det-mat-${m.id}" ${isChecked} class="rounded text-gob-guinda h-4 w-4 border-gray-300 focus:ring-gob-oro">
+                        <input type="checkbox" name="materiasIds" value="${m.id}" id="det-mat-${m.id}" ${isChecked} ${clickAttr} class="rounded text-gob-guinda h-4 w-4 border-gray-300 focus:ring-gob-oro">
                         <label for="det-mat-${m.id}" class="text-xs text-gray-700 cursor-pointer select-none">${m.nombre}</label>
                     </div>`;
             });

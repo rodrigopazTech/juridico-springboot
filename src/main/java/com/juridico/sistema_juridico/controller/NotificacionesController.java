@@ -144,14 +144,21 @@ public class NotificacionesController {
         return "redirect:/notificaciones";
     }
 
+    private boolean esRolDirectivo(Usuario usuario) {
+        if (usuario == null) return false;
+        RolUsuario rol = usuario.getRol();
+        return rol == RolUsuario.ADMIN || 
+               rol == RolUsuario.DIRECTOR_PRINCIPAL || 
+               rol == RolUsuario.DIRECTOR || 
+               rol == RolUsuario.SUBDIRECTOR;
+    }
+
     private boolean tieneAccesoAEntidad(Usuario usuario, String tipo, String idStr) {
         if (usuario == null || tipo == null || idStr == null) {
             return false;
         }
 
-        if (usuario.getRol() == RolUsuario.ADMIN || 
-            usuario.getRol() == RolUsuario.DIRECTOR || 
-            usuario.getRol() == RolUsuario.SUBDIRECTOR) {
+        if (esRolDirectivo(usuario)) {
             return true;
         }
 
@@ -253,9 +260,7 @@ public class NotificacionesController {
     private boolean tieneAccesoAExpediente(Usuario usuario, Expediente exp) {
         if (usuario == null || exp == null) return false;
         
-        if (usuario.getRol() == RolUsuario.ADMIN || 
-            usuario.getRol() == RolUsuario.DIRECTOR || 
-            usuario.getRol() == RolUsuario.SUBDIRECTOR) {
+        if (esRolDirectivo(usuario)) {
             return true;
         }
         

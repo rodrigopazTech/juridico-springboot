@@ -33,10 +33,101 @@ document.onkeydown = function (evt) {
         });
         const modalNuevo = document.getElementById('modal-nuevo-exp');
         if (modalNuevo && !modalNuevo.classList.contains('hidden')) {
-            modalNuevo.classList.add('hidden');
+            cerrarModalNuevoExpediente();
         }
     }
 };
+
+function limpiarModalNuevoExpediente() {
+    const modal = document.getElementById('modal-nuevo-exp');
+    if (!modal) return;
+
+    // 1. Limpiar inputs simples
+    const inputNumero = modal.querySelector('input[name="numero"]');
+    if (inputNumero) inputNumero.value = '';
+
+    const inputPartes = modal.querySelector('input[name="partes"]');
+    if (inputPartes) inputPartes.value = '';
+
+    const textareaDesc = modal.querySelector('textarea[name="descripcion"]');
+    if (textareaDesc) textareaDesc.value = '';
+
+    // 2. Limpiar selects simples (estáticos / no cascada)
+    const selectPrioridad = modal.querySelector('select[name="prioridad.id"]');
+    if (selectPrioridad) {
+        if (selectPrioridad.tomselect) selectPrioridad.tomselect.setValue(selectPrioridad.options[0]?.value || '');
+        else selectPrioridad.selectedIndex = 0;
+    }
+
+    const selectEtapa = modal.querySelector('select[name="etapaProcesal"]');
+    if (selectEtapa) {
+        if (selectEtapa.tomselect) selectEtapa.tomselect.setValue(selectEtapa.options[0]?.value || '');
+        else selectEtapa.selectedIndex = 0;
+    }
+
+    const selectSede = modal.querySelector('select[name="sede"]');
+    if (selectSede) {
+        if (selectSede.tomselect) selectSede.tomselect.setValue('');
+        else selectSede.value = '';
+    }
+
+    const selectTipo = modal.querySelector('select[name="tipoExpediente.id"]');
+    if (selectTipo) {
+        if (selectTipo.tomselect) selectTipo.tomselect.setValue('');
+        else selectTipo.value = '';
+    }
+
+    // 3. Limpiar selectores en cascada (Gerencia, Materia, Órgano, Abogado)
+    const selectGerencia = document.getElementById('select-gerencia-exp');
+    if (selectGerencia && !selectGerencia.disabled) {
+        if (selectGerencia.tomselect) {
+            selectGerencia.tomselect.setValue('');
+        } else {
+            selectGerencia.value = '';
+        }
+    }
+
+    const selectMateria = document.getElementById('select-materia-exp');
+    if (selectMateria) {
+        if (selectMateria.tomselect) {
+            selectMateria.tomselect.setValue('');
+        } else {
+            selectMateria.value = '';
+        }
+    }
+
+    const selectOrgano = document.getElementById('select-organo-exp');
+    if (selectOrgano) {
+        if (selectOrgano.tomselect) {
+            selectOrgano.tomselect.setValue('');
+        } else {
+            selectOrgano.value = '';
+        }
+    }
+
+    const selectAbogado = document.getElementById('select-abogado-exp');
+    if (selectAbogado && selectAbogado.dataset.locked !== 'true') {
+        if (selectAbogado.tomselect) {
+            selectAbogado.tomselect.setValue('');
+        } else {
+            selectAbogado.value = '';
+        }
+    }
+
+    // Recargar cascadas para aplicar los placeholders/deshabilitar según el estado de gerencia
+    cargarMateriasExpediente().then(() => {
+        cargarAbogadosExpediente();
+    });
+    cargarOrganosExpediente();
+}
+
+function cerrarModalNuevoExpediente() {
+    const modal = document.getElementById('modal-nuevo-exp');
+    if (modal) {
+        modal.classList.add('hidden');
+        limpiarModalNuevoExpediente();
+    }
+}
 
 // LÓGICA DE SELECTORES EN CASCADA (REUTILIZABLE)
 function cargarMateriasExpediente(arg1 = '', arg2 = '', arg3 = '', materiaIdSeleccionado = null) {

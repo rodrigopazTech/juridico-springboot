@@ -5,6 +5,8 @@ import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -16,4 +18,7 @@ public interface PushSubscriptionRepository extends JpaRepository<PushSubscripti
     Optional<PushSubscription> findByUsuarioIdAndDeviceId(Integer usuarioId, String deviceId);
     void deleteByEndpoint(String endpoint);
     void deleteByUsuarioId(Integer usuarioId);
+    
+    @Transactional
+    void deleteBySessionId(String sessionId);
 }

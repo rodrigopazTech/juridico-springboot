@@ -119,10 +119,7 @@ public class DashboardController {
                 List<Long> gerenciaIds = dashboardService.obtenerListaGerencias(grupoGerenciaSolicitado);
                 return new FiltroResult(null, gerenciaIds, grupoGerenciaSolicitado, null);
             }
-            // Si el director tiene gerencia asignada, lo restringimos a esa (ROD-JERARQUIA)
-            if (usuario.getGerencia() != null) {
-                return new FiltroResult(usuario.getGerencia().getId().longValue(), null, null, null);
-            }
+            // Los directivos no se restringen y pueden ver la gerencia solicitada (o todas si es null)
             return new FiltroResult(gerenciaIdSolicitada, null, null, null);
         } else {
             // Si es Gerente o Jefe, obligatoriamente solo ve su gerencia

@@ -125,6 +125,18 @@ public class UsuarioService {
             gerenciasSeleccionadas.addAll(gerenciaRepository.findByActivoTrueOrderByNombreAsc());
             materiasSeleccionadas.clear();
             materiasSeleccionadas.addAll(materiaRepository.findByActivoTrueOrderByNombreAsc());
+        } else if (usuario.getRol() == RolUsuario.GERENTE || usuario.getRol() == RolUsuario.JEFE_DEPTO || usuario.getRol() == RolUsuario.ABOGADO) {
+            if (gerenciasSeleccionadas.size() > 1) {
+                Gerencia primera = gerenciasSeleccionadas.iterator().next();
+                gerenciasSeleccionadas.clear();
+                gerenciasSeleccionadas.add(primera);
+            }
+            if (usuario.getRol() == RolUsuario.GERENTE) {
+                materiasSeleccionadas.clear();
+                for (Gerencia g : gerenciasSeleccionadas) {
+                    materiasSeleccionadas.addAll(materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(g.getId()));
+                }
+            }
         }
 
         if (usuario.getId() == null) {
@@ -189,7 +201,8 @@ public class UsuarioService {
                 if (materiasIds != null || existente.getRol() == RolUsuario.ADMIN 
                         || existente.getRol() == RolUsuario.DIRECTOR_PRINCIPAL 
                         || existente.getRol() == RolUsuario.DIRECTOR 
-                        || existente.getRol() == RolUsuario.SUBDIRECTOR) {
+                        || existente.getRol() == RolUsuario.SUBDIRECTOR
+                        || existente.getRol() == RolUsuario.GERENTE) {
                     existente.getMaterias().clear();
                     existente.getMaterias().addAll(materiasSeleccionadas);
                 }

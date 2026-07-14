@@ -49,7 +49,7 @@
 
                 <div>
                     <label class="block text-sm font-bold text-gob-guinda mb-1">Gerencia(s) Asignada(s)</label>
-                    <select th:field="*{gerencias}" id="select-usuario-gerencia" multiple="multiple" onchange="cargarMateriasDeGerencia()"
+                    <select th:field="*{gerencias}" id="select-usuario-gerencia" multiple="multiple" onchange="cargarMateriasDeGerencia(event)"
                         class="w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-blue-50 focus:ring-gob-oro outline-none">
                         <option th:each="g : ${allGerencias}" th:value="${g.id}" th:text="${g.nombre}"></option>
                     </select>

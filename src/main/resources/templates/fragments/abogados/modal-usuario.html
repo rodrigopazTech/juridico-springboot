@@ -54,7 +54,7 @@
                     <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 max-h-32 overflow-y-auto mb-2">
                         <div th:each="g : ${allGerencias}" class="flex items-center space-x-2">
                             <input type="checkbox" name="gerenciasIds" th:value="${g.id}" th:id="'ger-' + ${g.id}"
-                                onchange="cargarMateriasDeGerencia()"
+                                onchange="cargarMateriasDeGerencia(event)"
                                 class="gerencia-checkbox rounded text-gob-guinda h-4 w-4 border-gray-300 focus:ring-gob-oro">
                             <label th:for="'ger-' + ${g.id}" class="text-xs text-gray-700 cursor-pointer select-none" th:text="${g.nombre}">Gerencia</label>
                         </div>
@@ -63,7 +63,7 @@
                 </div>
 
                 <!-- Oculto para JEFE_DEPTO -->
-                <div id="contenedor-materias" th:classappend="${usuarioActual.rol.name() == 'JEFE_DEPTO'} ? 'hidden' : 'hidden'">
+                <div id="contenedor-materias" class="hidden">
                     <label class="block text-xs font-bold text-gob-guinda uppercase mb-2">Materias Autorizadas</label>
                     <div id="lista-materias-checkboxes"
                         class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 max-h-32 overflow-y-auto">

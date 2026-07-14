@@ -100,6 +100,20 @@ function abrirModalAudiencia() {
         salaSelect.tomselect.setValue('');
     }
 
+    const gerenciaSelect = document.getElementById('aud-contexto-gerencia');
+    if (gerenciaSelect && gerenciaSelect.tomselect) {
+        gerenciaSelect.tomselect.setValue('');
+    }
+    const materiaSelect = document.getElementById('aud-contexto-materia');
+    if (materiaSelect) {
+        if (materiaSelect.tomselect) {
+            updateTomSelectOptions(materiaSelect.tomselect, [], 'Seleccione gerencia primero...');
+            materiaSelect.tomselect.setValue('');
+        } else {
+            materiaSelect.innerHTML = '<option value="">Seleccione gerencia primero...</option>';
+        }
+    }
+
     // Resetear selector de abogados
     const abogadoSelect = document.getElementById('input-abogado');
     if (abogadoSelect) {
@@ -124,8 +138,15 @@ function abrirModalAudiencia() {
     document.getElementById('modal-audiencia').classList.remove('hidden');
 }
 
-// 2. ABRIR PARA EDITAR (¡CORREGIDO!)
 function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala, link, abogadoId, observaciones = "", origenAudiencia = "EXPEDIENTE", contextoGerenciaId = "", contextoMateriaId = "", contextoNumeroReferencia = "", contextoSede = "", contextoPartes = "", contextoDescripcion = "") {
+
+    if (origenAudiencia === 'EXPEDIENTE') {
+        window.editandoAudienciaAbogadoId = abogadoId;
+        window.editandoAudienciaMateriaId = null;
+    } else {
+        window.editandoAudienciaAbogadoId = abogadoId;
+        window.editandoAudienciaMateriaId = contextoMateriaId;
+    }
 
     // A. Llenar campos básicos
     setValueIfExists('input-audiencia-id', id);
@@ -146,7 +167,16 @@ function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala
         const gerenciaSelect = document.getElementById('aud-contexto-gerencia');
         if (gerenciaSelect) {
             if (gerenciaSelect.tomselect) {
-                gerenciaSelect.tomselect.setValue(contextoGerenciaId);
+                const valorActual = gerenciaSelect.tomselect.getValue();
+                if (String(valorActual) === String(contextoGerenciaId)) {
+                    // Si ya tiene el mismo valor, onChange no se disparará. Llamamos directo.
+                    cargarAbogadosAsuntoUnico(abogadoId);
+                    cargarMateriasAsuntoUnico(contextoMateriaId);
+                    window.editandoAudienciaAbogadoId = null;
+                    window.editandoAudienciaMateriaId = null;
+                } else {
+                    gerenciaSelect.tomselect.setValue(contextoGerenciaId);
+                }
             } else {
                 gerenciaSelect.value = contextoGerenciaId;
             }
@@ -218,8 +248,15 @@ function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala
             }
         }
     } else {
-        // En Asunto Único, cargar abogados desde el endpoint por gerencia
-        cargarAbogadosAsuntoUnico(abogadoId);
+        // En Asunto Único, cargar abogados y materias si aún no se han cargado (por ejemplo, si la gerencia es fija/input hidden)
+        if (window.editandoAudienciaAbogadoId !== null) {
+            cargarAbogadosAsuntoUnico(window.editandoAudienciaAbogadoId);
+            window.editandoAudienciaAbogadoId = null;
+        }
+        if (window.editandoAudienciaMateriaId !== null) {
+            cargarMateriasAsuntoUnico(window.editandoAudienciaMateriaId);
+            window.editandoAudienciaMateriaId = null;
+        }
     }
 
     // D. Cambiar Título y Mostrar
@@ -311,7 +348,11 @@ function switchModoRegistro(modo) {
         }
         if (contextoMateria) {
             contextoMateria.removeAttribute('required');
-            contextoMateria.value = '';
+            if (contextoMateria.tomselect) {
+                contextoMateria.tomselect.setValue('');
+            } else {
+                contextoMateria.value = '';
+            }
         }
         if (contextoReferencia) {
             contextoReferencia.removeAttribute('required');
@@ -366,8 +407,13 @@ function switchModoRegistro(modo) {
             setValueIfExists('input-sala', '');
         }
 
-        // Cargar los abogados de la gerencia seleccionada en Asunto Único
-        cargarAbogadosAsuntoUnico();
+        // Cargar los abogados y materias de la gerencia seleccionada en Asunto Único
+        if (!window.editandoAudienciaAbogadoId) {
+            cargarAbogadosAsuntoUnico();
+        }
+        if (!window.editandoAudienciaMateriaId) {
+            cargarMateriasAsuntoUnico();
+        }
     }
 }
 
@@ -753,6 +799,67 @@ function cargarAbogadosAsuntoUnico(idPreseleccionado = null) {
         });
 }
 
+function cargarMateriasAsuntoUnico(idPreseleccionado = null) {
+    const gerenciaEl = document.getElementById('aud-contexto-gerencia');
+    const materiaSelect = document.getElementById('aud-contexto-materia');
+    if (!gerenciaEl || !materiaSelect) return;
+
+    const gerenciaId = gerenciaEl.tomselect ? gerenciaEl.tomselect.getValue() : gerenciaEl.value;
+
+    if (!gerenciaId) {
+        if (materiaSelect.tomselect) {
+            updateTomSelectOptions(materiaSelect.tomselect, [], 'Seleccione gerencia primero...');
+            materiaSelect.tomselect.setValue('');
+        } else {
+            materiaSelect.innerHTML = '<option value="">Seleccione gerencia primero...</option>';
+        }
+        return;
+    }
+
+    if (materiaSelect.tomselect) {
+        updateTomSelectOptions(materiaSelect.tomselect, [], 'Buscando materias disponibles...');
+    } else {
+        materiaSelect.innerHTML = '<option>Buscando materias disponibles...</option>';
+    }
+
+    fetch(`/audiencias/api/materias-por-gerencia/${gerenciaId}`)
+        .then(response => response.json())
+        .then(materias => {
+            const options = materias.map(m => ({
+                value: m.id,
+                text: m.nombre
+            }));
+            
+            if (materiaSelect.tomselect) {
+                updateTomSelectOptions(materiaSelect.tomselect, options, '-- Seleccione Materia --');
+                if (idPreseleccionado) {
+                    materiaSelect.tomselect.setValue(idPreseleccionado);
+                } else {
+                    materiaSelect.tomselect.setValue('');
+                }
+            } else {
+                materiaSelect.innerHTML = '<option value="">-- Seleccione Materia --</option>';
+                options.forEach(opt => {
+                    const o = document.createElement('option');
+                    o.value = opt.value;
+                    o.text = opt.text;
+                    if (idPreseleccionado && String(opt.value) === String(idPreseleccionado)) {
+                        o.selected = true;
+                    }
+                    materiaSelect.appendChild(o);
+                });
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            if (materiaSelect.tomselect) {
+                updateTomSelectOptions(materiaSelect.tomselect, [], 'Error al cargar materias');
+            } else {
+                materiaSelect.innerHTML = '<option value="">Error al cargar materias</option>';
+            }
+        });
+}
+
 function inicializarSelectsAudiencias() {
     const tipoSelect = document.getElementById('input-tipo');
     if (tipoSelect) {
@@ -825,14 +932,36 @@ function inicializarSelectsAudiencias() {
                 tipo: 'gerencia',
                 onChange: function() {
                     if (document.getElementById('input-origen-audiencia').value === 'ASUNTO_UNICO') {
-                        cargarAbogadosAsuntoUnico();
+                        if (window.editandoAudienciaAbogadoId) {
+                            cargarAbogadosAsuntoUnico(window.editandoAudienciaAbogadoId);
+                            window.editandoAudienciaAbogadoId = null;
+                        } else {
+                            cargarAbogadosAsuntoUnico();
+                        }
+                        if (window.editandoAudienciaMateriaId) {
+                            cargarMateriasAsuntoUnico(window.editandoAudienciaMateriaId);
+                            window.editandoAudienciaMateriaId = null;
+                        } else {
+                            cargarMateriasAsuntoUnico();
+                        }
                     }
                 }
             });
         } else {
             selectGerencia.addEventListener('change', function() {
                 if (document.getElementById('input-origen-audiencia').value === 'ASUNTO_UNICO') {
-                    cargarAbogadosAsuntoUnico();
+                    if (window.editandoAudienciaAbogadoId) {
+                        cargarAbogadosAsuntoUnico(window.editandoAudienciaAbogadoId);
+                        window.editandoAudienciaAbogadoId = null;
+                    } else {
+                        cargarAbogadosAsuntoUnico();
+                    }
+                    if (window.editandoAudienciaMateriaId) {
+                        cargarMateriasAsuntoUnico(window.editandoAudienciaMateriaId);
+                        window.editandoAudienciaMateriaId = null;
+                    } else {
+                        cargarMateriasAsuntoUnico();
+                    }
                 }
             });
         }

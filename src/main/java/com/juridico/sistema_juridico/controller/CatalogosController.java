@@ -485,6 +485,7 @@ public class CatalogosController {
             String nombre = payload.get("nombre");
             String idStr = payload.get("id");
             String gerenciaIdStr = payload.get("gerenciaId");
+            Integer gerenciaId = (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) ? Integer.parseInt(gerenciaIdStr) : null;
 
             if (nombre == null || nombre.trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "El nombre es obligatorio."));
@@ -500,7 +501,6 @@ public class CatalogosController {
                     .orElseThrow(() -> new RuntimeException("Materia no encontrada."));
                 materia.setNombre(nombre.trim());
             } else {
-                Integer gerenciaId = (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) ? Integer.parseInt(gerenciaIdStr) : null;
                 
                 // CREACIÓN: Primero verificar si ya existe uno ACTIVO (filtrado por gerencia si aplica)
                 if (gerenciaId != null) {
@@ -549,11 +549,24 @@ public class CatalogosController {
 
             // Auto-asignar la nueva materia al usuario creador si es rol limitado
             boolean esCreacion = (idStr == null || idStr.isEmpty());
-            if (esCreacion && (usuarioActual.getRol() == RolUsuario.ABOGADO ||
-                               usuarioActual.getRol() == RolUsuario.JEFE_DEPTO ||
-                               usuarioActual.getRol() == RolUsuario.GERENTE)) {
-                usuarioActual.getMaterias().add(materia);
-                usuarioRepository.save(usuarioActual);
+            if (esCreacion) {
+                if (usuarioActual.getRol() == RolUsuario.ABOGADO ||
+                    usuarioActual.getRol() == RolUsuario.JEFE_DEPTO ||
+                    usuarioActual.getRol() == RolUsuario.GERENTE) {
+                    usuarioActual.getMaterias().add(materia);
+                    usuarioRepository.save(usuarioActual);
+                }
+
+                // Asignar automáticamente a todos los Gerentes activos de esta gerencia
+                if (gerenciaId != null) {
+                    List<Usuario> gerentes = usuarioRepository.findByRolAndGerenciasIdAndActivoTrue(RolUsuario.GERENTE, gerenciaId);
+                    for (Usuario g : gerentes) {
+                        if (!g.getId().equals(usuarioActual.getId())) {
+                            g.getMaterias().add(materia);
+                            usuarioRepository.save(g);
+                        }
+                    }
+                }
             }
 
             return ResponseEntity.ok(Map.of("status", "ok", "id", materia.getId(), "mensaje", "Materia guardada correctamente."));

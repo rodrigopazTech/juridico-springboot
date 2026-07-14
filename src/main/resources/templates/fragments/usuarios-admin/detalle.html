@@ -223,7 +223,7 @@
                                 <div th:each="g : ${allGerencias}" class="flex items-center space-x-2">
                                     <input type="checkbox" name="gerenciasIds" th:value="${g.id}" th:id="'det-ger-' + ${g.id}"
                                            class="det-gerencia-checkbox rounded text-gob-guinda h-4 w-4 border-gray-300 focus:ring-gob-oro"
-                                           onchange="cargarMateriasDeGerenciaEdicion()">
+                                           onchange="cargarMateriasDeGerenciaEdicion(event)">
                                     <label th:for="'det-ger-' + ${g.id}" th:text="${g.nombre}" class="text-xs text-gray-700 cursor-pointer select-none"></label>
                                 </div>
                             </div>

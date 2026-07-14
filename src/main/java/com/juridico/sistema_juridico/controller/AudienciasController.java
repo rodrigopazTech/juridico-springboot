@@ -941,4 +941,37 @@ public String guardar(@ModelAttribute Audiencia audiencia,
             return ResponseEntity.badRequest().build();
         }
     }
+
+    @GetMapping("/api/materias-por-gerencia/{gerenciaId}")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> obtenerMateriasPorGerencia(
+            @PathVariable("gerenciaId") Integer gerenciaId) {
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuarioActual = usuarioRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+            List<Materia> materias = materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(gerenciaId);
+
+            if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
+                Set<Integer> misMateriasIds = usuarioActual.getMaterias().stream()
+                        .map(Materia::getId)
+                        .collect(Collectors.toSet());
+                materias = materias.stream()
+                        .filter(m -> misMateriasIds.contains(m.getId()))
+                        .collect(Collectors.toList());
+            }
+
+            List<Map<String, Object>> resultado = materias.stream().map(m -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", m.getId());
+                map.put("nombre", m.getNombre());
+                return map;
+            }).collect(Collectors.toList());
+
+            return ResponseEntity.ok(resultado);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }

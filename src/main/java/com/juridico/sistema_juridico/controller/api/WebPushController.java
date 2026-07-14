@@ -64,7 +64,7 @@ public class WebPushController {
 
     @PostMapping("/subscribe")
     @Transactional
-    public ResponseEntity<?> subscribe(@RequestBody SubscriptionRequest request) {
+    public ResponseEntity<?> subscribe(@RequestBody SubscriptionRequest request, jakarta.servlet.http.HttpSession session) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
         if (usuario == null) {
@@ -91,6 +91,7 @@ public class WebPushController {
             subToSave.setEndpoint(request.getEndpoint());
             subToSave.setP256dh(request.getKeys().getP256dh());
             subToSave.setAuth(request.getKeys().getAuth());
+            subToSave.setSessionId(session.getId());
             log.info("Actualizando suscripción Web Push por Device ID para el usuario: {}", email);
         } else if (existingByEndpoint.isPresent()) {
             subToSave = existingByEndpoint.get();
@@ -98,6 +99,7 @@ public class WebPushController {
             subToSave.setDeviceId(request.getDeviceId());
             subToSave.setP256dh(request.getKeys().getP256dh());
             subToSave.setAuth(request.getKeys().getAuth());
+            subToSave.setSessionId(session.getId());
             log.info("Reutilizando suscripción Web Push por Endpoint para el usuario: {}", email);
         } else {
             subToSave = PushSubscription.builder()
@@ -106,6 +108,7 @@ public class WebPushController {
                     .p256dh(request.getKeys().getP256dh())
                     .auth(request.getKeys().getAuth())
                     .deviceId(request.getDeviceId())
+                    .sessionId(session.getId())
                     .build();
             log.info("Nueva suscripción Web Push registrada para el usuario: {}", email);
         }

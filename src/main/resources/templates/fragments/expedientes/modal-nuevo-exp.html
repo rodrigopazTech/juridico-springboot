@@ -7,7 +7,7 @@
             <h3 class="text-xl font-bold text-gob-guinda flex items-center gap-2">
                 <i class="fas fa-plus"></i> Nuevo Expediente
             </h3>
-            <button onclick="document.getElementById('modal-nuevo-exp').classList.add('hidden')"
+            <button type="button" onclick="cerrarModalNuevoExpediente()"
                 class="text-gray-400 hover:text-gray-600">
                 <i class="fas fa-times text-xl"></i>
             </button>
@@ -126,7 +126,7 @@
 
 
             <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-4">
-                <button type="button" onclick="document.getElementById('modal-nuevo-exp').classList.add('hidden')"
+                <button type="button" onclick="cerrarModalNuevoExpediente()"
                     class="px-4 py-2 border border-gray-300 text-gray-600 rounded hover:bg-gray-50 font-medium">
                     Cancelar
                 </button>
