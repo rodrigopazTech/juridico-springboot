@@ -71,7 +71,7 @@ public class TerminoService {
         registrarActividad(exp, "Término Creado",
                 "Se ha registrado un nuevo término: " + actuacionStr + ". Acción realizada por: "
                         + usuarioActual + " el " + fechaFormat + ".",
-                "PLUS");
+                "CHECK");
 
         return mapToResponse(guardado);
     }

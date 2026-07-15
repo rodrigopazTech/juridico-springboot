@@ -17,6 +17,22 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 let serviceWorkerRegistration = null;
+let vapidPublicKey = null;
+
+// Precarga la clave pública VAPID al iniciar la página
+async function preloadVapidPublicKey() {
+    try {
+        const response = await fetch('/api/webpush/public-key');
+        if (!response.ok) {
+            throw new Error('Error al obtener la clave pública VAPID.');
+        }
+        const data = await response.json();
+        vapidPublicKey = data.publicKey;
+        console.log('[WebPush] Clave pública VAPID precargada con éxito.');
+    } catch (error) {
+        console.error('[WebPush] Error al precargar la clave pública VAPID:', error);
+    }
+}
 
 // Registra el Service Worker de forma silenciosa al cargar la página
 async function registerServiceWorkerOnly() {
@@ -45,12 +61,20 @@ async function subscribeUser() {
 
         if (!subscription) {
             console.log('[WebPush] Creando nueva suscripción...');
-            const response = await fetch('/api/webpush/public-key');
-            if (!response.ok) {
-                throw new Error('[WebPush] No se pudo obtener la clave pública VAPID del backend.');
+            
+            // Usar la clave precargada si existe, de lo contrario obtenerla (fallback)
+            let key = vapidPublicKey;
+            if (!key) {
+                console.warn('[WebPush] Clave VAPID no precargada. Intentando obtener en caliente...');
+                const response = await fetch('/api/webpush/public-key');
+                if (!response.ok) {
+                    throw new Error('[WebPush] No se pudo obtener la clave pública VAPID del backend.');
+                }
+                const data = await response.json();
+                key = data.publicKey;
             }
-            const data = await response.json();
-            const publicKey = urlBase64ToUint8Array(data.publicKey);
+            
+            const publicKey = urlBase64ToUint8Array(key);
 
             subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
@@ -288,6 +312,10 @@ async function unsubscribeUserBeforeLogout(e, logoutLink) {
 // Iniciar Web Push al cargar el DOM
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[WebPush] Inicializando registro de Service Worker...');
+    
+    // Precargar la clave pública VAPID inmediatamente
+    preloadVapidPublicKey();
+
     registerServiceWorkerOnly().then(() => {
         if (Notification.permission === 'granted') {
             console.log('[WebPush] Permiso ya concedido previamente. Suscribiendo...');

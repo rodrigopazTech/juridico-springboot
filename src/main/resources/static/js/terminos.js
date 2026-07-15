@@ -660,13 +660,22 @@ document.addEventListener('change', function (e) {
             body: fd,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-            .then(res => {
-                if (res.ok) {
-                    showSuccessToast('¡Archivo subido correctamente!');
+            .then(res => res.json().then(data => ({ ok: res.ok, data })))
+            .then(({ ok, data }) => {
+                Swal.close();
+                e.target.value = ''; // Limpiar el input para permitir re-subir
+                if (ok && data.success) {
+                    showSuccessToast(data.mensaje || '¡Archivo subido correctamente!');
                     actualizarTablaAsincrono();
-                } else throw new Error();
+                } else {
+                    showErrorModal(data.mensaje || 'No se pudo subir el archivo.');
+                }
             })
-            .catch(() => showErrorModal('No se pudo subir el archivo.'));
+            .catch(() => {
+                Swal.close();
+                e.target.value = '';
+                showErrorModal('No se pudo subir el archivo.');
+            });
     }
 });
 
@@ -677,20 +686,28 @@ document.addEventListener('submit', function (e) {
     if (formConcluir) {
         e.preventDefault();
         const fd = new FormData(formConcluir);
+        Swal.fire({ title: 'Concluyendo término...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
         fetch(formConcluir.action, {
             method: 'POST',
             body: fd,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-            .then(res => {
-                if (res.ok) {
+            .then(res => res.json().then(data => ({ ok: res.ok, data })))
+            .then(({ ok, data }) => {
+                Swal.close();
+                if (ok && data.success) {
                     cerrarModal('modal-concluir-final');
-                    showSuccessToast('¡Término Concluido con éxito!');
+                    showSuccessToast(data.mensaje || '¡Término Concluido con éxito!');
                     actualizarTablaAsincrono();
-                } else throw new Error();
+                } else {
+                    showErrorModal(data.mensaje || 'No se pudo concluir el término.');
+                }
             })
-            .catch(() => showErrorModal('No se pudo concluir el término.'));
+            .catch(() => {
+                Swal.close();
+                showErrorModal('No se pudo concluir el término.');
+            });
     }
 
     // C. Subir Acuse (Form en modal acuse)
@@ -705,14 +722,25 @@ document.addEventListener('submit', function (e) {
             body: fd,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-            .then(res => {
-                if (res.ok) {
+            .then(res => res.json().then(data => ({ ok: res.ok, data })))
+            .then(({ ok, data }) => {
+                Swal.close();
+                const fileInput = formAcuse.querySelector('input[type="file"]');
+                if (fileInput) fileInput.value = '';
+                if (ok && data.success) {
                     cerrarModal('modal-subir-acuse');
-                    showSuccessToast('¡Acuse registrado correctamente!');
+                    showSuccessToast(data.mensaje || '¡Acuse registrado correctamente!');
                     actualizarTablaAsincrono();
-                } else throw new Error();
+                } else {
+                    showErrorModal(data.mensaje || 'No se pudo registrar el acuse.');
+                }
             })
-            .catch(() => showErrorModal('No se pudo registrar el acuse.'));
+            .catch(() => {
+                Swal.close();
+                const fileInput = formAcuse.querySelector('input[type="file"]');
+                if (fileInput) fileInput.value = '';
+                showErrorModal('No se pudo registrar el acuse.');
+            });
     }
 
     // D. Guardar/Editar Término
@@ -727,14 +755,21 @@ document.addEventListener('submit', function (e) {
             body: fd,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-            .then(res => {
-                if (res.ok) {
+            .then(res => res.json().then(data => ({ ok: res.ok, data })))
+            .then(({ ok, data }) => {
+                Swal.close();
+                if (ok && data.success) {
                     cerrarModal('modal-nuevo-termino');
-                    showSuccessToast('¡Datos guardados correctamente!');
+                    showSuccessToast(data.mensaje || '¡Datos guardados correctamente!');
                     actualizarTablaAsincrono();
-                } else throw new Error();
+                } else {
+                    showErrorModal(data.mensaje || 'Error al guardar el término.');
+                }
             })
-            .catch(() => showErrorModal('Error al guardar el término.'));
+            .catch(() => {
+                Swal.close();
+                showErrorModal('Error al guardar el término.');
+            });
     }
 });
 

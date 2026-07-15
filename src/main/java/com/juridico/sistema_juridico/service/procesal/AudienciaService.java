@@ -394,6 +394,9 @@ public class AudienciaService {
 
             Usuario actor = usuarioRepository.findByEmail(emailCreador).orElse(null);
 
+            // Conjunto para evitar notificaciones duplicadas al mismo usuario
+            java.util.Set<Integer> usuariosNotificados = new java.util.HashSet<>();
+
             // 4. NOTIFICAR AL RESPONSABLE (Dueño del expediente)
             if (responsable != null && !responsable.getEmail().equalsIgnoreCase(emailCreador)) {
                 notificacionService.crearNotificacion(
@@ -402,27 +405,25 @@ public class AudienciaService {
                         NotificacionEvento.AUDIENCIA_NUEVA,
                         tituloBase,
                         mensajeBase,
-
                         catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
                         entidadId,
                         false);
+                usuariosNotificados.add(responsable.getId());
             }
 
             // 5. NOTIFICAR AL QUE COMPARECE (El asignado)
-            if (comparece != null && !comparece.getEmail().equalsIgnoreCase(emailCreador)) {
-
-                if (responsable == null || !comparece.getId().equals(responsable.getId())) {
-                    notificacionService.crearNotificacion(
-                            comparece,
-                            actor,
-                            NotificacionEvento.AUDIENCIA_COMPARECENCIA_ASIGNADA,
-                            "Asignacion de Comparecencia",
-                            "Has sido asignado para asistir a la audiencia " + (numeroExpediente != null ? "del expediente " + numeroExpediente : "de Asunto Único"),
-
-                            catPrioridadRepository.findByNombreIgnoreCase("ALTA").orElse(null),
-                            entidadId,
-                            false);
-                }
+            // Se le notifica de AUDIENCIA_NUEVA incluso si es el creador o el responsable del expediente
+            if (comparece != null && !usuariosNotificados.contains(comparece.getId())) {
+                notificacionService.crearNotificacion(
+                        comparece,
+                        actor,
+                        NotificacionEvento.AUDIENCIA_NUEVA,
+                        tituloBase,
+                        mensajeBase,
+                        catPrioridadRepository.findByNombreIgnoreCase("MEDIA").orElse(null),
+                        entidadId,
+                        false);
+                usuariosNotificados.add(comparece.getId());
             }
 
             String tipoProg = (a.getTipoAudiencia() != null) ? a.getTipoAudiencia().getNombre() : "Desconocida";

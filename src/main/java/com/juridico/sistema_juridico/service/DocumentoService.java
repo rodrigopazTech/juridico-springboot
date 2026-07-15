@@ -59,6 +59,19 @@ public class DocumentoService {
             return false;
         }
 
+        // Si es un expediente temporal, flexibilizamos validando solo abogado responsable o pertenencia a la misma gerencia
+        if (Boolean.TRUE.equals(expediente.getEsTemporal())) {
+            if (expediente.getAbogadoResponsable() != null &&
+                    expediente.getAbogadoResponsable().getId().equals(usuario.getId())) {
+                return true;
+            }
+            if (usuario.getGerencia() != null && expediente.getGerencia() != null &&
+                    expediente.getGerencia().getId().equals(usuario.getGerencia().getId())) {
+                return true;
+            }
+            return false;
+        }
+
         // Si es el abogado responsable directo, tiene acceso
         if (expediente.getAbogadoResponsable() != null &&
                 expediente.getAbogadoResponsable().getId().equals(usuario.getId())) {

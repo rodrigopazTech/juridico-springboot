@@ -22,6 +22,7 @@ import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Usuarios.NotificacionRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 
+@lombok.extern.slf4j.Slf4j
 @Service
 public class NotificacionService {
 
@@ -73,6 +74,8 @@ public class NotificacionService {
         }
 
         if (notificacionRepository.existsByUsuarioAndEventoAndEntidadIdAndTitulo(usuario, evento, entidadId, titulo)) {
+            log.info("Notificación omitida por duplicidad: usuario={}, evento={}, entidadId={}, titulo='{}'", 
+                    usuario.getId(), evento, entidadId, titulo);
             return;
         }
 

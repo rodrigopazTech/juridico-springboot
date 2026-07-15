@@ -375,7 +375,7 @@ public class TerminosController {
     }
 
     @PostMapping("/guardar")
-    public String guardar(@ModelAttribute Termino terminoForm,
+    public Object guardar(@ModelAttribute Termino terminoForm,
             @RequestParam(value = "expedienteId", required = false) UUID expedienteId,
             @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
             @RequestParam(value = "origenTermino", required = false, defaultValue = "EXPEDIENTE") OrigenTermino origenTermino,
@@ -384,212 +384,249 @@ public class TerminosController {
             @RequestParam(value = "contextoDescripcion", required = false) String contextoDescripcion,
             @RequestParam(value = "contextoPartes", required = false) String contextoPartes,
             @RequestParam(value = "contextoNumeroReferencia", required = false) String contextoNumeroReferencia,
-            RedirectAttributes redirectAttrs) {
+            RedirectAttributes redirectAttrs,
+            HttpServletRequest request) {
 
-        Usuario actor = getUsuarioActual();
-        Termino terminoGuardar;
-        boolean esNuevo = false;
+        boolean ajax = "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
+        try {
+            Usuario actor = getUsuarioActual();
+            Termino terminoGuardar;
+            boolean esNuevo = false;
 
-        if (terminoForm.getAsunto() == null || terminoForm.getAsunto().trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El campo asunto/actuación es obligatorio.");
-        }
-        if (terminoForm.getFechaVencimiento() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha de vencimiento es obligatoria.");
-        }
-
-        if (actor.getRol() == RolUsuario.ABOGADO) {
-            abogadoId = actor.getId();
-        }
-
-        if (origenTermino == OrigenTermino.ASUNTO_UNICO) {
-            if (actor.getRol() == RolUsuario.JEFE_DEPTO) {
-                Set<Integer> misMateriasIds = actor.getMaterias().stream()
-                        .map(Materia::getId)
-                        .collect(Collectors.toSet());
-                if (contextoMateriaId == null || !misMateriasIds.contains(contextoMateriaId)) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No tienes acceso a la materia seleccionada.");
-                }
-            } else if (actor.getRol() == RolUsuario.ABOGADO || actor.getRol() == RolUsuario.GERENTE) {
-                if (actor.getGerencia() == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El usuario no tiene una gerencia asignada.");
-                }
-                Materia mat = materiaRepository.findById(contextoMateriaId).orElse(null);
-                if (mat == null || mat.getGerencia() == null || !mat.getGerencia().getId().equals(actor.getGerencia().getId())) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No tienes acceso a la materia seleccionada.");
-                }
+            if (terminoForm.getAsunto() == null || terminoForm.getAsunto().trim().isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El campo asunto/actuación es obligatorio.");
             }
-            if (actor.getGerencia() != null) {
-                contextoGerenciaId = actor.getGerencia().getId();
-            }
-            terminoForm.setContexto(crearContextoAsuntoUnico(contextoMateriaId, contextoGerenciaId,
-                    contextoDescripcion, contextoPartes, contextoNumeroReferencia));
-        } else if (expedienteId != null) {
-            Expediente exp = expedienteRepository.findById(expedienteId)
-                    .orElseThrow(() -> new ResourceNotFoundException("El expediente asociado no existe."));
-            validarAccesoExpediente(exp, actor);
-            terminoForm.setExpediente(exp);
-            terminoForm.setContexto(crearContextoDesdeExpediente(exp));
-        }
-
-        if (abogadoId != null) {
-            Usuario abogado = usuarioRepository.findById(abogadoId)
-                    .orElseThrow(() -> new ResourceNotFoundException("El abogado asignado no existe."));
-            terminoForm.setAbogadoResponsable(abogado);
-        } else if (terminoForm.getId() == null && origenTermino == OrigenTermino.ASUNTO_UNICO) {
-            terminoForm.setAbogadoResponsable(actor);
-        }
-
-        if (origenTermino == OrigenTermino.ASUNTO_UNICO) {
-            Expediente expTemporal = null;
-            String ref = (contextoNumeroReferencia != null && !contextoNumeroReferencia.trim().isEmpty())
-                    ? contextoNumeroReferencia.trim()
-                    : null;
-            if (ref != null) {
-                expTemporal = expedienteRepository.findByNumeroIgnoreCaseAndEsTemporal(ref, true).orElse(null);
-            }
-            if (expTemporal == null) {
-                expTemporal = new Expediente();
-                expTemporal.setNumero(ref != null ? ref : "TEMP-" + java.util.UUID.randomUUID().toString().substring(0, 8));
-                expTemporal.setEsTemporal(true);
-                if (contextoMateriaId != null) {
-                    expTemporal.setMateria(materiaRepository.findById(contextoMateriaId).orElse(null));
-                }
-                if (contextoGerenciaId != null) {
-                    expTemporal.setGerencia(gerenciaRepository.findById(contextoGerenciaId).orElse(null));
-                } else if (actor.getGerencia() != null) {
-                    expTemporal.setGerencia(actor.getGerencia());
-                }
-                expTemporal.setDescripcion(contextoDescripcion != null ? contextoDescripcion : "Asunto Único");
-                expTemporal.setPartes(contextoPartes);
-                expTemporal.setAbogadoResponsable(terminoForm.getAbogadoResponsable() != null ? terminoForm.getAbogadoResponsable() : actor);
-                expTemporal = expedienteRepository.save(expTemporal);
-            } else {
-                if (contextoGerenciaId != null) {
-                    expTemporal.setGerencia(gerenciaRepository.findById(contextoGerenciaId).orElse(null));
-                }
-                if (contextoMateriaId != null) {
-                    expTemporal.setMateria(materiaRepository.findById(contextoMateriaId).orElse(null));
-                }
-                if (contextoDescripcion != null) {
-                    expTemporal.setDescripcion(contextoDescripcion);
-                }
-                if (contextoPartes != null) {
-                    expTemporal.setPartes(contextoPartes);
-                }
-                if (terminoForm.getAbogadoResponsable() != null) {
-                    expTemporal.setAbogadoResponsable(terminoForm.getAbogadoResponsable());
-                }
-                expTemporal = expedienteRepository.save(expTemporal);
-            }
-            terminoForm.setExpediente(expTemporal);
-        }
-
-        boolean expedienteCambiado = false;
-        if (terminoForm.getId() != null) {
-            Termino existente = terminoRepository.findById(terminoForm.getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("El término que intentas editar no existe."));
-
-            validarAccesoTermino(existente, actor);
-
-            existente.setAsunto(terminoForm.getAsunto());
-            existente.setFechaVencimiento(terminoForm.getFechaVencimiento());
-
-            if (terminoForm.getAbogadoResponsable() != null) {
-                existente.setAbogadoResponsable(terminoForm.getAbogadoResponsable());
+            if (terminoForm.getFechaVencimiento() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha de vencimiento es obligatoria.");
             }
 
-            Expediente expAnterior = existente.getExpediente();
+            if (actor.getRol() == RolUsuario.ABOGADO) {
+                abogadoId = actor.getId();
+            }
+
             if (origenTermino == OrigenTermino.ASUNTO_UNICO) {
-                if (expAnterior == null || !expAnterior.getId().equals(terminoForm.getExpediente().getId())) {
-                    expedienteCambiado = true;
+                if (actor.getRol() == RolUsuario.JEFE_DEPTO) {
+                    Set<Integer> misMateriasIds = actor.getMaterias().stream()
+                            .map(Materia::getId)
+                            .collect(Collectors.toSet());
+                    if (contextoMateriaId == null || !misMateriasIds.contains(contextoMateriaId)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No tienes acceso a la materia seleccionada.");
+                    }
+                } else if (actor.getRol() == RolUsuario.ABOGADO || actor.getRol() == RolUsuario.GERENTE) {
+                    if (actor.getGerencia() == null) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El usuario no tiene una gerencia asignada.");
+                    }
+                    Materia mat = materiaRepository.findById(contextoMateriaId).orElse(null);
+                    if (mat == null || mat.getGerencia() == null || !mat.getGerencia().getId().equals(actor.getGerencia().getId())) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No tienes acceso a la materia seleccionada.");
+                    }
                 }
-                existente.setExpediente(terminoForm.getExpediente());
-                existente.setContexto(terminoForm.getContexto());
-            } else if (terminoForm.getExpediente() != null) {
-                if (expAnterior == null || !expAnterior.getId().equals(terminoForm.getExpediente().getId())) {
-                    expedienteCambiado = true;
+                if (actor.getGerencia() != null) {
+                    contextoGerenciaId = actor.getGerencia().getId();
                 }
-                existente.setExpediente(terminoForm.getExpediente());
-                existente.setContexto(terminoForm.getContexto());
-            }
-            if (terminoForm.getPrioridad() != null) {
-                existente.setPrioridad(terminoForm.getPrioridad());
-            }
-            if (terminoForm.getObservaciones() != null) {
-                existente.setObservaciones(terminoForm.getObservaciones());
-            }
-
-            existente.setUpdatedAt(LocalDateTime.now());
-            terminoGuardar = existente;
-        } else {
-            if (origenTermino != OrigenTermino.ASUNTO_UNICO && expedienteId == null && terminoForm.getExpediente() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "El expediente asociado es obligatorio para crear un término.");
-            }
-            esNuevo = true;
-            terminoGuardar = terminoForm;
-            terminoGuardar.setFechaCreacion(LocalDate.now());
-            terminoGuardar.setFechaIngreso(LocalDate.now());
-            terminoGuardar.setEstatusTermino(EstatusTermino.PROYECTISTA);
-            terminoGuardar.setCreatedAt(LocalDateTime.now());
-            terminoGuardar.setUpdatedAt(LocalDateTime.now());
-
-            if (terminoGuardar.getAbogadoResponsable() == null && terminoGuardar.getExpediente() != null) {
-                terminoGuardar.setAbogadoResponsable(terminoGuardar.getExpediente().getAbogadoResponsable());
-            }
-            if (terminoGuardar.getPrioridad() == null && terminoGuardar.getExpediente() != null) {
-                terminoGuardar.setPrioridad(terminoGuardar.getExpediente().getPrioridad());
+                terminoForm.setContexto(crearContextoAsuntoUnico(contextoMateriaId, contextoGerenciaId,
+                        contextoDescripcion, contextoPartes, contextoNumeroReferencia));
+            } else if (expedienteId != null) {
+                Expediente exp = expedienteRepository.findById(expedienteId)
+                        .orElseThrow(() -> new ResourceNotFoundException("El expediente asociado no existe."));
+                validarAccesoExpediente(exp, actor);
+                terminoForm.setExpediente(exp);
+                terminoForm.setContexto(crearContextoDesdeExpediente(exp));
             }
 
-            validarAccesoTermino(terminoGuardar, actor);
-        }
+            if (abogadoId != null) {
+                Usuario abogado = usuarioRepository.findById(abogadoId)
+                        .orElseThrow(() -> new ResourceNotFoundException("El abogado asignado no existe."));
+                terminoForm.setAbogadoResponsable(abogado);
+            } else if (terminoForm.getId() == null && origenTermino == OrigenTermino.ASUNTO_UNICO) {
+                terminoForm.setAbogadoResponsable(actor);
+            }
 
-        Termino terminoGuardado = terminoRepository.save(terminoGuardar);
-        Usuario usuarioActualN = getUsuarioActual();
+            if (origenTermino == OrigenTermino.ASUNTO_UNICO) {
+                Expediente expTemporal = null;
+                String ref = (contextoNumeroReferencia != null && !contextoNumeroReferencia.trim().isEmpty())
+                        ? contextoNumeroReferencia.trim()
+                        : null;
+                if (ref != null) {
+                    expTemporal = expedienteRepository.findByNumeroIgnoreCaseAndEsTemporal(ref, true).orElse(null);
+                }
+                if (expTemporal == null) {
+                    expTemporal = new Expediente();
+                    expTemporal.setNumero(ref != null ? ref : "TEMP-" + java.util.UUID.randomUUID().toString().substring(0, 8));
+                    expTemporal.setEsTemporal(true);
+                    if (contextoMateriaId != null) {
+                        expTemporal.setMateria(materiaRepository.findById(contextoMateriaId).orElse(null));
+                    }
+                    if (contextoGerenciaId != null) {
+                        expTemporal.setGerencia(gerenciaRepository.findById(contextoGerenciaId).orElse(null));
+                    } else if (actor.getGerencia() != null) {
+                        expTemporal.setGerencia(actor.getGerencia());
+                    }
+                    expTemporal.setDescripcion(contextoDescripcion != null ? contextoDescripcion : "Asunto Único");
+                    expTemporal.setPartes(contextoPartes);
+                    expTemporal.setAbogadoResponsable(terminoForm.getAbogadoResponsable() != null ? terminoForm.getAbogadoResponsable() : actor);
+                    expTemporal = expedienteRepository.save(expTemporal);
+                } else {
+                    if (contextoGerenciaId != null) {
+                        expTemporal.setGerencia(gerenciaRepository.findById(contextoGerenciaId).orElse(null));
+                    }
+                    if (contextoMateriaId != null) {
+                        expTemporal.setMateria(materiaRepository.findById(contextoMateriaId).orElse(null));
+                    }
+                    if (contextoDescripcion != null) {
+                        expTemporal.setDescripcion(contextoDescripcion);
+                    }
+                    if (contextoPartes != null) {
+                        expTemporal.setPartes(contextoPartes);
+                    }
+                    if (terminoForm.getAbogadoResponsable() != null) {
+                        expTemporal.setAbogadoResponsable(terminoForm.getAbogadoResponsable());
+                    }
+                    expTemporal = expedienteRepository.save(expTemporal);
+                }
+                terminoForm.setExpediente(expTemporal);
+            }
 
-        Gerencia g = terminoGuardado.getGerenciaReferencia();
-        if (g != null) {
-            List<Usuario> destinatarios = usuarioRepository.findByGerenciasIdAndActivoTrueOrderByNombreCompletoAsc(g.getId());
-            String expedienteNum = terminoGuardado.getNumeroReferencia();
+            boolean expedienteCambiado = false;
+            if (terminoForm.getId() != null) {
+                Termino existente = terminoRepository.findById(terminoForm.getId())
+                        .orElseThrow(() -> new ResourceNotFoundException("El término que intentas editar no existe."));
+
+                validarAccesoTermino(existente, actor);
+
+                existente.setAsunto(terminoForm.getAsunto());
+                existente.setFechaVencimiento(terminoForm.getFechaVencimiento());
+
+                if (terminoForm.getAbogadoResponsable() != null) {
+                    existente.setAbogadoResponsable(terminoForm.getAbogadoResponsable());
+                }
+
+                Expediente expAnterior = existente.getExpediente();
+                if (origenTermino == OrigenTermino.ASUNTO_UNICO) {
+                    if (expAnterior == null || !expAnterior.getId().equals(terminoForm.getExpediente().getId())) {
+                        expedienteCambiado = true;
+                    }
+                    existente.setExpediente(terminoForm.getExpediente());
+                    existente.setContexto(terminoForm.getContexto());
+                } else if (terminoForm.getExpediente() != null) {
+                    if (expAnterior == null || !expAnterior.getId().equals(terminoForm.getExpediente().getId())) {
+                        expedienteCambiado = true;
+                    }
+                    existente.setExpediente(terminoForm.getExpediente());
+                    existente.setContexto(terminoForm.getContexto());
+                }
+                if (terminoForm.getPrioridad() != null) {
+                    existente.setPrioridad(terminoForm.getPrioridad());
+                }
+                if (terminoForm.getObservaciones() != null) {
+                    existente.setObservaciones(terminoForm.getObservaciones());
+                }
+
+                existente.setUpdatedAt(LocalDateTime.now());
+                terminoGuardar = existente;
+            } else {
+                if (origenTermino != OrigenTermino.ASUNTO_UNICO && expedienteId == null && terminoForm.getExpediente() == null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "El expediente asociado es obligatorio para crear un término.");
+                }
+                esNuevo = true;
+                terminoGuardar = terminoForm;
+                terminoGuardar.setFechaCreacion(LocalDate.now());
+                terminoGuardar.setFechaIngreso(LocalDate.now());
+                terminoGuardar.setEstatusTermino(EstatusTermino.PROYECTISTA);
+                terminoGuardar.setCreatedAt(LocalDateTime.now());
+                terminoGuardar.setUpdatedAt(LocalDateTime.now());
+
+                if (terminoGuardar.getAbogadoResponsable() == null && terminoGuardar.getExpediente() != null) {
+                    terminoGuardar.setAbogadoResponsable(terminoGuardar.getExpediente().getAbogadoResponsable());
+                }
+                if (terminoGuardar.getPrioridad() == null && terminoGuardar.getExpediente() != null) {
+                    terminoGuardar.setPrioridad(terminoGuardar.getExpediente().getPrioridad());
+                }
+
+                validarAccesoTermino(terminoGuardar, actor);
+            }
+
+            Termino terminoGuardado = terminoRepository.save(terminoGuardar);
 
             if (esNuevo) {
-                for (Usuario u : destinatarios) {
-                    String msg = u.getId().equals(actor.getId())
-                            ? "Has creado el término con el asunto: " + terminoGuardado.getAsunto()
-                            : "El usuario " + actor.getNombreCompleto() + " ha creado el término: " + terminoGuardado.getAsunto();
-
-                    notificacionService.crearNotificacion(
-                            u,
-                            actor,
-                            NotificacionEvento.TERMINO_NUEVO,
-                            "Nuevo Término: " + expedienteNum,
-                            msg,
-                            terminoGuardado.getPrioridad(),
-                            terminoGuardado.getId().toString(),
-                            true);
-                }
-            } else if (expedienteCambiado) {
-                for (Usuario u : destinatarios) {
-                    String msg = u.getId().equals(actor.getId())
-                            ? "Has vinculado el término a tu expediente/gerencia: " + terminoGuardado.getAsunto()
-                            : "El usuario " + actor.getNombreCompleto() + " ha vinculado un término a tu expediente/gerencia: " + terminoGuardado.getAsunto();
-
-                    notificacionService.crearNotificacion(
-                            u,
-                            actor,
-                            NotificacionEvento.TERMINO_ASIGNADO,
-                            "Término Vinculado: " + expedienteNum,
-                            msg,
-                            terminoGuardado.getPrioridad(),
-                            terminoGuardado.getId().toString(),
-                            true);
+                String desc = "Se ha registrado un nuevo término: " + (terminoGuardado.getAsunto() != null ? terminoGuardado.getAsunto() : "Sin Especificar")
+                        + ". Acción realizada por: " + actor.getNombreCompleto() + " el " + LocalDate.now() + ".";
+                if (terminoGuardado.getExpediente() != null) {
+                    auditoriaService.registrar(terminoGuardado.getExpediente(), "Término Creado", desc, "CHECK", actor);
+                } else {
+                    auditoriaService.registrarActividadGeneral(actor, "Término Creado", desc, "CHECK");
                 }
             }
-        }
 
-        redirectAttrs.addFlashAttribute("mensaje", "Término guardado correctamente.");
-        redirectAttrs.addFlashAttribute("tipo", "success");
-        return "redirect:/terminos";
+            Usuario usuarioActualN = getUsuarioActual();
+
+            Gerencia g = terminoGuardado.getGerenciaReferencia();
+            if (g != null) {
+                List<Usuario> destinatarios = usuarioRepository.findByGerenciasIdAndActivoTrueOrderByNombreCompletoAsc(g.getId());
+                String expedienteNum = terminoGuardado.getNumeroReferencia();
+
+                if (esNuevo) {
+                    for (Usuario u : destinatarios) {
+                        String msg = u.getId().equals(actor.getId())
+                                ? "Has creado el término con el asunto: " + terminoGuardado.getAsunto()
+                                : "El usuario " + actor.getNombreCompleto() + " ha creado el término: " + terminoGuardado.getAsunto();
+
+                        notificacionService.crearNotificacion(
+                                u,
+                                actor,
+                                NotificacionEvento.TERMINO_NUEVO,
+                                "Nuevo Término: " + expedienteNum,
+                                msg,
+                                terminoGuardado.getPrioridad(),
+                                terminoGuardado.getId().toString(),
+                                true);
+                    }
+                } else if (expedienteCambiado) {
+                    for (Usuario u : destinatarios) {
+                        String msg = u.getId().equals(actor.getId())
+                                ? "Has vinculado el término a tu expediente/gerencia: " + terminoGuardado.getAsunto()
+                                : "El usuario " + actor.getNombreCompleto() + " ha vinculado un término a tu expediente/gerencia: " + terminoGuardado.getAsunto();
+
+                        notificacionService.crearNotificacion(
+                                u,
+                                actor,
+                                NotificacionEvento.TERMINO_ASIGNADO,
+                                "Término Vinculado: " + expedienteNum,
+                                msg,
+                                terminoGuardado.getPrioridad(),
+                                terminoGuardado.getId().toString(),
+                                true);
+                    }
+                }
+            }
+
+            redirectAttrs.addFlashAttribute("mensaje", "Término guardado correctamente.");
+            redirectAttrs.addFlashAttribute("tipo", "success");
+
+            if (ajax) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("mensaje", "Término guardado correctamente.");
+                return ResponseEntity.ok(response);
+            }
+            return "redirect:/terminos";
+
+        } catch (Exception e) {
+            String errorMsg = e instanceof ResponseStatusException ? ((ResponseStatusException) e).getReason() : e.getMessage();
+            if (errorMsg == null) {
+                errorMsg = "Error al guardar el término.";
+            }
+            if (ajax) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("mensaje", errorMsg);
+                return ResponseEntity.badRequest().body(response);
+            }
+            redirectAttrs.addFlashAttribute("mensaje", errorMsg);
+            redirectAttrs.addFlashAttribute("tipo", "error");
+            return "redirect:/terminos";
+        }
     }
 
     private TerminoContexto crearContextoDesdeExpediente(Expediente exp) {
@@ -732,8 +769,15 @@ public class TerminosController {
     }
 
     @PostMapping("/subir-archivo")
-    public String subirArchivo(@RequestParam("id") Integer id, @RequestParam("archivo") MultipartFile archivo, RedirectAttributes redirectAttrs) {
+    public Object subirArchivo(@RequestParam("id") Integer id, @RequestParam("archivo") MultipartFile archivo, RedirectAttributes redirectAttrs, HttpServletRequest request) {
+        boolean ajax = "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
         if (archivo.isEmpty()) {
+            if (ajax) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("mensaje", "Por favor selecciona un archivo.");
+                return ResponseEntity.badRequest().body(response);
+            }
             redirectAttrs.addFlashAttribute("mensaje", "Por favor selecciona un archivo.");
             redirectAttrs.addFlashAttribute("tipo", "error");
             return "redirect:/terminos";
@@ -744,14 +788,28 @@ public class TerminosController {
             validarAccesoTermino(termino, actor);
 
             if (!tienePermiso(termino.getEstatusTermino(), actor.getRol())) {
-                redirectAttrs.addFlashAttribute("mensaje", "⛔ No tienes permiso para modificar archivos en la etapa: " + termino.getEstatusTermino());
+                String msg = "⛔ No tienes permiso para modificar archivos en la etapa: " + termino.getEstatusTermino();
+                if (ajax) {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", false);
+                    response.put("mensaje", msg);
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+                }
+                redirectAttrs.addFlashAttribute("mensaje", msg);
                 redirectAttrs.addFlashAttribute("tipo", "error");
                 return "redirect:/terminos";
             }
 
             EstatusTermino st = termino.getEstatusTermino();
             if (st == EstatusTermino.LIBERADO || st == EstatusTermino.PRESENTADO || st == EstatusTermino.CONCLUIDO) {
-                redirectAttrs.addFlashAttribute("mensaje", "El documento está bloqueado en esta etapa.");
+                String msg = "El documento está bloqueado en esta etapa.";
+                if (ajax) {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", false);
+                    response.put("mensaje", msg);
+                    return ResponseEntity.badRequest().body(response);
+                }
+                redirectAttrs.addFlashAttribute("mensaje", msg);
                 redirectAttrs.addFlashAttribute("tipo", "error");
                 return "redirect:/terminos";
             }
@@ -771,18 +829,39 @@ public class TerminosController {
 
             redirectAttrs.addFlashAttribute("mensaje", "Borrador actualizado correctamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
-        } catch (IOException e) {
-            redirectAttrs.addFlashAttribute("mensaje", "Error al guardar el archivo: " + e.getMessage());
+            if (ajax) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("mensaje", "Borrador actualizado correctamente.");
+                return ResponseEntity.ok(response);
+            }
+        } catch (Exception e) {
+            String errorMsg = e.getMessage();
+            if (ajax) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("mensaje", "Error: " + errorMsg);
+                return ResponseEntity.badRequest().body(response);
+            }
+            redirectAttrs.addFlashAttribute("mensaje", "Error al guardar el archivo: " + errorMsg);
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
         return "redirect:/terminos";
     }
 
     @PostMapping("/subir-acuse")
-    public String subirAcuse(@RequestParam("id") Integer id, @RequestParam("archivoAcuse") MultipartFile archivo, @RequestParam(value = "observaciones", required = false) String observaciones, RedirectAttributes redirectAttrs) {
+    public Object subirAcuse(@RequestParam("id") Integer id, @RequestParam("archivoAcuse") MultipartFile archivo, @RequestParam(value = "observaciones", required = false) String observaciones, RedirectAttributes redirectAttrs, HttpServletRequest request) {
+        boolean ajax = "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
         Usuario actor = getUsuarioActual();
         if (!tienePermiso(EstatusTermino.LIBERADO, actor.getRol())) {
-            redirectAttrs.addFlashAttribute("mensaje", "No tienes permiso para cargar acuses.");
+            String msg = "No tienes permiso para cargar acuses.";
+            if (ajax) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("mensaje", msg);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+            redirectAttrs.addFlashAttribute("mensaje", msg);
             redirectAttrs.addFlashAttribute("tipo", "error");
             return "redirect:/terminos";
         }
@@ -822,19 +901,50 @@ public class TerminosController {
 
                 redirectAttrs.addFlashAttribute("mensaje", "Acuse cargado correctamente. Ahora puedes avanzar el término a 'Presentado'.");
                 redirectAttrs.addFlashAttribute("tipo", "success");
+                if (ajax) {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", true);
+                    response.put("mensaje", "Acuse cargado correctamente. Ahora puedes avanzar el término a 'Presentado'.");
+                    return ResponseEntity.ok(response);
+                }
+            } else {
+                String msg = "El término no está en la etapa LIBERADO.";
+                if (ajax) {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", false);
+                    response.put("mensaje", msg);
+                    return ResponseEntity.badRequest().body(response);
+                }
+                redirectAttrs.addFlashAttribute("mensaje", msg);
+                redirectAttrs.addFlashAttribute("tipo", "error");
             }
         } catch (Exception e) {
-            redirectAttrs.addFlashAttribute("mensaje", "Error: " + e.getMessage());
+            String errorMsg = e.getMessage();
+            if (ajax) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("mensaje", "Error: " + errorMsg);
+                return ResponseEntity.badRequest().body(response);
+            }
+            redirectAttrs.addFlashAttribute("mensaje", "Error: " + errorMsg);
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
         return "redirect:/terminos";
     }
 
     @PostMapping("/concluir")
-    public String concluir(@RequestParam("id") Integer id, @RequestParam(value = "observaciones", required = false) String observaciones, RedirectAttributes redirectAttrs) {
+    public Object concluir(@RequestParam("id") Integer id, @RequestParam(value = "observaciones", required = false) String observaciones, RedirectAttributes redirectAttrs, HttpServletRequest request) {
+        boolean ajax = "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
         Usuario actor = getUsuarioActual();
         if (!tienePermiso(EstatusTermino.PRESENTADO, actor.getRol())) {
-            redirectAttrs.addFlashAttribute("mensaje", "No tienes permiso para finalizar este término.");
+            String msg = "No tienes permiso para finalizar este término.";
+            if (ajax) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("mensaje", msg);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+            redirectAttrs.addFlashAttribute("mensaje", msg);
             redirectAttrs.addFlashAttribute("tipo", "error");
             return "redirect:/terminos";
         }
@@ -864,8 +974,31 @@ public class TerminosController {
 
                 redirectAttrs.addFlashAttribute("mensaje", "¡Término finalizado y archivado correctamente!");
                 redirectAttrs.addFlashAttribute("tipo", "success");
+                if (ajax) {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", true);
+                    response.put("mensaje", "¡Término finalizado y archivado correctamente!");
+                    return ResponseEntity.ok(response);
+                }
+            } else {
+                String msg = "El término no está en la etapa PRESENTADO.";
+                if (ajax) {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", false);
+                    response.put("mensaje", msg);
+                    return ResponseEntity.badRequest().body(response);
+                }
+                redirectAttrs.addFlashAttribute("mensaje", msg);
+                redirectAttrs.addFlashAttribute("tipo", "error");
             }
         } catch (Exception e) {
+            String errorMsg = e.getMessage();
+            if (ajax) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("mensaje", "Error: " + errorMsg);
+                return ResponseEntity.badRequest().body(response);
+            }
             redirectAttrs.addFlashAttribute("mensaje", "Error al concluir el término.");
             redirectAttrs.addFlashAttribute("tipo", "error");
         }

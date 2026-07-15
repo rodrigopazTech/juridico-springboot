@@ -10,6 +10,7 @@ import com.juridico.sistema_juridico.Entity.documento.Documento;
 import com.juridico.sistema_juridico.repository.procesal.TerminoArchivoRepository;
 import com.juridico.sistema_juridico.repository.documento.CarpetaRepository;
 import com.juridico.sistema_juridico.repository.documento.DocumentoRepository;
+import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
 import com.juridico.sistema_juridico.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ public class TerminoArchivoService {
     private final FileStorageService fileStorageService;
     private final DocumentoRepository documentoRepository;
     private final CarpetaRepository carpetaRepository;
+    private final ExpedienteRepository expedienteRepository;
 
     @Transactional
     public TerminoArchivo guardarArchivo(Termino termino, MultipartFile archivo, TipoDocumentoTermino tipoDocumento, Usuario actor)
@@ -54,48 +56,86 @@ public class TerminoArchivoService {
                 .build();
         TerminoArchivo guardado = terminoArchivoRepository.save(ta);
 
-        // Sincronizar con el Gestor Documental si pertenece a un expediente
-        if (termino.getExpediente() != null) {
-            try {
-                Carpeta carpetaSist = carpetaRepository.findByExpedienteIdAndNombreAndCarpetaPadreIsNull(
-                        termino.getExpediente().getId(), "Términos Legales").orElse(null);
-
-                if (carpetaSist == null) {
-                    carpetaSist = Carpeta.builder()
-                            .expedienteId(termino.getExpediente().getId())
-                            .nombre("Términos Legales")
-                            .carpetaPadre(null)
-                            .usuarioCreador(actor)
-                            .orden(1)
-                            .esSistema(true)
+        // Sincronizar con el Gestor Documental
+        try {
+            com.juridico.sistema_juridico.Entity.expediente.Expediente expSinc = termino.getExpediente();
+            if (expSinc == null) {
+                // Si el término no tiene expediente, se asocia al expediente contenedor de huérfanos
+                expSinc = expedienteRepository.findByNumeroIgnoreCaseAndEsTemporal("EXP-ORFANOS", true).orElse(null);
+                if (expSinc == null) {
+                    expSinc = com.juridico.sistema_juridico.Entity.expediente.Expediente.builder()
+                            .numero("EXP-ORFANOS")
+                            .esTemporal(true)
+                            .descripcion("Contenedor para documentos huérfanos de términos")
+                            .abogadoResponsable(actor)
+                            .gerencia(actor != null ? actor.getGerencia() : null)
                             .build();
-                    carpetaSist = carpetaRepository.save(carpetaSist);
+                    expSinc = expedienteRepository.save(expSinc);
                 }
-
-                String nombreOriginal = archivo.getOriginalFilename() != null ? archivo.getOriginalFilename() : "archivo";
-                boolean existe = documentoRepository.existeNombreDuplicado(
-                        termino.getExpediente().getId(),
-                        carpetaSist.getId(),
-                        nombreOriginal);
-
-                if (!existe) {
-                    Documento doc = Documento.builder()
-                            .expedienteId(termino.getExpediente().getId())
-                            .nombreArchivo(nombreOriginal)
-                            .nombreOriginal(nombreOriginal)
-                            .rutaArchivo(rutaRelativa)
-                            .tipoMime(archivo.getContentType())
-                            .tamanioBytes(archivo.getSize())
-                            .carpeta(carpetaSist)
-                            .descripcion("Documento (" + tipoDocumento + ") del término: " + termino.getAsunto())
-                            .usuarioSubida(actor)
-                            .eliminado(false)
-                            .build();
-                    documentoRepository.save(doc);
-                }
-            } catch (Exception e) {
-                System.err.println("Error al sincronizar archivo de término con expediente: " + e.getMessage());
             }
+
+            // Buscar o crear la carpeta raíz "Términos Legales" para el expediente correspondiente
+            Carpeta carpetaSist = carpetaRepository.findByExpedienteIdAndNombreAndCarpetaPadreIsNull(
+                    expSinc.getId(), "Términos Legales").orElse(null);
+
+            if (carpetaSist == null) {
+                carpetaSist = Carpeta.builder()
+                        .expedienteId(expSinc.getId())
+                        .nombre("Términos Legales")
+                        .carpetaPadre(null)
+                        .usuarioCreador(actor)
+                        .orden(1)
+                        .esSistema(true)
+                        .build();
+                carpetaSist = carpetaRepository.save(carpetaSist);
+            }
+
+            // Organizar archivos en subcarpetas por término para mantener una estructura persistente
+            String asuntoLimpiado = termino.getAsunto() != null ? termino.getAsunto().trim() : "Sin Asunto";
+            if (asuntoLimpiado.length() > 30) {
+                asuntoLimpiado = asuntoLimpiado.substring(0, 30) + "...";
+            }
+            String nombreSubcarpeta = "Término " + termino.getId() + " - " + asuntoLimpiado;
+
+            Carpeta carpetaTermino = carpetaRepository.findByExpedienteIdAndNombreAndCarpetaPadreId(
+                    expSinc.getId(), nombreSubcarpeta, carpetaSist.getId()).orElse(null);
+
+            if (carpetaTermino == null) {
+                carpetaTermino = Carpeta.builder()
+                        .expedienteId(expSinc.getId())
+                        .nombre(nombreSubcarpeta)
+                        .carpetaPadre(carpetaSist)
+                        .usuarioCreador(actor)
+                        .orden(1)
+                        .esSistema(false)
+                        .build();
+                carpetaTermino = carpetaRepository.save(carpetaTermino);
+            }
+
+            String nombreOriginal = archivo.getOriginalFilename() != null ? archivo.getOriginalFilename() : "archivo";
+            boolean existe = documentoRepository.existeNombreDuplicado(
+                    expSinc.getId(),
+                    carpetaTermino.getId(),
+                    nombreOriginal);
+
+            if (!existe) {
+                Documento doc = Documento.builder()
+                        .expedienteId(expSinc.getId())
+                        .nombreArchivo(nombreOriginal)
+                        .nombreOriginal(nombreOriginal)
+                        .rutaArchivo(rutaRelativa)
+                        .tipoMime(archivo.getContentType())
+                        .tamanioBytes(archivo.getSize())
+                        .carpeta(carpetaTermino)
+                        .descripcion("Documento (" + tipoDocumento + ") del término: " + termino.getAsunto())
+                        .usuarioSubida(actor)
+                        .eliminado(false)
+                        .build();
+                documentoRepository.save(doc);
+            }
+        } catch (Exception e) {
+            System.err.println("Error al sincronizar archivo de término con expediente: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return guardado;
