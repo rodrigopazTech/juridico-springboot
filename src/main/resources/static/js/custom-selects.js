@@ -289,5 +289,6 @@ function updateTomSelectOptions(tsInstance, items, emptyPlaceholder = 'Seleccion
         tsInstance.setValue(prevValue);
     }
     
+    tsInstance.refreshOptions(false);
     tsInstance.refreshState();
 }

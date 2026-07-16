@@ -901,10 +901,20 @@ function toggleOrigenTermino() {
         
         const gerenciaSelect = document.getElementById('select-contexto-gerencia');
         if (gerenciaSelect) {
-            const currentGerenciaVal = gerenciaSelect.tomselect ? gerenciaSelect.tomselect.getValue() : gerenciaSelect.value;
-            // Auto-seleccionar si solo hay 1 opción
-            if (!gerenciaSelect.tomselect && gerenciaSelect.options.length === 2 && !gerenciaSelect.value) {
-                gerenciaSelect.selectedIndex = 1;
+            let currentGerenciaVal = gerenciaSelect.tomselect ? gerenciaSelect.tomselect.getValue() : gerenciaSelect.value;
+            let alreadyLoaded = false;
+
+            // Auto-seleccionar si solo hay 1 opción real
+            const realOptions = Array.from(gerenciaSelect.options).filter(opt => opt.value !== "");
+            if (realOptions.length === 1 && !currentGerenciaVal) {
+                if (gerenciaSelect.tomselect) {
+                    gerenciaSelect.tomselect.setValue(realOptions[0].value);
+                    currentGerenciaVal = realOptions[0].value;
+                    alreadyLoaded = true;
+                } else {
+                    gerenciaSelect.selectedIndex = 1;
+                    currentGerenciaVal = gerenciaSelect.value;
+                }
             }
             
             if (userRol === 'ABOGADO') {
@@ -920,10 +930,12 @@ function toggleOrigenTermino() {
             }
             
             // Cargar materias y abogados dinámicamente si hay una gerencia seleccionada
-            if (currentGerenciaVal) {
-                cargarMateriasYAbogadosPorGerencia(currentGerenciaVal);
-            } else {
-                cargarMateriasYAbogadosPorGerencia('');
+            if (!alreadyLoaded) {
+                if (currentGerenciaVal) {
+                    cargarMateriasYAbogadosPorGerencia(currentGerenciaVal);
+                } else {
+                    cargarMateriasYAbogadosPorGerencia('');
+                }
             }
         }
     } else if (abogadoSelect) {
@@ -1345,10 +1357,9 @@ function inicializarSelectsTerminos() {
     if (selectGerencia && !selectGerencia.tomselect) {
         initSearchableSelect(selectGerencia, { 
             tipo: 'gerencia',
-            onChange: function() {
+            onChange: function(val) {
                 const origen = document.querySelector('input[name="origenTermino"]:checked')?.value || 'EXPEDIENTE';
                 if (origen === 'ASUNTO_UNICO') {
-                    const val = selectGerencia.tomselect.getValue();
                     cargarMateriasYAbogadosPorGerencia(val);
                 }
             }
