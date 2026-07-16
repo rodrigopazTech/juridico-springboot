@@ -1276,6 +1276,9 @@ public class TerminosController {
                 || usuario.getRol() == RolUsuario.DIRECTOR || usuario.getRol() == RolUsuario.SUBDIRECTOR) {
             return;
         }
+        if (termino.getAbogadoResponsable() != null && termino.getAbogadoResponsable().getId().equals(usuario.getId())) {
+            return;
+        }
         Gerencia gt = termino.getGerenciaReferencia();
         if (gt != null && usuario.getGerencia() != null && gt.getId().equals(usuario.getGerencia().getId())) {
             return;
@@ -1290,14 +1293,35 @@ public class TerminosController {
 
     private void validarAccesoExpediente(Expediente e, Usuario usuario) {
         RolUsuario rol = usuario.getRol();
+        boolean tienePermiso = false;
+
         if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL 
                 || rol == RolUsuario.DIRECTOR || rol == RolUsuario.SUBDIRECTOR) {
-            return;
+            tienePermiso = true;
+        } else if (rol == RolUsuario.GERENTE) {
+            if (e.getGerencia() != null && usuario.getGerencia() != null 
+                    && e.getGerencia().getId().equals(usuario.getGerencia().getId())) {
+                tienePermiso = true;
+            }
+        } else if (rol == RolUsuario.JEFE_DEPTO) {
+            if (e.getGerencia() != null && usuario.getGerencia() != null 
+                    && e.getGerencia().getId().equals(usuario.getGerencia().getId())
+                    && e.getMateria() != null 
+                    && usuario.getMaterias().stream().anyMatch(m -> m.getId().equals(e.getMateria().getId()))) {
+                tienePermiso = true;
+            }
+        } else if (rol == RolUsuario.ABOGADO) {
+            if (e.getAbogadoResponsable() != null && e.getAbogadoResponsable().getId().equals(usuario.getId())) {
+                tienePermiso = true;
+            } else if (colaboradorExpedienteRepository.existsByExpedienteIdAndUsuarioIdAndFechaExpiracionAfter(
+                    e.getId(), usuario.getId(), LocalDateTime.now())) {
+                tienePermiso = true;
+            }
         }
-        if (usuario.getGerencia() != null && e.getGerencia() != null && e.getGerencia().getId().equals(usuario.getGerencia().getId())) {
-            return;
+
+        if (!tienePermiso) {
+            throw new ForbiddenException("No tienes acceso a este expediente.");
         }
-        throw new ForbiddenException("No tienes acceso a este expediente.");
     }
 
     @GetMapping("/api/materias-por-gerencia/{gerenciaId}")
