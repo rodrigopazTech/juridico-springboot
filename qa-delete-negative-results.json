@@ -1,0 +1,8 @@
+﻿{
+    "termId":  "9",
+    "termBody":  "{\"success\":false,\"message\":\"Solo el abogado responsable del expediente puede eliminar este término.\"}",
+    "termExists":  "1",
+    "audId":  "11",
+    "audBody":  "{\"success\":false,\"message\":\"Solo el abogado responsable del expediente puede eliminar esta audiencia.\"}",
+    "audExists":  "1"
+}

@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -70,18 +71,16 @@ public class SecurityConfig {
 
                         // 2. NIVEL ALTO
                         .requestMatchers("/agenda", "/agenda/**")
-                        .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE", "JEFE_DEPTO",
-                                "PERM_AGENDA_VER")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.POST, "/catalogos/**")
+                        .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE", "JEFE_DEPTO")
+                        .requestMatchers(HttpMethod.DELETE, "/catalogos/**")
+                        .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE", "JEFE_DEPTO")
                         .requestMatchers("/catalogos", "/catalogos/**")
                         .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE", "JEFE_DEPTO", "ABOGADO",
                                 "PERM_CATALOGOS_VER")
-                        .requestMatchers("/admin/**").hasAnyAuthority("ADMIN", "PERM_ADMIN_PANEL")
-                        .requestMatchers("/usuarios/api/materias-por-gerencia/**").authenticated()
+                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/usuarios", "/usuarios/**")
-                        .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE", "PERM_USUARIOS_VER")
-                        .requestMatchers("/usuarios-admin", "/usuarios-admin/**")
-                        .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE")
-                        .requestMatchers("/abogados", "/abogados/**")
                         .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE", "JEFE_DEPTO")
 
                         // 3. NIVEL MEDIO

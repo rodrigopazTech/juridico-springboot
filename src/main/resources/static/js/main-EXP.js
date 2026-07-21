@@ -185,7 +185,7 @@ function cargarMateriasExpediente(arg1 = '', arg2 = '', arg3 = '', materiaIdSele
     }
 
     // 2. Traer materias de la API
-    return fetch(`/usuarios/api/materias-por-gerencia/${gerenciaId}`)
+    return fetch(`/expedientes/api/materias-por-gerencia/${gerenciaId}`)
         .then(res => res.json())
         .then(materias => {
             if (selectMateria.tomselect) {

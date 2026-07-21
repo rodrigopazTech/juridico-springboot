@@ -149,6 +149,16 @@ public class UsuarioService {
             if (actor.getRol() == RolUsuario.GERENTE) {
                 usuario.getGerencias().clear();
                 usuario.getGerencias().addAll(actor.getGerencias());
+                java.util.Set<Integer> gerenciasActorIds = actor.getGerencias().stream()
+                        .map(Gerencia::getId)
+                        .collect(java.util.stream.Collectors.toSet());
+                materiasSeleccionadas.removeIf(m -> m.getGerencia() == null
+                        || !gerenciasActorIds.contains(m.getGerencia().getId()));
+                if (materiasSeleccionadas.isEmpty()) {
+                    for (Gerencia g : actor.getGerencias()) {
+                        materiasSeleccionadas.addAll(materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(g.getId()));
+                    }
+                }
             } else if (actor.getRol() == RolUsuario.JEFE_DEPTO) {
                 usuario.getGerencias().clear();
                 usuario.getGerencias().addAll(actor.getGerencias());

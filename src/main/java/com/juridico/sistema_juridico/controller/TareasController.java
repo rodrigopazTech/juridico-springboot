@@ -75,7 +75,8 @@ public class TareasController {
 
     @GetMapping("/completar/{id}")
     public String completar(@PathVariable("id") Integer id) {
-        recordatorioRepository.findById(id).ifPresent(r -> {
+        Usuario usuario = getUsuarioActual();
+        recordatorioRepository.findByIdAndUsuario(id, usuario).ifPresent(r -> {
             r.setCompletado(true);
             recordatorioRepository.save(r);
         });
@@ -84,7 +85,13 @@ public class TareasController {
 
     @GetMapping("/eliminar/{id}")
     public String eliminar(@PathVariable("id") Integer id) {
-        recordatorioRepository.deleteById(id);
+        Usuario usuario = getUsuarioActual();
+        recordatorioRepository.findByIdAndUsuario(id, usuario).ifPresent(recordatorioRepository::delete);
         return "redirect:/tareas";
+    }
+
+    private Usuario getUsuarioActual() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return usuarioRepository.findByEmail(email).orElseThrow();
     }
 }

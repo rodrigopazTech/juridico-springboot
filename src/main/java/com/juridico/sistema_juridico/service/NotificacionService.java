@@ -105,6 +105,92 @@ public class NotificacionService {
         }
     }
 
+    public void notificarSuperioresDeEliminacion(
+            Usuario actor,
+            NotificacionEvento evento,
+            String titulo,
+            String mensaje,
+            CatPrioridad prioridad,
+            String entidadId,
+            Materia materiaAsunto) {
+        if (actor == null || actor.getRol() == null || evento == null) {
+            return;
+        }
+
+        List<RolUsuario> rolesSuperiores = switch (actor.getRol()) {
+            case ABOGADO -> List.of(RolUsuario.JEFE_DEPTO, RolUsuario.GERENTE, RolUsuario.DIRECTOR,
+                    RolUsuario.SUBDIRECTOR, RolUsuario.DIRECTOR_PRINCIPAL, RolUsuario.ADMIN);
+            case JEFE_DEPTO -> List.of(RolUsuario.GERENTE, RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR,
+                    RolUsuario.DIRECTOR_PRINCIPAL, RolUsuario.ADMIN);
+            case GERENTE -> List.of(RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR, RolUsuario.DIRECTOR_PRINCIPAL,
+                    RolUsuario.ADMIN);
+            case DIRECTOR, SUBDIRECTOR -> List.of(RolUsuario.DIRECTOR_PRINCIPAL, RolUsuario.ADMIN);
+            case DIRECTOR_PRINCIPAL -> List.of(RolUsuario.ADMIN);
+            case ADMIN -> List.of();
+        };
+
+        if (rolesSuperiores.isEmpty()) {
+            return;
+        }
+
+        List<Integer> gerenciasIds = actor.getGerencias() == null
+                ? List.of()
+                : actor.getGerencias().stream()
+                        .map(com.juridico.sistema_juridico.Entity.catalogo.Gerencia::getId)
+                        .toList();
+
+        List<RolUsuario> rolesTransversales = rolesSuperiores.stream()
+                .filter(r -> r == RolUsuario.ADMIN || r == RolUsuario.DIRECTOR_PRINCIPAL
+                        || r == RolUsuario.DIRECTOR || r == RolUsuario.SUBDIRECTOR)
+                .toList();
+        List<RolUsuario> rolesAcotados = rolesSuperiores.stream()
+                .filter(r -> r == RolUsuario.GERENTE || r == RolUsuario.JEFE_DEPTO)
+                .toList();
+
+        List<Usuario> destinatarios = new ArrayList<>();
+        if (!rolesTransversales.isEmpty()) {
+            destinatarios.addAll(usuarioRepository.findByRolInAndActivoTrue(rolesTransversales));
+        }
+        if (!rolesAcotados.isEmpty() && !gerenciasIds.isEmpty()) {
+            destinatarios.addAll(usuarioRepository.findDistinctByGerenciasIdInAndRolInAndActivoTrue(gerenciasIds, rolesAcotados));
+        }
+
+        for (Usuario destinatario : destinatarios) {
+            if (destinatario.getId().equals(actor.getId())) {
+                continue;
+            }
+            if (destinatario.getRol() == RolUsuario.JEFE_DEPTO && materiaAsunto != null) {
+                boolean tieneMateria = destinatario.getMaterias() != null && destinatario.getMaterias().stream()
+                        .anyMatch(m -> m.getId().equals(materiaAsunto.getId()));
+                if (!tieneMateria) {
+                    continue;
+                }
+            }
+            if (!preferenciaEventoService.permiteRecibir(destinatario, evento)) {
+                continue;
+            }
+            if (notificacionRepository.existsByUsuarioAndEventoAndEntidadIdAndTitulo(destinatario, evento, entidadId, titulo)) {
+                continue;
+            }
+
+            Notificacion notif = Notificacion.builder()
+                    .usuario(destinatario)
+                    .titulo(titulo)
+                    .mensaje(mensaje)
+                    .tipo(evento.getTipoVisual())
+                    .evento(evento)
+                    .prioridad(prioridad)
+                    .entidadTipo(evento.getEntidadTipo())
+                    .entidadId(entidadId)
+                    .notificarEn(LocalDateTime.now())
+                    .leida(false)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            notificacionRepository.save(notif);
+            webPushService.enviarNotificacion(destinatario, titulo, mensaje, "/notificaciones/leer/" + notif.getId());
+        }
+    }
+
     private void notificarASuperiores(
             Usuario subordinado,
             Usuario actor,

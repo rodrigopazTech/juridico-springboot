@@ -80,6 +80,8 @@ public class AudienciasController {
     @Autowired
     private AudienciaService audienciaService;
     @Autowired
+    private com.juridico.sistema_juridico.service.NotificacionService notificacionService;
+    @Autowired
     private com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository colaboradorExpedienteRepository;
 
     // @Autowired private ColaboradorExpedienteRepository colaboradorRepository;
@@ -123,6 +125,43 @@ public class AudienciasController {
             }
         }
         throw new ForbiddenException("No tienes acceso a este expediente.");
+    }
+
+    private void validarPermisoEliminarAudiencia(Audiencia audiencia, Usuario usuario) {
+        RolUsuario rol = usuario.getRol();
+        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL
+                || rol == RolUsuario.DIRECTOR || rol == RolUsuario.SUBDIRECTOR) {
+            return;
+        }
+
+        Expediente expediente = audiencia.getExpediente();
+        if (rol == RolUsuario.ABOGADO) {
+            if (expediente != null && expediente.getAbogadoResponsable() != null
+                    && expediente.getAbogadoResponsable().getId().equals(usuario.getId())) {
+                return;
+            }
+            throw new ForbiddenException("Solo el abogado responsable del expediente puede eliminar esta audiencia.");
+        }
+
+        if (rol == RolUsuario.GERENTE || rol == RolUsuario.JEFE_DEPTO) {
+            if (expediente != null) {
+                validarAccesoExpediente(expediente, usuario);
+                return;
+            }
+            Gerencia gerencia = audiencia.getGerenciaReferencia();
+            Materia materia = audiencia.getMateriaReferencia();
+            if (rol == RolUsuario.GERENTE && usuario.getGerencia() != null && gerencia != null
+                    && usuario.getGerencia().getId().equals(gerencia.getId())) {
+                return;
+            }
+            if (rol == RolUsuario.JEFE_DEPTO && usuario.getGerencia() != null && gerencia != null
+                    && usuario.getGerencia().getId().equals(gerencia.getId())
+                    && materia != null && usuario.getMaterias().stream().anyMatch(m -> m.getId().equals(materia.getId()))) {
+                return;
+            }
+        }
+
+        throw new ForbiddenException("No tienes permisos para eliminar esta audiencia.");
     }
 
     @GetMapping({"", "/"})
@@ -732,12 +771,21 @@ public String guardar(@ModelAttribute Audiencia audiencia,
 
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
-            if (aud.getExpediente() != null) {
-                validarAccesoExpediente(aud.getExpediente(), usuario);
-            }
+            validarPermisoEliminarAudiencia(aud, usuario);
+            String referencia = aud.getNumeroReferencia() != null ? aud.getNumeroReferencia()
+                    : (aud.getExpediente() != null ? aud.getExpediente().getNumero() : "S/N");
+            Materia materia = aud.getMateriaReferencia();
 
             // 2. LÓGICA FELIZ (Sin try-catch interno)
             audienciaRepository.deleteById(id);
+            notificacionService.notificarSuperioresDeEliminacion(
+                    usuario,
+                    com.juridico.sistema_juridico.Entity.enums.NotificacionEvento.AUDIENCIA_VALIDADA_CONCLUIDA,
+                    "Audiencia eliminada",
+                    "El usuario " + usuario.getNombreCompleto() + " elimino la audiencia " + referencia + ".",
+                    null,
+                    String.valueOf(id),
+                    materia);
 
             response.put("success", true);
             response.put("message", "Audiencia eliminada correctamente.");

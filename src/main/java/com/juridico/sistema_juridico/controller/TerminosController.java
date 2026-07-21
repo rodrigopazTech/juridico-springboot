@@ -302,6 +302,7 @@ public class TerminosController {
         model.addAttribute("expedientesList", expedientesParaDropdown);
 
         model.addAttribute("rolActual", usuarioActual.getRol());
+        model.addAttribute("usuarioActual", usuarioActual);
         model.addAttribute("mapaPermisos", PERMISOS_ETAPAS);
         model.addAttribute("ordenEtapas", ORDEN_ETAPAS);
 
@@ -1141,14 +1142,12 @@ public class TerminosController {
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         try {
             Usuario actor = getUsuarioActual();
-            if (actor.getRol() == RolUsuario.ABOGADO) {
-                response.put("success", false);
-                response.put("message", "Los abogados no tienen permiso para eliminar términos.");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-            }
 
             Termino termino = terminoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Término no existe."));
-            validarAccesoTermino(termino, actor);
+            validarPermisoEliminarTermino(termino, actor);
+            String referencia = termino.getNumeroReferencia();
+            Materia materia = termino.getMateriaReferencia();
+            com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad prioridad = termino.getPrioridad();
 
             // 1. Eliminar archivos asociados y registros en TerminoArchivo
             terminoArchivoService.eliminarArchivosPorTermino(id);
@@ -1161,9 +1160,21 @@ public class TerminosController {
 
             // 3. Eliminar el término principal
             terminoRepository.delete(termino);
+            notificacionService.notificarSuperioresDeEliminacion(
+                    actor,
+                    NotificacionEvento.TERMINO_CAMBIO_ETAPA,
+                    "Termino eliminado",
+                    "El usuario " + actor.getNombreCompleto() + " elimino el termino " + referencia + ".",
+                    prioridad,
+                    String.valueOf(id),
+                    materia);
             response.put("success", true);
             response.put("message", "Término eliminado correctamente.");
             return ResponseEntity.ok(response);
+        } catch (ForbiddenException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error: " + e.getMessage());
@@ -1217,6 +1228,27 @@ public class TerminosController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    private void validarPermisoEliminarTermino(Termino termino, Usuario actor) {
+        RolUsuario rol = actor.getRol();
+        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL
+                || rol == RolUsuario.DIRECTOR || rol == RolUsuario.SUBDIRECTOR
+                || rol == RolUsuario.GERENTE || rol == RolUsuario.JEFE_DEPTO) {
+            validarAccesoTermino(termino, actor);
+            return;
+        }
+
+        if (rol == RolUsuario.ABOGADO) {
+            Expediente expediente = termino.getExpediente();
+            if (expediente != null && expediente.getAbogadoResponsable() != null
+                    && expediente.getAbogadoResponsable().getId().equals(actor.getId())) {
+                return;
+            }
+            throw new ForbiddenException("Solo el abogado responsable del expediente puede eliminar este término.");
+        }
+
+        throw new ForbiddenException("No tienes permisos para eliminar este término.");
     }
 
     @GetMapping("/api/{id}")

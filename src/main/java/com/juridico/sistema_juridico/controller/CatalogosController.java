@@ -45,11 +45,9 @@ public class CatalogosController {
 
         // --- Determinar qué gerencias puede ver ---
         boolean esNivelAlto = (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL || rol == RolUsuario.DIRECTOR || rol == RolUsuario.SUBDIRECTOR);
-        boolean esGerente = (rol == RolUsuario.GERENTE || rol == RolUsuario.JEFE_DEPTO);
         boolean esAbogado = (rol == RolUsuario.ABOGADO);
 
-        // Puede realizar acciones? (Cualquier usuario con gerencia asignada o de nivel alto)
-        boolean puedeEditar = (usuarioActual.getGerencia() != null || esNivelAlto);
+        boolean puedeEditar = !esAbogado && (usuarioActual.getGerencia() != null || esNivelAlto);
 
         List<Gerencia> gerenciasDisponibles;
         Gerencia gerenciaSeleccionada = null;
@@ -156,6 +154,41 @@ public class CatalogosController {
     // ===============================================================
     // CRUD - ÓRGANOS JURISDICCIONALES
     // ===============================================================
+    private Usuario getUsuarioActual() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return usuarioRepository.findByEmail(email).orElseThrow();
+    }
+
+    private boolean esNivelAlto(Usuario usuario) {
+        RolUsuario rol = usuario.getRol();
+        return rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL
+                || rol == RolUsuario.DIRECTOR || rol == RolUsuario.SUBDIRECTOR;
+    }
+
+    private void validarPuedeEditarCatalogos(Usuario usuarioActual) {
+        if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
+            throw new org.springframework.security.access.AccessDeniedException("El ABOGADO no puede modificar catálogos.");
+        }
+        if (!esNivelAlto(usuarioActual) && usuarioActual.getGerencia() == null) {
+            throw new org.springframework.security.access.AccessDeniedException("No tienes una gerencia asignada para modificar catálogos.");
+        }
+    }
+
+    private Gerencia resolverGerenciaPermitida(String gerenciaIdStr, Usuario usuarioActual) {
+        validarPuedeEditarCatalogos(usuarioActual);
+        if (!esNivelAlto(usuarioActual)) {
+            return usuarioActual.getGerencia();
+        }
+        if (gerenciaIdStr == null || gerenciaIdStr.isBlank()) {
+            return null;
+        }
+        return gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null);
+    }
+
+    private ResponseEntity<?> forbidden(String message) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body(Map.of("error", message));
+    }
+
     @PostMapping("/organos/guardar")
     @ResponseBody
     public ResponseEntity<?> guardarOrgano(@RequestBody Map<String, String> payload) {
@@ -626,33 +659,4 @@ public class CatalogosController {
         return "redirect:/catalogos" + (gId != null ? "?gerenciaId=" + gId : "");
     }
 
-    // --- API JSON MATERIAS (Conservado) ---
-    @GetMapping("/gerencias/{id}/materias")
-    public String obtenerMateriasGerencia(@PathVariable("id") Integer id, Model model) {
-        Gerencia gerencia = usuarioService.buscarGerenciaPorId(id);
-        model.addAttribute("materias", gerencia.getMaterias());
-        return "fragments/usuarios/modal-materias :: lista";
-    }
-
-    @PostMapping("/gerencias/materias/guardar")
-    @ResponseBody
-    public ResponseEntity<?> guardarMateria(@RequestBody Materia materia) {
-        try {
-            usuarioService.guardarMateria(materia);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al guardar materia");
-        }
-    }
-
-    @DeleteMapping("/gerencias/materias/eliminar/{id}")
-    @ResponseBody
-    public ResponseEntity<?> eliminarMateria(@PathVariable("id") Integer id) {
-        try {
-            usuarioService.eliminarMateria(id);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al eliminar materia");
-        }
-    }
 }

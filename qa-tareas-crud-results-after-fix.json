@@ -1,0 +1,78 @@
+﻿[
+  {
+    "role": "ADMIN",
+    "email": "admin@sistema.com",
+    "title": "QA Tarea ADMIN 1784666045386",
+    "createVisible": true,
+    "created": true,
+    "completed": true,
+    "deleted": true,
+    "issues": []
+  },
+  {
+    "role": "DIRECTOR_PRINCIPAL",
+    "email": "director.principal@juridico.com",
+    "title": "QA Tarea DIRECTOR_PRINCIPAL 1784666049813",
+    "createVisible": true,
+    "created": true,
+    "completed": true,
+    "deleted": true,
+    "issues": []
+  },
+  {
+    "role": "DIRECTOR",
+    "email": "director@juridico.com",
+    "title": "QA Tarea DIRECTOR 1784666054087",
+    "createVisible": true,
+    "created": true,
+    "completed": true,
+    "deleted": true,
+    "issues": []
+  },
+  {
+    "role": "SUBDIRECTOR",
+    "email": "subdirector@juridico.com",
+    "title": "QA Tarea SUBDIRECTOR 1784666058352",
+    "createVisible": true,
+    "created": true,
+    "completed": true,
+    "deleted": true,
+    "issues": []
+  },
+  {
+    "role": "GERENTE",
+    "email": "gerente@juridico.com",
+    "title": "QA Tarea GERENTE 1784666062677",
+    "createVisible": true,
+    "created": true,
+    "completed": true,
+    "deleted": true,
+    "issues": []
+  },
+  {
+    "role": "JEFE_DEPTO",
+    "email": "jefe@juridico.com",
+    "title": "QA Tarea JEFE_DEPTO 1784666066864",
+    "createVisible": true,
+    "created": true,
+    "completed": true,
+    "deleted": true,
+    "issues": []
+  },
+  {
+    "role": "ABOGADO",
+    "email": "abogado@juridico.com",
+    "title": "QA Tarea ABOGADO 1784666071110",
+    "createVisible": true,
+    "created": true,
+    "completed": true,
+    "deleted": true,
+    "issues": []
+  },
+  {
+    "role": "ABOGADO",
+    "crossUserSetup": "QA Tarea Admin Ajena 1784666075281",
+    "abogadoCanSeeAdminTask": false,
+    "note": "El intento de borrado por URL directa se ejecuta con curl/BD fuera del navegador para obtener id exacto."
+  }
+]

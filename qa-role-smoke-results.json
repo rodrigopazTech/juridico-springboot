@@ -1,0 +1,1068 @@
+[
+  {
+    "role": "ADMIN",
+    "email": "admin@sistema.com",
+    "login": {
+      "ok": true,
+      "url": "http://localhost:8080/dashboard",
+      "status": 200
+    },
+    "menu": [
+      {
+        "item": "Dashboard",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Agenda Historial",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Calendario",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Mis Tareas",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Expedientes",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Términos",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Audiencias",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Usuarios",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Migración Inteligente",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Catálogos Generales",
+        "expected": "visible",
+        "ok": true
+      }
+    ],
+    "routes": [
+      {
+        "path": "/dashboard",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/dashboard",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/agenda",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/agenda",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/calendario",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/calendario",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/tareas",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/tareas",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/expedientes",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/expedientes",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/terminos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/terminos",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/audiencias",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/audiencias",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/catalogos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/catalogos?tab=organos",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/usuarios",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/usuarios",
+        "expected": "no_abogado",
+        "ok": true
+      },
+      {
+        "path": "/admin/importar",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/admin/importar",
+        "expected": "admin_only",
+        "ok": true
+      },
+      {
+        "path": "/usuarios-admin",
+        "status": 404,
+        "finalUrl": "http://localhost:8080/usuarios-admin",
+        "expected": "not_found",
+        "ok": true
+      },
+      {
+        "path": "/abogados",
+        "status": 404,
+        "finalUrl": "http://localhost:8080/abogados",
+        "expected": "not_found",
+        "ok": true
+      }
+    ],
+    "consoleIssues": [
+      "console error: Failed to load resource: the server responded with a status of 404 ()",
+      "console error: Failed to load resource: the server responded with a status of 404 ()"
+    ]
+  },
+  {
+    "role": "DIRECTOR_PRINCIPAL",
+    "email": "director.principal@juridico.com",
+    "login": {
+      "ok": true,
+      "url": "http://localhost:8080/dashboard",
+      "status": 200
+    },
+    "menu": [
+      {
+        "item": "Dashboard",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Agenda Historial",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Calendario",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Mis Tareas",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Expedientes",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Términos",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Audiencias",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Usuarios",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Catálogos Generales",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Migración Inteligente",
+        "expected": "hidden",
+        "ok": true
+      }
+    ],
+    "routes": [
+      {
+        "path": "/dashboard",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/dashboard",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/agenda",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/agenda",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/calendario",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/calendario",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/tareas",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/tareas",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/expedientes",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/expedientes",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/terminos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/terminos",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/audiencias",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/audiencias",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/catalogos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/catalogos?tab=organos",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/usuarios",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/usuarios",
+        "expected": "no_abogado",
+        "ok": true
+      },
+      {
+        "path": "/admin/importar",
+        "status": 403,
+        "finalUrl": "http://localhost:8080/admin/importar",
+        "expected": "admin_only",
+        "ok": true
+      },
+      {
+        "path": "/usuarios-admin",
+        "status": 404,
+        "finalUrl": "http://localhost:8080/usuarios-admin",
+        "expected": "not_found",
+        "ok": true
+      },
+      {
+        "path": "/abogados",
+        "status": 404,
+        "finalUrl": "http://localhost:8080/abogados",
+        "expected": "not_found",
+        "ok": true
+      }
+    ],
+    "consoleIssues": [
+      "console error: Failed to load resource: the server responded with a status of 403 ()",
+      "console error: Failed to load resource: the server responded with a status of 404 ()",
+      "console error: Failed to load resource: the server responded with a status of 404 ()"
+    ]
+  },
+  {
+    "role": "DIRECTOR",
+    "email": "director@juridico.com",
+    "login": {
+      "ok": true,
+      "url": "http://localhost:8080/dashboard",
+      "status": 200
+    },
+    "menu": [
+      {
+        "item": "Dashboard",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Agenda Historial",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Calendario",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Mis Tareas",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Expedientes",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Términos",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Audiencias",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Usuarios",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Catálogos Generales",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Migración Inteligente",
+        "expected": "hidden",
+        "ok": true
+      }
+    ],
+    "routes": [
+      {
+        "path": "/dashboard",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/dashboard",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/agenda",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/agenda",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/calendario",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/calendario",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/tareas",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/tareas",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/expedientes",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/expedientes",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/terminos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/terminos",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/audiencias",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/audiencias",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/catalogos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/catalogos?tab=organos",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/usuarios",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/usuarios",
+        "expected": "no_abogado",
+        "ok": true
+      },
+      {
+        "path": "/admin/importar",
+        "status": 403,
+        "finalUrl": "http://localhost:8080/admin/importar",
+        "expected": "admin_only",
+        "ok": true
+      },
+      {
+        "path": "/usuarios-admin",
+        "status": 404,
+        "finalUrl": "http://localhost:8080/usuarios-admin",
+        "expected": "not_found",
+        "ok": true
+      },
+      {
+        "path": "/abogados",
+        "status": 404,
+        "finalUrl": "http://localhost:8080/abogados",
+        "expected": "not_found",
+        "ok": true
+      }
+    ],
+    "consoleIssues": [
+      "console error: Failed to load resource: the server responded with a status of 403 ()",
+      "console error: Failed to load resource: the server responded with a status of 404 ()",
+      "console error: Failed to load resource: the server responded with a status of 404 ()"
+    ]
+  },
+  {
+    "role": "SUBDIRECTOR",
+    "email": "subdirector@juridico.com",
+    "login": {
+      "ok": true,
+      "url": "http://localhost:8080/dashboard",
+      "status": 200
+    },
+    "menu": [
+      {
+        "item": "Dashboard",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Agenda Historial",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Calendario",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Mis Tareas",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Expedientes",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Términos",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Audiencias",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Usuarios",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Catálogos Generales",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Migración Inteligente",
+        "expected": "hidden",
+        "ok": true
+      }
+    ],
+    "routes": [
+      {
+        "path": "/dashboard",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/dashboard",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/agenda",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/agenda",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/calendario",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/calendario",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/tareas",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/tareas",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/expedientes",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/expedientes",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/terminos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/terminos",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/audiencias",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/audiencias",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/catalogos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/catalogos?tab=organos",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/usuarios",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/usuarios",
+        "expected": "no_abogado",
+        "ok": true
+      },
+      {
+        "path": "/admin/importar",
+        "status": 403,
+        "finalUrl": "http://localhost:8080/admin/importar",
+        "expected": "admin_only",
+        "ok": true
+      },
+      {
+        "path": "/usuarios-admin",
+        "status": 404,
+        "finalUrl": "http://localhost:8080/usuarios-admin",
+        "expected": "not_found",
+        "ok": true
+      },
+      {
+        "path": "/abogados",
+        "status": 404,
+        "finalUrl": "http://localhost:8080/abogados",
+        "expected": "not_found",
+        "ok": true
+      }
+    ],
+    "consoleIssues": [
+      "console error: Failed to load resource: the server responded with a status of 403 ()",
+      "console error: Failed to load resource: the server responded with a status of 404 ()",
+      "console error: Failed to load resource: the server responded with a status of 404 ()"
+    ]
+  },
+  {
+    "role": "GERENTE",
+    "email": "gerente@juridico.com",
+    "login": {
+      "ok": true,
+      "url": "http://localhost:8080/dashboard",
+      "status": 200
+    },
+    "menu": [
+      {
+        "item": "Dashboard",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Agenda Historial",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Calendario",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Mis Tareas",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Expedientes",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Términos",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Audiencias",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Usuarios",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Catálogos Generales",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Migración Inteligente",
+        "expected": "hidden",
+        "ok": true
+      }
+    ],
+    "routes": [
+      {
+        "path": "/dashboard",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/dashboard",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/agenda",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/agenda",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/calendario",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/calendario",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/tareas",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/tareas",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/expedientes",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/expedientes",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/terminos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/terminos",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/audiencias",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/audiencias",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/catalogos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/catalogos?tab=organos",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/usuarios",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/usuarios",
+        "expected": "no_abogado",
+        "ok": true
+      },
+      {
+        "path": "/admin/importar",
+        "status": 403,
+        "finalUrl": "http://localhost:8080/admin/importar",
+        "expected": "admin_only",
+        "ok": true
+      },
+      {
+        "path": "/usuarios-admin",
+        "status": 404,
+        "finalUrl": "http://localhost:8080/usuarios-admin",
+        "expected": "not_found",
+        "ok": true
+      },
+      {
+        "path": "/abogados",
+        "status": 404,
+        "finalUrl": "http://localhost:8080/abogados",
+        "expected": "not_found",
+        "ok": true
+      }
+    ],
+    "consoleIssues": [
+      "console error: Failed to load resource: the server responded with a status of 403 ()",
+      "console error: Failed to load resource: the server responded with a status of 404 ()",
+      "console error: Failed to load resource: the server responded with a status of 404 ()"
+    ]
+  },
+  {
+    "role": "JEFE_DEPTO",
+    "email": "jefe@juridico.com",
+    "login": {
+      "ok": true,
+      "url": "http://localhost:8080/dashboard",
+      "status": 200
+    },
+    "menu": [
+      {
+        "item": "Dashboard",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Agenda Historial",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Calendario",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Mis Tareas",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Expedientes",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Términos",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Audiencias",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Usuarios",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Catálogos Generales",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Migración Inteligente",
+        "expected": "hidden",
+        "ok": true
+      }
+    ],
+    "routes": [
+      {
+        "path": "/dashboard",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/dashboard",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/agenda",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/agenda",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/calendario",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/calendario",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/tareas",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/tareas",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/expedientes",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/expedientes",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/terminos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/terminos",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/audiencias",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/audiencias",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/catalogos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/catalogos?tab=organos",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/usuarios",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/usuarios",
+        "expected": "no_abogado",
+        "ok": true
+      },
+      {
+        "path": "/admin/importar",
+        "status": 403,
+        "finalUrl": "http://localhost:8080/admin/importar",
+        "expected": "admin_only",
+        "ok": true
+      },
+      {
+        "path": "/usuarios-admin",
+        "status": 404,
+        "finalUrl": "http://localhost:8080/usuarios-admin",
+        "expected": "not_found",
+        "ok": true
+      },
+      {
+        "path": "/abogados",
+        "status": 404,
+        "finalUrl": "http://localhost:8080/abogados",
+        "expected": "not_found",
+        "ok": true
+      }
+    ],
+    "consoleIssues": [
+      "console error: Failed to load resource: the server responded with a status of 403 ()",
+      "console error: Failed to load resource: the server responded with a status of 404 ()",
+      "console error: Failed to load resource: the server responded with a status of 404 ()"
+    ]
+  },
+  {
+    "role": "ABOGADO",
+    "email": "abogado@juridico.com",
+    "login": {
+      "ok": true,
+      "url": "http://localhost:8080/dashboard",
+      "status": 200
+    },
+    "menu": [
+      {
+        "item": "Dashboard",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Agenda Historial",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Calendario",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Mis Tareas",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Expedientes",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Términos",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Audiencias",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Catálogos Generales",
+        "expected": "visible",
+        "ok": true
+      },
+      {
+        "item": "Usuarios",
+        "expected": "hidden",
+        "ok": true
+      },
+      {
+        "item": "Migración Inteligente",
+        "expected": "hidden",
+        "ok": true
+      }
+    ],
+    "routes": [
+      {
+        "path": "/dashboard",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/dashboard",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/agenda",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/agenda",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/calendario",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/calendario",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/tareas",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/tareas",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/expedientes",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/expedientes",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/terminos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/terminos",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/audiencias",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/audiencias",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/catalogos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/catalogos?tab=organos",
+        "expected": "allow_all",
+        "ok": true
+      },
+      {
+        "path": "/usuarios",
+        "status": 403,
+        "finalUrl": "http://localhost:8080/usuarios",
+        "expected": "no_abogado",
+        "ok": true
+      },
+      {
+        "path": "/admin/importar",
+        "status": 403,
+        "finalUrl": "http://localhost:8080/admin/importar",
+        "expected": "admin_only",
+        "ok": true
+      },
+      {
+        "path": "/usuarios-admin",
+        "status": 404,
+        "finalUrl": "http://localhost:8080/usuarios-admin",
+        "expected": "not_found",
+        "ok": true
+      },
+      {
+        "path": "/abogados",
+        "status": 404,
+        "finalUrl": "http://localhost:8080/abogados",
+        "expected": "not_found",
+        "ok": true
+      }
+    ],
+    "consoleIssues": [
+      "console error: Failed to load resource: the server responded with a status of 403 ()",
+      "console error: Error: TypeError: materias.map is not a function\n    at http://localhost:8080/js/main-EXP.js:192:74",
+      "console error: Failed to load resource: the server responded with a status of 403 ()",
+      "console error: Failed to load resource: the server responded with a status of 403 ()",
+      "console error: Failed to load resource: the server responded with a status of 404 ()",
+      "console error: Failed to load resource: the server responded with a status of 404 ()"
+    ]
+  }
+]

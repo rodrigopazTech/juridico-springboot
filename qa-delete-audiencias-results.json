@@ -1,0 +1,58 @@
+﻿[
+    {
+        "tipo":  "audiencia",
+        "rol":  "ADMIN",
+        "id":  "4",
+        "body":  "{\"success\":true,\"message\":\"Audiencia eliminada correctamente.\"}",
+        "exists":  "0",
+        "deleted":  true
+    },
+    {
+        "tipo":  "audiencia",
+        "rol":  "DIRECTOR_PRINCIPAL",
+        "id":  "5",
+        "body":  "{\"success\":true,\"message\":\"Audiencia eliminada correctamente.\"}",
+        "exists":  "0",
+        "deleted":  true
+    },
+    {
+        "tipo":  "audiencia",
+        "rol":  "DIRECTOR",
+        "id":  "6",
+        "body":  "{\"success\":true,\"message\":\"Audiencia eliminada correctamente.\"}",
+        "exists":  "0",
+        "deleted":  true
+    },
+    {
+        "tipo":  "audiencia",
+        "rol":  "SUBDIRECTOR",
+        "id":  "7",
+        "body":  "{\"success\":true,\"message\":\"Audiencia eliminada correctamente.\"}",
+        "exists":  "0",
+        "deleted":  true
+    },
+    {
+        "tipo":  "audiencia",
+        "rol":  "GERENTE",
+        "id":  "8",
+        "body":  "{\"success\":true,\"message\":\"Audiencia eliminada correctamente.\"}",
+        "exists":  "0",
+        "deleted":  true
+    },
+    {
+        "tipo":  "audiencia",
+        "rol":  "JEFE_DEPTO",
+        "id":  "9",
+        "body":  "{\"success\":true,\"message\":\"Audiencia eliminada correctamente.\"}",
+        "exists":  "0",
+        "deleted":  true
+    },
+    {
+        "tipo":  "audiencia",
+        "rol":  "ABOGADO",
+        "id":  "10",
+        "body":  "{\"success\":true,\"message\":\"Audiencia eliminada correctamente.\"}",
+        "exists":  "0",
+        "deleted":  true
+    }
+]

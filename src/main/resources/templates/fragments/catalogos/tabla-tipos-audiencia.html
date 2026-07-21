@@ -62,13 +62,13 @@
 
         <div class="flex gap-2">
             <a th:if="${listaTiposAudiencia.hasPrevious()}"
-                th:href="@{/usuarios(pageTiposAudiencia=${listaTiposAudiencia.number - 1}, tab='tipos-audiencia')}"
+                th:href="@{/catalogos(pageTiposAudiencia=${listaTiposAudiencia.number - 1}, tab='tipos-audiencia')}"
                 class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">
                 <i class="fas fa-chevron-left mr-1"></i> Anterior
             </a>
 
             <a th:if="${listaTiposAudiencia.hasNext()}"
-                th:href="@{/usuarios(pageTiposAudiencia=${listaTiposAudiencia.number + 1}, tab='tipos-audiencia')}"
+                th:href="@{/catalogos(pageTiposAudiencia=${listaTiposAudiencia.number + 1}, tab='tipos-audiencia')}"
                 class="px-3 py-1 border rounded hover:bg-gray-50 transition-colors">
                 Siguiente <i class="fas fa-chevron-right ml-1"></i>
             </a>

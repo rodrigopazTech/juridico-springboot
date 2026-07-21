@@ -781,6 +781,12 @@ public class ExpedientesController {
 
     // --- API PARA SELECTORES EN CASCADA (NUEVO EXPEDIENTE) ---
 
+    @GetMapping("/api/materias-por-gerencia/{gerenciaId}")
+    @ResponseBody
+    public ResponseEntity<List<Materia>> obtenerMateriasPorGerencia(@PathVariable("gerenciaId") Integer gerenciaId) {
+        return ResponseEntity.ok(materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(gerenciaId));
+    }
+
     @GetMapping("/api/abogados")
     @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> obtenerAbogadosPorMateria(

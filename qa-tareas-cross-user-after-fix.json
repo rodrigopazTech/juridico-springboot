@@ -1,0 +1,7 @@
+﻿{
+    "taskId":  "24",
+    "deleteAs":  "ABOGADO",
+    "status":  "200 http://localhost:8080/tareas",
+    "exists":  "1",
+    "protected":  true
+}

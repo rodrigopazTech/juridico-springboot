@@ -1,0 +1,12 @@
+﻿[
+    {
+        "actor":  "GERENTE",
+        "status":  "302 http://localhost:8080/usuarios",
+        "created":  "9|qa.gerente.crea@juridico.com|ABOGADO|1|5"
+    },
+    {
+        "actor":  "JEFE_DEPTO",
+        "status":  "302 http://localhost:8080/usuarios",
+        "created":  "10|qa.jefe.crea@juridico.com|ABOGADO|1|1"
+    }
+]

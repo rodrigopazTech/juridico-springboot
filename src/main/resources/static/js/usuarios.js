@@ -1,355 +1,454 @@
-/**
- * Lógica para Gestión de Usuarios, Gerencias y Materias
- */
-let materiasUsuarioActual = [];
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("Usuarios cargados");
+});
 
-function cambiarTab(tabName) {
-    // A. Ocultar contenidos
-    document.querySelectorAll('.tab-content').forEach(el => {
-        el.classList.add('hidden');
-        el.classList.remove('block');
-        el.style.display = 'none';
+let materiasUsuarioActual = [];
+let materiasUsuarioEdicion = [];
+let usuarioSeleccionadoId = null;
+
+// --- 1. LÓGICA DE MAESTRO - DETALLE ---
+
+function seleccionarAbogado(cardElement) {
+    // 1. Quitar estado activo de todas las tarjetas
+    document.querySelectorAll('.abogado-card').forEach(card => {
+        card.classList.remove('bg-red-50', 'border-red-100');
+        card.classList.add('border-transparent');
     });
 
-    // Mostrar contenido seleccionado
-    const content = document.getElementById('tab-' + tabName);
-    if (content) {
-        content.classList.remove('hidden');
-        content.classList.add('block');
-        content.style.display = 'block';
+    // 2. Poner estado activo a la tarjeta clickeada
+    cardElement.classList.add('bg-red-50', 'border-red-100');
+    cardElement.classList.remove('border-transparent');
+
+    // 3. Extraer datos de los atributos data-*
+    const id = cardElement.getAttribute('data-id');
+    const nombre = cardElement.getAttribute('data-nombre');
+    const email = cardElement.getAttribute('data-email');
+    const rol = cardElement.getAttribute('data-rol');
+    const gerenciaNombre = cardElement.getAttribute('data-gerencia-nombre');
+    const gerenciasIdsStr = cardElement.getAttribute('data-gerencias-ids');
+    const gerenciasIdsArray = gerenciasIdsStr ? gerenciasIdsStr.split(',').map(Number) : [];
+    const activo = cardElement.getAttribute('data-activo') === 'true';
+
+    const materiasStr = cardElement.getAttribute('data-materias-nombres');
+    const materiasNombres = materiasStr ? materiasStr.split('|') : [];
+
+    const materiasIdsStr = cardElement.getAttribute('data-materias-ids');
+    const materiasIdsArray = materiasIdsStr ? materiasIdsStr.split(',').map(Number) : [];
+
+    usuarioSeleccionadoId = id;
+
+    // 4. Ocultar estado vacío, mostrar detalle
+    document.getElementById('panel-vacio').classList.add('hidden');
+    const panelDetalle = document.getElementById('panel-detalle');
+    panelDetalle.classList.remove('hidden');
+
+    panelDetalle.classList.remove('animate-fade-in');
+    void panelDetalle.offsetWidth; // Trigger reflow
+    panelDetalle.classList.add('animate-fade-in');
+
+    // 5. Inyectar datos en el panel derecho (Vista de consulta)
+    document.getElementById('det-avatar').innerText = nombre.charAt(0).toUpperCase();
+    document.getElementById('det-nombre').innerText = nombre;
+    document.getElementById('det-email').innerText = email;
+
+    // Badges
+    let badgesHtml = `<span class="bg-white/10 border border-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">${rol}</span>`;
+    badgesHtml += `<span class="bg-white/10 border border-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fas fa-building mr-1"></i>${gerenciaNombre}</span>`;
+
+    if (activo) {
+        badgesHtml += `<span class="bg-green-500/20 border border-green-400/50 text-green-300 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fas fa-check-circle mr-1"></i>Activo</span>`;
+    } else {
+        badgesHtml += `<span class="bg-red-500/30 border border-red-400/50 text-red-300 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fas fa-ban mr-1"></i>Inactivo</span>`;
     }
 
-    // B. Actualizar Botones
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        // Quitamos estilos de Tailwind
-        btn.classList.remove('border-gob-guinda', 'text-gob-guinda', 'font-bold');
-        btn.classList.add('border-transparent', 'text-gray-500');
-
-        // --- CORRECCIÓN CRÍTICA: Quitamos también la clase CSS 'active' ---
-        btn.classList.remove('active');
+    // Materias
+    materiasNombres.forEach(m => {
+        if (m.trim() !== '') {
+            badgesHtml += `<span class="bg-yellow-500/20 border border-yellow-500/50 text-yellow-300 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">${m}</span>`;
+        }
     });
 
-    // Activar botón actual
-    const btn = document.getElementById('btn-tab-' + tabName);
-    if (btn) {
-        // Ponemos estilos Tailwind
-        btn.classList.remove('border-transparent', 'text-gray-500');
-        btn.classList.add('border-gob-guinda', 'text-gob-guinda', 'font-bold');
+    document.getElementById('det-badges').innerHTML = badgesHtml;
 
-        // --- CORRECCIÓN CRÍTICA: Agregamos la clase CSS 'active' ---
-        btn.classList.add('active');
+    // 6. Pre-poblar los campos de la pestaña "Editar Perfil"
+    const inputDetId = document.getElementById('det-input-id');
+    if (inputDetId) {
+        document.getElementById('det-input-id').value = id;
+        document.getElementById('det-input-nombre').value = nombre;
+        document.getElementById('det-input-email').value = email;
+        document.getElementById('det-select-rol').value = rol;
+        document.getElementById('det-check-activo').checked = activo;
+
+        // Reset password fields in edit tab
+        const detPass = document.getElementById('det-input-password-temporal');
+        if (detPass) {
+            detPass.value = '';
+            detPass.disabled = true;
+        }
+        const detBadge = document.getElementById('det-badge-pass-generado');
+        if (detBadge) detBadge.classList.add('hidden');
+
+        materiasUsuarioEdicion = materiasIdsArray || [];
+        document.querySelectorAll('.det-gerencia-checkbox').forEach(cb => {
+            cb.checked = gerenciasIdsArray.includes(Number(cb.value));
+        });
+
+        actualizarFormularioEdicionPorRol();
+        cargarMateriasDeGerenciaEdicion();
+    }
+
+    // 7. Configurar botón de estatus
+    const btnEstatus = document.getElementById('btn-estatus');
+    if (btnEstatus) {
+        btnEstatus.innerHTML = activo ? '<i class="fas fa-ban mr-1"></i> Desactivar' : '<i class="fas fa-check-circle mr-1"></i> Activar';
+        btnEstatus.className = activo ? 'px-3 py-1.5 bg-white/10 hover:bg-red-500/80 rounded-lg text-sm font-bold transition-colors backdrop-blur-sm border border-white/10 shadow-sm' : 'px-3 py-1.5 bg-white/10 hover:bg-green-500/80 rounded-lg text-sm font-bold transition-colors backdrop-blur-sm border border-white/10 shadow-sm';
+        btnEstatus.onclick = () => confirmarCambioEstatus(id);
+    }
+    if (document.getElementById('tab-btn-editar')) {
+        cambiarTabAbogado('editar');
+    } else {
+        cambiarTabAbogado('casos');
+    }
+
+    // Ocultar listado y mostrar detalle en móvil
+    const panelLista = document.getElementById('panel-lista');
+    const panelDetalleContainer = document.getElementById('panel-detalle-container');
+    if (window.innerWidth < 1024) {
+        if (panelLista) panelLista.classList.add('hidden');
+        if (panelDetalleContainer) panelDetalleContainer.classList.remove('hidden');
     }
 }
 
+function regresarALista() {
+    const panelLista = document.getElementById('panel-lista');
+    const panelDetalleContainer = document.getElementById('panel-detalle-container');
+
+    if (panelLista) panelLista.classList.remove('hidden');
+    if (panelDetalleContainer) panelDetalleContainer.classList.add('hidden');
+
+    // Limpiar el estado activo de las tarjetas
+    document.querySelectorAll('.abogado-card').forEach(card => {
+        card.classList.remove('bg-red-50', 'border-red-100');
+        card.classList.add('border-transparent');
+    });
+}
+
+// --- 2. LÓGICA DE MODALES ---
+
 function abrirModalUsuario() {
-    document.getElementById('titulo-modal-usuario').innerHTML = '<i class="fas fa-user-plus mr-2"></i> Nuevo Usuario';
+    const titulo = document.getElementById('titulo-modal-usuario');
+    if (titulo) titulo.innerHTML = '<i class="fas fa-user-plus mr-2"></i> Nuevo Usuario';
 
-    document.getElementById('input-usuario-id').value = '';
-    document.getElementById('input-usuario-nombre').value = '';
-    document.getElementById('input-usuario-email').value = '';
-    document.getElementById('input-usuario-password').value = '';
-    document.getElementById('input-usuario-password').required = true;
-    document.getElementById('input-usuario-password').placeholder = "";
+    const inputId = document.getElementById('input-usuario-id');
+    if (inputId) inputId.value = '';
 
-    document.getElementById('select-usuario-rol').value = "";
-    
-    const gerSelect = document.getElementById('select-usuario-gerencia');
-    if (gerSelect) {
-        if (gerSelect.tomselect) gerSelect.tomselect.setValue('');
-        else gerSelect.value = "";
+    const inputNombre = document.getElementById('input-usuario-nombre');
+    if (inputNombre) inputNombre.value = '';
+
+    const inputEmail = document.getElementById('input-usuario-email');
+    if (inputEmail) inputEmail.value = '';
+
+    const selectRol = document.getElementById('select-usuario-rol');
+    if (selectRol) selectRol.value = '';
+
+    // Reset multiple select
+    const selectGerencia = document.getElementById('select-usuario-gerencia');
+    if (selectGerencia) {
+        Array.from(selectGerencia.options).forEach(opt => opt.selected = false);
+    }
+    if (window.usuarioActual && (window.usuarioActual.rol === 'GERENTE' || window.usuarioActual.rol === 'JEFE_DEPTO')) {
+        const creatorGerId = window.usuarioActual.gerenciaId;
+        if (selectGerencia) {
+            Array.from(selectGerencia.options).forEach(opt => {
+                if (Number(opt.value) === Number(creatorGerId)) {
+                    opt.selected = true;
+                }
+            });
+        }
     }
 
-    document.getElementById('check-usuario-activo').checked = true;
+    const checkActivo = document.getElementById('check-usuario-activo');
+    if (checkActivo) checkActivo.checked = true;
+
+    // CREACIÓN
+    const bloqueNuevo = document.getElementById('bloque-password-nuevo');
+    const bloqueTemporal = document.getElementById('bloque-password-temporal');
+    const inputPass = document.getElementById('input-usuario-password');
+    if (bloqueNuevo) { bloqueNuevo.classList.remove('hidden'); }
+    if (bloqueTemporal) { bloqueTemporal.classList.add('hidden'); }
+    if (inputPass) { inputPass.value = ''; inputPass.required = true; inputPass.placeholder = 'Contraseña inicial'; inputPass.disabled = false; }
+
+    const hiddenPass = document.getElementById('input-password-temporal');
+    const badge = document.getElementById('badge-pass-generado');
+    if (hiddenPass) {
+        hiddenPass.value = '';
+        hiddenPass.disabled = true;
+    }
+    if (badge) badge.classList.add('hidden');
+
+    const fpcOld = document.getElementById('input-force-password-change');
+    if (fpcOld) fpcOld.remove();
 
     materiasUsuarioActual = [];
 
-    document.getElementById('contenedor-materias').classList.add('hidden');
-    document.getElementById('lista-materias-checkboxes').innerHTML = '';
+    const contMaterias = document.getElementById('contenedor-materias');
+    if (contMaterias) contMaterias.classList.add('hidden');
 
-    document.getElementById('seccion-asignacion').classList.remove('hidden');
+    const listaMaterias = document.getElementById('lista-materias-checkboxes');
+    if (listaMaterias) listaMaterias.innerHTML = '';
 
-    document.getElementById('btn-eliminar-usuario').classList.add('hidden');
+    const seccionAsignacion = document.getElementById('seccion-asignacion');
+    if (seccionAsignacion) seccionAsignacion.classList.remove('hidden');
+
+    const btnEliminar = document.getElementById('btn-eliminar-usuario');
+    if (btnEliminar) btnEliminar.classList.add('hidden');
+
+    actualizarFormularioPorRol();
+    cargarMateriasDeGerencia();
 
     const modal = document.getElementById('modal-usuario');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
 }
 
 function actualizarFormularioPorRol() {
-    const seccionAsignacion = document.getElementById('seccion-asignacion');
-    seccionAsignacion.classList.remove('hidden');
+    const selectRol = document.getElementById('select-usuario-rol');
+    if (!selectRol) return;
+    const rol = selectRol.value;
+    const divGerencia = document.getElementById('div-gerencia-asignada');
+    const contenedorMaterias = document.getElementById('contenedor-materias');
+
+    if (rol === 'ADMIN' || rol === 'DIRECTOR_PRINCIPAL' || rol === 'DIRECTOR' || rol === 'SUBDIRECTOR') {
+        if (divGerencia) divGerencia.classList.add('hidden');
+        if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
+    } else {
+        const creadorRol = window.usuarioActual ? window.usuarioActual.rol : '';
+        if (creadorRol !== 'GERENTE' && creadorRol !== 'JEFE_DEPTO') {
+            if (divGerencia) divGerencia.classList.remove('hidden');
+        }
+
+        const selectGerencias = document.getElementById('select-usuario-gerencia');
+        const checkedGerencias = selectGerencias ? Array.from(selectGerencias.selectedOptions).map(opt => opt.value) : [];
+
+        if (checkedGerencias.length > 0) {
+            if (contenedorMaterias) contenedorMaterias.classList.remove('hidden');
+        } else {
+            if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
+        }
+    }
+    cargarMateriasDeGerencia();
 }
 
-function cargarMateriasDeGerencia() {
-    const selectGer = document.getElementById('select-usuario-gerencia');
-    const gerenciaId = selectGer ? (selectGer.tomselect ? selectGer.tomselect.getValue() : selectGer.value) : '';
+function cargarMateriasDeGerencia(event) {
+    const selectRol = document.getElementById('select-usuario-rol');
+    const rol = selectRol ? selectRol.value : '';
+    if (rol === 'ADMIN' || rol === 'DIRECTOR_PRINCIPAL' || rol === 'DIRECTOR' || rol === 'SUBDIRECTOR') {
+        const contenedor = document.getElementById('contenedor-materias');
+        if (contenedor) contenedor.classList.add('hidden');
+        return;
+    }
+    const selectGerencias = document.getElementById('select-usuario-gerencia');
+    if (selectGerencias && (rol === 'GERENTE' || rol === 'JEFE_DEPTO' || rol === 'ABOGADO')) {
+        const selectedOptions = Array.from(selectGerencias.selectedOptions);
+        if (selectedOptions.length > 1) {
+            const lastSelected = selectedOptions[selectedOptions.length - 1];
+            Array.from(selectGerencias.options).forEach(opt => {
+                opt.selected = (opt === lastSelected);
+            });
+            materiasUsuarioActual = [];
+        }
+    }
+    const checkedGerencias = selectGerencias ? Array.from(selectGerencias.selectedOptions).map(opt => opt.value) : [];
     const contenedor = document.getElementById('contenedor-materias');
-    const listaCheckboxes = document.getElementById('lista-materias-checkboxes');
+    const lista = document.getElementById('lista-materias-checkboxes');
 
-    if (!gerenciaId) {
-        contenedor.classList.add('hidden');
+    if (checkedGerencias.length === 0) {
+        if (contenedor) contenedor.classList.add('hidden');
+        if (lista) lista.innerHTML = '';
         return;
     }
 
-    listaCheckboxes.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
-    contenedor.classList.remove('hidden');
+    if (lista) lista.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
+    if (contenedor) contenedor.classList.remove('hidden');
 
-    fetch(`/usuarios/api/materias-por-gerencia/${gerenciaId}`)
-        .then(res => res.json())
-        .then(materias => {
-            listaCheckboxes.innerHTML = '';
-            if (materias.length === 0) {
-                listaCheckboxes.innerHTML = '<p class="text-xs text-red-400">Sin materias registradas.</p>';
+    const fetchPromises = checkedGerencias.map(gerenciaId =>
+        fetch(`/usuarios/api/materias-por-gerencia/${gerenciaId}`).then(res => res.json())
+    );
+
+    Promise.all(fetchPromises)
+        .then(results => {
+            const todasMaterias = [];
+            const idsVistos = new Set();
+            results.forEach(materias => {
+                materias.forEach(m => {
+                    if (!idsVistos.has(m.id)) {
+                        idsVistos.add(m.id);
+                        todasMaterias.push(m);
+                    }
+                });
+            });
+
+            if (!lista) return;
+            lista.innerHTML = '';
+            if (todasMaterias.length === 0) {
+                lista.innerHTML = '<p class="text-xs text-red-400">Sin materias.</p>';
                 return;
             }
-            materias.forEach(m => {
-                const isChecked = materiasUsuarioActual.includes(m.id) ? 'checked' : '';
-                const html = `
+            todasMaterias.forEach(m => {
+                const isGerente = (rol === 'GERENTE');
+                const isChecked = (isGerente || materiasUsuarioActual.includes(m.id)) ? 'checked' : '';
+                const clickAttr = isGerente ? 'onclick="return false;" style="pointer-events: none; opacity: 0.7;"' : '';
+                lista.innerHTML += `
                     <div class="flex items-center space-x-2">
-                        <input type="checkbox" name="materiasIds" value="${m.id}" id="mat-${m.id}" ${isChecked}
-                               class="rounded text-gob-guinda focus:ring-gob-oro h-4 w-4 border-gray-300">
+                        <input type="checkbox" name="materiasIds" value="${m.id}" id="mat-${m.id}" ${isChecked} ${clickAttr} class="rounded text-gob-guinda h-4 w-4 border-gray-300 focus:ring-gob-oro">
                         <label for="mat-${m.id}" class="text-xs text-gray-700 cursor-pointer select-none">${m.nombre}</label>
                     </div>`;
-                listaCheckboxes.innerHTML += html;
             });
+        })
+        .catch(err => {
+            console.error("Error al cargar materias:", err);
+            if (lista) lista.innerHTML = '<p class="text-xs text-red-400">Error al cargar materias.</p>';
         });
 }
 
-function editarUsuario(id, nombre, email, rol, gerenciaId, activo, materiasIdsArray) {
-    document.getElementById('titulo-modal-usuario').innerHTML = '<i class="fas fa-user-edit mr-2"></i> Editar Usuario';
-    document.getElementById('input-usuario-id').value = id;
-    document.getElementById('input-usuario-nombre').value = nombre;
-    document.getElementById('input-usuario-email').value = email;
-    document.getElementById('select-usuario-rol').value = rol;
-    document.getElementById('check-usuario-activo').checked = activo;
+function editarUsuario(id, nombre, email, rol, gerenciaIdsArray, activo, materiasIdsArray) {
+    abrirModalUsuario();
 
+    const titulo = document.getElementById('titulo-modal-usuario');
+    if (titulo) titulo.innerHTML = '<i class="fas fa-user-edit mr-2"></i> Editar Usuario';
+
+    const inputId = document.getElementById('input-usuario-id');
+    if (inputId) inputId.value = id;
+
+    const inputNombre = document.getElementById('input-usuario-nombre');
+    if (inputNombre) inputNombre.value = nombre;
+
+    const inputEmail = document.getElementById('input-usuario-email');
+    if (inputEmail) inputEmail.value = email;
+
+    const selectRol = document.getElementById('select-usuario-rol');
+    if (selectRol) selectRol.value = rol;
+
+    const checkActivo = document.getElementById('check-usuario-activo');
+    if (checkActivo) checkActivo.checked = activo;
+
+    // EDICIÓN
+    const bloqueNuevo = document.getElementById('bloque-password-nuevo');
+    const bloqueTemporal = document.getElementById('bloque-password-temporal');
     const inputPass = document.getElementById('input-usuario-password');
-    inputPass.value = ''; inputPass.required = false; inputPass.placeholder = "Dejar en blanco para mantener";
+    if (bloqueNuevo) { bloqueNuevo.classList.add('hidden'); }
+    if (bloqueTemporal) { bloqueTemporal.classList.remove('hidden'); }
+    if (inputPass) { inputPass.required = false; inputPass.value = ''; inputPass.disabled = true; }
+
+    const hiddenPass = document.getElementById('input-password-temporal');
+    const badge = document.getElementById('badge-pass-generado');
+    if (hiddenPass) {
+        hiddenPass.value = '';
+        hiddenPass.disabled = false;
+    }
+    if (badge) badge.classList.add('hidden');
 
     materiasUsuarioActual = materiasIdsArray || [];
+
     const selectGerencia = document.getElementById('select-usuario-gerencia');
+    if (selectGerencia) {
+        Array.from(selectGerencia.options).forEach(opt => {
+            opt.selected = (gerenciaIdsArray || []).includes(Number(opt.value));
+        });
+    }
 
     actualizarFormularioPorRol();
-
-    if (gerenciaId) {
-        if (selectGerencia.tomselect) {
-            selectGerencia.tomselect.setValue(gerenciaId);
-        } else {
-            selectGerencia.value = gerenciaId;
-        }
-        cargarMateriasDeGerencia();
-    } else {
-        if (selectGerencia.tomselect) {
-            selectGerencia.tomselect.setValue('');
-        } else {
-            selectGerencia.value = "";
-        }
-        document.getElementById('contenedor-materias').classList.add('hidden');
-    }
+    cargarMateriasDeGerencia();
 
     const btnEliminar = document.getElementById('btn-eliminar-usuario');
-    btnEliminar.classList.remove('hidden');
-    document.getElementById('input-usuario-id').value = id;
-
-    const modal = document.getElementById('modal-usuario');
-    modal.classList.remove('hidden'); modal.classList.add('flex');
+    if (btnEliminar) btnEliminar.classList.remove('hidden');
 }
 
-function abrirModalGerencia() {
-    document.getElementById('titulo-modal-gerencia').innerHTML = '<i class="fas fa-building mr-2"></i> Nueva Gerencia';
-    document.getElementById('input-gerencia-id').value = '';
-    document.getElementById('input-gerencia-nombre').value = '';
-    document.getElementById('input-gerencia-desc').value = '';
-    document.getElementById('input-gerencia-activo').checked = true;
+// -- MODAL DE CONTRASEÑA TEMPORAL ------------------------------------------
+function abrirModalPasswordTemporal() {
+    const digitos = Math.floor(10000 + Math.random() * 90000);
+    const passGenerada = `Temporal${digitos}`;
 
-    const modal = document.getElementById('modal-gerencia');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-function editarGerencia(id, nombre, descripcion, activo) {
-    document.getElementById('titulo-modal-gerencia').innerHTML = '<i class="fas fa-edit mr-2"></i> Editar Gerencia';
-    document.getElementById('input-gerencia-id').value = id;
-    document.getElementById('input-gerencia-nombre').value = nombre;
-    document.getElementById('input-gerencia-desc').value = descripcion;
-    document.getElementById('input-gerencia-activo').checked = activo;
-
-    const modal = document.getElementById('modal-gerencia');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-// --- ÓRGANOS JURISDICCIONALES ---
-
-function abrirModalOrgano() {
-    document.getElementById('titulo-modal-organo').innerHTML = '<i class="fas fa-university mr-2"></i> Nuevo Órgano Jurisdiccional';
-    document.getElementById('input-organo-id').value = '';
-    document.getElementById('input-organo-nombre').value = '';
-    document.getElementById('select-organo-tipo').value = 'JUZGADO';
-    document.getElementById('input-organo-sede').value = '';
-    document.getElementById('check-organo-activo').checked = true;
-
-    const modal = document.getElementById('modal-organo');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-function editarOrgano(id, nombre, tipo, sede, activo) {
-    document.getElementById('titulo-modal-organo').innerHTML = '<i class="fas fa-edit mr-2"></i> Editar Órgano Jurisdiccional';
-    document.getElementById('input-organo-id').value = id;
-    document.getElementById('input-organo-nombre').value = nombre;
-    document.getElementById('select-organo-tipo').value = tipo;
-    document.getElementById('input-organo-sede').value = sede;
-    document.getElementById('check-organo-activo').checked = (activo === 'true' || activo === true);
-
-    const modal = document.getElementById('modal-organo');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-// --- TIPOS DE AUDIENCIA ---
-
-function abrirModalTipoAudiencia() {
-    document.getElementById('titulo-modal-tipo-audiencia').innerHTML = '<i class="fas fa-calendar-alt mr-2"></i> Nuevo Tipo de Audiencia';
-    document.getElementById('input-tipo-audiencia-id').value = '';
-    document.getElementById('input-tipo-audiencia-nombre').value = '';
-    document.getElementById('check-tipo-audiencia-activo').checked = true;
-
-    const modal = document.getElementById('modal-tipo-audiencia');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-function editarTipoAudiencia(id, nombre, activo) {
-    document.getElementById('titulo-modal-tipo-audiencia').innerHTML = '<i class="fas fa-edit mr-2"></i> Editar Tipo de Audiencia';
-    document.getElementById('input-tipo-audiencia-id').value = id;
-    document.getElementById('input-tipo-audiencia-nombre').value = nombre;
-    document.getElementById('check-tipo-audiencia-activo').checked = (activo === 'true' || activo === true);
-
-    const modal = document.getElementById('modal-tipo-audiencia');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-// --- 3. LÓGICA "PRO" MATERIAS (AJAX) ---
-
-// Abrir el modal y cargar lista
-function verMaterias(gerenciaId, nombreGerencia) {
-    // 1. Configurar Modal
-    document.getElementById('hidden-gerencia-id').value = gerenciaId;
-    document.getElementById('subtitulo-gerencia').textContent = 'Gerencia: ' + nombreGerencia;
-
-    // 2. Mostrar Modal
-    const modal = document.getElementById('modal-materias');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-
-    // 3. Cargar Lista via FETCH
-    cargarListaMaterias(gerenciaId);
-}
-
-function cargarListaMaterias(gerenciaId) {
-    const contenedor = document.getElementById('contenedor-lista-materias');
-    contenedor.innerHTML = '<div class="text-center text-gray-400 py-4"><i class="fas fa-spinner fa-spin mr-2"></i> Cargando...</div>';
-
-    fetch(`/usuarios/gerencias/${gerenciaId}/materias`)
-        .then(response => response.text())
-        .then(htmlFragment => {
-            // Inyectar el HTML que vino del servidor
-            contenedor.innerHTML = htmlFragment;
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            contenedor.innerHTML = '<p class="text-red-500 text-center text-sm">Error al cargar materias</p>';
-        });
-}
-
-function guardarMateriaJS() {
-    const gerenciaId = document.getElementById('hidden-gerencia-id').value;
-    const nombreMateria = document.getElementById('input-nueva-materia').value;
-
-    if (!nombreMateria.trim()) {
-        alert("Escribe un nombre para la materia");
-        return;
-    }
-
-    // Datos a enviar
-    const data = {
-        nombre: nombreMateria,
-        gerencia: { id: gerenciaId }, // Solo mandamos el ID de la relación
-        activo: true
-    };
-
-    fetch('/usuarios/gerencias/materias/guardar', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            // Si usas CSRF, aquí iría el token
-        },
-        body: JSON.stringify(data)
-    })
-        .then(response => {
-            if (response.ok) {
-                // Limpiar input y recargar lista
-                document.getElementById('input-nueva-materia').value = '';
-                cargarListaMaterias(gerenciaId);
-            } else {
-                alert("Error al guardar la materia");
-            }
-        })
-        .catch(error => console.error("Error:", error));
-}
-
-function cerrarModalMaterias() {
-    const modal = document.getElementById('modal-materias');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-}
-
-// --- 4. BUSCADORES EN TIEMPO REAL ---
-
-function filtrarTabla(inputId, tbodyId) {
-    const input = document.getElementById(inputId);
-    const filter = input.value.toLowerCase();
-    const tbody = document.getElementById(tbodyId);
-    if (!tbody) return;
-
-    const rows = tbody.getElementsByTagName('tr');
-
-    for (let i = 0; i < rows.length; i++) {
-        const textoFila = rows[i].textContent || rows[i].innerText;
-        if (textoFila.toLowerCase().indexOf(filter) > -1) {
-            rows[i].style.display = "";
-        } else {
-            rows[i].style.display = "none";
+    Swal.fire({
+        width: '36rem',
+        title: '<i class="fas fa-key text-gob-guinda mr-2"></i>Contraseña Temporal',
+        html: `
+            <p class="text-sm text-gray-600 mb-6">Se asignará esta contraseña temporal al usuario.<br>Al iniciar sesión se le pedirá cambiarla.</p>
+            <div class="flex items-center gap-6 bg-gray-50 border border-gray-200 rounded-lg px-4 py-6">
+                <code id="swal-pass-code" class="flex-1 text-left text-lg font-mono font-bold text-gob-guinda tracking-widest select-all">${passGenerada}</code>
+                <button type="button" onclick="copiarPasswordTemporal('${passGenerada}')"
+                     class="flex-shrink-0 px-3 py-1.5 bg-gob-guinda text-white text-xs font-bold rounded-lg hover:opacity-90 transition-all">
+                    <i class="fas fa-copy mr-1"></i>Copiar
+                </button>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-2">El usuario deberá cambiarla en su próximo inicio de sesión.</p>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '<i class="fas fa-save mr-1"></i> Actualizar contraseña',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#691228',
+        cancelButtonColor: '#808590ff',
+        focusConfirm: false,
+        customClass: {
+            title: 'text-3xl font-bold pt-6',
+            confirmButton: 'px-8 py-3 text-lg rounded-lg',
+            cancelButton: 'px-8 py-3 text-lg rounded-lg',
         }
+    }).then(result => {
+        if (result.isConfirmed) {
+            const hiddenPass = document.getElementById('input-password-temporal');
+            if (hiddenPass) hiddenPass.value = passGenerada;
+
+            const form = document.querySelector('#modal-usuario form');
+            if (form) form.submit();
+        }
+    });
+}
+
+function ejecutarCopiado(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text);
+    } else {
+        return new Promise((resolve, reject) => {
+            try {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.top = "0";
+                textArea.style.left = "0";
+                textArea.style.opacity = "0";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                const successful = document.execCommand('copy');
+                document.body.removeChild(textArea);
+                if (successful) {
+                    resolve();
+                } else {
+                    reject(new Error("Copiado fallido"));
+                }
+            } catch (err) {
+                reject(err);
+            }
+        });
     }
 }
 
-// Inicializar Listeners
-document.addEventListener('DOMContentLoaded', function () {
-    inicializarSelectsUsuarios();
-
-    // Buscador Gerencias
-    const searchGerencia = document.getElementById('input-search-gerencias');
-    if (searchGerencia) {
-        searchGerencia.addEventListener('keyup', () => filtrarTabla('input-search-gerencias', 'tabla-gerencias-body'));
-    }
-
-    // Buscador Órganos
-    const searchOrgano = document.getElementById('input-search-organos');
-    if (searchOrgano) {
-        searchOrgano.addEventListener('keyup', () => filtrarTabla('input-search-organos', 'tabla-organos-body'));
-    }
-
-    // Buscador Tipos Audiencia
-    const searchTipoAudiencia = document.getElementById('input-search-tipos-audiencia');
-    if (searchTipoAudiencia) {
-        searchTipoAudiencia.addEventListener('keyup', () => filtrarTabla('input-search-tipos-audiencia', 'tabla-tipos-audiencia-body'));
-    }
-});
-
-// --- 5. CAMBIO DE ESTATUS (Eliminado Lógico) ---
+function copiarPasswordTemporal(pass) {
+    ejecutarCopiado(pass).then(() => {
+        const btn = document.querySelector('#swal-pass-code + button') ||
+            document.querySelector('[onclick*="copiarPasswordTemporal"]');
+        if (btn) {
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check mr-1"></i>¡Copiado!';
+            btn.classList.add('bg-green-600');
+            btn.classList.remove('bg-gob-guinda');
+            setTimeout(() => { btn.innerHTML = original; btn.classList.remove('bg-green-600'); btn.classList.add('bg-gob-guinda'); }, 1500);
+        }
+    }).catch((err) => { console.error("Error al copiar:", err); });
+}
 
 let accionConfirmadaCallback = null;
 
@@ -410,129 +509,447 @@ function ejecutarAccionConfirmada() {
     }
 }
 
-function confirmarCambioEstatus(id, tipo) {
-    let titulo = tipo === 'usuario' ? '¿Cambiar acceso del usuario?' : '¿Cambiar estatus de gerencia?';
-    let texto = "El registro cambiará de Activo a Inactivo (o viceversa).";
-    let url = tipo === 'usuario' ? `/usuarios/toggle/${id}` : `/usuarios/gerencias/toggle/${id}`;
-
-    abrirModalConfirmarGenerico({
-        titulo: titulo,
-        texto: texto,
-        advertencia: "El cambio afectará la disponibilidad del registro en el sistema.",
-        esPeligro: false,
-        callback: () => {
-            window.location.href = url;
-        }
-    });
-}
-
-function confirmarCambioEstatusCatalogo(id, tipo) {
-    let titulo = '';
-    let url = '';
-
-    if (tipo === 'organo') {
-        titulo = '¿Cambiar estatus del Órgano?';
-        url = `/usuarios/organos/toggle/${id}`;
-    } else if (tipo === 'tipo-audiencia') {
-        titulo = '¿Cambiar estatus del Tipo de Audiencia?';
-        url = `/usuarios/tipos-audiencia/toggle/${id}`;
-    }
-
-    abrirModalConfirmarGenerico({
-        titulo: titulo,
-        texto: "El registro cambiará su disponibilidad en el sistema.",
-        advertencia: "Puedes revertir este cambio en cualquier momento.",
-        esPeligro: false,
-        callback: () => {
-            window.location.href = url;
-        }
-    });
-}
-
-function eliminarMateriaJS(materiaId, gerenciaId) {
-    abrirModalConfirmarGenerico({
-        titulo: "¿Eliminar materia?",
-        texto: "¿Seguro que deseas eliminar esta materia?",
-        advertencia: "Esta acción no se puede deshacer.",
-        esPeligro: true,
-        callback: () => {
-            cerrarModalConfirmarGenerico();
-            fetch(`/usuarios/gerencias/materias/eliminar/${materiaId}`, {
-                method: 'DELETE'
-            })
-            .then(response => {
-                if (response.ok) {
-                    cargarListaMaterias(gerenciaId);
-                } else {
-                    alert("No se pudo eliminar. Verifica que no tenga expedientes vinculados.");
-                }
-            })
-            .catch(error => console.error("Error:", error));
-        }
-    });
-}
-
 function eliminarUsuarioDesdeModal() {
     const id = document.getElementById('input-usuario-id').value;
     if (!id) return;
-
     abrirModalConfirmarGenerico({
-        titulo: "¿Eliminar usuario definitivamente?",
-        texto: "Esta acción no se puede deshacer. Si el usuario tiene historial, no se podrá borrar.",
-        advertencia: "Se borrarán los accesos y registros asociados permanentemente.",
+        titulo: '¿Eliminar usuario?',
+        texto: 'Esta acción no se puede deshacer.',
+        advertencia: 'Se borrarán los accesos y registros asociados permanentemente.',
         esPeligro: true,
         callback: () => {
-            cerrarModalConfirmarGenerico();
-            fetch(`/usuarios/eliminar/${id}`, {
-                method: 'DELETE'
-            })
-            .then(async response => {
-                if (response.ok) {
-                    const Toast = Swal.mixin({
-                        toast: true,
-                        position: 'bottom-end',
-                        showConfirmButton: false,
-                        timer: 2000,
-                    });
-
-                    Toast.fire({
-                        icon: 'success',
-                        title: 'Eliminado correctamente',
-                        iconColor: '#22c55e',
-                        background: '#f0fdf4',
-                        customClass: {
-                            title: 'text-green-800 text-sm font-bold'
-                        }
-                    }).then(() => {
-                        location.reload();
-                    });
-                } else {
-                    const msg = await response.text();
-                    Swal.fire('Error', msg || 'No se pudo eliminar el usuario.', 'error');
-                }
-            })
-            .catch(error => {
-                console.error(error);
-                Swal.fire('Error', 'Ocurrió un error inesperado.', 'error');
-            });
+            window.location.href = `/usuarios/eliminar/${id}`;
         }
     });
 }
-// Detectar tab en URL para abrirlo automáticamente
-const params = new URLSearchParams(window.location.search);
-const tabParam = params.get('tab');
-if (tabParam) {
-    cambiarTab(tabParam);
+
+function confirmarCambioEstatus(id) {
+    abrirModalConfirmarGenerico({
+        titulo: '¿Cambiar acceso al sistema?',
+        texto: 'El usuario perderá/recuperará acceso a la plataforma.',
+        advertencia: 'El cambio afectará la disponibilidad del registro en el sistema.',
+        esPeligro: false,
+        callback: () => {
+            window.location.href = `/usuarios/toggle/${id}`;
+        }
+    });
 }
 
-function inicializarSelectsUsuarios() {
-    const selectGerencia = document.getElementById('select-usuario-gerencia');
-    if (selectGerencia && !selectGerencia.tomselect) {
-        initSearchableSelect(selectGerencia, {
-            tipo: 'gerencia',
-            onChange: function() {
-                cargarMateriasDeGerencia();
+// --- 3. BÚSQUEDA SERVER-SIDE ---
+
+// --- 4. NAVEGACIÓN Y CARGA DE DATOS (PESTAÑAS) ---
+
+function cambiarTabAbogado(tabName) {
+    // 1. Ocultar todos y mostrar el activo
+    document.querySelectorAll('.tab-abogado-content').forEach(el => { el.classList.add('hidden'); el.classList.remove('block'); });
+    const contenidoActivo = document.getElementById('tab-content-' + tabName);
+    if (contenidoActivo) { contenidoActivo.classList.remove('hidden'); contenidoActivo.classList.add('block'); }
+
+    // 2. Estilos de los botones
+    document.querySelectorAll('.tab-abogado').forEach(btn => {
+        btn.classList.remove('border-gob-guinda', 'text-gob-guinda', 'font-bold');
+        btn.classList.add('border-transparent', 'text-gray-500', 'font-medium');
+    });
+    const botonActivo = document.getElementById('tab-btn-' + tabName);
+    if (botonActivo) {
+        botonActivo.classList.remove('border-transparent', 'text-gray-500', 'font-medium');
+        botonActivo.classList.add('border-gob-guinda', 'text-gob-guinda', 'font-bold');
+    }
+
+    // 3. CARGA DINÁMICA DE DATOS SEGÚN LA PESTAÑA
+    if (!usuarioSeleccionadoId) return;
+
+    if (tabName === 'casos') {
+        cargarCasosAbogado(usuarioSeleccionadoId);
+    } else if (tabName === 'terminos') {
+        cargarAgendaAbogado(usuarioSeleccionadoId);
+    } else if (tabName === 'historial') {
+        cargarHistorialAbogado(usuarioSeleccionadoId);
+    }
+}
+
+function cargarCasosAbogado(idUsuario) {
+    const tbody = document.getElementById('tbody-casos');
+    document.getElementById('container-tabla-casos').classList.add('hidden');
+    document.getElementById('empty-casos').classList.add('hidden');
+    document.getElementById('loading-casos').classList.remove('hidden');
+
+    fetch(`/usuarios/api/${idUsuario}/casos`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loading-casos').classList.add('hidden');
+            if (data.length === 0) {
+                document.getElementById('empty-casos').classList.remove('hidden');
+            } else {
+                tbody.innerHTML = '';
+                data.forEach(caso => {
+                    let estatusClass = 'bg-gray-100 text-gray-800';
+                    if (caso.estatus === 'TRAMITE') estatusClass = 'bg-blue-100 text-blue-800';
+                    else if (caso.estatus === 'LAUDO') estatusClass = 'bg-yellow-100 text-yellow-800';
+                    else if (caso.estatus === 'FIRME') estatusClass = 'bg-green-100 text-green-800';
+                    else if (caso.estatus === 'CONCLUIDO') estatusClass = 'bg-gray-200 text-gray-700';
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                            <td class="px-6 py-4">
+                                <p class="font-bold text-slate-800">${caso.numero}</p>
+                                <p class="text-xs text-slate-500 truncate max-w-xs" title="${caso.asunto}">${caso.asunto}</p>
+                            </td>
+                            <td class="px-6 py-4 text-slate-700 font-medium">${caso.cliente}</td>
+                            <td class="px-6 py-4"><span class="${estatusClass} text-[10px] font-bold px-2 py-0.5 rounded border border-black/5">${caso.estatus}</span></td>
+                            <td class="px-6 py-4 text-right text-slate-600 font-medium">${caso.fecha}</td>
+                        </tr>
+                    `;
+                });
+                document.getElementById('container-tabla-casos').classList.remove('hidden');
+            }
+        }).catch(err => console.error(err));
+}
+
+function cargarAgendaAbogado(idUsuario) {
+    const tbody = document.getElementById('tbody-terminos');
+    document.getElementById('container-tabla-terminos').classList.add('hidden');
+    document.getElementById('empty-terminos').classList.add('hidden');
+    document.getElementById('loading-terminos').classList.remove('hidden');
+
+    fetch(`/usuarios/api/${idUsuario}/agenda`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loading-terminos').classList.add('hidden');
+            if (data.length === 0) {
+                document.getElementById('empty-terminos').classList.remove('hidden');
+            } else {
+                tbody.innerHTML = '';
+                data.forEach(item => {
+                    let icon = item.tipo === 'Audiencia' ? '<i class="fas fa-gavel text-gob-oro mr-2"></i>' : '<i class="fas fa-hourglass-half text-gob-guinda mr-2"></i>';
+                    let typeBadge = item.tipo === 'Audiencia' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800';
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                            <td class="px-6 py-4 font-bold text-slate-800">
+                                <span class="${typeBadge} px-2 py-1 rounded text-[10px] uppercase tracking-wider border border-current/10">${icon} ${item.tipo}</span>
+                            </td>
+                            <td class="px-6 py-4 text-slate-600 text-sm">${item.descripcion}</td>
+                            <td class="px-6 py-4 font-bold text-gob-guinda text-sm">${item.fecha}</td>
+                        </tr>
+                    `;
+                });
+                document.getElementById('container-tabla-terminos').classList.remove('hidden');
+            }
+        }).catch(err => console.error(err));
+}
+
+let historialDatosCargados = [];
+
+function cargarHistorialAbogado(idUsuario) {
+    const container = document.getElementById('container-historial');
+    document.getElementById('container-historial').classList.add('hidden');
+    document.getElementById('empty-historial').classList.add('hidden');
+    document.getElementById('loading-historial').classList.remove('hidden');
+
+    document.querySelectorAll('.btn-filtro-historial').forEach(btn => {
+        btn.className = "btn-filtro-historial px-3 py-1.5 text-xs rounded-full bg-white text-slate-600 font-medium border border-slate-200 hover:bg-slate-50 transition-all";
+    });
+    const defaultBtn = document.querySelector('.btn-filtro-historial[onclick*="TODOS"]');
+    if (defaultBtn) {
+        defaultBtn.className = "btn-filtro-historial active px-3 py-1.5 text-xs rounded-full bg-slate-200 text-slate-700 font-bold border border-transparent shadow-sm transition-all";
+    }
+
+    fetch(`/usuarios/api/${idUsuario}/historial`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loading-historial').classList.add('hidden');
+            historialDatosCargados = data;
+            renderizarHistorial(data);
+        }).catch(err => {
+            console.error(err);
+            document.getElementById('loading-historial').classList.add('hidden');
+        });
+}
+
+function renderizarHistorial(data) {
+    const container = document.getElementById('container-historial');
+    if (!data || data.length === 0) {
+        container.innerHTML = '';
+        container.classList.add('hidden');
+        document.getElementById('empty-historial').classList.remove('hidden');
+        return;
+    }
+
+    document.getElementById('empty-historial').classList.add('hidden');
+    container.innerHTML = '';
+
+    data.forEach(act => {
+        let iconClass = 'fa-edit';
+        let bgClass = 'bg-gray-50 text-gray-600 border-gray-100';
+
+        const cat = act.categoria || 'ACCIONES';
+        if (cat === 'SEGURIDAD') {
+            iconClass = 'fa-shield-alt';
+            bgClass = 'bg-blue-50 text-blue-600 border-blue-100';
+        } else if (cat === 'ASIGNACION') {
+            iconClass = 'fa-user-tag';
+            bgClass = 'bg-purple-50 text-purple-600 border-purple-100';
+        } else if (cat === 'DOCUMENTAL') {
+            iconClass = 'fa-file-signature';
+            bgClass = 'bg-emerald-50 text-emerald-600 border-emerald-100';
+        } else if (cat === 'ACCIONES') {
+            iconClass = 'fa-gavel';
+            bgClass = 'bg-amber-50 text-amber-600 border-amber-100';
+        }
+
+        container.innerHTML += `
+            <div class="flex gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex-shrink-0 w-10 h-10 ${bgClass} rounded-full flex items-center justify-center border">
+                    <i class="fas ${iconClass} text-sm"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-start">
+                        <p class="text-sm font-bold text-slate-800 truncate">${act.accion}</p>
+                        <span class="text-[10px] text-slate-400 whitespace-nowrap ml-2">${act.fecha}</span>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-1">${act.detalles}</p>
+                    ${act.expediente !== 'General' ? `
+                    <p class="text-xs font-medium text-gob-guinda flex items-center gap-1 mt-2">
+                        <i class="fas fa-file-alt"></i> Exp: ${act.expediente}
+                    </p>` : ''}
+                </div>
+            </div>
+        `;
+    });
+    container.classList.remove('hidden');
+}
+
+function filtrarHistorial(categoria) {
+    document.querySelectorAll('.btn-filtro-historial').forEach(btn => {
+        if (btn.getAttribute('onclick').includes(`'${categoria}'`)) {
+            btn.className = "btn-filtro-historial active px-3 py-1.5 text-xs rounded-full bg-slate-200 text-slate-700 font-bold border border-transparent shadow-sm transition-all";
+        } else {
+            btn.className = "btn-filtro-historial px-3 py-1.5 text-xs rounded-full bg-white text-slate-600 font-medium border border-slate-200 hover:bg-slate-50 transition-all";
+        }
+    });
+
+    if (categoria === 'TODOS') {
+        renderizarHistorial(historialDatosCargados);
+    } else {
+        const filtrados = historialDatosCargados.filter(act => (act.categoria || 'ACCIONES') === categoria);
+        renderizarHistorial(filtrados);
+    }
+}
+
+// --- 5. LÓGICA DE EDICIÓN EN LA PESTAÑA "EDITAR PERFIL" ---
+
+function actualizarFormularioEdicionPorRol() {
+    const selectRol = document.getElementById('det-select-rol');
+    if (!selectRol) return;
+    const rol = selectRol.value;
+    const divGerencia = document.getElementById('det-div-gerencia-asignada');
+    const contenedorMaterias = document.getElementById('det-contenedor-materias');
+
+    if (rol === 'ADMIN' || rol === 'DIRECTOR_PRINCIPAL' || rol === 'DIRECTOR' || rol === 'SUBDIRECTOR') {
+        if (divGerencia) divGerencia.classList.add('hidden');
+        if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
+    } else {
+        const creadorRol = window.usuarioActual ? window.usuarioActual.rol : '';
+        if (creadorRol !== 'GERENTE' && creadorRol !== 'JEFE_DEPTO') {
+            if (divGerencia) divGerencia.classList.remove('hidden');
+        }
+        const checkedGerencias = document.querySelectorAll('.det-gerencia-checkbox:checked');
+        if (checkedGerencias.length > 0) {
+            if (contenedorMaterias) contenedorMaterias.classList.remove('hidden');
+        } else {
+            if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
+        }
+    }
+    cargarMateriasDeGerenciaEdicion();
+}
+
+function cargarMateriasDeGerenciaEdicion(event) {
+    const selectRol = document.getElementById('det-select-rol');
+    const rol = selectRol ? selectRol.value : '';
+    if (rol === 'ADMIN' || rol === 'DIRECTOR_PRINCIPAL' || rol === 'DIRECTOR' || rol === 'SUBDIRECTOR') {
+        const contenedor = document.getElementById('det-contenedor-materias');
+        if (contenedor) contenedor.classList.add('hidden');
+        return;
+    }
+
+    const target = event ? event.target : null;
+    if (target && target.checked) {
+        document.querySelectorAll('.det-gerencia-checkbox').forEach(cb => {
+            if (cb !== target) {
+                cb.checked = false;
             }
         });
+        materiasUsuarioEdicion = [];
     }
+
+    const checkedGerencias = Array.from(document.querySelectorAll('.det-gerencia-checkbox:checked')).map(cb => cb.value);
+    const contenedor = document.getElementById('det-contenedor-materias');
+    const lista = document.getElementById('det-lista-materias-checkboxes');
+
+    if (checkedGerencias.length === 0) {
+        if (contenedor) contenedor.classList.add('hidden');
+        if (lista) lista.innerHTML = '';
+        return;
+    }
+
+    if (lista) lista.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
+    if (contenedor) contenedor.classList.remove('hidden');
+
+    const fetchPromises = checkedGerencias.map(gerenciaId =>
+        fetch(`/usuarios/api/materias-por-gerencia/${gerenciaId}`).then(res => res.json())
+    );
+
+    Promise.all(fetchPromises)
+        .then(results => {
+            const todasMaterias = [];
+            const idsVistos = new Set();
+            results.forEach(materias => {
+                materias.forEach(m => {
+                    if (!idsVistos.has(m.id)) {
+                        idsVistos.add(m.id);
+                        todasMaterias.push(m);
+                    }
+                });
+            });
+
+            if (!lista) return;
+            lista.innerHTML = '';
+            if (todasMaterias.length === 0) {
+                lista.innerHTML = '<p class="text-xs text-red-400">Sin materias disponibles.</p>';
+                return;
+            }
+            todasMaterias.forEach(m => {
+                const isGerente = (rol === 'GERENTE');
+                const isChecked = (isGerente || materiasUsuarioEdicion.includes(m.id)) ? 'checked' : '';
+                const clickAttr = isGerente ? 'onclick="return false;" style="pointer-events: none; opacity: 0.7;"' : '';
+                lista.innerHTML += `
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" name="materiasIds" value="${m.id}" id="det-mat-${m.id}" ${isChecked} ${clickAttr} class="rounded text-gob-guinda h-4 w-4 border-gray-300 focus:ring-gob-oro">
+                        <label for="det-mat-${m.id}" class="text-xs text-gray-700 cursor-pointer select-none">${m.nombre}</label>
+                    </div>`;
+            });
+        })
+        .catch(err => {
+            console.error("Error al cargar materias en edición:", err);
+            if (lista) lista.innerHTML = '<p class="text-xs text-red-400">Error al cargar materias.</p>';
+        });
+}
+
+function abrirModalPasswordTemporalEdicion() {
+    const digitos = Math.floor(10000 + Math.random() * 90000);
+    const passGenerada = `Temporal${digitos}`;
+
+    Swal.fire({
+        width: '36rem',
+        title: '<i class="fas fa-key text-gob-guinda mr-2"></i>Contraseña Temporal',
+        html: `
+            <p class="text-sm text-gray-600 mb-6">Se asignará esta contraseña temporal al usuario.<br>Al iniciar sesión se le pedirá cambiarla.</p>
+            <div class="flex items-center gap-6 bg-gray-50 border border-gray-200 rounded-lg px-4 py-6">
+                <code id="swal-pass-code-edicion" class="flex-1 text-left text-lg font-mono font-bold text-gob-guinda tracking-widest select-all">${passGenerada}</code>
+                <button type="button" onclick="copiarPasswordTemporalEdicion('${passGenerada}')"
+                    class="flex-shrink-0 px-3 py-1.5 bg-gob-guinda text-white text-xs font-bold rounded-lg hover:opacity-90 transition-all">
+                    <i class="fas fa-copy mr-1"></i>Copiar
+                </button>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-2">El usuario deberá cambiarla en su próximo inicio de sesión.</p>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '<i class="fas fa-save mr-1"></i> Generar y Enviar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#691228',
+        cancelButtonColor: '#808590ff',
+        focusConfirm: false,
+        customClass: {
+            title: 'text-3xl font-bold pt-6',
+            confirmButton: 'px-8 py-3 text-lg rounded-lg',
+            cancelButton: 'px-8 py-3 text-lg rounded-lg',
+        }
+    }).then(result => {
+        if (result.isConfirmed) {
+            const userId = document.getElementById('det-input-id').value;
+            if (!userId) {
+                Swal.fire('Error', 'No se ha podido identificar al usuario seleccionado.', 'error');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Guardando contraseña...',
+                html: 'Guardando la contraseña temporal en la base de datos...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const formData = new FormData();
+            formData.append('id', userId);
+            formData.append('password', passGenerada);
+
+            fetch('/usuarios/api/password-temporal', {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(data => {
+                            throw new Error(data.mensaje || 'Error al guardar la contraseña.');
+                        });
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    const badge = document.getElementById('det-badge-pass-generado');
+                    if (badge) {
+                        badge.innerHTML = '<i class="fas fa-check-circle text-sm"></i> Contraseña Temporal Actualizada';
+                        badge.classList.remove('hidden');
+                    }
+                    Swal.fire({
+                        title: '¡Contraseña Temporal Actualizada!',
+                        text: 'La contraseña temporal ha sido actualizada de manera correcta, ya no es necesario que guardes los cambios del perfil',
+                        icon: 'success',
+                        confirmButtonColor: '#691228'
+                    });
+                })
+                .catch(err => {
+                    Swal.fire({
+                        title: 'Error',
+                        text: err.message || 'No se pudo guardar la contraseña temporal.',
+                        icon: 'error',
+                        confirmButtonColor: '#691228'
+                    });
+                });
+        }
+    });
+}
+
+function copiarPasswordTemporalEdicion(pass) {
+    ejecutarCopiado(pass).then(() => {
+        const btn = document.getElementById('swal-pass-code-edicion').nextElementSibling;
+        if (btn) {
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check mr-1"></i>¡Copiado!';
+            btn.classList.add('bg-green-600');
+            btn.classList.remove('bg-gob-guinda');
+            setTimeout(() => {
+                btn.innerHTML = original;
+                btn.classList.remove('bg-green-600');
+                btn.classList.add('bg-gob-guinda');
+            }, 1500);
+        }
+    }).catch((err) => { console.error("Error al copiar:", err); });
+}
+
+function eliminarUsuarioDesdeDetalle() {
+    const id = document.getElementById('det-input-id').value;
+    if (!id) return;
+    abrirModalConfirmarGenerico({
+        titulo: '¿Eliminar usuario?',
+        texto: 'Esta acción no se puede deshacer.',
+        advertencia: 'Se borrarán los accesos y registros asociados permanentemente.',
+        esPeligro: true,
+        callback: () => {
+            window.location.href = `/usuarios/eliminar/${id}`;
+        }
+    });
 }

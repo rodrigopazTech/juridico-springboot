@@ -1,0 +1,46 @@
+﻿[
+  {
+    "role": "ADMIN",
+    "status": 200,
+    "url": "http://localhost:8080/usuarios",
+    "hasAdmin": true,
+    "hasDirector": true,
+    "hasGerente": true,
+    "hasJefe": true,
+    "hasAbogado": true,
+    "hasCrear": true
+  },
+  {
+    "role": "GERENTE",
+    "status": 200,
+    "url": "http://localhost:8080/usuarios",
+    "hasAdmin": false,
+    "hasDirector": false,
+    "hasGerente": true,
+    "hasJefe": true,
+    "hasAbogado": true,
+    "hasCrear": true
+  },
+  {
+    "role": "JEFE_DEPTO",
+    "status": 200,
+    "url": "http://localhost:8080/usuarios",
+    "hasAdmin": false,
+    "hasDirector": false,
+    "hasGerente": false,
+    "hasJefe": true,
+    "hasAbogado": true,
+    "hasCrear": true
+  },
+  {
+    "role": "ABOGADO",
+    "status": 403,
+    "url": "http://localhost:8080/usuarios",
+    "hasAdmin": false,
+    "hasDirector": false,
+    "hasGerente": false,
+    "hasJefe": false,
+    "hasAbogado": false,
+    "hasCrear": false
+  }
+]

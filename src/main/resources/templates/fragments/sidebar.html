@@ -52,7 +52,7 @@
                     </a>
                 </li>
 
-                <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO')">
+                <li sec:authorize="isAuthenticated()">
                     <a th:href="@{/agenda}"
                         class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
                         th:classappend="${activePage == 'agenda' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
@@ -121,12 +121,12 @@
                 </li>
 
                 <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO')">
-                    <a th:href="@{/abogados}"
+                    <a th:href="@{/usuarios}"
                         class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
-                        th:classappend="${activePage == 'abogados' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
-                        <i class="fas fa-user-tie w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
-                            th:classappend="${activePage == 'abogados' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
-                        <span class="ms-3 text-sm">Abogados</span>
+                        th:classappend="${activePage == 'usuarios' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-user-shield w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                            th:classappend="${activePage == 'usuarios' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
+                        <span class="ms-3 text-sm">Usuarios</span>
                     </a>
                 </li>
 

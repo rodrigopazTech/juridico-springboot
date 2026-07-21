@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 
@@ -46,11 +47,16 @@ public class AgendaService {
 
         Integer filtroRoleGerenciaId = null;
         List<Integer> filtroRoleMateriaIds = null;
+        Integer filtroRoleUsuarioId = null;
 
-        if (actual.getRol().name().equals("GERENTE") && actual.getGerencia() != null) {
-            filtroRoleGerenciaId = actual.getGerencia().getId();
-        } else if (actual.getRol().name().equals("JEFE_DEPTO") && !actual.getMaterias().isEmpty()) {
-            filtroRoleMateriaIds = actual.getMaterias().stream().map(m -> m.getId()).toList();
+        if (actual.getRol() == RolUsuario.ABOGADO) {
+            filtroRoleUsuarioId = actual.getId();
+        } else if (actual.getRol() == RolUsuario.GERENTE) {
+            filtroRoleGerenciaId = actual.getGerencia() != null ? actual.getGerencia().getId() : -1;
+        } else if (actual.getRol() == RolUsuario.JEFE_DEPTO) {
+            filtroRoleMateriaIds = actual.getMaterias() != null && !actual.getMaterias().isEmpty()
+                    ? actual.getMaterias().stream().map(m -> m.getId()).toList()
+                    : List.of(-1);
         }
 
         // Si las fechas son nulas sugerir rango de siglo por defecto para evitar NULL
@@ -62,7 +68,7 @@ public class AgendaService {
                 EstatusAudiencia.CONCLUIDA,
                 fechaInicio, fechaFin,
                 gerenciaId, materiaId,
-                filtroRoleGerenciaId, filtroRoleMateriaIds,
+                filtroRoleGerenciaId, filtroRoleMateriaIds, filtroRoleUsuarioId,
                 pageable);
     }
 
@@ -74,11 +80,17 @@ public class AgendaService {
 
         Integer filtroRoleGerenciaId = null;
         List<Integer> filtroRoleMateriaIds = null;
+        Integer filtroRoleUsuarioId = null;
 
-        if (actual.getRol().name().equals("GERENTE") && actual.getGerencia() != null) {
-            filtroRoleGerenciaId = actual.getGerencia().getId();
-        } else if (actual.getRol().name().equals("JEFE_DEPTO") && !actual.getMaterias().isEmpty()) {
-            filtroRoleMateriaIds = actual.getMaterias().stream().map(m -> m.getId()).toList();
+        if (actual.getRol() == RolUsuario.ABOGADO) {
+            filtroRoleMateriaIds = List.of(-1);
+            filtroRoleUsuarioId = actual.getId();
+        } else if (actual.getRol() == RolUsuario.GERENTE) {
+            filtroRoleGerenciaId = actual.getGerencia() != null ? actual.getGerencia().getId() : -1;
+        } else if (actual.getRol() == RolUsuario.JEFE_DEPTO) {
+            filtroRoleMateriaIds = actual.getMaterias() != null && !actual.getMaterias().isEmpty()
+                    ? actual.getMaterias().stream().map(m -> m.getId()).toList()
+                    : List.of(-1);
         }
 
         if (fechaInicio == null) fechaInicio = LocalDate.of(1900, 1, 1);
@@ -90,7 +102,7 @@ public class AgendaService {
                 fechaInicio, fechaFin,
                 gerenciaId, materiaId,
                 filtroRoleGerenciaId, filtroRoleMateriaIds,
-                null,
+                filtroRoleUsuarioId,
                 pageable);
     }
 }

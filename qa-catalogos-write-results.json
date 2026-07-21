@@ -1,0 +1,6 @@
+﻿{
+    "actor":  "ABOGADO",
+    "action":  "POST /catalogos/gerencias/guardar",
+    "status":  "302 http://localhost:8080/catalogos?gerenciaId=4",
+    "created":  "4|QA Gerencia Abogado No Permitida"
+}

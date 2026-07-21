@@ -159,14 +159,13 @@
                                             <i class="fas fa-file-pdf mr-3 w-4 text-center text-red-500"></i> Ver Acta
                                         </a>
                                         <div class="border-t border-gray-50"></div>
-                                        <button th:if="${a.estatusAudiencia?.name() == 'CON_ACTA'}"
-                                            sec:authorize="hasAnyAuthority('DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO', 'ADMIN')"
+                                        <button th:if="${a.estatusAudiencia?.name() == 'CON_ACTA' and usuarioActual != null and (usuarioActual.rol.name() == 'ADMIN' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'SUBDIRECTOR' or usuarioActual.rol.name() == 'GERENTE' or usuarioActual.rol.name() == 'JEFE_DEPTO' or (usuarioActual.rol.name() == 'ABOGADO' and ((a.expediente != null and a.expediente.abogadoResponsable != null and a.expediente.abogadoResponsable.id == usuarioActual.id) or (a.abogadoComparece != null and a.abogadoComparece.id == usuarioActual.id))))}"
                                             th:data-audiencia-id="${a.id}" onclick="abrirModalConcluir(this.dataset.audienciaId)"
                                             class="w-full text-left px-4 py-3 text-sm text-green-700 hover:bg-green-50 flex items-center font-bold transition-colors">
                                             <i class="fas fa-check-circle mr-3 w-4 text-center"></i> Validar y Concluir
                                         </button>
                                         <a th:unless="${a.estatusAudiencia?.name() == 'CONCLUIDA'}"
-                                            sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR')" href="javascript:void(0)"
+                                            th:if="${usuarioActual != null and (usuarioActual.rol.name() == 'ADMIN' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'SUBDIRECTOR' or usuarioActual.rol.name() == 'GERENTE' or usuarioActual.rol.name() == 'JEFE_DEPTO' or (usuarioActual.rol.name() == 'ABOGADO' and a.expediente != null and a.expediente.abogadoResponsable != null and a.expediente.abogadoResponsable.id == usuarioActual.id))}" href="javascript:void(0)"
                                             th:onclick="'confirmarEliminarAudiencia(' + ${a.id} + ')'"
                                             class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors">
                                             <i class="fas fa-trash-alt mr-3 w-4 text-center opacity-70"></i> Eliminar
@@ -307,15 +306,14 @@
 
                             <div class="border-t border-gray-50"></div>
 
-                            <button th:if="${a.estatusAudiencia?.name() == 'CON_ACTA'}"
-                                sec:authorize="hasAnyAuthority('DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO', 'ADMIN')"
+                            <button th:if="${a.estatusAudiencia?.name() == 'CON_ACTA' and usuarioActual != null and (usuarioActual.rol.name() == 'ADMIN' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'SUBDIRECTOR' or usuarioActual.rol.name() == 'GERENTE' or usuarioActual.rol.name() == 'JEFE_DEPTO' or (usuarioActual.rol.name() == 'ABOGADO' and ((a.expediente != null and a.expediente.abogadoResponsable != null and a.expediente.abogadoResponsable.id == usuarioActual.id) or (a.abogadoComparece != null and a.abogadoComparece.id == usuarioActual.id))))}"
                                 th:data-audiencia-id="${a.id}" onclick="abrirModalConcluir(this.dataset.audienciaId)"
                                 class="w-full text-left px-4 py-3 text-sm text-green-700 hover:bg-green-50 flex items-center font-bold transition-colors">
                                 <i class="fas fa-check-circle mr-3 w-4 text-center"></i> Validar y Concluir
                             </button>
 
                             <a th:unless="${a.estatusAudiencia?.name() == 'CONCLUIDA'}"
-                                sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR')" href="javascript:void(0)"
+                                th:if="${usuarioActual != null and (usuarioActual.rol.name() == 'ADMIN' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'SUBDIRECTOR' or usuarioActual.rol.name() == 'GERENTE' or usuarioActual.rol.name() == 'JEFE_DEPTO' or (usuarioActual.rol.name() == 'ABOGADO' and a.expediente != null and a.expediente.abogadoResponsable != null and a.expediente.abogadoResponsable.id == usuarioActual.id))}" href="javascript:void(0)"
                                 th:onclick="'confirmarEliminarAudiencia(' + ${a.id} + ')'"
                                 class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors">
                                 <i class="fas fa-trash-alt mr-3 w-4 text-center opacity-70"></i> Eliminar

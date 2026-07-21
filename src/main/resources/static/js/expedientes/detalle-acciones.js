@@ -464,7 +464,7 @@ function inicializarSelectsEdicionExpediente() {
                 const tsMat = selectMateria ? selectMateria.tomselect : null;
                 if (tsMat && gerId) {
                     tsMat.disable();
-                    fetch(`/usuarios/api/materias-por-gerencia/${gerId}`)
+                    fetch(`/expedientes/api/materias-por-gerencia/${gerId}`)
                         .then(res => res.json())
                         .then(materias => {
                             updateTomSelectOptions(tsMat, materias.map(m => ({ value: m.id, text: m.nombre })), 'Selecciona materia...');

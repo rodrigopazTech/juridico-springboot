@@ -76,6 +76,8 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "LEFT JOIN a.expediente e " +
                         "LEFT JOIN a.contexto c " +
                         "LEFT JOIN a.tipoAudiencia ta " +
+                        "LEFT JOIN e.abogadoResponsable abr " +
+                        "LEFT JOIN a.abogadoComparece abc " +
                         "LEFT JOIN e.gerencia eg " +
                         "LEFT JOIN c.gerencia cg " +
                         "LEFT JOIN e.materia em " +
@@ -92,7 +94,8 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "AND (:gerenciaId IS NULL OR eg.id = :gerenciaId OR cg.id = :gerenciaId) " +
                         "AND (:materiaId IS NULL OR em.id = :materiaId OR cm.id = :materiaId) " +
                         "AND (:filtroRoleGerenciaId IS NULL OR eg.id = :filtroRoleGerenciaId OR cg.id = :filtroRoleGerenciaId) " +
-                        "AND ((:filtroRoleMateriaIds) IS NULL OR em.id IN (:filtroRoleMateriaIds) OR cm.id IN (:filtroRoleMateriaIds))")
+                        "AND ((:filtroRoleMateriaIds) IS NULL OR em.id IN (:filtroRoleMateriaIds) OR cm.id IN (:filtroRoleMateriaIds)) " +
+                        "AND (:filtroRoleUsuarioId IS NULL OR abr.id = :filtroRoleUsuarioId OR abc.id = :filtroRoleUsuarioId OR a.usuarioDelegado.id = :filtroRoleUsuarioId)")
         Page<Audiencia> buscarParaHistorial(
                         @Param("keyword") String keyword,
                         @Param("estatus") EstatusAudiencia estatus,
@@ -102,6 +105,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         @Param("materiaId") Integer materiaId,
                         @Param("filtroRoleGerenciaId") Integer filtroRoleGerenciaId,
                         @Param("filtroRoleMateriaIds") List<Integer> filtroRoleMateriaIds,
+                        @Param("filtroRoleUsuarioId") Integer filtroRoleUsuarioId,
                         Pageable pageable);
 
         @Query("SELECT a FROM Audiencia a " +

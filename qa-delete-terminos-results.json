@@ -1,0 +1,58 @@
+﻿[
+    {
+        "tipo":  "termino",
+        "rol":  "ADMIN",
+        "id":  2,
+        "body":  "{\"success\":true,\"message\":\"Término eliminado correctamente.\"}",
+        "exists":  "0",
+        "deleted":  true
+    },
+    {
+        "tipo":  "termino",
+        "rol":  "DIRECTOR_PRINCIPAL",
+        "id":  3,
+        "body":  "{\"success\":true,\"message\":\"Término eliminado correctamente.\"}",
+        "exists":  "0",
+        "deleted":  true
+    },
+    {
+        "tipo":  "termino",
+        "rol":  "DIRECTOR",
+        "id":  4,
+        "body":  "{\"success\":true,\"message\":\"Término eliminado correctamente.\"}",
+        "exists":  "0",
+        "deleted":  true
+    },
+    {
+        "tipo":  "termino",
+        "rol":  "SUBDIRECTOR",
+        "id":  5,
+        "body":  "{\"success\":true,\"message\":\"Término eliminado correctamente.\"}",
+        "exists":  "0",
+        "deleted":  true
+    },
+    {
+        "tipo":  "termino",
+        "rol":  "GERENTE",
+        "id":  6,
+        "body":  "{\"success\":true,\"message\":\"Término eliminado correctamente.\"}",
+        "exists":  "0",
+        "deleted":  true
+    },
+    {
+        "tipo":  "termino",
+        "rol":  "JEFE_DEPTO",
+        "id":  7,
+        "body":  "{\"success\":true,\"message\":\"Término eliminado correctamente.\"}",
+        "exists":  "0",
+        "deleted":  true
+    },
+    {
+        "tipo":  "termino",
+        "rol":  "ABOGADO",
+        "id":  8,
+        "body":  "{\"success\":true,\"message\":\"Término eliminado correctamente.\"}",
+        "exists":  "0",
+        "deleted":  true
+    }
+]

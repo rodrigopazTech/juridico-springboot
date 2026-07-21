@@ -1,0 +1,817 @@
+[
+  {
+    "role": "ADMIN",
+    "email": "admin@sistema.com",
+    "pages": [
+      {
+        "id": "DASH",
+        "path": "/dashboard",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/dashboard",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "AGE",
+        "path": "/agenda",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/agenda",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "CAL",
+        "path": "/calendario",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/calendario",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "TAR",
+        "path": "/tareas",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/tareas",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "EXP",
+        "path": "/expedientes",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/expedientes",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": true,
+        "issues": []
+      },
+      {
+        "id": "TER",
+        "path": "/terminos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/terminos",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "AUD",
+        "path": "/audiencias",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/audiencias",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "CAT",
+        "path": "/catalogos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/catalogos?tab=organos",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "PERF",
+        "path": "/perfil",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/perfil",
+        "ok": false,
+        "hasMustText": false,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "NOTIF",
+        "path": "/notificaciones",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/notificaciones",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      }
+    ]
+  },
+  {
+    "role": "DIRECTOR_PRINCIPAL",
+    "email": "director.principal@juridico.com",
+    "pages": [
+      {
+        "id": "DASH",
+        "path": "/dashboard",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/dashboard",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "AGE",
+        "path": "/agenda",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/agenda",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "CAL",
+        "path": "/calendario",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/calendario",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "TAR",
+        "path": "/tareas",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/tareas",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "EXP",
+        "path": "/expedientes",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/expedientes",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": true,
+        "issues": []
+      },
+      {
+        "id": "TER",
+        "path": "/terminos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/terminos",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "AUD",
+        "path": "/audiencias",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/audiencias",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "CAT",
+        "path": "/catalogos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/catalogos?tab=organos",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "PERF",
+        "path": "/perfil",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/perfil",
+        "ok": false,
+        "hasMustText": false,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "NOTIF",
+        "path": "/notificaciones",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/notificaciones",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      }
+    ]
+  },
+  {
+    "role": "DIRECTOR",
+    "email": "director@juridico.com",
+    "pages": [
+      {
+        "id": "DASH",
+        "path": "/dashboard",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/dashboard",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "AGE",
+        "path": "/agenda",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/agenda",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "CAL",
+        "path": "/calendario",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/calendario",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "TAR",
+        "path": "/tareas",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/tareas",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "EXP",
+        "path": "/expedientes",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/expedientes",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": true,
+        "issues": []
+      },
+      {
+        "id": "TER",
+        "path": "/terminos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/terminos",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "AUD",
+        "path": "/audiencias",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/audiencias",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "CAT",
+        "path": "/catalogos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/catalogos?tab=organos",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "PERF",
+        "path": "/perfil",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/perfil",
+        "ok": false,
+        "hasMustText": false,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "NOTIF",
+        "path": "/notificaciones",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/notificaciones",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      }
+    ]
+  },
+  {
+    "role": "SUBDIRECTOR",
+    "email": "subdirector@juridico.com",
+    "pages": [
+      {
+        "id": "DASH",
+        "path": "/dashboard",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/dashboard",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "AGE",
+        "path": "/agenda",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/agenda",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "CAL",
+        "path": "/calendario",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/calendario",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "TAR",
+        "path": "/tareas",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/tareas",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "EXP",
+        "path": "/expedientes",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/expedientes",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": true,
+        "issues": []
+      },
+      {
+        "id": "TER",
+        "path": "/terminos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/terminos",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "AUD",
+        "path": "/audiencias",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/audiencias",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "CAT",
+        "path": "/catalogos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/catalogos?tab=organos",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "PERF",
+        "path": "/perfil",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/perfil",
+        "ok": false,
+        "hasMustText": false,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "NOTIF",
+        "path": "/notificaciones",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/notificaciones",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      }
+    ]
+  },
+  {
+    "role": "GERENTE",
+    "email": "gerente@juridico.com",
+    "pages": [
+      {
+        "id": "DASH",
+        "path": "/dashboard",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/dashboard",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "AGE",
+        "path": "/agenda",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/agenda",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "CAL",
+        "path": "/calendario",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/calendario",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "TAR",
+        "path": "/tareas",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/tareas",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "EXP",
+        "path": "/expedientes",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/expedientes",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "TER",
+        "path": "/terminos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/terminos",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "AUD",
+        "path": "/audiencias",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/audiencias",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "CAT",
+        "path": "/catalogos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/catalogos?tab=organos",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "PERF",
+        "path": "/perfil",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/perfil",
+        "ok": false,
+        "hasMustText": false,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "NOTIF",
+        "path": "/notificaciones",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/notificaciones",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      }
+    ]
+  },
+  {
+    "role": "JEFE_DEPTO",
+    "email": "jefe@juridico.com",
+    "pages": [
+      {
+        "id": "DASH",
+        "path": "/dashboard",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/dashboard",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "AGE",
+        "path": "/agenda",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/agenda",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "CAL",
+        "path": "/calendario",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/calendario",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "TAR",
+        "path": "/tareas",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/tareas",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "EXP",
+        "path": "/expedientes",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/expedientes",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "TER",
+        "path": "/terminos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/terminos",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "AUD",
+        "path": "/audiencias",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/audiencias",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "CAT",
+        "path": "/catalogos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/catalogos?tab=organos",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "PERF",
+        "path": "/perfil",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/perfil",
+        "ok": false,
+        "hasMustText": false,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "NOTIF",
+        "path": "/notificaciones",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/notificaciones",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      }
+    ]
+  },
+  {
+    "role": "ABOGADO",
+    "email": "abogado@juridico.com",
+    "pages": [
+      {
+        "id": "DASH",
+        "path": "/dashboard",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/dashboard",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "AGE",
+        "path": "/agenda",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/agenda",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "CAL",
+        "path": "/calendario",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/calendario",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "TAR",
+        "path": "/tareas",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/tareas",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "EXP",
+        "path": "/expedientes",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/expedientes",
+        "ok": false,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": [
+          "Failed to load resource: the server responded with a status of 403 ()",
+          "Error: TypeError: materias.map is not a function\n    at http://localhost:8080/js/main-EXP.js:192:74"
+        ]
+      },
+      {
+        "id": "TER",
+        "path": "/terminos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/terminos",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "AUD",
+        "path": "/audiencias",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/audiencias",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": true,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "CAT",
+        "path": "/catalogos",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/catalogos?tab=organos",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "PERF",
+        "path": "/perfil",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/perfil",
+        "ok": false,
+        "hasMustText": false,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      },
+      {
+        "id": "NOTIF",
+        "path": "/notificaciones",
+        "status": 200,
+        "finalUrl": "http://localhost:8080/notificaciones",
+        "ok": true,
+        "hasMustText": true,
+        "includesCivilExpediente": false,
+        "includesOutOfScopeExpediente": false,
+        "issues": []
+      }
+    ]
+  }
+]

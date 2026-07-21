@@ -982,7 +982,7 @@ function inicializarSelectsAudiencias() {
 function confirmarEliminarAudiencia(id) {
     Swal.fire({
         title: '¿Eliminar audiencia?',
-        text: "Esta acción no se puede deshacer",
+        text: "Esta acción no se puede deshacer. Se notificará a tus superiores.",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
