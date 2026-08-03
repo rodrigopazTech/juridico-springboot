@@ -736,126 +736,6 @@ body {
   height: min(62vh, 520px);
 }
 
-.calendar-outlook-panel {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  padding: 0.95rem 1rem;
-  border: 1px solid #d8e4f2;
-  border-radius: 0.9rem;
-  background: #f8fbff;
-  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
-}
-
-.calendar-outlook-copy {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  min-width: 0;
-}
-
-.calendar-outlook-icon {
-  width: 2.6rem;
-  height: 2.6rem;
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.8rem;
-  color: #fff;
-  background: #2563eb;
-  font-size: 1.15rem;
-  box-shadow: 0 8px 18px rgb(37 99 235 / 0.18);
-}
-
-.calendar-outlook-kicker {
-  color: #1d4ed8;
-  font-size: 0.68rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0;
-}
-
-.calendar-outlook-title {
-  color: #172033;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 1rem;
-  font-weight: 800;
-  line-height: 1.2;
-}
-
-.calendar-outlook-description {
-  max-width: 54rem;
-  margin-top: 0.2rem;
-  color: #334155;
-  font-size: 0.82rem;
-  line-height: 1.35;
-}
-
-.calendar-outlook-sync {
-  margin-top: 0.25rem;
-  color: #1d4ed8;
-  font-size: 0.72rem;
-  font-weight: 800;
-}
-
-.calendar-outlook-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-}
-
-.calendar-outlook-state,
-.calendar-outlook-primary,
-.calendar-outlook-secondary {
-  min-height: 2.25rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  border-radius: 0.65rem;
-  padding: 0.45rem 0.75rem;
-  font-size: 0.8rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.calendar-outlook-state.is-connected {
-  color: #166534;
-  background: #dcfce7;
-  border: 1px solid #bbf7d0;
-}
-
-.calendar-outlook-state.is-disconnected {
-  color: #92400e;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-}
-
-.calendar-outlook-primary {
-  color: #fff;
-  background: #2563eb;
-  box-shadow: 0 8px 16px rgb(37 99 235 / 0.18);
-}
-
-.calendar-outlook-primary:hover {
-  background: #1d4ed8;
-}
-
-.calendar-outlook-secondary {
-  color: #1d4ed8;
-  background: #fff;
-  border: 1px solid #bfdbfe;
-}
-
-.calendar-outlook-secondary:hover {
-  background: #eff6ff;
-}
-
 @media (min-width: 1280px) {
   .calendar-day-cell {
     min-height: 86px;
@@ -867,16 +747,6 @@ body {
 }
 
 @media (max-width: 900px) {
-  .calendar-outlook-panel {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .calendar-outlook-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
   .calendar-filter-field,
   .calendar-filter-wide {
     max-width: none;
@@ -901,25 +771,6 @@ body {
     width: 100%;
     min-width: 0;
     justify-content: space-between;
-  }
-
-  .calendar-outlook-panel {
-    gap: 0.75rem;
-    padding: 0.8rem;
-  }
-
-  .calendar-outlook-copy {
-    align-items: flex-start;
-  }
-
-  .calendar-outlook-actions,
-  .calendar-outlook-actions form {
-    width: 100%;
-  }
-
-  .calendar-outlook-primary,
-  .calendar-outlook-secondary {
-    width: 100%;
   }
 
   .calendar-scope-strip {
@@ -983,7 +834,7 @@ body {
 }
 
 /* =========================================
-   BARRA COMPACTA: FILTROS EN VIVO + OUTLOOK
+   BARRA COMPACTA: FILTROS EN VIVO
    ========================================= */
 
 .calendar-toolbar {
@@ -1091,45 +942,6 @@ body {
   display: none;
 }
 
-.calendar-outlook-compact {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.28rem;
-  border: 1px solid #d8e4f2;
-  border-radius: 0.75rem;
-  background: #f8fbff;
-}
-
-.calendar-outlook-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0 0.35rem;
-  color: #1d4ed8;
-  font-size: 0.78rem;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.calendar-outlook-compact form {
-  margin: 0;
-}
-
-.calendar-outlook-compact .calendar-outlook-state,
-.calendar-outlook-compact .calendar-outlook-primary,
-.calendar-outlook-compact .calendar-outlook-secondary {
-  min-height: 1.85rem;
-  padding: 0.28rem 0.55rem;
-  font-size: 0.76rem;
-  border-radius: 0.55rem;
-}
-
-.calendar-outlook-compact .calendar-outlook-primary {
-  box-shadow: none;
-}
-
 @media (min-width: 1200px) {
   .calendar-control-line {
     display: grid;
@@ -1155,13 +967,6 @@ body {
     max-width: 9rem;
   }
 
-  .calendar-outlook-compact {
-    max-width: 13.8rem;
-  }
-
-  .calendar-outlook-compact .calendar-outlook-label {
-    display: none;
-  }
 }
 
 @media (min-width: 1440px) {
@@ -1173,15 +978,11 @@ body {
     flex-wrap: nowrap;
   }
 
-  .calendar-outlook-compact {
-    max-width: 16rem;
-  }
 }
 
 @media (max-width: 900px) {
   .calendar-scope-inline,
-  .calendar-inline-filters,
-  .calendar-outlook-compact {
+  .calendar-inline-filters {
     width: 100%;
   }
 
@@ -1189,9 +990,6 @@ body {
     justify-content: flex-start;
   }
 
-  .calendar-outlook-compact {
-    justify-content: flex-start;
-  }
 }
 
 @media (max-width: 640px) {
@@ -1231,7 +1029,4 @@ body {
     width: 100%;
   }
 
-  .calendar-outlook-compact {
-    flex-wrap: wrap;
-  }
 }
