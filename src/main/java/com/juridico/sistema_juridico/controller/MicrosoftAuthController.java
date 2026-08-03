@@ -1,9 +1,6 @@
 package com.juridico.sistema_juridico.controller;
 
 import java.util.UUID;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
 
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.config.MicrosoftAuthProperties;
@@ -15,7 +12,6 @@ import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.AuditoriaTecnicaService;
 import com.juridico.sistema_juridico.service.MicrosoftGraphClient;
 import com.juridico.sistema_juridico.service.MicrosoftIdentityService;
-import com.juridico.sistema_juridico.service.OutlookCalendarService;
 import com.juridico.sistema_juridico.service.PasswordResetService;
 
 import jakarta.servlet.http.Cookie;
@@ -40,13 +36,11 @@ public class MicrosoftAuthController {
 
     private static final String MICROSOFT_OAUTH_STATE = "MICROSOFT_OAUTH_STATE";
     private static final String MICROSOFT_ACTIVATION_TOKEN = "MICROSOFT_ACTIVATION_TOKEN";
-    private static final String MICROSOFT_ACTIVATION_SCOPES = "MICROSOFT_ACTIVATION_SCOPES";
 
     private final MicrosoftAuthProperties properties;
     private final MicrosoftGraphClient graphClient;
     private final MicrosoftIdentityService identityService;
     private final PasswordResetService passwordResetService;
-    private final OutlookCalendarService outlookCalendarService;
     private final CustomUserDetailsService userDetailsService;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuditoriaService auditoriaService;
@@ -60,7 +54,6 @@ public class MicrosoftAuthController {
             MicrosoftGraphClient graphClient,
             MicrosoftIdentityService identityService,
             PasswordResetService passwordResetService,
-            OutlookCalendarService outlookCalendarService,
             CustomUserDetailsService userDetailsService,
             JwtTokenProvider jwtTokenProvider,
             AuditoriaService auditoriaService,
@@ -69,7 +62,6 @@ public class MicrosoftAuthController {
         this.graphClient = graphClient;
         this.identityService = identityService;
         this.passwordResetService = passwordResetService;
-        this.outlookCalendarService = outlookCalendarService;
         this.userDetailsService = userDetailsService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.auditoriaService = auditoriaService;
@@ -103,11 +95,9 @@ public class MicrosoftAuthController {
         }
 
         String state = UUID.randomUUID().toString();
-        List<String> activationScopes = activationScopes();
         session.setAttribute(MICROSOFT_OAUTH_STATE, state);
         session.setAttribute(MICROSOFT_ACTIVATION_TOKEN, activationToken);
-        session.setAttribute(MICROSOFT_ACTIVATION_SCOPES, activationScopes);
-        return "redirect:" + graphClient.buildAuthorizationUrl(state, activationScopes);
+        return "redirect:" + graphClient.buildAuthorizationUrl(state);
     }
 
     @GetMapping("/auth/microsoft/callback")
@@ -141,12 +131,7 @@ public class MicrosoftAuthController {
         }
 
         try {
-            @SuppressWarnings("unchecked")
-            List<String> requestedScopes = (List<String>) session.getAttribute(MICROSOFT_ACTIVATION_SCOPES);
-            MicrosoftTokenResponse token = requestedScopes == null
-                    ? graphClient.exchangeCode(code)
-                    : graphClient.exchangeCode(code, requestedScopes);
-            session.removeAttribute(MICROSOFT_ACTIVATION_SCOPES);
+            MicrosoftTokenResponse token = graphClient.exchangeCode(code);
             if (token == null || token.accessToken() == null || token.accessToken().isBlank()) {
                 redirectAttrs.addFlashAttribute("microsoftError",
                         "Microsoft no regreso un token de acceso valido.");
@@ -156,7 +141,7 @@ public class MicrosoftAuthController {
             MicrosoftUserProfile profile = graphClient.fetchMe(token.accessToken());
             String activationToken = (String) session.getAttribute(MICROSOFT_ACTIVATION_TOKEN);
             if (activationToken != null) {
-                return completarActivacionMicrosoft(activationToken, token, profile, request, session);
+                return completarActivacionMicrosoft(activationToken, profile, request, session);
             }
 
             Usuario usuario = identityService.vincularYObtenerUsuarioLocal(profile);
@@ -185,29 +170,17 @@ public class MicrosoftAuthController {
         }
     }
 
-    private String completarActivacionMicrosoft(String activationToken, MicrosoftTokenResponse token, MicrosoftUserProfile profile,
+    private String completarActivacionMicrosoft(String activationToken, MicrosoftUserProfile profile,
             HttpServletRequest request, HttpSession session) {
         session.removeAttribute(MICROSOFT_ACTIVATION_TOKEN);
         Usuario usuario = passwordResetService.findUserForValidToken(activationToken)
                 .orElseThrow(() -> new IllegalArgumentException("El enlace es invalido o ha expirado."));
         Usuario vinculado = identityService.vincularPerfilAUsuario(usuario, profile);
-        if (properties.isCalendarConfigured() && token != null && token.refreshToken() != null
-                && !token.refreshToken().isBlank()) {
-            outlookCalendarService.conectarCalendario(vinculado, token, profile);
-        }
         auditoriaTecnicaService.registrarEventoSeguridad(vinculado, vinculado.getEmail(), request,
                 "CUENTA_ACTIVACION_MICROSOFT_VINCULADA", "EXITOSO", 200,
                 "El usuario valido su correo institucional con Microsoft durante la activacion.",
                 "USUARIO", String.valueOf(vinculado.getId()));
         return "redirect:/auth/reset-password?token=" + activationToken;
-    }
-
-    private List<String> activationScopes() {
-        LinkedHashSet<String> scopes = new LinkedHashSet<>();
-        scopes.addAll(properties.getScopes());
-        scopes.addAll(properties.getCalendarScopes());
-        scopes.add("https://graph.microsoft.com/Mail.Send");
-        return new ArrayList<>(scopes);
     }
 
     private Authentication autenticarUsuarioSiaj(Usuario usuario, HttpServletRequest request, HttpServletResponse response) {

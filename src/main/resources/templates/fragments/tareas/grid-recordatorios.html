@@ -24,18 +24,6 @@
             </div>
 
             <div class="pl-2 mt-1 mb-auto">
-                <div class="mb-2">
-                    <span th:if="${r.outlookSyncStatus != null and r.outlookSyncStatus.name() == 'ERROR_SYNC'}"
-                        class="inline-flex items-center gap-1 rounded-full border border-red-100 bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">
-                        <i class="fas fa-triangle-exclamation"></i> Error Outlook
-                    </span>
-                    <span th:unless="${r.outlookSyncStatus != null and r.outlookSyncStatus.name() == 'ERROR_SYNC'}"
-                        class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold"
-                        th:classappend="${r.outlookLinked} ? 'border-blue-100 bg-blue-50 text-blue-700' : 'border-gray-100 bg-gray-50 text-gray-500'">
-                        <i class="far fa-calendar"></i>
-                        <span th:text="${r.outlookLinked} ? 'Outlook' : 'Solo SIAJ'">Solo SIAJ</span>
-                    </span>
-                </div>
                 <p class="text-sm text-gray-500 line-clamp-1" th:text="${r.detalles}">Detalles o descripción corta...</p>
             </div>
 

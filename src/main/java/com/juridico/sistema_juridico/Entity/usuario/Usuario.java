@@ -89,22 +89,6 @@ public class Usuario {
     @Builder.Default
     private Boolean microsoftLoginEnabled = false;
 
-    @Column(name = "outlook_calendar_linked")
-    @Builder.Default
-    private Boolean outlookCalendarLinked = false;
-
-    @Column(name = "outlook_account_email", length = 180)
-    private String outlookAccountEmail;
-
-    @Column(name = "outlook_refresh_token_encrypted", columnDefinition = "TEXT")
-    private String outlookRefreshTokenEncrypted;
-
-    @Column(name = "outlook_connected_at")
-    private LocalDateTime outlookConnectedAt;
-
-    @Column(name = "outlook_last_sync_at")
-    private LocalDateTime outlookLastSyncAt;
-
     @Column(name = "password_hash", nullable = false)
     private String password;
 

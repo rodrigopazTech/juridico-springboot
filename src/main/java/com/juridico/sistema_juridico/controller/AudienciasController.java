@@ -80,8 +80,6 @@ public class AudienciasController {
     @Autowired
     private AudienciaService audienciaService;
     @Autowired
-    private com.juridico.sistema_juridico.service.OutlookCalendarService outlookCalendarService;
-    @Autowired
     private com.juridico.sistema_juridico.service.NotificacionService notificacionService;
     @Autowired
     private com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository colaboradorExpedienteRepository;
@@ -393,7 +391,6 @@ public class AudienciasController {
         model.addAttribute("listaEstatus", EstatusAudiencia.values());
         model.addAttribute("sortBy", sortBy);
         model.addAttribute("sortDir", sortDir);
-        model.addAttribute("outlookCalendarLinked", outlookCalendarService.tieneCalendarioVinculado(usuario));
 
         // --- 6. CONTEOS PARA KPIs ---
         List<Object[]> rawCounts = audienciaRepository.contarPorEstatusConFiltros(
@@ -428,7 +425,6 @@ public class AudienciasController {
 @PostMapping("/guardar")
 public String guardar(@ModelAttribute Audiencia audiencia,
         @RequestParam(value = "usuarioDelegadoId", required = false) Integer usuarioDelegadoId,
-        @RequestParam(value = "syncOutlook", defaultValue = "false") boolean syncOutlook,
         RedirectAttributes redirectAttrs) {
     String email = SecurityContextHolder.getContext().getAuthentication().getName();
     Usuario usuario = usuarioRepository.findByEmail(email)
@@ -458,7 +454,6 @@ public String guardar(@ModelAttribute Audiencia audiencia,
         // Preservamos los datos que no vienen en el formulario simple
         audiencia.setEstatusAudiencia(audienciaExistente.getEstatusAudiencia());
         audiencia.setActaDocumento(audienciaExistente.getActaDocumento());
-        copiarCamposOutlook(audienciaExistente, audiencia);
 
         // Preservar observaciones si no se enviaron nuevas
         if (audiencia.getObservaciones() == null && audienciaExistente.getObservaciones() != null) {
@@ -512,7 +507,6 @@ public String guardar(@ModelAttribute Audiencia audiencia,
 
     // GUARDADO
     Audiencia guardada = audienciaRepository.save(audiencia);
-    sincronizarOutlookSiConfirmado(syncOutlook, usuario, guardada, redirectAttrs);
 
     // DELEGACIÓN: crear/actualizar acceso temporal en colaboradores_expediente
     if (guardada.getUsuarioDelegado() != null) {
@@ -569,7 +563,6 @@ public String guardar(@ModelAttribute Audiencia audiencia,
             @RequestParam(value = "contextoDescripcion", required = false) String contextoDescripcion,
             @RequestParam(value = "contextoPartes", required = false) String contextoPartes,
             @RequestParam(value = "contextoNumeroReferencia", required = false) String contextoNumeroReferencia,
-            @RequestParam(value = "syncOutlook", defaultValue = "false") boolean syncOutlook,
             RedirectAttributes redirectAttrs) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -595,7 +588,6 @@ public String guardar(@ModelAttribute Audiencia audiencia,
             // Preservamos los datos que no vienen en el formulario simple
             audiencia.setEstatusAudiencia(audienciaExistente.getEstatusAudiencia());
             audiencia.setActaDocumento(audienciaExistente.getActaDocumento());
-            copiarCamposOutlook(audienciaExistente, audiencia);
 
             // Preservar observaciones si no se enviaron nuevas
             if (audiencia.getObservaciones() == null && audienciaExistente.getObservaciones() != null) {
@@ -701,7 +693,6 @@ public String guardar(@ModelAttribute Audiencia audiencia,
 
         // GUARDADO
         Audiencia guardada = audienciaRepository.save(audiencia);
-        sincronizarOutlookSiConfirmado(syncOutlook, usuario, guardada, redirectAttrs);
 
         // Notificación (Solo si es nueva)
         if (esNueva) {
@@ -776,8 +767,7 @@ public String guardar(@ModelAttribute Audiencia audiencia,
 
     @PostMapping("/eliminar/{id}")
     @ResponseBody
-    public ResponseEntity<java.util.Map<String, Object>> eliminar(@PathVariable("id") Integer id,
-            @RequestParam(value = "deleteOutlook", defaultValue = "false") boolean deleteOutlook) {
+    public ResponseEntity<java.util.Map<String, Object>> eliminar(@PathVariable("id") Integer id) {
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         try {
             // 1. VALIDACIÓN LIMPIA
@@ -790,10 +780,6 @@ public String guardar(@ModelAttribute Audiencia audiencia,
             String referencia = aud.getNumeroReferencia() != null ? aud.getNumeroReferencia()
                     : (aud.getExpediente() != null ? aud.getExpediente().getNumero() : "S/N");
             Materia materia = aud.getMateriaReferencia();
-
-            if (deleteOutlook && Boolean.TRUE.equals(aud.getOutlookLinked())) {
-                outlookCalendarService.eliminarEventoAudiencia(usuario, aud);
-            }
 
             // 2. LÓGICA FELIZ (Sin try-catch interno)
             audienciaRepository.deleteById(id);
@@ -823,31 +809,6 @@ public String guardar(@ModelAttribute Audiencia audiencia,
             response.put("message", "Error al eliminar la audiencia.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-    }
-
-    private void sincronizarOutlookSiConfirmado(boolean syncOutlook, Usuario usuario, Audiencia audiencia,
-            RedirectAttributes redirectAttrs) {
-        if (!syncOutlook) {
-            return;
-        }
-        try {
-            outlookCalendarService.crearOActualizarEventoAudiencia(usuario, audiencia);
-            redirectAttrs.addFlashAttribute("mensajeOutlook", "Evento sincronizado con Outlook.");
-        } catch (Exception ex) {
-            redirectAttrs.addFlashAttribute("mensajeOutlook",
-                    "La audiencia se guardo en SIAJ, pero Outlook no pudo sincronizarse: " + ex.getMessage());
-            redirectAttrs.addFlashAttribute("tipo", "warning");
-        }
-    }
-
-    private void copiarCamposOutlook(Audiencia origen, Audiencia destino) {
-        destino.setOutlookLinked(origen.getOutlookLinked());
-        destino.setOutlookEventId(origen.getOutlookEventId());
-        destino.setOutlookCalendarId(origen.getOutlookCalendarId());
-        destino.setOutlookWebLink(origen.getOutlookWebLink());
-        destino.setOutlookSyncedAt(origen.getOutlookSyncedAt());
-        destino.setOutlookSyncStatus(origen.getOutlookSyncStatus());
-        destino.setOutlookSyncError(origen.getOutlookSyncError());
     }
 
     @GetMapping("/descargar-acta/{id}")

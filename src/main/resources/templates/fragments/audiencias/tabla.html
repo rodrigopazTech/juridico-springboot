@@ -112,16 +112,6 @@
                                                               (a.estatusAudiencia?.name() == 'CON_ACTA' ? 'bg-blue-600' : 'bg-orange-600')}"></span>
                                         <span th:text="${a.estatusAudiencia != null ? a.estatusAudiencia.descripcion : 'Pendiente'}">PENDIENTE</span>
                                     </span>
-                                    <a th:if="${a.outlookLinked}" th:href="${a.outlookWebLink}" target="_blank"
-                                       class="inline-flex items-center gap-1 rounded-full border border-blue-100 bg-blue-50 px-2 py-1 text-[9px] font-bold text-blue-700"
-                                       title="Este evento existe en Outlook">
-                                        <i class="fab fa-microsoft"></i> Outlook
-                                    </a>
-                                    <span th:unless="${a.outlookLinked}"
-                                       class="inline-flex items-center gap-1 rounded-full border border-gray-100 bg-gray-50 px-2 py-1 text-[9px] font-bold text-gray-500"
-                                       title="Este evento solo existe en SIAJ">
-                                        <i class="far fa-calendar"></i> Solo SIAJ
-                                    </span>
                                 </div>
                             </td>
 
@@ -146,8 +136,7 @@
                                                 [[${a.contexto?.numeroReferencia != null ? #strings.escapeJavaScript(a.contexto.numeroReferencia) : ''}]],
                                                 [[${a.contexto?.sede != null ? #strings.escapeJavaScript(a.contexto.sede) : ''}]],
                                                 [[${a.contexto?.partes != null ? #strings.escapeJavaScript(a.contexto.partes) : ''}]],
-                                                [[${a.contexto?.descripcion != null ? #strings.escapeJavaScript(a.contexto.descripcion) : ''}]],
-                                                [[${a.outlookLinked}]]
+                                                [[${a.contexto?.descripcion != null ? #strings.escapeJavaScript(a.contexto.descripcion) : ''}]]
                                             )">
                                         <i class="fas fa-edit"></i>
                                     </button>
@@ -186,7 +175,7 @@
                                         </button>
                                         <a th:unless="${a.estatusAudiencia?.name() == 'CONCLUIDA'}"
                                             th:if="${usuarioActual != null and (usuarioActual.rol.name() == 'ADMIN' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'SUBDIRECTOR' or usuarioActual.rol.name() == 'GERENTE' or usuarioActual.rol.name() == 'JEFE_DEPTO' or (usuarioActual.rol.name() == 'ABOGADO' and a.expediente != null and a.expediente.abogadoResponsable != null and a.expediente.abogadoResponsable.id == usuarioActual.id))}" href="javascript:void(0)"
-                                            th:onclick="'confirmarEliminarAudiencia(' + ${a.id} + ', ' + ${a.outlookLinked} + ')'"
+                                            th:onclick="'confirmarEliminarAudiencia(' + ${a.id} + ')'"
                                             class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors">
                                             <i class="fas fa-trash-alt mr-3 w-4 text-center opacity-70"></i> Eliminar
                                         </a>
@@ -230,17 +219,6 @@
                             th:classappend="${a.estatusAudiencia?.name() == 'CONCLUIDA' ? 'bg-green-600' : 
                                               (a.estatusAudiencia?.name() == 'CON_ACTA' ? 'bg-blue-600' : 'bg-orange-600')}"></span>
                         <span th:text="${a.estatusAudiencia != null ? a.estatusAudiencia.descripcion : 'Pendiente'}">PENDIENTE</span>
-                    </span>
-                </div>
-
-                <div>
-                    <a th:if="${a.outlookLinked}" th:href="${a.outlookWebLink}" target="_blank"
-                       class="inline-flex items-center gap-1 rounded-full border border-blue-100 bg-blue-50 px-2 py-1 text-[9px] font-bold text-blue-700">
-                        <i class="fab fa-microsoft"></i> Outlook vinculado
-                    </a>
-                    <span th:unless="${a.outlookLinked}"
-                       class="inline-flex items-center gap-1 rounded-full border border-gray-100 bg-gray-50 px-2 py-1 text-[9px] font-bold text-gray-500">
-                        <i class="far fa-calendar"></i> Solo SIAJ
                     </span>
                 </div>
 
@@ -308,8 +286,7 @@
                                     [[${a.contexto?.numeroReferencia != null ? #strings.escapeJavaScript(a.contexto.numeroReferencia) : ''}]],
                                     [[${a.contexto?.sede != null ? #strings.escapeJavaScript(a.contexto.sede) : ''}]],
                                     [[${a.contexto?.partes != null ? #strings.escapeJavaScript(a.contexto.partes) : ''}]],
-                                    [[${a.contexto?.descripcion != null ? #strings.escapeJavaScript(a.contexto.descripcion) : ''}]],
-                                    [[${a.outlookLinked}]]
+                                    [[${a.contexto?.descripcion != null ? #strings.escapeJavaScript(a.contexto.descripcion) : ''}]]
                                 )">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -353,7 +330,7 @@
 
                             <a th:unless="${a.estatusAudiencia?.name() == 'CONCLUIDA'}"
                                 th:if="${usuarioActual != null and (usuarioActual.rol.name() == 'ADMIN' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'SUBDIRECTOR' or usuarioActual.rol.name() == 'GERENTE' or usuarioActual.rol.name() == 'JEFE_DEPTO' or (usuarioActual.rol.name() == 'ABOGADO' and a.expediente != null and a.expediente.abogadoResponsable != null and a.expediente.abogadoResponsable.id == usuarioActual.id))}" href="javascript:void(0)"
-                                th:onclick="'confirmarEliminarAudiencia(' + ${a.id} + ', ' + ${a.outlookLinked} + ')'"
+                                th:onclick="'confirmarEliminarAudiencia(' + ${a.id} + ')'"
                                 class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors">
                                 <i class="fas fa-trash-alt mr-3 w-4 text-center opacity-70"></i> Eliminar
                             </a>

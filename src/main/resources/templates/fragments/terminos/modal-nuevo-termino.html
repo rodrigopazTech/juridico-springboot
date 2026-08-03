@@ -36,8 +36,6 @@
                     </div>
 
                     <input type="hidden" name="id" id="input-termino-id">
-                    <input type="hidden" name="syncOutlook" id="input-sync-outlook-termino" value="false">
-                    <input type="hidden" id="input-outlook-linked-termino-current" value="false">
                     <select id="template-abogados-termino" class="hidden" aria-hidden="true">
                         <option value="">Seleccione abogado...</option>
                         <option th:each="a : ${abogados}" th:value="${a.id}" th:text="${a.nombreCompleto}"></option>

@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
-import com.juridico.sistema_juridico.Entity.enums.OutlookSyncStatus;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
@@ -78,30 +77,6 @@ public class Termino {
 
     @Column(name = "acuse_nombre", length = 500)
     private String acuseNombre;
-
-    @Column(name = "outlook_linked")
-    @Builder.Default
-    private Boolean outlookLinked = false;
-
-    @Column(name = "outlook_event_id", length = 220)
-    private String outlookEventId;
-
-    @Column(name = "outlook_calendar_id", length = 120)
-    private String outlookCalendarId;
-
-    @Column(name = "outlook_web_link", columnDefinition = "TEXT")
-    private String outlookWebLink;
-
-    @Column(name = "outlook_synced_at")
-    private LocalDateTime outlookSyncedAt;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "outlook_sync_status", length = 40)
-    @Builder.Default
-    private OutlookSyncStatus outlookSyncStatus = OutlookSyncStatus.NO_VINCULADO;
-
-    @Column(name = "outlook_sync_error", columnDefinition = "TEXT")
-    private String outlookSyncError;
 
     @Transient
     @Builder.Default

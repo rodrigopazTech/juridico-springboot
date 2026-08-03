@@ -16,16 +16,11 @@ public class MicrosoftAuthProperties {
     private String clientId;
     private String clientSecret;
     private String redirectUri;
-    private String calendarRedirectUri;
-    private String tokenEncryptionSecret;
     private List<String> scopes = new ArrayList<>(List.of(
             "openid",
             "profile",
             "email",
             "https://graph.microsoft.com/User.Read"));
-    private List<String> calendarScopes = new ArrayList<>(List.of(
-            "offline_access",
-            "https://graph.microsoft.com/Calendars.ReadWrite"));
 
     public boolean isConfigured() {
         return enabled
@@ -34,10 +29,6 @@ public class MicrosoftAuthProperties {
                 && hasText(clientId)
                 && hasText(clientSecret)
                 && hasText(redirectUri);
-    }
-
-    public boolean isCalendarConfigured() {
-        return isConfigured() && hasText(calendarRedirectUri) && hasText(tokenEncryptionSecret);
     }
 
     private boolean hasText(String value) {
@@ -92,22 +83,6 @@ public class MicrosoftAuthProperties {
         this.redirectUri = redirectUri;
     }
 
-    public String getCalendarRedirectUri() {
-        return calendarRedirectUri;
-    }
-
-    public void setCalendarRedirectUri(String calendarRedirectUri) {
-        this.calendarRedirectUri = calendarRedirectUri;
-    }
-
-    public String getTokenEncryptionSecret() {
-        return tokenEncryptionSecret;
-    }
-
-    public void setTokenEncryptionSecret(String tokenEncryptionSecret) {
-        this.tokenEncryptionSecret = tokenEncryptionSecret;
-    }
-
     public List<String> getScopes() {
         return scopes;
     }
@@ -116,11 +91,4 @@ public class MicrosoftAuthProperties {
         this.scopes = scopes;
     }
 
-    public List<String> getCalendarScopes() {
-        return calendarScopes;
-    }
-
-    public void setCalendarScopes(List<String> calendarScopes) {
-        this.calendarScopes = calendarScopes;
-    }
 }

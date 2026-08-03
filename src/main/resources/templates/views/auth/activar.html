@@ -36,7 +36,7 @@
                 <i class="fas fa-user-check text-3xl text-gob-guinda"></i>
             </div>
             <h1 class="text-2xl font-bold text-gob-guindaDark">Activar cuenta</h1>
-            <p class="mt-2 text-sm text-gob-gris">Valida tu correo institucional antes de crear tu contrasena.</p>
+            <p class="mt-2 text-sm text-gob-gris">Valida tu correo institucional con Microsoft antes de crear tu contrasena.</p>
         </div>
 
         <div th:if="${!tokenValido}" class="space-y-5 text-center">
@@ -57,7 +57,7 @@
             </div>
 
             <div th:if="${microsoftError}" class="p-4 text-sm text-amber-900 border-l-4 border-amber-700 bg-amber-50 rounded">
-                <span th:text="${microsoftError}">No fue posible vincular Microsoft.</span>
+                <span th:text="${microsoftError}">No fue posible validar Microsoft.</span>
             </div>
 
             <a th:if="${microsoftConfigured}" th:href="@{/auth/activar/microsoft(token=${token})}"
@@ -67,7 +67,7 @@
             </a>
 
             <div th:unless="${microsoftConfigured}" class="p-4 text-sm text-amber-900 border-l-4 border-amber-700 bg-amber-50 rounded">
-                La vinculacion con Microsoft aun no esta configurada.
+                La validacion con Microsoft aun no esta configurada.
             </div>
 
             <a th:href="@{/auth/reset-password(token=${token})}"
@@ -77,7 +77,7 @@
             </a>
 
             <p class="text-xs text-gray-500 text-center">
-                La validacion con Microsoft quedara vinculada cuando los permisos esten disponibles.
+                Tu cuenta institucional quedara vinculada para futuros inicios de sesion con Microsoft.
             </p>
         </div>
     </main>

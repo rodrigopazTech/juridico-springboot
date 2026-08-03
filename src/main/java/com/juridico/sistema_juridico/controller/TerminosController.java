@@ -70,7 +70,6 @@ import com.juridico.sistema_juridico.repository.procesal.TerminoPresentadoReposi
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.NotificacionService;
-import com.juridico.sistema_juridico.service.OutlookCalendarService;
 import com.juridico.sistema_juridico.util.TerminoExcelExporter;
 import com.juridico.sistema_juridico.service.procesal.TerminoArchivoService;
 import com.juridico.sistema_juridico.service.FileStorageService;
@@ -113,8 +112,6 @@ public class TerminosController {
     private AuditoriaService auditoriaService;
     @Autowired
     private ConfiguracionSemaforoService configuracionSemaforoService;
-    @Autowired
-    private OutlookCalendarService outlookCalendarService;
 
     // --- MATRIZ DE PERMISOS ---
     private static final Map<EstatusTermino, List<RolUsuario>> PERMISOS_ETAPAS = new HashMap<>();
@@ -349,7 +346,6 @@ public class TerminosController {
         model.addAttribute("activePage", "terminos");
         model.addAttribute("mesActual", mes != null ? mes : LocalDate.now().getMonthValue());
         model.addAttribute("anioActual", anio != null ? anio : LocalDate.now().getYear());
-        model.addAttribute("outlookCalendarLinked", outlookCalendarService.tieneCalendarioVinculado(usuarioActual));
 
         // --- 7. ETAPAS ASIGNADAS AL ROL ---
         List<EstatusTermino> etapasAsignadas = getEtapasAsignadasPorRol(usuarioActual.getRol());
@@ -391,7 +387,6 @@ public class TerminosController {
             @RequestParam(value = "contextoDescripcion", required = false) String contextoDescripcion,
             @RequestParam(value = "contextoPartes", required = false) String contextoPartes,
             @RequestParam(value = "contextoNumeroReferencia", required = false) String contextoNumeroReferencia,
-            @RequestParam(value = "syncOutlook", defaultValue = "false") boolean syncOutlook,
             RedirectAttributes redirectAttrs,
             HttpServletRequest request) {
 
@@ -555,7 +550,6 @@ public class TerminosController {
             }
 
             Termino terminoGuardado = terminoRepository.save(terminoGuardar);
-            sincronizarOutlookSiConfirmado(syncOutlook, actor, terminoGuardado, redirectAttrs);
 
             if (esNuevo) {
                 String desc = "Se ha registrado un nuevo término: " + (terminoGuardado.getAsunto() != null ? terminoGuardado.getAsunto() : "Sin Especificar")
@@ -1017,21 +1011,6 @@ public class TerminosController {
         return true;
     }
 
-    private void sincronizarOutlookSiConfirmado(boolean syncOutlook, Usuario usuario, Termino termino,
-            RedirectAttributes redirectAttrs) {
-        if (!syncOutlook) {
-            return;
-        }
-        try {
-            outlookCalendarService.crearOActualizarEventoTermino(usuario, termino);
-            redirectAttrs.addFlashAttribute("mensajeOutlook", "Termino sincronizado con Outlook.");
-        } catch (Exception ex) {
-            redirectAttrs.addFlashAttribute("mensajeOutlook",
-                    "El termino se guardo en SIAJ, pero Outlook no pudo sincronizarse: " + ex.getMessage());
-            redirectAttrs.addFlashAttribute("tipo", "warning");
-        }
-    }
-
     private EstatusTermino calcularSiguienteEstado(EstatusTermino actual) {
         if (actual == null) {
             return EstatusTermino.PROYECTISTA;
@@ -1160,8 +1139,7 @@ public class TerminosController {
 
     @PostMapping("/eliminar/{id}")
     @ResponseBody
-    public ResponseEntity<java.util.Map<String, Object>> eliminar(@PathVariable("id") Integer id,
-            @RequestParam(value = "deleteOutlook", defaultValue = "false") boolean deleteOutlook) {
+    public ResponseEntity<java.util.Map<String, Object>> eliminar(@PathVariable("id") Integer id) {
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         try {
             Usuario actor = getUsuarioActual();
@@ -1171,10 +1149,6 @@ public class TerminosController {
             String referencia = termino.getNumeroReferencia();
             Materia materia = termino.getMateriaReferencia();
             com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad prioridad = termino.getPrioridad();
-
-            if (deleteOutlook && Boolean.TRUE.equals(termino.getOutlookLinked())) {
-                outlookCalendarService.eliminarEventoTermino(actor, termino);
-            }
 
             // 1. Eliminar archivos asociados y registros en TerminoArchivo
             terminoArchivoService.eliminarArchivosPorTermino(id);
@@ -1295,8 +1269,6 @@ public class TerminosController {
             res.put("abogadoId", termino.getAbogadoResponsable() != null ? termino.getAbogadoResponsable().getId() : "");
             res.put("prioridad", termino.getPrioridad() != null ? termino.getPrioridad().getId() : "");
             res.put("observaciones", termino.getObservaciones() != null ? termino.getObservaciones() : "");
-            res.put("outlookLinked", Boolean.TRUE.equals(termino.getOutlookLinked()));
-            
             TerminoContexto ctx = termino.getContexto();
             res.put("origenTermino", ctx != null && ctx.getOrigen() != null ? ctx.getOrigen().name() : "EXPEDIENTE");
             res.put("materiaId", ctx != null && ctx.getMateria() != null ? ctx.getMateria().getId() : "");

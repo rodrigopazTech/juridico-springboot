@@ -109,8 +109,6 @@ function abrirModalAudiencia() {
 
     const inputId = document.getElementById('input-audiencia-id');
     if (inputId) inputId.value = '';
-    setValueIfExists('input-sync-outlook', 'false');
-    setValueIfExists('input-outlook-linked-current', 'false');
 
     const observacionesInput = document.getElementById('input-observaciones-aud');
     if (observacionesInput) observacionesInput.value = '';
@@ -174,7 +172,7 @@ function abrirModalAudiencia() {
     document.getElementById('modal-audiencia').classList.remove('hidden');
 }
 
-function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala, link, abogadoId, observaciones = "", origenAudiencia = "EXPEDIENTE", contextoGerenciaId = "", contextoMateriaId = "", contextoNumeroReferencia = "", contextoSede = "", contextoPartes = "", contextoDescripcion = "", outlookLinked = false) {
+function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala, link, abogadoId, observaciones = "", origenAudiencia = "EXPEDIENTE", contextoGerenciaId = "", contextoMateriaId = "", contextoNumeroReferencia = "", contextoSede = "", contextoPartes = "", contextoDescripcion = "") {
 
     if (origenAudiencia === 'EXPEDIENTE') {
         window.editandoAudienciaAbogadoId = abogadoId;
@@ -186,8 +184,6 @@ function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala
 
     // A. Llenar campos básicos
     setValueIfExists('input-audiencia-id', id);
-    setValueIfExists('input-sync-outlook', 'false');
-    setValueIfExists('input-outlook-linked-current', String(outlookLinked) === 'true' ? 'true' : 'false');
     
     // Configurar origen (pestaña y modo)
     switchModoRegistro(origenAudiencia);
@@ -517,52 +513,6 @@ function showErrorModal(mensaje) {
 // ROD-186: Listener para subida de acta y conclusión vía AJAX (Preserva filtros)
 document.addEventListener('submit', function (e) {
     const formAudiencia = e.target.closest('#form-audiencia');
-    if (formAudiencia && !formAudiencia.dataset.outlookConfirmed) {
-        const calendarioVinculado = String(document.getElementById('hdnOutlookCalendarLinked')?.value) === 'true';
-        const yaVinculado = String(document.getElementById('input-outlook-linked-current')?.value) === 'true';
-        const syncInput = document.getElementById('input-sync-outlook');
-
-        if (!calendarioVinculado) {
-            if (syncInput) syncInput.value = 'false';
-            return;
-        }
-
-        if (typeof formAudiencia.checkValidity === 'function' && !formAudiencia.checkValidity()) {
-            return;
-        }
-
-        e.preventDefault();
-        const titulo = yaVinculado ? 'Actualizar evento de Outlook' : 'Crear evento en Outlook';
-        const texto = yaVinculado
-            ? 'Esta audiencia ya esta vinculada. Elige si tambien quieres actualizar tu calendario de Outlook.'
-            : 'Elige si quieres guardar la audiencia solo en SIAJ o tambien crearla en tu calendario de Outlook.';
-
-        Swal.fire({
-            title: titulo,
-            text: texto,
-            icon: 'question',
-            showDenyButton: true,
-            showCancelButton: true,
-            confirmButtonText: yaVinculado ? 'Actualizar Outlook' : 'Crear en Outlook',
-            denyButtonText: 'Solo SIAJ',
-            cancelButtonText: 'Cancelar',
-            confirmButtonColor: '#2563eb',
-            denyButtonColor: '#6b7280',
-            cancelButtonColor: '#9ca3af'
-        }).then((result) => {
-            if (result.isConfirmed || result.isDenied) {
-                if (syncInput) syncInput.value = result.isConfirmed ? 'true' : 'false';
-                formAudiencia.dataset.outlookConfirmed = 'true';
-                if (typeof formAudiencia.requestSubmit === 'function') {
-                    formAudiencia.requestSubmit();
-                } else {
-                    formAudiencia.submit();
-                }
-            }
-        });
-        return;
-    }
-
     // A. Concluir Audiencia
     const formConcluir = e.target.closest('#form-concluir');
     if (formConcluir) {
@@ -1063,27 +1013,7 @@ function inicializarSelectsAudiencias() {
 }
 
 // 4. CONFIRMAR ELIMINAR AUDIENCIA
-function confirmarEliminarAudiencia(id, outlookLinked = false) {
-    if (outlookLinked) {
-        Swal.fire({
-            title: 'Eliminar audiencia',
-            text: 'Esta audiencia tiene un evento vinculado en Outlook. Elige que deseas eliminar.',
-            icon: 'warning',
-            showDenyButton: true,
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            denyButtonColor: '#6b7280',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Eliminar SIAJ y Outlook',
-            denyButtonText: 'Eliminar solo SIAJ',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed || result.isDenied) {
-                ejecutarEliminacionAudiencia(id, result.isConfirmed);
-            }
-        });
-        return;
-    }
+function confirmarEliminarAudiencia(id) {
     Swal.fire({
         title: '¿Eliminar audiencia?',
         text: "Esta acción no se puede deshacer. Se notificará a tus superiores.",
@@ -1095,13 +1025,13 @@ function confirmarEliminarAudiencia(id, outlookLinked = false) {
         cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) {
-            ejecutarEliminacionAudiencia(id, false);
+            ejecutarEliminacionAudiencia(id);
         }
     });
 }
 
-function ejecutarEliminacionAudiencia(id, deleteOutlook) {
-            fetch('/audiencias/eliminar/' + id + '?deleteOutlook=' + deleteOutlook, {
+function ejecutarEliminacionAudiencia(id) {
+            fetch('/audiencias/eliminar/' + id, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
