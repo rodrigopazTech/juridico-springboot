@@ -3,12 +3,16 @@
 
 <head>
     <link rel="manifest" th:href="@{/manifest.json}" />
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any" />
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
+    <link rel="apple-touch-icon" th:href="@{/img/apple-touch-icon.png}" />
     <meta name="theme-color" content="#691228" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Centro de Notificaciones | Sistema Jurídico</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
+    <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 
@@ -75,15 +79,15 @@
 
                         <tr th:each="n : ${notificaciones.content}" 
                             class="transition-all duration-300 group border-l-4"
-                            th:classappend="${!n.leida ? 'bg-gob-verde border-gob-oro hover:bg-gob-verde/80' : 'bg-white border-transparent hover:bg-gob-oro/50 hover:border-gray-200'}">
+                            th:classappend="${!n.leida ? 'bg-[#fffaf0] border-gob-oro hover:bg-[#fff4db]' : 'bg-white border-transparent hover:bg-gray-50 hover:border-gray-200'}">
 
                             <td class="px-6 py-5 whitespace-nowrap">
                                 <div class="text-sm font-bold"
-                                    th:classappend="${!n.leida ? 'text-yellow-50' : 'text-gray-900'}"
+                                    th:classappend="${!n.leida ? 'text-gray-900' : 'text-gray-900'}"
                                     th:text="${#temporals.format(n.createdAt, 'dd MMM, yyyy')}">Fecha</div>
                                 <div class="flex items-center gap-1">
                                     <span class="text-xs" 
-                                          th:classappend="${!n.leida ? 'text-yellow-100/70' : 'text-gray-500'}"
+                                          th:classappend="${!n.leida ? 'text-gob-guinda/70' : 'text-gray-500'}"
                                           th:text="${#temporals.format(n.createdAt, 'HH:mm')}">Hora</span>
 
 
@@ -94,7 +98,7 @@
                                     
                                     <!-- Etiqueta de Leída Azul Eléctrico -->
                                     <span th:if="${n.leida}"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold border bg-orange-50 text-orangee-600 border-orange-500">
+                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold border bg-orange-50 text-orange-600 border-orange-500">
                                         <i class="fas fa-check-double"></i> LEÍDA
                                     </span> <!--ORIGINAL class="fas fa-eye"> -->
                                 
@@ -106,7 +110,7 @@
                                     <span
                                         class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[12px] font-extrabold border"
                                         th:classappend="${n.tipo == 'AUDIENCIA' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                       (n.tipo == 'TERMINO' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gob-oro/15 text-gob-oro border-gob-oro/50')}"> <!--ORIGINAL (n.tipo == 'TERMINO' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gob-oro/10 text-gob-oro border-gob-oro/20')}"-->
+                                       (n.tipo == 'TERMINO' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-[#f7f1e6] text-gob-guinda border-gob-oro/50')}"> <!--ORIGINAL (n.tipo == 'TERMINO' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gob-oro/10 text-gob-oro border-gob-oro/20')}"-->
                                         <i class="fas"
                                             th:classappend="${n.tipo == 'AUDIENCIA' ? 'fa-gavel' : (n.tipo == 'TERMINO' ? 'fa-hourglass-end' : 'fa-info-circle')}"></i>
                                         <span th:text="${n.tipo}">TIPO</span>
@@ -118,10 +122,10 @@
                             <td class="px-6 py-5 w-1/2">
                                 <div class="max-w-md">
                                     <p class="text-sm font-bold" 
-                                       th:classappend="${!n.leida ? 'text-yellow-50' : 'text-gray-800'}"
+                                       th:classappend="${!n.leida ? 'text-gob-guinda' : 'text-gray-800'}"
                                        th:text="${n.titulo}">Título de la Notificación</p>
                                     <p class="text-xs mt-0.5 line-clamp-2" 
-                                       th:classappend="${!n.leida ? 'text-yellow-100/80' : 'text-gray-500'}"
+                                       th:classappend="${!n.leida ? 'text-gray-600' : 'text-gray-500'}"
                                        th:text="${n.mensaje}">Mensaje...</p>
                                 </div>
                             </td>
@@ -133,7 +137,7 @@
                                     <th:block th:if="${!esPapelera}">
                                         <a th:href="@{/notificaciones/leer/{id}(id=${n.id})}"
                                             class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all"
-                                            th:classappend="${!n.leida ? 'border-yellow-400/30 text-yellow-400 hover:bg-white/10' : 'border-gob-guinda/20 text-gob-guinda hover:bg-gob-guinda/5'}"
+                                            th:classappend="${!n.leida ? 'border-gob-oro/60 bg-white text-gob-guinda hover:bg-gob-oro/10' : 'border-gob-guinda/20 text-gob-guinda hover:bg-gob-guinda/5'}"
                                             title="Ir al origen">
                                             <i class="fas fa-external-link-alt text-[10px]"></i>
                                             <span>Ver</span>
@@ -142,7 +146,7 @@
                                         <!--BOTON PARA MARCAR COMO LEIDA UNA NOTIFICACION-->
                                         <a th:href="@{/notificaciones/archivar/{id}(id=${n.id})}"
                                             class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all"
-                                            th:classappend="${!n.leida ? 'border-yellow-100/20 text-yellow-100 hover:bg-white/20' : 'border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-500 hover:border-red-200'}"
+                                            th:classappend="${!n.leida ? 'border-gob-oro/50 bg-white text-gob-guinda hover:bg-gob-oro/10' : 'border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-500 hover:border-red-200'}"
                                             title="Marcar como leída">
                                             <i class="fas fa-eye"></i>
                                             <span>Marcar como leída</span>
@@ -185,7 +189,7 @@
                 <!-- Tarjeta por notificación -->
                 <div th:each="n : ${notificaciones.content}"
                      class="relative rounded-2xl overflow-hidden shadow-md transition-all duration-200"
-                     th:classappend="${!n.leida ? 'bg-gob-verde border border-gob-oro/40' : 'bg-white border border-gray-200'}">
+                     th:classappend="${!n.leida ? 'bg-[#fffaf0] border border-gob-oro/50' : 'bg-white border border-gray-200'}">
 
                     <!-- Barra lateral izquierda de estado -->
                     <div class="absolute left-0 top-0 bottom-0 w-1 rounded-r"
@@ -199,7 +203,7 @@
                                 <!-- Badge tipo -->
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-extrabold border"
                                       th:classappend="${n.tipo == 'AUDIENCIA' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                                      (n.tipo == 'TERMINO' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gob-oro/15 text-gob-oro border-gob-oro/50')}">
+                                                      (n.tipo == 'TERMINO' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-[#f7f1e6] text-gob-guinda border-gob-oro/50')}">
                                     <i class="fas" th:classappend="${n.tipo == 'AUDIENCIA' ? 'fa-gavel' : (n.tipo == 'TERMINO' ? 'fa-hourglass-end' : 'fa-info-circle')}"></i>
                                     <span th:text="${n.tipo}">TIPO</span>
                                 </span>
@@ -212,20 +216,20 @@
                             <!-- Fecha y hora -->
                             <div class="text-right flex-shrink-0">
                                 <p class="text-[11px] font-bold"
-                                   th:classappend="${!n.leida ? 'text-yellow-100' : 'text-gray-600'}"
+                                   th:classappend="${!n.leida ? 'text-gray-800' : 'text-gray-600'}"
                                    th:text="${#temporals.format(n.createdAt, 'dd MMM, yyyy')}">Fecha</p>
                                 <p class="text-[10px]"
-                                   th:classappend="${!n.leida ? 'text-yellow-100/60' : 'text-gray-400'}"
+                                   th:classappend="${!n.leida ? 'text-gob-guinda/70' : 'text-gray-400'}"
                                    th:text="${#temporals.format(n.createdAt, 'HH:mm')}">Hora</p>
                             </div>
                         </div>
 
                         <!-- Título y mensaje -->
                         <p class="text-sm font-bold leading-tight mb-1"
-                           th:classappend="${!n.leida ? 'text-yellow-50' : 'text-gray-800'}"
+                           th:classappend="${!n.leida ? 'text-gob-guinda' : 'text-gray-800'}"
                            th:text="${n.titulo}">Título de la Notificación</p>
                         <p class="text-xs line-clamp-2"
-                           th:classappend="${!n.leida ? 'text-yellow-100/75' : 'text-gray-500'}"
+                           th:classappend="${!n.leida ? 'text-gray-600' : 'text-gray-500'}"
                            th:text="${n.mensaje}">Mensaje descriptivo de la notificación.</p>
 
                         <!-- Acciones -->
@@ -235,13 +239,13 @@
                             <th:block th:if="${!esPapelera}">
                                 <a th:href="@{/notificaciones/leer/{id}(id=${n.id})}"
                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all"
-                                   th:classappend="${!n.leida ? 'border-gob-oro/40 text-gob-oro hover:bg-white/10' : 'border-gob-guinda/20 text-gob-guinda hover:bg-gob-guinda/5'}"
+                                   th:classappend="${!n.leida ? 'border-gob-oro/60 bg-white text-gob-guinda hover:bg-gob-oro/10' : 'border-gob-guinda/20 text-gob-guinda hover:bg-gob-guinda/5'}"
                                    title="Ver detalle">
                                     <i class="fas fa-external-link-alt text-[9px]"></i> Ver
                                 </a>
                                 <a th:href="@{/notificaciones/archivar/{id}(id=${n.id})}"
                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all"
-                                   th:classappend="${!n.leida ? 'border-yellow-100/20 text-yellow-100 hover:bg-white/10' : 'border-gray-200 text-gray-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200'}"
+                                   th:classappend="${!n.leida ? 'border-gob-oro/50 bg-white text-gob-guinda hover:bg-gob-oro/10' : 'border-gray-200 text-gray-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200'}"
                                    title="Marcar como leída">
                                     <i class="fas fa-eye text-[9px]"></i> Marcar leída
                                 </a>

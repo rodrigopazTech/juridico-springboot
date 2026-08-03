@@ -37,12 +37,12 @@ public class AuthService {
 
     public LoginResponse login(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            new UsernamePasswordAuthenticationToken(request.loginIdentifier(), request.getPassword())
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         
-        Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
+        Usuario usuario = usuarioRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
         
         usuario.setUltimoAcceso(LocalDateTime.now());

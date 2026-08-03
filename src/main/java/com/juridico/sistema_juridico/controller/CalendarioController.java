@@ -67,9 +67,9 @@ public class CalendarioController {
                     // Cargar gerencias desde la base de datos (solo activas)
                     listaGerencias = gerenciaRepository.findByActivoTrueOrderByNombreAsc();
 
-                    // Filtro de usuario visible para DIRECCION y SUBDIRECCION
+                    // El usuario se carga al elegir gerencia para evitar mezclar alcances.
                     puedeVerFiltroUsuario = true;
-                    listaUsuarios = usuarioRepository.findAll();
+                    listaUsuarios = new ArrayList<>();
 
                 } else if (usuarioActual.getRol() == RolUsuario.GERENTE) {
                     // GERENTE no ve el filtro de gerencia (solo ve su propia gerencia)
@@ -80,8 +80,8 @@ public class CalendarioController {
 
                     // Filtro de usuario visible para GERENTE (solo usuarios de su gerencia)
                     puedeVerFiltroUsuario = true;
-                    listaUsuarios = usuarioRepository.findByGerenciasIdAndActivoTrueOrderByNombreCompletoAsc(
-                            usuarioActual.getGerencia().getId());
+                    listaUsuarios = usuarioRepository.findByGerenciasIdAndRolInAndActivoTrueOrderByNombreCompletoAsc(
+                            usuarioActual.getGerencia().getId(), rolesVisiblesPara(usuarioActual.getRol()));
 
                 } else if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
                     // ABOGADO no ve el filtro de usuario
@@ -106,8 +106,8 @@ public class CalendarioController {
                     puedeVerFiltroUsuario = true;
                     // JEFE_DEPTO ve los usuarios de su gerencia
                     if (usuarioActual.getGerencia() != null) {
-                        listaUsuarios = usuarioRepository.findByGerenciasIdAndActivoTrueOrderByNombreCompletoAsc(
-                                usuarioActual.getGerencia().getId());
+                        listaUsuarios = usuarioRepository.findByGerenciasIdAndRolInAndActivoTrueOrderByNombreCompletoAsc(
+                                usuarioActual.getGerencia().getId(), rolesVisiblesPara(usuarioActual.getRol()));
                     }
                 }
             }
@@ -130,5 +130,25 @@ public class CalendarioController {
                 new String[] { "recordatorio", "Recordatorios" }));
 
         return "views/calendario/index";
+    }
+
+    private List<RolUsuario> rolesVisiblesPara(RolUsuario rol) {
+        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL) {
+            return List.of(RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR, RolUsuario.GERENTE,
+                    RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO);
+        }
+        if (rol == RolUsuario.DIRECTOR) {
+            return List.of(RolUsuario.SUBDIRECTOR, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO);
+        }
+        if (rol == RolUsuario.SUBDIRECTOR) {
+            return List.of(RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO);
+        }
+        if (rol == RolUsuario.GERENTE) {
+            return List.of(RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO);
+        }
+        if (rol == RolUsuario.JEFE_DEPTO) {
+            return List.of(RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO);
+        }
+        return List.of(RolUsuario.ABOGADO);
     }
 }

@@ -43,7 +43,7 @@ public class CatalogosController {
         Usuario usuarioActual = usuarioRepository.findByEmail(email).orElseThrow();
         RolUsuario rol = usuarioActual.getRol();
 
-        // --- Determinar qué gerencias puede ver ---
+        // --- Determinar quÃ© gerencias puede ver ---
         boolean esNivelAlto = (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL || rol == RolUsuario.DIRECTOR || rol == RolUsuario.SUBDIRECTOR);
         boolean esAbogado = (rol == RolUsuario.ABOGADO);
 
@@ -59,13 +59,13 @@ public class CatalogosController {
             Gerencia miGerencia = usuarioActual.getGerencia();
             if (miGerencia != null) {
                 gerenciasDisponibles = List.of(miGerencia);
-                gerenciaId = miGerencia.getId(); // Forzar selección a su gerencia
+                gerenciaId = miGerencia.getId(); // Forzar selecciÃ³n a su gerencia
             } else {
                 gerenciasDisponibles = List.of();
             }
         }
 
-        // Si se seleccionó una gerencia (o fue forzada)
+        // Si se seleccionÃ³ una gerencia (o fue forzada)
         if (gerenciaId != null) {
             gerenciaSeleccionada = gerenciaRepository.findById(gerenciaId).orElse(null);
         } else if (!gerenciasDisponibles.isEmpty()) {
@@ -73,7 +73,7 @@ public class CatalogosController {
             gerenciaSeleccionada = gerenciasDisponibles.get(0);
         }
 
-        // --- Cargar catálogos filtrados por la gerencia seleccionada ---
+        // --- Cargar catÃ¡logos filtrados por la gerencia seleccionada ---
         List<OrganoJurisdiccional> organos = new ArrayList<>();
         List<TipoAudiencia> tiposAudiencia = new ArrayList<>();
         List<Usuario> abogados = new ArrayList<>();
@@ -83,7 +83,7 @@ public class CatalogosController {
 
         if (gerenciaSeleccionada != null) {
             organos = organoRepository.findByGerenciaIdAndActivoTrue(gerenciaSeleccionada.getId());
-            // Incluir órganos sin gerencia asignada
+            // Incluir Ã³rganos sin gerencia asignada
             organos.addAll(organoRepository.findByGerenciaIsNullAndActivoTrue());
             // Eliminar duplicados por id
             organos = organos.stream()
@@ -145,14 +145,14 @@ public class CatalogosController {
         
         model.addAttribute("fechaLimiteNuevo", java.time.LocalDateTime.now().minusDays(7));
 
-        model.addAttribute("pageTitle", "Catálogos Generales");
+        model.addAttribute("pageTitle", "Cat\u00e1logos");
         model.addAttribute("activePage", "catalogos");
 
         return "views/catalogos/index";
     }
 
     // ===============================================================
-    // CRUD - ÓRGANOS JURISDICCIONALES
+    // CRUD - Ã“RGANOS JURISDICCIONALES
     // ===============================================================
     private Usuario getUsuarioActual() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -167,10 +167,30 @@ public class CatalogosController {
 
     private void validarPuedeEditarCatalogos(Usuario usuarioActual) {
         if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
-            throw new org.springframework.security.access.AccessDeniedException("El ABOGADO no puede modificar catálogos.");
+            throw new org.springframework.security.access.AccessDeniedException("El ABOGADO no puede modificar catÃ¡logos.");
         }
         if (!esNivelAlto(usuarioActual) && usuarioActual.getGerencia() == null) {
-            throw new org.springframework.security.access.AccessDeniedException("No tienes una gerencia asignada para modificar catálogos.");
+            throw new org.springframework.security.access.AccessDeniedException("No tienes una gerencia asignada para modificar catÃ¡logos.");
+        }
+    }
+
+    private void validarAlcanceGerencia(Gerencia gerenciaCatalogo, Usuario usuarioActual, String catalogo) {
+        validarPuedeEditarCatalogos(usuarioActual);
+        if (esNivelAlto(usuarioActual)) {
+            return;
+        }
+        if (gerenciaCatalogo == null || usuarioActual.getGerencia() == null
+                || !gerenciaCatalogo.getId().equals(usuarioActual.getGerencia().getId())) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "No puedes modificar " + catalogo + " fuera de tu gerencia.");
+        }
+    }
+
+    private void validarPuedeModificarGerencia(Usuario usuarioActual, Gerencia gerencia) {
+        validarPuedeEditarCatalogos(usuarioActual);
+        if (!esNivelAlto(usuarioActual)) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Solo ADMIN y directivos pueden modificar gerencias.");
         }
     }
 
@@ -203,21 +223,23 @@ public class CatalogosController {
 
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuarioActual = usuarioRepository.findByEmail(email).orElseThrow();
+            Gerencia gerenciaPermitida = resolverGerenciaPermitida(gerenciaIdStr, usuarioActual);
 
             OrganoJurisdiccional organo;
             if (idStr != null && !idStr.isEmpty()) {
-                // EDICIÓN
+                // EDICIÃ“N
                 organo = usuarioService.buscarOrganoPorId(Integer.parseInt(idStr));
+                validarAlcanceGerencia(organo.getGerencia(), usuarioActual, "organos jurisdiccionales");
                 organo.setNombre(nombre.trim());
             } else {
-                // CREACIÓN: Primero verificar si ya existe uno ACTIVO
+                // CREACIÃ“N: Primero verificar si ya existe uno ACTIVO
                 Optional<OrganoJurisdiccional> activoOpt = organoRepository.findByNombreIgnoreCase(nombre.trim())
                     .filter(o -> Boolean.TRUE.equals(o.getActivo()));
                 if (activoOpt.isPresent()) {
-                    return ResponseEntity.ok(Map.of("status", "exists", "id", activoOpt.get().getId(), "mensaje", "El Órgano Jurisdiccional ya existe."));
+                    return ResponseEntity.ok(Map.of("status", "exists", "id", activoOpt.get().getId(), "mensaje", "El Ã“rgano Jurisdiccional ya existe."));
                 }
 
-                // CREACIÓN: buscar si ya existe uno inactivo con el mismo nombre
+                // CREACIÃ“N: buscar si ya existe uno inactivo con el mismo nombre
                 organo = organoRepository.findByNombreIgnoreCase(nombre.trim())
                     .filter(o -> Boolean.FALSE.equals(o.getActivo()))
                     .orElse(null);
@@ -226,23 +248,21 @@ public class CatalogosController {
                     // Reactivar el existente
                     organo.setActivo(true);
                     organo.setUsuario(usuarioActual);
-                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
-                        organo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
-                    }
+                    organo.setGerencia(gerenciaPermitida);
                 } else {
                     organo = new OrganoJurisdiccional();
                     organo.setNombre(nombre.trim());
                     organo.setActivo(true);
                     organo.setUsuario(usuarioActual);
-                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
-                        organo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
-                    }
+                    organo.setGerencia(gerenciaPermitida);
                 }
             }
 
             usuarioService.guardarOrgano(organo);
             syncService.sincronizarNombreOrgano(organo);
-            return ResponseEntity.ok(Map.of("status", "ok", "id", organo.getId(), "mensaje", "Órgano guardado correctamente."));
+            return ResponseEntity.ok(Map.of("status", "ok", "id", organo.getId(), "mensaje", "Ã“rgano guardado correctamente."));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return forbidden(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
@@ -252,13 +272,18 @@ public class CatalogosController {
     @ResponseBody
     public ResponseEntity<?> eliminarOrgano(@PathVariable("id") Integer id) {
         try {
+            Usuario usuarioActual = getUsuarioActual();
+            OrganoJurisdiccional organoActual = usuarioService.buscarOrganoPorId(id);
+            validarAlcanceGerencia(organoActual.getGerencia(), usuarioActual, "organos jurisdiccionales");
             usuarioService.eliminarOrgano(id);
-            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Órgano eliminado correctamente."));
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Ã“rgano eliminado correctamente."));
         } catch (DataIntegrityViolationException e) {
             OrganoJurisdiccional o = usuarioService.buscarOrganoPorId(id);
             o.setActivo(false);
             organoRepository.save(o);
-            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "El valor estaba en uso. Ha sido ocultado del catálogo."));
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "El valor estaba en uso. Ha sido ocultado del catÃ¡logo."));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return forbidden(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo eliminar: " + e.getMessage()));
         }
@@ -282,20 +307,23 @@ public class CatalogosController {
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuarioActual = usuarioRepository.findByEmail(email).orElseThrow();
 
+            Gerencia gerenciaPermitida = resolverGerenciaPermitida(gerenciaIdStr, usuarioActual);
+
             TipoAudiencia tipo;
             if (idStr != null && !idStr.isEmpty()) {
-                // EDICIÓN
+                // EDICIÃ“N
                 tipo = usuarioService.buscarTipoAudienciaPorId(Integer.parseInt(idStr));
+                validarAlcanceGerencia(tipo.getGerencia(), usuarioActual, "tipos de audiencia");
                 tipo.setNombre(nombre.trim());
             } else {
-                // CREACIÓN: Primero verificar si ya existe uno ACTIVO
+                // CREACIÃ“N: Primero verificar si ya existe uno ACTIVO
                 Optional<TipoAudiencia> activoOpt = tipoAudienciaRepository.findByNombreIgnoreCase(nombre.trim())
                     .filter(t -> Boolean.TRUE.equals(t.getActivo()));
                 if (activoOpt.isPresent()) {
                     return ResponseEntity.ok(Map.of("status", "exists", "id", activoOpt.get().getId(), "mensaje", "El Tipo de Audiencia ya existe."));
                 }
 
-                // CREACIÓN: buscar si ya existe uno inactivo con el mismo nombre
+                // CREACIÃ“N: buscar si ya existe uno inactivo con el mismo nombre
                 tipo = tipoAudienciaRepository.findByNombreIgnoreCase(nombre.trim())
                     .filter(t -> Boolean.FALSE.equals(t.getActivo()))
                     .orElse(null);
@@ -304,22 +332,20 @@ public class CatalogosController {
                     // Reactivar el existente
                     tipo.setActivo(true);
                     tipo.setUsuario(usuarioActual);
-                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
-                        tipo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
-                    }
+                    tipo.setGerencia(gerenciaPermitida);
                 } else {
                     tipo = new TipoAudiencia();
                     tipo.setNombre(nombre.trim());
                     tipo.setActivo(true);
                     tipo.setUsuario(usuarioActual);
-                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
-                        tipo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
-                    }
+                    tipo.setGerencia(gerenciaPermitida);
                 }
             }
 
             usuarioService.guardarTipoAudiencia(tipo);
             return ResponseEntity.ok(Map.of("status", "ok", "id", tipo.getId(), "mensaje", "Tipo de Audiencia guardado correctamente."));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return forbidden(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
@@ -329,13 +355,16 @@ public class CatalogosController {
     @ResponseBody
     public ResponseEntity<?> eliminarTipoAudiencia(@PathVariable("id") Integer id) {
         try {
+            Usuario usuarioActual = getUsuarioActual();
+            TipoAudiencia tipoActual = usuarioService.buscarTipoAudienciaPorId(id);
+            validarAlcanceGerencia(tipoActual.getGerencia(), usuarioActual, "tipos de audiencia");
             usuarioService.eliminarTipoAudiencia(id);
             return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Tipo de Audiencia eliminado correctamente."));
         } catch (DataIntegrityViolationException e) {
             TipoAudiencia t = usuarioService.buscarTipoAudienciaPorId(id);
             t.setActivo(false);
             tipoAudienciaRepository.save(t);
-            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "El valor estaba en uso. Ha sido ocultado del catálogo."));
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "El valor estaba en uso. Ha sido ocultado del catÃ¡logo."));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo eliminar: " + e.getMessage()));
         }
@@ -359,14 +388,17 @@ public class CatalogosController {
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuarioActual = usuarioRepository.findByEmail(email).orElseThrow();
 
+            Gerencia gerenciaPermitida = resolverGerenciaPermitida(gerenciaIdStr, usuarioActual);
+
             TipoExpediente tipo;
             if (idStr != null && !idStr.isEmpty()) {
-                // EDICIÓN
+                // EDICIÃ“N
                 tipo = tipoExpedienteRepository.findById(Integer.parseInt(idStr))
                         .orElseThrow(() -> new RuntimeException("Tipo de Expediente no encontrado"));
+                validarAlcanceGerencia(tipo.getGerencia(), usuarioActual, "tipos de expediente");
                 tipo.setNombre(nombre.trim());
             } else {
-                // CREACIÓN
+                // CREACIÃ“N
                 tipo = tipoExpedienteRepository.findByNombreIgnoreCase(nombre.trim())
                     .filter(t -> Boolean.FALSE.equals(t.getActivo()))
                     .orElse(null);
@@ -374,22 +406,20 @@ public class CatalogosController {
                 if (tipo != null) {
                     tipo.setActivo(true);
                     tipo.setUsuario(usuarioActual);
-                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
-                        tipo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
-                    }
+                    tipo.setGerencia(gerenciaPermitida);
                 } else {
                     tipo = new TipoExpediente();
                     tipo.setNombre(nombre.trim());
                     tipo.setActivo(true);
                     tipo.setUsuario(usuarioActual);
-                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
-                        tipo.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
-                    }
+                    tipo.setGerencia(gerenciaPermitida);
                 }
             }
 
             tipoExpedienteRepository.save(tipo);
             return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Tipo de Expediente guardado correctamente."));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return forbidden(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
@@ -399,13 +429,18 @@ public class CatalogosController {
     @ResponseBody
     public ResponseEntity<?> eliminarTipoExpediente(@PathVariable("id") Integer id) {
         try {
+            Usuario usuarioActual = getUsuarioActual();
+            TipoExpediente tipoActual = tipoExpedienteRepository.findById(id).orElseThrow();
+            validarAlcanceGerencia(tipoActual.getGerencia(), usuarioActual, "tipos de expediente");
             tipoExpedienteRepository.deleteById(id);
             return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Tipo de Expediente eliminado correctamente."));
         } catch (DataIntegrityViolationException e) {
             TipoExpediente t = tipoExpedienteRepository.findById(id).orElseThrow();
             t.setActivo(false);
             tipoExpedienteRepository.save(t);
-            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "El valor estaba en uso. Ha sido ocultado del catálogo."));
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "El valor estaba en uso. Ha sido ocultado del catÃ¡logo."));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return forbidden(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo eliminar: " + e.getMessage()));
         }
@@ -429,21 +464,24 @@ public class CatalogosController {
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuarioActual = usuarioRepository.findByEmail(email).orElseThrow();
 
+            Gerencia gerenciaPermitida = resolverGerenciaPermitida(gerenciaIdStr, usuarioActual);
+
             Estado estado;
             if (idStr != null && !idStr.isEmpty()) {
-                // EDICIÓN
+                // EDICIÃ“N
                 estado = estadoRepository.findById(Integer.parseInt(idStr))
                     .orElseThrow(() -> new RuntimeException("Sede no encontrada."));
+                validarAlcanceGerencia(estado.getGerencia(), usuarioActual, "sedes");
                 estado.setNombre(nombre.trim());
             } else {
-                // CREACIÓN: Primero verificar si ya existe uno ACTIVO
+                // CREACIÃ“N: Primero verificar si ya existe uno ACTIVO
                 Optional<Estado> activoOpt = estadoRepository.findByNombreIgnoreCase(nombre.trim())
                     .filter(e -> Boolean.TRUE.equals(e.getActivo()));
                 if (activoOpt.isPresent()) {
                     return ResponseEntity.ok(Map.of("status", "exists", "id", activoOpt.get().getId(), "mensaje", "La Sede/Estado ya existe."));
                 }
 
-                // CREACIÓN: buscar si ya existe uno inactivo con el mismo nombre
+                // CREACIÃ“N: buscar si ya existe uno inactivo con el mismo nombre
                 estado = estadoRepository.findByNombreIgnoreCase(nombre.trim())
                     .filter(e -> Boolean.FALSE.equals(e.getActivo()))
                     .orElse(null);
@@ -452,17 +490,13 @@ public class CatalogosController {
                     // Reactivar el existente
                     estado.setActivo(true);
                     estado.setUsuario(usuarioActual);
-                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
-                        estado.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
-                    }
+                    estado.setGerencia(gerenciaPermitida);
                 } else {
                     estado = new Estado();
                     estado.setNombre(nombre.trim());
                     estado.setActivo(true);
                     estado.setUsuario(usuarioActual);
-                    if (gerenciaIdStr != null && !gerenciaIdStr.isEmpty()) {
-                        estado.setGerencia(gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null));
-                    }
+                    estado.setGerencia(gerenciaPermitida);
                 }
             }
 
@@ -476,6 +510,8 @@ public class CatalogosController {
             }
             
             return ResponseEntity.ok(Map.of("status", "ok", "id", estado.getId(), "mensaje", "Sede/Estado guardado correctamente."));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return forbidden(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
@@ -485,13 +521,18 @@ public class CatalogosController {
     @ResponseBody
     public ResponseEntity<?> eliminarSede(@PathVariable("id") Integer id) {
         try {
+            Usuario usuarioActual = getUsuarioActual();
+            Estado sedeActual = estadoRepository.findById(id).orElseThrow();
+            validarAlcanceGerencia(sedeActual.getGerencia(), usuarioActual, "sedes");
             estadoRepository.deleteById(id);
             return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Sede/Estado eliminado correctamente."));
         } catch (DataIntegrityViolationException e) {
             Estado s = estadoRepository.findById(id).orElseThrow();
             s.setActivo(false);
             estadoRepository.save(s);
-            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "El valor estaba en uso. Ha sido ocultado del catálogo."));
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "El valor estaba en uso. Ha sido ocultado del catÃ¡logo."));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return forbidden(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo eliminar: " + e.getMessage()));
         }
@@ -502,6 +543,7 @@ public class CatalogosController {
     // ===============================================================
     @PostMapping("/gerencias/guardar")
     public String guardarGerencia(@ModelAttribute Gerencia gerencia, RedirectAttributes redirectAttrs) {
+        validarPuedeModificarGerencia(getUsuarioActual(), gerencia);
         usuarioService.guardarGerencia(gerencia);
         redirectAttrs.addFlashAttribute("mensaje", "Gerencia guardada.");
         redirectAttrs.addFlashAttribute("tipo", "success");
@@ -527,15 +569,20 @@ public class CatalogosController {
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuarioActual = usuarioRepository.findByEmail(email).orElseThrow();
 
+            Gerencia gerenciaPermitida = resolverGerenciaPermitida(gerenciaIdStr, usuarioActual);
+            Integer gerenciaPermitidaId = gerenciaPermitida != null ? gerenciaPermitida.getId() : null;
+            gerenciaId = gerenciaPermitidaId;
+
             Materia materia;
             if (idStr != null && !idStr.isEmpty()) {
-                // EDICIÓN
+                // EDICIÃ“N
                 materia = materiaRepository.findById(Integer.parseInt(idStr))
                     .orElseThrow(() -> new RuntimeException("Materia no encontrada."));
+                validarAlcanceGerencia(materia.getGerencia(), usuarioActual, "materias");
                 materia.setNombre(nombre.trim());
             } else {
                 
-                // CREACIÓN: Primero verificar si ya existe uno ACTIVO (filtrado por gerencia si aplica)
+                // CREACIÃ“N: Primero verificar si ya existe uno ACTIVO (filtrado por gerencia si aplica)
                 if (gerenciaId != null) {
                     Optional<Materia> activoOpt = materiaRepository.findByNombreIgnoreCaseAndGerenciaId(nombre.trim(), gerenciaId)
                         .filter(m -> Boolean.TRUE.equals(m.getActivo()));
@@ -550,7 +597,7 @@ public class CatalogosController {
                     }
                 }
 
-                // CREACIÓN: buscar si existe inactiva (filtrada por gerencia si aplica, de lo contrario global)
+                // CREACIÃ“N: buscar si existe inactiva (filtrada por gerencia si aplica, de lo contrario global)
                 if (gerenciaId != null) {
                     materia = materiaRepository.findByNombreIgnoreCaseAndGerenciaId(nombre.trim(), gerenciaId)
                         .filter(m -> Boolean.FALSE.equals(m.getActivo()))
@@ -564,17 +611,13 @@ public class CatalogosController {
                 if (materia != null) {
                     materia.setActivo(true);
                     materia.setUsuario(usuarioActual);
-                    if (gerenciaId != null) {
-                        materia.setGerencia(gerenciaRepository.findById(gerenciaId).orElse(null));
-                    }
+                    materia.setGerencia(gerenciaPermitida);
                 } else {
                     materia = new Materia();
                     materia.setNombre(nombre.trim());
                     materia.setActivo(true);
                     materia.setUsuario(usuarioActual);
-                    if (gerenciaId != null) {
-                        materia.setGerencia(gerenciaRepository.findById(gerenciaId).orElse(null));
-                    }
+                    materia.setGerencia(gerenciaPermitida);
                 }
             }
 
@@ -590,7 +633,7 @@ public class CatalogosController {
                     usuarioRepository.save(usuarioActual);
                 }
 
-                // Asignar automáticamente a todos los Gerentes activos de esta gerencia
+                // Asignar automÃ¡ticamente a todos los Gerentes activos de esta gerencia
                 if (gerenciaId != null) {
                     List<Usuario> gerentes = usuarioRepository.findByRolAndGerenciasIdAndActivoTrue(RolUsuario.GERENTE, gerenciaId);
                     for (Usuario g : gerentes) {
@@ -603,6 +646,8 @@ public class CatalogosController {
             }
 
             return ResponseEntity.ok(Map.of("status", "ok", "id", materia.getId(), "mensaje", "Materia guardada correctamente."));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return forbidden(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
@@ -612,13 +657,18 @@ public class CatalogosController {
     @ResponseBody
     public ResponseEntity<?> eliminarMateriaCat(@PathVariable("id") Integer id) {
         try {
+            Usuario usuarioActual = getUsuarioActual();
+            Materia materiaActual = materiaRepository.findById(id).orElseThrow();
+            validarAlcanceGerencia(materiaActual.getGerencia(), usuarioActual, "materias");
             materiaRepository.deleteById(id);
             return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Materia eliminada correctamente."));
         } catch (DataIntegrityViolationException e) {
             Materia m = materiaRepository.findById(id).orElseThrow();
             m.setActivo(false);
             materiaRepository.save(m);
-            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "La materia estaba en uso. Ha sido ocultada del catálogo."));
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "La materia estaba en uso. Ha sido ocultada del catÃ¡logo."));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return forbidden(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo eliminar: " + e.getMessage()));
         }
@@ -626,7 +676,9 @@ public class CatalogosController {
 
     @GetMapping("/gerencias/toggle/{id}")
     public String toggleGerencia(@PathVariable("id") Integer id) {
+        Usuario usuarioActual = getUsuarioActual();
         Gerencia g = usuarioService.buscarGerenciaPorId(id);
+        validarPuedeModificarGerencia(usuarioActual, g);
         g.setActivo(!g.getActivo());
         usuarioService.guardarGerencia(g);
         return "redirect:/catalogos?gerenciaId=" + id;
@@ -634,7 +686,9 @@ public class CatalogosController {
 
     @GetMapping("/organos/toggle/{id}")
     public String toggleOrgano(@PathVariable("id") Integer id) {
+        Usuario usuarioActual = getUsuarioActual();
         OrganoJurisdiccional o = usuarioService.buscarOrganoPorId(id);
+        validarAlcanceGerencia(o.getGerencia(), usuarioActual, "organos jurisdiccionales");
         o.setActivo(!o.getActivo());
         usuarioService.guardarOrgano(o);
         Integer gId = o.getGerencia() != null ? o.getGerencia().getId() : null;
@@ -643,7 +697,9 @@ public class CatalogosController {
 
     @GetMapping("/tipos-audiencia/toggle/{id}")
     public String toggleTipoAudiencia(@PathVariable("id") Integer id) {
+        Usuario usuarioActual = getUsuarioActual();
         TipoAudiencia t = usuarioService.buscarTipoAudienciaPorId(id);
+        validarAlcanceGerencia(t.getGerencia(), usuarioActual, "tipos de audiencia");
         t.setActivo(!t.getActivo());
         usuarioService.guardarTipoAudiencia(t);
         Integer gId = t.getGerencia() != null ? t.getGerencia().getId() : null;
@@ -652,7 +708,9 @@ public class CatalogosController {
 
     @GetMapping("/tipos-expediente/toggle/{id}")
     public String toggleTipoExpediente(@PathVariable("id") Integer id) {
+        Usuario usuarioActual = getUsuarioActual();
         TipoExpediente t = tipoExpedienteRepository.findById(id).orElseThrow();
+        validarAlcanceGerencia(t.getGerencia(), usuarioActual, "tipos de expediente");
         t.setActivo(!t.getActivo());
         tipoExpedienteRepository.save(t);
         Integer gId = t.getGerencia() != null ? t.getGerencia().getId() : null;

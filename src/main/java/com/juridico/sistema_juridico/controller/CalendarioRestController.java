@@ -1,9 +1,9 @@
 package com.juridico.sistema_juridico.controller;
 
-import com.juridico.sistema_juridico.dto.response.calendario.EventoResponse;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
-import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
+import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.dto.response.calendario.EventoResponse;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.service.CalendarioService;
@@ -11,9 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/calendario")
@@ -38,16 +43,9 @@ public class CalendarioRestController {
             @RequestParam(required = false, defaultValue = "todos") String prioridadId,
             @RequestParam(required = false, defaultValue = "todos") String tipoAudiencia,
             @RequestParam(required = false, defaultValue = "false") boolean misAsuntos) {
-        
-        // Obtener usuario autenticado
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Usuario usuarioActual = null;
-        
-        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
-            usuarioActual = usuarioRepository.findByEmail(auth.getName()).orElse(null);
-        }
-        
-        // Determinar gerenciaId y gerenciaNombre a filtrar
+
+        Usuario usuarioActual = usuarioActual();
+
         Long gerenciaId = null;
         String gerenciaNombre = null;
         if (gerencia != null && !"todos".equals(gerencia)) {
@@ -57,45 +55,37 @@ public class CalendarioRestController {
                 gerenciaNombre = gerencia;
             }
         }
-        
-        // GERENTE: forzar filtrar por su propia gerencia (el filtro está oculto)
-        if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.GERENTE) {
-            if (usuarioActual.getGerencia() != null) {
-                gerenciaId = usuarioActual.getGerencia().getId().longValue();
-                gerenciaNombre = usuarioActual.getGerencia().getNombre();
-            }
+
+        if (usuarioActual != null
+                && (usuarioActual.getRol() == RolUsuario.GERENTE
+                        || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO
+                        || usuarioActual.getRol() == RolUsuario.ABOGADO)
+                && usuarioActual.getGerencia() != null) {
+            gerenciaId = usuarioActual.getGerencia().getId().longValue();
+            gerenciaNombre = usuarioActual.getGerencia().getNombre();
         }
-        
-        // JEFE_DEPTO: forzar filtrar por su propia gerencia (el filtro está oculto)
-        if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
-            if (usuarioActual.getGerencia() != null) {
-                gerenciaId = usuarioActual.getGerencia().getId().longValue();
-                gerenciaNombre = usuarioActual.getGerencia().getNombre();
-            }
-        }
-        
-        // ABOGADO: forzar filtrar por su propia gerencia
-        if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.ABOGADO) {
-            if (usuarioActual.getGerencia() != null) {
-                gerenciaId = usuarioActual.getGerencia().getId().longValue();
-                gerenciaNombre = usuarioActual.getGerencia().getNombre();
-            }
-        }
-        
-        // Determinar usuarioId a filtrar
+
         Long usuarioId = null;
         if (misAsuntos && usuarioActual != null) {
-            // Si misAsuntos está activo, forzar filtrar por el ID del usuario autenticado
             usuarioId = usuarioActual.getId().longValue();
         } else if (usuario != null && !"todos".equals(usuario)) {
             try {
                 usuarioId = Long.parseLong(usuario);
             } catch (NumberFormatException e) {
-                // Ignorar si no es un número válido
+                usuarioId = null;
             }
         }
 
-        // Determinar materiaId y/o materiaNombre a filtrar
+        if (usuarioId != null && usuarioActual != null && !misAsuntos) {
+            Set<Long> usuariosPermitidosIds = usuariosPermitidos(usuarioActual, gerenciaId).stream()
+                    .map(Usuario::getId)
+                    .map(Integer::longValue)
+                    .collect(Collectors.toSet());
+            if (!usuariosPermitidosIds.contains(usuarioId)) {
+                return ResponseEntity.ok(List.of());
+            }
+        }
+
         Integer materiaId = null;
         String materiaNombre = null;
         if (materia != null && !"todos".equals(materia)) {
@@ -106,95 +96,120 @@ public class CalendarioRestController {
             }
         }
 
-        // Determinar prioridadId a filtrar
         Integer priorityId = null;
         if (prioridadId != null && !"todos".equals(prioridadId)) {
             try {
                 priorityId = Integer.parseInt(prioridadId);
             } catch (NumberFormatException e) {
-                // Ignorar si no es un número válido
+                priorityId = null;
             }
         }
-        
+
         List<EventoResponse> eventos = calendarioService.obtenerEventosCalendario(
-                usuarioActual, tipo, gerenciaId, gerenciaNombre, usuarioId, materiaNombre, materiaId, estatus, priorityId, tipoAudiencia);
-        
+                usuarioActual, tipo, gerenciaId, gerenciaNombre, usuarioId, materiaNombre, materiaId, estatus,
+                priorityId, tipoAudiencia);
+
         return ResponseEntity.ok(eventos);
     }
 
     @GetMapping("/gerencias")
     public ResponseEntity<List<Gerencia>> getGerencias() {
-        // Obtener usuario autenticado para verificar permisos
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Usuario usuarioActual = null;
-        
-        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
-            usuarioActual = usuarioRepository.findByEmail(auth.getName()).orElse(null);
-        }
-        
-        // ABOGADO no puede ver el filtro de gerencias
+        Usuario usuarioActual = usuarioActual();
+
         if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.ABOGADO) {
             return ResponseEntity.ok(List.of());
         }
-        
-        // GERENTE solo ve su propia gerencia
-        if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.GERENTE) {
+
+        if (usuarioActual != null
+                && (usuarioActual.getRol() == RolUsuario.GERENTE || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO)) {
             if (usuarioActual.getGerencia() != null) {
                 return ResponseEntity.ok(List.of(usuarioActual.getGerencia()));
             }
             return ResponseEntity.ok(List.of());
         }
-        
-        // JEFE_DEPTO solo ve su propia gerencia
-        if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
-            if (usuarioActual.getGerencia() != null) {
-                return ResponseEntity.ok(List.of(usuarioActual.getGerencia()));
-            }
-            return ResponseEntity.ok(List.of());
-        }
-        
-        // DIRECCIÓN y SUBDIRECCIÓN ven todas las gerencias
-        List<Gerencia> gerencias = gerenciaRepository.findAll();
-        return ResponseEntity.ok(gerencias);
+
+        return ResponseEntity.ok(gerenciaRepository.findAll());
     }
 
     @GetMapping("/usuarios")
-    public ResponseEntity<List<Usuario>> getUsuarios() {
-        // Obtener usuario autenticado para verificar permisos
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Usuario usuarioActual = null;
-        
-        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
-            usuarioActual = usuarioRepository.findByEmail(auth.getName()).orElse(null);
-        }
-        
-        // ABOGADO no puede ver el filtro de usuarios
-        if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.ABOGADO) {
+    public ResponseEntity<List<UsuarioOption>> getUsuarios(
+            @RequestParam(required = false, defaultValue = "todos") String gerencia) {
+        Usuario usuarioActual = usuarioActual();
+        if (usuarioActual == null || usuarioActual.getRol() == RolUsuario.ABOGADO) {
             return ResponseEntity.ok(List.of());
         }
-        
-        // GERENTE solo ve usuarios de su propia gerencia
-        if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.GERENTE) {
-            if (usuarioActual.getGerencia() != null) {
-                List<Usuario> usuarios = usuarioRepository.findByGerenciasIdAndActivoTrueOrderByNombreCompletoAsc(
-                    usuarioActual.getGerencia().getId());
-                return ResponseEntity.ok(usuarios);
-            }
+
+        Long gerenciaId = resolverGerenciaSolicitada(usuarioActual, gerencia);
+        if (gerenciaId == null) {
             return ResponseEntity.ok(List.of());
         }
-        
-        // JEFE_DEPTO solo ve usuarios de su propia gerencia
-        if (usuarioActual != null && usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
-            if (usuarioActual.getGerencia() != null) {
-                List<Usuario> usuarios = usuarioRepository.findByGerenciasIdAndActivoTrueOrderByNombreCompletoAsc(
-                    usuarioActual.getGerencia().getId());
-                return ResponseEntity.ok(usuarios);
-            }
-            return ResponseEntity.ok(List.of());
-        }
-        
-        // DIRECCIÓN y SUBDIRECCIÓN ven todos los usuarios activos
-        List<Usuario> usuarios = usuarioRepository.findAll();
+
+        List<UsuarioOption> usuarios = usuariosPermitidos(usuarioActual, gerenciaId).stream()
+                .map(UsuarioOption::from)
+                .toList();
         return ResponseEntity.ok(usuarios);
+    }
+
+    private Usuario usuarioActual() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+            return usuarioRepository.findByEmail(auth.getName()).orElse(null);
+        }
+        return null;
+    }
+
+    private Long resolverGerenciaSolicitada(Usuario usuarioActual, String gerencia) {
+        if (usuarioActual == null) {
+            return null;
+        }
+        if (usuarioActual.getRol() == RolUsuario.GERENTE
+                || usuarioActual.getRol() == RolUsuario.JEFE_DEPTO
+                || usuarioActual.getRol() == RolUsuario.ABOGADO) {
+            return usuarioActual.getGerencia() != null ? usuarioActual.getGerencia().getId().longValue() : null;
+        }
+        if (gerencia == null || "todos".equals(gerencia)) {
+            return null;
+        }
+        try {
+            return Long.parseLong(gerencia);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private List<Usuario> usuariosPermitidos(Usuario usuarioActual, Long gerenciaId) {
+        Long gerenciaPermitida = resolverGerenciaSolicitada(usuarioActual,
+                gerenciaId == null ? "todos" : gerenciaId.toString());
+        if (gerenciaPermitida == null) {
+            return List.of();
+        }
+        return usuarioRepository.findByGerenciasIdAndRolInAndActivoTrueOrderByNombreCompletoAsc(
+                gerenciaPermitida.intValue(), rolesVisiblesPara(usuarioActual.getRol()));
+    }
+
+    private List<RolUsuario> rolesVisiblesPara(RolUsuario rol) {
+        if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL) {
+            return List.of(RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR, RolUsuario.GERENTE,
+                    RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO);
+        }
+        if (rol == RolUsuario.DIRECTOR) {
+            return List.of(RolUsuario.SUBDIRECTOR, RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO);
+        }
+        if (rol == RolUsuario.SUBDIRECTOR) {
+            return List.of(RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO);
+        }
+        if (rol == RolUsuario.GERENTE) {
+            return List.of(RolUsuario.GERENTE, RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO);
+        }
+        if (rol == RolUsuario.JEFE_DEPTO) {
+            return List.of(RolUsuario.JEFE_DEPTO, RolUsuario.ABOGADO);
+        }
+        return List.of(RolUsuario.ABOGADO);
+    }
+
+    public record UsuarioOption(Integer id, String nombreCompleto, String rol) {
+        public static UsuarioOption from(Usuario usuario) {
+            return new UsuarioOption(usuario.getId(), usuario.getNombreCompleto(), usuario.getRol().name());
+        }
     }
 }

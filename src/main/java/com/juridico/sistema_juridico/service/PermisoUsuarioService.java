@@ -37,6 +37,7 @@ public class PermisoUsuarioService {
                 PermisoSistema.DASHBOARD_VER,
                 PermisoSistema.AGENDA_VER,
                 PermisoSistema.CATALOGOS_VER,
+                PermisoSistema.USUARIOS_VER,
                 PermisoSistema.EXPEDIENTES_VER,
                 PermisoSistema.EXPEDIENTES_SUPERVISION,
                 PermisoSistema.TERMINOS_VER,

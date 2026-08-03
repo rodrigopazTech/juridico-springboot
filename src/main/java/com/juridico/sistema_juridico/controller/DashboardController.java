@@ -1,11 +1,14 @@
 package com.juridico.sistema_juridico.controller;
 
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.service.DashboardService;
 import com.juridico.sistema_juridico.service.UsuarioService;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
+import com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -23,22 +26,27 @@ public class DashboardController {
     private final GerenciaRepository gerenciaRepository;
     private final MateriaRepository materiaRepository;
     private final UsuarioService usuarioService;
+    private final UsuarioRepository usuarioRepository;
 
     public DashboardController(DashboardService dashboardService,
             GerenciaRepository gerenciaRepository,
             MateriaRepository materiaRepository,
-            UsuarioService usuarioService) {
+            UsuarioService usuarioService,
+            UsuarioRepository usuarioRepository) {
         this.dashboardService = dashboardService;
         this.gerenciaRepository = gerenciaRepository;
         this.materiaRepository = materiaRepository;
         this.usuarioService = usuarioService;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @GetMapping({"", "/"})
     public String dashboard(Model model,
             @RequestParam(value = "gerenciaId", required = false) Long gerenciaId,
             @RequestParam(value = "grupoGerencia", required = false) String grupoGerencia,
-            @RequestParam(value = "materiaId", required = false) Integer materiaId) {
+            @RequestParam(value = "materiaId", required = false) Integer materiaId,
+            @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
+            @RequestParam(value = "periodo", required = false) PeriodoFiltro periodo) {
         // Obtenemos el nombre del usuario logueado
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
@@ -61,12 +69,122 @@ public class DashboardController {
             model.addAttribute("materiaSeleccionada", materiaId);
             model.addAttribute("kpis", dashboardService.obtenerKpisPersonales(usuario.getId(), materiaId));
             model.addAttribute("dashboardData", dashboardService.obtenerMetricasPersonales(usuario.getId(), materiaId));
+            model.addAttribute("misAsuntos", dashboardService.obtenerResumenMisAsuntos(usuario, materiaId));
+            model.addAttribute("hoyIso", java.time.LocalDate.now().toString());
             model.addAttribute("pageTitle", "Dashboard - Abogado");
             model.addAttribute("activePage", "dashboard");
             return "views/dashboard/index_abogado";
         }
 
+        if (usuario.getRol() == RolUsuario.JEFE_DEPTO) {
+            FiltroResult filtro = validarFiltrosPorRol(usuario, gerenciaId, grupoGerencia);
+
+            model.addAttribute("kpis",
+                    dashboardService.obtenerKpisPorLista(filtro.gerenciaId(), filtro.gerenciaIds(), filtro.materiaIds()));
+            model.addAttribute("dashboardData",
+                    dashboardService.obtenerMetricasPorLista(filtro.gerenciaId(), filtro.gerenciaIds(), filtro.materiaIds()));
+            model.addAttribute("resumenDepartamento", dashboardService.obtenerResumenDepartamento(usuario));
+            model.addAttribute("misAsuntos", dashboardService.obtenerResumenMisAsuntos(usuario, null));
+            model.addAttribute("hoyIso", java.time.LocalDate.now().toString());
+            model.addAttribute("gerenciaSeleccionada", filtro.gerenciaId());
+            model.addAttribute("materiasSupervisadas", usuario.getMaterias());
+            model.addAttribute("pageTitle", "Dashboard - Jefe de Departamento");
+            model.addAttribute("activePage", "dashboard");
+            return "views/dashboard/index_jefe_departamento";
+        }
+
         // Aplicamos la lógica de restricción y obtenemos filtros
+        if (usuario.getRol() == RolUsuario.GERENTE) {
+            FiltroResult filtro = validarFiltrosPorRol(usuario, gerenciaId, grupoGerencia);
+            List<Materia> materiasGerencia = usuario.getGerencia() != null
+                    ? materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(usuario.getGerencia().getId())
+                    : List.of();
+            List<Usuario> abogadosGerencia = usuario.getGerencia() != null
+                    ? usuarioRepository.findByGerenciasIdAndActivoTrueOrderByNombreCompletoAsc(usuario.getGerencia().getId())
+                            .stream()
+                            .filter(u -> u.getRol() == RolUsuario.ABOGADO)
+                            .toList()
+                    : List.of();
+            String materiaSeleccionadaNombre = materiasGerencia.stream()
+                    .filter(m -> materiaId != null && m.getId().equals(materiaId))
+                    .map(Materia::getNombre)
+                    .findFirst()
+                    .orElse(null);
+            String abogadoSeleccionadoNombre = abogadosGerencia.stream()
+                    .filter(a -> abogadoId != null && a.getId().equals(abogadoId))
+                    .map(Usuario::getNombreCompleto)
+                    .findFirst()
+                    .orElse(null);
+
+            model.addAttribute("kpis",
+                    dashboardService.obtenerKpisPorLista(filtro.gerenciaId(), filtro.gerenciaIds(), filtro.materiaIds()));
+            model.addAttribute("dashboardData",
+                    dashboardService.obtenerMetricasPorLista(filtro.gerenciaId(), filtro.gerenciaIds(), filtro.materiaIds()));
+            model.addAttribute("gerenteDashboard", dashboardService.obtenerDashboardGerente(usuario, materiaId, abogadoId, periodo));
+            model.addAttribute("misAsuntos", dashboardService.obtenerResumenMisAsuntos(usuario, null));
+            model.addAttribute("hoyIso", java.time.LocalDate.now().toString());
+            model.addAttribute("gerenciaSeleccionada", filtro.gerenciaId());
+            model.addAttribute("materiasGerencia", materiasGerencia);
+            model.addAttribute("abogadosGerencia", abogadosGerencia);
+            model.addAttribute("materiaSeleccionada", materiaId);
+            model.addAttribute("abogadoSeleccionado", abogadoId);
+            model.addAttribute("periodoSeleccionado", periodo != null ? periodo.name() : "SEMANA");
+            model.addAttribute("materiaSeleccionadaNombre", materiaSeleccionadaNombre);
+            model.addAttribute("abogadoSeleccionadoNombre", abogadoSeleccionadoNombre);
+            model.addAttribute("pageTitle", "Dashboard - Gerente");
+            model.addAttribute("activePage", "dashboard");
+            return "views/dashboard/index_gerente";
+        }
+
+        if (usuario.getRol() == RolUsuario.SUBDIRECTOR) {
+            List<Materia> materiasDirectivo = gerenciaId != null
+                    ? materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(gerenciaId.intValue())
+                    : materiaRepository.findByActivoTrueOrderByNombreAsc();
+            List<Usuario> abogadosDirectivo = gerenciaId != null
+                    ? usuarioRepository.findByGerenciasIdAndActivoTrueOrderByNombreCompletoAsc(gerenciaId.intValue())
+                            .stream()
+                            .filter(u -> u.getRol() == RolUsuario.ABOGADO)
+                            .toList()
+                    : usuarioRepository.findByRolAndActivoTrue(RolUsuario.ABOGADO);
+            if (materiaId != null) {
+                abogadosDirectivo = abogadosDirectivo.stream()
+                        .filter(u -> u.tieneMateria(materiaId))
+                        .toList();
+            }
+
+            String gerenciaSeleccionadaNombre = gerenciaId != null
+                    ? gerenciaRepository.findById(gerenciaId.intValue()).map(g -> g.getNombre()).orElse(null)
+                    : null;
+            String materiaSeleccionadaNombre = materiasDirectivo.stream()
+                    .filter(m -> materiaId != null && m.getId().equals(materiaId))
+                    .map(Materia::getNombre)
+                    .findFirst()
+                    .orElse(null);
+            String abogadoSeleccionadoNombre = abogadosDirectivo.stream()
+                    .filter(a -> abogadoId != null && a.getId().equals(abogadoId))
+                    .map(Usuario::getNombreCompleto)
+                    .findFirst()
+                    .orElse(null);
+
+            model.addAttribute("subdirectorDashboard",
+                    dashboardService.obtenerDashboardSubdirector(gerenciaId, materiaId, abogadoId, periodo));
+            model.addAttribute("misAsuntos", dashboardService.obtenerResumenMisAsuntos(usuario, null));
+            model.addAttribute("hoyIso", java.time.LocalDate.now().toString());
+            model.addAttribute("gerencias", gerenciaRepository.findByActivoTrueOrderByNombreAsc());
+            model.addAttribute("materiasDirectivo", materiasDirectivo);
+            model.addAttribute("abogadosDirectivo", abogadosDirectivo);
+            model.addAttribute("gerenciaSeleccionada", gerenciaId);
+            model.addAttribute("materiaSeleccionada", materiaId);
+            model.addAttribute("abogadoSeleccionado", abogadoId);
+            model.addAttribute("periodoSeleccionado", periodo != null ? periodo.name() : "SEMANA");
+            model.addAttribute("gerenciaSeleccionadaNombre", gerenciaSeleccionadaNombre);
+            model.addAttribute("materiaSeleccionadaNombre", materiaSeleccionadaNombre);
+            model.addAttribute("abogadoSeleccionadoNombre", abogadoSeleccionadoNombre);
+            model.addAttribute("pageTitle", "Dashboard - Subdirector");
+            model.addAttribute("activePage", "dashboard");
+            return "views/dashboard/index_subdirector";
+        }
+
         FiltroResult filtro = validarFiltrosPorRol(usuario, gerenciaId, grupoGerencia);
 
         model.addAttribute("gerencias", gerenciaRepository.findByActivoTrueOrderByNombreAsc());

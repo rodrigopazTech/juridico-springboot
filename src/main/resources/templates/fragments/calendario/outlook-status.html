@@ -1,0 +1,31 @@
+<div th:fragment="outlookStatus"
+     class="calendar-outlook-compact"
+     th:if="${usuarioGlobal != null}">
+    <span class="calendar-outlook-label">
+        <i class="fab fa-microsoft"></i> Outlook
+    </span>
+    <span th:if="${usuarioGlobal.outlookCalendarLinked}"
+          class="calendar-outlook-state is-connected"
+          th:title="${usuarioGlobal.outlookAccountEmail ?: usuarioGlobal.email}">
+        <i class="fas fa-check-circle"></i> Conectado
+    </span>
+    <span th:unless="${usuarioGlobal.outlookCalendarLinked}" class="calendar-outlook-state is-disconnected">
+        <i class="fas fa-circle-exclamation"></i> No conectado
+    </span>
+
+    <a th:unless="${usuarioGlobal.outlookCalendarLinked}"
+       th:href="@{/calendario/outlook/conectar}"
+       class="calendar-outlook-primary"
+       title="Conectar calendario Outlook">
+        <i class="fab fa-microsoft"></i> Conectar
+    </a>
+
+    <form th:if="${usuarioGlobal.outlookCalendarLinked}"
+          th:action="@{/calendario/outlook/desconectar}"
+          method="post"
+          onsubmit="return confirm('Se desconectara Outlook. Los eventos ya creados no se eliminaran automaticamente.');">
+        <button type="submit" class="calendar-outlook-secondary" title="Desconectar Outlook">
+            <i class="fas fa-unlink"></i> Desconectar
+        </button>
+    </form>
+</div>

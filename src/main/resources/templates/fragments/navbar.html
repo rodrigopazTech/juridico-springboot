@@ -17,19 +17,8 @@
                 </button>
 
                 <h1 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 font-headings flex items-center tracking-tight truncate">
-                    <div class="p-2 bg-gob-oro/10 rounded-lg mr-2 sm:mr-3 text-gob-oro flex items-center justify-center flex-shrink-0">
-                        <i th:if="${activePage == 'dashboard'}" class="fas fa-chart-pie"></i>
-                        <i th:if="${activePage == 'agenda'}" class="fas fa-address-book"></i>
-                        <i th:if="${activePage == 'calendario'}" class="fas fa-calendar-alt"></i>
-                        <i th:if="${activePage == 'notificaciones'}" class="fas fa-bell"></i>
-                        <i th:if="${activePage == 'expedientes'}" class="fas fa-folder-open"></i>
-                        <i th:if="${activePage == 'terminos'}" class="fas fa-hourglass-half"></i>
-                        <i th:if="${activePage == 'audiencias'}" class="fas fa-gavel"></i>
-                        <i th:if="${activePage == 'perfil'}" class="fas fa-user-cog"></i>
-                        <i th:if="${activePage == 'usuarios'}" class="fas fa-users-cog"></i>
-                        <i th:if="${activePage == 'importar'}" class="fas fa-file-import"></i>
-                        <i th:if="${activePage == 'tareas'}" class="fas fa-tasks"></i>
-                        <i th:if="${activePage == null}" class="fas fa-balance-scale"></i>
+                    <div class="mr-2 sm:mr-3 flex h-9 w-9 items-center justify-center flex-shrink-0">
+                        <img th:src="@{/img/icon-192.png}" alt="Sistema Juridico" class="h-9 w-9 rounded-full shadow-sm" />
                     </div>
                     <span class="truncate" th:text="${pageTitle != null ? pageTitle : 'Sistema Jurídico'}">Título de la Página</span>
                 </h1>
@@ -151,6 +140,17 @@
         class="fixed bottom-5 right-5 z-[9999] flex flex-col gap-3 items-end pointer-events-none">
     </div>
 
+        <style>
+            .notif-item-opening {
+                opacity: 0.55;
+                transform: translateX(10px) scale(0.985);
+                pointer-events: none;
+                background: #f9fafb;
+            }
+            .notif-item-opening .notif-open-spinner {
+                display: inline-flex;
+            }
+        </style>
         <script th:inline="none">
         /* -----------------------------------------------------------------------
            Sistema de Popup de Notificaciones (Navbar Bell)
@@ -241,14 +241,17 @@
                            </span>`
                         : '';
                     return `
-                    <a href="/notificaciones/leer/${n.id}" class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors block">
+                    <a href="/notificaciones/leer/${n.id}" data-notification-link class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-all duration-200 block">
                         <div class="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br ${meta.color} flex items-center justify-center text-white shadow-sm mt-0.5">
                             <i class="fas ${meta.icon} text-sm"></i>
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between gap-2">
                                 <span class="text-xs font-bold text-gray-800 truncate">${escHtml(n.titulo)}</span>
-                                <span class="text-[10px] text-gray-400 whitespace-nowrap">${escHtml(n.hora)}</span>
+                                <span class="text-[10px] text-gray-400 whitespace-nowrap flex items-center gap-1">
+                                    <i class="notif-open-spinner hidden fas fa-circle-notch fa-spin text-gob-guinda"></i>
+                                    ${escHtml(n.hora)}
+                                </span>
                             </div>
                             <p class="text-[11px] text-gray-500 mt-0.5 line-clamp-2">${escHtml(n.mensaje)}</p>
                             <div class="flex items-center gap-2 mt-1 flex-wrap">
@@ -556,6 +559,16 @@
                 }
             });
 
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('[data-notification-link]');
+                if (!link) return;
+                link.classList.add('notif-item-opening');
+                link.setAttribute('aria-busy', 'true');
+                link.querySelectorAll('.notif-open-spinner').forEach(spinner => {
+                    spinner.classList.remove('hidden');
+                });
+            });
+
             // Inicializar de manera híbrida y reactiva
             document.addEventListener('DOMContentLoaded', function () {
                 pollInitialState();
@@ -565,6 +578,7 @@
         </script>
         <script th:src="@{/js/webpush-client.js}" defer></script>
         <script th:src="@{/js/utils.js}" defer></script>
+        <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
     </th:block>
 
 </body>

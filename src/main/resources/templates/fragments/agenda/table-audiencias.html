@@ -21,16 +21,17 @@
                 <tr th:each="a : ${audiencias}" class="bg-white hover:bg-gray-50 transition-colors">
                     <td class="px-6 py-4 font-bold text-gray-700"
                         th:text="${#temporals.format(a.fechaDesahogo, 'dd/MM/yyyy')}">01/01/2026</td>
-                    <td class="px-6 py-4 text-gob-guinda font-bold" th:text="${a.expediente.numero}">EXP-001</td>
+                    <td class="px-6 py-4 text-gob-guinda font-bold" th:text="${a.numeroReferencia}">EXP-001</td>
                     <td class="px-6 py-4">
                         <div class="w-[150px] truncate">
                             <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded inline-block max-w-full truncate"
-                                th:text="${a.tipoAudiencia.nombre}" th:title="${a.tipoAudiencia.nombre}">Tipo</span>
+                                th:text="${a.tipoAudiencia != null ? a.tipoAudiencia.nombre : 'Sin tipo'}"
+                                th:title="${a.tipoAudiencia != null ? a.tipoAudiencia.nombre : 'Sin tipo'}">Tipo</span>
                         </div>
                     </td>
                     <td class="px-6 py-4 w-56">
-                        <div class="line-clamp-2 whitespace-normal break-words text-sm" th:text="${a.expediente.partes}"
-                            th:title="${a.expediente.partes}">
+                        <div class="line-clamp-2 whitespace-normal break-words text-sm" th:text="${a.partesReferencia}"
+                            th:title="${a.partesReferencia}">
                             Partes
                         </div>
                     </td>
@@ -42,7 +43,7 @@
                                 class="text-red-600 hover:text-red-800 transition-colors" title="Descargar Acta">
                                 <i class="fas fa-file-pdf fa-lg"></i>
                             </a>
-                            <button type="button" th:data-id="${a.id}" th:data-expediente="${a.expediente.numero}"
+                            <button type="button" th:data-id="${a.id}" th:data-expediente="${a.numeroReferencia}"
                                 th:data-obs="${a.observaciones}"
                                 onclick="window.verObservaciones(this.getAttribute('data-id'), 'audiencia', this.getAttribute('data-expediente'), this.getAttribute('data-obs'))"
                                 class="text-gray-500 hover:text-blue-600 transition-colors" title="Ver Observaciones">
@@ -76,7 +77,8 @@
 
                 <div class="max-w-[150px] truncate">
                     <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded inline-block max-w-full truncate"
-                        th:text="${a.tipoAudiencia.nombre}" th:title="${a.tipoAudiencia.nombre}">Tipo</span>
+                        th:text="${a.tipoAudiencia != null ? a.tipoAudiencia.nombre : 'Sin tipo'}"
+                        th:title="${a.tipoAudiencia != null ? a.tipoAudiencia.nombre : 'Sin tipo'}">Tipo</span>
                 </div>
             </div>
 
@@ -84,11 +86,11 @@
             <div class="space-y-1">
                 <div>
                     <span class="text-xs font-bold text-gray-400 block">Expediente</span>
-                    <span class="text-xs font-bold text-gob-guinda" th:text="${a.expediente.numero}">EXP-001</span>
+                    <span class="text-xs font-bold text-gob-guinda" th:text="${a.numeroReferencia}">EXP-001</span>
                 </div>
                 <div>
                     <span class="text-xs font-bold text-gray-400 block">Partes</span>
-                    <p class="text-xs text-gray-700 whitespace-normal break-words" th:text="${a.expediente.partes}">Partes</p>
+                    <p class="text-xs text-gray-700 whitespace-normal break-words" th:text="${a.partesReferencia}">Partes</p>
                 </div>
             </div>
 
@@ -101,7 +103,7 @@
                     <i class="fas fa-file-pdf fa-lg"></i>
                 </a>
 
-                <button type="button" th:data-id="${a.id}" th:data-expediente="${a.expediente.numero}"
+                <button type="button" th:data-id="${a.id}" th:data-expediente="${a.numeroReferencia}"
                     th:data-obs="${a.observaciones}"
                     onclick="window.verObservaciones(this.getAttribute('data-id'), 'audiencia', this.getAttribute('data-expediente'), this.getAttribute('data-obs'))"
                     class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Observaciones">
@@ -119,13 +121,13 @@
         </span>
         <div class="flex gap-2">
             <a th:if="${audiencias.hasPrevious()}"
-                th:href="@{/agenda(page=${audiencias.number - 1}, tab='audiencias', filtro=${filtroActual}, mes=${mesActual}, anio=${anioActual})}"
+                th:href="@{/agenda(page=${audiencias.number - 1}, tab='audiencias', keyword=${paramKeyword}, fechaInicio=${paramFechaInicio}, fechaFin=${paramFechaFin}, gerenciaId=${paramGerenciaId}, materiaId=${paramMateriaId})}"
                 class="px-3 py-1 border border-gray-300 rounded hover:bg-white text-sm bg-white text-gray-600 transition-colors">
                 <i class="fas fa-chevron-left mr-1"></i> Anterior
             </a>
 
             <a th:if="${audiencias.hasNext()}"
-                th:href="@{/agenda(page=${audiencias.number + 1}, tab='audiencias', filtro=${filtroActual}, mes=${mesActual}, anio=${anioActual})}"
+                th:href="@{/agenda(page=${audiencias.number + 1}, tab='audiencias', keyword=${paramKeyword}, fechaInicio=${paramFechaInicio}, fechaFin=${paramFechaFin}, gerenciaId=${paramGerenciaId}, materiaId=${paramMateriaId})}"
                 class="px-3 py-1 border border-gray-300 rounded hover:bg-white text-sm bg-white text-gray-600 transition-colors">
                 Siguiente <i class="fas fa-chevron-right ml-1"></i>
             </a>

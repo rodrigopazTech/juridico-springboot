@@ -31,18 +31,18 @@ Lee el archivo en este orden:
 | --- | --- |
 | 🟢 Sin bloqueadores críticos abiertos | Los 4 hallazgos críticos/altos detectados ya fueron corregidos y revalidados |
 | 🟡 Aún faltan pruebas funcionales | Faltan flujos completos de crear, concluir, descargar y validar notificaciones |
-| 🟠 Hay decisiones de negocio pendientes | Principalmente permisos finos en Expedientes, Catálogos, Migración y Notificaciones |
+| 🟡 Queda una aclaración pendiente | Solo falta que me compartas o autorices generar el archivo controlado para probar Migración |
 | ✅ App compila | `mvnw.cmd compile` pasó correctamente después de los fixes |
 
-## 🟠 Decisiones pendientes que debes leer
+## 🟠 Decisiones y criterios acordados
 
 | ID | Tema | Decisión pendiente | Recomendación |
 | --- | --- | --- | --- |
-| DEC-001 | Expedientes - ABOGADO | Confirmar si el ABOGADO puede crear expedientes o solo trabajar expedientes asignados | Si no hay regla explícita, dejar creación solo para JEFE_DEPTO hacia arriba |
-| DEC-002 | Catálogos | Confirmar quién puede crear, editar o activar/desactivar catálogos | Mantener ABOGADO solo lectura; GERENTE y JEFE_DEPTO solo dentro de su alcance |
-| DEC-003 | Migración | Confirmar si la prueba debe usar archivo real de ejemplo o solo pantalla/plantillas | Para QA real conviene usar un archivo pequeño y controlado |
-| DEC-004 | Perfil - contraseña | Confirmar si puedo cambiar contraseñas durante pruebas | Usar solo usuarios temporales QA para no romper credenciales base |
-| DEC-005 | Notificaciones | Confirmar si basta validar en BD o también visualmente por navegador | Recomiendo ambas: BD + navegador por rol |
+| DEC-001 | Expedientes - ABOGADO | ✅ Decidido: el ABOGADO sí puede crear expedientes | Probar creación real como ABOGADO y confirmar que queda como responsable |
+| DEC-002 | Catálogos | ✅ Decidido: seguir recomendación | ABOGADO solo lectura; GERENTE y JEFE_DEPTO solo modifican catálogos dentro de su alcance |
+| DEC-003 | Migración | 🟠 Aclarado: el archivo es un Excel/CSV de muestra para importación | Falta definir si usaré uno real anonimizado o genero uno pequeño con datos ficticios controlados |
+| DEC-004 | Perfil - contraseña | ✅ Decidido: seguir recomendación | Cambiar contraseñas solo de usuarios temporales QA |
+| DEC-005 | Notificaciones | ✅ Decidido: seguir recomendación | Validar en BD y visualmente en navegador por rol |
 
 ## 🟡 Pendiente por ejecutar
 
@@ -51,7 +51,7 @@ No son errores abiertos; son pruebas funcionales que todavía faltan completar c
 | Prioridad | ID | Pantalla | Prueba pendiente | Motivo |
 | --- | --- | --- | --- | --- |
 | 🟡 Alta | EXP-ALL-002 | Expedientes | Crear expediente dentro del alcance por rol permitido | Flujo principal de negocio |
-| 🟡 Alta | EXP-ABOG-001 | Expedientes | Intentar creación como ABOGADO | Depende de DEC-001 |
+| 🟡 Alta | EXP-ABOG-001 | Expedientes | Crear expediente como ABOGADO | Decidido: debe estar permitido |
 | 🟡 Alta | EXP-ALL-003 | Expedientes | Abrir detalle, comentarios y gestor documental | Flujo diario |
 | 🟡 Alta | TER-ALL-002 | Términos | Crear término para expediente permitido | Flujo principal |
 | 🟡 Alta | TER-ALL-004 | Términos | Avanzar término permitido | Flujo principal |
@@ -102,6 +102,12 @@ No son errores abiertos; son pruebas funcionales que todavía faltan completar c
 | AUD-ABOG-002 | ABOGADO no responsable intenta eliminar audiencia ajena | ✅ Bloqueado correctamente |
 | USR-GER-002 | GERENTE crea usuario sin poder conservar materias fuera de su gerencia | 🟢 Corregido y OK |
 | CAT-ABOG-001 | ABOGADO intenta escribir en Catálogos por POST directo | 🟢 Corregido; responde `403` |
+| EXP-ABOG-001 | ABOGADO crea expediente | ✅ OK; queda en su gerencia y como responsable |
+| CAT-GER-001 | GERENTE crea materia manipulando `gerenciaId` fuera de alcance | ✅ OK; se fuerza a su gerencia real |
+| CAT-JEFE-001 | JEFE_DEPTO crea materia manipulando `gerenciaId` fuera de alcance | ✅ OK; se fuerza a su gerencia real |
+| CAT-ADMIN-001 | ADMIN crea materia en gerencia seleccionada | ✅ OK; respeta la gerencia indicada |
+| CAT-URL-001 | ABOGADO intenta `POST`/`toggle` directo en Catálogos | ✅ OK; responde `403` |
+| CAT-URL-002 | GERENTE intenta modificar gerencia o toggle global fuera de alcance | ✅ OK; responde `403` |
 
 ## 🧯 Discrepancias corregidas
 
@@ -135,15 +141,18 @@ Todas las discrepancias críticas o altas detectadas hasta ahora están corregid
 | `qa-tareas-cross-user-after-fix.json` | Evidencia de bloqueo de tarea ajena |
 | `qa-catalogos-write-results-after-fix.json` | Evidencia de bloqueo de escritura en Catálogos para ABOGADO |
 | `qa-usuarios-create-results-after-fix.json` | Evidencia de alcance corregido al crear usuarios como GERENTE |
+| `qa-catalogos-scope-results-after-decisions.json` | Evidencia de alcance de Catálogos por GERENTE, JEFE_DEPTO y ADMIN |
+| `qa-role-smoke-results-after-decisions.json` | Evidencia de navbar/rutas por rol después de los cambios |
+| `qa-page-smoke-results-after-decisions.json` | Evidencia de carga de pantallas por rol después de los cambios |
 
 ## 📋 Siguiente ronda sugerida
 
-1. Cerrar las decisiones `DEC-001` a `DEC-005`.
-2. Ejecutar primero los pendientes de prioridad alta.
-3. Ejecutar después Catálogos y Migración.
+1. Ejecutar primero los pendientes de prioridad alta.
+2. Ejecutar Catálogos con alcance por URL directa y por pantalla.
+3. Ejecutar Migración cuando exista archivo controlado de prueba.
 4. Repetir una pasada de navbar + URL directa por rol.
 5. Marcar cada fila con ✅, 🟢, 🟡, 🟠 o 🔴 según resultado.
 
 ## 🚀 Criterio para subir a pruebas con usuarios reales
 
-La versión ya no tiene bloqueadores críticos conocidos después de los fixes aplicados. Para una prueba controlada interna puede usarse, pero antes de abrirla a usuarios reales conviene cerrar los pendientes de prioridad alta y tomar las decisiones marcadas con 🟠.
+La versión ya no tiene bloqueadores críticos conocidos después de los fixes aplicados. Para una prueba controlada interna puede usarse, pero antes de abrirla a usuarios reales conviene cerrar los pendientes de prioridad alta y definir el archivo controlado de Migración.

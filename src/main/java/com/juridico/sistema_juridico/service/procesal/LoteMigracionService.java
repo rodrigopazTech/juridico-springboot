@@ -2087,8 +2087,7 @@ import org.springframework.transaction.support.TransactionTemplate;
             }
 
             // 3. Generar contraseña temporal: "tempora" + 6 dígitos aleatorios
-            String passwordRaw = "tempora" + String.format("%06d", new java.util.Random().nextInt(999999));
-            String passwordHash = passwordEncoder.encode(passwordRaw);
+            String passwordHash = passwordEncoder.encode(java.util.UUID.randomUUID().toString());
 
             // 4. Usar la gerencia del expediente (mapeada en Etapa 1)
             Gerencia gerenciaFinal = gerenciaExpediente != null ? gerenciaExpediente : getFallbackGerencia();
@@ -2112,7 +2111,7 @@ import org.springframework.transaction.support.TransactionTemplate;
             nuevoAbogado.setMaterias(materiasAbogado);
 
             Usuario guardado = usuarioRepository.save(nuevoAbogado);
-            System.out.println(">>> Migracion: Usuario creado: " + email + " / pass: " + passwordRaw 
+            System.out.println(">>> Migracion: Usuario creado: " + email
                 + " / gerencia: " + gerenciaFinal.getNombre() 
                 + " / materias: " + materiasAbogado.stream().map(Materia::getNombre).toList());
             return guardado;

@@ -420,6 +420,118 @@ function inicializarSelectsNuevoExpediente() {
 }
 
 // AUTO-INICIALIZACIÓN PARA GERENTES
+let expedientesFetchController = null;
+let expedientesDebounceTimer = null;
+
+function obtenerParametrosListadoExpedientes({ resetPage = false } = {}) {
+    const params = new URLSearchParams();
+    const formSearch = document.getElementById('form-search-expedientes');
+    const formFiltros = document.getElementById('formFiltros');
+    const keywordInput = document.getElementById('input-search-expedientes');
+
+    if (formSearch) {
+        for (const [key, value] of new FormData(formSearch).entries()) {
+            if (value) params.set(key, value);
+        }
+    }
+
+    if (formFiltros) {
+        for (const [key, value] of new FormData(formFiltros).entries()) {
+            if (value) params.set(key, value);
+            else params.delete(key);
+        }
+    }
+
+    if (keywordInput && keywordInput.value.trim()) {
+        params.set('keyword', keywordInput.value.trim());
+    } else {
+        params.delete('keyword');
+    }
+
+    if (resetPage) params.set('page', '0');
+    return params;
+}
+
+function actualizarUrlListadoExpedientes(params) {
+    const cleanParams = new URLSearchParams(params);
+    for (const [key, value] of Array.from(cleanParams.entries())) {
+        if (!value || (key === 'page' && value === '0')) cleanParams.delete(key);
+    }
+
+    const query = cleanParams.toString();
+    window.history.replaceState({}, '', query ? `/expedientes?${query}` : '/expedientes');
+}
+
+function reemplazarGridExpedientes(html) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const nuevoGrid = doc.getElementById('grid-resultados');
+    const gridActual = document.getElementById('grid-resultados');
+    if (!nuevoGrid || !gridActual) return false;
+
+    gridActual.innerHTML = nuevoGrid.innerHTML;
+    return true;
+}
+
+function cargarListadoExpedientes({ resetPage = false, debounce = 0 } = {}) {
+    clearTimeout(expedientesDebounceTimer);
+
+    expedientesDebounceTimer = setTimeout(() => {
+        const gridActual = document.getElementById('grid-resultados');
+        const params = obtenerParametrosListadoExpedientes({ resetPage });
+
+        if (expedientesFetchController) expedientesFetchController.abort();
+        expedientesFetchController = new AbortController();
+        if (gridActual) gridActual.classList.add('is-refreshing');
+
+        fetch('/expedientes?' + params.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            signal: expedientesFetchController.signal
+        })
+            .then(res => {
+                if (!res.ok) throw new Error(`Respuesta HTTP ${res.status}`);
+                return res.text();
+            })
+            .then(html => {
+                if (reemplazarGridExpedientes(html)) actualizarUrlListadoExpedientes(params);
+            })
+            .catch(err => {
+                if (err.name !== 'AbortError') console.error('Error al actualizar expedientes:', err);
+            })
+            .finally(() => {
+                if (gridActual) gridActual.classList.remove('is-refreshing');
+                expedientesFetchController = null;
+            });
+    }, debounce);
+}
+
+function cargarListadoExpedientesConParametros(params) {
+    clearTimeout(expedientesDebounceTimer);
+
+    const gridActual = document.getElementById('grid-resultados');
+    if (expedientesFetchController) expedientesFetchController.abort();
+    expedientesFetchController = new AbortController();
+    if (gridActual) gridActual.classList.add('is-refreshing');
+
+    fetch('/expedientes?' + params.toString(), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        signal: expedientesFetchController.signal
+    })
+        .then(res => {
+            if (!res.ok) throw new Error(`Respuesta HTTP ${res.status}`);
+            return res.text();
+        })
+        .then(html => {
+            if (reemplazarGridExpedientes(html)) actualizarUrlListadoExpedientes(params);
+        })
+        .catch(err => {
+            if (err.name !== 'AbortError') console.error('Error al actualizar expedientes:', err);
+        })
+        .finally(() => {
+            if (gridActual) gridActual.classList.remove('is-refreshing');
+            expedientesFetchController = null;
+        });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     inicializarSelectsNuevoExpediente();
 
@@ -438,6 +550,87 @@ document.addEventListener('DOMContentLoaded', function () {
     // Inicializar barra de búsqueda (local & server)
     const inputExp = document.getElementById('input-search-expedientes');
     const btnClearExp = document.getElementById('btn-clear-search-expedientes');
+    const formSearchExpedientes = document.getElementById('form-search-expedientes');
+    const formFiltrosExpedientes = document.getElementById('formFiltros');
+    const btnLimpiarFiltrosExpedientes = document.getElementById('btn-limpiar-filtros-expedientes');
+
+    if (inputExp) {
+        inputExp.addEventListener('input', function (e) {
+            e.stopImmediatePropagation();
+
+            if (btnClearExp) {
+                btnClearExp.classList.toggle('hidden', this.value.trim() === '');
+            }
+
+            cargarListadoExpedientes({ resetPage: true, debounce: 250 });
+        }, true);
+
+        inputExp.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') e.preventDefault();
+        });
+    }
+
+    if (btnClearExp && inputExp) {
+        btnClearExp.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            inputExp.value = '';
+            btnClearExp.classList.add('hidden');
+            cargarListadoExpedientes({ resetPage: true });
+        }, true);
+    }
+
+    if (formSearchExpedientes) {
+        formSearchExpedientes.addEventListener('submit', function (e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            cargarListadoExpedientes({ resetPage: true });
+        }, true);
+    }
+
+    if (formFiltrosExpedientes) {
+        formFiltrosExpedientes.addEventListener('submit', function (e) {
+            e.preventDefault();
+            cargarListadoExpedientes({ resetPage: true });
+        });
+
+        formFiltrosExpedientes.addEventListener('change', function (e) {
+            if (e.target.matches('select')) {
+                cargarListadoExpedientes({ resetPage: true });
+            }
+        });
+    }
+
+    if (btnLimpiarFiltrosExpedientes) {
+        btnLimpiarFiltrosExpedientes.addEventListener('click', function () {
+            if (formFiltrosExpedientes) {
+                formFiltrosExpedientes.querySelectorAll('select').forEach(select => {
+                    select.value = '';
+                });
+            }
+
+            if (inputExp) {
+                inputExp.value = '';
+            }
+
+            if (btnClearExp) {
+                btnClearExp.classList.add('hidden');
+            }
+
+            cargarListadoExpedientes({ resetPage: true });
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        const link = e.target.closest('.pagina-link');
+        if (!link) return;
+
+        e.preventDefault();
+        const params = obtenerParametrosListadoExpedientes();
+        const page = new URL(link.href).searchParams.get('page');
+        if (page !== null) params.set('page', page);
+        cargarListadoExpedientesConParametros(params);
+    });
     
     let debounceTimer;
 
@@ -600,30 +793,5 @@ function iniciarWebSocketExpedientes() {
 }
 
 function recargarListadoExpedientes() {
-    const form = document.getElementById('form-search-expedientes');
-    if (!form) return;
-
-    const urlParams = new URLSearchParams(new FormData(form));
-    const formFiltros = document.getElementById('formFiltros');
-    if (formFiltros) {
-        const fd = new FormData(formFiltros);
-        for (const [key, value] of fd.entries()) {
-            if (value) urlParams.set(key, value);
-        }
-    }
-
-    fetch('/expedientes?' + urlParams.toString(), {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(res => res.text())
-    .then(html => {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const nuevoGrid = doc.getElementById('grid-resultados');
-        const gridActual = document.getElementById('grid-resultados');
-        if (nuevoGrid && gridActual) {
-            gridActual.innerHTML = nuevoGrid.innerHTML;
-        }
-    })
-    .catch(err => console.error("Error al recargar listado en tiempo real:", err));
+    cargarListadoExpedientes();
 }

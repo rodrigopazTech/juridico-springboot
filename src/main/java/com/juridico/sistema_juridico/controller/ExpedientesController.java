@@ -252,6 +252,21 @@ public class ExpedientesController {
                 secGerenciaId, secMateriaIds, secUsuarioId,
                 pageable);
 
+        HttpServletRequest request = ((org.springframework.web.context.request.ServletRequestAttributes)
+                org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes()).getRequest();
+        boolean esAjax = "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
+
+        if (esAjax) {
+            model.addAttribute("expedientes", paginaExpedientes);
+            model.addAttribute("keyword", keyword);
+            model.addAttribute("paramGerenciaId", gerenciaId);
+            model.addAttribute("paramMateriaId", materiaId);
+            model.addAttribute("paramPrioridadId", prioridadId);
+            model.addAttribute("paramEtapa", etapa != null ? etapa.name() : null);
+            model.addAttribute("paramAbogadoId", abogadoId);
+            return "views/expedientes/index :: gridResultados";
+        }
+
         // Conteos para resumen (Respetando seguridad)
         Integer idAlta = catPrioridadRepository.findByNombreIgnoreCase("ALTA").map(CatPrioridad::getId).orElse(null);
         long totalAlta = expedienteRepository.buscarConSeguridad(
@@ -322,14 +337,6 @@ public class ExpedientesController {
 
         // --- OPTIMIZACIÓN HTMX / FETCH ASÍNCRONO ---
         // Verificar si la petición es asíncrona (para búsqueda en vivo veloz sin recargar toda la plantilla)
-        HttpServletRequest request = ((org.springframework.web.context.request.ServletRequestAttributes) 
-            org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes()).getRequest();
-        String isAjax = request.getHeader("X-Requested-With");
-        if ("XMLHttpRequest".equals(isAjax)) {
-            // Devuelve solo el fragmento de la grilla de la tabla
-            return "views/expedientes/index :: gridResultados";
-        }
-
         return "views/expedientes/index";
     }
 

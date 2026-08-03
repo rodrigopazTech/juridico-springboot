@@ -1,7 +1,7 @@
 <div th:fragment="lista"
     class="w-full lg:w-1/3 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
     <div class="p-4 border-b border-gray-100 bg-gray-50/50 flex-shrink-0 space-y-3">
-        <button onclick="abrirModalUsuario()"
+        <button onclick="iniciarNuevoUsuarioEnDetalle()"
             class="w-full bg-gob-guinda text-white py-2.5 rounded-xl text-sm font-bold hover:bg-opacity-90 transition-colors shadow-sm flex justify-center items-center gap-2">
             <i class="fas fa-plus"></i> Agregar Usuario
         </button>
@@ -45,7 +45,10 @@
         </div>
 
         <button th:each="u : ${listaUsuarios.content}" th:data-id="${u.id}" th:data-nombre="${u.nombreCompleto}"
-            th:data-email="${u.email}" th:data-rol="${u.rol}"
+            th:data-email="${u.email}" th:data-username="${u.username}" th:data-numero-empleado="${u.numeroEmpleado}" th:data-rol="${u.rol}"
+            th:data-puesto="${u.puesto}" th:data-telefono-institucional="${u.telefonoInstitucional}"
+            th:data-telefono-movil="${u.telefonoMovil}" th:data-ubicacion-oficina="${u.ubicacionOficina}"
+            th:data-microsoft-login-enabled="${u.microsoftLoginEnabled}"
             th:data-gerencias-ids="${#strings.listJoin(u.gerencias.![id], ',')}"
             th:data-gerencia-nombre="${u.gerencia != null ? u.gerencia.nombre : 'Sin Gerencia'}"
             th:data-activo="${u.activo}" th:data-materias-ids="${#strings.listJoin(u.materias.![id], ',')}"
@@ -63,7 +66,10 @@
             <div class="flex-1 min-w-0">
                 <p class="text-sm font-bold text-gray-800 truncate group-hover:text-gob-guinda transition-colors"
                     th:text="${u.nombreCompleto}">Nombre</p>
-                <p class="text-xs text-gray-500 truncate mb-1" th:text="${u.email}">email</p>
+                <p class="text-xs text-gray-500 truncate mb-1">
+                    <span th:text="${u.username ?: 'sin usuario'}">usuario</span>
+                    <span th:if="${u.numeroEmpleado != null and !#strings.isEmpty(u.numeroEmpleado)}"> · [[${u.numeroEmpleado}]]</span>
+                </p>
 
                 <div class="flex flex-wrap gap-1">
                     <span

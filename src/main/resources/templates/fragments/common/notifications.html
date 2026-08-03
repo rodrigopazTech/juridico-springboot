@@ -1,54 +1,114 @@
 <div th:fragment="notificaciones" xmlns:th="http://www.thymeleaf.org">
+    <style th:if="${mensaje != null}">
+        .siaj-toast-warning {
+            background: #f2b705 !important;
+            border: 1px solid rgba(105, 18, 40, 0.16) !important;
+            border-radius: 0.75rem !important;
+            box-shadow: 0 18px 40px rgba(17, 24, 39, 0.18) !important;
+            color: #ffffff !important;
+            padding: 0.95rem 1rem 1.15rem 1rem !important;
+        }
+
+        .siaj-toast-warning .swal2-title,
+        .siaj-toast-warning .swal2-html-container,
+        .siaj-toast-warning .swal2-close {
+            color: #ffffff !important;
+        }
+
+        .siaj-toast-warning .swal2-timer-progress-bar {
+            background: rgba(255, 255, 255, 0.72) !important;
+            height: 5px !important;
+        }
+
+        .siaj-toast-warning .swal2-icon.swal2-warning {
+            border-color: #ffffff !important;
+            color: #ffffff !important;
+        }
+    </style>
+
     <script th:if="${mensaje != null}" th:inline="javascript">
         document.addEventListener('DOMContentLoaded', function () {
             const mensaje = /*[[${mensaje}]]*/ 'Operación exitosa';
             const tipo = /*[[${tipo}]]*/ 'success';
+            const toastKey = tipo + '|' + mensaje;
 
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'bottom-end',
-                showConfirmButton: false,
-                timer: 3000,
-                //timerProgressBar: true,
-                didOpen: (toast) => {
-                    //toast.addEventListener('mouseenter', Swal.stopTimer)
-                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+            if (window.__siajFlashToastKey === toastKey) {
+                return;
+            }
+            window.__siajFlashToastKey = toastKey;
+
+            function mostrarNotificacion() {
+                if (typeof Swal === 'undefined') {
+                    return;
                 }
-            });
 
-            if (tipo === 'success') {
-                Toast.fire({
-                    icon: 'success',
-                    title: mensaje,
-                    iconColor: '#22c55e', // Verde de avanzar etapa
-                    background: '#f0fdf4', // Fondo verde muy claro
-                    padding: '1em',
-                    customClass: {
-                        title: 'text-green-800 text-sm font-bold'
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'bottom-end',
+                    showConfirmButton: false,
+                    showCloseButton: true,
+                    timer: tipo === 'warning' ? 5200 : 3000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer);
+                        toast.addEventListener('mouseleave', Swal.resumeTimer);
                     }
                 });
-            } else if (tipo === 'error') {
-                // Errores mantienen el modal actual (bloqueante)
-                Swal.fire({
-                    title: 'Atención',
-                    text: mensaje,
-                    icon: 'error',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#bc955c',
-                    background: '#f9fafb',
-                    customClass: {
-                        confirmButton: 'font-bold'
-                    }
-                });
+
+                if (tipo === 'success') {
+                    Toast.fire({
+                        icon: 'success',
+                        title: mensaje,
+                        iconColor: '#22c55e',
+                        background: '#f0fdf4',
+                        padding: '1em',
+                        customClass: {
+                            title: 'text-green-800 text-sm font-bold'
+                        }
+                    });
+                } else if (tipo === 'error') {
+                    Swal.fire({
+                        title: 'Atención',
+                        text: mensaje,
+                        icon: 'error',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#bc955c',
+                        background: '#f9fafb',
+                        customClass: {
+                            confirmButton: 'font-bold'
+                        }
+                    });
+                } else if (tipo === 'warning') {
+                    Toast.fire({
+                        icon: 'warning',
+                        title: 'Atención',
+                        text: mensaje,
+                        iconColor: '#ffffff',
+                        customClass: {
+                            popup: 'siaj-toast-warning',
+                            title: 'text-base font-extrabold font-headings',
+                            htmlContainer: 'text-white text-left'
+                        }
+                    });
+                } else {
+                    Toast.fire({
+                        icon: 'info',
+                        title: mensaje,
+                        padding: '1em',
+                        customClass: {
+                            title: 'text-gray-800 text-sm font-bold'
+                        }
+                    });
+                }
+            }
+
+            if (typeof Swal === 'undefined') {
+                const script = document.createElement('script');
+                script.src = /*[[@{/lib/sweetalert2.all.min.js}]]*/ '/lib/sweetalert2.all.min.js';
+                script.onload = mostrarNotificacion;
+                document.head.appendChild(script);
             } else {
-                Toast.fire({
-                    icon: 'info',
-                    title: mensaje,
-                    padding: '1em',
-                    customClass: {
-                        title: 'text-gray-800 text-sm font-bold'
-                    }
-                });
+                mostrarNotificacion();
             }
         });
     </script>

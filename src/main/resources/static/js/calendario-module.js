@@ -33,9 +33,15 @@ export class CalendarioModule {
             });
         });
 
+        ['filterTipo', 'filterUsuario', 'filterMateria'].forEach(id => {
+            document.getElementById(id)?.addEventListener('change', () => this.loadEvents().then(() => this.render()));
+        });
+
         // Botón Aplicar Filtros
-        document.getElementById('btnApplyFilters')?.addEventListener('click', () => {
-            this.applyFilters();
+        document.getElementById('filterGerencia')?.addEventListener('change', async () => {
+            await this.loadUsuariosByGerencia();
+            await this.loadEvents();
+            this.render();
         });
 
         // Botón Limpiar Filtros
@@ -58,14 +64,70 @@ export class CalendarioModule {
             if (chkMisAsuntos) {
                 chkMisAsuntos.checked = false;
             }
-            this.filteredEvents = [...this.events];
-            this.render();
+            this.initializeUsuarioFilter();
+            this.loadEvents().then(() => this.render());
         });
 
-        // Checkbox "Mis asuntos" (solo visible para ABOGADO)
         document.getElementById('chkMisAsuntos')?.addEventListener('change', () => {
-            this.loadEvents();
+            this.loadEvents().then(() => this.render());
         });
+
+        this.initializeUsuarioFilter();
+    }
+
+    initializeUsuarioFilter() {
+        const filterGerencia = document.getElementById('filterGerencia');
+        const filterUsuario = document.getElementById('filterUsuario');
+        if (!filterUsuario) return;
+
+        if (filterGerencia && filterGerencia.value === 'todos') {
+            filterUsuario.disabled = true;
+            this.setUsuariosOptions([], 'Seleccione gerencia');
+        }
+    }
+
+    setUsuariosOptions(usuarios, placeholder = 'Todos los usuarios') {
+        const filterUsuario = document.getElementById('filterUsuario');
+        if (!filterUsuario) return;
+
+        filterUsuario.innerHTML = '';
+        const defaultOption = document.createElement('option');
+        defaultOption.value = 'todos';
+        defaultOption.textContent = placeholder;
+        filterUsuario.appendChild(defaultOption);
+
+        usuarios.forEach(usuario => {
+            const option = document.createElement('option');
+            option.value = usuario.id;
+            option.textContent = `${usuario.nombreCompleto} (${usuario.rol})`;
+            filterUsuario.appendChild(option);
+        });
+    }
+
+    async loadUsuariosByGerencia() {
+        const filterGerencia = document.getElementById('filterGerencia');
+        const filterUsuario = document.getElementById('filterUsuario');
+        if (!filterGerencia || !filterUsuario) return;
+
+        filterUsuario.value = 'todos';
+        if (filterGerencia.value === 'todos') {
+            filterUsuario.disabled = true;
+            this.setUsuariosOptions([], 'Seleccione gerencia');
+            return;
+        }
+
+        filterUsuario.disabled = true;
+        this.setUsuariosOptions([], 'Cargando usuarios...');
+        try {
+            const response = await fetch(`/api/calendario/usuarios?gerencia=${encodeURIComponent(filterGerencia.value)}`);
+            if (!response.ok) throw new Error('No fue posible cargar usuarios');
+            const usuarios = await response.json();
+            this.setUsuariosOptions(usuarios, 'Todos los usuarios');
+            filterUsuario.disabled = false;
+        } catch (error) {
+            console.error('[Calendario] Error cargando usuarios:', error);
+            this.setUsuariosOptions([], 'Sin usuarios disponibles');
+        }
     }
 
     async loadEvents() {
@@ -85,9 +147,12 @@ export class CalendarioModule {
             if (!response.ok) throw new Error("Error en la respuesta del servidor");
             this.events = await response.json();
             this.filteredEvents = [...this.events];
+            this.updateScopeSummary();
         } catch (error) {
             console.error("Error cargando eventos:", error);
             this.events = [];
+            this.filteredEvents = [];
+            this.updateScopeSummary();
         }
     }
 
@@ -113,17 +178,19 @@ export class CalendarioModule {
         });
 
         console.log(`Filtrado: ${this.filteredEvents.length} eventos encontrados.`);
+        this.updateScopeSummary();
         this.render();
     }
 
     updateViewButtons(activeBtn) {
         document.querySelectorAll('.view-btn').forEach(btn => {
-            btn.classList.remove('bg-white', 'shadow-sm');
+            btn.classList.remove('bg-white', 'shadow-sm', 'active');
         });
-        activeBtn.classList.add('bg-white', 'shadow-sm');
+        activeBtn.classList.add('bg-white', 'shadow-sm', 'active');
     }
 
     render() {
+        this.updateScopeSummary();
         // Ocultar todas las vistas
         document.querySelectorAll('.calendar-view').forEach(v => v.classList.add('hidden'));
 
@@ -178,7 +245,7 @@ export class CalendarioModule {
 
             // Filtrar eventos de este día específico (de los ya filtrados por el combo)
             const dayEvents = this.filteredEvents.filter(e => e.fecha === dateStr);
-            const MAX_VISIBLE_EVENTS = 3;
+            const MAX_VISIBLE_EVENTS = 2;
 
             if (dayEvents.length > MAX_VISIBLE_EVENTS) {
                 // Mostrar solo los primeros 3 eventos
@@ -343,11 +410,7 @@ export class CalendarioModule {
         const sunday = new Date(monday);
         sunday.setDate(monday.getDate() + 6);
 
-        const formatDate = (d) => {
-            return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
-        };
-
-        periodLabel.innerText = `${formatDate(monday)} - ${formatDate(sunday)}`;
+        periodLabel.innerText = this.formatWeekPeriod(monday, sunday);
 
         // --- PRE-CALCULO: Alturas sincronizadas ---
         // 1. Altura fija para el header del día (compacto)
@@ -549,6 +612,10 @@ export class CalendarioModule {
         const dayTitle = document.getElementById('dayTitle');
         const daySubtitle = document.getElementById('daySubtitle');
         const dayEventsContainer = document.getElementById('dayEventsContainer');
+        const periodLabel = document.getElementById('currentPeriod');
+        if (periodLabel) {
+            periodLabel.innerText = this.formatDayPeriod(this.currentDate);
+        }
 
         if (dayTitle) {
             const today = new Date();
@@ -669,6 +736,91 @@ export class CalendarioModule {
         }
     }
 
+    getSelectedOptionText(id) {
+        const select = document.getElementById(id);
+        if (!select || select.value === 'todos') return '';
+        return select.options[select.selectedIndex]?.text?.trim() || '';
+    }
+
+    getTipoText() {
+        const tipo = document.getElementById('filterTipo')?.value || 'todos';
+        switch (tipo) {
+            case 'audiencia': return 'Audiencias';
+            case 'termino': return 'Terminos';
+            case 'recordatorio': return 'Recordatorios';
+            default: return 'Todos los eventos';
+        }
+    }
+
+    hasActiveFilters() {
+        const chkMisAsuntos = document.getElementById('chkMisAsuntos');
+        const values = [
+            document.getElementById('filterTipo')?.value || 'todos',
+            document.getElementById('filterGerencia')?.value || 'todos',
+            document.getElementById('filterUsuario')?.value || 'todos',
+            document.getElementById('filterMateria')?.value || 'todos'
+        ];
+
+        return values.some(value => value !== 'todos') || Boolean(chkMisAsuntos?.checked);
+    }
+
+    updateClearFiltersVisibility() {
+        const clearButton = document.getElementById('btnClearFilters');
+        if (!clearButton) return;
+
+        clearButton.classList.toggle('hidden', !this.hasActiveFilters());
+    }
+
+    updateScopeSummary() {
+        const summary = document.getElementById('calendarScopeSummary');
+        const count = document.getElementById('calendarEventCount');
+        if (!summary && !count) {
+            this.updateClearFiltersVisibility();
+            return;
+        }
+
+        const toolbar = document.getElementById('calendarToolbar');
+        const role = toolbar?.dataset.userRole || '';
+        const currentUser = toolbar?.dataset.currentUserName || 'mi usuario';
+        const currentGerencia = toolbar?.dataset.currentGerenciaName || '';
+        const chkMisAsuntos = document.getElementById('chkMisAsuntos');
+        const isMisAsuntos = chkMisAsuntos ? chkMisAsuntos.checked : false;
+        const usuarioText = this.getSelectedOptionText('filterUsuario');
+        const gerenciaText = this.getSelectedOptionText('filterGerencia');
+        const materiaText = this.getSelectedOptionText('filterMateria');
+        const tipoText = this.getTipoText();
+
+        let scopeText;
+        if (isMisAsuntos) {
+            scopeText = `Mis asuntos (${currentUser})`;
+        } else if (usuarioText) {
+            scopeText = `Eventos de ${usuarioText}`;
+        } else if (gerenciaText) {
+            scopeText = `Gerencia ${gerenciaText}`;
+        } else if (currentGerencia && ['GERENTE', 'JEFE_DEPTO', 'ABOGADO'].includes(role)) {
+            scopeText = `Toda mi gerencia: ${currentGerencia}`;
+        } else {
+            scopeText = 'Todas las gerencias';
+        }
+
+        const refinements = [];
+        if (tipoText !== 'Todos los eventos') refinements.push(tipoText);
+        if (materiaText) refinements.push(`Materia ${materiaText}`);
+
+        if (summary) {
+            summary.innerText = refinements.length > 0
+                ? `${scopeText} · ${refinements.join(' · ')}`
+                : `${scopeText} · ${tipoText}`;
+        }
+
+        if (count) {
+            const total = this.filteredEvents?.length || 0;
+            count.innerText = `${total} ${total === 1 ? 'evento' : 'eventos'}`;
+        }
+
+        this.updateClearFiltersVisibility();
+    }
+
     createDayCell(day, isCurrentMonth, isToday) {
         const div = document.createElement('div');
         div.className = `calendar-day-cell ${isCurrentMonth ? '' : 'day-off'} ${isToday ? 'day-today' : ''}`;
@@ -693,6 +845,27 @@ export class CalendarioModule {
             this.currentDate.setDate(this.currentDate.getDate() + direction);
         }
         this.render();
+    }
+
+    formatWeekPeriod(startDate, endDate) {
+        const startMonth = this.names[startDate.getMonth()].slice(0, 3);
+        const endMonth = this.names[endDate.getMonth()].slice(0, 3);
+        const endYear = endDate.getFullYear();
+
+        if (startDate.getFullYear() !== endDate.getFullYear()) {
+            return `${startDate.getDate()} ${startMonth} ${startDate.getFullYear()} - ${endDate.getDate()} ${endMonth} ${endYear}`;
+        }
+
+        if (startDate.getMonth() === endDate.getMonth()) {
+            return `${startDate.getDate()} - ${endDate.getDate()} ${endMonth} ${endYear}`;
+        }
+
+        return `${startDate.getDate()} ${startMonth} - ${endDate.getDate()} ${endMonth} ${endYear}`;
+    }
+
+    formatDayPeriod(date) {
+        const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+        return `${dayNames[date.getDay()]} ${date.getDate()} de ${this.names[date.getMonth()]} ${date.getFullYear()}`;
     }
 
     showEventDetail(event) {

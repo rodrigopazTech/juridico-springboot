@@ -8,6 +8,7 @@ import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.repository.Usuarios.NotificacionRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.RecordatorioRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -49,6 +51,8 @@ public class NotificacionesController {
     private ExpedienteRepository expedienteRepository;
     @Autowired
     private AudienciaRepository audienciaRepository;
+    @Autowired
+    private RecordatorioRepository recordatorioRepository;
     @Autowired
     private RecordatorioNotificacionScheduler recordatorioNotificacionScheduler;
 
@@ -98,7 +102,7 @@ public class NotificacionesController {
     }
 
     @GetMapping("/leer/{id}")
-    public String leerNotificacion(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
+    public String leerNotificacion(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs, HttpServletRequest request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Notificacion notificacion = notificacionRepository.findById(id).orElse(null);
 
@@ -113,9 +117,9 @@ public class NotificacionesController {
                 String tipo = notificacion.getEntidadTipo();
 
                 if (!tieneAccesoAEntidad(notificacion.getUsuario(), tipo, idClean)) {
-                    redirectAttrs.addFlashAttribute("mensaje", "Ya no tienes acceso a esta " + (tipo != null ? tipo.toLowerCase() : "información") + " o el registro ya no existe.");
-                    redirectAttrs.addFlashAttribute("tipo", "warning");
-                    return "redirect:/notificaciones";
+                    agregarAvisoNotificacionNoDisponible(redirectAttrs,
+                            "El registro fue eliminado, ya no esta disponible o ya no tienes acceso.");
+                    return redirigirAOrigenSeguro(request);
                 }
 
                 if ("AUDIENCIA".equals(tipo)) {
@@ -138,10 +142,64 @@ public class NotificacionesController {
                     return "redirect:/expedientes/" + idClean + "?openObservaciones=true";
                 } else if ("SEGURIDAD".equals(tipo)) {
                     return "redirect:/perfil?tab=seguridad";
+                } else if ("RECORDATORIO".equals(tipo)) {
+                    if (!recordatorioExiste(idClean, notificacion.getUsuario())) {
+                        agregarAvisoNotificacionNoDisponible(redirectAttrs,
+                                "El recordatorio pudo haber sido completado, eliminado o modificado.");
+                        return redirigirAOrigenSeguro(request);
+                    }
+                    return "redirect:/tareas";
                 }
             }
+            agregarAvisoNotificacionNoDisponible(redirectAttrs,
+                    "La notificacion no tiene un registro asociado o su tipo de destino no esta soportado.");
+            return redirigirAOrigenSeguro(request);
         }
-        return "redirect:/notificaciones";
+        agregarAvisoNotificacionNoDisponible(redirectAttrs,
+                "La notificacion ya no esta disponible.");
+        return redirigirAOrigenSeguro(request);
+    }
+
+    private void agregarAvisoNotificacionNoDisponible(RedirectAttributes redirectAttrs, String mensaje) {
+        redirectAttrs.addFlashAttribute("mensaje", mensaje);
+        redirectAttrs.addFlashAttribute("tipo", "warning");
+    }
+
+    private String redirigirAOrigenSeguro(HttpServletRequest request) {
+        return "redirect:" + obtenerRutaLocalDesdeReferer(request);
+    }
+
+    private String obtenerRutaLocalDesdeReferer(HttpServletRequest request) {
+        String referer = request.getHeader("Referer");
+        if (referer == null || referer.isBlank()) {
+            return "/";
+        }
+
+        try {
+            URI uri = URI.create(referer);
+            String requestHost = request.getServerName();
+            if (uri.getHost() != null && !uri.getHost().equalsIgnoreCase(requestHost)) {
+                return "/";
+            }
+
+            String path = uri.getPath();
+            if (path == null || path.isBlank() || path.startsWith("/notificaciones/leer")) {
+                return "/";
+            }
+
+            String query = uri.getQuery();
+            return query != null && !query.isBlank() ? path + "?" + query : path;
+        } catch (IllegalArgumentException ex) {
+            return "/";
+        }
+    }
+
+    private boolean recordatorioExiste(String idStr, Usuario usuario) {
+        try {
+            return recordatorioRepository.findByIdAndUsuario(Integer.valueOf(idStr), usuario).isPresent();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private boolean esRolDirectivo(Usuario usuario) {

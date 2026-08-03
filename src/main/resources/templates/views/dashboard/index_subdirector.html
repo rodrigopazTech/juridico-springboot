@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <link rel="manifest" th:href="@{/manifest.json}" />
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any" />
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
+    <link rel="apple-touch-icon" th:href="@{/img/apple-touch-icon.png}" />
+    <meta name="theme-color" content="#691228" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${pageTitle}">Dashboard - Subdirector</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script th:src="@{/js/tailwind.config.js}"></script>
+    <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
+    <script th:src="@{/lib/chart.umd.min.js}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Noto+Sans:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <style>
+        .metric-card {
+            background: #fff;
+            border: 1px solid #f3f4f6;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+        }
+
+        .metric-number {
+            font-family: 'Montserrat', sans-serif;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0;
+            line-height: 1;
+        }
+
+        .metric-label {
+            font-family: 'Montserrat', sans-serif;
+            letter-spacing: .055em;
+            line-height: 1.18;
+        }
+
+        .kpi-card {
+            min-height: 9.25rem;
+            position: relative;
+            overflow: hidden;
+            padding-top: 1.15rem;
+        }
+
+        .kpi-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 1rem;
+            right: 1rem;
+            height: .28rem;
+            border-radius: 0 0 999px 999px;
+        }
+
+        .kpi-danger { background: linear-gradient(180deg, #fff 0%, #fff 58%, #fff7f7 100%); }
+        .kpi-primary { background: linear-gradient(180deg, #fff 0%, #fff 60%, #fff8fb 100%); }
+        .kpi-gold { background: linear-gradient(180deg, #fff 0%, #fff 60%, #fbf8ef 100%); }
+        .kpi-green { background: linear-gradient(180deg, #fff 0%, #fff 60%, #f4faf8 100%); }
+        .kpi-neutral { background: linear-gradient(180deg, #fff 0%, #fff 60%, #f8f9fb 100%); }
+
+        .kpi-danger::before { background: #dc2626; }
+        .kpi-primary::before { background: #691228; }
+        .kpi-gold::before { background: #D4C19C; }
+        .kpi-green::before { background: #13322B; }
+        .kpi-neutral::before { background: #545454; }
+
+        .status-dot {
+            width: .62rem;
+            height: .62rem;
+            border-radius: 999px;
+            display: inline-block;
+        }
+
+        .chart-panel {
+            min-height: 24rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn .4s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800 font-sans overflow-x-hidden">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="sm:ml-64 flex flex-col min-h-screen">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <main class="p-4 md:p-6 flex-1 animate-fade-in pt-[128px] sm:pt-[128px] md:pt-[128px] lg:pt-[128px]"
+            style="padding-top: 128px;">
+            <section class="mb-5 mt-1">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+                    <div class="flex flex-col gap-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-gob-guinda/10 text-gob-guinda flex items-center justify-center">
+                                <i class="fas fa-sitemap"></i>
+                            </div>
+                            <div>
+                                <p class="metric-label text-[11px] font-extrabold uppercase text-gray-400">Vista subdirectiva</p>
+                                <p class="text-sm font-bold text-gray-700">seguimiento transversal por gerencia, materia, abogado y periodo</p>
+                            </div>
+                        </div>
+
+                        <form id="subdirectorDashboardFilters" method="get" th:action="@{/dashboard}"
+                            class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_.85fr_auto] 2xl:w-[1080px]">
+                            <div class="relative">
+                                <select name="gerenciaId"
+                                    class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-3 py-2.5 pr-9 text-sm font-medium text-gray-800 outline-none transition focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10">
+                                    <option value="">Todas las gerencias</option>
+                                    <option th:each="g : ${gerencias}" th:value="${g.id}" th:text="${g.nombre}"
+                                        th:selected="${gerenciaSeleccionada != null and g.id == gerenciaSeleccionada.intValue()}">Gerencia</option>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none"></i>
+                            </div>
+                            <div class="relative">
+                                <select name="materiaId"
+                                    class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-3 py-2.5 pr-9 text-sm font-medium text-gray-800 outline-none transition focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10">
+                                    <option value="">Todas las materias</option>
+                                    <option th:each="m : ${materiasDirectivo}" th:value="${m.id}" th:text="${m.nombre}"
+                                        th:selected="${materiaSeleccionada != null and m.id == materiaSeleccionada}">Materia</option>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none"></i>
+                            </div>
+                            <div class="relative">
+                                <select name="abogadoId"
+                                    class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-3 py-2.5 pr-9 text-sm font-medium text-gray-800 outline-none transition focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10">
+                                    <option value="">Todos los abogados</option>
+                                    <option th:each="a : ${abogadosDirectivo}" th:value="${a.id}" th:text="${a.nombreCompleto}"
+                                        th:selected="${abogadoSeleccionado != null and a.id == abogadoSeleccionado}">Abogado</option>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none"></i>
+                            </div>
+                            <div class="relative">
+                                <select name="periodo"
+                                    class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-3 py-2.5 pr-9 text-sm font-medium text-gray-800 outline-none transition focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10">
+                                    <option value="VENCIDOS" th:selected="${periodoSeleccionado == 'VENCIDOS'}">Vencidos</option>
+                                    <option value="HOY" th:selected="${periodoSeleccionado == 'HOY'}">Hoy</option>
+                                    <option value="SEMANA" th:selected="${periodoSeleccionado == 'SEMANA'}">Prox. 7 dias</option>
+                                    <option value="MES" th:selected="${periodoSeleccionado == 'MES'}">Este mes</option>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none"></i>
+                            </div>
+                            <div class="flex md:col-span-2 xl:col-span-1">
+                                <a th:href="@{/dashboard}"
+                                    class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-xs font-black uppercase tracking-wide text-gray-600 hover:bg-gray-50">
+                                    <i class="fas fa-rotate-left text-[11px]"></i>
+                                    Limpiar filtros
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                <div class="kpi-card kpi-danger rounded-2xl p-4 metric-card">
+                    <div class="flex h-full flex-col justify-between gap-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="metric-label text-[12px] font-extrabold uppercase text-gray-500">Riesgo critico</p>
+                                <p class="mt-1 text-xs font-semibold text-gray-400">Vencidos, hoy y atrasadas</p>
+                            </div>
+                            <span class="w-8 h-8 rounded-xl bg-red-50 text-red-700 flex items-center justify-center">
+                                <i class="fas fa-triangle-exclamation text-sm"></i>
+                            </span>
+                        </div>
+                        <p class="metric-number text-4xl font-black text-red-700" th:text="${subdirectorDashboard.resumen.alertasPrioridad.criticas}">0</p>
+                        <div class="grid grid-cols-3 gap-2 text-[11px] font-black">
+                            <a th:href="@{/terminos(periodo='VENCIDOS', gerenciaId=${gerenciaSeleccionada}, materiaId=${materiaSeleccionada}, abogadoId=${abogadoSeleccionado})}"
+                                class="rounded-lg bg-red-50 px-2 py-1.5 text-center text-red-700 hover:bg-red-100">Terminos vencidos</a>
+                            <a th:href="@{/terminos(periodo='HOY', gerenciaId=${gerenciaSeleccionada}, materiaId=${materiaSeleccionada}, abogadoId=${abogadoSeleccionado})}"
+                                class="rounded-lg bg-gob-guinda/5 px-2 py-1.5 text-center text-gob-guinda hover:bg-gob-guinda/10">Terminos hoy</a>
+                            <a th:href="@{/audiencias(periodo='VENCIDOS', estatus='PENDIENTE', gerencia=${gerenciaSeleccionadaNombre}, materia=${materiaSeleccionadaNombre}, abogadoId=${abogadoSeleccionado})}"
+                                class="rounded-lg border border-red-100 bg-white px-2 py-1.5 text-center text-gob-guinda hover:bg-red-50">Audiencias atrasadas</a>
+                        </div>
+                    </div>
+                </div>
+
+                <a th:href="@{/terminos(periodo='VENCIDOS', gerenciaId=${gerenciaSeleccionada}, materiaId=${materiaSeleccionada}, abogadoId=${abogadoSeleccionado})}"
+                    class="kpi-card kpi-primary rounded-2xl p-4 metric-card transition hover:shadow-lg">
+                    <div class="flex h-full flex-col justify-between gap-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <p class="metric-label text-[12px] font-extrabold uppercase text-gray-500">Terminos vencidos</p>
+                            <span class="w-8 h-8 rounded-xl bg-gob-guinda/10 text-gob-guinda flex items-center justify-center">
+                                <i class="fas fa-clock-rotate-left text-sm"></i>
+                            </span>
+                        </div>
+                        <p class="metric-number text-4xl font-black text-gray-900" th:text="${subdirectorDashboard.resumen.terminosVencidos}">0</p>
+                    </div>
+                </a>
+
+                <a th:href="@{/audiencias(fecha=${hoyIso}, gerencia=${gerenciaSeleccionadaNombre}, materia=${materiaSeleccionadaNombre}, abogadoId=${abogadoSeleccionado})}"
+                    class="kpi-card kpi-gold rounded-2xl p-4 metric-card transition hover:shadow-lg">
+                    <div class="flex h-full flex-col justify-between gap-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <p class="metric-label text-[12px] font-extrabold uppercase text-gray-500">Audiencias hoy</p>
+                            <span class="w-8 h-8 rounded-xl bg-gob-oro/15 text-gob-oro flex items-center justify-center">
+                                <i class="fas fa-calendar-day text-sm"></i>
+                            </span>
+                        </div>
+                        <p class="metric-number text-4xl font-black text-gray-900" th:text="${subdirectorDashboard.resumen.audienciasHoy}">0</p>
+                    </div>
+                </a>
+
+                <a th:href="@{/expedientes(etapa='TRAMITE', gerenciaId=${gerenciaSeleccionada}, materiaId=${materiaSeleccionada}, abogadoId=${abogadoSeleccionado})}"
+                    class="kpi-card kpi-green rounded-2xl p-4 metric-card transition hover:shadow-lg">
+                    <div class="flex h-full flex-col justify-between gap-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <p class="metric-label text-[12px] font-extrabold uppercase text-gray-500">Expedientes en tramite</p>
+                            <span class="w-8 h-8 rounded-xl bg-gob-verde/10 text-gob-verde flex items-center justify-center">
+                                <i class="fas fa-folder-open text-sm"></i>
+                            </span>
+                        </div>
+                        <p class="metric-number text-4xl font-black text-gray-900" th:text="${subdirectorDashboard.resumen.expedientesEnTramite}">0</p>
+                    </div>
+                </a>
+
+                <div class="kpi-card kpi-neutral rounded-2xl p-4 metric-card">
+                    <div class="flex h-full flex-col justify-between gap-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <p class="metric-label text-[12px] font-extrabold uppercase text-gray-500">Abogados supervisados</p>
+                            <span class="w-8 h-8 rounded-xl bg-gray-100 text-gray-700 flex items-center justify-center">
+                                <i class="fas fa-user-tie text-sm"></i>
+                            </span>
+                        </div>
+                        <p class="metric-number text-4xl font-black text-gray-900" th:text="${subdirectorDashboard.resumen.abogadosSupervisados}">0</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
+                <div class="chart-panel rounded-2xl p-6 metric-card">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                            <i class="fas fa-building mr-2 text-gob-guinda"></i>Pendientes por gerencia
+                        </h2>
+                        <span class="rounded-lg bg-gray-50 px-2 py-1 text-[11px] font-bold text-gray-500">Top 8</span>
+                    </div>
+                    <div class="relative h-72">
+                        <canvas id="chartGerencia"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-panel rounded-2xl p-6 metric-card">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                            <i class="fas fa-scale-balanced mr-2 text-gob-guinda"></i>Carga por abogado
+                        </h2>
+                        <span class="rounded-lg bg-gray-50 px-2 py-1 text-[11px] font-bold text-gray-500">Periodo</span>
+                    </div>
+                    <div class="relative h-72">
+                        <canvas id="chartCargaAbogado"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-panel rounded-2xl p-6 metric-card">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                            <i class="fas fa-layer-group mr-2 text-gob-verde"></i>Pendientes por materia
+                        </h2>
+                        <span class="rounded-lg bg-gray-50 px-2 py-1 text-[11px] font-bold text-gray-500">Top 8</span>
+                    </div>
+                    <div class="relative h-72">
+                        <canvas id="chartMateria"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+                <div class="rounded-2xl p-6 metric-card">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                            <i class="fas fa-triangle-exclamation mr-2 text-red-700"></i>Terminos del periodo
+                        </h2>
+                        <a th:href="@{/terminos(periodo=${periodoSeleccionado}, gerenciaId=${gerenciaSeleccionada}, materiaId=${materiaSeleccionada}, abogadoId=${abogadoSeleccionado})}"
+                            class="text-xs font-bold text-gob-guinda hover:underline">Ver terminos</a>
+                    </div>
+
+                    <div class="space-y-3" th:if="${!#lists.isEmpty(subdirectorDashboard.terminosPeriodo)}">
+                        <a th:each="t : ${subdirectorDashboard.terminosPeriodo}"
+                            th:href="@{/terminos(keyword=${t.referencia}, periodo=${t.dias < 0 ? 'VENCIDOS' : (t.dias == 0 ? 'HOY' : 'SEMANA')}, gerenciaId=${gerenciaSeleccionada}, materiaId=${materiaSeleccionada}, abogadoId=${abogadoSeleccionado})}"
+                            class="block rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 transition hover:border-gob-guinda hover:bg-white hover:shadow-sm">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="status-dot"
+                                            th:classappend="${t.tono == 'vencido' ? ' bg-red-700' : (t.tono == 'critico' ? ' bg-gob-guinda' : ' bg-amber-500')}"></span>
+                                        <p class="truncate text-sm font-black text-gray-800" th:text="${t.referencia}">EXP-001</p>
+                                        <span class="rounded-lg border border-gray-100 bg-white px-2 py-0.5 text-[11px] font-bold text-gray-600" th:text="${t.prioridad}">ALTA</span>
+                                    </div>
+                                    <p class="mt-1 line-clamp-2 text-sm text-gray-600" th:text="${t.asunto}">Asunto</p>
+                                    <p class="mt-1 truncate text-xs font-bold text-gray-400" th:text="${t.responsable}">Responsable</p>
+                                </div>
+                                <div class="shrink-0 text-right">
+                                    <p class="text-sm font-black text-gray-800" th:text="${#temporals.format(t.fecha, 'dd/MM')}">29/07</p>
+                                    <p class="text-[11px] font-bold uppercase"
+                                        th:classappend="${t.dias < 0 ? ' text-red-700' : ' text-gob-guinda'}"
+                                        th:text="${t.dias < 0 ? 'Vencido' : (t.dias == 0 ? 'Hoy' : t.dias + ' dias')}">Hoy</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(subdirectorDashboard.terminosPeriodo)}"
+                        class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
+                        Sin terminos en el periodo seleccionado.
+                    </div>
+                </div>
+
+                <div class="rounded-2xl p-6 metric-card">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                            <i class="fas fa-calendar-day mr-2 text-gob-guinda"></i>Audiencias del periodo
+                        </h2>
+                        <a th:href="@{/audiencias(periodo=${periodoSeleccionado}, gerencia=${gerenciaSeleccionadaNombre}, materia=${materiaSeleccionadaNombre}, abogadoId=${abogadoSeleccionado})}"
+                            class="text-xs font-bold text-gob-guinda hover:underline">Ver audiencias</a>
+                    </div>
+
+                    <div class="space-y-3" th:if="${!#lists.isEmpty(subdirectorDashboard.audienciasPeriodo)}">
+                        <a th:each="a : ${subdirectorDashboard.audienciasPeriodo}"
+                            th:href="@{/audiencias(fecha=${a.fecha}, keyword=${a.referencia}, gerencia=${gerenciaSeleccionadaNombre}, materia=${materiaSeleccionadaNombre}, abogadoId=${abogadoSeleccionado})}"
+                            class="block rounded-xl border border-gray-100 px-4 py-3 transition hover:border-gob-guinda hover:bg-gray-50 hover:shadow-sm">
+                            <div class="flex items-start gap-3">
+                                <div class="w-14 shrink-0 rounded-xl bg-gob-oro/10 px-2 py-2 text-center border border-gob-oro/20">
+                                    <p class="text-xs font-black uppercase text-gob-guinda" th:text="${#temporals.format(a.fecha, 'MMM')}">JUL</p>
+                                    <p class="text-xl font-black text-gray-800 font-headings" th:text="${#temporals.format(a.fecha, 'dd')}">29</p>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="truncate text-sm font-black text-gray-800" th:text="${a.referencia}">EXP-001</p>
+                                        <p class="text-xs font-bold text-gray-500" th:text="${#temporals.format(a.hora, 'HH:mm')}">10:00</p>
+                                    </div>
+                                    <p class="mt-1 text-sm font-semibold text-gray-700" th:text="${a.tipo}">Audiencia</p>
+                                    <p class="truncate text-xs font-bold text-gray-400" th:text="${a.responsable}">Responsable</p>
+                                    <p class="truncate text-xs text-gray-500" th:text="${a.lugar}">Sede</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(subdirectorDashboard.audienciasPeriodo)}"
+                        class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
+                        Sin audiencias en el periodo seleccionado.
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6 rounded-2xl p-6 metric-card">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <p class="metric-label text-[11px] font-extrabold uppercase text-gray-400">Mis asuntos</p>
+                        <p class="text-sm font-bold text-gray-700">Resumen personal asignado al subdirector</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 md:grid-cols-5">
+                        <a th:href="@{/terminos(periodo='VENCIDOS', keyword=${usuario.nombreCompleto})}"
+                            class="rounded-xl bg-red-50 px-3 py-2 text-center hover:bg-red-100">
+                            <p class="metric-number text-2xl font-black text-red-700" th:text="${misAsuntos.terminosVencidos}">0</p>
+                            <p class="text-[10px] font-black uppercase text-red-700">Terminos vencidos</p>
+                        </a>
+                        <a th:href="@{/terminos(periodo='HOY', keyword=${usuario.nombreCompleto})}"
+                            class="rounded-xl bg-gob-guinda/5 px-3 py-2 text-center hover:bg-gob-guinda/10">
+                            <p class="metric-number text-2xl font-black text-gob-guinda" th:text="${misAsuntos.terminosHoy}">0</p>
+                            <p class="text-[10px] font-black uppercase text-gob-guinda">Terminos hoy</p>
+                        </a>
+                        <a th:href="@{/audiencias(fecha=${hoyIso}, keyword=${usuario.nombreCompleto})}"
+                            class="rounded-xl bg-gob-oro/10 px-3 py-2 text-center hover:bg-gob-oro/20">
+                            <p class="metric-number text-2xl font-black text-gray-800" th:text="${misAsuntos.audienciasHoy}">0</p>
+                            <p class="text-[10px] font-black uppercase text-gray-600">Audiencias hoy</p>
+                        </a>
+                        <a th:href="@{/audiencias(periodo='SEMANA', keyword=${usuario.nombreCompleto})}"
+                            class="rounded-xl bg-gob-verde/10 px-3 py-2 text-center hover:bg-gob-verde/15">
+                            <p class="metric-number text-2xl font-black text-gob-verde" th:text="${misAsuntos.audienciasProximas7}">0</p>
+                            <p class="text-[10px] font-black uppercase text-gob-verde">Audiencias 7 dias</p>
+                        </a>
+                        <a th:href="@{/tareas(estado='pendiente')}"
+                            class="rounded-xl bg-gray-50 px-3 py-2 text-center hover:bg-white">
+                            <p class="metric-number text-2xl font-black text-gray-900" th:text="${misAsuntos.tareasPendientes}">0</p>
+                            <p class="text-[10px] font-black uppercase text-gray-500">Tareas</p>
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        window.subdirectorDashboard = /*[[${subdirectorDashboard}]]*/ {};
+        /*]]>*/
+    </script>
+
+    <script>
+        function chartOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 10, usePointStyle: true } }
+                },
+                scales: {
+                    x: { beginAtZero: true, ticks: { precision: 0 } },
+                    y: { grid: { display: false } }
+                }
+            };
+        }
+
+        function renderStackedBar(canvasId, data) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: data?.labels || [],
+                    datasets: [
+                        { label: 'Audiencias', data: data?.audiencias || [], backgroundColor: '#691228', borderRadius: 6, maxBarThickness: 28 },
+                        { label: 'Terminos', data: data?.terminos || [], backgroundColor: '#D4C19C', borderRadius: 6, maxBarThickness: 28 }
+                    ]
+                },
+                options: chartOptions()
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const data = window.subdirectorDashboard || {};
+            renderStackedBar('chartGerencia', data.pendientesPorGerencia || {});
+            renderStackedBar('chartCargaAbogado', data.cargaPorAbogado || {});
+            renderStackedBar('chartMateria', data.pendientesPorMateria || {});
+
+            const filtersForm = document.getElementById('subdirectorDashboardFilters');
+            if (filtersForm) {
+                filtersForm.querySelectorAll('select').forEach(function (select) {
+                    select.addEventListener('change', function () {
+                        if (filtersForm.requestSubmit) {
+                            filtersForm.requestSubmit();
+                        } else {
+                            filtersForm.submit();
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

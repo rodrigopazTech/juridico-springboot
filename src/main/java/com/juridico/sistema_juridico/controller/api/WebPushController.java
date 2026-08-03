@@ -12,7 +12,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 import java.util.Optional;
@@ -35,9 +39,6 @@ public class WebPushController {
     @Autowired
     private WebPushService webPushService;
 
-    // =========================================================================
-    // CODIGO DE PRUEBA: Endpoint temporal para probar el envio de notificaciones push
-    // =========================================================================
     @GetMapping("/test-send")
     public ResponseEntity<?> testSend() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -45,17 +46,15 @@ public class WebPushController {
         if (usuario == null) {
             return ResponseEntity.status(401).body(Map.of("error", "Usuario no encontrado"));
         }
-        
+
         webPushService.enviarNotificacion(
-            usuario, 
-            "Notificación de Prueba", 
-            "Esta es una notificación push de prueba enviada a las " + java.time.LocalTime.now(), 
-            "/dashboard"
-        );
-        
+                usuario,
+                "Notificacion de Prueba",
+                "Esta es una notificacion push de prueba enviada a las " + java.time.LocalTime.now(),
+                "/dashboard");
+
         return ResponseEntity.ok(Map.of("success", true, "mensaje", "Push de prueba enviado a " + email));
     }
-    // =========================================================================
 
     @GetMapping("/public-key")
     public ResponseEntity<?> getPublicKey() {
@@ -72,16 +71,14 @@ public class WebPushController {
         }
 
         if (request.getEndpoint() == null || request.getKeys() == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Datos de suscripción inválidos"));
+            return ResponseEntity.badRequest().body(Map.of("error", "Datos de suscripcion invalidos"));
         }
 
-        // Buscar si ya existe una suscripción para este usuario en este dispositivo (deviceId)
         Optional<PushSubscription> existingByDevice = Optional.empty();
         if (request.getDeviceId() != null && !request.getDeviceId().trim().isEmpty()) {
             existingByDevice = subscriptionRepository.findByUsuarioIdAndDeviceId(usuario.getId(), request.getDeviceId());
         }
 
-        // Buscar si existe una suscripción por el endpoint
         Optional<PushSubscription> existingByEndpoint = subscriptionRepository.findByEndpoint(request.getEndpoint());
 
         PushSubscription subToSave;
@@ -92,7 +89,7 @@ public class WebPushController {
             subToSave.setP256dh(request.getKeys().getP256dh());
             subToSave.setAuth(request.getKeys().getAuth());
             subToSave.setSessionId(session.getId());
-            log.info("Actualizando suscripción Web Push por Device ID para el usuario: {}", email);
+            log.info("Actualizando suscripcion Web Push por Device ID para el usuario: {}", email);
         } else if (existingByEndpoint.isPresent()) {
             subToSave = existingByEndpoint.get();
             subToSave.setUsuario(usuario);
@@ -100,7 +97,7 @@ public class WebPushController {
             subToSave.setP256dh(request.getKeys().getP256dh());
             subToSave.setAuth(request.getKeys().getAuth());
             subToSave.setSessionId(session.getId());
-            log.info("Reutilizando suscripción Web Push por Endpoint para el usuario: {}", email);
+            log.info("Reutilizando suscripcion Web Push por Endpoint para el usuario: {}", email);
         } else {
             subToSave = PushSubscription.builder()
                     .usuario(usuario)
@@ -110,7 +107,7 @@ public class WebPushController {
                     .deviceId(request.getDeviceId())
                     .sessionId(session.getId())
                     .build();
-            log.info("Nueva suscripción Web Push registrada para el usuario: {}", email);
+            log.info("Nueva suscripcion Web Push registrada para el usuario: {}", email);
         }
 
         subscriptionRepository.save(subToSave);
@@ -120,15 +117,26 @@ public class WebPushController {
 
     @PostMapping("/unsubscribe")
     @Transactional
-    public ResponseEntity<?> unsubscribe(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> unsubscribe(@RequestBody Map<String, String> body, jakarta.servlet.http.HttpSession session) {
         String endpoint = body.get("endpoint");
         if (endpoint == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Endpoint requerido"));
         }
 
-        subscriptionRepository.findByEndpoint(endpoint).ifPresent(sub -> {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+        if (usuario == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "No autenticado"));
+        }
+
+        Optional<PushSubscription> subscription = subscriptionRepository.findByEndpointAndUsuarioId(endpoint, usuario.getId());
+        if (subscription.isEmpty()) {
+            subscription = subscriptionRepository.findByEndpointAndSessionId(endpoint, session.getId());
+        }
+
+        subscription.ifPresent(sub -> {
             subscriptionRepository.delete(sub);
-            log.info("Suscripción Web Push eliminada para endpoint: {}", endpoint);
+            log.info("Suscripcion Web Push eliminada para usuario {} endpoint: {}", email, endpoint);
         });
 
         return ResponseEntity.ok(Map.of("success", true));

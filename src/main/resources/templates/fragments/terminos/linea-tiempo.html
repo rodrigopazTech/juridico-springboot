@@ -18,7 +18,7 @@
                             <!-- Esfera con Conteo -->
                             <div th:id="|etapa-${etapa}|"
                                 class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 shadow-sm transition-all duration-300 relative"
-                                th:with="enEtapa=${conteosEtapas.get(etapa)}, isSelected=${paramEstatus == etapa}, isAssigned=${etapasAsignadas != null and !etapasAsignadas.isEmpty() and etapasAsignadas.contains(etapa)}"
+                                th:with="etapaName=${etapa.name()}, enEtapa=${conteosEtapas.get(etapaName)}, isSelected=${paramEstatusName == etapaName}, isAssigned=${etapasAsignadasNames != null and !etapasAsignadasNames.isEmpty() and etapasAsignadasNames.contains(etapaName)}"
                                 th:classappend="${isAssigned ? 'bg-gob-guinda border-white text-white' : 'bg-gob-grisTenue border-white text-gob-guinda'}">
 
                                 <th:block th:if="${isSelected}">
@@ -37,7 +37,7 @@
                             <!-- Etiqueta de la Etapa -->
                             <span
                                 class="mt-1.5 text-[11px] font-extrabold uppercase tracking-tight text-center max-w-[80px] leading-none transition-colors duration-300"
-                                th:classappend="${paramEstatus == etapa ? 'text-gob-oro' : (etapasAsignadas != null and etapasAsignadas.contains(etapa) ? 'text-gob-guinda' : 'text-gray-400')}"
+                                th:classappend="${paramEstatusName == etapa.name() ? 'text-gob-oro' : (etapasAsignadasNames != null and etapasAsignadasNames.contains(etapa.name()) ? 'text-gob-guinda' : 'text-gray-400')}"
                                 th:text="${etapa.descripcion}">
                                 ETAPA
                             </span>
@@ -59,7 +59,7 @@
                             <!-- Esfera con Conteo -->
                             <div th:id="|etapa-mob-${etapa}|"
                                 class="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold border-2 shadow-sm transition-all duration-300 relative"
-                                th:with="enEtapa=${conteosEtapas.get(etapa)}, isSelected=${paramEstatus == etapa}, isAssigned=${etapasAsignadas != null and !etapasAsignadas.isEmpty() and etapasAsignadas.contains(etapa)}"
+                                th:with="etapaName=${etapa.name()}, enEtapa=${conteosEtapas.get(etapaName)}, isSelected=${paramEstatusName == etapaName}, isAssigned=${etapasAsignadasNames != null and !etapasAsignadasNames.isEmpty() and etapasAsignadasNames.contains(etapaName)}"
                                 th:classappend="${isAssigned ? 'bg-gob-guinda border-white text-white' : 'bg-gob-grisTenue border-white text-gob-guinda'}">
 
                                 <th:block th:if="${isSelected}">
@@ -78,7 +78,7 @@
                             <!-- Etiqueta de la Etapa -->
                             <span
                                 class="mt-2 text-[10px] font-extrabold uppercase tracking-tight text-center max-w-[80px] leading-tight transition-colors duration-300"
-                                th:classappend="${paramEstatus == etapa ? 'text-gob-oro' : (etapasAsignadas != null and etapasAsignadas.contains(etapa) ? 'text-gob-guinda' : 'text-gray-400')}"
+                                th:classappend="${paramEstatusName == etapa.name() ? 'text-gob-oro' : (etapasAsignadasNames != null and etapasAsignadasNames.contains(etapa.name()) ? 'text-gob-guinda' : 'text-gray-400')}"
                                 th:text="${etapa.descripcion}">
                                 ETAPA
                             </span>

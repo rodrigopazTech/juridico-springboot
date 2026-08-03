@@ -18,7 +18,7 @@
         <div class="h-full pt-0 pb-5 overflow-y-auto bg-gob-verde flex flex-col custom-scrollbar">
 
             <div class="flex items-center justify-between px-6 h-[72px] border-b border-white/10 mb-6">
-                <a th:href="@{/}" class="flex items-center group">
+                <a th:href="@{/dashboard}" class="flex items-center group">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-gob-oro to-yellow-600 flex items-center justify-center shadow-lg group-hover:shadow-gob-oro/50 transition-all duration-300">
                         <i class="fas fa-balance-scale text-white text-xl group-hover:scale-110 transition-transform duration-300"></i>
                     </div>
@@ -52,17 +52,17 @@
                     </a>
                 </li>
 
-                <li sec:authorize="isAuthenticated()">
+                <li class="hidden" sec:authorize="isAuthenticated()">
                     <a th:href="@{/agenda}"
                         class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
                         th:classappend="${activePage == 'agenda' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
-                        <i class="fas fa-address-book w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                        <i class="fas fa-box-archive w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
                             th:classappend="${activePage == 'agenda' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
-                        <span class="ms-3 text-sm">Agenda Historial</span>
+                        <span class="ms-3 text-sm">Concluidos</span>
                     </a>
                 </li>
 
-                <li>
+                <li class="hidden">
                     <a th:href="@{/calendario}" 
                         class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
                         th:classappend="${activePage == 'calendario' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
@@ -72,7 +72,7 @@
                     </a>
                 </li>
 
-                <li>
+                <li class="hidden">
                     <a th:href="@{/tareas}"
                         class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
                         th:classappend="${activePage == 'tareas' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
@@ -116,8 +116,52 @@
                     </a>
                 </li>
 
+                <li class="px-6 mt-8 mb-3">
+                    <span class="text-[10px] font-extrabold text-white/40 uppercase tracking-widest">Seguimiento</span>
+                </li>
+
+                <li>
+                    <a th:href="@{/calendario}" 
+                        class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
+                        th:classappend="${activePage == 'calendario' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-calendar-alt w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                            th:classappend="${activePage == 'calendario' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
+                        <span class="ms-3 text-sm">Calendario</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a th:href="@{/tareas}"
+                        class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
+                        th:classappend="${activePage == 'tareas' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-tasks w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                            th:classappend="${activePage == 'tareas' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
+                        <span class="ms-3 text-sm">Mis Tareas</span>
+                    </a>
+                </li>
+
+                <li sec:authorize="isAuthenticated()">
+                    <a th:href="@{/agenda}"
+                        class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
+                        th:classappend="${activePage == 'agenda' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-box-archive w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                            th:classappend="${activePage == 'agenda' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
+                        <span class="ms-3 text-sm">Concluidos</span>
+                    </a>
+                </li>
+
                 <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO')" class="px-6 mt-8 mb-3">
                     <span class="text-[10px] font-extrabold text-white/40 uppercase tracking-widest">Administración</span>
+                </li>
+
+                <li>
+                    <a th:href="@{/catalogos}"
+                        class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
+                        th:classappend="${activePage == 'catalogos' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-database w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                            th:classappend="${activePage == 'catalogos' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
+                        <span class="ms-3 text-sm">Cat&aacute;logos</span>
+                    </a>
                 </li>
 
                 <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO')">
@@ -140,13 +184,23 @@
                     </a>
                 </li>
 
-                <li>
+                <li sec:authorize="hasAuthority('ADMIN')">
+                    <a th:href="@{/admin/auditoria}"
+                        class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
+                        th:classappend="${activePage == 'auditoria' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-shield-halved w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                            th:classappend="${activePage == 'auditoria' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
+                        <span class="ms-3 text-sm">Auditoria Tecnica</span>
+                    </a>
+                </li>
+
+                <li class="hidden">
                     <a th:href="@{/catalogos}"
                         class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
                         th:classappend="${activePage == 'catalogos' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
-                        <i class="fas fa-clipboard-list w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                        <i class="fas fa-database w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
                             th:classappend="${activePage == 'catalogos' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
-                        <span class="ms-3 text-sm">Catálogos Generales</span>
+                        <span class="ms-3 text-sm">Cat&aacute;logos</span>
                     </a>
                 </li>
 

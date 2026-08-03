@@ -3,6 +3,7 @@ package com.juridico.sistema_juridico.Entity.enums;
 import java.time.LocalDate;
 
 public enum PeriodoFiltro {
+    VENCIDOS,
     HOY,
     MANANA,
     SEMANA,
@@ -19,6 +20,10 @@ public enum PeriodoFiltro {
         LocalDate fechaFin = LocalDate.of(2100, 12, 31);
 
         switch (this) {
+            case VENCIDOS:
+                fechaInicio = LocalDate.of(1900, 1, 1);
+                fechaFin = hoy.minusDays(1);
+                break;
             case HOY:
                 fechaInicio = hoy;
                 fechaFin = hoy;

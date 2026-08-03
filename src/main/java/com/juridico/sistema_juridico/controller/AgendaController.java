@@ -45,7 +45,7 @@ public class AgendaController {
         model.addAttribute("paramKeyword", keyword);
 
         // 4. UI y Filtros
-        model.addAttribute("pageTitle", "Agenda / Historial");
+        model.addAttribute("pageTitle", "Concluidos");
         model.addAttribute("activePage", "agenda");
         model.addAttribute("activeTab", tab);
         

@@ -5,7 +5,7 @@
         <table class="w-full text-sm text-left text-gob-gris" id="tabla-terminos-presentados">
             <thead class="text-xs text-gob-gris uppercase bg-gray-100 border-b border-gray-200 font-heading">
                 <tr>
-                    <th scope="col" class="px-6 py-3 font-bold">Vencimiento</th>
+                    <th scope="col" class="px-6 py-3 font-bold">Conclusion</th>
                     <th scope="col" class="px-6 py-3 font-bold">Expediente</th>
                     <th scope="col" class="px-6 py-3 font-bold">Prioridad</th>
                     <th scope="col" class="px-6 py-3 font-bold">Actuación</th>
@@ -24,7 +24,7 @@
                         <div class="flex items-center gap-2">
                             <i class="fas fa-circle text-xs text-gray-400"></i>
                             <span class="font-bold text-gray-800"
-                                th:text="${#temporals.format(t.fechaVencimiento, 'yyyy-MM-dd')}">2025-01-14</span>
+                                th:text="${t.updatedAt != null ? #temporals.format(t.updatedAt, 'yyyy-MM-dd') : #temporals.format(t.fechaVencimiento, 'yyyy-MM-dd')}">2025-01-14</span>
                         </div>
                     </td>
                     <td class="px-6 py-4">
@@ -52,7 +52,7 @@
                     </td>
                     <td class="px-6 py-4 text-center">
                         <div class="flex justify-center gap-2">
-                            <a th:if="${t.acuse != null}" 
+                            <a th:if="${t.acuse != null || t.acuseNombre != null}" 
                                 th:href="${#strings.startsWith(t.acuse, 'http')} ? ${t.acuse} : @{/terminos/descargar/{id}(id=${t.id})}"
                                 th:target="${#strings.startsWith(t.acuse, 'http')} ? '_blank' : '_self'"
                                 class="text-red-600 hover:text-red-800 transition-colors" title="Descargar Acuse">
@@ -86,8 +86,8 @@
                     <span class="text-xs font-bold text-gray-400" th:text="'#' + ${t.id}">#1</span>
                     <div class="flex flex-col">
                         <span class="text-xs font-bold text-gray-900"
-                            th:text="${#temporals.format(t.fechaVencimiento, 'yyyy-MM-dd')}">2025-01-14</span>
-                        <span class="text-[10px] text-gray-400">Vencimiento</span>
+                            th:text="${t.updatedAt != null ? #temporals.format(t.updatedAt, 'yyyy-MM-dd') : #temporals.format(t.fechaVencimiento, 'yyyy-MM-dd')}">2025-01-14</span>
+                        <span class="text-[10px] text-gray-400">Conclusion</span>
                     </div>
                 </div>
 
@@ -123,7 +123,7 @@
 
                 <!-- Acciones -->
                 <div class="flex items-center gap-2">
-                    <a th:if="${t.acuse != null}" 
+                    <a th:if="${t.acuse != null || t.acuseNombre != null}" 
                         th:href="${#strings.startsWith(t.acuse, 'http')} ? ${t.acuse} : @{/terminos/descargar/{id}(id=${t.id})}"
                         th:target="${#strings.startsWith(t.acuse, 'http')} ? '_blank' : '_self'"
                         class="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors" title="Descargar Acuse">
@@ -149,13 +149,13 @@
         </span>
         <div class="flex gap-2">
             <a th:if="${terminos.hasPrevious()}"
-                th:href="@{/agenda(page=${terminos.number - 1}, tab='terminos', filtro=${filtroActual}, mes=${mesActual}, anio=${anioActual})}"
+                th:href="@{/agenda(page=${terminos.number - 1}, tab='terminos', keyword=${paramKeyword}, fechaInicio=${paramFechaInicio}, fechaFin=${paramFechaFin}, gerenciaId=${paramGerenciaId}, materiaId=${paramMateriaId})}"
                 class="px-3 py-1 border border-gray-300 rounded hover:bg-white text-sm bg-white text-gray-600 transition-colors">
                 <i class="fas fa-chevron-left mr-1"></i> Anterior
             </a>
 
             <a th:if="${terminos.hasNext()}"
-                th:href="@{/agenda(page=${terminos.number + 1}, tab='terminos', filtro=${filtroActual}, mes=${mesActual}, anio=${anioActual})}"
+                th:href="@{/agenda(page=${terminos.number + 1}, tab='terminos', keyword=${paramKeyword}, fechaInicio=${paramFechaInicio}, fechaFin=${paramFechaFin}, gerenciaId=${paramGerenciaId}, materiaId=${paramMateriaId})}"
                 class="px-3 py-1 border border-gray-300 rounded hover:bg-white text-sm bg-white text-gray-600 transition-colors">
                 Siguiente <i class="fas fa-chevron-right ml-1"></i>
             </a>

@@ -3,6 +3,9 @@
 
 <head>
     <link rel="manifest" th:href="@{/manifest.json}" />
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any" />
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
+    <link rel="apple-touch-icon" th:href="@{/img/apple-touch-icon.png}" />
     <meta name="theme-color" content="#691228" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -30,20 +33,8 @@
         <!-- Main Content with padding to avoid overlapping -->
         <main class="p-4 md:p-6 flex-1 animate-fade-in pt-[116px] sm:pt-[116px] md:pt-[116px] lg:pt-[116px]">
 
-            <div class="grid grid-cols-12 gap-8">
-                <!-- Columna Izquierda: Filtros -->
-                <aside class="col-span-12 xl:col-span-3 space-y-6 xl:sticky xl:top-24 xl:self-start z-20">
-                    <div
-                        class="bg-gob-guinda text-white p-6 rounded-2xl shadow-lg shadow-gob-guinda/10 relative overflow-hidden flex flex-col gap-6">
-                        <div class="relative z-10">
-                            <div th:replace="~{fragments/agenda/barra-filtros :: filtros}"></div>
-                        </div>
-                        <i class="fas fa-calendar-alt absolute -right-4 -bottom-4 text-white/10 text-7xl rotate-12"></i>
-                    </div>
-                </aside>
-
-                <!-- Columna Derecha: Tabla -->
-                <div class="col-span-12 xl:col-span-9 space-y-6">
+            <div class="space-y-5">
+                <div th:replace="~{fragments/agenda/barra-filtros :: filtros}"></div>
 
                     <!-- Selector de Vista Horizontal (Pill Switcher) -->
                     <div
@@ -73,8 +64,6 @@
                             <div th:replace="~{fragments/agenda/table-terminos :: tabla}"></div>
                         </div>
                     </div>
-
-                </div>
             </div>
         </main>
     </div>

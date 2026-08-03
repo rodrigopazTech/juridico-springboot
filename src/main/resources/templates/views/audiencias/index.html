@@ -3,6 +3,9 @@
 
 <head>
     <link rel="manifest" th:href="@{/manifest.json}" />
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any" />
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
+    <link rel="apple-touch-icon" th:href="@{/img/apple-touch-icon.png}" />
     <meta name="theme-color" content="#691228" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -177,13 +180,14 @@
 
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <script th:src="@{/js/custom-selects.js}"></script>
-    <script th:src="@{/js/audiencias.js(v=4)}"></script>
+    <script th:src="@{/js/audiencias.js(v=7)}"></script>
     <script th:src="@{/js/realtime-search.js}"></script>
 
     <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
     <!-- Estado del Mini-Calendario para JS -->
     <input type="hidden" id="hdnMesActual" th:value="${mesActual}">
     <input type="hidden" id="hdnAnioActual" th:value="${anioActual}">
+    <input type="hidden" id="hdnOutlookCalendarLinked" th:value="${outlookCalendarLinked}">
 </body>
 
 </html>

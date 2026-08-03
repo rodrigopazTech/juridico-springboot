@@ -24,6 +24,7 @@
                 <select name="periodo"
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
                     <option value="" class="text-gray-800">Todos los periodos</option>
+                    <option value="VENCIDOS" th:selected="${paramPeriodo == 'VENCIDOS'}" class="text-gray-800">Vencidos</option>
                     <option value="HOY" th:selected="${paramPeriodo == 'HOY'}" class="text-gray-800">Hoy</option>
                     <option value="MANANA" th:selected="${paramPeriodo == 'MANANA'}" class="text-gray-800">Mañana
                     </option>
@@ -40,7 +41,7 @@
                     class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:bg-white/20 transition-all font-medium appearance-none cursor-pointer">
                     <option value="" class="text-gray-800">Todos los estatus</option>
                     <option th:each="st : ${listaEstatus}" th:value="${st}" th:text="${st}"
-                        th:selected="${paramEstatus == st}" class="text-gray-800"></option>
+                        th:selected="${paramEstatusName == st.name()}" class="text-gray-800"></option>
                 </select>
             </div>
 

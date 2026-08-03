@@ -3,6 +3,9 @@
 
 <head>
     <link rel="manifest" th:href="@{/manifest.json}" />
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any" />
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
+    <link rel="apple-touch-icon" th:href="@{/img/apple-touch-icon.png}" />
     <meta name="theme-color" content="#691228" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -61,6 +64,7 @@
         </main>
     </div>
     <script th:src="@{/js/tareas.js}"></script>
+    <input type="hidden" id="hdnOutlookCalendarLinkedTareas" th:value="${outlookCalendarLinked}">
     <div th:replace="~{fragments/tareas/modal-recordatorio :: modal}"></div>
 
     <script>

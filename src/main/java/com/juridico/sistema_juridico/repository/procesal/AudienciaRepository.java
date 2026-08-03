@@ -25,6 +25,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "LEFT JOIN a.tipoAudiencia ta " +
                         "LEFT JOIN e.abogadoResponsable abr " +
                         "LEFT JOIN a.abogadoComparece abc " +
+                        "LEFT JOIN a.usuarioDelegado ud " +
                         "LEFT JOIN e.gerencia eg " +
                         "LEFT JOIN c.gerencia cg " +
                         "LEFT JOIN e.materia em " +
@@ -41,6 +42,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "LOWER(ta.nombre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(abr.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(abc.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(ud.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(a.estatusAudiencia) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "CONCAT(a.fechaAudiencia, '') LIKE CONCAT('%', :keyword, '%') OR " +
                         "CONCAT(a.horaAudiencia, '') LIKE CONCAT('%', :keyword, '%') OR " +
@@ -78,6 +80,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "LEFT JOIN a.tipoAudiencia ta " +
                         "LEFT JOIN e.abogadoResponsable abr " +
                         "LEFT JOIN a.abogadoComparece abc " +
+                        "LEFT JOIN a.usuarioDelegado ud " +
                         "LEFT JOIN e.gerencia eg " +
                         "LEFT JOIN c.gerencia cg " +
                         "LEFT JOIN e.materia em " +
@@ -90,12 +93,13 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "LOWER(c.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(ta.nombre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "CONCAT(a.id, '') LIKE CONCAT('%', :keyword, '%')) " +
-                        "AND a.fechaAudiencia >= :fechaInicio AND a.fechaAudiencia <= :fechaFin " +
+                        "AND a.fechaDesahogo >= :fechaInicio AND a.fechaDesahogo <= :fechaFin " +
                         "AND (:gerenciaId IS NULL OR eg.id = :gerenciaId OR cg.id = :gerenciaId) " +
                         "AND (:materiaId IS NULL OR em.id = :materiaId OR cm.id = :materiaId) " +
                         "AND (:filtroRoleGerenciaId IS NULL OR eg.id = :filtroRoleGerenciaId OR cg.id = :filtroRoleGerenciaId) " +
                         "AND ((:filtroRoleMateriaIds) IS NULL OR em.id IN (:filtroRoleMateriaIds) OR cm.id IN (:filtroRoleMateriaIds)) " +
-                        "AND (:filtroRoleUsuarioId IS NULL OR abr.id = :filtroRoleUsuarioId OR abc.id = :filtroRoleUsuarioId OR a.usuarioDelegado.id = :filtroRoleUsuarioId)")
+                        "AND (:filtroRoleUsuarioId IS NULL OR abr.id = :filtroRoleUsuarioId OR abc.id = :filtroRoleUsuarioId OR a.usuarioDelegado.id = :filtroRoleUsuarioId) " +
+                        "ORDER BY a.fechaDesahogo DESC, a.id DESC")
         Page<Audiencia> buscarParaHistorial(
                         @Param("keyword") String keyword,
                         @Param("estatus") EstatusAudiencia estatus,
@@ -114,6 +118,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "LEFT JOIN a.tipoAudiencia ta " +
                         "LEFT JOIN e.abogadoResponsable abr " +
                         "LEFT JOIN a.abogadoComparece abc " +
+                        "LEFT JOIN a.usuarioDelegado ud " +
                         "LEFT JOIN e.gerencia eg " +
                         "LEFT JOIN c.gerencia cg " +
                         "LEFT JOIN e.materia em " +
@@ -130,6 +135,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "LOWER(ta.nombre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(abr.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(abc.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(ud.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(a.estatusAudiencia) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "CONCAT(a.fechaAudiencia, '') LIKE CONCAT('%', :keyword, '%') OR " +
                         "CONCAT(a.horaAudiencia, '') LIKE CONCAT('%', :keyword, '%') OR " +
@@ -267,6 +273,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "LEFT JOIN a.tipoAudiencia ta " +
                         "LEFT JOIN e.abogadoResponsable abr " +
                         "LEFT JOIN a.abogadoComparece abc " +
+                        "LEFT JOIN a.usuarioDelegado ud " +
                         "LEFT JOIN e.gerencia eg " +
                         "LEFT JOIN c.gerencia cg " +
                         "LEFT JOIN e.materia em " +
@@ -283,6 +290,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "LOWER(ta.nombre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(abr.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(abc.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(ud.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "LOWER(a.estatusAudiencia) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                         "CONCAT(a.fechaAudiencia, '') LIKE CONCAT('%', :keyword, '%') OR " +
                         "CONCAT(a.horaAudiencia, '') LIKE CONCAT('%', :keyword, '%') OR " +
@@ -312,12 +320,306 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
         @Query("SELECT a FROM Audiencia a WHERE a.abogadoComparece.id = :usuarioId OR a.expediente.abogadoResponsable.id = :usuarioId OR a.usuarioDelegado.id = :usuarioId")
         List<Audiencia> findByUsuarioId(@Param("usuarioId") Integer usuarioId);
 
+        @Query("""
+                        SELECT COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        WHERE (e.abogadoResponsable.id = :usuarioId OR a.abogadoComparece.id = :usuarioId OR a.usuarioDelegado.id = :usuarioId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia = :hoy
+                        """)
+        long countMisAudienciasHoy(@Param("usuarioId") Integer usuarioId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("hoy") LocalDate hoy);
+
+        @Query("""
+                        SELECT COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        WHERE (e.abogadoResponsable.id = :usuarioId OR a.abogadoComparece.id = :usuarioId OR a.usuarioDelegado.id = :usuarioId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia BETWEEN :hoy AND :hasta
+                        """)
+        long countMisAudienciasProximas(@Param("usuarioId") Integer usuarioId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("hoy") LocalDate hoy,
+                        @Param("hasta") LocalDate hasta);
+
+        @Query("""
+                        SELECT COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        WHERE (e.abogadoResponsable.id = :usuarioId OR a.abogadoComparece.id = :usuarioId OR a.usuarioDelegado.id = :usuarioId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia < :hoy
+                        """)
+        long countMisAudienciasAtrasadas(@Param("usuarioId") Integer usuarioId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("hoy") LocalDate hoy);
+
+        @Query("""
+                        SELECT a
+                        FROM Audiencia a
+                        LEFT JOIN FETCH a.expediente e
+                        LEFT JOIN FETCH a.contexto c
+                        LEFT JOIN FETCH a.tipoAudiencia ta
+                        LEFT JOIN FETCH a.abogadoComparece ac
+                        LEFT JOIN FETCH a.usuarioDelegado ud
+                        WHERE (e.abogadoResponsable.id = :usuarioId OR a.abogadoComparece.id = :usuarioId OR a.usuarioDelegado.id = :usuarioId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia >= :hoy
+                        ORDER BY a.fechaAudiencia ASC, a.horaAudiencia ASC
+                        """)
+        List<Audiencia> findMisProximasAudiencias(@Param("usuarioId") Integer usuarioId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("hoy") LocalDate hoy,
+                        Pageable pageable);
+
         @Query("SELECT DISTINCT a.expediente FROM Audiencia a WHERE a.abogadoComparece.id = :usuarioId AND a.estatusAudiencia != com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.CONCLUIDA")
         List<com.juridico.sistema_juridico.Entity.expediente.Expediente> findExpedientesByAbogadoInvitadoActivo(@Param("usuarioId") Integer usuarioId);
 
         // --- MÉTODOS PARA JEFE DE DEPTO (POR MATERIAS) ---
         @Query("SELECT COUNT(a) FROM Audiencia a LEFT JOIN a.expediente e LEFT JOIN a.contexto c WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId) AND (e.materia.id IN :materiaIds OR c.materia.id IN :materiaIds) AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
         long countByExpedienteGerenciaIdAndMateriaIdInAndEstatusPendiente(@Param("gerenciaId") Long gerenciaId, @Param("materiaIds") List<Integer> materiaIds);
+
+        @Query("""
+                        SELECT COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (e.materia.id IN :materiaIds OR c.materia.id IN :materiaIds)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia = :hoy
+                        """)
+        long countDepartamentoAudienciasHoy(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaIds") List<Integer> materiaIds,
+                        @Param("hoy") LocalDate hoy);
+
+        @Query("""
+                        SELECT COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (e.materia.id IN :materiaIds OR c.materia.id IN :materiaIds)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia BETWEEN :hoy AND :hasta
+                        """)
+        long countDepartamentoAudienciasProximas(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaIds") List<Integer> materiaIds,
+                        @Param("hoy") LocalDate hoy,
+                        @Param("hasta") LocalDate hasta);
+
+        @Query("""
+                        SELECT COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (e.materia.id IN :materiaIds OR c.materia.id IN :materiaIds)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia < :hoy
+                        """)
+        long countDepartamentoAudienciasAtrasadas(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaIds") List<Integer> materiaIds,
+                        @Param("hoy") LocalDate hoy);
+
+        @Query("""
+                        SELECT a
+                        FROM Audiencia a
+                        LEFT JOIN FETCH a.expediente e
+                        LEFT JOIN FETCH e.abogadoResponsable ar
+                        LEFT JOIN FETCH a.contexto c
+                        LEFT JOIN FETCH a.tipoAudiencia ta
+                        WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (e.materia.id IN :materiaIds OR c.materia.id IN :materiaIds)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia >= :hoy
+                        ORDER BY a.fechaAudiencia ASC, a.horaAudiencia ASC
+                        """)
+        List<Audiencia> findDepartamentoProximasAudiencias(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaIds") List<Integer> materiaIds,
+                        @Param("hoy") LocalDate hoy,
+                        Pageable pageable);
+
+        @Query("""
+                        SELECT COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia = :hoy
+                        """)
+        long countGerenciaAudienciasHoy(@Param("gerenciaId") Long gerenciaId,
+                        @Param("hoy") LocalDate hoy);
+
+        @Query("""
+                        SELECT COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia BETWEEN :hoy AND :hasta
+                        """)
+        long countGerenciaAudienciasProximas(@Param("gerenciaId") Long gerenciaId,
+                        @Param("hoy") LocalDate hoy,
+                        @Param("hasta") LocalDate hasta);
+
+        @Query("""
+                        SELECT COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia < :hoy
+                        """)
+        long countGerenciaAudienciasAtrasadas(@Param("gerenciaId") Long gerenciaId,
+                        @Param("hoy") LocalDate hoy);
+
+        @Query("""
+                        SELECT a
+                        FROM Audiencia a
+                        LEFT JOIN FETCH a.expediente e
+                        LEFT JOIN FETCH e.abogadoResponsable ar
+                        LEFT JOIN FETCH a.contexto c
+                        LEFT JOIN FETCH a.tipoAudiencia ta
+                        WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia >= :hoy
+                        ORDER BY a.fechaAudiencia ASC, a.horaAudiencia ASC
+                        """)
+        List<Audiencia> findGerenciaProximasAudiencias(@Param("gerenciaId") Long gerenciaId,
+                        @Param("hoy") LocalDate hoy,
+                        Pageable pageable);
+
+        @Query("""
+                        SELECT COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        LEFT JOIN a.abogadoComparece ac
+                        LEFT JOIN a.usuarioDelegado ud
+                        WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND (:abogadoId IS NULL OR e.abogadoResponsable.id = :abogadoId OR ac.id = :abogadoId OR ud.id = :abogadoId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia = :hoy
+                        """)
+        long countGerenciaAudienciasHoyFiltrado(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("abogadoId") Integer abogadoId,
+                        @Param("hoy") LocalDate hoy);
+
+        @Query("""
+                        SELECT COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        LEFT JOIN a.abogadoComparece ac
+                        LEFT JOIN a.usuarioDelegado ud
+                        WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND (:abogadoId IS NULL OR e.abogadoResponsable.id = :abogadoId OR ac.id = :abogadoId OR ud.id = :abogadoId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia BETWEEN :hoy AND :hasta
+                        """)
+        long countGerenciaAudienciasProximasFiltrado(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("abogadoId") Integer abogadoId,
+                        @Param("hoy") LocalDate hoy,
+                        @Param("hasta") LocalDate hasta);
+
+        @Query("""
+                        SELECT COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        LEFT JOIN a.abogadoComparece ac
+                        LEFT JOIN a.usuarioDelegado ud
+                        WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND (:abogadoId IS NULL OR e.abogadoResponsable.id = :abogadoId OR ac.id = :abogadoId OR ud.id = :abogadoId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia < :hoy
+                        """)
+        long countGerenciaAudienciasAtrasadasFiltrado(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("abogadoId") Integer abogadoId,
+                        @Param("hoy") LocalDate hoy);
+
+        @Query("""
+                        SELECT a
+                        FROM Audiencia a
+                        LEFT JOIN FETCH a.expediente e
+                        LEFT JOIN FETCH e.abogadoResponsable ar
+                        LEFT JOIN FETCH a.contexto c
+                        LEFT JOIN FETCH a.tipoAudiencia ta
+                        LEFT JOIN FETCH a.abogadoComparece ac
+                        LEFT JOIN FETCH a.usuarioDelegado ud
+                        WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND (:abogadoId IS NULL OR ar.id = :abogadoId OR ac.id = :abogadoId OR ud.id = :abogadoId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia BETWEEN :fechaInicio AND :fechaFin
+                        ORDER BY a.fechaAudiencia ASC, a.horaAudiencia ASC
+                        """)
+        List<Audiencia> findGerenciaAudienciasPeriodoFiltrado(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("abogadoId") Integer abogadoId,
+                        @Param("fechaInicio") LocalDate fechaInicio,
+                        @Param("fechaFin") LocalDate fechaFin,
+                        Pageable pageable);
+
+        @Query("""
+                        SELECT COALESCE(e.abogadoResponsable.nombreCompleto, ac.nombreCompleto, ud.nombreCompleto, 'Sin responsable'), COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        LEFT JOIN a.abogadoComparece ac
+                        LEFT JOIN a.usuarioDelegado ud
+                        WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND (:abogadoId IS NULL OR e.abogadoResponsable.id = :abogadoId OR ac.id = :abogadoId OR ud.id = :abogadoId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia BETWEEN :fechaInicio AND :fechaFin
+                        GROUP BY COALESCE(e.abogadoResponsable.nombreCompleto, ac.nombreCompleto, ud.nombreCompleto, 'Sin responsable')
+                        """)
+        List<Object[]> contarGerenciaAudienciasPorUsuarioFiltrado(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("abogadoId") Integer abogadoId,
+                        @Param("fechaInicio") LocalDate fechaInicio,
+                        @Param("fechaFin") LocalDate fechaFin);
+
+        @Query("""
+                        SELECT COALESCE(e.materia.nombre, c.materia.nombre, 'Sin materia'), COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        LEFT JOIN a.abogadoComparece ac
+                        LEFT JOIN a.usuarioDelegado ud
+                        WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND (:abogadoId IS NULL OR e.abogadoResponsable.id = :abogadoId OR ac.id = :abogadoId OR ud.id = :abogadoId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia BETWEEN :fechaInicio AND :fechaFin
+                        GROUP BY COALESCE(e.materia.nombre, c.materia.nombre, 'Sin materia')
+                        """)
+        List<Object[]> contarGerenciaAudienciasPorMateriaFiltrado(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("abogadoId") Integer abogadoId,
+                        @Param("fechaInicio") LocalDate fechaInicio,
+                        @Param("fechaFin") LocalDate fechaFin);
 
         @Query("""
                         SELECT u.nombreCompleto, COUNT(a)
@@ -328,6 +630,144 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         GROUP BY u.nombreCompleto
                         """)
         List<Object[]> contarAudienciasPorUsuarioYGerenciaYMateriaIn(@Param("gerenciaId") Long gerenciaId, @Param("materiaIds") List<Integer> materiaIds);
+
+        @Query("""
+                        SELECT COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        LEFT JOIN a.abogadoComparece ac
+                        LEFT JOIN a.usuarioDelegado ud
+                        WHERE (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND (:abogadoId IS NULL OR e.abogadoResponsable.id = :abogadoId OR ac.id = :abogadoId OR ud.id = :abogadoId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia = :hoy
+                        """)
+        long countDirectivoAudienciasHoyFiltrado(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("abogadoId") Integer abogadoId,
+                        @Param("hoy") LocalDate hoy);
+
+        @Query("""
+                        SELECT COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        LEFT JOIN a.abogadoComparece ac
+                        LEFT JOIN a.usuarioDelegado ud
+                        WHERE (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND (:abogadoId IS NULL OR e.abogadoResponsable.id = :abogadoId OR ac.id = :abogadoId OR ud.id = :abogadoId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia BETWEEN :hoy AND :hasta
+                        """)
+        long countDirectivoAudienciasProximasFiltrado(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("abogadoId") Integer abogadoId,
+                        @Param("hoy") LocalDate hoy,
+                        @Param("hasta") LocalDate hasta);
+
+        @Query("""
+                        SELECT COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        LEFT JOIN a.abogadoComparece ac
+                        LEFT JOIN a.usuarioDelegado ud
+                        WHERE (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND (:abogadoId IS NULL OR e.abogadoResponsable.id = :abogadoId OR ac.id = :abogadoId OR ud.id = :abogadoId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia < :hoy
+                        """)
+        long countDirectivoAudienciasAtrasadasFiltrado(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("abogadoId") Integer abogadoId,
+                        @Param("hoy") LocalDate hoy);
+
+        @Query("""
+                        SELECT a
+                        FROM Audiencia a
+                        LEFT JOIN FETCH a.expediente e
+                        LEFT JOIN FETCH e.abogadoResponsable ar
+                        LEFT JOIN FETCH a.contexto c
+                        LEFT JOIN FETCH a.tipoAudiencia ta
+                        LEFT JOIN FETCH a.abogadoComparece ac
+                        LEFT JOIN FETCH a.usuarioDelegado ud
+                        WHERE (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND (:abogadoId IS NULL OR ar.id = :abogadoId OR ac.id = :abogadoId OR ud.id = :abogadoId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia BETWEEN :fechaInicio AND :fechaFin
+                        ORDER BY a.fechaAudiencia ASC, a.horaAudiencia ASC
+                        """)
+        List<Audiencia> findDirectivoAudienciasPeriodoFiltrado(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("abogadoId") Integer abogadoId,
+                        @Param("fechaInicio") LocalDate fechaInicio,
+                        @Param("fechaFin") LocalDate fechaFin,
+                        Pageable pageable);
+
+        @Query("""
+                        SELECT COALESCE(e.abogadoResponsable.nombreCompleto, ac.nombreCompleto, ud.nombreCompleto, 'Sin responsable'), COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        LEFT JOIN a.abogadoComparece ac
+                        LEFT JOIN a.usuarioDelegado ud
+                        WHERE (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND (:abogadoId IS NULL OR e.abogadoResponsable.id = :abogadoId OR ac.id = :abogadoId OR ud.id = :abogadoId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia BETWEEN :fechaInicio AND :fechaFin
+                        GROUP BY COALESCE(e.abogadoResponsable.nombreCompleto, ac.nombreCompleto, ud.nombreCompleto, 'Sin responsable')
+                        """)
+        List<Object[]> contarDirectivoAudienciasPorUsuarioFiltrado(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("abogadoId") Integer abogadoId,
+                        @Param("fechaInicio") LocalDate fechaInicio,
+                        @Param("fechaFin") LocalDate fechaFin);
+
+        @Query("""
+                        SELECT COALESCE(e.materia.nombre, c.materia.nombre, 'Sin materia'), COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        LEFT JOIN a.abogadoComparece ac
+                        LEFT JOIN a.usuarioDelegado ud
+                        WHERE (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND (:abogadoId IS NULL OR e.abogadoResponsable.id = :abogadoId OR ac.id = :abogadoId OR ud.id = :abogadoId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia BETWEEN :fechaInicio AND :fechaFin
+                        GROUP BY COALESCE(e.materia.nombre, c.materia.nombre, 'Sin materia')
+                        """)
+        List<Object[]> contarDirectivoAudienciasPorMateriaFiltrado(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("abogadoId") Integer abogadoId,
+                        @Param("fechaInicio") LocalDate fechaInicio,
+                        @Param("fechaFin") LocalDate fechaFin);
+
+        @Query("""
+                        SELECT COALESCE(e.gerencia.nombre, c.gerencia.nombre, 'Sin gerencia'), COUNT(a)
+                        FROM Audiencia a
+                        LEFT JOIN a.expediente e
+                        LEFT JOIN a.contexto c
+                        LEFT JOIN a.abogadoComparece ac
+                        LEFT JOIN a.usuarioDelegado ud
+                        WHERE (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+                          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+                          AND (:abogadoId IS NULL OR e.abogadoResponsable.id = :abogadoId OR ac.id = :abogadoId OR ud.id = :abogadoId)
+                          AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE
+                          AND a.fechaAudiencia BETWEEN :fechaInicio AND :fechaFin
+                        GROUP BY COALESCE(e.gerencia.nombre, c.gerencia.nombre, 'Sin gerencia')
+                        """)
+        List<Object[]> contarDirectivoAudienciasPorGerenciaFiltrado(@Param("gerenciaId") Long gerenciaId,
+                        @Param("materiaId") Integer materiaId,
+                        @Param("abogadoId") Integer abogadoId,
+                        @Param("fechaInicio") LocalDate fechaInicio,
+                        @Param("fechaFin") LocalDate fechaFin);
 
         List<Audiencia> findByExpedienteAndFechaAudienciaAndHoraAudiencia(com.juridico.sistema_juridico.Entity.expediente.Expediente expediente, java.time.LocalDate fechaAudiencia, java.time.LocalTime horaAudiencia);
 

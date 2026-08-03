@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,6 +24,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "LEFT JOIN t.expediente e " +
            "LEFT JOIN t.contexto c " +
            "LEFT JOIN t.abogadoResponsable a " +
+           "LEFT JOIN e.abogadoResponsable er " +
            "WHERE " +
            "(:keyword IS NULL OR :keyword = '' OR " +
            "LOWER(t.asunto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -30,7 +32,9 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(c.numeroExpedienteSnapshot) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(c.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(c.descripcion) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "LOWER(c.descripcion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(a.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(er.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
            "AND (:estatus IS NULL OR t.estatusTermino = :estatus) " +
            "AND (:prioridadId IS NULL OR t.prioridad.id = :prioridadId) " +
            "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
@@ -65,6 +69,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "LEFT JOIN t.expediente e " +
            "LEFT JOIN t.contexto c " +
            "LEFT JOIN t.abogadoResponsable a " +
+           "LEFT JOIN e.abogadoResponsable er " +
            "WHERE " +
            "(:keyword IS NULL OR :keyword = '' OR " +
            "LOWER(t.asunto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -72,7 +77,9 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "LOWER(e.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(c.numeroExpedienteSnapshot) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(c.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(c.descripcion) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "LOWER(c.descripcion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(a.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(er.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
            "AND (:estatus IS NULL OR t.estatusTermino = :estatus) " +
            "AND (:prioridadId IS NULL OR t.prioridad.id = :prioridadId) " +
            "AND (:abogadoId IS NULL OR a.id = :abogadoId) " +
@@ -164,7 +171,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "LEFT JOIN t.expediente e " +
            "LEFT JOIN t.contexto c " +
            "LEFT JOIN t.abogadoResponsable a " +
-           "WHERE t.estatusTermino IN :estatusList " +
+           "WHERE t.estatusTermino = :estatus " +
            "AND (:keyword IS NULL OR :keyword = '' OR " +
            "LOWER(t.asunto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(e.numero) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -173,7 +180,7 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "LOWER(c.partes) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(c.descripcion) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "CONCAT(t.id, '') LIKE CONCAT('%', :keyword, '%')) " +
-           "AND t.fechaVencimiento >= :fechaInicio AND t.fechaVencimiento <= :fechaFin " +
+           "AND t.updatedAt >= :fechaInicio AND t.updatedAt <= :fechaFin " +
            "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId) " +
            "AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId) " +
            "AND (:secGerenciaId IS NULL OR e.gerencia.id = :secGerenciaId OR c.gerencia.id = :secGerenciaId) " +
@@ -183,12 +190,13 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "OR c.materia.id IN :secMateriaIds " +
            "OR a.id = :secUsuarioId " +
            "OR e.abogadoResponsable.id = :secUsuarioId" +
-           ")")
+           ") " +
+           "ORDER BY t.updatedAt DESC, t.id DESC")
     Page<Termino> buscarParaHistorial(
             @Param("keyword") String keyword,
-            @Param("estatusList") List<EstatusTermino> estatusList,
-            @Param("fechaInicio") LocalDate fechaInicio,
-            @Param("fechaFin") LocalDate fechaFin,
+            @Param("estatus") EstatusTermino estatus,
+            @Param("fechaInicio") LocalDateTime fechaInicio,
+            @Param("fechaFin") LocalDateTime fechaFin,
             @Param("gerenciaId") Integer gerenciaId,
             @Param("materiaId") Integer materiaId,
             @Param("secGerenciaId") Integer secGerenciaId,
@@ -294,9 +302,355 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
     @Query("SELECT t FROM Termino t LEFT JOIN t.expediente e WHERE t.abogadoResponsable.id = :usuarioId OR e.abogadoResponsable.id = :usuarioId")
     List<Termino> findByUsuarioId(@Param("usuarioId") Integer usuarioId);
 
+    @Query("""
+        SELECT COUNT(t)
+        FROM Termino t
+        LEFT JOIN t.expediente e
+        LEFT JOIN t.contexto c
+        WHERE (e.abogadoResponsable.id = :usuarioId OR t.abogadoResponsable.id = :usuarioId)
+          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+          AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+          )
+          AND t.fechaVencimiento < :hoy
+    """)
+    long countMisTerminosVencidos(@Param("usuarioId") Integer usuarioId,
+                                  @Param("materiaId") Integer materiaId,
+                                  @Param("hoy") LocalDate hoy);
+
+    @Query("""
+        SELECT COUNT(t)
+        FROM Termino t
+        LEFT JOIN t.expediente e
+        LEFT JOIN t.contexto c
+        WHERE (e.abogadoResponsable.id = :usuarioId OR t.abogadoResponsable.id = :usuarioId)
+          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+          AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+          )
+          AND t.fechaVencimiento = :hoy
+    """)
+    long countMisTerminosHoy(@Param("usuarioId") Integer usuarioId,
+                             @Param("materiaId") Integer materiaId,
+                             @Param("hoy") LocalDate hoy);
+
+    @Query("""
+        SELECT COUNT(t)
+        FROM Termino t
+        LEFT JOIN t.expediente e
+        LEFT JOIN t.contexto c
+        WHERE (e.abogadoResponsable.id = :usuarioId OR t.abogadoResponsable.id = :usuarioId)
+          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+          AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+          )
+          AND t.fechaVencimiento BETWEEN :hoy AND :hasta
+    """)
+    long countMisTerminosProximos(@Param("usuarioId") Integer usuarioId,
+                                  @Param("materiaId") Integer materiaId,
+                                  @Param("hoy") LocalDate hoy,
+                                  @Param("hasta") LocalDate hasta);
+
+    @Query("""
+        SELECT t
+        FROM Termino t
+        LEFT JOIN FETCH t.expediente e
+        LEFT JOIN FETCH t.contexto c
+        LEFT JOIN FETCH t.prioridad p
+        LEFT JOIN FETCH t.abogadoResponsable ar
+        WHERE (e.abogadoResponsable.id = :usuarioId OR t.abogadoResponsable.id = :usuarioId)
+          AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+          AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+          )
+          AND t.fechaVencimiento <= :hasta
+        ORDER BY t.fechaVencimiento ASC
+    """)
+    List<Termino> findMisTerminosCriticos(@Param("usuarioId") Integer usuarioId,
+                                          @Param("materiaId") Integer materiaId,
+                                          @Param("hasta") LocalDate hasta,
+                                          Pageable pageable);
+
     // --- MÉTODOS PARA JEFE DE DEPTO (POR MATERIAS) ---
     @Query("SELECT COUNT(t) FROM Termino t LEFT JOIN t.expediente e LEFT JOIN t.contexto c WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId) AND (e.materia.id IN :materiaIds OR c.materia.id IN :materiaIds) AND t.estatusTermino NOT IN (com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO, com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO)")
     long countByExpedienteGerenciaIdAndMateriaIdInAndActivo(@Param("gerenciaId") Long gerenciaId, @Param("materiaIds") List<Integer> materiaIds);
+
+    @Query("""
+          SELECT COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (e.materia.id IN :materiaIds OR c.materia.id IN :materiaIds)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento < :hoy
+    """)
+    long countDepartamentoTerminosVencidos(@Param("gerenciaId") Long gerenciaId,
+                                           @Param("materiaIds") List<Integer> materiaIds,
+                                           @Param("hoy") LocalDate hoy);
+
+    @Query("""
+          SELECT COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (e.materia.id IN :materiaIds OR c.materia.id IN :materiaIds)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento = :hoy
+    """)
+    long countDepartamentoTerminosHoy(@Param("gerenciaId") Long gerenciaId,
+                                      @Param("materiaIds") List<Integer> materiaIds,
+                                      @Param("hoy") LocalDate hoy);
+
+    @Query("""
+          SELECT COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (e.materia.id IN :materiaIds OR c.materia.id IN :materiaIds)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento BETWEEN :hoy AND :hasta
+    """)
+    long countDepartamentoTerminosProximos(@Param("gerenciaId") Long gerenciaId,
+                                           @Param("materiaIds") List<Integer> materiaIds,
+                                           @Param("hoy") LocalDate hoy,
+                                           @Param("hasta") LocalDate hasta);
+
+    @Query("""
+          SELECT t
+          FROM Termino t
+          LEFT JOIN FETCH t.expediente e
+          LEFT JOIN FETCH t.contexto c
+          LEFT JOIN FETCH t.abogadoResponsable ar
+          LEFT JOIN FETCH t.prioridad p
+          WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (e.materia.id IN :materiaIds OR c.materia.id IN :materiaIds)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento <= :hasta
+          ORDER BY t.fechaVencimiento ASC
+    """)
+    List<Termino> findDepartamentoTerminosCriticos(@Param("gerenciaId") Long gerenciaId,
+                                                   @Param("materiaIds") List<Integer> materiaIds,
+                                                   @Param("hasta") LocalDate hasta,
+                                                   Pageable pageable);
+
+    @Query("""
+          SELECT COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento < :hoy
+    """)
+    long countGerenciaTerminosVencidos(@Param("gerenciaId") Long gerenciaId,
+                                       @Param("hoy") LocalDate hoy);
+
+    @Query("""
+          SELECT COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento = :hoy
+    """)
+    long countGerenciaTerminosHoy(@Param("gerenciaId") Long gerenciaId,
+                                  @Param("hoy") LocalDate hoy);
+
+    @Query("""
+          SELECT COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento BETWEEN :hoy AND :hasta
+    """)
+    long countGerenciaTerminosProximos(@Param("gerenciaId") Long gerenciaId,
+                                       @Param("hoy") LocalDate hoy,
+                                       @Param("hasta") LocalDate hasta);
+
+    @Query("""
+          SELECT t
+          FROM Termino t
+          LEFT JOIN FETCH t.expediente e
+          LEFT JOIN FETCH t.contexto c
+          LEFT JOIN FETCH t.abogadoResponsable ar
+          LEFT JOIN FETCH t.prioridad p
+          WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento <= :hasta
+          ORDER BY t.fechaVencimiento ASC
+    """)
+    List<Termino> findGerenciaTerminosCriticos(@Param("gerenciaId") Long gerenciaId,
+                                               @Param("hasta") LocalDate hasta,
+                                               Pageable pageable);
+
+    @Query("""
+          SELECT COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          LEFT JOIN t.abogadoResponsable ar
+          LEFT JOIN e.abogadoResponsable er
+          WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+            AND (:abogadoId IS NULL OR ar.id = :abogadoId OR er.id = :abogadoId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento < :hoy
+    """)
+    long countGerenciaTerminosVencidosFiltrado(@Param("gerenciaId") Long gerenciaId,
+                                               @Param("materiaId") Integer materiaId,
+                                               @Param("abogadoId") Integer abogadoId,
+                                               @Param("hoy") LocalDate hoy);
+
+    @Query("""
+          SELECT COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          LEFT JOIN t.abogadoResponsable ar
+          LEFT JOIN e.abogadoResponsable er
+          WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+            AND (:abogadoId IS NULL OR ar.id = :abogadoId OR er.id = :abogadoId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento = :hoy
+    """)
+    long countGerenciaTerminosHoyFiltrado(@Param("gerenciaId") Long gerenciaId,
+                                          @Param("materiaId") Integer materiaId,
+                                          @Param("abogadoId") Integer abogadoId,
+                                          @Param("hoy") LocalDate hoy);
+
+    @Query("""
+          SELECT COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          LEFT JOIN t.abogadoResponsable ar
+          LEFT JOIN e.abogadoResponsable er
+          WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+            AND (:abogadoId IS NULL OR ar.id = :abogadoId OR er.id = :abogadoId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento BETWEEN :hoy AND :hasta
+    """)
+    long countGerenciaTerminosProximosFiltrado(@Param("gerenciaId") Long gerenciaId,
+                                               @Param("materiaId") Integer materiaId,
+                                               @Param("abogadoId") Integer abogadoId,
+                                               @Param("hoy") LocalDate hoy,
+                                               @Param("hasta") LocalDate hasta);
+
+    @Query("""
+          SELECT t
+          FROM Termino t
+          LEFT JOIN FETCH t.expediente e
+          LEFT JOIN FETCH t.contexto c
+          LEFT JOIN FETCH t.abogadoResponsable ar
+          LEFT JOIN FETCH e.abogadoResponsable er
+          LEFT JOIN FETCH t.prioridad p
+          WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+            AND (:abogadoId IS NULL OR ar.id = :abogadoId OR er.id = :abogadoId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento BETWEEN :fechaInicio AND :fechaFin
+          ORDER BY t.fechaVencimiento ASC
+    """)
+    List<Termino> findGerenciaTerminosPeriodoFiltrado(@Param("gerenciaId") Long gerenciaId,
+                                                      @Param("materiaId") Integer materiaId,
+                                                      @Param("abogadoId") Integer abogadoId,
+                                                      @Param("fechaInicio") LocalDate fechaInicio,
+                                                      @Param("fechaFin") LocalDate fechaFin,
+                                                      Pageable pageable);
+
+    @Query("""
+          SELECT COALESCE(ar.nombreCompleto, er.nombreCompleto, 'Sin responsable'), COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          LEFT JOIN t.abogadoResponsable ar
+          LEFT JOIN e.abogadoResponsable er
+          WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+            AND (:abogadoId IS NULL OR ar.id = :abogadoId OR er.id = :abogadoId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento BETWEEN :fechaInicio AND :fechaFin
+          GROUP BY COALESCE(ar.nombreCompleto, er.nombreCompleto, 'Sin responsable')
+    """)
+    List<Object[]> contarGerenciaTerminosPorUsuarioFiltrado(@Param("gerenciaId") Long gerenciaId,
+                                                            @Param("materiaId") Integer materiaId,
+                                                            @Param("abogadoId") Integer abogadoId,
+                                                            @Param("fechaInicio") LocalDate fechaInicio,
+                                                            @Param("fechaFin") LocalDate fechaFin);
+
+    @Query("""
+          SELECT COALESCE(e.materia.nombre, c.materia.nombre, 'Sin materia'), COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          LEFT JOIN t.abogadoResponsable ar
+          LEFT JOIN e.abogadoResponsable er
+          WHERE (e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+            AND (:abogadoId IS NULL OR ar.id = :abogadoId OR er.id = :abogadoId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento BETWEEN :fechaInicio AND :fechaFin
+          GROUP BY COALESCE(e.materia.nombre, c.materia.nombre, 'Sin materia')
+    """)
+    List<Object[]> contarGerenciaTerminosPorMateriaFiltrado(@Param("gerenciaId") Long gerenciaId,
+                                                            @Param("materiaId") Integer materiaId,
+                                                            @Param("abogadoId") Integer abogadoId,
+                                                            @Param("fechaInicio") LocalDate fechaInicio,
+                                                            @Param("fechaFin") LocalDate fechaFin);
 
     @Query("""
                 SELECT u.nombreCompleto, COUNT(t)
@@ -309,6 +663,164 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
                 GROUP BY u.nombreCompleto
             """)
     List<Object[]> contarTerminosPorUsuarioYGerenciaYMateriaIn(@Param("gerenciaId") Long gerenciaId, @Param("materiaIds") List<Integer> materiaIds);
+
+    @Query("""
+          SELECT COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          LEFT JOIN t.abogadoResponsable ar
+          LEFT JOIN e.abogadoResponsable er
+          WHERE (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+            AND (:abogadoId IS NULL OR ar.id = :abogadoId OR er.id = :abogadoId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento < :hoy
+    """)
+    long countDirectivoTerminosVencidosFiltrado(@Param("gerenciaId") Long gerenciaId,
+                                                @Param("materiaId") Integer materiaId,
+                                                @Param("abogadoId") Integer abogadoId,
+                                                @Param("hoy") LocalDate hoy);
+
+    @Query("""
+          SELECT COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          LEFT JOIN t.abogadoResponsable ar
+          LEFT JOIN e.abogadoResponsable er
+          WHERE (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+            AND (:abogadoId IS NULL OR ar.id = :abogadoId OR er.id = :abogadoId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento = :hoy
+    """)
+    long countDirectivoTerminosHoyFiltrado(@Param("gerenciaId") Long gerenciaId,
+                                           @Param("materiaId") Integer materiaId,
+                                           @Param("abogadoId") Integer abogadoId,
+                                           @Param("hoy") LocalDate hoy);
+
+    @Query("""
+          SELECT COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          LEFT JOIN t.abogadoResponsable ar
+          LEFT JOIN e.abogadoResponsable er
+          WHERE (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+            AND (:abogadoId IS NULL OR ar.id = :abogadoId OR er.id = :abogadoId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento BETWEEN :hoy AND :hasta
+    """)
+    long countDirectivoTerminosProximosFiltrado(@Param("gerenciaId") Long gerenciaId,
+                                                @Param("materiaId") Integer materiaId,
+                                                @Param("abogadoId") Integer abogadoId,
+                                                @Param("hoy") LocalDate hoy,
+                                                @Param("hasta") LocalDate hasta);
+
+    @Query("""
+          SELECT t
+          FROM Termino t
+          LEFT JOIN FETCH t.expediente e
+          LEFT JOIN FETCH t.contexto c
+          LEFT JOIN FETCH t.abogadoResponsable ar
+          LEFT JOIN FETCH e.abogadoResponsable er
+          LEFT JOIN FETCH t.prioridad p
+          WHERE (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+            AND (:abogadoId IS NULL OR ar.id = :abogadoId OR er.id = :abogadoId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento BETWEEN :fechaInicio AND :fechaFin
+          ORDER BY t.fechaVencimiento ASC
+    """)
+    List<Termino> findDirectivoTerminosPeriodoFiltrado(@Param("gerenciaId") Long gerenciaId,
+                                                       @Param("materiaId") Integer materiaId,
+                                                       @Param("abogadoId") Integer abogadoId,
+                                                       @Param("fechaInicio") LocalDate fechaInicio,
+                                                       @Param("fechaFin") LocalDate fechaFin,
+                                                       Pageable pageable);
+
+    @Query("""
+          SELECT COALESCE(ar.nombreCompleto, er.nombreCompleto, 'Sin responsable'), COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          LEFT JOIN t.abogadoResponsable ar
+          LEFT JOIN e.abogadoResponsable er
+          WHERE (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+            AND (:abogadoId IS NULL OR ar.id = :abogadoId OR er.id = :abogadoId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento BETWEEN :fechaInicio AND :fechaFin
+          GROUP BY COALESCE(ar.nombreCompleto, er.nombreCompleto, 'Sin responsable')
+    """)
+    List<Object[]> contarDirectivoTerminosPorUsuarioFiltrado(@Param("gerenciaId") Long gerenciaId,
+                                                             @Param("materiaId") Integer materiaId,
+                                                             @Param("abogadoId") Integer abogadoId,
+                                                             @Param("fechaInicio") LocalDate fechaInicio,
+                                                             @Param("fechaFin") LocalDate fechaFin);
+
+    @Query("""
+          SELECT COALESCE(e.materia.nombre, c.materia.nombre, 'Sin materia'), COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          LEFT JOIN t.abogadoResponsable ar
+          LEFT JOIN e.abogadoResponsable er
+          WHERE (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+            AND (:abogadoId IS NULL OR ar.id = :abogadoId OR er.id = :abogadoId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento BETWEEN :fechaInicio AND :fechaFin
+          GROUP BY COALESCE(e.materia.nombre, c.materia.nombre, 'Sin materia')
+    """)
+    List<Object[]> contarDirectivoTerminosPorMateriaFiltrado(@Param("gerenciaId") Long gerenciaId,
+                                                             @Param("materiaId") Integer materiaId,
+                                                             @Param("abogadoId") Integer abogadoId,
+                                                             @Param("fechaInicio") LocalDate fechaInicio,
+                                                             @Param("fechaFin") LocalDate fechaFin);
+
+    @Query("""
+          SELECT COALESCE(e.gerencia.nombre, c.gerencia.nombre, 'Sin gerencia'), COUNT(t)
+          FROM Termino t
+          LEFT JOIN t.expediente e
+          LEFT JOIN t.contexto c
+          LEFT JOIN t.abogadoResponsable ar
+          LEFT JOIN e.abogadoResponsable er
+          WHERE (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId)
+            AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId)
+            AND (:abogadoId IS NULL OR ar.id = :abogadoId OR er.id = :abogadoId)
+            AND t.estatusTermino NOT IN (
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.CONCLUIDO,
+              com.juridico.sistema_juridico.Entity.enums.EstatusTermino.PRESENTADO
+            )
+            AND t.fechaVencimiento BETWEEN :fechaInicio AND :fechaFin
+          GROUP BY COALESCE(e.gerencia.nombre, c.gerencia.nombre, 'Sin gerencia')
+    """)
+    List<Object[]> contarDirectivoTerminosPorGerenciaFiltrado(@Param("gerenciaId") Long gerenciaId,
+                                                              @Param("materiaId") Integer materiaId,
+                                                              @Param("abogadoId") Integer abogadoId,
+                                                              @Param("fechaInicio") LocalDate fechaInicio,
+                                                              @Param("fechaFin") LocalDate fechaFin);
 
     List<Termino> findByExpedienteAndAsuntoAndFechaVencimiento(com.juridico.sistema_juridico.Entity.expediente.Expediente expediente, String asunto, LocalDate fechaVencimiento);
 

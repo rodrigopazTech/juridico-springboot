@@ -3,6 +3,7 @@ package com.juridico.sistema_juridico.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.juridico.sistema_juridico.Entity.usuario.PushSubscription;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.listener.SessionListener;
 import com.juridico.sistema_juridico.repository.Usuarios.PushSubscriptionRepository;
 import jakarta.annotation.PostConstruct;
 import nl.martijndwars.webpush.Notification;
@@ -82,6 +83,13 @@ public class WebPushService {
         }
 
         for (PushSubscription sub : subscriptions) {
+            if (!SessionListener.isSessionActive(sub.getSessionId())) {
+                log.info("Eliminando suscripcion Web Push sin sesion activa. Usuario: {}, endpoint: {}",
+                        usuario.getEmail(), sub.getEndpoint());
+                subscriptionRepository.delete(sub);
+                continue;
+            }
+
             try {
                 Subscription clientSub = new Subscription(
                         sub.getEndpoint(),

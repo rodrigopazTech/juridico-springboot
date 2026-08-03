@@ -3,176 +3,509 @@
 
 <head>
     <link rel="manifest" th:href="@{/manifest.json}" />
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any" />
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
+    <link rel="apple-touch-icon" th:href="@{/img/apple-touch-icon.png}" />
     <meta name="theme-color" content="#691228" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Personal - Sistema Jurídico</title>
+    <title>Mis asuntos - Sistema Juridico</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
-
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Noto+Sans:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
 
     <style>
-        .bg-gob-guinda {
-            background-color: #8B1E3F;
+        .metric-card {
+            background: #ffffff;
+            border: 1px solid #f3f4f6;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
         }
 
-        .text-gob-guinda {
-            color: #8B1E3F;
+        .metric-number {
+            font-family: 'Montserrat', sans-serif;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0;
+            line-height: 1;
+            font-size: 2.5rem !important;
         }
 
-        .bg-gob-oro {
-            background-color: #D4AF37;
+        .metric-label {
+            font-family: 'Montserrat', sans-serif;
+            letter-spacing: .055em;
+            font-size: .76rem !important;
+            line-height: 1.18;
         }
 
-        .text-gob-oro {
-            color: #D4AF37;
+        .kpi-card {
+            min-height: 9rem;
+            position: relative;
+            overflow: hidden;
+            padding-top: 1.15rem;
+        }
+
+        .kpi-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 1rem;
+            right: 1rem;
+            height: .28rem;
+            border-radius: 0 0 999px 999px;
+            background: #d1d5db;
+        }
+
+        .kpi-danger {
+            background: linear-gradient(180deg, #fff 0%, #fff 58%, #fff7f7 100%);
+        }
+
+        .kpi-primary {
+            background: linear-gradient(180deg, #fff 0%, #fff 60%, #fff8fb 100%);
+        }
+
+        .kpi-gold {
+            background: linear-gradient(180deg, #fff 0%, #fff 60%, #fbf8ef 100%);
+        }
+
+        .kpi-rose {
+            background: linear-gradient(180deg, #fff 0%, #fff 60%, #fff7fa 100%);
+        }
+
+        .kpi-green {
+            background: linear-gradient(180deg, #fff 0%, #fff 60%, #f4faf8 100%);
+        }
+
+        .kpi-neutral {
+            background: linear-gradient(180deg, #fff 0%, #fff 60%, #f8f9fb 100%);
+        }
+
+        .kpi-danger::before { background: #dc2626; }
+        .kpi-primary::before { background: #691228; }
+        .kpi-gold::before { background: #D4C19C; }
+        .kpi-rose::before { background: #8B1E3F; }
+        .kpi-green::before { background: #13322B; }
+        .kpi-neutral::before { background: #545454; }
+
+        .status-dot {
+            width: .62rem;
+            height: .62rem;
+            border-radius: 999px;
+            display: inline-block;
+        }
+
+        .segmented-btn.active {
+            background: #691228;
+            color: #fff;
+            box-shadow: 0 8px 18px rgba(105, 18, 40, .12);
+        }
+
+        .segmented-control {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 10rem;
+            flex: 0 0 10rem;
+        }
+
+        .segmented-control .segmented-btn {
+            min-height: 2rem;
+            white-space: nowrap;
+        }
+
+        .chart-panel {
+            min-height: 22.5rem;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
         }
     </style>
 </head>
 
-<body class="bg-gray-100 text-gray-800 font-sans">
+<body class="bg-gray-100 text-gray-800 font-sans overflow-x-hidden">
 
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <div class="p-4 sm:ml-64 pt-[116px] sm:pt-[116px] md:pt-[116px] lg:pt-[116px]">
+    <div class="sm:ml-64 flex flex-col min-h-screen">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 border-b pb-4">
+        <main class="p-4 md:p-6 flex-1 animate-fade-in pt-[116px] sm:pt-[116px] md:pt-[116px] lg:pt-[116px]">
+            <section class="mb-5">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gob-guinda/10 text-gob-guinda flex items-center justify-center">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <div>
+                            <p class="metric-label text-[11px] font-extrabold uppercase text-gray-400">Vista personal</p>
+                            <p class="text-sm font-bold text-gray-700">Asuntos asignados, próximos vencimientos y actividad pendiente</p>
+                        </div>
+                    </div>
 
-            <div class="mt-4 md:mt-0 flex flex-col md:flex-row items-start md:items-center gap-3">
+                    <div class="bg-gray-50 p-1.5 rounded-2xl border border-gray-100 flex items-center gap-2 w-full lg:w-auto">
+                        <div
+                            class="hidden sm:inline-flex items-center justify-center gap-2 px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest rounded-xl bg-gob-guinda text-white shadow-md shadow-gob-guinda/20">
+                            <i class="fas fa-filter"></i> Materia
+                        </div>
+                        <form method="get" th:action="@{/dashboard}" class="relative flex-1 lg:w-72">
+                            <select name="materiaId" onchange="this.form.submit()"
+                                class="bg-white border border-gray-200 text-gray-900 text-sm rounded-xl focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 block w-full px-3 py-2.5 outline-none transition-all font-medium appearance-none cursor-pointer pr-9">
+                                <option value="">Todas mis materias</option>
+                                <option th:each="m : ${materias}" th:value="${m.id}" th:text="${m.nombre}"
+                                    th:selected="${materiaSeleccionada != null and m.id == materiaSeleccionada}">
+                                </option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none"></i>
+                        </form>
+                    </div>
+                </div>
+            </section>
 
-                <!-- Filtro por Materia -->
-                <form method="get" th:action="@{/dashboard}" class="flex items-center gap-2">
-                    <label class="text-sm font-semibold text-gray-600 whitespace-nowrap">
-                        <i class="fas fa-filter text-gob-guinda mr-1"></i>Materia:
-                    </label>
-                    <select name="materiaId" onchange="this.form.submit()"
-                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gob-guinda outline-none bg-white text-gray-700 min-w-[160px]">
-                        <option value="">— Todas —</option>
-                        <option th:each="m : ${materias}" th:value="${m.id}" th:text="${m.nombre}"
-                            th:selected="${materiaSeleccionada != null and m.id == materiaSeleccionada}">
-                        </option>
-                    </select>
-                </form>
-
-                <span
-                    class="bg-gob-guinda text-white text-sm font-bold px-4 py-2 rounded-full shadow border border-gob-oro flex items-center">
-                    <i class="fas fa-user-tie mr-2 text-gob-oro"></i>
-                    Abogado: <span class="ml-1 italic" th:text="${usuario.nombreCompleto}">Nombre Abogado</span>
-                </span>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-
-            <div
-                class="bg-white p-6 rounded-lg shadow-md border-l-4 border-gob-guinda hover:shadow-lg transition duration-200">
-                <div class="flex items-center justify-between">
+        <section class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <a th:href="@{/terminos(periodo='VENCIDOS')}" class="kpi-card kpi-danger rounded-2xl p-4 metric-card hover:shadow-lg transition-all group">
+                <div class="flex h-full flex-col justify-between gap-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="metric-label text-[11px] font-extrabold uppercase text-gray-500 leading-tight">Términos vencidos</p>
+                            <p class="mt-1 text-xs font-semibold text-gray-400">Requieren atención inmediata</p>
+                        </div>
+                        <span class="w-8 h-8 rounded-xl bg-red-50 text-red-700 flex items-center justify-center group-hover:bg-red-100 transition">
+                            <i class="fas fa-triangle-exclamation text-sm"></i>
+                        </span>
+                    </div>
                     <div>
-                        <p class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-1">Mis Expedientes</p>
-                        <h3 class="text-4xl font-bold text-gray-800" th:text="${kpis.totalExpedientes}">0</h3>
-                    </div>
-                    <div class="bg-red-50 p-3 rounded-full">
-                        <i class="fas fa-folder-open text-2xl text-gob-guinda"></i>
+                        <p class="metric-number text-4xl font-black text-red-700" th:text="${misAsuntos.terminosVencidos}">0</p>
+                        <div th:if="${misAsuntos.terminosVencidos > 0}" class="mt-3 h-1.5 rounded-full bg-red-50 overflow-hidden">
+                            <div class="h-full rounded-full bg-red-600" style="width:100%"></div>
+                        </div>
+                        <p th:if="${misAsuntos.terminosVencidos == 0}" class="mt-3 inline-flex rounded-lg bg-gray-50 px-2 py-1 text-[11px] font-bold text-gray-500">Sin vencidos</p>
                     </div>
                 </div>
-                <div class="mt-4 text-sm text-gray-500">Total asignados a mi cargo</div>
-            </div>
+            </a>
 
-            <div
-                class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500 hover:shadow-lg transition duration-200">
-                <div class="flex items-center justify-between">
+            <a th:href="@{/terminos(periodo='HOY')}" class="kpi-card kpi-primary rounded-2xl p-4 metric-card hover:shadow-lg transition-all group">
+                <div class="flex h-full flex-col justify-between gap-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <p class="metric-label text-[10px] font-extrabold uppercase text-gray-500 leading-tight">Términos hoy</p>
+                        <span class="w-8 h-8 rounded-xl bg-gob-guinda/10 text-gob-guinda flex items-center justify-center group-hover:bg-gob-guinda/15 transition">
+                            <i class="fas fa-clock text-sm"></i>
+                        </span>
+                    </div>
+                    <p class="metric-number text-3xl font-black text-gray-900" th:text="${misAsuntos.terminosHoy}">0</p>
+                </div>
+            </a>
+
+            <a th:href="@{/terminos(periodo='SEMANA')}" class="kpi-card kpi-gold rounded-2xl p-4 metric-card hover:shadow-lg transition-all group">
+                <div class="flex h-full flex-col justify-between gap-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <p class="metric-label text-[10px] font-extrabold uppercase text-gray-500 leading-tight">Términos 7 días</p>
+                        <span class="w-8 h-8 rounded-xl bg-gob-oro/15 text-gob-oro flex items-center justify-center group-hover:bg-gob-oro/25 transition">
+                            <i class="fas fa-hourglass-half text-sm"></i>
+                        </span>
+                    </div>
+                    <p class="metric-number text-3xl font-black text-gray-900" th:text="${misAsuntos.terminosProximos7}">0</p>
+                </div>
+            </a>
+
+            <a th:href="@{/audiencias(fecha=${hoyIso})}" class="kpi-card kpi-rose rounded-2xl p-4 metric-card hover:shadow-lg transition-all group">
+                <div class="flex h-full flex-col justify-between gap-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <p class="metric-label text-[10px] font-extrabold uppercase text-gray-500 leading-tight">Audiencias hoy</p>
+                        <span class="w-8 h-8 rounded-xl bg-gob-guinda/10 text-gob-guinda flex items-center justify-center group-hover:bg-gob-guinda/15 transition">
+                            <i class="fas fa-calendar-day text-sm"></i>
+                        </span>
+                    </div>
+                    <p class="metric-number text-3xl font-black text-gray-900" th:text="${misAsuntos.audienciasHoy}">0</p>
+                </div>
+            </a>
+
+            <a th:href="@{/audiencias(periodo='SEMANA')}" class="kpi-card kpi-green rounded-2xl p-4 metric-card hover:shadow-lg transition-all group">
+                <div class="flex h-full flex-col justify-between gap-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <p class="metric-label text-[10px] font-extrabold uppercase text-gray-500 leading-tight">Audiencias 7 días</p>
+                        <span class="w-8 h-8 rounded-xl bg-gob-verde/10 text-gob-verde flex items-center justify-center group-hover:bg-gob-verde/15 transition">
+                            <i class="fas fa-gavel text-sm"></i>
+                        </span>
+                    </div>
+                    <p class="metric-number text-3xl font-black text-gray-900" th:text="${misAsuntos.audienciasProximas7}">0</p>
+                </div>
+            </a>
+
+            <a th:href="@{/expedientes(etapa='TRAMITE')}" class="hidden kpi-card rounded-2xl p-4 metric-card hover:shadow-lg transition-all group">
+                <div class="flex h-full flex-col justify-between gap-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <p class="metric-label text-[10px] font-extrabold uppercase text-gray-500 leading-tight">Expedientes activos</p>
+                        <span class="w-8 h-8 rounded-xl bg-gray-100 text-gob-guinda flex items-center justify-center group-hover:bg-gob-guinda/10 transition">
+                            <i class="fas fa-folder-open text-sm"></i>
+                        </span>
+                    </div>
+                    <p class="metric-number text-3xl font-black text-gray-900" th:text="${kpis.expedientesActivos}">0</p>
+                </div>
+            </a>
+
+            <a th:href="@{/tareas(estado='pendiente')}" class="hidden kpi-card rounded-2xl p-4 metric-card hover:shadow-lg transition-all group">
+                <div class="flex h-full flex-col justify-between gap-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <p class="metric-label text-[10px] font-extrabold uppercase text-gray-500 leading-tight">Tareas pendientes</p>
+                        <span class="w-8 h-8 rounded-xl bg-gob-verde/10 text-gob-verde flex items-center justify-center group-hover:bg-gob-verde/15 transition">
+                            <i class="fas fa-list-check text-sm"></i>
+                        </span>
+                    </div>
+                    <p class="metric-number text-3xl font-black text-gray-900" th:text="${misAsuntos.tareasPendientes}">0</p>
+                </div>
+            </a>
+
+        </section>
+
+        <section class="hidden mb-6 grid grid-cols-1 gap-4 xl:grid-cols-[1.25fr_.75fr]">
+            <div class="rounded-2xl p-6 metric-card">
+                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <p class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-1">En Trámite</p>
-                        <h3 class="text-4xl font-bold text-gray-800" th:text="${kpis.expedientesActivos}">0</h3>
+                        <p class="text-xs uppercase text-gray-500 font-bold tracking-wider">Prioridad de atención</p>
+                        <div class="mt-2 flex flex-wrap items-end gap-5">
+                            <div>
+                                <p class="text-4xl font-black text-red-700 font-headings" th:text="${misAsuntos.alertasPrioridad.criticas}">0</p>
+                                <p class="text-xs font-bold uppercase text-gray-500">Criticas</p>
+                            </div>
+                            <div>
+                                <p class="text-4xl font-black text-gob-guinda font-headings" th:text="${misAsuntos.alertasPrioridad.hoy}">0</p>
+                                <p class="text-xs font-bold uppercase text-gray-500">Hoy</p>
+                            </div>
+                            <div>
+                                <p class="text-4xl font-black text-gob-oro font-headings" th:text="${misAsuntos.alertasPrioridad.semana}">0</p>
+                                <p class="text-xs font-bold uppercase text-gray-500">Esta semana</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bg-blue-50 p-3 rounded-full">
-                        <i class="fas fa-file-signature text-2xl text-blue-500"></i>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <a th:href="@{/terminos(periodo='VENCIDOS')}" class="rounded-xl border border-red-100 bg-red-50 px-3 py-3 hover:shadow-sm transition">
+                            <span class="block text-xl font-black text-red-700" th:text="${misAsuntos.terminosVencidos}">0</span>
+                            <span class="text-[11px] font-bold uppercase text-red-700">Vencidos</span>
+                        </a>
+                        <a th:href="@{/audiencias(fecha=${hoyIso})}" class="rounded-xl border border-gob-oro/30 bg-gob-oro/10 px-3 py-3 hover:shadow-sm transition">
+                            <span class="block text-xl font-black text-gob-guinda" th:text="${misAsuntos.audienciasHoy}">0</span>
+                            <span class="text-[11px] font-bold uppercase text-gob-guinda">Audiencias hoy</span>
+                        </a>
+                        <a th:href="@{/tareas(estado='pendiente')}" class="rounded-xl border border-gob-verde/15 bg-gob-verde/5 px-3 py-3 hover:shadow-sm transition">
+                            <span class="block text-xl font-black text-gob-verde" th:text="${misAsuntos.tareasPendientes}">0</span>
+                            <span class="text-[11px] font-bold uppercase text-gob-verde">Tareas</span>
+                        </a>
                     </div>
                 </div>
-                <div class="mt-4 text-sm text-gray-500">Expedientes activos actualmente</div>
             </div>
 
-            <div
-                class="bg-white p-6 rounded-lg shadow-md border-l-4 border-gob-oro hover:shadow-lg transition duration-200">
-                <div class="flex items-center justify-between">
+            <div class="rounded-2xl p-6 metric-card">
+                <p class="text-xs uppercase text-gray-500 font-bold tracking-wider">Resumen de carga</p>
+                <div class="mt-4 grid grid-cols-3 gap-3">
                     <div>
-                        <p class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-1">Mis Audiencias</p>
-                        <h3 class="text-4xl font-bold text-gray-800" th:text="${kpis.audienciasProgramadas}">0</h3>
+                        <p class="text-3xl font-black text-gray-800 font-headings" th:text="${kpis.expedientesActivos}">0</p>
+                        <p class="text-xs uppercase text-gray-500">Expedientes activos</p>
                     </div>
-                    <div class="bg-yellow-50 p-3 rounded-full">
-                        <i class="fas fa-gavel text-2xl text-gob-oro"></i>
-                    </div>
-                </div>
-                <div class="mt-4 text-sm text-gray-500">Audiencias pendientes</div>
-            </div>
-
-            <div
-                class="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-600 hover:shadow-lg transition duration-200">
-                <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-xs uppercase text-gray-500 font-bold tracking-wider mb-1">Mis Términos</p>
-                        <h3 class="text-4xl font-bold text-gray-800" th:text="${kpis.terminosActivos}">0</h3>
+                        <p class="text-3xl font-black text-gray-800 font-headings" th:text="${kpis.terminosActivos}">0</p>
+                        <p class="text-xs uppercase text-gray-500">Terminos activos</p>
                     </div>
-                    <div class="bg-green-50 p-3 rounded-full">
-                        <i class="fas fa-clock text-2xl text-green-600"></i>
+                    <div>
+                        <p class="text-3xl font-black text-gray-800 font-headings" th:text="${kpis.audienciasProgramadas}">0</p>
+                        <p class="text-xs uppercase text-gray-500">Audiencias pendientes</p>
                     </div>
-                </div>
-                <div class="mt-4 text-sm text-gray-500">Términos activos asignados</div>
-            </div>
-
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-
-            <div class="bg-white p-6 rounded shadow border-t-2 border-gob-oro">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-bold text-gray-700 uppercase text-sm tracking-wider">
-                        <i class="fas fa-tasks mr-2"></i><span id="chartEstatusTitle">Estatus de Mis Expedientes</span>
-                    </h3>
-                    <div class="flex gap-1">
-                        <button id="btnEtapas" onclick="switchDonutChart('etapas')"
-                            class="text-xs px-3 py-1 rounded-full font-semibold bg-gob-guinda text-white transition">
-                            Etapas
-                        </button>
-                        <button id="btnPrioridad" onclick="switchDonutChart('prioridad')"
-                            class="text-xs px-3 py-1 rounded-full font-semibold bg-gray-200 text-gray-600 transition">
-                            Prioridad
-                        </button>
-                    </div>
-                </div>
-                <div class="relative h-80">
-                    <canvas id="chartEstatusExpedientes"></canvas>
                 </div>
             </div>
+        </section>
 
-            <div class="bg-white p-6 rounded shadow border-t-2 border-gob-oro">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-bold text-gray-700 uppercase text-sm tracking-wider">
-                        <i class="fas fa-chart-bar mr-2"></i><span id="chartBarTitle">Mis Audiencias y Términos</span>
-                    </h3>
-                    <div class="flex gap-1">
-                        <button id="btnBarTotal" onclick="switchBarChart('total')"
-                            class="text-xs px-3 py-1 rounded-full font-semibold bg-gob-guinda text-white transition">
-                            Total
-                        </button>
-                        <button id="btnBarPrioridad" onclick="switchBarChart('prioridad')"
-                            class="text-xs px-3 py-1 rounded-full font-semibold bg-gray-200 text-gray-600 transition">
-                            Por Prioridad
-                        </button>
+        <section class="hidden mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <a th:href="@{/terminos(periodo='HOY')}" class="rounded-2xl p-5 metric-card hover:shadow-md transition">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-bold uppercase text-gray-500">Terminos hoy</p>
+                        <p class="mt-2 text-3xl font-black text-gray-800 font-headings" th:text="${misAsuntos.terminosHoy}">0</p>
                     </div>
+                    <i class="fas fa-clock text-xl text-gob-guinda"></i>
                 </div>
-                <div class="relative h-80">
-                    <canvas id="chartCargaTrabajoUsuarios"></canvas>
+            </a>
+            <a th:href="@{/terminos(periodo='SEMANA')}" class="rounded-2xl p-5 metric-card hover:shadow-md transition">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-bold uppercase text-gray-500">Terminos 7 dias</p>
+                        <p class="mt-2 text-3xl font-black text-gray-800 font-headings" th:text="${misAsuntos.terminosProximos7}">0</p>
+                    </div>
+                    <i class="fas fa-hourglass-half text-xl text-gob-oro"></i>
+                </div>
+            </a>
+            <a th:href="@{/audiencias(periodo='SEMANA')}" class="rounded-2xl p-5 metric-card hover:shadow-md transition">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-bold uppercase text-gray-500">Audiencias 7 dias</p>
+                        <p class="mt-2 text-3xl font-black text-gray-800 font-headings" th:text="${misAsuntos.audienciasProximas7}">0</p>
+                    </div>
+                    <i class="fas fa-gavel text-xl text-gob-verde"></i>
+                </div>
+            </a>
+            <a th:href="@{/notificaciones}" class="rounded-2xl p-5 metric-card hover:shadow-md transition">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-bold uppercase text-gray-500">Alertas sin leer</p>
+                        <p class="mt-2 text-3xl font-black text-gray-800 font-headings" th:text="${misAsuntos.notificacionesNoLeidas}">0</p>
+                    </div>
+                    <i class="fas fa-bell text-xl text-gray-700"></i>
+                </div>
+            </a>
+        </section>
+
+        <section class="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_.9fr]">
+            <div class="rounded-2xl p-6 metric-card">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                    <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                        <i class="fas fa-triangle-exclamation mr-2 text-red-700"></i>Terminos criticos
+                    </h2>
+                    <a th:href="@{/terminos(periodo='SEMANA')}" class="text-xs font-bold text-gob-guinda hover:underline">Ver críticos</a>
+                </div>
+
+                <div class="space-y-3" th:if="${!#lists.isEmpty(misAsuntos.terminosCriticos)}">
+                    <a th:each="t : ${misAsuntos.terminosCriticos}" th:href="@{/terminos(keyword=${t.referencia}, periodo=${t.dias < 0 ? 'VENCIDOS' : (t.dias == 0 ? 'HOY' : 'SEMANA')})}"
+                        class="block rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 transition hover:border-gob-guinda hover:bg-white hover:shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="status-dot"
+                                        th:classappend="${t.tono == 'vencido' ? ' bg-red-700' : (t.tono == 'critico' ? ' bg-gob-guinda' : ' bg-amber-500')}"></span>
+                                    <p class="truncate text-sm font-black text-gray-800" th:text="${t.referencia}">EXP-001</p>
+                                    <span class="rounded-lg border border-gray-100 bg-white px-2 py-0.5 text-[11px] font-bold text-gray-600" th:text="${t.prioridad}">ALTA</span>
+                                </div>
+                                <p class="mt-1 line-clamp-2 text-sm text-gray-600" th:text="${t.asunto}">Asunto</p>
+                            </div>
+                            <div class="shrink-0 text-right">
+                                <p class="text-sm font-black text-gray-800" th:text="${#temporals.format(t.fecha, 'dd/MM')}">29/07</p>
+                                <p class="text-[11px] font-bold uppercase"
+                                    th:classappend="${t.dias < 0 ? ' text-red-700' : ' text-gob-guinda'}"
+                                    th:text="${t.dias < 0 ? 'Vencido' : (t.dias == 0 ? 'Hoy' : t.dias + ' dias')}">Hoy</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <div th:if="${#lists.isEmpty(misAsuntos.terminosCriticos)}"
+                    class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
+                    Sin terminos criticos en los proximos dias.
                 </div>
             </div>
 
-        </div>
+            <div class="rounded-2xl p-6 metric-card">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                    <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                        <i class="fas fa-calendar-day mr-2 text-gob-guinda"></i>Proximas audiencias
+                    </h2>
+                    <a th:href="@{/audiencias(periodo='SEMANA')}" class="text-xs font-bold text-gob-guinda hover:underline">Ver audiencias</a>
+                </div>
 
+                <div class="space-y-3" th:if="${!#lists.isEmpty(misAsuntos.proximasAudiencias)}">
+                    <a th:each="a : ${misAsuntos.proximasAudiencias}" th:href="@{/audiencias(fecha=${a.fecha}, keyword=${a.referencia})}"
+                        class="block rounded-xl border border-gray-100 px-4 py-3 transition hover:border-gob-guinda hover:bg-gray-50 hover:shadow-sm">
+                        <div class="flex items-start gap-3">
+                            <div class="w-14 shrink-0 rounded-xl bg-gob-oro/10 px-2 py-2 text-center border border-gob-oro/20">
+                                <p class="text-xs font-black uppercase text-gob-guinda" th:text="${#temporals.format(a.fecha, 'MMM')}">JUL</p>
+                                <p class="text-xl font-black text-gray-800 font-headings" th:text="${#temporals.format(a.fecha, 'dd')}">29</p>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="truncate text-sm font-black text-gray-800" th:text="${a.referencia}">EXP-001</p>
+                                    <p class="text-xs font-bold text-gray-500" th:text="${#temporals.format(a.hora, 'HH:mm')}">10:00</p>
+                                </div>
+                                <p class="mt-1 text-sm font-semibold text-gray-700" th:text="${a.tipo}">Audiencia</p>
+                                <p class="truncate text-xs text-gray-500" th:text="${a.lugar}">Sede</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <div th:if="${#lists.isEmpty(misAsuntos.proximasAudiencias)}"
+                    class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
+                    Sin audiencias pendientes proximas.
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-[.8fr_1.2fr]">
+            <div class="rounded-2xl p-6 metric-card">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                    <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                        <i class="fas fa-list-check mr-2 text-gob-verde"></i>Tareas personales
+                    </h2>
+                    <a th:href="@{/tareas(estado='pendiente')}" class="text-xs font-bold text-gob-guinda hover:underline">Abrir tareas</a>
+                </div>
+
+                <div class="space-y-2" th:if="${!#lists.isEmpty(misAsuntos.proximasTareas)}">
+                    <a th:each="r : ${misAsuntos.proximasTareas}" th:href="@{/tareas(estado='pendiente')}"
+                        class="flex items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50 px-3 py-3 transition hover:bg-white hover:shadow-sm">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-bold text-gray-800" th:text="${r.titulo}">Tarea</p>
+                            <p class="text-xs text-gray-500">
+                                <span th:text="${#temporals.format(r.fecha, 'dd/MM/yyyy')}">29/07/2026</span>
+                                <span th:if="${r.hora != null}" th:text="${' · ' + #temporals.format(r.hora, 'HH:mm')}"> · 10:00</span>
+                            </p>
+                        </div>
+                        <span class="rounded-lg border border-gray-100 bg-white px-2 py-1 text-[11px] font-black text-gray-600" th:text="${r.prioridad}">MEDIA</span>
+                    </a>
+                </div>
+
+                <div th:if="${#lists.isEmpty(misAsuntos.proximasTareas)}"
+                    class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
+                    Sin tareas pendientes.
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div class="chart-panel rounded-2xl p-6 metric-card">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                            <i class="fas fa-circle-nodes mr-2"></i><span id="chartEstatusTitle">Expedientes</span>
+                        </h2>
+                        <div class="segmented-control rounded-xl bg-gray-100 p-1 border border-gray-200">
+                            <button id="btnEtapas" type="button" onclick="switchDonutChart('etapas')"
+                                class="segmented-btn active rounded-lg px-2 py-1 text-xs font-black transition">Etapas</button>
+                            <button id="btnPrioridad" type="button" onclick="switchDonutChart('prioridad')"
+                                class="segmented-btn rounded-lg px-2 py-1 text-xs font-black text-gray-600 transition">Prioridad</button>
+                        </div>
+                    </div>
+                    <div class="relative h-64">
+                        <canvas id="chartEstatusExpedientes"></canvas>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl p-6 metric-card">
+                    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                            <i class="fas fa-chart-simple mr-2"></i><span id="chartBarTitle">Actividad pendiente</span>
+                        </h2>
+                        <div class="segmented-control rounded-xl bg-gray-100 p-1 border border-gray-200">
+                            <button id="btnBarTotal" type="button" onclick="switchBarChart('total')"
+                                class="segmented-btn active rounded-lg px-2 py-1 text-xs font-black transition">Total</button>
+                            <button id="btnBarPrioridad" type="button" onclick="switchBarChart('prioridad')"
+                                class="segmented-btn rounded-lg px-2 py-1 text-xs font-black text-gray-600 transition">Riesgo</button>
+                        </div>
+                    </div>
+                    <div class="relative h-64">
+                        <canvas id="chartCargaTrabajoUsuarios"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+        </main>
     </div>
 
     <script th:inline="javascript">
@@ -186,117 +519,112 @@
     <script th:src="@{/js/dashboard.js}"></script>
 
     <script>
-        // Paleta de colores del proyecto para prioridad
         const prioridadColores = {
-            'ALTA': '#691228', // gob-guinda
-            'MEDIA': '#D4C19C', // gob-oro
-            'BAJA': '#13322B'  // gob-verde
+            'ALTA': '#b42318',
+            'MEDIA': '#D4C19C',
+            'BAJA': '#13322B'
         };
 
-        let currentDonutMode = 'etapas';
+        function setSegmentState(activeId, inactiveId) {
+            document.getElementById(activeId).classList.add('active');
+            document.getElementById(activeId).classList.remove('text-gray-600');
+            document.getElementById(inactiveId).classList.remove('active');
+            document.getElementById(inactiveId).classList.add('text-gray-600');
+        }
+
+        function baseChartOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 10, usePointStyle: true }
+                    }
+                }
+            };
+        }
 
         function switchDonutChart(mode) {
-            currentDonutMode = mode;
-            const data = window.dashboardData;
+            const data = window.dashboardData || {};
             const canvasId = 'chartEstatusExpedientes';
-
             if (window.chartInstances && window.chartInstances[canvasId]) {
                 window.chartInstances[canvasId].destroy();
             }
 
-            const btnEtapas = document.getElementById('btnEtapas');
-            const btnPrioridad = document.getElementById('btnPrioridad');
-            const titleEl = document.getElementById('chartEstatusTitle');
-
             if (mode === 'etapas') {
-                btnEtapas.className = 'text-xs px-3 py-1 rounded-full font-semibold bg-gob-guinda text-white transition';
-                btnPrioridad.className = 'text-xs px-3 py-1 rounded-full font-semibold bg-gray-200 text-gray-600 transition';
-                titleEl.textContent = 'Estatus de Mis Expedientes';
-                const d = data.estatusExpedientes;
-                window.chartInstances = window.chartInstances || {};
+                setSegmentState('btnEtapas', 'btnPrioridad');
+                document.getElementById('chartEstatusTitle').textContent = 'Expedientes';
+                const d = data.estatusExpedientes || { labels: [], values: [] };
                 window.chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
                     type: 'doughnut',
                     data: {
                         labels: d.labels,
-                        datasets: [{ data: d.values, backgroundColor: ['#691228', '#4e0c1d', '#D4C19C', '#545454', '#98989A', '#13322B'], borderWidth: 1 }]
+                        datasets: [{ data: d.values, backgroundColor: ['#691228', '#D4C19C', '#13322B', '#545454'], borderWidth: 0 }]
                     },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                    options: baseChartOptions()
                 });
-            } else {
-                btnEtapas.className = 'text-xs px-3 py-1 rounded-full font-semibold bg-gray-200 text-gray-600 transition';
-                btnPrioridad.className = 'text-xs px-3 py-1 rounded-full font-semibold bg-gob-guinda text-white transition';
-                titleEl.textContent = 'Expedientes por Prioridad';
-                const d = data.prioridadExpedientes;
-                const colors = (d.labels || []).map(l => prioridadColores[l] || '#888');
-                window.chartInstances = window.chartInstances || {};
-                window.chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
-                    type: 'doughnut',
-                    data: {
-                        labels: d.labels,
-                        datasets: [{ data: d.values, backgroundColor: colors, borderWidth: 1 }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-                });
+                return;
             }
+
+            setSegmentState('btnPrioridad', 'btnEtapas');
+            document.getElementById('chartEstatusTitle').textContent = 'Expedientes';
+            const d = data.prioridadExpedientes || { labels: [], values: [] };
+            window.chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+                type: 'doughnut',
+                data: {
+                    labels: d.labels,
+                    datasets: [{ data: d.values, backgroundColor: (d.labels || []).map(l => prioridadColores[l] || '#737373'), borderWidth: 0 }]
+                },
+                options: baseChartOptions()
+            });
         }
 
         function switchBarChart(mode) {
-            const data = window.dashboardData;
+            const data = window.dashboardData || {};
             const canvasId = 'chartCargaTrabajoUsuarios';
-
             if (window.chartInstances && window.chartInstances[canvasId]) {
                 window.chartInstances[canvasId].destroy();
             }
 
-            const btnTotal = document.getElementById('btnBarTotal');
-            const btnPrioridad = document.getElementById('btnBarPrioridad');
-            const titleEl = document.getElementById('chartBarTitle');
-
-            const activeClass = 'text-xs px-3 py-1 rounded-full font-semibold bg-gob-guinda text-white transition';
-            const inactiveClass = 'text-xs px-3 py-1 rounded-full font-semibold bg-gray-200 text-gray-600 transition';
+            const options = baseChartOptions();
+            options.scales = { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } };
 
             if (mode === 'total') {
-                btnTotal.className = activeClass;
-                btnPrioridad.className = inactiveClass;
-                titleEl.textContent = 'Mis Audiencias y Términos';
-                const d = data.cargaTrabajoUsuarios;
+                setSegmentState('btnBarTotal', 'btnBarPrioridad');
+                document.getElementById('chartBarTitle').textContent = 'Actividad pendiente';
+                const d = data.cargaTrabajoUsuarios || { labels: [], audiencias: [], terminos: [] };
                 window.chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
                     type: 'bar',
                     data: {
-                        labels: d.labels,
+                        labels: ['Pendientes'],
                         datasets: [
-                            { label: 'Audiencias', data: d.audiencias, backgroundColor: '#691228' },
-                            { label: 'Términos', data: d.terminos, backgroundColor: '#D4C19C' }
+                            { label: 'Audiencias', data: d.audiencias || [], backgroundColor: '#691228', borderRadius: 6, maxBarThickness: 42 },
+                            { label: 'Terminos', data: d.terminos || [], backgroundColor: '#D4C19C', borderRadius: 6, maxBarThickness: 42 }
                         ]
                     },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+                    options
                 });
-            } else {
-                btnTotal.className = inactiveClass;
-                btnPrioridad.className = activeClass;
-                titleEl.textContent = 'Audiencias y Términos por Prioridad';
-                const d = data.cargaTrabajoPrioridad;
-                const barColors = (d.labels || []).map(l => prioridadColores[l] || '#888');
-                window.chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
-                    type: 'bar',
-                    data: {
-                        labels: d.labels,
-                        datasets: [
-                            { label: 'Audiencias', data: d.audiencias, backgroundColor: '#691228' },
-                            { label: 'Términos', data: d.terminos, backgroundColor: '#D4C19C' }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: { y: { beginAtZero: true } },
-                        plugins: { legend: { position: 'bottom' } }
-                    }
-                });
+                return;
             }
+
+            setSegmentState('btnBarPrioridad', 'btnBarTotal');
+            document.getElementById('chartBarTitle').textContent = 'Riesgo por prioridad';
+            const d = data.cargaTrabajoPrioridad || { labels: [], audiencias: [], terminos: [] };
+            window.chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+                type: 'bar',
+                data: {
+                    labels: d.labels,
+                    datasets: [
+                        { label: 'Audiencias', data: d.audiencias || [], backgroundColor: '#691228', borderRadius: 6, maxBarThickness: 34 },
+                        { label: 'Terminos', data: d.terminos || [], backgroundColor: '#D4C19C', borderRadius: 6, maxBarThickness: 34 }
+                    ]
+                },
+                options
+            });
         }
     </script>
-
 </body>
 
 </html>

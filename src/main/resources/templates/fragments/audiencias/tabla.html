@@ -8,7 +8,7 @@
                     <thead class="bg-gray-50/50 text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 sticky top-0 z-10 shadow-sm">
                         <tr>
                             <th class="px-2 py-3 bg-gray-50 text-center w-20 rounded-tl-2xl">
-                                <a th:href="@{/audiencias(page=${audiencias.number}, keyword=${keyword}, tipo=${paramTipo}, gerencia=${paramGerencia}, materia=${paramMateria}, estatus=${paramEstatus}, abogadoId=${paramAbogadoId}, periodo=${paramPeriodo}, mes=${param.mes}, anio=${param.anio}, sortBy='id', sortDir=${sortBy == 'id' && sortDir == 'asc' ? 'desc' : 'asc'})}"
+                                <a th:href="@{/audiencias(page=${audiencias.number}, keyword=${keyword}, tipo=${paramTipo}, gerencia=${paramGerencia}, materia=${paramMateria}, estatus=${paramEstatus}, abogadoId=${paramAbogadoId}, periodo=${paramPeriodo}, fecha=${paramFecha}, mes=${param.mes}, anio=${param.anio}, sortBy='id', sortDir=${sortBy == 'id' && sortDir == 'asc' ? 'desc' : 'asc'})}"
                                    class="pagina-link-aud flex items-center gap-1 hover:text-gob-guinda transition justify-center">
                                     <span>#ID</span>
                                     <i th:if="${sortBy == 'id'}" th:class="${sortDir == 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'}"></i>
@@ -17,7 +17,7 @@
                             </th>
                             <th class="px-2.5 py-3 bg-gray-50">Asunto / Expediente</th>
                             <th class="px-2.5 py-3 bg-gray-50">
-                                <a th:href="@{/audiencias(page=${audiencias.number}, keyword=${keyword}, tipo=${paramTipo}, gerencia=${paramGerencia}, materia=${paramMateria}, estatus=${paramEstatus}, abogadoId=${paramAbogadoId}, periodo=${paramPeriodo}, mes=${param.mes}, anio=${param.anio}, sortBy='fechaAudiencia', sortDir=${sortBy == 'fechaAudiencia' && sortDir == 'asc' ? 'desc' : 'asc'})}"
+                                <a th:href="@{/audiencias(page=${audiencias.number}, keyword=${keyword}, tipo=${paramTipo}, gerencia=${paramGerencia}, materia=${paramMateria}, estatus=${paramEstatus}, abogadoId=${paramAbogadoId}, periodo=${paramPeriodo}, fecha=${paramFecha}, mes=${param.mes}, anio=${param.anio}, sortBy='fechaAudiencia', sortDir=${sortBy == 'fechaAudiencia' && sortDir == 'asc' ? 'desc' : 'asc'})}"
                                    class="pagina-link-aud flex items-center gap-1 hover:text-gob-guinda transition">
                                     <span>Fecha y Hora</span>
                                     <i th:if="${sortBy == 'fechaAudiencia'}" th:class="${sortDir == 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'}"></i>
@@ -102,15 +102,27 @@
 
                             <!-- Estado -->
                             <td class="px-2.5 py-4 border-r border-gray-50 text-center">
-                                <span class="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-full text-[10px] font-bold border whitespace-nowrap"
-                                    th:classappend="${a.estatusAudiencia?.name() == 'CONCLUIDA' ? 'bg-green-50 text-green-700 border-green-100' : 
-                                                    (a.estatusAudiencia?.name() == 'CON_ACTA' ? 'bg-blue-50 text-blue-700 border-blue-100' : 
-                                                    'bg-orange-50 text-orange-700 border-orange-100')}">
-                                    <span class="w-1.5 h-1.5 rounded-full"
-                                        th:classappend="${a.estatusAudiencia?.name() == 'CONCLUIDA' ? 'bg-green-600' : 
-                                                          (a.estatusAudiencia?.name() == 'CON_ACTA' ? 'bg-blue-600' : 'bg-orange-600')}"></span>
-                                    <span th:text="${a.estatusAudiencia != null ? a.estatusAudiencia.descripcion : 'Pendiente'}">PENDIENTE</span>
-                                </span>
+                                <div class="flex flex-col items-center gap-1.5">
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-full text-[10px] font-bold border whitespace-nowrap"
+                                        th:classappend="${a.estatusAudiencia?.name() == 'CONCLUIDA' ? 'bg-green-50 text-green-700 border-green-100' : 
+                                                        (a.estatusAudiencia?.name() == 'CON_ACTA' ? 'bg-blue-50 text-blue-700 border-blue-100' : 
+                                                        'bg-orange-50 text-orange-700 border-orange-100')}">
+                                        <span class="w-1.5 h-1.5 rounded-full"
+                                            th:classappend="${a.estatusAudiencia?.name() == 'CONCLUIDA' ? 'bg-green-600' : 
+                                                              (a.estatusAudiencia?.name() == 'CON_ACTA' ? 'bg-blue-600' : 'bg-orange-600')}"></span>
+                                        <span th:text="${a.estatusAudiencia != null ? a.estatusAudiencia.descripcion : 'Pendiente'}">PENDIENTE</span>
+                                    </span>
+                                    <a th:if="${a.outlookLinked}" th:href="${a.outlookWebLink}" target="_blank"
+                                       class="inline-flex items-center gap-1 rounded-full border border-blue-100 bg-blue-50 px-2 py-1 text-[9px] font-bold text-blue-700"
+                                       title="Este evento existe en Outlook">
+                                        <i class="fab fa-microsoft"></i> Outlook
+                                    </a>
+                                    <span th:unless="${a.outlookLinked}"
+                                       class="inline-flex items-center gap-1 rounded-full border border-gray-100 bg-gray-50 px-2 py-1 text-[9px] font-bold text-gray-500"
+                                       title="Este evento solo existe en SIAJ">
+                                        <i class="far fa-calendar"></i> Solo SIAJ
+                                    </span>
+                                </div>
                             </td>
 
                             <!-- Acciones -->
@@ -134,7 +146,8 @@
                                                 [[${a.contexto?.numeroReferencia != null ? #strings.escapeJavaScript(a.contexto.numeroReferencia) : ''}]],
                                                 [[${a.contexto?.sede != null ? #strings.escapeJavaScript(a.contexto.sede) : ''}]],
                                                 [[${a.contexto?.partes != null ? #strings.escapeJavaScript(a.contexto.partes) : ''}]],
-                                                [[${a.contexto?.descripcion != null ? #strings.escapeJavaScript(a.contexto.descripcion) : ''}]]
+                                                [[${a.contexto?.descripcion != null ? #strings.escapeJavaScript(a.contexto.descripcion) : ''}]],
+                                                [[${a.outlookLinked}]]
                                             )">
                                         <i class="fas fa-edit"></i>
                                     </button>
@@ -145,7 +158,14 @@
 
                                     <!-- Menú Contextual Desktop -->
                                     <div th:id="'menu-' + ${a.id}"
-                                        class="hidden absolute right-4 mt-12 w-64 bg-white rounded-xl shadow-2xl z-50 border border-gray-50 text-left overflow-hidden ring-1 ring-black ring-opacity-5">
+                                        class="hidden absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl z-50 border border-gray-50 text-left overflow-hidden ring-1 ring-black ring-opacity-5">
+                                        <a th:if="${a.expediente != null}"
+                                            th:href="@{/expedientes/{id}(id=${a.expediente?.id})}"
+                                            class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors">
+                                            <i class="fas fa-folder-open mr-3 w-4 text-center text-gray-400"></i>
+                                            Ver Expediente
+                                        </a>
+                                        <div th:if="${a.expediente != null}" class="border-t border-gray-50"></div>
                                         <button th:unless="${a.estatusAudiencia?.name() == 'CONCLUIDA'}" th:data-audiencia-id="${a.id}"
                                             onclick="activarSubidaActa(this.dataset.audienciaId)"
                                             class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors">
@@ -166,7 +186,7 @@
                                         </button>
                                         <a th:unless="${a.estatusAudiencia?.name() == 'CONCLUIDA'}"
                                             th:if="${usuarioActual != null and (usuarioActual.rol.name() == 'ADMIN' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'SUBDIRECTOR' or usuarioActual.rol.name() == 'GERENTE' or usuarioActual.rol.name() == 'JEFE_DEPTO' or (usuarioActual.rol.name() == 'ABOGADO' and a.expediente != null and a.expediente.abogadoResponsable != null and a.expediente.abogadoResponsable.id == usuarioActual.id))}" href="javascript:void(0)"
-                                            th:onclick="'confirmarEliminarAudiencia(' + ${a.id} + ')'"
+                                            th:onclick="'confirmarEliminarAudiencia(' + ${a.id} + ', ' + ${a.outlookLinked} + ')'"
                                             class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors">
                                             <i class="fas fa-trash-alt mr-3 w-4 text-center opacity-70"></i> Eliminar
                                         </a>
@@ -210,6 +230,17 @@
                             th:classappend="${a.estatusAudiencia?.name() == 'CONCLUIDA' ? 'bg-green-600' : 
                                               (a.estatusAudiencia?.name() == 'CON_ACTA' ? 'bg-blue-600' : 'bg-orange-600')}"></span>
                         <span th:text="${a.estatusAudiencia != null ? a.estatusAudiencia.descripcion : 'Pendiente'}">PENDIENTE</span>
+                    </span>
+                </div>
+
+                <div>
+                    <a th:if="${a.outlookLinked}" th:href="${a.outlookWebLink}" target="_blank"
+                       class="inline-flex items-center gap-1 rounded-full border border-blue-100 bg-blue-50 px-2 py-1 text-[9px] font-bold text-blue-700">
+                        <i class="fab fa-microsoft"></i> Outlook vinculado
+                    </a>
+                    <span th:unless="${a.outlookLinked}"
+                       class="inline-flex items-center gap-1 rounded-full border border-gray-100 bg-gray-50 px-2 py-1 text-[9px] font-bold text-gray-500">
+                        <i class="far fa-calendar"></i> Solo SIAJ
                     </span>
                 </div>
 
@@ -277,7 +308,8 @@
                                     [[${a.contexto?.numeroReferencia != null ? #strings.escapeJavaScript(a.contexto.numeroReferencia) : ''}]],
                                     [[${a.contexto?.sede != null ? #strings.escapeJavaScript(a.contexto.sede) : ''}]],
                                     [[${a.contexto?.partes != null ? #strings.escapeJavaScript(a.contexto.partes) : ''}]],
-                                    [[${a.contexto?.descripcion != null ? #strings.escapeJavaScript(a.contexto.descripcion) : ''}]]
+                                    [[${a.contexto?.descripcion != null ? #strings.escapeJavaScript(a.contexto.descripcion) : ''}]],
+                                    [[${a.outlookLinked}]]
                                 )">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -289,6 +321,13 @@
                         <!-- Menú Contextual Móvil -->
                         <div th:id="'menu-mob-' + ${a.id}"
                             class="hidden absolute right-0 bottom-10 w-64 bg-white rounded-xl shadow-2xl z-50 border border-gray-100 text-left overflow-hidden ring-1 ring-black ring-opacity-5">
+                            <a th:if="${a.expediente != null}"
+                                th:href="@{/expedientes/{id}(id=${a.expediente?.id})}"
+                                class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors">
+                                <i class="fas fa-folder-open mr-3 w-4 text-center text-gray-400"></i>
+                                Ver Expediente
+                            </a>
+                            <div th:if="${a.expediente != null}" class="border-t border-gray-50"></div>
                             
                             <button th:unless="${a.estatusAudiencia?.name() == 'CONCLUIDA'}" th:data-audiencia-id="${a.id}"
                                 onclick="activarSubidaActa(this.dataset.audienciaId)"
@@ -314,7 +353,7 @@
 
                             <a th:unless="${a.estatusAudiencia?.name() == 'CONCLUIDA'}"
                                 th:if="${usuarioActual != null and (usuarioActual.rol.name() == 'ADMIN' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'SUBDIRECTOR' or usuarioActual.rol.name() == 'GERENTE' or usuarioActual.rol.name() == 'JEFE_DEPTO' or (usuarioActual.rol.name() == 'ABOGADO' and a.expediente != null and a.expediente.abogadoResponsable != null and a.expediente.abogadoResponsable.id == usuarioActual.id))}" href="javascript:void(0)"
-                                th:onclick="'confirmarEliminarAudiencia(' + ${a.id} + ')'"
+                                th:onclick="'confirmarEliminarAudiencia(' + ${a.id} + ', ' + ${a.outlookLinked} + ')'"
                                 class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors">
                                 <i class="fas fa-trash-alt mr-3 w-4 text-center opacity-70"></i> Eliminar
                             </a>
@@ -334,13 +373,13 @@
             </span>
             <div class="flex gap-2">
                 <a th:if="${audiencias.hasPrevious()}"
-                   th:href="@{/audiencias(page=${audiencias.number - 1}, keyword=${keyword}, tipo=${paramTipo}, gerencia=${paramGerencia}, materia=${paramMateria}, estatus=${paramEstatus}, periodo=${paramPeriodo}, abogadoId=${paramAbogadoId}, mes=${param.mes}, anio=${param.anio}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                   th:href="@{/audiencias(page=${audiencias.number - 1}, keyword=${keyword}, tipo=${paramTipo}, gerencia=${paramGerencia}, materia=${paramMateria}, estatus=${paramEstatus}, periodo=${paramPeriodo}, fecha=${paramFecha}, abogadoId=${paramAbogadoId}, mes=${param.mes}, anio=${param.anio}, sortBy=${sortBy}, sortDir=${sortDir})}"
                    class="pagina-link-aud px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 bg-white shadow-sm transition-all flex items-center gap-1">
                    <i class="fas fa-chevron-left text-xs"></i> Anterior
                 </a>
 
                 <a th:if="${audiencias.hasNext()}"
-                   th:href="@{/audiencias(page=${audiencias.number + 1}, keyword=${keyword}, tipo=${paramTipo}, gerencia=${paramGerencia}, materia=${paramMateria}, estatus=${paramEstatus}, periodo=${paramPeriodo}, abogadoId=${paramAbogadoId}, mes=${param.mes}, anio=${param.anio}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                   th:href="@{/audiencias(page=${audiencias.number + 1}, keyword=${keyword}, tipo=${paramTipo}, gerencia=${paramGerencia}, materia=${paramMateria}, estatus=${paramEstatus}, periodo=${paramPeriodo}, fecha=${paramFecha}, abogadoId=${paramAbogadoId}, mes=${param.mes}, anio=${param.anio}, sortBy=${sortBy}, sortDir=${sortDir})}"
                    class="pagina-link-aud px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 bg-white shadow-sm transition-all flex items-center gap-1">
                    Siguiente <i class="fas fa-chevron-right text-xs"></i>
                 </a>

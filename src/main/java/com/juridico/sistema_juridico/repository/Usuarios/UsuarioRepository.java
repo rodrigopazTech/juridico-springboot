@@ -18,7 +18,22 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     Optional<Usuario> findByEmail(String email);
 
+    Optional<Usuario> findByEmailIgnoreCase(String email);
+
+    Optional<Usuario> findByMicrosoftObjectId(String microsoftObjectId);
+
+    Optional<Usuario> findByUsernameIgnoreCase(String username);
+
+    Optional<Usuario> findByNumeroEmpleadoIgnoreCase(String numeroEmpleado);
+
     boolean existsByEmail(String email);
+
+    boolean existsByUsernameIgnoreCase(String username);
+
+    boolean existsByNumeroEmpleadoIgnoreCase(String numeroEmpleado);
+
+    @Query("SELECT u FROM Usuario u WHERE LOWER(u.username) = LOWER(:identifier) OR LOWER(u.numeroEmpleado) = LOWER(:identifier)")
+    Optional<Usuario> findByLoginIdentifier(@Param("identifier") String identifier);
 
     // 1. Para el Select del Modal (Solo mostrar ABOGADOS activos)
     List<Usuario> findByRolAndActivoTrue(RolUsuario rol);
@@ -38,6 +53,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     // 5. Para jerarquía de notificaciones (Superiores de la misma gerencia)
     List<Usuario> findByGerenciasIdAndRolInAndActivoTrue(Integer gerenciaId, List<RolUsuario> roles);
+    List<Usuario> findByGerenciasIdAndRolInAndActivoTrueOrderByNombreCompletoAsc(Integer gerenciaId, List<RolUsuario> roles);
     List<Usuario> findDistinctByGerenciasIdInAndRolInAndActivoTrue(List<Integer> gerenciaIds, List<RolUsuario> roles);
 
     // 6. Para filtro de usuarios por gerencia
@@ -47,6 +63,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
     // 7. Búsqueda por keyword (nombre, email, rol) con paginación — para el buscador del módulo Usuarios
     @Query("SELECT DISTINCT u FROM Usuario u WHERE " +
            "LOWER(u.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.numeroEmpleado) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(CAST(u.rol AS string)) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<Usuario> buscarPorKeyword(@Param("keyword") String keyword, Pageable pageable);
@@ -54,6 +72,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
     // 8. Búsqueda por keyword restringida a múltiples gerencias (para GERENTE)
     @Query("SELECT DISTINCT u FROM Usuario u JOIN u.gerencias g WHERE g.id IN :gerenciaIds AND (" +
            "LOWER(u.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.numeroEmpleado) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(CAST(u.rol AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Usuario> buscarPorKeywordYGerenciasIn(@Param("keyword") String keyword,
@@ -68,8 +88,24 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
                                                                              @Param("excluidoUsuarioId") Integer excluidoUsuarioId,
                                                                              Pageable pageable);
 
+    @Query("""
+           SELECT COUNT(DISTINCT u)
+           FROM Usuario u
+           JOIN u.gerencias g
+           JOIN u.materias m
+           WHERE g.id = :gerenciaId
+             AND m.id IN :materiaIds
+             AND u.rol = :rol
+             AND u.activo = true
+           """)
+    long countAbogadosActivosPorGerenciaYMaterias(@Param("gerenciaId") Integer gerenciaId,
+                                                  @Param("materiaIds") List<Integer> materiaIds,
+                                                  @Param("rol") RolUsuario rol);
+
     @Query("SELECT DISTINCT u FROM Usuario u WHERE u.rol IN :roles AND u.id != :excluidoUsuarioId AND (" +
            "LOWER(u.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.numeroEmpleado) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(CAST(u.rol AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Usuario> buscarPorKeywordAndRolInAndIdNot(@Param("keyword") String keyword,
@@ -79,6 +115,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     @Query("SELECT DISTINCT u FROM Usuario u JOIN u.gerencias g JOIN u.materias m WHERE g.id IN :gerenciaIds AND m.id IN :materiaIds AND u.rol IN :roles AND u.id != :excluidoUsuarioId AND (" +
            "LOWER(u.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.numeroEmpleado) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(CAST(u.rol AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Usuario> buscarPorKeywordYGerenciasInAndMateriasInAndRolInAndIdNot(@Param("keyword") String keyword,
@@ -96,6 +134,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     @Query("SELECT DISTINCT u FROM Usuario u JOIN u.gerencias g WHERE g.id IN :gerenciaIds AND u.rol IN :roles AND u.id != :excluidoUsuarioId AND (" +
            "LOWER(u.nombreCompleto) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.numeroEmpleado) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(CAST(u.rol AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Usuario> buscarPorKeywordYGerenciasInAndRolInAndIdNot(@Param("keyword") String keyword,

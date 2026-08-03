@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <link rel="manifest" th:href="@{/manifest.json}" />
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any" />
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
+    <link rel="apple-touch-icon" th:href="@{/img/apple-touch-icon.png}" />
+    <meta name="theme-color" content="#691228" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoria tecnica | Sistema Juridico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script th:src="@{/js/tailwind.config.js}"></script>
+    <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <main class="p-4 sm:ml-64 min-h-screen pt-[116px]">
+        <div class="max-w-7xl mx-auto space-y-5">
+            <section class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 border-b border-gray-200 pb-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gob-verde font-headings">
+                        <i class="fas fa-shield-halved text-gob-oro mr-2"></i> Auditoria tecnica
+                    </h1>
+                    <p class="text-sm text-gray-500 mt-1">Actividad de usuarios, sesiones, accesos denegados y errores del sistema.</p>
+                </div>
+                <nav class="flex flex-wrap gap-2 text-sm font-semibold">
+                    <a th:href="@{/admin/auditoria/resumen}" class="px-3 py-2 rounded-lg border"
+                       th:classappend="${vista == 'resumen'} ? 'bg-gob-verde text-white border-gob-verde' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">Resumen</a>
+                    <a th:href="@{/admin/auditoria/sesiones}" class="px-3 py-2 rounded-lg border"
+                       th:classappend="${vista == 'sesiones'} ? 'bg-gob-verde text-white border-gob-verde' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">Sesiones</a>
+                    <a th:href="@{/admin/auditoria/eventos}" class="px-3 py-2 rounded-lg border"
+                       th:classappend="${vista == 'eventos'} ? 'bg-gob-verde text-white border-gob-verde' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">Eventos</a>
+                    <a th:href="@{/admin/auditoria/seguridad}" class="px-3 py-2 rounded-lg border"
+                       th:classappend="${vista == 'seguridad'} ? 'bg-gob-verde text-white border-gob-verde' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">Seguridad</a>
+                    <a th:href="@{/admin/auditoria/errores}" class="px-3 py-2 rounded-lg border"
+                       th:classappend="${vista == 'errores'} ? 'bg-gob-verde text-white border-gob-verde' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">Errores</a>
+                </nav>
+            </section>
+
+            <section th:if="${vista == 'resumen'}" class="space-y-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <p class="text-xs uppercase tracking-wide text-gray-500 font-bold">Sesiones activas</p>
+                        <p class="text-3xl font-bold text-gob-verde mt-2" th:text="${resumen.sesionesActivas}">0</p>
+                    </div>
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <p class="text-xs uppercase tracking-wide text-gray-500 font-bold">Inicios hoy</p>
+                        <p class="text-3xl font-bold text-gray-800 mt-2" th:text="${resumen.loginsHoy}">0</p>
+                    </div>
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <p class="text-xs uppercase tracking-wide text-gray-500 font-bold">Denegados hoy</p>
+                        <p class="text-3xl font-bold text-gob-guinda mt-2" th:text="${resumen.denegadosHoy}">0</p>
+                    </div>
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <p class="text-xs uppercase tracking-wide text-gray-500 font-bold">Errores hoy</p>
+                        <p class="text-3xl font-bold text-red-700 mt-2" th:text="${resumen.erroresHoy}">0</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                        <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center">
+                            <h2 class="font-bold text-gray-800">Sesiones activas</h2>
+                            <a th:href="@{/admin/auditoria/sesiones}" class="text-xs font-bold text-gob-guinda hover:underline">Ver todas</a>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+                                    <tr>
+                                        <th class="text-left px-4 py-3">Usuario</th>
+                                        <th class="text-left px-4 py-3">Estado</th>
+                                        <th class="text-left px-4 py-3">Ultima actividad</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr th:each="s : ${sesionesRecientes}">
+                                        <td class="px-4 py-3">
+                                            <div class="font-semibold text-gray-800" th:text="${s.email ?: 'Sin usuario'}">usuario</div>
+                                            <div class="text-xs text-gray-500" th:text="${s.rol ?: '-'}">rol</div>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="px-2 py-1 rounded text-xs font-bold"
+                                                  th:classappend="${s.estado == 'ACTIVA'} ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'"
+                                                  th:text="${s.estado}">ACTIVA</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-gray-600" th:text="${#temporals.format(s.fechaUltimaActividad, 'dd/MM/yyyy HH:mm')}">-</td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(sesionesRecientes)}">
+                                        <td colspan="3" class="px-4 py-8 text-center text-gray-400">Sin sesiones registradas.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                        <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center">
+                            <h2 class="font-bold text-gray-800">Eventos recientes</h2>
+                            <a th:href="@{/admin/auditoria/eventos}" class="text-xs font-bold text-gob-guinda hover:underline">Ver todos</a>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+                                    <tr>
+                                        <th class="text-left px-4 py-3">Evento</th>
+                                        <th class="text-left px-4 py-3">Resultado</th>
+                                        <th class="text-left px-4 py-3">Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr th:each="e : ${eventosRecientes}">
+                                        <td class="px-4 py-3">
+                                            <div class="font-semibold text-gray-800" th:text="${e.accionLegible}">Evento</div>
+                                            <div class="text-xs text-gray-500" th:text="${e.actorLegible + ' - ' + (e.ruta ?: '-')}">detalle</div>
+                                            <div class="text-xs text-gray-600 mt-1" th:text="${e.diagnosticoAdmin}">diagnostico</div>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="px-2 py-1 rounded text-xs font-bold"
+                                                  th:classappend="${e.resultado == 'EXITOSO'} ? 'bg-green-50 text-green-700' : (${e.resultado == 'ERROR'} ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700')"
+                                                  th:text="${e.resultadoLegible}">Exitoso</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-gray-600" th:text="${#temporals.format(e.fecha, 'dd/MM/yyyy HH:mm')}">-</td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(eventosRecientes)}">
+                                        <td colspan="3" class="px-4 py-8 text-center text-gray-400">Sin eventos registrados.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section th:if="${vista == 'sesiones'}" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                <div th:replace="~{fragments/admin/auditoria-tablas :: tablaSesiones(${sesiones})}"></div>
+            </section>
+
+            <section th:if="${vista == 'eventos' or vista == 'seguridad' or vista == 'errores'}" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                <div th:replace="~{fragments/admin/auditoria-tablas :: tablaEventos(${eventos})}"></div>
+            </section>
+        </div>
+    </main>
+</body>
+</html>

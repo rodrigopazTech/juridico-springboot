@@ -7,6 +7,7 @@ import com.juridico.sistema_juridico.dto.response.notificaciones.GrupoPreferenci
 import com.juridico.sistema_juridico.repository.Usuarios.PreferenciaNotificacionRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.security.CustomUserDetails;
+import com.juridico.sistema_juridico.service.PasswordPolicyService;
 import com.juridico.sistema_juridico.service.PreferenciaNotificacionEventoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -35,6 +36,9 @@ public class PerfilController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private PasswordPolicyService passwordPolicyService;
 
     @Autowired
     private PreferenciaNotificacionEventoService preferenciaEventoService;
@@ -97,6 +101,13 @@ public class PerfilController {
 
         if (!nuevoPassword.equals(confirmarPassword)) {
             redirectAttrs.addFlashAttribute("mensaje", "Las nuevas contrasenas no coinciden.");
+            redirectAttrs.addFlashAttribute("tipo", "warning");
+            redirectAttrs.addFlashAttribute("origenMensaje", "password");
+            return "redirect:/perfil";
+        }
+
+        if (!passwordPolicyService.isValid(nuevoPassword)) {
+            redirectAttrs.addFlashAttribute("mensaje", passwordPolicyService.description());
             redirectAttrs.addFlashAttribute("tipo", "warning");
             redirectAttrs.addFlashAttribute("origenMensaje", "password");
             return "redirect:/perfil";

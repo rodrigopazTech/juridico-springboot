@@ -3,14 +3,7 @@
     <!-- ═══════════════════════════════════════════════
          RECUADRO DE REGLAS DE SEGURIDAD
     ═══════════════════════════════════════════════ -->
-    <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs text-gray-600 space-y-1 mb-5 max-w-md mx-auto">
-        <p class="font-bold text-gray-700 mb-2">
-            <i class="fas fa-shield-alt text-gob-guinda mr-1"></i> Reglas de la nueva contraseña:
-        </p>
-        <p><i class="fas fa-check text-green-500 mr-1.5"></i> Mínimo 6 caracteres</p>
-        <p><i class="fas fa-check text-green-500 mr-1.5"></i> Puedes usar letras, números y símbolos</p>
-        <p><i class="fas fa-info-circle text-blue-400 mr-1.5"></i> Se recomienda cambiarla cada 3 meses</p>
-    </div>
+    <div id="password-policy-perfil" class="mb-5 max-w-md mx-auto"></div>
 
     <!-- ═══════════════════════════════════════════════
          FORMULARIO
@@ -43,7 +36,7 @@
                         class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-gob-guinda transition-colors">
                         <i class="fas fa-key text-sm"></i>
                     </div>
-                    <input id="nuevoPassword" type="password" name="nuevoPassword" required minlength="6"
+                    <input id="nuevoPassword" type="password" name="nuevoPassword" required minlength="8"
                         class="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gob-oro focus:border-gob-oro outline-none transition-all">
                     <button type="button" onclick="toggleVis('nuevoPassword','eyeNuevo')"
                         class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
@@ -60,15 +53,13 @@
                         class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-gob-guinda transition-colors">
                         <i class="fas fa-check text-sm"></i>
                     </div>
-                    <input id="confirmarPassword" type="password" name="confirmarPassword" required minlength="6"
+                    <input id="confirmarPassword" type="password" name="confirmarPassword" required minlength="8"
                         class="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gob-oro focus:border-gob-oro outline-none transition-all">
                     <button type="button" onclick="toggleVis('confirmarPassword','eyeConfirmar')"
                         class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
                         <i id="eyeConfirmar" class="fas fa-eye text-sm"></i>
                     </button>
                 </div>
-                <!-- Indicador en tiempo real -->
-                <span id="mensajePassword" class="text-xs mt-1.5 hidden block"></span>
             </div>
 
         </div>
@@ -98,71 +89,15 @@
         }
     </script>
 
-    <!-- ═══════════════════════════════════════════════
-         Script 2: Validación en Tiempo Real
-    ═══════════════════════════════════════════════ -->
+    <script th:src="@{/js/password-policy-validator.js}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const nuevoPassword = document.getElementById('nuevoPassword');
-            const confirmarPassword = document.getElementById('confirmarPassword');
-            const mensajePassword = document.getElementById('mensajePassword');
-            const btnSubmit = document.getElementById('btnSubmitPassword');
-
-            if (!nuevoPassword || !confirmarPassword) return;
-
-            function validarCoincidencia() {
-                // Ambos vacíos → ocultar mensaje
-                if (nuevoPassword.value === '' && confirmarPassword.value === '') {
-                    mensajePassword.classList.add('hidden');
-                    desbloquearBoton();
-                    return;
-                }
-
-                mensajePassword.classList.remove('hidden');
-
-                // Mínimo 6 caracteres
-                if (nuevoPassword.value.length < 6) {
-                    setMensaje('La contraseña debe tener al menos 6 caracteres', 'red');
-                    bloquearBoton();
-                    return;
-                }
-
-                // Confirmación aún vacía
-                if (confirmarPassword.value === '') {
-                    setMensaje('Ingresa la confirmación de la contraseña', 'gray');
-                    bloquearBoton();
-                    return;
-                }
-
-                // Comparación
-                if (nuevoPassword.value !== confirmarPassword.value) {
-                    setMensaje('✗ Las contraseñas nuevas no coinciden', 'red');
-                    bloquearBoton();
-                } else {
-                    setMensaje('✓ Las contraseñas coinciden', 'green');
-                    desbloquearBoton();
-                }
-            }
-
-            function setMensaje(texto, color) {
-                const baseClass = 'text-xs mt-1.5 block font-bold';
-                const colorMap = { red: 'text-red-600', green: 'text-green-600', gray: 'text-gray-500' };
-                mensajePassword.textContent = texto;
-                mensajePassword.className = baseClass + ' ' + (colorMap[color] || 'text-gray-500');
-            }
-
-            function bloquearBoton() {
-                btnSubmit.disabled = true;
-                btnSubmit.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-
-            function desbloquearBoton() {
-                btnSubmit.disabled = false;
-                btnSubmit.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-
-            nuevoPassword.addEventListener('input', validarCoincidencia);
-            confirmarPassword.addEventListener('input', validarCoincidencia);
+            attachPasswordPolicyValidator({
+                passwordInputId: 'nuevoPassword',
+                confirmInputId: 'confirmarPassword',
+                submitButtonId: 'btnSubmitPassword',
+                containerId: 'password-policy-perfil'
+            });
         });
     </script>
 

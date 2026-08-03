@@ -1,4 +1,4 @@
-<div th:fragment="monthView" class="flex flex-col h-full min-h-[600px]">
+<div th:fragment="monthView" class="flex flex-col h-full">
     <div class="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
         <div th:each="dia : ${#strings.arraySplit('Lun,Mar,Mie,Jue,Vie,Sab,Dom', ',')}" 
              class="py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider" 

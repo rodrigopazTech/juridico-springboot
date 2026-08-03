@@ -1,107 +1,90 @@
-<div th:fragment="header" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6">
-    <div class="flex flex-wrap justify-between items-center gap-4">
-        <div class="flex items-center gap-4">
-            <button id="btnPrev" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <i class="fas fa-chevron-left text-gob-guinda"></i>
+<div th:fragment="header"
+     id="calendarToolbar"
+     class="calendar-toolbar bg-white rounded-xl shadow-sm border border-gray-200 mb-4"
+     th:attr="data-user-role=${userRole},
+              data-current-user-name=${usuarioGlobal != null ? usuarioGlobal.nombreCompleto : ''},
+              data-current-gerencia-name=${usuarioGlobal != null && usuarioGlobal.gerencia != null ? usuarioGlobal.gerencia.nombre : ''}">
+    <div class="calendar-toolbar-main">
+        <div class="calendar-period-control" aria-label="Navegacion del calendario">
+            <button id="btnPrev" class="calendar-icon-button" aria-label="Periodo anterior">
+                <i class="fas fa-chevron-left"></i>
             </button>
-            <h2 id="currentPeriod" class="text-2xl font-bold text-gob-guinda min-w-[200px] text-center">---</h2>
-            <button id="btnNext" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <i class="fas fa-chevron-right text-gob-guinda"></i>
+            <div>
+                <p class="calendar-kicker">Calendario juridico</p>
+                <h2 id="currentPeriod" class="calendar-period-title">---</h2>
+            </div>
+            <button id="btnNext" class="calendar-icon-button" aria-label="Periodo siguiente">
+                <i class="fas fa-chevron-right"></i>
             </button>
         </div>
-        
-        <div class="flex bg-gray-100 p-1 rounded-lg">
-            <button data-view="day" class="view-btn px-6 py-2 text-sm font-semibold rounded-md transition-all">Día</button>
-            <button data-view="week" class="view-btn px-6 py-2 text-sm font-semibold rounded-md transition-all">Semana</button>
-            <button data-view="month" class="view-btn px-6 py-2 text-sm font-semibold rounded-md bg-white shadow-sm">Mes</button>
+
+        <div class="calendar-view-switch" aria-label="Cambiar vista">
+            <button data-view="day" class="view-btn">Dia</button>
+            <button data-view="week" class="view-btn">Semana</button>
+            <button data-view="month" class="view-btn active">Mes</button>
         </div>
     </div>
-    
-    <div class="mt-4 pt-4 border-t border-gray-100">
-        <div class="flex flex-wrap gap-4 items-end">
-            
-            <div class="flex-1 min-w-[150px] max-w-[200px]">
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tipo de Evento</label>
-                <select id="filterTipo" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gob-guinda outline-none">
-                    <option th:each="tipo : ${listaTiposEvento}" 
-                            th:value="${tipo[0]}" 
-                            th:text="${tipo[1]}"></option>
-                </select>
+
+    <div class="calendar-control-line" aria-live="polite">
+        <div class="calendar-scope-inline">
+            <span class="calendar-scope-icon"><i class="fas fa-users-viewfinder"></i></span>
+            <span class="calendar-scope-prefix">Viendo:</span>
+            <span id="calendarScopeSummary" class="calendar-scope-summary">Alcance disponible</span>
+            <span id="calendarEventCount" class="calendar-count-pill">0 eventos</span>
+        </div>
+
+        <div class="calendar-inline-filters">
+            <div class="calendar-filter-field">
+                <label>Tipo</label>
+            <select id="filterTipo">
+                <option th:each="tipo : ${listaTiposEvento}"
+                        th:value="${tipo[0]}"
+                        th:text="${tipo[1]}"></option>
+            </select>
             </div>
-            
-            <div th:if="${puedeVerFiltroGerencia}" class="flex-1 min-w-[200px] max-w-[300px]">
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Gerencia</label>
-                <select id="filterGerencia" 
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gob-guinda outline-none bg-white disabled:bg-gray-100"
+
+            <div th:if="${puedeVerFiltroGerencia}" class="calendar-filter-field calendar-filter-wide">
+                <label>Gerencia</label>
+                <select id="filterGerencia"
                         th:disabled="${userRole == 'GERENTE'}">
-                    
                     <option value="todos" th:if="${userRole != 'GERENTE'}">Todas las gerencias</option>
-                    <option th:each="ger : ${listaGerencias}" 
-                            th:value="${ger.id}" 
+                    <option th:each="ger : ${listaGerencias}"
+                            th:value="${ger.id}"
                             th:text="${ger.nombre}"
                             th:selected="${userRole == 'GERENTE' && ger.id == usuarioGlobal.gerencia?.id}"></option>
                 </select>
             </div>
-            
-            <div th:if="${puedeVerFiltroUsuario}" class="flex-1 min-w-[200px] max-w-[300px]">
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Usuario</label>
-                <select id="filterUsuario" 
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gob-guinda outline-none bg-white">
-                    
-                    <option value="todos">Todos los usuarios</option>
-                    <option th:each="usu : ${listaUsuarios}" 
-                            th:value="${usu.id}" 
+
+            <div th:if="${puedeVerFiltroUsuario}" class="calendar-filter-field calendar-filter-wide">
+                <label>Usuario</label>
+                <select id="filterUsuario">
+                    <option value="todos" th:text="${puedeVerFiltroGerencia} ? 'Seleccione gerencia' : 'Todos los usuarios'">Todos los usuarios</option>
+                    <option th:each="usu : ${listaUsuarios}"
+                            th:value="${usu.id}"
                             th:text="${usu.nombreCompleto} + ' (' + ${usu.rol} + ')'"></option>
                 </select>
             </div>
-            
-            <div th:if="${puedeVerFiltroMateria}" class="flex-1 min-w-[150px] max-w-[200px]">
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Materia</label>
-                <select id="filterMateria" 
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gob-guinda outline-none bg-white">
-                    
+
+            <div th:if="${puedeVerFiltroMateria}" class="calendar-filter-field">
+                <label>Materia</label>
+                <select id="filterMateria">
                     <option value="todos">Todas las materias</option>
-                    <option th:each="materia : ${listaMaterias}" 
-                            th:value="${materia.id}" 
+                    <option th:each="materia : ${listaMaterias}"
+                            th:value="${materia.id}"
                             th:text="${materia.nombre}"></option>
                 </select>
             </div>
-            
-            <!-- Checkbox Mis Asuntos - Visible para todos los usuarios -->
-            <div class="flex items-center min-w-[150px]">
-                <label class="flex items-center cursor-pointer gap-2 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
-                    <input type="checkbox" id="chkMisAsuntos" class="w-4 h-4 text-gob-guinda rounded focus:ring-gob-guinda border-gray-300">
-                    <span class="text-sm font-semibold text-gray-700">Mis asuntos</span>
-                </label>
-            </div>
-            
-            <div class="flex gap-2">
-                <button id="btnApplyFilters" class="bg-gob-guinda text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-red-800 transition-all">
-                    <i class="fas fa-filter mr-2"></i>Filtrar
-                </button>
-                <button id="btnClearFilters" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">
-                    Limpiar Filtros
-                </button>
-            </div>
+
+            <label class="calendar-own-toggle">
+                <input type="checkbox" id="chkMisAsuntos">
+                <span>Mis asuntos</span>
+            </label>
+
+            <button id="btnClearFilters" class="calendar-secondary-button calendar-clear-button hidden" type="button">
+                <i class="fas fa-rotate-left"></i> Limpiar
+            </button>
         </div>
-    </div>
-    
-    <!-- Leyenda de acotaciones -->
-    <div class="mt-4 pt-4 border-t border-gray-100">
-        <div class="flex flex-wrap gap-6 items-center">
-            <span class="text-xs font-bold text-gray-500 uppercase">Leyenda:</span>
-            <div class="flex items-center gap-2">
-                <span class="w-4 h-4 rounded bg-evento-audiencia"></span>
-                <span class="text-sm text-gray-600">Audiencia</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <span class="w-4 h-4 rounded bg-evento-termino"></span>
-                <span class="text-sm text-gray-600">Término</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <span class="w-4 h-4 rounded bg-evento-recordatorio"></span>
-                <span class="text-sm text-gray-600">Recordatorio</span>
-            </div>
-        </div>
+
+        <div th:replace="~{fragments/calendario/outlook-status :: outlookStatus}"></div>
     </div>
 </div>

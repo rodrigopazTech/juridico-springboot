@@ -647,6 +647,63 @@ function confirmarEliminar(id) {
 // ROD-186: Listeners para subida de archivos y conclusión vía AJAX (Preservar contexto)
 
 // A. Subida de Archivo General (Form oculto en index)
+function confirmarEliminar(id, outlookLinked = false) {
+    if (outlookLinked === true || String(outlookLinked) === 'true') {
+        Swal.fire({
+            title: 'Eliminar termino vinculado',
+            text: 'Este termino tiene un evento en Outlook. Elige que deseas eliminar.',
+            icon: 'warning',
+            showDenyButton: true,
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            denyButtonColor: '#6b7280',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Eliminar SIAJ y Outlook',
+            denyButtonText: 'Eliminar solo SIAJ',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed || result.isDenied) {
+                ejecutarEliminacionTermino(id, result.isConfirmed);
+            }
+        });
+        return;
+    }
+
+    Swal.fire({
+        title: 'Eliminar termino',
+        text: 'Esta accion no se puede deshacer. Se notificara a tus superiores.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Si, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            ejecutarEliminacionTermino(id, false);
+        }
+    });
+}
+
+function ejecutarEliminacionTermino(id, deleteOutlook) {
+    window.justDeletedTermId = id;
+    fetch('/terminos/eliminar/' + id + '?deleteOutlook=' + deleteOutlook, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+        .then(res => {
+            if (res.ok) {
+                showSuccessToast('Termino eliminado correctamente.');
+                actualizarTablaAsincrono();
+            } else {
+                throw new Error('Error al eliminar');
+            }
+        })
+        .catch(() => {
+            showErrorModal('No se pudo eliminar el registro.');
+        });
+}
+
 document.addEventListener('change', function (e) {
     if (e.target && e.target.id === 'upload-file-input') {
         const form = document.getElementById('form-upload');
@@ -747,6 +804,44 @@ document.addEventListener('submit', function (e) {
     const formTermino = e.target.closest('#modal-nuevo-termino form');
     if (formTermino) {
         e.preventDefault();
+        if (!formTermino.dataset.outlookConfirmed) {
+            const calendarioVinculado = String(document.getElementById('hdnOutlookCalendarLinkedTerminos')?.value) === 'true';
+            const yaVinculado = String(document.getElementById('input-outlook-linked-termino-current')?.value) === 'true';
+            const syncInput = document.getElementById('input-sync-outlook-termino');
+
+            if (typeof formTermino.checkValidity === 'function' && !formTermino.checkValidity()) {
+                formTermino.reportValidity();
+                return;
+            }
+
+            if (calendarioVinculado) {
+                Swal.fire({
+                    title: yaVinculado ? 'Actualizar evento de Outlook' : 'Crear evento en Outlook',
+                    text: yaVinculado
+                        ? 'Este termino ya esta vinculado. Elige si tambien quieres actualizar tu calendario de Outlook.'
+                        : 'Elige si quieres guardar el termino solo en SIAJ o tambien crear el vencimiento en Outlook.',
+                    icon: 'question',
+                    showDenyButton: true,
+                    showCancelButton: true,
+                    confirmButtonText: yaVinculado ? 'Actualizar Outlook' : 'Crear en Outlook',
+                    denyButtonText: 'Solo SIAJ',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#2563eb',
+                    denyButtonColor: '#6b7280',
+                    cancelButtonColor: '#9ca3af'
+                }).then((result) => {
+                    if (result.isConfirmed || result.isDenied) {
+                        if (syncInput) syncInput.value = result.isConfirmed ? 'true' : 'false';
+                        formTermino.dataset.outlookConfirmed = 'true';
+                        formTermino.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                    }
+                });
+                return;
+            }
+
+            if (syncInput) syncInput.value = 'false';
+        }
+        delete formTermino.dataset.outlookConfirmed;
         const fd = new FormData(formTermino);
         Swal.fire({ title: 'Guardando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
@@ -805,6 +900,10 @@ function abrirModalNuevo() {
 
     // Limpiar campos
     if (idInput) idInput.value = "";
+    const syncInput = document.getElementById('input-sync-outlook-termino');
+    const outlookLinkedInput = document.getElementById('input-outlook-linked-termino-current');
+    if (syncInput) syncInput.value = "false";
+    if (outlookLinkedInput) outlookLinkedInput.value = "false";
     if (expSelect) {
         if (expSelect.tomselect) expSelect.tomselect.setValue('');
         else expSelect.value = "";
@@ -1106,7 +1205,7 @@ function cargarMateriasYAbogadosPorGerencia(gerenciaId, callbackMateria = null, 
     }
 }
 
-function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogadoId, prioridad, observaciones = "", origenTermino = 'EXPEDIENTE', materiaId = '', gerenciaId = '', descripcion = '', partes = '', referencia = '') {
+function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogadoId, prioridad, observaciones = "", origenTermino = 'EXPEDIENTE', materiaId = '', gerenciaId = '', descripcion = '', partes = '', referencia = '', outlookLinked = false) {
 
     // Llenar datos en el formulario
     const idInput = document.getElementById('input-termino-id');
@@ -1125,6 +1224,10 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
     const abogadoSelect = document.getElementById('select-abogado-termino');
 
     if (idInput) idInput.value = id;
+    const syncInput = document.getElementById('input-sync-outlook-termino');
+    const outlookLinkedInput = document.getElementById('input-outlook-linked-termino-current');
+    if (syncInput) syncInput.value = "false";
+    if (outlookLinkedInput) outlookLinkedInput.value = String(outlookLinked) === 'true' ? "true" : "false";
     if (asuntoInput) asuntoInput.value = actuacion;
     if (vencimientoInput) vencimientoInput.value = fecha;
     if (prioridadSelect && prioridad) prioridadSelect.value = prioridad;
@@ -1258,7 +1361,8 @@ function recargarDatosTerminoActual() {
                 data.gerenciaId,
                 data.descripcion,
                 data.partes,
-                data.referencia
+                data.referencia,
+                data.outlookLinked
             );
 
             const btnGuardar = document.getElementById('btn-guardar-termino');

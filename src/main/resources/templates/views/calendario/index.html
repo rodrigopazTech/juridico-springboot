@@ -3,6 +3,9 @@
 
 <head>
     <link rel="manifest" th:href="@{/manifest.json}" />
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any" />
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
+    <link rel="apple-touch-icon" th:href="@{/img/apple-touch-icon.png}" />
     <meta name="theme-color" content="#691228" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,6 +20,7 @@
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <!-- Google Fonts -->
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Noto+Sans:wght@400;600&display=swap"
@@ -34,12 +38,12 @@
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <div class="p-3 sm:p-4 sm:ml-64 pt-[116px] sm:pt-[116px] md:pt-[116px] lg:pt-[116px]">
+    <div class="calendar-page-shell p-3 sm:p-4 sm:ml-64 pt-[116px] sm:pt-[116px] md:pt-[116px] lg:pt-[116px]">
 
         <div th:replace="~{fragments/calendario/calendar-header :: header}"></div>
 
         <div id="calendarContainer"
-            class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden min-h-[700px]">
+            class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
 
             <div id="calendarDayView" class="calendar-view hidden h-full">
                 <div th:replace="~{fragments/calendario/calendar-day-view :: dayView}"></div>
@@ -57,6 +61,7 @@
     </div>
 
     <div th:replace="~{fragments/calendario/event-detail-modal :: detailModal}"></div>
+    <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
 
     <script type="module">
         // Agrega el parámetro de versión para evitar caché vieja

@@ -26,6 +26,8 @@
                         class="p-6 bg-gray-50/50">
                         <input type="hidden" id="input-audiencia-id" name="id" />
                         <input type="hidden" id="input-origen-audiencia" name="origenAudiencia" value="EXPEDIENTE" />
+                        <input type="hidden" id="input-sync-outlook" name="syncOutlook" value="false" />
+                        <input type="hidden" id="input-outlook-linked-current" value="false" />
                         <input type="hidden" id="current-user-id"
                             th:value="${usuarioActual != null ? usuarioActual.id : ''}" />
 

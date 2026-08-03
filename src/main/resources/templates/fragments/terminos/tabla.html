@@ -71,10 +71,22 @@
                             </td>
 
                             <td class="px-2.5 py-3 font-bold text-gray-800">
-                                <span th:text="${#temporals.format(t.fechaVencimiento, 'yyyy-MM-dd')}"
-                                    th:classappend="${t.semaforoColor == 'bg-red-800' || t.semaforoColor == 'bg-red-500' ? 'text-red-600' : ''}">
-                                    2026-01-01
-                                </span>
+                                <div class="flex flex-col gap-1">
+                                    <span th:text="${#temporals.format(t.fechaVencimiento, 'yyyy-MM-dd')}"
+                                        th:classappend="${t.semaforoColor == 'bg-red-800' || t.semaforoColor == 'bg-red-500' ? 'text-red-600' : ''}">
+                                        2026-01-01
+                                    </span>
+                                    <span th:if="${t.outlookSyncStatus != null and t.outlookSyncStatus.name() == 'ERROR_SYNC'}"
+                                        class="inline-flex w-fit items-center gap-1 rounded-full border border-red-100 bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">
+                                        <i class="fas fa-triangle-exclamation"></i> Error Outlook
+                                    </span>
+                                    <span th:unless="${t.outlookSyncStatus != null and t.outlookSyncStatus.name() == 'ERROR_SYNC'}"
+                                        class="inline-flex w-fit items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold"
+                                        th:classappend="${t.outlookLinked} ? 'border-blue-100 bg-blue-50 text-blue-700' : 'border-gray-100 bg-gray-50 text-gray-500'">
+                                        <i class="far fa-calendar"></i>
+                                        <span th:text="${t.outlookLinked} ? 'Outlook' : 'Solo SIAJ'">Solo SIAJ</span>
+                                    </span>
+                                </div>
                             </td>
 
                             <td class="px-2.5 py-3">
@@ -102,7 +114,7 @@
                             <td class="px-2 py-3 text-right relative">
                                     <button
                                         th:if="${t.estatusTermino?.name() != 'LIBERADO' && t.estatusTermino?.name() != 'PRESENTADO' && t.estatusTermino?.name() != 'CONCLUIDO'}"
-                                        th:onclick="editarTermino([[${t.id}]], [[${t.asunto}]], [[${t.fechaVencimiento}]], [[${t.expediente?.id ?: ''}]], [[${t.expediente?.numero ?: 'Sin Número'}]], [[${t.abogadoResponsable?.id ?: ''}]], [[${t.prioridad?.id ?: ''}]], [[${t.observaciones != null ? #strings.escapeJavaScript(t.observaciones) : ''}]], [[${t.contexto?.origen ?: 'EXPEDIENTE'}]], [[${t.contexto?.materia?.id ?: ''}]], [[${t.contexto?.gerencia?.id ?: ''}]], [[${t.contexto?.descripcion != null ? #strings.escapeJavaScript(t.contexto?.descripcion) : ''}]] , [[${t.contexto?.partes != null ? #strings.escapeJavaScript(t.contexto?.partes) : ''}]], [[${t.contexto?.numeroExpedienteSnapshot != null ? #strings.escapeJavaScript(t.contexto?.numeroExpedienteSnapshot) : ''}]])"
+                                        th:onclick="editarTermino([[${t.id}]], [[${t.asunto}]], [[${t.fechaVencimiento}]], [[${t.expediente?.id ?: ''}]], [[${t.expediente?.numero ?: 'Sin Número'}]], [[${t.abogadoResponsable?.id ?: ''}]], [[${t.prioridad?.id ?: ''}]], [[${t.observaciones != null ? #strings.escapeJavaScript(t.observaciones) : ''}]], [[${t.contexto?.origen ?: 'EXPEDIENTE'}]], [[${t.contexto?.materia?.id ?: ''}]], [[${t.contexto?.gerencia?.id ?: ''}]], [[${t.contexto?.descripcion != null ? #strings.escapeJavaScript(t.contexto?.descripcion) : ''}]] , [[${t.contexto?.partes != null ? #strings.escapeJavaScript(t.contexto?.partes) : ''}]], [[${t.contexto?.numeroExpedienteSnapshot != null ? #strings.escapeJavaScript(t.contexto?.numeroExpedienteSnapshot) : ''}]], [[${t.outlookLinked}]])"
                                         class="text-gray-400 hover:text-gob-oro mr-2" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </button>
@@ -203,7 +215,7 @@
                                         </button>
 
                                         <button th:if="${usuarioActual != null and (usuarioActual.rol.name() == 'ADMIN' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'SUBDIRECTOR' or usuarioActual.rol.name() == 'GERENTE' or usuarioActual.rol.name() == 'JEFE_DEPTO' or (usuarioActual.rol.name() == 'ABOGADO' and t.expediente != null and t.expediente.abogadoResponsable != null and t.expediente.abogadoResponsable.id == usuarioActual.id))}"
-                                            th:onclick="'confirmarEliminar(' + ${t.id} + ')'"
+                                            th:onclick="'confirmarEliminar(' + ${t.id} + ', ' + ${t.outlookLinked} + ')'"
                                             class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition font-medium border-l-4 border-transparent hover:border-red-500">
                                             <i class="fas fa-trash-alt mr-3 w-4 text-center text-red-400"></i> Eliminar
                                         </button>
@@ -243,6 +255,19 @@
                     <i class="fas fa-circle text-[8px] opacity-70"></i>
                     <span th:text="${t.prioridad != null ? t.prioridad.nombre : 'MEDIA'}">MEDIA</span>
                 </div>
+            </div>
+
+            <div class="flex justify-end">
+                <span th:if="${t.outlookSyncStatus != null and t.outlookSyncStatus.name() == 'ERROR_SYNC'}"
+                    class="inline-flex items-center gap-1 rounded-full border border-red-100 bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">
+                    <i class="fas fa-triangle-exclamation"></i> Error Outlook
+                </span>
+                <span th:unless="${t.outlookSyncStatus != null and t.outlookSyncStatus.name() == 'ERROR_SYNC'}"
+                    class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold"
+                    th:classappend="${t.outlookLinked} ? 'border-blue-100 bg-blue-50 text-blue-700' : 'border-gray-100 bg-gray-50 text-gray-500'">
+                    <i class="far fa-calendar"></i>
+                    <span th:text="${t.outlookLinked} ? 'Outlook' : 'Solo SIAJ'">Solo SIAJ</span>
+                </span>
             </div>
 
             <!-- Cuerpo de la Tarjeta: Expediente y Actuación -->
@@ -293,7 +318,7 @@
                 <div class="flex items-center gap-1 relative">
                     <button
                         th:if="${t.estatusTermino?.name() != 'LIBERADO' && t.estatusTermino?.name() != 'PRESENTADO' && t.estatusTermino?.name() != 'CONCLUIDO'}"
-                        th:onclick="editarTermino([[${t.id}]], [[${t.asunto}]], [[${t.fechaVencimiento}]], [[${t.expediente?.id ?: ''}]], [[${t.expediente?.numero ?: 'Sin Número'}]], [[${t.abogadoResponsable?.id ?: ''}]], [[${t.prioridad?.id ?: ''}]], [[${t.observaciones != null ? #strings.escapeJavaScript(t.observaciones) : ''}]], [[${t.contexto?.origen ?: 'EXPEDIENTE'}]], [[${t.contexto?.materia?.id ?: ''}]], [[${t.contexto?.gerencia?.id ?: ''}]], [[${t.contexto?.descripcion != null ? #strings.escapeJavaScript(t.contexto?.descripcion) : ''}]] , [[${t.contexto?.partes != null ? #strings.escapeJavaScript(t.contexto?.partes) : ''}]], [[${t.contexto?.numeroExpedienteSnapshot != null ? #strings.escapeJavaScript(t.contexto?.numeroExpedienteSnapshot) : ''}]])"
+                        th:onclick="editarTermino([[${t.id}]], [[${t.asunto}]], [[${t.fechaVencimiento}]], [[${t.expediente?.id ?: ''}]], [[${t.expediente?.numero ?: 'Sin Número'}]], [[${t.abogadoResponsable?.id ?: ''}]], [[${t.prioridad?.id ?: ''}]], [[${t.observaciones != null ? #strings.escapeJavaScript(t.observaciones) : ''}]], [[${t.contexto?.origen ?: 'EXPEDIENTE'}]], [[${t.contexto?.materia?.id ?: ''}]], [[${t.contexto?.gerencia?.id ?: ''}]], [[${t.contexto?.descripcion != null ? #strings.escapeJavaScript(t.contexto?.descripcion) : ''}]] , [[${t.contexto?.partes != null ? #strings.escapeJavaScript(t.contexto?.partes) : ''}]], [[${t.contexto?.numeroExpedienteSnapshot != null ? #strings.escapeJavaScript(t.contexto?.numeroExpedienteSnapshot) : ''}]], [[${t.outlookLinked}]])"
                         class="p-2 text-gray-400 hover:text-gob-oro transition-colors" title="Editar">
                         <i class="fas fa-edit"></i>
                     </button>
@@ -388,7 +413,7 @@
                         </button>
 
                         <button th:if="${usuarioActual != null and (usuarioActual.rol.name() == 'ADMIN' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'SUBDIRECTOR' or usuarioActual.rol.name() == 'GERENTE' or usuarioActual.rol.name() == 'JEFE_DEPTO' or (usuarioActual.rol.name() == 'ABOGADO' and t.expediente != null and t.expediente.abogadoResponsable != null and t.expediente.abogadoResponsable.id == usuarioActual.id))}"
-                            th:onclick="'confirmarEliminar(' + ${t.id} + ')'"
+                            th:onclick="'confirmarEliminar(' + ${t.id} + ', ' + ${t.outlookLinked} + ')'"
                             class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition font-medium border-l-4 border-transparent hover:border-red-500">
                             <i class="fas fa-trash-alt mr-3 w-4 text-center text-red-400"></i> Eliminar
                         </button>

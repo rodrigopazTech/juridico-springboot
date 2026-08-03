@@ -11,9 +11,16 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import java.util.Map;
+import com.juridico.sistema_juridico.service.AuditoriaTecnicaService;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    private final AuditoriaTecnicaService auditoriaTecnicaService;
+
+    public GlobalExceptionHandler(AuditoriaTecnicaService auditoriaTecnicaService) {
+        this.auditoriaTecnicaService = auditoriaTecnicaService;
+    }
 
     // 0. IGNORAR RECURSOS ESTÁTICOS NO ENCONTRADOS (Evita popups por favicon.ico, etc.)
     @ExceptionHandler(NoResourceFoundException.class)
@@ -34,8 +41,19 @@ public class GlobalExceptionHandler {
     }
 
     // 2. PERMISOS (403)
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public Object handleSpringAccessDenied(org.springframework.security.access.AccessDeniedException ex, HttpServletRequest request) {
+        auditoriaTecnicaService.registrarAccesoDenegado(request, ex.getMessage());
+        if (isApiRequest(request) || isJsonRequest(request)) {
+            return jsonError(HttpStatus.FORBIDDEN, "Acceso Denegado: " + ex.getMessage());
+        }
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acceso Denegado: " + ex.getMessage());
+    }
+
     @ExceptionHandler({ForbiddenException.class, UnauthorizedException.class})
     public Object handleSecurityErrors(RuntimeException ex, RedirectAttributes attrs, HttpServletRequest request) {
+        auditoriaTecnicaService.registrarAccesoDenegado(request, ex.getMessage());
         if (isApiRequest(request)) {
             return jsonError(HttpStatus.FORBIDDEN, "Acceso Denegado: " + ex.getMessage());
         }
@@ -60,6 +78,7 @@ public class GlobalExceptionHandler {
     // 4. ERROR DE BASE DE DATOS (Integridad / FK)
     @ExceptionHandler(DataIntegrityViolationException.class)
     public Object handleDatabaseError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
+        auditoriaTecnicaService.registrarError(request, ex);
         System.err.println("--- ERROR DE INTEGRIDAD DE DATOS CAPTURADO POR GLOBAL HANDLER ---");
         System.err.println("Mensaje: " + ex.getMessage());
         ex.printStackTrace();
@@ -77,6 +96,7 @@ public class GlobalExceptionHandler {
     // 5. ERROR GENERAL (Cualquier otra cosa)
     @ExceptionHandler(Exception.class)
     public Object handleGeneralError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
+        auditoriaTecnicaService.registrarError(request, ex);
         // Imprimimos el error real en la consola
         System.err.println("--- ERROR CAPTURADO POR GLOBAL HANDLER ---");
         System.err.println("Mensaje: " + ex.getMessage());
@@ -115,6 +135,13 @@ public class GlobalExceptionHandler {
 
     private boolean isApiRequest(HttpServletRequest request) {
         return request.getRequestURI().startsWith("/api/");
+    }
+
+    private boolean isJsonRequest(HttpServletRequest request) {
+        String accept = request.getHeader("Accept");
+        String contentType = request.getContentType();
+        return (accept != null && accept.contains("application/json"))
+                || (contentType != null && contentType.contains("application/json"));
     }
 
     private ResponseEntity<Map<String, String>> jsonError(HttpStatus status, String mensaje) {

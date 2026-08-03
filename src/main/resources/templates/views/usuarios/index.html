@@ -2,6 +2,9 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <link rel="manifest" th:href="@{/manifest.json}" />
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any" />
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
+    <link rel="apple-touch-icon" th:href="@{/img/apple-touch-icon.png}" />
     <meta name="theme-color" content="#691228" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -35,7 +38,16 @@
     <div th:replace="~{fragments/usuarios/modal-usuario :: modal}"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <script th:inline="javascript">
+        window.emailMaintenance = /*[[${emailMaintenance}]]*/ false;
+        window.emailMaintenanceMessage = /*[[${emailMaintenanceMessage}]]*/ 'El servicio de correo esta en mantenimiento.';
+        window.usuarioActual = {
+            rol: /*[[${usuarioActual.rol.name()}]]*/ '',
+            gerenciaId: /*[[${usuarioActual.gerencia != null ? usuarioActual.gerencia.id : null}]]*/ null
+        };
+    </script>
     <script th:src="@{/js/custom-selects.js}"></script>
+    <script th:src="@{/js/email-submit-loading.js}"></script>
     <script th:src="@{/js/usuarios.js}"></script>
     <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
 </body>

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <link rel="manifest" th:href="@{/manifest.json}" />
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any" />
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
+    <link rel="apple-touch-icon" th:href="@{/img/apple-touch-icon.png}" />
+    <meta name="theme-color" content="#691228" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${pageTitle}">Dashboard</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script th:src="@{/js/tailwind.config.js}"></script>
+    <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
+    <script th:src="@{/lib/chart.umd.min.js}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Noto+Sans:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <style>
+        .metric-card {
+            background: #ffffff;
+            border: 1px solid #f3f4f6;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+        }
+
+        .metric-number {
+            font-family: 'Montserrat', sans-serif;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0;
+            line-height: 1;
+        }
+
+        .metric-label {
+            font-family: 'Montserrat', sans-serif;
+            letter-spacing: .055em;
+            line-height: 1.18;
+        }
+
+        .kpi-card {
+            min-height: 9rem;
+            position: relative;
+            overflow: hidden;
+            padding-top: 1.15rem;
+        }
+
+        .kpi-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 1rem;
+            right: 1rem;
+            height: .28rem;
+            border-radius: 0 0 999px 999px;
+        }
+
+        .kpi-danger { background: linear-gradient(180deg, #fff 0%, #fff 58%, #fff7f7 100%); }
+        .kpi-primary { background: linear-gradient(180deg, #fff 0%, #fff 60%, #fff8fb 100%); }
+        .kpi-gold { background: linear-gradient(180deg, #fff 0%, #fff 60%, #fbf8ef 100%); }
+        .kpi-green { background: linear-gradient(180deg, #fff 0%, #fff 60%, #f4faf8 100%); }
+        .kpi-neutral { background: linear-gradient(180deg, #fff 0%, #fff 60%, #f8f9fb 100%); }
+
+        .kpi-danger::before { background: #dc2626; }
+        .kpi-primary::before { background: #691228; }
+        .kpi-gold::before { background: #D4C19C; }
+        .kpi-green::before { background: #13322B; }
+        .kpi-neutral::before { background: #545454; }
+
+        .chart-panel {
+            min-height: 24rem;
+        }
+
+        .status-dot {
+            width: .62rem;
+            height: .62rem;
+            border-radius: 999px;
+            display: inline-block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800 font-sans overflow-x-hidden">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="sm:ml-64 flex flex-col min-h-screen">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <main class="p-4 md:p-6 flex-1 animate-fade-in pt-[116px] sm:pt-[116px] md:pt-[116px] lg:pt-[116px]">
+            <section class="mb-5">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gob-guinda/10 text-gob-guinda flex items-center justify-center">
+                            <i class="fas fa-users-gear"></i>
+                        </div>
+                        <div>
+                            <p class="metric-label text-[11px] font-extrabold uppercase text-gray-400"
+                                th:text="${usuario.rol.name() == 'GERENTE' ? 'Vista de gerencia' : 'Vista de departamento'}">Vista de departamento</p>
+                            <p class="text-sm font-bold text-gray-700">
+                                <span th:text="${usuario.gerencia?.nombre} ?: 'Sin gerencia asignada'">Gerencia</span>
+                                <span class="text-gray-300">/</span>
+                                <span th:text="${usuario.rol.name() == 'GERENTE' ? 'supervisión de la gerencia completa' : 'supervisión por materias asignadas'}">supervisión por materias asignadas</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div th:if="${usuario.rol.name() == 'GERENTE'}" class="flex flex-wrap items-center gap-2">
+                        <span class="rounded-xl border border-gob-oro/30 bg-gob-oro/10 px-3 py-2 text-xs font-black text-gob-guinda">
+                            Gerencia completa
+                        </span>
+                    </div>
+
+                    <div th:if="${usuario.rol.name() != 'GERENTE'}" class="flex flex-wrap items-center gap-2">
+                        <span th:if="${materiasSupervisadas == null or materiasSupervisadas.isEmpty()}"
+                            class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-bold text-gray-500">
+                            Sin materias asignadas
+                        </span>
+                        <span th:each="m : ${materiasSupervisadas}"
+                            class="rounded-xl border border-gob-oro/30 bg-gob-oro/10 px-3 py-2 text-xs font-black text-gob-guinda"
+                            th:text="${m.nombre}">Materia</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                <div class="kpi-card kpi-danger rounded-2xl p-4 metric-card">
+                    <div class="flex h-full flex-col justify-between gap-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="metric-label text-[12px] font-extrabold uppercase text-gray-500">Riesgo crítico</p>
+                                <p class="mt-1 text-xs font-semibold text-gray-400">Vencidos, hoy y audiencias atrasadas</p>
+                            </div>
+                            <span class="w-8 h-8 rounded-xl bg-red-50 text-red-700 flex items-center justify-center">
+                                <i class="fas fa-triangle-exclamation text-sm"></i>
+                            </span>
+                        </div>
+                        <p class="metric-number text-4xl font-black text-red-700" th:text="${resumenDepartamento.alertasPrioridad.criticas}">0</p>
+                        <div class="grid grid-cols-3 gap-2 text-[11px] font-black">
+                            <a th:href="@{/terminos(periodo='VENCIDOS')}" class="rounded-lg bg-red-50 px-2 py-1.5 text-center text-red-700 hover:bg-red-100">Términos vencidos</a>
+                            <a th:href="@{/terminos(periodo='HOY')}" class="rounded-lg bg-gob-guinda/5 px-2 py-1.5 text-center text-gob-guinda hover:bg-gob-guinda/10">Términos hoy</a>
+                            <a th:href="@{/audiencias(periodo='VENCIDOS', estatus='PENDIENTE')}" class="rounded-lg bg-white px-2 py-1.5 text-center text-gob-guinda border border-red-100 hover:bg-red-50">Audiencias atrasadas</a>
+                        </div>
+                    </div>
+                </div>
+
+                <a th:href="@{/terminos(periodo='VENCIDOS')}" class="kpi-card kpi-primary rounded-2xl p-4 metric-card hover:shadow-lg transition-all group">
+                    <div class="flex h-full flex-col justify-between gap-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <p class="metric-label text-[12px] font-extrabold uppercase text-gray-500">Términos vencidos</p>
+                            <span class="w-8 h-8 rounded-xl bg-gob-guinda/10 text-gob-guinda flex items-center justify-center">
+                                <i class="fas fa-clock-rotate-left text-sm"></i>
+                            </span>
+                        </div>
+                        <div>
+                            <p class="metric-number text-4xl font-black text-gray-900" th:text="${resumenDepartamento.terminosVencidos}">0</p>
+                            <p th:if="${resumenDepartamento.terminosVencidos == 0}" class="mt-2 inline-flex rounded-lg bg-gray-50 px-2 py-1 text-[11px] font-bold text-gray-500">Sin vencidos</p>
+                        </div>
+                    </div>
+                </a>
+
+                <a th:href="@{/audiencias(fecha=${hoyIso})}" class="kpi-card kpi-gold rounded-2xl p-4 metric-card hover:shadow-lg transition-all group">
+                    <div class="flex h-full flex-col justify-between gap-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <p class="metric-label text-[12px] font-extrabold uppercase text-gray-500">Audiencias hoy</p>
+                            <span class="w-8 h-8 rounded-xl bg-gob-oro/15 text-gob-oro flex items-center justify-center">
+                                <i class="fas fa-calendar-day text-sm"></i>
+                            </span>
+                        </div>
+                        <p class="metric-number text-4xl font-black text-gray-900" th:text="${resumenDepartamento.audienciasHoy}">0</p>
+                    </div>
+                </a>
+
+                <a th:href="@{/expedientes(etapa='TRAMITE')}" class="kpi-card kpi-green rounded-2xl p-4 metric-card hover:shadow-lg transition-all group">
+                    <div class="flex h-full flex-col justify-between gap-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <p class="metric-label text-[12px] font-extrabold uppercase text-gray-500">Expedientes en trámite</p>
+                            <span class="w-8 h-8 rounded-xl bg-gob-verde/10 text-gob-verde flex items-center justify-center">
+                                <i class="fas fa-folder-open text-sm"></i>
+                            </span>
+                        </div>
+                        <p class="metric-number text-4xl font-black text-gray-900" th:text="${kpis.expedientesActivos}">0</p>
+                    </div>
+                </a>
+
+                <div class="kpi-card kpi-neutral rounded-2xl p-4 metric-card">
+                    <div class="flex h-full flex-col justify-between gap-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <p class="metric-label text-[12px] font-extrabold uppercase text-gray-500">Abogados supervisados</p>
+                            <span class="w-8 h-8 rounded-xl bg-gray-100 text-gray-700 flex items-center justify-center">
+                                <i class="fas fa-user-tie text-sm"></i>
+                            </span>
+                        </div>
+                        <p class="metric-number text-4xl font-black text-gray-900" th:text="${resumenDepartamento.abogadosSupervisados}">0</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr_.85fr]">
+                <div class="chart-panel rounded-2xl p-6 metric-card">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                            <i class="fas fa-scale-balanced mr-2 text-gob-guinda"></i>Carga por abogado
+                        </h2>
+                        <span class="rounded-lg bg-gray-50 px-2 py-1 text-[11px] font-bold text-gray-500">Top 8 por carga</span>
+                    </div>
+                    <div class="relative h-72">
+                        <canvas id="chartCargaEquipo"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-panel rounded-2xl p-6 metric-card">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                            <i class="fas fa-circle-nodes mr-2 text-gob-verde"></i>Estatus de expedientes
+                        </h2>
+                    </div>
+                    <div class="relative h-72">
+                        <canvas id="chartEstatusExpedientes"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6">
+                <div class="mb-3 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-gob-verde/10 text-gob-verde flex items-center justify-center">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <div>
+                            <p class="metric-label text-[11px] font-extrabold uppercase text-gray-400">Mis asuntos</p>
+                            <p class="text-sm font-bold text-gray-700"
+                                th:text="${usuario.rol.name() == 'GERENTE' ? 'Pendientes personales asignados al gerente' : 'Pendientes personales asignados al jefe de departamento'}">
+                                Pendientes personales asignados al jefe de departamento
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 xl:grid-cols-[.85fr_1.15fr]">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-1">
+                        <div class="rounded-2xl p-4 metric-card">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <p class="metric-label text-[11px] font-extrabold uppercase text-gray-500">Términos personales</p>
+                                    <p class="mt-1 text-xs font-semibold text-gray-400">Vencidos / hoy / 7 días</p>
+                                </div>
+                                <i class="fas fa-clock text-gob-guinda"></i>
+                            </div>
+                            <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+                                <a th:href="@{/terminos(periodo='VENCIDOS', keyword=${usuario.nombreCompleto})}" class="rounded-xl bg-red-50 px-2 py-2 hover:bg-red-100 transition">
+                                    <p class="metric-number text-2xl font-black text-red-700" th:text="${misAsuntos.terminosVencidos}">0</p>
+                                    <p class="text-[10px] font-black uppercase text-red-700">Vencidos</p>
+                                </a>
+                                <a th:href="@{/terminos(periodo='HOY', keyword=${usuario.nombreCompleto})}" class="rounded-xl bg-gob-guinda/5 px-2 py-2 hover:bg-gob-guinda/10 transition">
+                                    <p class="metric-number text-2xl font-black text-gob-guinda" th:text="${misAsuntos.terminosHoy}">0</p>
+                                    <p class="text-[10px] font-black uppercase text-gob-guinda">Hoy</p>
+                                </a>
+                                <a th:href="@{/terminos(periodo='SEMANA', keyword=${usuario.nombreCompleto})}" class="rounded-xl bg-gob-oro/10 px-2 py-2 hover:bg-gob-oro/20 transition">
+                                    <p class="metric-number text-2xl font-black text-gray-800" th:text="${misAsuntos.terminosProximos7}">0</p>
+                                    <p class="text-[10px] font-black uppercase text-gray-500">7 días</p>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl p-4 metric-card">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <p class="metric-label text-[11px] font-extrabold uppercase text-gray-500">Audiencias propias</p>
+                                    <p class="mt-1 text-xs font-semibold text-gray-400">Hoy y próximas</p>
+                                </div>
+                                <i class="fas fa-gavel text-gob-verde"></i>
+                            </div>
+                            <div class="mt-4 grid grid-cols-2 gap-2 text-center">
+                                <a th:href="@{/audiencias(fecha=${hoyIso}, keyword=${usuario.nombreCompleto})}" class="rounded-xl bg-gob-guinda/5 px-2 py-3 hover:bg-gob-guinda/10 transition">
+                                    <p class="metric-number text-3xl font-black text-gob-guinda" th:text="${misAsuntos.audienciasHoy}">0</p>
+                                    <p class="text-[10px] font-black uppercase text-gob-guinda">Hoy</p>
+                                </a>
+                                <a th:href="@{/audiencias(periodo='SEMANA', keyword=${usuario.nombreCompleto})}" class="rounded-xl bg-gob-verde/10 px-2 py-3 hover:bg-gob-verde/15 transition">
+                                    <p class="metric-number text-3xl font-black text-gob-verde" th:text="${misAsuntos.audienciasProximas7}">0</p>
+                                    <p class="text-[10px] font-black uppercase text-gob-verde">7 días</p>
+                                </a>
+                            </div>
+                        </div>
+
+                        <a th:href="@{/tareas(estado='pendiente')}" class="rounded-2xl p-4 metric-card hover:shadow-md transition">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <p class="metric-label text-[11px] font-extrabold uppercase text-gray-500">Tareas personales</p>
+                                    <p class="mt-1 text-xs font-semibold text-gray-400">Pendientes y vencidas</p>
+                                </div>
+                                <i class="fas fa-list-check text-gob-verde"></i>
+                            </div>
+                            <div class="mt-4 flex items-end justify-between gap-3">
+                                <div>
+                                    <p class="metric-number text-4xl font-black text-gray-900" th:text="${misAsuntos.tareasPendientes}">0</p>
+                                    <p class="text-[11px] font-black uppercase text-gray-500">Pendientes</p>
+                                </div>
+                                <span class="rounded-xl bg-red-50 px-3 py-2 text-xs font-black text-red-700">
+                                    <span th:text="${misAsuntos.tareasVencidas}">0</span> vencidas
+                                </span>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <div class="rounded-2xl p-5 metric-card">
+                            <div class="mb-4 flex items-center justify-between gap-3">
+                                <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                                    <i class="fas fa-triangle-exclamation mr-2 text-red-700"></i>Mis términos críticos
+                                </h2>
+                            </div>
+
+                            <div class="space-y-3" th:if="${!#lists.isEmpty(misAsuntos.terminosCriticos)}">
+                                <a th:each="t : ${misAsuntos.terminosCriticos}" th:href="@{/terminos(keyword=${t.referencia}, periodo=${t.dias < 0 ? 'VENCIDOS' : (t.dias == 0 ? 'HOY' : 'SEMANA')})}"
+                                    class="block rounded-xl border border-gray-100 bg-gray-50 px-3 py-3 transition hover:border-gob-guinda hover:bg-white">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-black text-gray-800" th:text="${t.referencia}">EXP-001</p>
+                                            <p class="mt-1 line-clamp-2 text-xs text-gray-600" th:text="${t.asunto}">Asunto</p>
+                                        </div>
+                                        <div class="shrink-0 text-right">
+                                            <p class="text-xs font-black text-gray-800" th:text="${#temporals.format(t.fecha, 'dd/MM')}">29/07</p>
+                                            <p class="text-[10px] font-bold uppercase"
+                                                th:classappend="${t.dias < 0 ? ' text-red-700' : ' text-gob-guinda'}"
+                                                th:text="${t.dias < 0 ? 'Vencido' : (t.dias == 0 ? 'Hoy' : t.dias + ' días')}">Hoy</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div th:if="${#lists.isEmpty(misAsuntos.terminosCriticos)}"
+                                class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
+                                Sin términos críticos propios.
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl p-5 metric-card">
+                            <div class="mb-4 flex items-center justify-between gap-3">
+                                <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                                    <i class="fas fa-calendar-day mr-2 text-gob-guinda"></i>Mi agenda próxima
+                                </h2>
+                                <a th:href="@{/tareas(estado='pendiente')}" class="text-xs font-bold text-gob-guinda hover:underline">Abrir tareas</a>
+                            </div>
+
+                            <div class="space-y-3" th:if="${!#lists.isEmpty(misAsuntos.proximasAudiencias)}">
+                                <a th:each="a : ${misAsuntos.proximasAudiencias}" th:href="@{/audiencias(fecha=${a.fecha}, keyword=${a.referencia})}"
+                                    class="block rounded-xl border border-gray-100 px-3 py-3 transition hover:border-gob-guinda hover:bg-gray-50">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-black text-gray-800" th:text="${a.referencia}">EXP-001</p>
+                                            <p class="truncate text-xs font-semibold text-gray-500" th:text="${a.tipo}">Audiencia</p>
+                                        </div>
+                                        <div class="shrink-0 text-right">
+                                            <p class="text-xs font-black text-gray-800" th:text="${#temporals.format(a.fecha, 'dd/MM')}">29/07</p>
+                                            <p class="text-[10px] font-bold text-gray-500" th:text="${#temporals.format(a.hora, 'HH:mm')}">10:00</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="mt-3 space-y-2" th:if="${!#lists.isEmpty(misAsuntos.proximasTareas)}">
+                                <a th:each="r : ${misAsuntos.proximasTareas}" th:href="@{/tareas(estado='pendiente')}"
+                                    class="flex items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 transition hover:bg-white">
+                                    <p class="truncate text-xs font-bold text-gray-700" th:text="${r.titulo}">Tarea</p>
+                                    <span class="shrink-0 text-[10px] font-black text-gray-500" th:text="${#temporals.format(r.fecha, 'dd/MM')}">29/07</span>
+                                </a>
+                            </div>
+
+                            <div th:if="${#lists.isEmpty(misAsuntos.proximasAudiencias) and #lists.isEmpty(misAsuntos.proximasTareas)}"
+                                class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
+                                Sin audiencias ni tareas personales próximas.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+                <div class="rounded-2xl p-6 metric-card">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                            <i class="fas fa-triangle-exclamation mr-2 text-red-700"></i><span
+                                th:text="${usuario.rol.name() == 'GERENTE' ? 'Términos críticos de la gerencia' : 'Términos críticos del departamento'}">Términos críticos del departamento</span>
+                        </h2>
+                    </div>
+
+                    <div class="space-y-3" th:if="${!#lists.isEmpty(resumenDepartamento.terminosCriticos)}">
+                        <a th:each="t : ${resumenDepartamento.terminosCriticos}" th:href="@{/terminos(keyword=${t.referencia}, periodo=${t.dias < 0 ? 'VENCIDOS' : (t.dias == 0 ? 'HOY' : 'SEMANA')})}"
+                            class="block rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 transition hover:border-gob-guinda hover:bg-white hover:shadow-sm">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="status-dot"
+                                            th:classappend="${t.tono == 'vencido' ? ' bg-red-700' : (t.tono == 'critico' ? ' bg-gob-guinda' : ' bg-amber-500')}"></span>
+                                        <p class="truncate text-sm font-black text-gray-800" th:text="${t.referencia}">EXP-001</p>
+                                        <span class="rounded-lg border border-gray-100 bg-white px-2 py-0.5 text-[11px] font-bold text-gray-600" th:text="${t.prioridad}">ALTA</span>
+                                    </div>
+                                    <p class="mt-1 line-clamp-2 text-sm text-gray-600" th:text="${t.asunto}">Asunto</p>
+                                    <p class="mt-1 truncate text-xs font-bold text-gray-400" th:text="${t.responsable}">Responsable</p>
+                                </div>
+                                <div class="shrink-0 text-right">
+                                    <p class="text-sm font-black text-gray-800" th:text="${#temporals.format(t.fecha, 'dd/MM')}">29/07</p>
+                                    <p class="text-[11px] font-bold uppercase"
+                                        th:classappend="${t.dias < 0 ? ' text-red-700' : ' text-gob-guinda'}"
+                                        th:text="${t.dias < 0 ? 'Vencido' : (t.dias == 0 ? 'Hoy' : t.dias + ' días')}">Hoy</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(resumenDepartamento.terminosCriticos)}"
+                        class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
+                        Sin términos críticos en los próximos días.
+                    </div>
+                </div>
+
+                <div class="rounded-2xl p-6 metric-card">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                            <i class="fas fa-calendar-day mr-2 text-gob-guinda"></i>Próximas audiencias del equipo
+                        </h2>
+                    </div>
+
+                    <div class="space-y-3" th:if="${!#lists.isEmpty(resumenDepartamento.proximasAudiencias)}">
+                        <a th:each="a : ${resumenDepartamento.proximasAudiencias}" th:href="@{/audiencias(fecha=${a.fecha}, keyword=${a.referencia})}"
+                            class="block rounded-xl border border-gray-100 px-4 py-3 transition hover:border-gob-guinda hover:bg-gray-50 hover:shadow-sm">
+                            <div class="flex items-start gap-3">
+                                <div class="w-14 shrink-0 rounded-xl bg-gob-oro/10 px-2 py-2 text-center border border-gob-oro/20">
+                                    <p class="text-xs font-black uppercase text-gob-guinda" th:text="${#temporals.format(a.fecha, 'MMM')}">JUL</p>
+                                    <p class="text-xl font-black text-gray-800 font-headings" th:text="${#temporals.format(a.fecha, 'dd')}">29</p>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="truncate text-sm font-black text-gray-800" th:text="${a.referencia}">EXP-001</p>
+                                        <p class="text-xs font-bold text-gray-500" th:text="${#temporals.format(a.hora, 'HH:mm')}">10:00</p>
+                                    </div>
+                                    <p class="mt-1 text-sm font-semibold text-gray-700" th:text="${a.tipo}">Audiencia</p>
+                                    <p class="truncate text-xs font-bold text-gray-400" th:text="${a.responsable}">Responsable</p>
+                                    <p class="truncate text-xs text-gray-500" th:text="${a.lugar}">Sede</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(resumenDepartamento.proximasAudiencias)}"
+                        class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
+                        Sin audiencias pendientes próximas.
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6 rounded-2xl p-6 metric-card">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                    <h2 class="font-bold text-gray-700 uppercase text-sm tracking-wider font-headings">
+                        <i class="fas fa-chart-line mr-2 text-gob-oro"></i>Trabajo completado mensual
+                    </h2>
+                </div>
+                <div class="relative h-64">
+                    <canvas id="chartTrabajoMensual"></canvas>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        window.dashboardData = /*[[${dashboardData}]]*/ {};
+        window.userRole = /*[[${usuario.rol.name()}]]*/ '';
+        /*]]>*/
+    </script>
+
+    <script>
+        const data = window.dashboardData || {};
+        const palette = {
+            guinda: '#691228',
+            oro: '#D4C19C',
+            verde: '#13322B',
+            gris: '#545454',
+            rojo: '#dc2626'
+        };
+
+        function chartOptions(extra = {}) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 10, usePointStyle: true }
+                    }
+                },
+                ...extra
+            };
+        }
+
+        function topCargaTrabajo(raw) {
+            const labels = raw.labels || [];
+            const rows = labels.map((label, index) => ({
+                label,
+                expedientes: (raw.expedientes || [])[index] || 0,
+                audiencias: (raw.audiencias || [])[index] || 0,
+                terminos: (raw.terminos || [])[index] || 0
+            }));
+            rows.sort((a, b) => (b.expedientes + b.audiencias + b.terminos) - (a.expedientes + a.audiencias + a.terminos));
+            return rows.slice(0, 8);
+        }
+
+        const carga = topCargaTrabajo(data.cargaTrabajoUsuarios || {});
+        new Chart(document.getElementById('chartCargaEquipo'), {
+            type: 'bar',
+            data: {
+                labels: carga.map(item => item.label),
+                datasets: [
+                    { label: 'Expedientes', data: carga.map(item => item.expedientes), backgroundColor: palette.guinda, borderRadius: 6, maxBarThickness: 18 },
+                    { label: 'Términos', data: carga.map(item => item.terminos), backgroundColor: palette.oro, borderRadius: 6, maxBarThickness: 18 },
+                    { label: 'Audiencias', data: carga.map(item => item.audiencias), backgroundColor: palette.verde, borderRadius: 6, maxBarThickness: 18 }
+                ]
+            },
+            options: chartOptions({
+                indexAxis: 'y',
+                scales: {
+                    x: { beginAtZero: true, ticks: { precision: 0 } },
+                    y: { grid: { display: false }, ticks: { autoSkip: false } }
+                }
+            })
+        });
+
+        const estatus = data.estatusExpedientes || { labels: [], values: [] };
+        new Chart(document.getElementById('chartEstatusExpedientes'), {
+            type: 'doughnut',
+            data: {
+                labels: estatus.labels,
+                datasets: [{
+                    data: estatus.values,
+                    backgroundColor: [palette.guinda, palette.oro, palette.verde, palette.gris],
+                    borderWidth: 0
+                }]
+            },
+            options: chartOptions({ cutout: '58%' })
+        });
+
+        const mensual = data.trabajoMensual || { labels: [], values: [] };
+        new Chart(document.getElementById('chartTrabajoMensual'), {
+            type: 'line',
+            data: {
+                labels: mensual.labels,
+                datasets: [{
+                    label: 'Concluidos',
+                    data: mensual.values,
+                    borderColor: palette.guinda,
+                    backgroundColor: 'rgba(105, 18, 40, .08)',
+                    fill: true,
+                    tension: .35,
+                    pointRadius: 3,
+                    pointBackgroundColor: palette.guinda
+                }]
+            },
+            options: chartOptions({
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } },
+                    x: { grid: { display: false } }
+                }
+            })
+        });
+    </script>
+</body>
+
+</html>

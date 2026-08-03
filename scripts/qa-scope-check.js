@@ -6,10 +6,10 @@ const civilExpedienteId = 'daa3c09e-d335-4f89-94e1-5b2c4865fa21';
 const outOfScopeExpedienteId = '62b42040-2c97-4676-b256-ba91757cad5f';
 
 const accounts = [
-  ['ADMIN', 'admin@sistema.com'],
-  ['GERENTE', 'gerente@juridico.com'],
-  ['JEFE_DEPTO', 'jefe@juridico.com'],
-  ['ABOGADO', 'abogado@juridico.com'],
+  ['ADMIN', 'admin'],
+  ['GERENTE', 'gerente'],
+  ['JEFE_DEPTO', 'jefe'],
+  ['ABOGADO', 'abogado'],
 ];
 
 async function login(page, email) {

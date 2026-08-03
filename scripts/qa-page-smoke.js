@@ -4,13 +4,13 @@ const baseUrl = process.env.QA_BASE_URL || 'http://localhost:8080';
 const password = process.env.QA_PASSWORD || '12345';
 
 const accounts = [
-  ['ADMIN', 'admin@sistema.com'],
-  ['DIRECTOR_PRINCIPAL', 'director.principal@juridico.com'],
-  ['DIRECTOR', 'director@juridico.com'],
-  ['SUBDIRECTOR', 'subdirector@juridico.com'],
-  ['GERENTE', 'gerente@juridico.com'],
-  ['JEFE_DEPTO', 'jefe@juridico.com'],
-  ['ABOGADO', 'abogado@juridico.com'],
+  ['ADMIN', 'admin'],
+  ['DIRECTOR_PRINCIPAL', 'director.principal'],
+  ['DIRECTOR', 'director'],
+  ['SUBDIRECTOR', 'subdirector'],
+  ['GERENTE', 'gerente'],
+  ['JEFE_DEPTO', 'jefe'],
+  ['ABOGADO', 'abogado'],
 ];
 
 const pages = [
@@ -22,7 +22,7 @@ const pages = [
   { id: 'TER', path: '/terminos', mustContain: ['Términos'] },
   { id: 'AUD', path: '/audiencias', mustContain: ['Audiencias'] },
   { id: 'CAT', path: '/catalogos', mustContain: ['Catálogos'] },
-  { id: 'PERF', path: '/perfil', mustContain: ['Perfil'] },
+  { id: 'PERF', path: '/perfil', mustContain: ['Mi Cuenta'] },
   { id: 'NOTIF', path: '/notificaciones', mustContain: ['Notificaciones'] },
 ];
 

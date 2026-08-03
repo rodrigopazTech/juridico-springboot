@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <link rel="manifest" th:href="@{/manifest.json}" />
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any" />
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
+    <link rel="apple-touch-icon" th:href="@{/img/apple-touch-icon.png}" />
+    <meta name="theme-color" content="#691228" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activar cuenta | Sistema Juridico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'gob-guinda': '#691228',
+                        'gob-guindaDark': '#4e0c1d',
+                        'gob-oro': '#D4C19C',
+                        'gob-gris': '#545454',
+                        'gob-fondo': '#F5F5F5'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gob-fondo min-h-screen flex items-center justify-center px-6">
+    <main class="w-full max-w-md bg-white border border-gray-200 rounded-lg shadow-lg p-8">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gob-guinda/10 mb-4">
+                <i class="fas fa-user-check text-3xl text-gob-guinda"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gob-guindaDark">Activar cuenta</h1>
+            <p class="mt-2 text-sm text-gob-gris">Valida tu correo institucional antes de crear tu contrasena.</p>
+        </div>
+
+        <div th:if="${!tokenValido}" class="space-y-5 text-center">
+            <div class="p-4 text-sm text-red-800 border-l-4 border-red-700 bg-red-50 rounded text-left">
+                El enlace es invalido o ha expirado.
+            </div>
+            <a th:href="@{/}" class="inline-flex justify-center items-center gap-2 py-3 px-4 rounded-lg text-sm font-bold text-white bg-gob-guinda hover:bg-gob-guindaDark">
+                <i class="fas fa-arrow-left"></i>
+                Volver al inicio
+            </a>
+        </div>
+
+        <div th:if="${tokenValido}" class="space-y-5">
+            <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <p class="text-xs font-bold text-gray-500 uppercase mb-1">Usuario registrado</p>
+                <p class="text-sm font-bold text-gray-800" th:text="${usernameActivacion}">usuario</p>
+                <p class="text-sm text-gray-600 break-all" th:text="${correoActivacion}">correo@finabien.gob.mx</p>
+            </div>
+
+            <div th:if="${microsoftError}" class="p-4 text-sm text-amber-900 border-l-4 border-amber-700 bg-amber-50 rounded">
+                <span th:text="${microsoftError}">No fue posible vincular Microsoft.</span>
+            </div>
+
+            <a th:if="${microsoftConfigured}" th:href="@{/auth/activar/microsoft(token=${token})}"
+                class="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-lg text-sm font-bold text-white bg-gob-guinda hover:bg-gob-guindaDark">
+                <i class="fab fa-microsoft"></i>
+                Validar con Microsoft
+            </a>
+
+            <div th:unless="${microsoftConfigured}" class="p-4 text-sm text-amber-900 border-l-4 border-amber-700 bg-amber-50 rounded">
+                La vinculacion con Microsoft aun no esta configurada.
+            </div>
+
+            <a th:href="@{/auth/reset-password(token=${token})}"
+                class="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-lg text-sm font-bold text-gob-guinda bg-white border border-gob-guinda hover:bg-red-50">
+                <i class="fas fa-key"></i>
+                Continuar y crear contrasena
+            </a>
+
+            <p class="text-xs text-gray-500 text-center">
+                La validacion con Microsoft quedara vinculada cuando los permisos esten disponibles.
+            </p>
+        </div>
+    </main>
+</body>
+
+</html>

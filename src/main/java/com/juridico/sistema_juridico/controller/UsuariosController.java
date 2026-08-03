@@ -10,6 +10,7 @@ import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -51,6 +52,8 @@ public class UsuariosController {
     @Autowired
     private AuditoriaService auditoriaService;
     @Autowired
+    private com.juridico.sistema_juridico.service.PasswordResetService passwordResetService;
+    @Autowired
     private ExpedienteRepository expedienteRepository;
     @Autowired
     private AudienciaRepository audienciaRepository;
@@ -60,6 +63,12 @@ public class UsuariosController {
     private ActividadExpedienteRepository actividadRepository;
     @Autowired
     private com.juridico.sistema_juridico.service.CatalogosSyncService syncService;
+
+    @Value("${app.email.maintenance:false}")
+    private boolean emailMaintenance;
+
+    @Value("${app.email.maintenance-message:El servicio de correo esta en mantenimiento.}")
+    private String emailMaintenanceMessage;
 
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a");
@@ -81,6 +90,11 @@ public class UsuariosController {
                 RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR);
 
         List<RolUsuario> rolesVisibles = usuarioService.getRolesVisiblesPara(usuarioActual.getRol());
+        if (usuarioActual.getRol() != RolUsuario.ADMIN) {
+            rolesVisibles = rolesVisibles.stream()
+                    .filter(rol -> rol != RolUsuario.ADMIN)
+                    .toList();
+        }
         boolean hayBusqueda = q != null && !q.trim().isEmpty();
 
         if (hayBusqueda) {
@@ -151,6 +165,9 @@ public class UsuariosController {
         model.addAttribute("listaRoles", rolesPermitidos);
 
         model.addAttribute("usuarioActual", usuarioActual);
+        model.addAttribute("puedeAdministrarUsuarios", puedeAdministrarUsuarios(usuarioActual));
+        model.addAttribute("emailMaintenance", emailMaintenance);
+        model.addAttribute("emailMaintenanceMessage", emailMaintenanceMessage);
         model.addAttribute("nuevoUsuario", new Usuario());
         model.addAttribute("pageTitle", "Gestión de Usuarios");
         model.addAttribute("activePage", "usuarios");
@@ -162,10 +179,24 @@ public class UsuariosController {
     public String guardarUsuario(@ModelAttribute Usuario usuario,
             @RequestParam(value = "gerenciasIds", required = false) List<Integer> gerenciasIds,
             @RequestParam(value = "materiasIds", required = false) List<Integer> materiasIds,
+            jakarta.servlet.http.HttpServletRequest request,
             RedirectAttributes redirectAttrs) {
-        usuarioService.guardarUsuario(usuario, gerenciasIds, materiasIds);
-        syncService.sincronizarNombreUsuario(usuario);
-        redirectAttrs.addFlashAttribute("mensaje", "Usuario guardado correctamente.");
+        boolean esNuevo = usuario.getId() == null;
+        Usuario guardado = usuarioService.guardarUsuario(usuario, gerenciasIds, materiasIds);
+        syncService.sincronizarNombreUsuario(guardado);
+        if (esNuevo) {
+            if (emailMaintenance) {
+                redirectAttrs.addFlashAttribute("mensaje", "Usuario creado. " + emailMaintenanceMessage);
+                redirectAttrs.addFlashAttribute("tipo", "warning");
+                return "redirect:/usuarios";
+            }
+            boolean enviado = passwordResetService.sendActivationLink(guardado, request);
+            redirectAttrs.addFlashAttribute("mensaje", enviado
+                    ? "Usuario creado. Se envio el enlace de activacion a " + guardado.getEmail() + "."
+                    : "Usuario creado, pero no se pudo enviar el enlace de activacion. Revisa SMTP y reenvia el enlace.");
+        } else {
+            redirectAttrs.addFlashAttribute("mensaje", "Usuario guardado correctamente.");
+        }
         redirectAttrs.addFlashAttribute("tipo", "success");
         return "redirect:/usuarios";
     }
@@ -173,6 +204,7 @@ public class UsuariosController {
     @GetMapping("/toggle/{id}")
     public String toggleStatusUsuario(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
         Usuario usuario = usuarioService.buscarPorId(id);
+        validarPuedeVerUsuario(usuario);
         usuario.setActivo(!usuario.getActivo());
         List<Integer> gerenciasIds = usuario.getGerencias().stream().map(Gerencia::getId).collect(Collectors.toList());
         List<Integer> materiasIds = usuario.getMaterias().stream().map(Materia::getId).collect(Collectors.toList());
@@ -200,6 +232,7 @@ public class UsuariosController {
     public org.springframework.http.ResponseEntity<List<Map<String, Object>>> obtenerCasosReal(
             @PathVariable("id") Integer id) {
 
+        validarPuedeVerUsuario(usuarioService.buscarPorId(id));
         List<Expediente> expedientes = expedienteRepository.findAllByAbogadoResponsableId(id);
         List<Map<String, Object>> response = expedientes.stream().map(e -> {
             Map<String, Object> map = new HashMap<>();
@@ -219,6 +252,7 @@ public class UsuariosController {
     public org.springframework.http.ResponseEntity<List<Map<String, Object>>> obtenerAgendaReal(
             @PathVariable("id") Integer id) {
 
+        validarPuedeVerUsuario(usuarioService.buscarPorId(id));
         List<Map<String, Object>> agenda = new ArrayList<>();
 
         // Cargar Audiencias
@@ -298,6 +332,7 @@ public class UsuariosController {
     public org.springframework.http.ResponseEntity<List<Map<String, Object>>> obtenerHistorialReal(
             @PathVariable("id") Integer id) {
 
+        validarPuedeVerUsuario(usuarioService.buscarPorId(id));
         List<ActividadExpediente> actExp = actividadRepository.findTop100ByUsuarioIdOrderByFechaRegistroDesc(id);
         List<com.juridico.sistema_juridico.Entity.usuario.ActividadUsuario> actUs = actividadUsuarioRepository.findTop100ByUsuarioIdOrderByFechaRegistroDesc(id);
 
@@ -342,39 +377,113 @@ public class UsuariosController {
     @ResponseBody
     public org.springframework.http.ResponseEntity<?> actualizarPasswordTemporal(
             @RequestParam("id") Integer id,
-            @RequestParam("password") String password) {
+            @RequestParam(value = "passwordTemporal", required = false) String passwordTemporal,
+            jakarta.servlet.http.HttpServletRequest request) {
         try {
             String actorEmail = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario actor = usuarioRepository.findByEmail(actorEmail)
                     .orElseThrow(() -> new ResourceNotFoundException("Usuario actual no encontrado."));
 
-            if (actor.getRol() != RolUsuario.DIRECTOR_PRINCIPAL && actor.getRol() != RolUsuario.DIRECTOR && actor.getRol() != RolUsuario.SUBDIRECTOR &&
-                actor.getRol() != RolUsuario.ADMIN && actor.getRol() != RolUsuario.GERENTE) {
+            if (!puedeAdministrarUsuarios(actor)) {
                 return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
                         .body(Map.of("mensaje", "No tienes permisos para realizar esta acción."));
             }
 
             Usuario usuarioModificado = usuarioService.buscarPorId(id);
+            validarPuedeVerUsuario(actor, usuarioModificado);
+            usuarioService.validarPuedeAdministrarUsuario(actor, usuarioModificado);
+            String temporal = passwordResetService.createTemporaryPassword(usuarioModificado, passwordTemporal, request);
 
-            if (actor.getRol() == RolUsuario.GERENTE) {
-                boolean gerenciaComun = actor.getGerencias() != null && usuarioModificado.getGerencias() != null &&
-                    actor.getGerencias().stream().anyMatch(gA ->
-                        usuarioModificado.getGerencias().stream().anyMatch(gU -> gU.getId().equals(gA.getId())));
-                if (!gerenciaComun) {
-                    return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
-                            .body(Map.of("mensaje", "No tienes permisos para modificar usuarios de otras gerencias."));
-                }
-            }
+            auditoriaService.registrarActividadGeneral(usuarioModificado, "Contrasena Temporal Generada",
+                    "Se genero una contrasena temporal por el usuario: " + actor.getNombreCompleto(), "KEY");
 
-            usuarioService.actualizarPasswordTemporal(id, password);
-
-            auditoriaService.registrarActividadGeneral(usuarioModificado, "Contraseña Temporal Asignada",
-                    "Se le ha asignado una nueva contraseña temporal por el usuario: " + actor.getNombreCompleto(), "KEY");
-
-            return org.springframework.http.ResponseEntity.ok(Map.of("mensaje", "Contraseña temporal guardada correctamente en la base de datos."));
+            return org.springframework.http.ResponseEntity.ok(Map.of(
+                    "mensaje", "Contrasena temporal creada. El usuario debera cambiarla al iniciar sesion.",
+                    "passwordTemporal", temporal));
         } catch (Exception e) {
             return org.springframework.http.ResponseEntity.badRequest().body(Map.of("mensaje", e.getMessage()));
         }
+    }
+
+    @PostMapping("/api/{id}/enviar-restablecimiento")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> enviarRestablecimiento(@PathVariable("id") Integer id,
+            jakarta.servlet.http.HttpServletRequest request) {
+        try {
+            String actorEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario actor = usuarioRepository.findByEmail(actorEmail)
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuario actual no encontrado."));
+            Usuario usuario = usuarioService.buscarPorId(id);
+            validarPuedeVerUsuario(actor, usuario);
+            if (emailMaintenance) {
+                return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE)
+                        .body(Map.of("mensaje", emailMaintenanceMessage));
+            }
+            boolean enviado = passwordResetService.sendResetLinkForUser(usuario, request);
+            if (!enviado) {
+                return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.BAD_GATEWAY)
+                        .body(Map.of("mensaje", "No se pudo enviar el enlace de restablecimiento."));
+            }
+
+            auditoriaService.registrarActividadGeneral(usuario, "Enlace de Restablecimiento Enviado",
+                    "Se envio enlace de restablecimiento por el usuario: " + actor.getNombreCompleto(), "KEY");
+
+            return org.springframework.http.ResponseEntity.ok(Map.of(
+                    "mensaje", "Enlace de restablecimiento enviado a " + usuario.getEmail() + "."));
+        } catch (Exception ex) {
+            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("mensaje", "No se pudo enviar el enlace de restablecimiento."));
+        }
+    }
+
+    @PostMapping("/api/{id}/reenviar-activacion")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> reenviarActivacion(@PathVariable("id") Integer id,
+            jakarta.servlet.http.HttpServletRequest request) {
+        try {
+            String actorEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario actor = usuarioRepository.findByEmail(actorEmail)
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuario actual no encontrado."));
+            Usuario usuario = usuarioService.buscarPorId(id);
+            validarPuedeVerUsuario(actor, usuario);
+            if (emailMaintenance) {
+                return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE)
+                        .body(Map.of("mensaje", emailMaintenanceMessage));
+            }
+            boolean enviado = passwordResetService.sendActivationLink(usuario, request);
+            if (enviado) {
+                return org.springframework.http.ResponseEntity.ok(Map.of(
+                        "mensaje", "Enlace de activacion enviado a " + usuario.getEmail() + "."));
+            }
+            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.BAD_GATEWAY)
+                    .body(Map.of("mensaje", "No se pudo enviar el enlace de activacion."));
+        } catch (Exception ex) {
+            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("mensaje", "No se pudo reenviar el enlace de activacion."));
+        }
+    }
+
+    private void validarPuedeVerUsuario(Usuario destino) {
+        String actorEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario actor = usuarioRepository.findByEmail(actorEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario actual no encontrado."));
+        validarPuedeVerUsuario(actor, destino);
+    }
+
+    private void validarPuedeVerUsuario(Usuario actor, Usuario destino) {
+        if (destino != null && destino.getRol() == RolUsuario.ADMIN && actor.getRol() != RolUsuario.ADMIN) {
+            throw new ResourceNotFoundException("Usuario no encontrado.");
+        }
+    }
+
+    private boolean puedeAdministrarUsuarios(Usuario usuario) {
+        return usuario != null && List.of(
+                RolUsuario.ADMIN,
+                RolUsuario.DIRECTOR_PRINCIPAL,
+                RolUsuario.DIRECTOR,
+                RolUsuario.SUBDIRECTOR,
+                RolUsuario.GERENTE,
+                RolUsuario.JEFE_DEPTO).contains(usuario.getRol());
     }
 
     @GetMapping("/api/materias-por-gerencia/{ids}")

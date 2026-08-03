@@ -47,6 +47,8 @@ public class UsuarioService {
     private TipoAudienciaRepository tipoAudienciaRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private UsuarioIdentityService usuarioIdentityService;
 
     // --- USUARIOS ---
 
@@ -144,6 +146,7 @@ public class UsuarioService {
             if (usuarioRepository.existsByEmail(usuario.getEmail())) {
                 throw new RuntimeException("El correo electrónico ya está registrado.");
             }
+            prepararIdentidadUsuarioNuevo(usuario);
 
             // Aplicar asignaciones por default basadas en el rol del creador
             if (actor.getRol() == RolUsuario.GERENTE) {
@@ -180,7 +183,8 @@ public class UsuarioService {
                 }
             }
 
-            usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+            usuario.setPassword(passwordEncoder.encode(java.util.UUID.randomUUID().toString()));
+            usuario.setForcePasswordChange(true);
             usuario.setMaterias(materiasSeleccionadas);
             usuario.setCreadoPor(actor);
             return usuarioRepository.save(usuario);
@@ -193,29 +197,59 @@ public class UsuarioService {
 
             existente.setNombreCompleto(usuario.getNombreCompleto());
             existente.setEmail(usuario.getEmail());
+            existente.setPuesto(usuario.getPuesto());
+            existente.setTelefonoInstitucional(usuario.getTelefonoInstitucional());
+            existente.setTelefonoMovil(usuario.getTelefonoMovil());
+            existente.setUbicacionOficina(usuario.getUbicacionOficina());
+            actualizarIdentidadUsuarioExistente(existente, usuario);
 
-            if (actor.getRol() == RolUsuario.GERENTE) {
-                // Gerente puede editar rol (entre JEFE_DEPTO y ABOGADO) y materias, pero no gerencia
-                existente.setRol(usuario.getRol());
-                if (materiasIds != null) {
-                    existente.getMaterias().clear();
-                    existente.getMaterias().addAll(materiasSeleccionadas);
+            existente.setRol(usuario.getRol());
+
+            if ((materiasIds == null || materiasIds.isEmpty()) && !gerenciasSeleccionadas.isEmpty()
+                    && existente.getRol() != RolUsuario.ADMIN
+                    && existente.getRol() != RolUsuario.DIRECTOR_PRINCIPAL
+                    && existente.getRol() != RolUsuario.DIRECTOR
+                    && existente.getRol() != RolUsuario.SUBDIRECTOR
+                    && existente.getRol() != RolUsuario.GERENTE) {
+                for (Gerencia g : gerenciasSeleccionadas) {
+                    materiasSeleccionadas.addAll(materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(g.getId()));
                 }
-            } else if (actor.getRol() == RolUsuario.JEFE_DEPTO) {
-                // Jefe de Departamento no puede cambiar rol, gerencia ni materias del usuario
-            } else {
-                // Roles directivos/admin editan todo
-                existente.setRol(usuario.getRol());
-                existente.getGerencias().clear();
-                existente.getGerencias().addAll(gerenciasSeleccionadas);
-                if (materiasIds != null || existente.getRol() == RolUsuario.ADMIN 
-                        || existente.getRol() == RolUsuario.DIRECTOR_PRINCIPAL 
-                        || existente.getRol() == RolUsuario.DIRECTOR 
-                        || existente.getRol() == RolUsuario.SUBDIRECTOR
-                        || existente.getRol() == RolUsuario.GERENTE) {
-                    existente.getMaterias().clear();
-                    existente.getMaterias().addAll(materiasSeleccionadas);
+            }
+
+            if (actor.getRol() == RolUsuario.GERENTE || actor.getRol() == RolUsuario.JEFE_DEPTO) {
+                Set<Integer> gerenciasActorIds = actor.getGerencias().stream()
+                        .map(Gerencia::getId)
+                        .collect(java.util.stream.Collectors.toSet());
+                gerenciasSeleccionadas.removeIf(g -> !gerenciasActorIds.contains(g.getId()));
+                if (gerenciasSeleccionadas.isEmpty()) {
+                    gerenciasSeleccionadas.addAll(actor.getGerencias());
                 }
+
+                materiasSeleccionadas.removeIf(m -> m.getGerencia() == null
+                        || !gerenciasSeleccionadas.stream().map(Gerencia::getId).toList().contains(m.getGerencia().getId()));
+
+                if (actor.getRol() == RolUsuario.JEFE_DEPTO) {
+                    Set<Integer> materiasActorIds = actor.getMaterias().stream()
+                            .map(Materia::getId)
+                            .collect(java.util.stream.Collectors.toSet());
+                    materiasSeleccionadas.removeIf(m -> !materiasActorIds.contains(m.getId()));
+                    if ((materiasIds == null || materiasIds.isEmpty()) && !actor.getMaterias().isEmpty()) {
+                        materiasSeleccionadas.addAll(actor.getMaterias());
+                    }
+                }
+            }
+
+            existente.getGerencias().clear();
+            existente.getGerencias().addAll(gerenciasSeleccionadas);
+
+            if (materiasIds != null || !materiasSeleccionadas.isEmpty()
+                    || existente.getRol() == RolUsuario.ADMIN
+                    || existente.getRol() == RolUsuario.DIRECTOR_PRINCIPAL
+                    || existente.getRol() == RolUsuario.DIRECTOR
+                    || existente.getRol() == RolUsuario.SUBDIRECTOR
+                    || existente.getRol() == RolUsuario.GERENTE) {
+                existente.getMaterias().clear();
+                existente.getMaterias().addAll(materiasSeleccionadas);
             }
 
             existente.setActivo(usuario.getActivo());
@@ -235,6 +269,52 @@ public class UsuarioService {
         existente.setPassword(passwordEncoder.encode(password));
         existente.setForcePasswordChange(true);
         usuarioRepository.save(existente);
+    }
+
+    public void validarPuedeAdministrarUsuario(Usuario actor, Usuario destino) {
+        validarJerarquia(actor, destino);
+    }
+
+    private void prepararIdentidadUsuarioNuevo(Usuario usuario) {
+        String username = usuarioIdentityService.normalizeUsername(usuario.getUsername());
+        usuario.setUsername(username != null ? username : usuarioIdentityService.generateUsername(usuario));
+        validarUsernameDisponible(usuario.getUsername(), null);
+        usuario.setNumeroEmpleado(normalizeNumeroEmpleado(usuario.getNumeroEmpleado()));
+        validarNumeroEmpleadoDisponible(usuario.getNumeroEmpleado(), null);
+    }
+
+    private void actualizarIdentidadUsuarioExistente(Usuario existente, Usuario cambios) {
+        String username = usuarioIdentityService.normalizeUsername(cambios.getUsername());
+        existente.setUsername(username != null ? username : existente.getUsername());
+        validarUsernameDisponible(existente.getUsername(), existente.getId());
+        existente.setNumeroEmpleado(normalizeNumeroEmpleado(cambios.getNumeroEmpleado()));
+        validarNumeroEmpleadoDisponible(existente.getNumeroEmpleado(), existente.getId());
+    }
+
+    private void validarUsernameDisponible(String username, Integer usuarioIdActual) {
+        usuarioRepository.findByUsernameIgnoreCase(username).ifPresent(u -> {
+            if (usuarioIdActual == null || !u.getId().equals(usuarioIdActual)) {
+                throw new RuntimeException("El nombre de usuario ya esta registrado.");
+            }
+        });
+    }
+
+    private void validarNumeroEmpleadoDisponible(String numeroEmpleado, Integer usuarioIdActual) {
+        if (numeroEmpleado == null || numeroEmpleado.isBlank()) {
+            return;
+        }
+        usuarioRepository.findByNumeroEmpleadoIgnoreCase(numeroEmpleado).ifPresent(u -> {
+            if (usuarioIdActual == null || !u.getId().equals(usuarioIdActual)) {
+                throw new RuntimeException("El numero de empleado ya esta registrado.");
+            }
+        });
+    }
+
+    private String normalizeNumeroEmpleado(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim().toUpperCase(Locale.ROOT);
     }
 
 

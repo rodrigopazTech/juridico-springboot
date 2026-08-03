@@ -40,6 +40,71 @@ public class Usuario {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
+    @Column(name = "username", unique = true, length = 80)
+    private String username;
+
+    @Column(name = "numero_empleado", unique = true, length = 40)
+    private String numeroEmpleado;
+
+    @Column(name = "puesto", length = 160)
+    private String puesto;
+
+    @Column(name = "telefono_institucional", length = 120)
+    private String telefonoInstitucional;
+
+    @Column(name = "telefono_movil", length = 80)
+    private String telefonoMovil;
+
+    @Column(name = "ubicacion_oficina", length = 180)
+    private String ubicacionOficina;
+
+    @Column(name = "microsoft_object_id", unique = true, length = 80)
+    private String microsoftObjectId;
+
+    @Column(name = "microsoft_user_principal_name", length = 180)
+    private String microsoftUserPrincipalName;
+
+    @Column(name = "microsoft_display_name", length = 200)
+    private String microsoftDisplayName;
+
+    @Column(name = "microsoft_job_title", length = 160)
+    private String microsoftJobTitle;
+
+    @Column(name = "microsoft_business_phones", length = 300)
+    private String microsoftBusinessPhones;
+
+    @Column(name = "microsoft_mobile_phone", length = 80)
+    private String microsoftMobilePhone;
+
+    @Column(name = "microsoft_office_location", length = 180)
+    private String microsoftOfficeLocation;
+
+    @Column(name = "microsoft_linked_at")
+    private LocalDateTime microsoftLinkedAt;
+
+    @Column(name = "microsoft_last_sync_at")
+    private LocalDateTime microsoftLastSyncAt;
+
+    @Column(name = "microsoft_login_enabled")
+    @Builder.Default
+    private Boolean microsoftLoginEnabled = false;
+
+    @Column(name = "outlook_calendar_linked")
+    @Builder.Default
+    private Boolean outlookCalendarLinked = false;
+
+    @Column(name = "outlook_account_email", length = 180)
+    private String outlookAccountEmail;
+
+    @Column(name = "outlook_refresh_token_encrypted", columnDefinition = "TEXT")
+    private String outlookRefreshTokenEncrypted;
+
+    @Column(name = "outlook_connected_at")
+    private LocalDateTime outlookConnectedAt;
+
+    @Column(name = "outlook_last_sync_at")
+    private LocalDateTime outlookLastSyncAt;
+
     @Column(name = "password_hash", nullable = false)
     private String password;
 
@@ -122,12 +187,29 @@ public class Usuario {
 
     @PrePersist
     protected void onCreate() {
+        normalizeIdentityFields();
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
+        normalizeIdentityFields();
         updatedAt = LocalDateTime.now();
+    }
+
+    private void normalizeIdentityFields() {
+        if (email != null) {
+            email = email.trim().toLowerCase();
+        }
+        if (username != null) {
+            username = username.trim().toLowerCase();
+        }
+        if (numeroEmpleado != null) {
+            numeroEmpleado = numeroEmpleado.trim().toUpperCase();
+            if (numeroEmpleado.isBlank()) {
+                numeroEmpleado = null;
+            }
+        }
     }
 }

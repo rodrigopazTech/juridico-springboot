@@ -20,6 +20,7 @@ import com.juridico.sistema_juridico.security.ForcePasswordChangeFilter;
 import com.juridico.sistema_juridico.security.JwtAuthenticationEntryPoint;
 import com.juridico.sistema_juridico.security.JwtAuthenticationFilter; // <-- Importación necesaria
 import com.juridico.sistema_juridico.security.JwtTokenProvider;
+import com.juridico.sistema_juridico.service.AuditoriaTecnicaService;
 
 @Configuration
 @EnableWebSecurity
@@ -31,6 +32,7 @@ public class SecurityConfig {
     private final ForcePasswordChangeFilter forcePasswordChangeFilter;
     private final com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository usuarioRepository;
     private final com.juridico.sistema_juridico.service.AuditoriaService auditoriaService;
+    private final AuditoriaTecnicaService auditoriaTecnicaService;
     private final JwtTokenProvider jwtTokenProvider;
 
     @Value("${app.jwt.expiration:86400000}")
@@ -42,6 +44,7 @@ public class SecurityConfig {
             ForcePasswordChangeFilter forcePasswordChangeFilter,
             com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository usuarioRepository,
             com.juridico.sistema_juridico.service.AuditoriaService auditoriaService,
+            AuditoriaTecnicaService auditoriaTecnicaService,
             JwtTokenProvider jwtTokenProvider) {
         this.userDetailsService = userDetailsService;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
@@ -49,6 +52,7 @@ public class SecurityConfig {
         this.forcePasswordChangeFilter = forcePasswordChangeFilter;
         this.usuarioRepository = usuarioRepository;
         this.auditoriaService = auditoriaService;
+        this.auditoriaTecnicaService = auditoriaTecnicaService;
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
@@ -59,13 +63,23 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception
                         .defaultAuthenticationEntryPointFor(
                                 jwtAuthenticationEntryPoint,
-                                new AntPathRequestMatcher("/api/**")))
+                                new AntPathRequestMatcher("/api/**"))
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            auditoriaTecnicaService.registrarAccesoDenegado(request, accessDeniedException.getMessage());
+                            if (isJsonRequest(request)) {
+                                response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
+                                response.setContentType("application/json");
+                                response.getWriter().write("{\"error\":\"Acceso denegado\"}");
+                            } else {
+                                response.sendError(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN, "Acceso denegado");
+                            }
+                        }))
                 .authorizeHttpRequests(auth -> auth
                         // 1. Recursos Públicos
                         .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**", "/lib/**", "/manifest.json",
                                 "/sw.js")
                         .permitAll()
-                        .requestMatchers("/", "/login", "/register", "/api/auth/**", "/error", "/cambiar-password",
+                        .requestMatchers("/", "/login", "/register", "/auth/**", "/api/auth/**", "/error", "/cambiar-password",
                                 "/ws-realtime/**")
                         .permitAll()
 
@@ -75,6 +89,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/catalogos/**")
                         .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE", "JEFE_DEPTO")
                         .requestMatchers(HttpMethod.DELETE, "/catalogos/**")
+                        .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE", "JEFE_DEPTO")
+                        .requestMatchers(HttpMethod.GET, "/catalogos/*/toggle/**")
                         .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE", "JEFE_DEPTO")
                         .requestMatchers("/catalogos", "/catalogos/**")
                         .hasAnyAuthority("ADMIN", "DIRECTOR_PRINCIPAL", "DIRECTOR", "SUBDIRECTOR", "GERENTE", "JEFE_DEPTO", "ABOGADO",
@@ -109,16 +125,25 @@ public class SecurityConfig {
                         .successHandler((request, response, authentication) -> {
                             String email = authentication.getName();
                             usuarioRepository.findByEmail(email).ifPresent(u -> {
-                                auditoriaService.registrarActividadGeneral(u, "Inicio de Sesión",
-                                        "El usuario ha ingresado al sistema.", "CLOCK");
+                                try {
+                                    auditoriaService.registrarActividadGeneral(u, "Inicio de Sesión",
+                                            "El usuario ha ingresado al sistema.", "CLOCK");
+                                    auditoriaTecnicaService.registrarLoginExitoso(u, request);
+                                } catch (Exception auditError) {
+                                    // La auditoria no debe bloquear el inicio de sesion.
+                                }
                             });
                             // Generar cookie JWT para sincronizar sesión con peticiones /api/**
-                            String jwt = jwtTokenProvider.generateToken(authentication);
-                            jakarta.servlet.http.Cookie jwtCookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", jwt);
-                            jwtCookie.setHttpOnly(true);
-                            jwtCookie.setPath("/");
-                            jwtCookie.setMaxAge((int) (jwtExpirationMs / 1000));
-                            response.addCookie(jwtCookie);
+                            try {
+                                String jwt = jwtTokenProvider.generateToken(authentication);
+                                jakarta.servlet.http.Cookie jwtCookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", jwt);
+                                jwtCookie.setHttpOnly(true);
+                                jwtCookie.setPath("/");
+                                jwtCookie.setMaxAge((int) (jwtExpirationMs / 1000));
+                                response.addCookie(jwtCookie);
+                            } catch (Exception jwtError) {
+                                // La sesion web puede continuar aunque no se emita cookie JWT.
+                            }
                             // Redirigir a la URL solicitada originalmente o al dashboard
                             org.springframework.security.web.savedrequest.HttpSessionRequestCache requestCache = new org.springframework.security.web.savedrequest.HttpSessionRequestCache();
                             org.springframework.security.web.savedrequest.SavedRequest savedRequest = requestCache
@@ -139,7 +164,11 @@ public class SecurityConfig {
                                 response.sendRedirect("/dashboard");
                             }
                         })
-                        .failureUrl("/?error=true")
+                        .failureHandler((request, response, exception) -> {
+                            auditoriaTecnicaService.registrarLoginFallido(request.getParameter("username"), request,
+                                    exception.getMessage());
+                            response.sendRedirect("/?error=true");
+                        })
                         .permitAll())
                 .logout(logout -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
@@ -149,6 +178,7 @@ public class SecurityConfig {
                                 usuarioRepository.findByEmail(email).ifPresent(u -> {
                                     auditoriaService.registrarActividadGeneral(u, "Cierre de Sesión",
                                             "El usuario ha salido del sistema.", "CLOCK");
+                                    auditoriaTecnicaService.registrarLogout(u, request);
                                 });
                             }
                             // Limpiar cookie JWT al cerrar sesión
@@ -187,5 +217,13 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
+    }
+
+    private boolean isJsonRequest(jakarta.servlet.http.HttpServletRequest request) {
+        String accept = request.getHeader("Accept");
+        String contentType = request.getContentType();
+        return request.getRequestURI().startsWith("/api/")
+                || (accept != null && accept.contains("application/json"))
+                || (contentType != null && contentType.contains("application/json"));
     }
 }

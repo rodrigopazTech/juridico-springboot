@@ -21,11 +21,23 @@ public class CustomUserDetailsService implements UserDetailsService {
     private UsuarioRepository usuarioRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        // 1. Buscamos el usuario en tu base de datos
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
+    public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {
+        String identifier = login != null ? login.trim() : "";
+        Usuario usuario = usuarioRepository.findByLoginIdentifier(identifier)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + login));
 
+        return buildUserDetails(usuario);
+    }
+
+    public UserDetails loadUserByEmail(String email) throws UsernameNotFoundException {
+        String normalizedEmail = email != null ? email.trim() : "";
+        Usuario usuario = usuarioRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + email));
+
+        return buildUserDetails(usuario);
+    }
+
+    private UserDetails buildUserDetails(Usuario usuario) {
         // 2. Convertimos tu Rol (Enum) a una autoridad de Spring Security
         List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(usuario.getRol().name()));

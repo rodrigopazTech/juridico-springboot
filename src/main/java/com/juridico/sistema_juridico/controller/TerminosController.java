@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -71,6 +70,7 @@ import com.juridico.sistema_juridico.repository.procesal.TerminoPresentadoReposi
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.NotificacionService;
+import com.juridico.sistema_juridico.service.OutlookCalendarService;
 import com.juridico.sistema_juridico.util.TerminoExcelExporter;
 import com.juridico.sistema_juridico.service.procesal.TerminoArchivoService;
 import com.juridico.sistema_juridico.service.FileStorageService;
@@ -113,6 +113,8 @@ public class TerminosController {
     private AuditoriaService auditoriaService;
     @Autowired
     private ConfiguracionSemaforoService configuracionSemaforoService;
+    @Autowired
+    private OutlookCalendarService outlookCalendarService;
 
     // --- MATRIZ DE PERMISOS ---
     private static final Map<EstatusTermino, List<RolUsuario>> PERMISOS_ETAPAS = new HashMap<>();
@@ -309,6 +311,7 @@ public class TerminosController {
         // Mantener valores
         model.addAttribute("keyword", keyword);
         model.addAttribute("paramEstatus", estatus);
+        model.addAttribute("paramEstatusName", estatus != null ? estatus.name() : null);
         model.addAttribute("paramPrioridadId", prioridadId);
         model.addAttribute("paramAbogadoId", abogadoId);
         model.addAttribute("paramGerenciaId", gerenciaId);
@@ -323,22 +326,22 @@ public class TerminosController {
                 fechaInicio, fechaFin,
                 filtroMateriaIds);
 
-        Map<EstatusTermino, Long> conteosMap = new EnumMap<>(EstatusTermino.class);
+        Map<String, Long> conteosMap = new HashMap<>();
         for (EstatusTermino e : EstatusTermino.values()) {
-            conteosMap.put(e, 0L);
+            conteosMap.put(e.name(), 0L);
         }
         for (Object[] row : rawCounts) {
             if (row[0] != null) {
-                conteosMap.put((EstatusTermino) row[0], (Long) row[1]);
+                conteosMap.put(((EstatusTermino) row[0]).name(), (Long) row[1]);
             }
         }
         model.addAttribute("conteosEtapas", conteosMap);
 
         // --- 7. TOTALES EN PROCESO ---
         long totalesEnProceso = 0;
-        for (Map.Entry<EstatusTermino, Long> entry : conteosMap.entrySet()) {
-            if (entry.getKey() != EstatusTermino.CONCLUIDO) {
-                totalesEnProceso += entry.getValue();
+        for (EstatusTermino e : EstatusTermino.values()) {
+            if (e != EstatusTermino.CONCLUIDO) {
+                totalesEnProceso += conteosMap.getOrDefault(e.name(), 0L);
             }
         }
         model.addAttribute("totalesEnProceso", totalesEnProceso);
@@ -346,10 +349,12 @@ public class TerminosController {
         model.addAttribute("activePage", "terminos");
         model.addAttribute("mesActual", mes != null ? mes : LocalDate.now().getMonthValue());
         model.addAttribute("anioActual", anio != null ? anio : LocalDate.now().getYear());
+        model.addAttribute("outlookCalendarLinked", outlookCalendarService.tieneCalendarioVinculado(usuarioActual));
 
         // --- 7. ETAPAS ASIGNADAS AL ROL ---
         List<EstatusTermino> etapasAsignadas = getEtapasAsignadasPorRol(usuarioActual.getRol());
         model.addAttribute("etapasAsignadas", etapasAsignadas);
+        model.addAttribute("etapasAsignadasNames", etapasAsignadas.stream().map(EstatusTermino::name).collect(Collectors.toList()));
 
         // --- 8. FILTRO POR DEFECTO PARA EL USUARIO (ELIMINADO PARA MOSTRAR TODO) ---
         // Se eliminó la lógica que filtraba por etapas asignadas por defecto para mostrar el listado completo.
@@ -364,6 +369,7 @@ public class TerminosController {
                         fechaInicio, fechaFin, materiaId, filtroMateriaIds, pageable);
                 model.addAttribute("terminos", paginaTerminos);
                 model.addAttribute("paramEstatus", null);
+                model.addAttribute("paramEstatusName", null);
             }
             return "views/terminos/index :: gridMaestroTerminos";
         }
@@ -385,6 +391,7 @@ public class TerminosController {
             @RequestParam(value = "contextoDescripcion", required = false) String contextoDescripcion,
             @RequestParam(value = "contextoPartes", required = false) String contextoPartes,
             @RequestParam(value = "contextoNumeroReferencia", required = false) String contextoNumeroReferencia,
+            @RequestParam(value = "syncOutlook", defaultValue = "false") boolean syncOutlook,
             RedirectAttributes redirectAttrs,
             HttpServletRequest request) {
 
@@ -522,7 +529,6 @@ public class TerminosController {
                 if (terminoForm.getObservaciones() != null) {
                     existente.setObservaciones(terminoForm.getObservaciones());
                 }
-
                 existente.setUpdatedAt(LocalDateTime.now());
                 terminoGuardar = existente;
             } else {
@@ -549,6 +555,7 @@ public class TerminosController {
             }
 
             Termino terminoGuardado = terminoRepository.save(terminoGuardar);
+            sincronizarOutlookSiConfirmado(syncOutlook, actor, terminoGuardado, redirectAttrs);
 
             if (esNuevo) {
                 String desc = "Se ha registrado un nuevo término: " + (terminoGuardado.getAsunto() != null ? terminoGuardado.getAsunto() : "Sin Especificar")
@@ -1010,6 +1017,21 @@ public class TerminosController {
         return true;
     }
 
+    private void sincronizarOutlookSiConfirmado(boolean syncOutlook, Usuario usuario, Termino termino,
+            RedirectAttributes redirectAttrs) {
+        if (!syncOutlook) {
+            return;
+        }
+        try {
+            outlookCalendarService.crearOActualizarEventoTermino(usuario, termino);
+            redirectAttrs.addFlashAttribute("mensajeOutlook", "Termino sincronizado con Outlook.");
+        } catch (Exception ex) {
+            redirectAttrs.addFlashAttribute("mensajeOutlook",
+                    "El termino se guardo en SIAJ, pero Outlook no pudo sincronizarse: " + ex.getMessage());
+            redirectAttrs.addFlashAttribute("tipo", "warning");
+        }
+    }
+
     private EstatusTermino calcularSiguienteEstado(EstatusTermino actual) {
         if (actual == null) {
             return EstatusTermino.PROYECTISTA;
@@ -1138,7 +1160,8 @@ public class TerminosController {
 
     @PostMapping("/eliminar/{id}")
     @ResponseBody
-    public ResponseEntity<java.util.Map<String, Object>> eliminar(@PathVariable("id") Integer id) {
+    public ResponseEntity<java.util.Map<String, Object>> eliminar(@PathVariable("id") Integer id,
+            @RequestParam(value = "deleteOutlook", defaultValue = "false") boolean deleteOutlook) {
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         try {
             Usuario actor = getUsuarioActual();
@@ -1148,6 +1171,10 @@ public class TerminosController {
             String referencia = termino.getNumeroReferencia();
             Materia materia = termino.getMateriaReferencia();
             com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad prioridad = termino.getPrioridad();
+
+            if (deleteOutlook && Boolean.TRUE.equals(termino.getOutlookLinked())) {
+                outlookCalendarService.eliminarEventoTermino(actor, termino);
+            }
 
             // 1. Eliminar archivos asociados y registros en TerminoArchivo
             terminoArchivoService.eliminarArchivosPorTermino(id);
@@ -1268,6 +1295,7 @@ public class TerminosController {
             res.put("abogadoId", termino.getAbogadoResponsable() != null ? termino.getAbogadoResponsable().getId() : "");
             res.put("prioridad", termino.getPrioridad() != null ? termino.getPrioridad().getId() : "");
             res.put("observaciones", termino.getObservaciones() != null ? termino.getObservaciones() : "");
+            res.put("outlookLinked", Boolean.TRUE.equals(termino.getOutlookLinked()));
             
             TerminoContexto ctx = termino.getContexto();
             res.put("origenTermino", ctx != null && ctx.getOrigen() != null ? ctx.getOrigen().name() : "EXPEDIENTE");

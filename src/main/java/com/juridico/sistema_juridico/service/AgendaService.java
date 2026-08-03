@@ -1,8 +1,6 @@
 package com.juridico.sistema_juridico.service;
 
-import com.juridico.sistema_juridico.Entity.procesal.AudienciaDesahogada;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
-import com.juridico.sistema_juridico.repository.procesal.AudienciaDesahogadaRepository;
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,9 +19,8 @@ import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 
 import java.time.LocalDate;
-import java.time.YearMonth;
-import java.time.temporal.TemporalAdjusters;
-import java.util.Arrays;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -76,14 +73,11 @@ public class AgendaService {
         Pageable pageable = PageRequest.of(page, 10);
         Usuario actual = obtenerUsuarioActual();
 
-        List<EstatusTermino> estatusFinales = Arrays.asList(EstatusTermino.PRESENTADO, EstatusTermino.CONCLUIDO);
-
         Integer filtroRoleGerenciaId = null;
         List<Integer> filtroRoleMateriaIds = null;
         Integer filtroRoleUsuarioId = null;
 
         if (actual.getRol() == RolUsuario.ABOGADO) {
-            filtroRoleMateriaIds = List.of(-1);
             filtroRoleUsuarioId = actual.getId();
         } else if (actual.getRol() == RolUsuario.GERENTE) {
             filtroRoleGerenciaId = actual.getGerencia() != null ? actual.getGerencia().getId() : -1;
@@ -95,11 +89,13 @@ public class AgendaService {
 
         if (fechaInicio == null) fechaInicio = LocalDate.of(1900, 1, 1);
         if (fechaFin == null) fechaFin = LocalDate.of(2100, 12, 31);
+        LocalDateTime inicioConclusion = fechaInicio.atStartOfDay();
+        LocalDateTime finConclusion = fechaFin.atTime(LocalTime.MAX);
 
         return terminoRepository.buscarParaHistorial(
                 keyword,
-                estatusFinales,
-                fechaInicio, fechaFin,
+                EstatusTermino.CONCLUIDO,
+                inicioConclusion, finConclusion,
                 gerenciaId, materiaId,
                 filtroRoleGerenciaId, filtroRoleMateriaIds,
                 filtroRoleUsuarioId,

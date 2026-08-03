@@ -10,7 +10,7 @@
     <div id="grid-recordatorios-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
         <div th:each="r : ${recordatorios}" 
-             class="relative bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group overflow-hidden flex flex-col justify-between h-44">
+             class="relative bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group overflow-hidden flex flex-col justify-between min-h-52">
             
             <div class="absolute left-0 top-0 bottom-0 w-1.5"
                  th:classappend="${r.prioridad != null and r.prioridad.nombre == 'ALTA' ? 'bg-red-500' : 'bg-gob-oro'}"></div>
@@ -24,6 +24,18 @@
             </div>
 
             <div class="pl-2 mt-1 mb-auto">
+                <div class="mb-2">
+                    <span th:if="${r.outlookSyncStatus != null and r.outlookSyncStatus.name() == 'ERROR_SYNC'}"
+                        class="inline-flex items-center gap-1 rounded-full border border-red-100 bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">
+                        <i class="fas fa-triangle-exclamation"></i> Error Outlook
+                    </span>
+                    <span th:unless="${r.outlookSyncStatus != null and r.outlookSyncStatus.name() == 'ERROR_SYNC'}"
+                        class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold"
+                        th:classappend="${r.outlookLinked} ? 'border-blue-100 bg-blue-50 text-blue-700' : 'border-gray-100 bg-gray-50 text-gray-500'">
+                        <i class="far fa-calendar"></i>
+                        <span th:text="${r.outlookLinked} ? 'Outlook' : 'Solo SIAJ'">Solo SIAJ</span>
+                    </span>
+                </div>
                 <p class="text-sm text-gray-500 line-clamp-1" th:text="${r.detalles}">Detalles o descripción corta...</p>
             </div>
 

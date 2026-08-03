@@ -6,6 +6,7 @@
         <input type="hidden" name="materia" th:value="${paramMateria}">
         <input type="hidden" name="estatus" th:value="${paramEstatus}">
         <input type="hidden" name="periodo" th:value="${paramPeriodo}">
+        <input type="hidden" name="fecha" th:value="${paramFecha}">
         <input type="hidden" name="abogadoId" th:value="${paramAbogadoId}">
         <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
             <i class="fas fa-search text-gray-400"></i>
@@ -25,7 +26,7 @@
         class="flex flex-wrap items-center gap-2 w-full lg:w-auto lg:ml-auto justify-end">
         <a th:href="@{/audiencias}"
             class="text-xs px-3 py-2 rounded-lg transition-all flex items-center gap-1.5 no-underline border"
-            th:classappend="${#strings.isEmpty(keyword) && #strings.isEmpty(param.tipo) && #strings.isEmpty(param.gerencia) && #strings.isEmpty(param.materia) && #strings.isEmpty(param.estatus) && #strings.isEmpty(param.periodo) && #strings.isEmpty(param.abogadoId) && #strings.isEmpty(param.mes) ? 
+            th:classappend="${#strings.isEmpty(keyword) && #strings.isEmpty(param.tipo) && #strings.isEmpty(param.gerencia) && #strings.isEmpty(param.materia) && #strings.isEmpty(param.estatus) && #strings.isEmpty(param.periodo) && #strings.isEmpty(param.fecha) && #strings.isEmpty(param.abogadoId) && #strings.isEmpty(param.mes) ? 
            'text-gray-400 border-transparent hover:bg-gray-100' : 
            'bg-gob-guinda text-white border-gob-guinda shadow-md font-bold hover:bg-gob-guinda/90'}">
             <i class="fas fa-list-ul"></i> Ver Todos
@@ -38,6 +39,7 @@
              materia=${paramMateria},
              estatus=${paramEstatus},
              periodo=${paramPeriodo},
+             fecha=${paramFecha},
              abogadoId=${paramAbogadoId}
         )}" class="text-gob-gris bg-white border border-gray-300 hover:bg-gray-50 font-bold rounded-lg text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm transition-colors flex items-center decoration-0"
              title="Descargar Reporte Excel">

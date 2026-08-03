@@ -3,6 +3,9 @@
 
 <head>
     <link rel="manifest" th:href="@{/manifest.json}" />
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any" />
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
+    <link rel="apple-touch-icon" th:href="@{/img/apple-touch-icon.png}" />
     <meta name="theme-color" content="#691228" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -48,8 +51,8 @@
 
         <div class="w-full max-w-sm space-y-8">
             <div class="text-center">
-                <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gob-guinda/10 mb-6">
-                    <i class="fas fa-balance-scale text-4xl text-gob-guinda"></i>
+                <div class="inline-flex items-center justify-center w-20 h-20 mb-6">
+                    <img th:src="@{/img/icon-192.png}" alt="Sistema Juridico" class="w-20 h-20 rounded-full shadow-lg" />
                 </div>
                 <h1 class="text-3xl font-headings font-bold text-gob-guindaDark tracking-tight">Bienvenido</h1>
                 <p class="mt-2 text-sm text-gob-gris">Sistema de Gestión Jurídica</p>
@@ -78,20 +81,26 @@
                 <span>Su sesión ha expirado, vuelve a iniciar sesión.</span>
             </div>
 
+            <div th:if="${microsoftError}"
+                class="flex items-center p-4 mb-4 text-sm text-amber-900 border-l-4 border-amber-700 bg-amber-50 rounded shadow-sm"
+                role="alert">
+                <i class="fas fa-circle-info mr-3"></i>
+                <span th:text="${microsoftError}">No fue posible iniciar sesion con Microsoft.</span>
+            </div>
+
             <form th:action="@{/perform_login}" method="POST" class="mt-8 space-y-6">
                 <div class="space-y-5">
                     <div class="relative group">
                         <label for="username"
-                            class="block text-xs font-bold text-gob-plata uppercase tracking-wider mb-1 font-headings">Correo
-                            Institucional</label>
+                            class="block text-xs font-bold text-gob-plata uppercase tracking-wider mb-1 font-headings">Usuario o Numero de Empleado</label>
                         <div class="relative">
                             <div
                                 class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gob-plata group-focus-within:text-gob-guinda transition-colors">
-                                <i class="fas fa-envelope"></i>
+                                <i class="fas fa-user"></i>
                             </div>
                             <input id="username" name="username" type="text" required
                                 class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gob-guinda focus:border-transparent transition-all shadow-sm sm:text-sm bg-gray-50 focus:bg-white"
-                                placeholder="usuario@dominio.com">
+                                placeholder="usuario o numero de empleado">
                         </div>
                     </div>
 
@@ -101,13 +110,22 @@
                         <div class="relative">
                             <div
                                 class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gob-plata group-focus-within:text-gob-guinda transition-colors">
-                                <i class="fas fa-lock"></i>
+                                <i class="fas fa-key"></i>
                             </div>
                             <input id="password" name="password" type="password" required
                                 class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gob-guinda focus:border-transparent transition-all shadow-sm sm:text-sm bg-gray-50 focus:bg-white"
                                 placeholder="••••••••">
                         </div>
                     </div>
+                </div>
+
+                <div class="flex justify-between gap-3">
+                    <a th:href="@{/auth/recordar-usuario}" class="text-xs font-bold text-gob-guinda hover:underline">
+                        Recordar usuario
+                    </a>
+                    <a th:href="@{/auth/solicitar-reset}" class="text-xs font-bold text-gob-guinda hover:underline">
+                        Recuperar contrasena
+                    </a>
                 </div>
 
                 <div class="pt-2">
@@ -121,10 +139,24 @@
                 </div>
             </form>
 
+            <a th:href="@{/auth/microsoft/login}"
+                th:classappend="${!microsoftLoginConfigured} ? ' opacity-80' : ''"
+                class="group relative w-full flex justify-center items-center gap-2 py-3 px-4 mt-4 border border-gray-300 text-sm font-bold rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gob-guinda shadow-sm transition-all font-headings">
+                <i class="fab fa-microsoft text-blue-600"></i>
+                Continuar con correo institucional
+            </a>
+
+            <div th:if="${passwordResetSuccess}"
+                class="flex items-center p-4 mt-4 text-sm text-gob-verde border-l-4 border-gob-verde bg-green-50 rounded shadow-sm"
+                role="alert">
+                <i class="fas fa-check-circle mr-3"></i>
+                <span th:text="${passwordResetSuccess}">Contrasena actualizada.</span>
+            </div>
+
             <div class="text-center mt-6 border-t border-gray-100 pt-6">
                 <p class="text-xs text-gob-plata">
                     &copy; 2026 Departamento Jurídico.<br>
-                    <span class="text-gob-oro font-bold">Soporte Técnico Ext.2258 </span>
+                    <span class="text-gob-oro font-bold">siaj@finabien.gob.mx</span>
                 </p>
             </div>
         </div>

@@ -48,12 +48,31 @@ server-log.txt
 server-full-log.txt
 test-documento.txt
 *.png
+!src/main/resources/static/img/
+!src/main/resources/static/img/favicon-16.png
+!src/main/resources/static/img/favicon-32.png
+!src/main/resources/static/img/favicon-48.png
+!src/main/resources/static/img/apple-touch-icon.png
+!src/main/resources/static/img/icon-192.png
+!src/main/resources/static/img/icon-512.png
+!src/main/resources/static/img/logo.png
 temp-frontend*/
 nul
 
 # Entorno local
 .env
 .env.local
+config/siaj-mail.properties
+config/siaj-microsoft.properties
+
+# Artefactos locales, respaldos y resultados de pruebas
+AzureCLI.msi
+AzureCLI-full.msi
+backups/
+output/
+qa-*.tmp
+qa-*-results*.json
+docs/credenciales-usuarios-pruebas-*.csv
 
 ```,oldString:
 node_modules/

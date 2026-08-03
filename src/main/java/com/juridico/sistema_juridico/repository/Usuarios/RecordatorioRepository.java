@@ -18,6 +18,12 @@ public interface RecordatorioRepository extends JpaRepository<Recordatorio, Inte
      // fecha (más próximos primero)
      List<Recordatorio> findByUsuarioAndCompletadoFalseOrderByFechaRecordatorioAsc(Usuario usuario);
 
+     long countByUsuarioAndCompletadoFalse(Usuario usuario);
+
+     long countByUsuarioAndCompletadoFalseAndFechaRecordatorioBefore(Usuario usuario, LocalDate fechaRecordatorio);
+
+     long countByUsuarioAndCompletadoFalseAndFechaRecordatorioBetween(Usuario usuario, LocalDate inicio, LocalDate fin);
+
      // Agrega esta línea debajo de las demás
      List<Recordatorio> findByUsuarioOrderByFechaRecordatorioDesc(Usuario usuario);
 

@@ -5,10 +5,14 @@ document.addEventListener('DOMContentLoaded', () => {
 let materiasUsuarioActual = [];
 let materiasUsuarioEdicion = [];
 let usuarioSeleccionadoId = null;
+let creandoUsuario = false;
 
 // --- 1. LÓGICA DE MAESTRO - DETALLE ---
 
 function seleccionarAbogado(cardElement) {
+    creandoUsuario = false;
+    setModoCreacionUsuario(false);
+
     // 1. Quitar estado activo de todas las tarjetas
     document.querySelectorAll('.abogado-card').forEach(card => {
         card.classList.remove('bg-red-50', 'border-red-100');
@@ -23,6 +27,12 @@ function seleccionarAbogado(cardElement) {
     const id = cardElement.getAttribute('data-id');
     const nombre = cardElement.getAttribute('data-nombre');
     const email = cardElement.getAttribute('data-email');
+    const username = cardElement.getAttribute('data-username') || '';
+    const numeroEmpleado = cardElement.getAttribute('data-numero-empleado') || '';
+    const puesto = cardElement.getAttribute('data-puesto') || '';
+    const telefonoInstitucional = cardElement.getAttribute('data-telefono-institucional') || '';
+    const telefonoMovil = cardElement.getAttribute('data-telefono-movil') || '';
+    const ubicacionOficina = cardElement.getAttribute('data-ubicacion-oficina') || '';
     const rol = cardElement.getAttribute('data-rol');
     const gerenciaNombre = cardElement.getAttribute('data-gerencia-nombre');
     const gerenciasIdsStr = cardElement.getAttribute('data-gerencias-ids');
@@ -50,6 +60,10 @@ function seleccionarAbogado(cardElement) {
     document.getElementById('det-avatar').innerText = nombre.charAt(0).toUpperCase();
     document.getElementById('det-nombre').innerText = nombre;
     document.getElementById('det-email').innerText = email;
+    const detIdentity = document.getElementById('det-identity');
+    if (detIdentity) {
+        detIdentity.innerText = numeroEmpleado ? `${username} · ${numeroEmpleado}` : username;
+    }
 
     // Badges
     let badgesHtml = `<span class="bg-white/10 border border-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">${rol}</span>`;
@@ -76,6 +90,16 @@ function seleccionarAbogado(cardElement) {
         document.getElementById('det-input-id').value = id;
         document.getElementById('det-input-nombre').value = nombre;
         document.getElementById('det-input-email').value = email;
+        document.getElementById('det-input-username').value = username;
+        document.getElementById('det-input-numero-empleado').value = numeroEmpleado;
+        const detPuesto = document.getElementById('det-input-puesto');
+        if (detPuesto) detPuesto.value = puesto;
+        const detTelefonoInstitucional = document.getElementById('det-input-telefono-institucional');
+        if (detTelefonoInstitucional) detTelefonoInstitucional.value = telefonoInstitucional;
+        const detTelefonoMovil = document.getElementById('det-input-telefono-movil');
+        if (detTelefonoMovil) detTelefonoMovil.value = telefonoMovil;
+        const detUbicacionOficina = document.getElementById('det-input-ubicacion-oficina');
+        if (detUbicacionOficina) detUbicacionOficina.value = ubicacionOficina;
         document.getElementById('det-select-rol').value = rol;
         document.getElementById('det-check-activo').checked = activo;
 
@@ -87,11 +111,20 @@ function seleccionarAbogado(cardElement) {
         }
         const detBadge = document.getElementById('det-badge-pass-generado');
         if (detBadge) detBadge.classList.add('hidden');
+        const detSeguridad = document.getElementById('det-seccion-seguridad');
+        if (detSeguridad) detSeguridad.classList.remove('hidden');
+        const detFormTitulo = document.getElementById('det-form-titulo');
+        if (detFormTitulo) detFormTitulo.innerHTML = '<i class="fas fa-id-card mr-2 text-gob-guinda"></i> Datos Generales';
+        const detSubmitLabel = document.getElementById('det-submit-label');
+        if (detSubmitLabel) detSubmitLabel.innerText = 'Guardar Cambios';
 
         materiasUsuarioEdicion = materiasIdsArray || [];
-        document.querySelectorAll('.det-gerencia-checkbox').forEach(cb => {
-            cb.checked = gerenciasIdsArray.includes(Number(cb.value));
-        });
+        const detSelectGerencia = document.getElementById('det-select-usuario-gerencia');
+        if (detSelectGerencia) {
+            Array.from(detSelectGerencia.options).forEach(opt => {
+                opt.selected = gerenciasIdsArray.includes(Number(opt.value));
+            });
+        }
 
         actualizarFormularioEdicionPorRol();
         cargarMateriasDeGerenciaEdicion();
@@ -117,6 +150,153 @@ function seleccionarAbogado(cardElement) {
         if (panelLista) panelLista.classList.add('hidden');
         if (panelDetalleContainer) panelDetalleContainer.classList.remove('hidden');
     }
+}
+
+function iniciarNuevoUsuarioEnDetalle() {
+    creandoUsuario = true;
+    usuarioSeleccionadoId = null;
+    setModoCreacionUsuario(true);
+    asegurarTarjetaNuevoUsuario();
+
+    document.querySelectorAll('.abogado-card').forEach(card => {
+        card.classList.remove('bg-red-50', 'border-red-100');
+        card.classList.add('border-transparent');
+    });
+    const tempCard = document.getElementById('usuario-card-nuevo');
+    if (tempCard) {
+        tempCard.classList.add('bg-red-50', 'border-red-100');
+        tempCard.classList.remove('border-transparent');
+    }
+
+    document.getElementById('panel-vacio').classList.add('hidden');
+    const panelDetalle = document.getElementById('panel-detalle');
+    panelDetalle.classList.remove('hidden');
+
+    document.getElementById('det-avatar').innerText = '+';
+    document.getElementById('det-nombre').innerText = 'Nuevo Usuario';
+    document.getElementById('det-identity').innerText = 'Captura los datos para crear el acceso';
+    document.getElementById('det-email').innerText = 'Se enviara enlace de activacion al correo institucional';
+    document.getElementById('det-badges').innerHTML =
+        '<span class="bg-white/10 border border-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">ALTA</span>';
+
+    limpiarFormularioDetalleUsuario();
+    const selectRol = document.getElementById('det-select-rol');
+    if (selectRol && selectRol.options.length > 0) {
+        selectRol.selectedIndex = 0;
+    }
+    const checkActivo = document.getElementById('det-check-activo');
+    if (checkActivo) checkActivo.checked = true;
+    preseleccionarGerenciaActorEnDetalle();
+    materiasUsuarioEdicion = [];
+
+    const detFormTitulo = document.getElementById('det-form-titulo');
+    if (detFormTitulo) detFormTitulo.innerHTML = '<i class="fas fa-user-plus mr-2 text-gob-guinda"></i> Datos del Nuevo Usuario';
+    const detSubmitLabel = document.getElementById('det-submit-label');
+    if (detSubmitLabel) detSubmitLabel.innerText = 'Crear Usuario';
+
+    actualizarFormularioEdicionPorRol();
+    cambiarTabAbogado('editar');
+
+    const panelLista = document.getElementById('panel-lista');
+    const panelDetalleContainer = document.getElementById('panel-detalle-container');
+    if (window.innerWidth < 1024) {
+        if (panelLista) panelLista.classList.add('hidden');
+        if (panelDetalleContainer) panelDetalleContainer.classList.remove('hidden');
+    }
+}
+
+function asegurarTarjetaNuevoUsuario() {
+    if (document.getElementById('usuario-card-nuevo')) return;
+    const lista = document.getElementById('lista-abogados');
+    if (!lista) return;
+    const card = document.createElement('button');
+    card.id = 'usuario-card-nuevo';
+    card.type = 'button';
+    card.onclick = iniciarNuevoUsuarioEnDetalle;
+    card.className = 'abogado-card w-full text-left p-3 rounded-xl border border-transparent transition-all flex gap-3 group focus:outline-none';
+    card.innerHTML = `
+        <div class="w-12 h-12 rounded-full bg-gob-guinda flex-shrink-0 flex items-center justify-center text-white font-bold text-lg shadow-sm border-2 border-white">
+            <i class="fas fa-plus text-sm"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+            <p class="text-sm font-bold text-gray-800 truncate group-hover:text-gob-guinda transition-colors">Nuevo usuario</p>
+            <p class="text-xs text-gray-500 truncate mb-1">Formulario de alta</p>
+            <span class="bg-red-50 text-gob-guinda text-[9px] font-extrabold px-1.5 py-0.5 rounded border border-red-100">SIN GUARDAR</span>
+        </div>`;
+    lista.prepend(card);
+}
+
+function limpiarFormularioDetalleUsuario() {
+    const ids = [
+        'det-input-id',
+        'det-input-nombre',
+        'det-input-email',
+        'det-input-username',
+        'det-input-numero-empleado',
+        'det-input-puesto',
+        'det-input-telefono-institucional',
+        'det-input-telefono-movil',
+        'det-input-ubicacion-oficina'
+    ];
+    ids.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.value = '';
+    });
+    const pass = document.getElementById('det-input-password-temporal');
+    if (pass) {
+        pass.value = '';
+        pass.disabled = true;
+    }
+    const badge = document.getElementById('det-badge-pass-generado');
+    if (badge) badge.classList.add('hidden');
+    const selectGerencia = document.getElementById('det-select-usuario-gerencia');
+    if (selectGerencia) {
+        Array.from(selectGerencia.options).forEach(opt => opt.selected = false);
+    }
+    const listaMaterias = document.getElementById('det-lista-materias-checkboxes');
+    if (listaMaterias) listaMaterias.innerHTML = '';
+}
+
+function preseleccionarGerenciaActorEnDetalle() {
+    if (!window.usuarioActual || (window.usuarioActual.rol !== 'GERENTE' && window.usuarioActual.rol !== 'JEFE_DEPTO')) {
+        return;
+    }
+    const selectGerencia = document.getElementById('det-select-usuario-gerencia');
+    if (!selectGerencia) return;
+    Array.from(selectGerencia.options).forEach(opt => {
+        opt.selected = Number(opt.value) === Number(window.usuarioActual.gerenciaId);
+    });
+}
+
+function setModoCreacionUsuario(activo) {
+    ['casos', 'terminos', 'historial', 'permisos'].forEach(tab => {
+        const btn = document.getElementById('tab-btn-' + tab);
+        if (btn) btn.classList.toggle('hidden', activo);
+    });
+    const btnEstatus = document.getElementById('btn-estatus');
+    if (btnEstatus) btnEstatus.classList.toggle('hidden', activo);
+    const btnEliminar = document.getElementById('det-btn-eliminar-usuario');
+    if (btnEliminar) btnEliminar.classList.toggle('hidden', activo);
+    const btnCancelar = document.getElementById('det-btn-cancelar-creacion');
+    if (btnCancelar) btnCancelar.classList.toggle('hidden', !activo);
+    const seccionSeguridad = document.getElementById('det-seccion-seguridad');
+    if (seccionSeguridad) seccionSeguridad.classList.toggle('hidden', activo);
+}
+
+function cancelarNuevoUsuarioEnDetalle() {
+    creandoUsuario = false;
+    usuarioSeleccionadoId = null;
+    setModoCreacionUsuario(false);
+    const tempCard = document.getElementById('usuario-card-nuevo');
+    if (tempCard) tempCard.remove();
+    document.querySelectorAll('.abogado-card').forEach(card => {
+        card.classList.remove('bg-red-50', 'border-red-100');
+        card.classList.add('border-transparent');
+    });
+    const panelDetalle = document.getElementById('panel-detalle');
+    const panelVacio = document.getElementById('panel-vacio');
+    if (panelDetalle) panelDetalle.classList.add('hidden');
+    if (panelVacio) panelVacio.classList.remove('hidden');
 }
 
 function regresarALista() {
@@ -147,6 +327,24 @@ function abrirModalUsuario() {
 
     const inputEmail = document.getElementById('input-usuario-email');
     if (inputEmail) inputEmail.value = '';
+
+    const inputUsername = document.getElementById('input-usuario-username');
+    if (inputUsername) inputUsername.value = '';
+
+    const inputNumeroEmpleado = document.getElementById('input-usuario-numero-empleado');
+    if (inputNumeroEmpleado) inputNumeroEmpleado.value = '';
+
+    const inputPuesto = document.getElementById('input-usuario-puesto');
+    if (inputPuesto) inputPuesto.value = '';
+
+    const inputTelefonoInstitucional = document.getElementById('input-usuario-telefono-institucional');
+    if (inputTelefonoInstitucional) inputTelefonoInstitucional.value = '';
+
+    const inputTelefonoMovil = document.getElementById('input-usuario-telefono-movil');
+    if (inputTelefonoMovil) inputTelefonoMovil.value = '';
+
+    const inputUbicacionOficina = document.getElementById('input-usuario-ubicacion-oficina');
+    if (inputUbicacionOficina) inputUbicacionOficina.value = '';
 
     const selectRol = document.getElementById('select-usuario-rol');
     if (selectRol) selectRol.value = '';
@@ -313,7 +511,7 @@ function cargarMateriasDeGerencia(event) {
         });
 }
 
-function editarUsuario(id, nombre, email, rol, gerenciaIdsArray, activo, materiasIdsArray) {
+function editarUsuario(id, nombre, email, rol, gerenciaIdsArray, activo, materiasIdsArray, username = '', numeroEmpleado = '', puesto = '', telefonoInstitucional = '', telefonoMovil = '', ubicacionOficina = '') {
     abrirModalUsuario();
 
     const titulo = document.getElementById('titulo-modal-usuario');
@@ -327,6 +525,24 @@ function editarUsuario(id, nombre, email, rol, gerenciaIdsArray, activo, materia
 
     const inputEmail = document.getElementById('input-usuario-email');
     if (inputEmail) inputEmail.value = email;
+
+    const inputUsername = document.getElementById('input-usuario-username');
+    if (inputUsername) inputUsername.value = username;
+
+    const inputNumeroEmpleado = document.getElementById('input-usuario-numero-empleado');
+    if (inputNumeroEmpleado) inputNumeroEmpleado.value = numeroEmpleado;
+
+    const inputPuesto = document.getElementById('input-usuario-puesto');
+    if (inputPuesto) inputPuesto.value = puesto;
+
+    const inputTelefonoInstitucional = document.getElementById('input-usuario-telefono-institucional');
+    if (inputTelefonoInstitucional) inputTelefonoInstitucional.value = telefonoInstitucional;
+
+    const inputTelefonoMovil = document.getElementById('input-usuario-telefono-movil');
+    if (inputTelefonoMovil) inputTelefonoMovil.value = telefonoMovil;
+
+    const inputUbicacionOficina = document.getElementById('input-usuario-ubicacion-oficina');
+    if (inputUbicacionOficina) inputUbicacionOficina.value = ubicacionOficina;
 
     const selectRol = document.getElementById('select-usuario-rol');
     if (selectRol) selectRol.value = rol;
@@ -368,42 +584,14 @@ function editarUsuario(id, nombre, email, rol, gerenciaIdsArray, activo, materia
 
 // -- MODAL DE CONTRASEÑA TEMPORAL ------------------------------------------
 function abrirModalPasswordTemporal() {
-    const digitos = Math.floor(10000 + Math.random() * 90000);
-    const passGenerada = `Temporal${digitos}`;
-
     Swal.fire({
         width: '36rem',
-        title: '<i class="fas fa-key text-gob-guinda mr-2"></i>Contraseña Temporal',
-        html: `
-            <p class="text-sm text-gray-600 mb-6">Se asignará esta contraseña temporal al usuario.<br>Al iniciar sesión se le pedirá cambiarla.</p>
-            <div class="flex items-center gap-6 bg-gray-50 border border-gray-200 rounded-lg px-4 py-6">
-                <code id="swal-pass-code" class="flex-1 text-left text-lg font-mono font-bold text-gob-guinda tracking-widest select-all">${passGenerada}</code>
-                <button type="button" onclick="copiarPasswordTemporal('${passGenerada}')"
-                     class="flex-shrink-0 px-3 py-1.5 bg-gob-guinda text-white text-xs font-bold rounded-lg hover:opacity-90 transition-all">
-                    <i class="fas fa-copy mr-1"></i>Copiar
-                </button>
-            </div>
-            <p class="text-[10px] text-gray-400 mt-2">El usuario deberá cambiarla en su próximo inicio de sesión.</p>
-        `,
-        showCancelButton: true,
-        confirmButtonText: '<i class="fas fa-save mr-1"></i> Actualizar contraseña',
-        cancelButtonText: 'Cancelar',
+        title: '<i class="fas fa-paper-plane text-gob-guinda mr-2"></i>Usa el enlace de activacion',
+        text: 'La creacion de usuarios ahora envia un enlace al correo institucional registrado. No se generan contrasenas temporales.',
+        icon: 'info',
+        confirmButtonText: 'Entendido',
         confirmButtonColor: '#691228',
-        cancelButtonColor: '#808590ff',
-        focusConfirm: false,
-        customClass: {
-            title: 'text-3xl font-bold pt-6',
-            confirmButton: 'px-8 py-3 text-lg rounded-lg',
-            cancelButton: 'px-8 py-3 text-lg rounded-lg',
-        }
-    }).then(result => {
-        if (result.isConfirmed) {
-            const hiddenPass = document.getElementById('input-password-temporal');
-            if (hiddenPass) hiddenPass.value = passGenerada;
-
-            const form = document.querySelector('#modal-usuario form');
-            if (form) form.submit();
-        }
+        customClass: { title: 'text-3xl font-bold pt-6', confirmButton: 'px-8 py-3 text-lg rounded-lg' }
     });
 }
 
@@ -557,7 +745,7 @@ function cambiarTabAbogado(tabName) {
     }
 
     // 3. CARGA DINÁMICA DE DATOS SEGÚN LA PESTAÑA
-    if (!usuarioSeleccionadoId) return;
+    if (!usuarioSeleccionadoId || creandoUsuario) return;
 
     if (tabName === 'casos') {
         cargarCasosAbogado(usuarioSeleccionadoId);
@@ -750,12 +938,10 @@ function actualizarFormularioEdicionPorRol() {
         if (divGerencia) divGerencia.classList.add('hidden');
         if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
     } else {
-        const creadorRol = window.usuarioActual ? window.usuarioActual.rol : '';
-        if (creadorRol !== 'GERENTE' && creadorRol !== 'JEFE_DEPTO') {
-            if (divGerencia) divGerencia.classList.remove('hidden');
-        }
-        const checkedGerencias = document.querySelectorAll('.det-gerencia-checkbox:checked');
-        if (checkedGerencias.length > 0) {
+        if (divGerencia) divGerencia.classList.remove('hidden');
+        const selectGerencias = document.getElementById('det-select-usuario-gerencia');
+        const selectedGerencias = selectGerencias ? Array.from(selectGerencias.selectedOptions) : [];
+        if (selectedGerencias.length > 0) {
             if (contenedorMaterias) contenedorMaterias.classList.remove('hidden');
         } else {
             if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
@@ -773,17 +959,22 @@ function cargarMateriasDeGerenciaEdicion(event) {
         return;
     }
 
-    const target = event ? event.target : null;
-    if (target && target.checked) {
-        document.querySelectorAll('.det-gerencia-checkbox').forEach(cb => {
-            if (cb !== target) {
-                cb.checked = false;
-            }
-        });
+    const selectGerencias = document.getElementById('det-select-usuario-gerencia');
+    if (selectGerencias && (rol === 'GERENTE' || rol === 'JEFE_DEPTO' || rol === 'ABOGADO')) {
+        const selectedOptions = Array.from(selectGerencias.selectedOptions);
+        if (selectedOptions.length > 1) {
+            const lastSelected = selectedOptions[selectedOptions.length - 1];
+            Array.from(selectGerencias.options).forEach(opt => {
+                opt.selected = (opt === lastSelected);
+            });
+            materiasUsuarioEdicion = [];
+        }
+    }
+    if (event && event.target === selectGerencias) {
         materiasUsuarioEdicion = [];
     }
 
-    const checkedGerencias = Array.from(document.querySelectorAll('.det-gerencia-checkbox:checked')).map(cb => cb.value);
+    const checkedGerencias = selectGerencias ? Array.from(selectGerencias.selectedOptions).map(opt => opt.value) : [];
     const contenedor = document.getElementById('det-contenedor-materias');
     const lista = document.getElementById('det-lista-materias-checkboxes');
 
@@ -836,26 +1027,29 @@ function cargarMateriasDeGerenciaEdicion(event) {
         });
 }
 
-function abrirModalPasswordTemporalEdicion() {
-    const digitos = Math.floor(10000 + Math.random() * 90000);
-    const passGenerada = `Temporal${digitos}`;
-
+function abrirModalPasswordTemporalEdicionLegacy() {
+    if (window.emailMaintenance) {
+        Swal.fire({
+            title: 'Correo en mantenimiento',
+            text: window.emailMaintenanceMessage || 'Por ahora no es posible enviar enlaces por correo.',
+            icon: 'warning',
+            confirmButtonColor: '#691228'
+        });
+        return;
+    }
     Swal.fire({
         width: '36rem',
-        title: '<i class="fas fa-key text-gob-guinda mr-2"></i>Contraseña Temporal',
+        title: '<i class="fas fa-paper-plane text-gob-guinda mr-2"></i>Enviar enlace de restablecimiento',
         html: `
-            <p class="text-sm text-gray-600 mb-6">Se asignará esta contraseña temporal al usuario.<br>Al iniciar sesión se le pedirá cambiarla.</p>
+            <p class="text-sm text-gray-600 mb-6">Se enviará al correo institucional registrado el mismo enlace que recibiría el usuario desde Recuperar contraseña.</p>
             <div class="flex items-center gap-6 bg-gray-50 border border-gray-200 rounded-lg px-4 py-6">
-                <code id="swal-pass-code-edicion" class="flex-1 text-left text-lg font-mono font-bold text-gob-guinda tracking-widest select-all">${passGenerada}</code>
-                <button type="button" onclick="copiarPasswordTemporalEdicion('${passGenerada}')"
-                    class="flex-shrink-0 px-3 py-1.5 bg-gob-guinda text-white text-xs font-bold rounded-lg hover:opacity-90 transition-all">
-                    <i class="fas fa-copy mr-1"></i>Copiar
-                </button>
+                <i class="fas fa-envelope text-gob-guinda text-lg"></i>
+                <span class="text-sm font-bold text-gray-700">El usuario podrá crear una nueva contraseña segura desde ese enlace.</span>
             </div>
-            <p class="text-[10px] text-gray-400 mt-2">El usuario deberá cambiarla en su próximo inicio de sesión.</p>
+            <p class="text-[10px] text-gray-400 mt-2">No se genera ni se muestra ninguna contraseña temporal.</p>
         `,
         showCancelButton: true,
-        confirmButtonText: '<i class="fas fa-save mr-1"></i> Generar y Enviar',
+        confirmButtonText: '<i class="fas fa-paper-plane mr-1"></i> Enviar enlace',
         cancelButtonText: 'Cancelar',
         confirmButtonColor: '#691228',
         cancelButtonColor: '#808590ff',
@@ -874,9 +1068,10 @@ function abrirModalPasswordTemporalEdicion() {
             }
 
             Swal.fire({
-                title: 'Guardando contraseña...',
-                html: 'Guardando la contraseña temporal en la base de datos...',
+                title: 'Enviando enlace seguro...',
+                html: 'Estamos preparando el enlace y enviandolo al correo registrado.',
                 allowOutsideClick: false,
+                allowEscapeKey: false,
                 didOpen: () => {
                     Swal.showLoading();
                 }
@@ -884,7 +1079,6 @@ function abrirModalPasswordTemporalEdicion() {
 
             const formData = new FormData();
             formData.append('id', userId);
-            formData.append('password', passGenerada);
 
             fetch('/usuarios/api/password-temporal', {
                 method: 'POST',
@@ -893,7 +1087,7 @@ function abrirModalPasswordTemporalEdicion() {
                 .then(res => {
                     if (!res.ok) {
                         return res.json().then(data => {
-                            throw new Error(data.mensaje || 'Error al guardar la contraseña.');
+                            throw new Error(data.mensaje || 'Error al enviar el enlace.');
                         });
                     }
                     return res.json();
@@ -901,12 +1095,12 @@ function abrirModalPasswordTemporalEdicion() {
                 .then(data => {
                     const badge = document.getElementById('det-badge-pass-generado');
                     if (badge) {
-                        badge.innerHTML = '<i class="fas fa-check-circle text-sm"></i> Contraseña Temporal Actualizada';
+                        badge.innerHTML = '<i class="fas fa-check-circle text-sm"></i> Enlace enviado al correo registrado';
                         badge.classList.remove('hidden');
                     }
                     Swal.fire({
-                        title: '¡Contraseña Temporal Actualizada!',
-                        text: 'La contraseña temporal ha sido actualizada de manera correcta, ya no es necesario que guardes los cambios del perfil',
+                        title: 'Enlace enviado',
+                        text: data.mensaje || 'Se envio el enlace de restablecimiento al correo registrado.',
                         icon: 'success',
                         confirmButtonColor: '#691228'
                     });
@@ -914,12 +1108,171 @@ function abrirModalPasswordTemporalEdicion() {
                 .catch(err => {
                     Swal.fire({
                         title: 'Error',
-                        text: err.message || 'No se pudo guardar la contraseña temporal.',
+                        text: err.message || 'No se pudo enviar el enlace de restablecimiento.',
                         icon: 'error',
                         confirmButtonColor: '#691228'
                     });
                 });
         }
+    });
+}
+
+function abrirModalPasswordTemporalEdicion() {
+    Swal.fire({
+        width: '36rem',
+        title: '<i class="fas fa-key text-gob-guinda mr-2"></i>Restablecimiento manual',
+        html: `
+            <p class="text-sm text-gray-600 mb-4">Crea una contrasena temporal para compartirla manualmente con el usuario. Al iniciar sesion, SIAJ le pedira establecer su contrasena definitiva.</p>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-4 text-left">
+                <label for="swal-password-temporal" class="block text-xs font-bold text-gray-500 uppercase mb-1">Contrasena temporal</label>
+                <input id="swal-password-temporal" type="text" minlength="8"
+                    class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-gob-oro focus:border-gob-oro outline-none"
+                    placeholder="Opcional, minimo 8 caracteres">
+                <p class="text-[10px] text-gray-500 mt-2">Se mostrara una sola vez. Al iniciar sesion, el usuario debera cambiarla por una contrasena definitiva.</p>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '<i class="fas fa-key mr-1"></i> Restablecer',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#691228',
+        cancelButtonColor: '#808590ff',
+        focusConfirm: false
+    }).then(result => {
+        if (!result.isConfirmed) return;
+        const userId = document.getElementById('det-input-id').value;
+        if (!userId) {
+            Swal.fire('Error', 'No se ha podido identificar al usuario seleccionado.', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('id', userId);
+        const requestedPassword = document.getElementById('swal-password-temporal')?.value || '';
+        if (requestedPassword.trim()) {
+            formData.append('passwordTemporal', requestedPassword.trim());
+        }
+
+        Swal.fire({
+            title: 'Restableciendo contrasena...',
+            html: 'Estamos actualizando el acceso del usuario.',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        fetch('/usuarios/api/password-temporal', {
+            method: 'POST',
+            body: formData
+        })
+            .then(res => {
+                if (!res.ok) {
+                    return res.json().then(data => {
+                        throw new Error(data.mensaje || 'Error al generar la contrasena temporal.');
+                    });
+                }
+                return res.json();
+            })
+            .then(data => {
+                const temporalEscapada = encodeURIComponent(data.passwordTemporal || '');
+                const badge = document.getElementById('det-badge-pass-generado');
+                if (badge) {
+                    badge.innerHTML = '<i class="fas fa-check-circle text-sm"></i> Restablecimiento manual activo';
+                    badge.classList.remove('hidden');
+                }
+                Swal.fire({
+                    title: 'Restablecimiento manual listo',
+                    html: `
+                        <p class="text-sm text-gray-600 mb-3">${data.mensaje || 'El usuario debera cambiarla al iniciar sesion.'}</p>
+                        <p class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-3">Comparte esta contrasena por un canal autorizado. Se mostrara una sola vez.</p>
+                        <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-3">
+                            <code id="swal-pass-code-edicion" class="flex-1 text-left text-lg font-bold text-gob-guinda break-all">${data.passwordTemporal || ''}</code>
+                            <button type="button" onclick="copiarPasswordTemporalEdicion(decodeURIComponent('${temporalEscapada}'))"
+                                class="bg-gob-guinda text-white rounded px-3 py-2 text-xs font-bold">
+                                <i class="fas fa-copy mr-1"></i>Copiar
+                            </button>
+                        </div>
+                    `,
+                    icon: 'success',
+                    confirmButtonColor: '#691228'
+                });
+            })
+            .catch(err => {
+                Swal.fire({
+                    title: 'Error',
+                    text: err.message || 'No se pudo generar la contrasena temporal.',
+                    icon: 'error',
+                    confirmButtonColor: '#691228'
+                });
+            });
+    });
+}
+
+function enviarEnlaceRestablecimientoEdicion() {
+    if (window.emailMaintenance) {
+        Swal.fire({
+            title: 'Correo en mantenimiento',
+            text: window.emailMaintenanceMessage || 'Por ahora no es posible enviar enlaces por correo.',
+            icon: 'warning',
+            confirmButtonColor: '#691228'
+        });
+        return;
+    }
+    const userId = document.getElementById('det-input-id').value;
+    if (!userId) {
+        Swal.fire('Error', 'No se ha podido identificar al usuario seleccionado.', 'error');
+        return;
+    }
+
+    Swal.fire({
+        width: '34rem',
+        title: '<i class="fas fa-paper-plane text-gob-guinda mr-2"></i>Enviar enlace de restablecimiento',
+        html: '<p class="text-sm text-gray-600">Se enviara al correo institucional registrado un enlace seguro para crear una nueva contrasena.</p>',
+        showCancelButton: true,
+        confirmButtonText: '<i class="fas fa-paper-plane mr-1"></i> Enviar enlace',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#691228',
+        cancelButtonColor: '#808590ff'
+    }).then(result => {
+        if (!result.isConfirmed) return;
+
+        Swal.fire({
+            title: 'Enviando enlace seguro...',
+            html: 'Estamos preparando el enlace y enviandolo al correo registrado.',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        fetch(`/usuarios/api/${userId}/enviar-restablecimiento`, { method: 'POST' })
+            .then(res => {
+                if (!res.ok) {
+                    return res.json().then(data => {
+                        throw new Error(data.mensaje || 'Error al enviar el enlace.');
+                    });
+                }
+                return res.json();
+            })
+            .then(data => {
+                const badge = document.getElementById('det-badge-pass-generado');
+                if (badge) {
+                    badge.innerHTML = '<i class="fas fa-check-circle text-sm"></i> Enlace enviado al correo registrado';
+                    badge.classList.remove('hidden');
+                }
+                Swal.fire({
+                    title: 'Enlace enviado',
+                    text: data.mensaje || 'Se envio el enlace de restablecimiento al correo registrado.',
+                    icon: 'success',
+                    confirmButtonColor: '#691228'
+                });
+            })
+            .catch(err => {
+                Swal.fire({
+                    title: 'Error',
+                    text: err.message || 'No se pudo enviar el enlace de restablecimiento.',
+                    icon: 'error',
+                    confirmButtonColor: '#691228'
+                });
+            });
     });
 }
 

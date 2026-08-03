@@ -3,6 +3,7 @@ package com.juridico.sistema_juridico.controller;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.security.CustomUserDetails;
+import com.juridico.sistema_juridico.service.PasswordPolicyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,6 +24,9 @@ public class CambiarPasswordController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private PasswordPolicyService passwordPolicyService;
+
     @GetMapping("/cambiar-password")
     public String mostrarFormulario(
             @RequestParam(value = "razon", defaultValue = "primera-vez") String razon,
@@ -39,6 +43,12 @@ public class CambiarPasswordController {
 
         if (!newPassword.equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("error", "Las contraseñas no coinciden.");
+            redirectAttributes.addFlashAttribute("razon", razon);
+            return "redirect:/cambiar-password?razon=" + razon;
+        }
+
+        if (!passwordPolicyService.isValid(newPassword)) {
+            redirectAttributes.addFlashAttribute("error", passwordPolicyService.description());
             redirectAttributes.addFlashAttribute("razon", razon);
             return "redirect:/cambiar-password?razon=" + razon;
         }
