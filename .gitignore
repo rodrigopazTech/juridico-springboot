@@ -46,6 +46,7 @@ uploads/
 *.log
 server-log.txt
 server-full-log.txt
+server-error.txt
 test-documento.txt
 *.png
 !src/main/resources/static/img/
