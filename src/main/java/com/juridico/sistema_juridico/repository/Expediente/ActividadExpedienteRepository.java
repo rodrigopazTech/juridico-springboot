@@ -10,6 +10,8 @@ import java.util.UUID;
 @Repository
 public interface ActividadExpedienteRepository extends JpaRepository<ActividadExpediente, Long> {
     List<ActividadExpediente> findByExpedienteIdOrderByFechaRegistroDesc(UUID expedienteId);
+
+    List<ActividadExpediente> findByExpedienteIdOrderByFechaRegistroAsc(UUID expedienteId);
     
     List<ActividadExpediente> findTop15ByUsuarioIdOrderByFechaRegistroDesc(Integer usuarioId);
     List<ActividadExpediente> findTop100ByUsuarioIdOrderByFechaRegistroDesc(Integer usuarioId);

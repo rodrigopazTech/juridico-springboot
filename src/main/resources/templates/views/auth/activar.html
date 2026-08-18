@@ -36,7 +36,7 @@
                 <i class="fas fa-user-check text-3xl text-gob-guinda"></i>
             </div>
             <h1 class="text-2xl font-bold text-gob-guindaDark">Activar cuenta</h1>
-            <p class="mt-2 text-sm text-gob-gris">Valida tu correo institucional con Microsoft antes de crear tu contrasena.</p>
+            <p class="mt-2 text-sm text-gob-gris">Crea tu contrasena para activar el acceso al sistema.</p>
         </div>
 
         <div th:if="${!tokenValido}" class="space-y-5 text-center">
@@ -56,7 +56,7 @@
                 <p class="text-sm text-gray-600 break-all" th:text="${correoActivacion}">correo@finabien.gob.mx</p>
             </div>
 
-            <div th:if="${microsoftError}" class="p-4 text-sm text-amber-900 border-l-4 border-amber-700 bg-amber-50 rounded">
+            <div th:if="${microsoftConfigured and microsoftError}" class="p-4 text-sm text-amber-900 border-l-4 border-amber-700 bg-amber-50 rounded">
                 <span th:text="${microsoftError}">No fue posible validar Microsoft.</span>
             </div>
 
@@ -66,10 +66,6 @@
                 Validar con Microsoft
             </a>
 
-            <div th:unless="${microsoftConfigured}" class="p-4 text-sm text-amber-900 border-l-4 border-amber-700 bg-amber-50 rounded">
-                La validacion con Microsoft aun no esta configurada.
-            </div>
-
             <a th:href="@{/auth/reset-password(token=${token})}"
                 class="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-lg text-sm font-bold text-gob-guinda bg-white border border-gob-guinda hover:bg-red-50">
                 <i class="fas fa-key"></i>
@@ -77,7 +73,7 @@
             </a>
 
             <p class="text-xs text-gray-500 text-center">
-                Tu cuenta institucional quedara vinculada para futuros inicios de sesion con Microsoft.
+                Este enlace fue enviado a tu correo institucional y expira por seguridad.
             </p>
         </div>
     </main>

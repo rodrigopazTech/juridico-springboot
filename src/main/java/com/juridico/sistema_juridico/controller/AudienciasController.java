@@ -36,6 +36,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
@@ -843,6 +844,47 @@ public String guardar(@ModelAttribute Audiencia audiencia,
         } catch (MalformedURLException e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/preview-acta/{id}")
+    public ResponseEntity<Resource> previsualizarActa(@PathVariable("id") Integer id) {
+        return servirActa(id, false);
+    }
+
+    private ResponseEntity<Resource> servirActa(Integer id, boolean descarga) {
+        try {
+            Audiencia audiencia = audienciaRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Audiencia no encontrada"));
+
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+            if (audiencia.getExpediente() != null) {
+                validarAccesoExpediente(audiencia.getExpediente(), usuario);
+            }
+
+            if (audiencia.getActaDocumento() == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            java.nio.file.Path rutaArchivo = java.nio.file.Paths.get("uploads/audiencias")
+                    .resolve(audiencia.getActaDocumento());
+            Resource recurso = new UrlResource(rutaArchivo.toUri());
+
+            if (!recurso.exists() && !recurso.isReadable()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            String tipoMime = java.nio.file.Files.probeContentType(rutaArchivo);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(tipoMime != null ? tipoMime : "application/octet-stream"))
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            (descarga ? "attachment" : "inline") + "; filename=\"" + recurso.getFilename() + "\"")
+                    .body(recurso);
+        } catch (MalformedURLException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 

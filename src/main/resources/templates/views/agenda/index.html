@@ -13,63 +13,36 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
     <link rel="stylesheet" th:href="@{/css/agenda-general.css}">
-
     <script th:src="@{/js/agenda.js}"></script>
 </head>
 
 <body class="bg-gray-100 text-gray-800 font-sans overflow-x-hidden">
-
-    <!-- Sidebar Fragment -->
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
 
     <div class="sm:ml-64 flex flex-col min-h-screen">
-
-        <!-- Navbar Fragment -->
         <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-        <!-- Main Content with padding to avoid overlapping -->
-        <!-- Main Content with padding to avoid overlapping -->
         <main class="p-4 md:p-6 flex-1 animate-fade-in pt-[116px] sm:pt-[116px] md:pt-[116px] lg:pt-[116px]">
-
             <div class="space-y-5">
                 <div th:replace="~{fragments/agenda/barra-filtros :: filtros}"></div>
 
-                    <!-- Selector de Vista Horizontal (Pill Switcher) -->
-                    <div
-                        class="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 flex gap-1 items-center max-w-md">
-                        <button onclick="window.cambiarTabPill('audiencias')" id="btn-tab-audiencias"
-                            class="tab-btn-pill flex-1 inline-flex items-center justify-center gap-2 py-2.5 text-[11px] font-extrabold uppercase tracking-widest rounded-xl transition-all duration-300"
-                            th:classappend="${activeTab == 'audiencias' ? 'bg-gob-guinda text-white shadow-md shadow-gob-guinda/20' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'}">
-                            <i class="fas fa-gavel"></i> Audiencias Concluidas
-                        </button>
-                        <button onclick="window.cambiarTabPill('terminos')" id="btn-tab-terminos"
-                            class="tab-btn-pill flex-1 inline-flex items-center justify-center gap-2 py-2.5 text-[11px] font-extrabold uppercase tracking-widest rounded-xl transition-all duration-300"
-                            th:classappend="${activeTab == 'terminos' ? 'bg-gob-guinda text-white shadow-md shadow-gob-guinda/20' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'}">
-                            <i class="fas fa-clock"></i> Términos Concluidos
-                        </button>
+                <div>
+                    <div id="tab-audiencias" class="tab-content animate-fade-in transition-all"
+                        th:classappend="${activeTab == 'audiencias' ? 'block' : 'hidden'}">
+                        <div th:replace="~{fragments/agenda/table-audiencias :: tabla}"></div>
                     </div>
 
-                    <div>
-                        <div id="tab-audiencias" class="tab-content animate-fade-in transition-all"
-                            th:classappend="${activeTab == 'audiencias' ? 'block' : 'hidden'}">
-                            <div th:replace="~{fragments/agenda/toolbar-audiencias :: toolbar}"></div>
-                            <div th:replace="~{fragments/agenda/table-audiencias :: tabla}"></div>
-                        </div>
-
-                        <div id="tab-terminos" class="tab-content animate-fade-in transition-all"
-                            th:classappend="${activeTab == 'terminos' ? 'block' : 'hidden'}">
-                            <div th:replace="~{fragments/agenda/toolbar-terminos :: toolbar}"></div>
-                            <div th:replace="~{fragments/agenda/table-terminos :: tabla}"></div>
-                        </div>
+                    <div id="tab-terminos" class="tab-content animate-fade-in transition-all"
+                        th:classappend="${activeTab == 'terminos' ? 'block' : 'hidden'}">
+                        <div th:replace="~{fragments/agenda/table-terminos :: tabla}"></div>
                     </div>
+                </div>
             </div>
         </main>
     </div>
 
     <div th:replace="~{fragments/agenda/modal-observaciones :: modal-observaciones}"></div>
-
 </body>
 
 </html>

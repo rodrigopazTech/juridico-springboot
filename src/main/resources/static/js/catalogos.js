@@ -57,7 +57,8 @@ const TIPO_A_TABLA = {
     'tipo-audiencia':   'tipos_audiencia',
     'tipo-expediente':  'cat_tipo_expediente',
     'sede':             'cat_estados',
-    'materia':          'materias'
+    'materia':          'materias',
+    'etapa':            'cat_etapas_procesales'
 };
 
 /** Tabs que recibieron un evento WS mientras estaban ocultos */
@@ -100,6 +101,236 @@ const TIPOS_CONFIG = {
         placeholder: 'Ej. Civil, Penal'
     }
 };
+
+function filtrarParentsEtapa() {
+    const materiaId = document.getElementById('etapa-materia-id')?.value || '';
+    const etapaId = document.getElementById('etapa-id')?.value || '';
+    const parentSelect = document.getElementById('etapa-parent-id');
+    if (!parentSelect) return;
+    Array.from(parentSelect.options).forEach(option => {
+        if (!option.value) {
+            option.hidden = false;
+            return;
+        }
+        option.hidden = option.dataset.materiaId !== materiaId || option.value === etapaId;
+    });
+    if (parentSelect.selectedOptions[0]?.hidden) {
+        parentSelect.value = '';
+    }
+    sugerirOrdenEtapa();
+    actualizarPreviewOrdenEtapa();
+}
+
+function getEtapaRows() {
+    return Array.from(document.querySelectorAll('#tbody-etapas tr[data-id]'));
+}
+
+function aplicarFiltrosEtapas() {
+    const materiaId = document.getElementById('filtro-etapas-materia')?.value || '';
+    const texto = (document.getElementById('search-etapas')?.value || '').toLowerCase();
+    let visibles = 0;
+
+    getEtapaRows().forEach(row => {
+        const coincideMateria = !materiaId || row.dataset.materiaId === materiaId;
+        const coincideTexto = !texto || row.textContent.toLowerCase().includes(texto);
+        const visible = coincideMateria && coincideTexto;
+        row.style.display = visible ? '' : 'none';
+        if (visible) visibles++;
+    });
+
+    const emptyRow = document.getElementById('empty-etapas-filter');
+    if (emptyRow) {
+        const hayDatos = getEtapaRows().length > 0;
+        const mostrarEstadoVacio = hayDatos && visibles === 0;
+        emptyRow.classList.toggle('hidden', !mostrarEstadoVacio);
+    }
+}
+
+function limpiarFiltrosEtapas() {
+    const materia = document.getElementById('filtro-etapas-materia');
+    const busqueda = document.getElementById('search-etapas');
+    if (materia) materia.value = '';
+    if (busqueda) busqueda.value = '';
+    aplicarFiltrosEtapas();
+}
+
+function etapasDelNivelActual() {
+    const materiaId = document.getElementById('etapa-materia-id')?.value || '';
+    const parentId = document.getElementById('etapa-parent-id')?.value || '';
+    const etapaId = document.getElementById('etapa-id')?.value || '';
+    if (!materiaId) return [];
+
+    return getEtapaRows()
+        .filter(row => row.dataset.id !== etapaId)
+        .filter(row => row.dataset.materiaId === materiaId)
+        .filter(row => (row.dataset.parentId || '') === parentId)
+        .map(row => ({
+            nombre: row.dataset.nombre || row.textContent.trim(),
+            orden: parseInt(row.dataset.orden || '1', 10)
+        }))
+        .sort((a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre));
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function sugerirOrdenEtapa() {
+    const ordenInput = document.getElementById('etapa-orden');
+    if (!ordenInput || ordenInput.dataset.manual === 'true') return;
+    const etapas = etapasDelNivelActual();
+    const siguiente = etapas.length ? Math.max(...etapas.map(e => e.orden || 1)) + 1 : 1;
+    ordenInput.value = String(siguiente);
+}
+
+function actualizarPreviewOrdenEtapa() {
+    const preview = document.getElementById('etapa-preview-orden');
+    if (!preview) return;
+
+    const materiaSelect = document.getElementById('etapa-materia-id');
+    const parentSelect = document.getElementById('etapa-parent-id');
+    const nombre = document.getElementById('etapa-nombre')?.value.trim() || 'Nueva etapa';
+    const orden = Math.max(parseInt(document.getElementById('etapa-orden')?.value || '1', 10), 1);
+    const materia = materiaSelect?.selectedOptions[0]?.textContent?.trim() || '';
+    const parent = parentSelect?.value ? parentSelect.selectedOptions[0]?.textContent?.trim() : '';
+
+    if (!materiaSelect?.value) {
+        preview.innerHTML = '<span class="text-gray-400 italic">Selecciona materia y captura el nombre para ver la posicion.</span>';
+        return;
+    }
+
+    const nivel = parent ? `Subetapas de ${parent.replace(`${materia} / `, '')}` : `Etapas principales de ${materia}`;
+    const items = [...etapasDelNivelActual(), { nombre, orden, nueva: true }]
+        .sort((a, b) => a.orden - b.orden || (b.nueva ? 1 : 0));
+
+    preview.innerHTML = `
+        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">${escapeHtml(nivel)}</div>
+        <ol class="space-y-1">
+            ${items.map(item => `
+                <li class="flex items-center gap-2 ${item.nueva ? 'font-bold text-gob-guinda' : 'text-gray-600'}">
+                    <i class="fas fa-code-branch text-[10px] text-gray-400"></i>
+                    <span class="inline-flex items-center justify-center min-w-7 px-1.5 h-5 rounded border border-gray-200 bg-gray-50 text-[11px]">${item.orden}</span>
+                    <span>${escapeHtml(item.nombre)}</span>
+                    ${item.nueva ? '<span class="text-[10px] bg-gob-guinda text-white px-1.5 py-0.5 rounded">nuevo</span>' : ''}
+                </li>
+            `).join('')}
+        </ol>
+    `;
+}
+
+function abrirModalEtapa() {
+    document.getElementById('modal-etapa-titulo').textContent = 'Nueva etapa procesal';
+    document.getElementById('etapa-id').value = '';
+    document.getElementById('etapa-materia-id').value = document.getElementById('filtro-etapas-materia')?.value || '';
+    document.getElementById('etapa-parent-id').value = '';
+    document.getElementById('etapa-nombre').value = '';
+    document.getElementById('etapa-clave').value = '';
+    document.getElementById('etapa-orden').dataset.manual = 'false';
+    document.getElementById('etapa-cierra').checked = false;
+    document.getElementById('etapa-activo').checked = true;
+    filtrarParentsEtapa();
+    const modal = document.getElementById('modal-etapa');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => document.getElementById('etapa-materia-id')?.focus(), 150);
+}
+
+function editarEtapa(btn) {
+    document.getElementById('modal-etapa-titulo').textContent = 'Editar etapa procesal';
+    document.getElementById('etapa-id').value = btn.dataset.id || '';
+    document.getElementById('etapa-materia-id').value = btn.dataset.materiaId || '';
+    filtrarParentsEtapa();
+    document.getElementById('etapa-parent-id').value = btn.dataset.parentId || '';
+    document.getElementById('etapa-nombre').value = btn.dataset.nombre || '';
+    document.getElementById('etapa-clave').value = btn.dataset.clave || '';
+    document.getElementById('etapa-orden').value = btn.dataset.orden || '1';
+    document.getElementById('etapa-orden').dataset.manual = 'true';
+    document.getElementById('etapa-cierra').checked = btn.dataset.cierra === 'true';
+    document.getElementById('etapa-activo').checked = btn.dataset.activo !== 'false';
+    actualizarPreviewOrdenEtapa();
+    const modal = document.getElementById('modal-etapa');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => document.getElementById('etapa-nombre')?.focus(), 150);
+}
+
+function cerrarModalEtapa() {
+    const modal = document.getElementById('modal-etapa');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+function guardarEtapa() {
+    const nombre = document.getElementById('etapa-nombre').value.trim();
+    const materiaId = document.getElementById('etapa-materia-id').value;
+    if (!materiaId || !nombre) {
+        Swal.fire({ icon: 'warning', title: 'Datos requeridos', text: 'Selecciona materia y escribe el nombre de la etapa.', confirmButtonColor: '#9D2449' });
+        return;
+    }
+
+    const body = {
+        id: document.getElementById('etapa-id').value,
+        materiaId,
+        parentId: document.getElementById('etapa-parent-id').value,
+        nombre,
+        clave: '',
+        orden: document.getElementById('etapa-orden').value || '1',
+        cierraExpediente: String(document.getElementById('etapa-cierra').checked),
+        activo: String(document.getElementById('etapa-activo').checked)
+    };
+
+    fetch('/catalogos/etapas/guardar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                cerrarModalEtapa();
+                Swal.fire({ icon: 'success', title: 'Guardado', text: data.mensaje, timer: 1400, showConfirmButton: false });
+                const url = new URL(window.location);
+                url.searchParams.set('tab', 'etapas');
+                setTimeout(() => window.location.href = url.toString(), 350);
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'No se pudo guardar.', confirmButtonColor: '#9D2449' });
+            }
+        })
+        .catch(err => Swal.fire({ icon: 'error', title: 'Error de conexion', text: err.message, confirmButtonColor: '#9D2449' }));
+}
+
+function eliminarEtapa(btn) {
+    const nombre = btn.dataset.nombre || 'esta etapa';
+    Swal.fire({
+        icon: 'warning',
+        title: 'Desactivar etapa',
+        text: `La etapa "${nombre}" se ocultara de nuevos expedientes, pero se conserva para historial.`,
+        showCancelButton: true,
+        confirmButtonText: 'Desactivar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#9D2449'
+    }).then(result => {
+        if (!result.isConfirmed) return;
+        fetch('/catalogos/etapas/eliminar/' + btn.dataset.id, { method: 'DELETE' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    Swal.fire({ icon: 'success', title: 'Desactivada', text: data.mensaje, timer: 1400, showConfirmButton: false });
+                    const url = new URL(window.location);
+                    url.searchParams.set('tab', 'etapas');
+                    setTimeout(() => window.location.href = url.toString(), 350);
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'No se pudo desactivar.', confirmButtonColor: '#9D2449' });
+                }
+            });
+    });
+}
 
 function abrirModalNuevo(tipo) {
     const cfg = TIPOS_CONFIG[tipo];
@@ -315,6 +546,21 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSearch('search-abogados', 'tbody-abogados');
     setupSearch('search-sedes', 'tbody-sedes');
     setupSearch('search-materias', 'tbody-materias');
+    document.getElementById('search-etapas')?.addEventListener('input', aplicarFiltrosEtapas);
+    document.getElementById('filtro-etapas-materia')?.addEventListener('change', aplicarFiltrosEtapas);
+    aplicarFiltrosEtapas();
+
+    document.getElementById('etapa-materia-id')?.addEventListener('change', filtrarParentsEtapa);
+    document.getElementById('etapa-parent-id')?.addEventListener('change', () => {
+        document.getElementById('etapa-orden')?.setAttribute('data-manual', 'false');
+        sugerirOrdenEtapa();
+        actualizarPreviewOrdenEtapa();
+    });
+    document.getElementById('etapa-nombre')?.addEventListener('input', actualizarPreviewOrdenEtapa);
+    document.getElementById('etapa-orden')?.addEventListener('input', e => {
+        e.currentTarget.dataset.manual = 'true';
+        actualizarPreviewOrdenEtapa();
+    });
 
     // Cerrar modal con Escape
     document.addEventListener('keydown', e => {
@@ -324,6 +570,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cerrar modal clic fuera
     document.getElementById('modal-catalogo')?.addEventListener('click', e => {
         if (e.target === e.currentTarget) cerrarModal();
+    });
+    document.getElementById('modal-etapa')?.addEventListener('click', e => {
+        if (e.target === e.currentTarget) cerrarModalEtapa();
     });
 
     // Enter en modal guarda
@@ -348,7 +597,8 @@ const TABLA_A_TBODY = {
     'tipos_audiencia':          'tbody-tipos-audiencia',
     'cat_tipo_expediente':      'tbody-tipos-expediente',
     'materias':                 'tbody-materias',
-    'cat_estados':              'tbody-sedes'
+    'cat_estados':              'tbody-sedes',
+    'cat_etapas_procesales':    'tbody-etapas'
 };
 
 /**
@@ -390,7 +640,11 @@ async function refrescarTablaCatalogo(tabla, force = false) {
         if (tbodyNuevo) {
             tbodyActual.innerHTML = tbodyNuevo.innerHTML;
             // Actualizar buscador y badge de conteo (siempre, incluso si el panel está oculto)
-            setupSearch(tbodyId.replace('tbody-', 'search-'), tbodyId);
+            if (tbodyId === 'tbody-etapas') {
+                aplicarFiltrosEtapas();
+            } else {
+                setupSearch(tbodyId.replace('tbody-', 'search-'), tbodyId);
+            }
             actualizarBadgeTab(tbodyId);
             // Limpiar el flag dirty: ya está actualizado, no hace falta un segundo fetch al abrir el tab
             dirtyTabs.delete(tbodyId);

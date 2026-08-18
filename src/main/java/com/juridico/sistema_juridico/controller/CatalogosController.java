@@ -31,6 +31,7 @@ public class CatalogosController {
     @Autowired private MateriaRepository materiaRepository;
     @Autowired private EstadoRepository estadoRepository;
     @Autowired private TipoExpedienteRepository tipoExpedienteRepository;
+    @Autowired private EtapaCatalogoRepository etapaCatalogoRepository;
     @Autowired private com.juridico.sistema_juridico.service.CatalogosSyncService syncService;
 
     // ===============================================================
@@ -80,6 +81,7 @@ public class CatalogosController {
         List<Estado> sedes = new ArrayList<>();
         List<Materia> materias = new ArrayList<>();
         List<TipoExpediente> tiposExpediente = new ArrayList<>();
+        List<EtapaCatalogo> etapasCatalogo = new ArrayList<>();
 
         if (gerenciaSeleccionada != null) {
             organos = organoRepository.findByGerenciaIdAndActivoTrue(gerenciaSeleccionada.getId());
@@ -120,6 +122,11 @@ public class CatalogosController {
             sedes.sort(Comparator.comparing(Estado::getNombre, String.CASE_INSENSITIVE_ORDER));
             
             materias = materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(gerenciaSeleccionada.getId());
+            if (!materias.isEmpty()) {
+                etapasCatalogo = etapaCatalogoRepository.findByMateriaIdInOrderByMateriaNombreAscOrdenAscNombreAsc(
+                        materias.stream().map(Materia::getId).toList());
+                etapasCatalogo = ordenarEtapasJerarquicas(etapasCatalogo);
+            }
             
             tiposExpediente = tipoExpedienteRepository.findByGerenciaIdAndActivoTrue(gerenciaSeleccionada.getId());
             tiposExpediente.addAll(tipoExpedienteRepository.findByGerenciaIsNullAndActivoTrue());
@@ -142,6 +149,7 @@ public class CatalogosController {
         model.addAttribute("listaSedes", sedes);
         model.addAttribute("listaMaterias", materias);
         model.addAttribute("listaTiposExpediente", tiposExpediente);
+        model.addAttribute("listaEtapasCatalogo", etapasCatalogo);
         
         model.addAttribute("fechaLimiteNuevo", java.time.LocalDateTime.now().minusDays(7));
 
@@ -203,6 +211,26 @@ public class CatalogosController {
             return null;
         }
         return gerenciaRepository.findById(Integer.parseInt(gerenciaIdStr)).orElse(null);
+    }
+
+    private Materia validarMateriaPermitida(Integer materiaId, Usuario usuarioActual) {
+        validarPuedeEditarCatalogos(usuarioActual);
+        Materia materia = materiaRepository.findById(materiaId)
+                .orElseThrow(() -> new IllegalArgumentException("Materia no encontrada."));
+        validarAlcanceGerencia(materia.getGerencia(), usuarioActual, "etapas procesales");
+        return materia;
+    }
+
+    private String normalizarClaveEtapa(String nombre) {
+        if (nombre == null) {
+            return "ETAPA";
+        }
+        String clave = java.text.Normalizer.normalize(nombre.trim(), java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toUpperCase(Locale.ROOT)
+                .replaceAll("[^A-Z0-9]+", "_")
+                .replaceAll("^_+|_+$", "");
+        return clave.isBlank() ? "ETAPA" : clave;
     }
 
     private ResponseEntity<?> forbidden(String message) {
@@ -672,6 +700,153 @@ public class CatalogosController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo eliminar: " + e.getMessage()));
         }
+    }
+
+    // ===============================================================
+    // CRUD - ETAPAS PROCESALES POR MATERIA
+    // ===============================================================
+    @GetMapping("/etapas/materia/{materiaId}")
+    @ResponseBody
+    public ResponseEntity<?> listarEtapasPorMateria(@PathVariable("materiaId") Integer materiaId) {
+        try {
+            Usuario usuarioActual = getUsuarioActual();
+            validarMateriaPermitida(materiaId, usuarioActual);
+            List<Map<String, Object>> etapas = etapaCatalogoRepository
+                    .findByMateriaIdOrderByOrdenAscNombreAsc(materiaId)
+                    .stream()
+                    .map(this::mapearEtapaCatalogo)
+                    .toList();
+            return ResponseEntity.ok(etapas);
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return forbidden(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/etapas/guardar")
+    @ResponseBody
+    public ResponseEntity<?> guardarEtapa(@RequestBody Map<String, String> payload) {
+        try {
+            Usuario usuarioActual = getUsuarioActual();
+            String nombre = payload.get("nombre");
+            String idStr = payload.get("id");
+            String materiaIdStr = payload.get("materiaId");
+            String parentIdStr = payload.get("parentId");
+
+            if (nombre == null || nombre.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "El nombre de la etapa es obligatorio."));
+            }
+            if (materiaIdStr == null || materiaIdStr.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Selecciona una materia."));
+            }
+
+            Materia materia = validarMateriaPermitida(Integer.parseInt(materiaIdStr), usuarioActual);
+            EtapaCatalogo parent = null;
+            if (parentIdStr != null && !parentIdStr.isBlank()) {
+                parent = etapaCatalogoRepository.findById(Integer.parseInt(parentIdStr))
+                        .orElseThrow(() -> new IllegalArgumentException("Etapa padre no encontrada."));
+                if (!parent.getMateria().getId().equals(materia.getId())) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "La subetapa debe pertenecer a la misma materia."));
+                }
+                if (parent.getParent() != null) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Solo puedes crear subetapas dentro de etapas principales."));
+                }
+            }
+
+            EtapaCatalogo etapa;
+            if (idStr != null && !idStr.isBlank()) {
+                etapa = etapaCatalogoRepository.findById(Integer.parseInt(idStr))
+                        .orElseThrow(() -> new IllegalArgumentException("Etapa no encontrada."));
+                validarMateriaPermitida(etapa.getMateria().getId(), usuarioActual);
+                if (parent != null && parent.getId().equals(etapa.getId())) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Una etapa no puede ser padre de si misma."));
+                }
+                if (parent != null && etapaCatalogoRepository.existsByParentId(etapa.getId())) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "No puedes convertir en subetapa una etapa que ya tiene subetapas."));
+                }
+            } else {
+                etapa = new EtapaCatalogo();
+                etapa.setMateria(materia);
+                etapa.setUsuario(usuarioActual);
+                etapa.setActivo(true);
+            }
+
+            etapa.setNombre(nombre.trim());
+            etapa.setClave(payload.getOrDefault("clave", normalizarClaveEtapa(nombre)));
+            etapa.setOrden(parseIntOrDefault(payload.get("orden"), 1));
+            etapa.setDescripcion(payload.get("descripcion"));
+            etapa.setParent(parent);
+            etapa.setCierraExpediente(Boolean.parseBoolean(payload.getOrDefault("cierraExpediente", "false")));
+            etapa.setActivo(Boolean.parseBoolean(payload.getOrDefault("activo", "true")));
+            etapa.setEtapaLegacy(Boolean.TRUE.equals(etapa.getCierraExpediente())
+                    ? com.juridico.sistema_juridico.Entity.enums.EtapaProcesal.CONCLUIDO
+                    : com.juridico.sistema_juridico.Entity.enums.EtapaProcesal.TRAMITE);
+
+            etapaCatalogoRepository.save(etapa);
+            return ResponseEntity.ok(Map.of("status", "ok", "id", etapa.getId(), "mensaje", "Etapa guardada correctamente."));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return forbidden(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/etapas/eliminar/{id}")
+    @ResponseBody
+    public ResponseEntity<?> eliminarEtapa(@PathVariable("id") Integer id) {
+        try {
+            Usuario usuarioActual = getUsuarioActual();
+            EtapaCatalogo etapa = etapaCatalogoRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Etapa no encontrada."));
+            validarMateriaPermitida(etapa.getMateria().getId(), usuarioActual);
+            etapa.setActivo(false);
+            etapaCatalogoRepository.save(etapa);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Etapa desactivada correctamente."));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return forbidden(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "No se pudo desactivar: " + e.getMessage()));
+        }
+    }
+
+    private int parseIntOrDefault(String value, int fallback) {
+        try {
+            return value != null && !value.isBlank() ? Integer.parseInt(value) : fallback;
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
+    }
+
+    private List<EtapaCatalogo> ordenarEtapasJerarquicas(List<EtapaCatalogo> etapas) {
+        return etapas.stream()
+                .sorted(Comparator
+                        .comparing((EtapaCatalogo e) -> e.getMateria() != null ? e.getMateria().getNombre() : "",
+                                String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(e -> e.getParent() != null ? e.getParent().getOrden() : e.getOrden(),
+                                Comparator.nullsLast(Integer::compareTo))
+                        .thenComparing(e -> e.getParent() != null ? e.getParent().getNombre() : e.getNombre(),
+                                String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(e -> e.getParent() != null ? 1 : 0)
+                        .thenComparing(EtapaCatalogo::getOrden, Comparator.nullsLast(Integer::compareTo))
+                        .thenComparing(EtapaCatalogo::getNombre, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    private Map<String, Object> mapearEtapaCatalogo(EtapaCatalogo etapa) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("id", etapa.getId());
+        map.put("nombre", etapa.getNombre());
+        map.put("nombreJerarquico", etapa.getNombreJerarquico());
+        map.put("clave", etapa.getClave());
+        map.put("orden", etapa.getOrden());
+        map.put("activo", etapa.getActivo());
+        map.put("cierraExpediente", etapa.getCierraExpediente());
+        map.put("materiaId", etapa.getMateria() != null ? etapa.getMateria().getId() : null);
+        map.put("materiaNombre", etapa.getMateria() != null ? etapa.getMateria().getNombre() : "");
+        map.put("parentId", etapa.getParent() != null ? etapa.getParent().getId() : null);
+        map.put("parentNombre", etapa.getParent() != null ? etapa.getParent().getNombre() : "");
+        return map;
     }
 
     @GetMapping("/gerencias/toggle/{id}")

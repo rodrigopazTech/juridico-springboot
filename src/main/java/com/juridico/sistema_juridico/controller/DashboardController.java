@@ -136,7 +136,8 @@ public class DashboardController {
             return "views/dashboard/index_gerente";
         }
 
-        if (usuario.getRol() == RolUsuario.SUBDIRECTOR) {
+        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECTOR_PRINCIPAL
+                || usuario.getRol() == RolUsuario.DIRECTOR || usuario.getRol() == RolUsuario.SUBDIRECTOR) {
             List<Materia> materiasDirectivo = gerenciaId != null
                     ? materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(gerenciaId.intValue())
                     : materiaRepository.findByActivoTrueOrderByNombreAsc();
@@ -165,6 +166,30 @@ public class DashboardController {
                     .map(Usuario::getNombreCompleto)
                     .findFirst()
                     .orElse(null);
+            String pageTitle = switch (usuario.getRol()) {
+                case ADMIN -> "Dashboard - Admin";
+                case DIRECTOR_PRINCIPAL -> "Dashboard - Director Principal";
+                case DIRECTOR -> "Dashboard - Director";
+                default -> "Dashboard - Subdirector";
+            };
+            String vistaTitulo = switch (usuario.getRol()) {
+                case ADMIN -> "Vista administrativa";
+                case DIRECTOR_PRINCIPAL -> "Vista de direccion principal";
+                case DIRECTOR -> "Vista directiva";
+                default -> "Vista subdirectiva";
+            };
+            String vistaDescripcion = switch (usuario.getRol()) {
+                case ADMIN -> "control total del sistema por gerencia, materia, abogado y periodo";
+                case DIRECTOR_PRINCIPAL -> "panorama institucional por gerencia, materia, abogado y periodo";
+                case DIRECTOR -> "control ejecutivo por gerencia, materia, abogado y periodo";
+                default -> "seguimiento transversal por gerencia, materia, abogado y periodo";
+            };
+            String misAsuntosDescripcion = switch (usuario.getRol()) {
+                case ADMIN -> "Resumen personal asignado al administrador";
+                case DIRECTOR_PRINCIPAL -> "Resumen personal asignado al director principal";
+                case DIRECTOR -> "Resumen personal asignado al director";
+                default -> "Resumen personal asignado al subdirector";
+            };
 
             model.addAttribute("subdirectorDashboard",
                     dashboardService.obtenerDashboardSubdirector(gerenciaId, materiaId, abogadoId, periodo));
@@ -180,7 +205,10 @@ public class DashboardController {
             model.addAttribute("gerenciaSeleccionadaNombre", gerenciaSeleccionadaNombre);
             model.addAttribute("materiaSeleccionadaNombre", materiaSeleccionadaNombre);
             model.addAttribute("abogadoSeleccionadoNombre", abogadoSeleccionadoNombre);
-            model.addAttribute("pageTitle", "Dashboard - Subdirector");
+            model.addAttribute("directivoVistaTitulo", vistaTitulo);
+            model.addAttribute("directivoVistaDescripcion", vistaDescripcion);
+            model.addAttribute("directivoMisAsuntosDescripcion", misAsuntosDescripcion);
+            model.addAttribute("pageTitle", pageTitle);
             model.addAttribute("activePage", "dashboard");
             return "views/dashboard/index_subdirector";
         }

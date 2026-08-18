@@ -9,4 +9,6 @@ import java.util.UUID;
 @Repository
 public interface BitacoraDatoRepository extends JpaRepository<BitacoraDato, Long> {
     List<BitacoraDato> findByExpedienteIdOrderByFechaDesc(UUID expedienteId);
+
+    List<BitacoraDato> findByExpedienteIdOrderByFechaAsc(UUID expedienteId);
 }

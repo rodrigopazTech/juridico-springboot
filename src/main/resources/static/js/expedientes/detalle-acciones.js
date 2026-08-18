@@ -79,7 +79,7 @@ async function loadObservaciones(smooth = false) {
                 'FIRME': 'Firme',
                 'CONCLUIDO': 'Concluido'
             };
-            const etapa = nota.etapaProcesal;
+            const etapa = nota.etapaNombre || nota.etapaProcesal;
             const etapaBadge = etapa
                 ? `<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${etapaColores[etapa] || 'bg-gray-100 text-gray-500 border-gray-200'}">${etapaLabels[etapa] || etapa}</span>`
                 : '';
@@ -454,6 +454,7 @@ function inicializarSelectsEdicionExpediente() {
     const selectSede = document.getElementById('select-sede-exp-edit');
     const selectMateria = document.getElementById('select-materia-exp-edit');
     const selectAbogado = document.getElementById('select-abogado-exp-edit');
+    const selectEtapa = document.getElementById('select-etapa-exp-edit');
 
     if (selectGerencia && !selectGerencia.tomselect) {
         const tsGer = initSearchableSelect(selectGerencia, { tipo: 'gerencia' });
@@ -469,6 +470,10 @@ function inicializarSelectsEdicionExpediente() {
                         .then(materias => {
                             updateTomSelectOptions(tsMat, materias.map(m => ({ value: m.id, text: m.nombre })), 'Selecciona materia...');
                             tsMat.enable();
+                            if (selectEtapa?.tomselect) {
+                                updateTomSelectOptions(selectEtapa.tomselect, [], 'Primero selecciona una materia...');
+                                selectEtapa.tomselect.disable();
+                            }
                         });
                 }
             });
@@ -490,6 +495,7 @@ function inicializarSelectsEdicionExpediente() {
             tsMat.on('change', function() {
                 const tsGer = selectGerencia ? selectGerencia.tomselect : null;
                 const tsAbg = selectAbogado ? selectAbogado.tomselect : null;
+                const tsEtapa = selectEtapa ? selectEtapa.tomselect : null;
                 if (tsGer && tsAbg) {
                     const gerId = tsGer.getValue();
                     const matId = tsMat.getValue();
@@ -503,11 +509,38 @@ function inicializarSelectsEdicionExpediente() {
                             });
                     }
                 }
+                if (tsEtapa) {
+                    const matId = tsMat.getValue();
+                    tsEtapa.disable();
+                    updateTomSelectOptions(tsEtapa, [], 'Cargando etapas...');
+                    if (matId) {
+                        fetch(`/expedientes/api/etapas-por-materia/${matId}`)
+                            .then(res => res.json())
+                            .then(etapas => {
+                                if (etapas.length) {
+                                    updateTomSelectOptions(tsEtapa, etapas.map(e => ({
+                                        value: e.id,
+                                        text: e.parentId ? `- ${e.nombreJerarquico || e.nombre}` : (e.nombreJerarquico || e.nombre)
+                                    })), 'Selecciona etapa...');
+                                    tsEtapa.enable();
+                                    tsEtapa.setValue(etapas[0].id);
+                                } else {
+                                    updateTomSelectOptions(tsEtapa, [], 'Configura etapas para esta materia');
+                                }
+                            });
+                    } else {
+                        updateTomSelectOptions(tsEtapa, [], 'Primero selecciona una materia...');
+                    }
+                }
             });
         }
     }
 
     if (selectAbogado && !selectAbogado.tomselect) {
         initSearchableSelect(selectAbogado, { tipo: 'abogado' });
+    }
+
+    if (selectEtapa && !selectEtapa.tomselect) {
+        initSearchableSelect(selectEtapa, { tipo: 'etapa' });
     }
 }

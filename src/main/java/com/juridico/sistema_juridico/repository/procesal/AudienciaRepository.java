@@ -96,6 +96,11 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         "AND a.fechaDesahogo >= :fechaInicio AND a.fechaDesahogo <= :fechaFin " +
                         "AND (:gerenciaId IS NULL OR eg.id = :gerenciaId OR cg.id = :gerenciaId) " +
                         "AND (:materiaId IS NULL OR em.id = :materiaId OR cm.id = :materiaId) " +
+                        "AND (:abogadoId IS NULL OR abr.id = :abogadoId OR abc.id = :abogadoId OR ud.id = :abogadoId) " +
+                        "AND (:tipoAudienciaId IS NULL OR ta.id = :tipoAudienciaId) " +
+                        "AND (:documento IS NULL OR :documento = '' " +
+                        "OR (:documento = 'con' AND a.actaDocumento IS NOT NULL AND a.actaDocumento <> '') " +
+                        "OR (:documento = 'sin' AND (a.actaDocumento IS NULL OR a.actaDocumento = ''))) " +
                         "AND (:filtroRoleGerenciaId IS NULL OR eg.id = :filtroRoleGerenciaId OR cg.id = :filtroRoleGerenciaId) " +
                         "AND ((:filtroRoleMateriaIds) IS NULL OR em.id IN (:filtroRoleMateriaIds) OR cm.id IN (:filtroRoleMateriaIds)) " +
                         "AND (:filtroRoleUsuarioId IS NULL OR abr.id = :filtroRoleUsuarioId OR abc.id = :filtroRoleUsuarioId OR a.usuarioDelegado.id = :filtroRoleUsuarioId) " +
@@ -107,6 +112,9 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
                         @Param("fechaFin") LocalDate fechaFin,
                         @Param("gerenciaId") Integer gerenciaId,
                         @Param("materiaId") Integer materiaId,
+                        @Param("abogadoId") Integer abogadoId,
+                        @Param("tipoAudienciaId") Integer tipoAudienciaId,
+                        @Param("documento") String documento,
                         @Param("filtroRoleGerenciaId") Integer filtroRoleGerenciaId,
                         @Param("filtroRoleMateriaIds") List<Integer> filtroRoleMateriaIds,
                         @Param("filtroRoleUsuarioId") Integer filtroRoleUsuarioId,

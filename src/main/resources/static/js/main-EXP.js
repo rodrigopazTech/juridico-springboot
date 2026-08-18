@@ -59,10 +59,15 @@ function limpiarModalNuevoExpediente() {
         else selectPrioridad.selectedIndex = 0;
     }
 
-    const selectEtapa = modal.querySelector('select[name="etapaProcesal"]');
+    const selectEtapa = document.getElementById('select-etapa-exp');
     if (selectEtapa) {
-        if (selectEtapa.tomselect) selectEtapa.tomselect.setValue(selectEtapa.options[0]?.value || '');
-        else selectEtapa.selectedIndex = 0;
+        if (selectEtapa.tomselect) {
+            updateTomSelectOptions(selectEtapa.tomselect, [], 'Primero selecciona una materia...');
+            selectEtapa.tomselect.disable();
+        } else {
+            selectEtapa.innerHTML = '<option value="">Primero selecciona una materia...</option>';
+            selectEtapa.disabled = true;
+        }
     }
 
     const selectSede = modal.querySelector('select[name="sede"]');
@@ -374,12 +379,90 @@ function cargarAbogadosExpediente(arg1 = '', arg2 = '', arg3 = '', abogadoIdSele
         });
 }
 
+function cargarEtapasExpediente(arg1 = '', arg2 = '', etapaIdSeleccionada = null) {
+    let matId, etapaId;
+
+    if (arg2 === '') {
+        const suffix = arg1;
+        matId = 'select-materia-exp' + suffix;
+        etapaId = 'select-etapa-exp' + suffix;
+    } else {
+        matId = arg1;
+        etapaId = arg2;
+    }
+
+    const materiaEl = document.getElementById(matId);
+    const selectEtapa = document.getElementById(etapaId);
+    if (!materiaEl || !selectEtapa) return Promise.resolve();
+
+    const materiaId = materiaEl.value;
+
+    if (selectEtapa.tomselect) {
+        updateTomSelectOptions(selectEtapa.tomselect, [], 'Cargando etapas...');
+        selectEtapa.tomselect.disable();
+    } else {
+        selectEtapa.innerHTML = '<option value="">Cargando etapas...</option>';
+        selectEtapa.disabled = true;
+        selectEtapa.classList.add('bg-gray-50');
+    }
+
+    if (!materiaId) {
+        if (selectEtapa.tomselect) {
+            updateTomSelectOptions(selectEtapa.tomselect, [], 'Primero selecciona una materia...');
+        } else {
+            selectEtapa.innerHTML = '<option value="">Primero selecciona una materia...</option>';
+        }
+        return Promise.resolve();
+    }
+
+    return fetch(`/expedientes/api/etapas-por-materia/${materiaId}`)
+        .then(res => res.json())
+        .then(etapas => {
+            if (selectEtapa.tomselect) {
+                if (etapas.length === 0) {
+                    updateTomSelectOptions(selectEtapa.tomselect, [], 'Configura etapas para esta materia');
+                } else {
+                    updateTomSelectOptions(selectEtapa.tomselect, etapas.map(e => ({
+                        value: e.id,
+                        text: e.parentId ? `- ${e.nombreJerarquico || e.nombre}` : (e.nombreJerarquico || e.nombre)
+                    })), 'Selecciona etapa...');
+                    selectEtapa.tomselect.enable();
+                    selectEtapa.tomselect.setValue(etapaIdSeleccionada || etapas[0].id);
+                }
+            } else {
+                if (etapas.length === 0) {
+                    selectEtapa.innerHTML = '<option value="">Configura etapas para esta materia</option>';
+                    selectEtapa.disabled = true;
+                } else {
+                    selectEtapa.innerHTML = '<option value="">Selecciona etapa...</option>';
+                    etapas.forEach((e, index) => {
+                        const selected = ((etapaIdSeleccionada && e.id == etapaIdSeleccionada) || (!etapaIdSeleccionada && index === 0)) ? 'selected' : '';
+                        const label = e.parentId ? `- ${e.nombreJerarquico || e.nombre}` : (e.nombreJerarquico || e.nombre);
+                        selectEtapa.innerHTML += `<option value="${e.id}" ${selected}>${label}</option>`;
+                    });
+                    selectEtapa.disabled = false;
+                    selectEtapa.classList.remove('bg-gray-50');
+                }
+            }
+            return etapas;
+        })
+        .catch(error => {
+            console.error("Error al cargar etapas:", error);
+            if (selectEtapa.tomselect) {
+                updateTomSelectOptions(selectEtapa.tomselect, [], 'Error al cargar etapas');
+            } else {
+                selectEtapa.innerHTML = '<option value="">Error al cargar etapas</option>';
+            }
+        });
+}
+
 function inicializarSelectsNuevoExpediente() {
     const selectGerencia = document.getElementById('select-gerencia-exp');
     const selectSede = document.getElementById('select-sede-exp');
     const selectMateria = document.getElementById('select-materia-exp');
     const selectOrgano = document.getElementById('select-organo-exp');
     const selectAbogado = document.getElementById('select-abogado-exp');
+    const selectEtapa = document.getElementById('select-etapa-exp');
 
     if (selectGerencia && !selectGerencia.tomselect) {
         initSearchableSelect(selectGerencia, { 
@@ -387,6 +470,7 @@ function inicializarSelectsNuevoExpediente() {
             onChange: function() {
                 cargarMateriasExpediente();
                 cargarOrganosExpediente();
+                cargarEtapasExpediente();
             }
         });
     }
@@ -402,8 +486,13 @@ function inicializarSelectsNuevoExpediente() {
             gerenciaSelector: '#select-gerencia-exp',
             onChange: function() {
                 cargarAbogadosExpediente();
+                cargarEtapasExpediente();
             }
         });
+    }
+
+    if (selectEtapa && !selectEtapa.tomselect) {
+        initSearchableSelect(selectEtapa, { tipo: 'etapa' });
     }
 
     if (selectOrgano && !selectOrgano.tomselect) {

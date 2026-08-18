@@ -237,7 +237,7 @@
                                     <span
                                         class="px-2.5 py-1 rounded-md text-[11px] font-extrabold uppercase tracking-wide border"
                                         th:classappend="${exp.etapaProcesal != null and exp.etapaProcesal.name() == 'CONCLUIDO' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gob-oro/10 text-gob-oro border-gob-oro/20'}"
-                                        th:text="${exp.etapaProcesal != null ? exp.etapaProcesal.name() : 'DESCONOCIDO'}">
+                                        th:text="${exp.etapaCatalogo != null ? exp.etapaCatalogo.nombreJerarquico : (exp.etapaProcesal != null ? exp.etapaProcesal.name() : 'DESCONOCIDO')}">
                                         TRAMITE
                                     </span>
                                 </td>
@@ -342,7 +342,7 @@
                             <!-- Badge Etapa -->
                             <span class="px-2.5 py-1 rounded-md text-[11px] font-extrabold uppercase tracking-wide border"
                                   th:classappend="${exp.etapaProcesal != null and exp.etapaProcesal.name() == 'CONCLUIDO' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gob-oro/10 text-gob-oro border-gob-oro/20'}"
-                                  th:text="${exp.etapaProcesal != null ? exp.etapaProcesal.name() : 'DESCONOCIDO'}">
+                                  th:text="${exp.etapaCatalogo != null ? exp.etapaCatalogo.nombreJerarquico : (exp.etapaProcesal != null ? exp.etapaProcesal.name() : 'DESCONOCIDO')}">
                                 TRAMITE
                             </span>
                         </div>

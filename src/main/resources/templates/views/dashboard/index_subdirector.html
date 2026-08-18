@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#691228" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title th:text="${pageTitle}">Dashboard - Subdirector</title>
+    <title th:text="${pageTitle}">Dashboard - Directivo</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
@@ -107,8 +107,12 @@
                                 <i class="fas fa-sitemap"></i>
                             </div>
                             <div>
-                                <p class="metric-label text-[11px] font-extrabold uppercase text-gray-400">Vista subdirectiva</p>
-                                <p class="text-sm font-bold text-gray-700">seguimiento transversal por gerencia, materia, abogado y periodo</p>
+                                <p class="metric-label text-[11px] font-extrabold uppercase text-gray-400"
+                                    th:text="${directivoVistaTitulo}">Vista directiva</p>
+                                <p class="text-sm font-bold text-gray-700"
+                                    th:text="${directivoVistaDescripcion}">
+                                    seguimiento transversal por gerencia, materia, abogado y periodo
+                                </p>
                             </div>
                         </div>
 
@@ -360,7 +364,10 @@
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <p class="metric-label text-[11px] font-extrabold uppercase text-gray-400">Mis asuntos</p>
-                        <p class="text-sm font-bold text-gray-700">Resumen personal asignado al subdirector</p>
+                        <p class="text-sm font-bold text-gray-700"
+                            th:text="${directivoMisAsuntosDescripcion}">
+                            Resumen personal asignado al directivo
+                        </p>
                     </div>
                     <div class="grid grid-cols-2 gap-2 md:grid-cols-5">
                         <a th:href="@{/terminos(periodo='VENCIDOS', keyword=${usuario.nombreCompleto})}"

@@ -30,7 +30,7 @@ public class AuthController {
             model.addAttribute("logoutSuccess", true);
             session.removeAttribute("logoutSuccess"); // se consume una sola vez
         }
-        model.addAttribute("microsoftLoginConfigured", microsoftAuthProperties.isConfigured());
+        model.addAttribute("microsoftLoginConfigured", microsoftAuthProperties.isVisibleInUi());
         return "views/auth/index";
     }
 }

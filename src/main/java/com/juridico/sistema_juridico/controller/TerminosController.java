@@ -31,6 +31,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -1223,6 +1224,55 @@ public class TerminosController {
             if (recurso.exists() || recurso.isReadable()) {
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + recurso.getFilename() + "\"")
+                        .body(recurso);
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/preview/{id}")
+    public ResponseEntity<Resource> previsualizarArchivo(@PathVariable("id") Integer id) {
+        return servirArchivoTermino(id, false);
+    }
+
+    private ResponseEntity<Resource> servirArchivoTermino(Integer id, boolean descarga) {
+        try {
+            Termino termino = terminoRepository.findById(id).orElse(null);
+            if (termino == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            validarAccesoTermino(termino, getUsuarioActual());
+
+            Optional<TerminoArchivo> taOpt = terminoArchivoService.obtenerUltimoPorTipo(id, TipoDocumentoTermino.BORRADOR);
+            if (taOpt.isPresent()) {
+                TerminoArchivo ta = taOpt.get();
+                Path rutaArchivo = fileStorageService.obtenerArchivo(ta.getRutaArchivo());
+                Resource recurso = new UrlResource(rutaArchivo.toUri());
+                if (recurso.exists() || recurso.isReadable()) {
+                    String tipoMime = Files.probeContentType(rutaArchivo);
+                    return ResponseEntity.ok()
+                            .contentType(MediaType.parseMediaType(tipoMime != null ? tipoMime : "application/octet-stream"))
+                            .header(HttpHeaders.CONTENT_DISPOSITION,
+                                    (descarga ? "attachment" : "inline") + "; filename=\"" + ta.getNombreOriginal() + "\"")
+                            .body(recurso);
+                }
+            }
+
+            if (termino.getAcuse() == null) {
+                return ResponseEntity.notFound().build();
+            }
+            Path rutaArchivo = Paths.get("uploads/terminos").resolve(termino.getAcuse());
+            Resource recurso = new UrlResource(rutaArchivo.toUri());
+            if (recurso.exists() || recurso.isReadable()) {
+                String nombre = termino.getAcuseNombre() != null ? termino.getAcuseNombre() : recurso.getFilename();
+                String tipoMime = Files.probeContentType(rutaArchivo);
+                return ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType(tipoMime != null ? tipoMime : "application/octet-stream"))
+                        .header(HttpHeaders.CONTENT_DISPOSITION,
+                                (descarga ? "attachment" : "inline") + "; filename=\"" + nombre + "\"")
                         .body(recurso);
             }
             return ResponseEntity.notFound().build();

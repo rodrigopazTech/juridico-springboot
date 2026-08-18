@@ -183,6 +183,11 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "AND t.updatedAt >= :fechaInicio AND t.updatedAt <= :fechaFin " +
            "AND (:gerenciaId IS NULL OR e.gerencia.id = :gerenciaId OR c.gerencia.id = :gerenciaId) " +
            "AND (:materiaId IS NULL OR e.materia.id = :materiaId OR c.materia.id = :materiaId) " +
+           "AND (:abogadoId IS NULL OR a.id = :abogadoId OR e.abogadoResponsable.id = :abogadoId) " +
+           "AND (:prioridadId IS NULL OR t.prioridad.id = :prioridadId) " +
+           "AND (:documento IS NULL OR :documento = '' " +
+           "OR (:documento = 'con' AND ((t.acuse IS NOT NULL AND t.acuse <> '') OR (t.acuseNombre IS NOT NULL AND t.acuseNombre <> ''))) " +
+           "OR (:documento = 'sin' AND (t.acuse IS NULL OR t.acuse = '') AND (t.acuseNombre IS NULL OR t.acuseNombre = ''))) " +
            "AND (:secGerenciaId IS NULL OR e.gerencia.id = :secGerenciaId OR c.gerencia.id = :secGerenciaId) " +
            "AND (" +
            "COALESCE(:secMateriaIds, NULL) IS NULL " +
@@ -199,6 +204,9 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
             @Param("fechaFin") LocalDateTime fechaFin,
             @Param("gerenciaId") Integer gerenciaId,
             @Param("materiaId") Integer materiaId,
+            @Param("abogadoId") Integer abogadoId,
+            @Param("prioridadId") Integer prioridadId,
+            @Param("documento") String documento,
             @Param("secGerenciaId") Integer secGerenciaId,
             @Param("secMateriaIds") List<Integer> secMateriaIds,
             @Param("secUsuarioId") Integer secUsuarioId,

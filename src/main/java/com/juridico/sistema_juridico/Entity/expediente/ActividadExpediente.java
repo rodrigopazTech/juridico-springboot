@@ -1,6 +1,8 @@
 package com.juridico.sistema_juridico.Entity.expediente;
 
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.catalogo.EtapaCatalogo;
+import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -33,6 +35,18 @@ public class ActividadExpediente {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "etapa_procesal", length = 30)
+    private EtapaProcesal etapaProcesal;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "etapa_catalogo_id")
+    private EtapaCatalogo etapaCatalogo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "etapa_periodo_id")
+    private ExpedienteEtapaPeriodo etapaPeriodo;
 
     @Column(name = "fecha_registro")
     private LocalDateTime fechaRegistro;

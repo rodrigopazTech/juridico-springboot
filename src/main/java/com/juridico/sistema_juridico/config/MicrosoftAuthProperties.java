@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 public class MicrosoftAuthProperties {
 
     private boolean enabled = false;
+    private boolean uiVisible = false;
     private String baseUri = "https://login.microsoftonline.com";
     private String tenantId;
     private String clientId;
@@ -31,6 +32,10 @@ public class MicrosoftAuthProperties {
                 && hasText(redirectUri);
     }
 
+    public boolean isVisibleInUi() {
+        return uiVisible && isConfigured();
+    }
+
     private boolean hasText(String value) {
         return value != null && !value.trim().isEmpty();
     }
@@ -41,6 +46,14 @@ public class MicrosoftAuthProperties {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isUiVisible() {
+        return uiVisible;
+    }
+
+    public void setUiVisible(boolean uiVisible) {
+        this.uiVisible = uiVisible;
     }
 
     public String getBaseUri() {

@@ -3,15 +3,19 @@ package com.juridico.sistema_juridico.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
+import com.juridico.sistema_juridico.Entity.catalogo.EtapaCatalogo;
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.Entity.enums.NotificacionEvento;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.Entity.expediente.ActividadExpediente;
+import com.juridico.sistema_juridico.Entity.expediente.BitacoraDato;
+import com.juridico.sistema_juridico.Entity.expediente.ExpedienteEtapaPeriodo;
 import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Catalogo.CatPrioridadRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.EstadoRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.EtapaCatalogoRepository;
 
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
@@ -24,10 +28,13 @@ import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import com.juridico.sistema_juridico.repository.Expediente.ActividadExpedienteRepository;
+import com.juridico.sistema_juridico.repository.Expediente.BitacoraDatoRepository;
+import com.juridico.sistema_juridico.repository.Expediente.ExpedienteEtapaPeriodoRepository;
 import com.juridico.sistema_juridico.repository.General.ComentarioRepository;
 import com.juridico.sistema_juridico.Entity.general.Comentario;
 import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.NotificacionService;
+import com.juridico.sistema_juridico.service.ExpedienteEtapaPeriodoService;
 import com.juridico.sistema_juridico.service.CarpetaService;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 
@@ -51,6 +58,7 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.servlet.http.HttpServletRequest;
 
 import com.juridico.sistema_juridico.util.ExpedienteExcelExporter;
+import com.juridico.sistema_juridico.util.ExpedienteTrazabilidadExcelExporter;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -80,6 +88,8 @@ public class ExpedientesController {
     @Autowired
     private EstadoRepository estadoRepository;
     @Autowired
+    private EtapaCatalogoRepository etapaCatalogoRepository;
+    @Autowired
     private AudienciaRepository audienciaRepository;
     @Autowired
     private TerminoRepository terminoRepository;
@@ -96,9 +106,15 @@ public class ExpedientesController {
     @Autowired
     private ActividadExpedienteRepository actividadRepository;
     @Autowired
+    private BitacoraDatoRepository bitacoraDatoRepository;
+    @Autowired
+    private ExpedienteEtapaPeriodoRepository etapaPeriodoRepository;
+    @Autowired
     private NotificacionService notificacionService;
     @Autowired
     private AuditoriaService auditoriaService;
+    @Autowired
+    private ExpedienteEtapaPeriodoService etapaPeriodoService;
     @Autowired
     private CarpetaService carpetaService;
     @Autowired
@@ -328,6 +344,7 @@ public class ExpedientesController {
 
         model.addAttribute("listaPrioridades", catPrioridadRepository.findAll());
         model.addAttribute("etapas", EtapaProcesal.values());
+        model.addAttribute("etapasCatalogo", Collections.emptyList());
         model.addAttribute("organos", organoRepository.findByActivoTrue());
         model.addAttribute("prioridades", catPrioridadRepository.findAll());
         model.addAttribute("estados", estadoRepository.findAllByActivoTrueOrderByNombreAsc());
@@ -492,6 +509,13 @@ public class ExpedientesController {
                 }
             }
 
+            EtapaCatalogo etapaCatalogo = resolverEtapaCatalogoFormulario(expedienteForm, expedienteReal);
+            if (etapaCatalogo != null) {
+                expedienteReal.setEtapaCatalogo(etapaCatalogo);
+                expedienteReal.setEtapaProcesal(etapaLegacyCompatibilidad(etapaCatalogo));
+            } else if (esNuevo) {
+                expedienteReal.setEtapaProcesal(EtapaProcesal.TRAMITE);
+            }
 
 
             expedienteReal.setUpdatedAt(LocalDateTime.now());
@@ -499,11 +523,21 @@ public class ExpedientesController {
             idParaRedirigir = guardado.getId();
 
             if (esNuevo) {
+                etapaPeriodoService.iniciarPeriodoInicial(guardado, usuario);
                 enviarNotificacionesNuevoExpediente(guardado);
                 carpetaService.inicializarCarpetasPorDefecto(guardado.getId(), usuario);
                 auditoriaService.registrar(guardado, "Expediente Creado",
                         "Se ha registrado un nuevo expediente: " + guardado.getNumero(), "PLUS", usuario);
             } else {
+                if (anterior != null && cambioEtapaExpediente(anterior, guardado)) {
+                    if (guardado.getEtapaCatalogo() != null) {
+                        etapaPeriodoService.cambiarEtapaCatalogo(guardado, guardado.getEtapaCatalogo(), usuario,
+                                "Cambio registrado desde edicion del expediente");
+                    } else {
+                        etapaPeriodoService.cambiarEtapa(guardado, guardado.getEtapaProcesal(), usuario,
+                                "Cambio registrado desde edicion del expediente");
+                    }
+                }
                 auditoriaService.registrarCambiosEstructurados(guardado, anterior, usuario);
 
                 if (anterior != null && guardado.getAbogadoResponsable() != null) {
@@ -554,6 +588,41 @@ public class ExpedientesController {
     /**
      * Envía notificaciones al Abogado, Gerente y Jefe de Depto correspondiente.
      */
+    private EtapaCatalogo resolverEtapaCatalogoFormulario(Expediente expedienteForm, Expediente expedienteReal) {
+        Integer etapaId = expedienteForm.getEtapaCatalogo() != null ? expedienteForm.getEtapaCatalogo().getId() : null;
+        Integer materiaId = expedienteReal.getMateria() != null ? expedienteReal.getMateria().getId() : null;
+
+        if (etapaId != null) {
+            EtapaCatalogo etapa = etapaCatalogoRepository.findById(etapaId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "La etapa procesal no existe."));
+            if (materiaId == null || etapa.getMateria() == null || !etapa.getMateria().getId().equals(materiaId)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La etapa procesal no pertenece a la materia del expediente.");
+            }
+            if (!Boolean.TRUE.equals(etapa.getActivo())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La etapa procesal seleccionada no esta activa.");
+            }
+            return etapa;
+        }
+
+        if (materiaId != null) {
+            return etapaCatalogoRepository.findByMateriaIdAndActivoTrueOrderByOrdenAscNombreAsc(materiaId)
+                    .stream()
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        return null;
+    }
+
+    private boolean cambioEtapaExpediente(Expediente anterior, Expediente actual) {
+        Integer etapaAnteriorId = anterior.getEtapaCatalogo() != null ? anterior.getEtapaCatalogo().getId() : null;
+        Integer etapaActualId = actual.getEtapaCatalogo() != null ? actual.getEtapaCatalogo().getId() : null;
+        if (!Objects.equals(etapaAnteriorId, etapaActualId)) {
+            return true;
+        }
+        return etapaAnteriorId == null && anterior.getEtapaProcesal() != actual.getEtapaProcesal();
+    }
+
     private void enviarNotificacionesNuevoExpediente(Expediente exp) {
         // 1. RECUPERAR EL NOMBRE DE LA MATERIA (Parche para el NULL)
         String nombreMateria = "General";
@@ -657,6 +726,10 @@ public class ExpedientesController {
         model.addAttribute("estados", estadoRepository.findByActivoTrue());
         model.addAttribute("etapas", EtapaProcesal.values());
         model.addAttribute("materias", materiaRepository.findByActivoTrueOrderByNombreAsc());
+        model.addAttribute("etapasCatalogo", expediente.getMateria() != null
+                ? ordenarEtapasJerarquicas(etapaCatalogoRepository
+                        .findByMateriaIdAndActivoTrueOrderByOrdenAscNombreAsc(expediente.getMateria().getId()))
+                : Collections.emptyList());
         model.addAttribute("tipos", tipoAudienciaRepository.findByActivoTrue());
         model.addAttribute("tiposExpediente", tipoExpedienteRepository.findAll());
         model.addAttribute("pageTitle", "Detalle del Expediente");
@@ -665,8 +738,94 @@ public class ExpedientesController {
         // CARGAR HISTORIAL DE ACTIVIDADES (Bitácora)
         List<ActividadExpediente> actividades = actividadRepository.findByExpedienteIdOrderByFechaRegistroDesc(id);
         model.addAttribute("actividades", actividades);
+        model.addAttribute("periodosEtapa", etapaPeriodoRepository.findByExpedienteIdOrderByFechaInicioDesc(id));
 
         return "views/expedientes/detalle";
+    }
+
+    @GetMapping("/{id}/trazabilidad")
+    public String verTrazabilidad(@PathVariable("id") UUID id, Model model) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+
+        Expediente expediente = expedienteRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Expediente no encontrado con ID: " + id));
+        validarAccesoExpediente(expediente, usuario);
+
+        List<ExpedienteEtapaPeriodo> periodos = etapaPeriodoRepository.findByExpedienteIdOrderByFechaInicioDesc(id);
+        List<ActividadExpediente> actividades = actividadRepository.findByExpedienteIdOrderByFechaRegistroDesc(id);
+        List<BitacoraDato> cambios = bitacoraDatoRepository.findByExpedienteIdOrderByFechaDesc(id);
+
+        model.addAttribute("usuario", usuario);
+        model.addAttribute("rolActual", usuario.getRol());
+        model.addAttribute("expediente", expediente);
+        model.addAttribute("bloquesTrazabilidad", construirBloquesTrazabilidad(periodos, actividades, cambios));
+        model.addAttribute("actividadesSinPeriodo", actividades.stream()
+                .filter(act -> act.getEtapaPeriodo() == null)
+                .toList());
+        model.addAttribute("cambiosSinPeriodo", cambios.stream()
+                .filter(cambio -> cambio.getEtapaPeriodo() == null)
+                .toList());
+        model.addAttribute("pageTitle", "Trazabilidad del Expediente");
+        model.addAttribute("activePage", "expedientes");
+
+        return "views/expedientes/trazabilidad";
+    }
+
+    @GetMapping("/{id}/trazabilidad/exportar")
+    public void exportarTrazabilidad(@PathVariable("id") UUID id, HttpServletResponse response) throws IOException {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+
+        Expediente expediente = expedienteRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Expediente no encontrado con ID: " + id));
+        validarAccesoExpediente(expediente, usuario);
+
+        List<ExpedienteEtapaPeriodo> periodos = etapaPeriodoRepository.findByExpedienteIdOrderByFechaInicioAsc(id);
+        List<ActividadExpediente> actividades = actividadRepository.findByExpedienteIdOrderByFechaRegistroAsc(id);
+        List<BitacoraDato> cambios = bitacoraDatoRepository.findByExpedienteIdOrderByFechaAsc(id);
+
+        ExpedienteTrazabilidadExcelExporter exporter =
+                new ExpedienteTrazabilidadExcelExporter(expediente, periodos, actividades, cambios);
+        exporter.export(response);
+    }
+
+    private List<Map<String, Object>> construirBloquesTrazabilidad(List<ExpedienteEtapaPeriodo> periodos,
+            List<ActividadExpediente> actividades, List<BitacoraDato> cambios) {
+        List<Map<String, Object>> bloques = new ArrayList<>();
+        for (ExpedienteEtapaPeriodo periodo : periodos) {
+            Map<String, Object> bloque = new LinkedHashMap<>();
+            bloque.put("periodo", periodo);
+            bloque.put("actividades", actividades.stream()
+                    .filter(act -> act.getEtapaPeriodo() != null
+                            && Objects.equals(act.getEtapaPeriodo().getId(), periodo.getId()))
+                    .toList());
+            bloque.put("cambios", cambios.stream()
+                    .filter(cambio -> cambio.getEtapaPeriodo() != null
+                            && Objects.equals(cambio.getEtapaPeriodo().getId(), periodo.getId()))
+                    .toList());
+            bloque.put("duracion", formatearDuracionPeriodo(periodo));
+            bloques.add(bloque);
+        }
+        return bloques;
+    }
+
+    private String formatearDuracionPeriodo(ExpedienteEtapaPeriodo periodo) {
+        if (periodo == null || periodo.getFechaInicio() == null) {
+            return "";
+        }
+        LocalDateTime fin = periodo.getFechaFin() != null ? periodo.getFechaFin() : LocalDateTime.now();
+        java.time.Duration duracion = java.time.Duration.between(periodo.getFechaInicio(), fin);
+        long dias = duracion.toDays();
+        long horas = duracion.toHoursPart();
+        long minutos = duracion.toMinutesPart();
+        if (dias > 0) {
+            return dias + " dias " + horas + " h";
+        }
+        if (horas > 0) {
+            return horas + " h " + minutos + " min";
+        }
+        return Math.max(minutos, 0) + " min";
     }
 
     // --- ENDPOINTS PARA COMENTARIOS (NOTAS) ---
@@ -702,6 +861,7 @@ public class ExpedientesController {
         nuevo.setUsuario(usuario);
         nuevo.setUsuarioNombre(usuario != null ? usuario.getNombreCompleto() : "Sistema");
         nuevo.setEtapaProcesal(exp.getEtapaProcesal());
+        nuevo.setEtapaCatalogo(exp.getEtapaCatalogo());
 
         auditoriaService.registrar(exp, "Nueva Observación",
                 "Se agregó una nota: "
@@ -764,7 +924,9 @@ public class ExpedientesController {
 
     @PostMapping("/{id}/cambiar-etapa")
     @ResponseBody
-    public ResponseEntity<?> cambiarEtapa(@PathVariable("id") UUID id, @RequestParam("etapa") EtapaProcesal etapa) {
+    public ResponseEntity<?> cambiarEtapa(@PathVariable("id") UUID id,
+            @RequestParam(value = "etapa", required = false) EtapaProcesal etapa,
+            @RequestParam(value = "etapaCatalogoId", required = false) Integer etapaCatalogoId) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
@@ -775,15 +937,79 @@ public class ExpedientesController {
         validarAccesoExpediente(exp, usuario);
 
         EtapaProcesal anterior = exp.getEtapaProcesal();
+        EtapaCatalogo etapaCatalogoAnterior = exp.getEtapaCatalogo();
+
+        if (etapaCatalogoId != null) {
+            EtapaCatalogo etapaNueva = etapaCatalogoRepository.findById(etapaCatalogoId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Etapa procesal no encontrada"));
+            if (exp.getMateria() == null || etapaNueva.getMateria() == null
+                    || !etapaNueva.getMateria().getId().equals(exp.getMateria().getId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La etapa no pertenece a la materia del expediente.");
+            }
+            if (etapaCatalogoAnterior != null && etapaCatalogoAnterior.getId().equals(etapaNueva.getId())) {
+                return ResponseEntity.ok().build();
+            }
+            exp.setEtapaCatalogo(etapaNueva);
+            exp.setEtapaProcesal(etapaLegacyCompatibilidad(etapaNueva));
+            exp.setUpdatedAt(LocalDateTime.now());
+            expedienteRepository.save(exp);
+
+            etapaPeriodoService.cambiarEtapaCatalogo(exp, etapaNueva, usuario,
+                    "Cambio manual de etapa desde el detalle del expediente");
+
+            auditoriaService.registrar(exp, "Cambio de Etapa Procesal",
+                    "La etapa ha cambiado de " + nombreEtapa(etapaCatalogoAnterior, anterior) + " a "
+                            + etapaNueva.getNombreJerarquico(), "EDIT", usuario);
+
+            return ResponseEntity.ok().build();
+        }
+
+        if (etapa == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Etapa requerida.");
+        }
+
+        if (anterior == etapa) {
+            return ResponseEntity.ok().build();
+        }
 
         exp.setEtapaProcesal(etapa);
         exp.setUpdatedAt(LocalDateTime.now());
         expedienteRepository.save(exp);
 
+        etapaPeriodoService.cambiarEtapa(exp, etapa, usuario,
+                "Cambio manual de etapa desde el detalle del expediente");
+
         auditoriaService.registrar(exp, "Cambio de Etapa Procesal",
                 "La etapa ha cambiado de " + anterior + " a " + etapa, "EDIT", usuario);
 
         return ResponseEntity.ok().build();
+    }
+
+    private String nombreEtapa(EtapaCatalogo etapaCatalogo, EtapaProcesal etapaLegacy) {
+        if (etapaCatalogo != null) {
+            return etapaCatalogo.getNombreJerarquico();
+        }
+        return etapaLegacy != null ? etapaLegacy.name() : "Sin etapa";
+    }
+
+    private EtapaProcesal etapaLegacyCompatibilidad(EtapaCatalogo etapaCatalogo) {
+        if (etapaCatalogo != null && Boolean.TRUE.equals(etapaCatalogo.getCierraExpediente())) {
+            return EtapaProcesal.CONCLUIDO;
+        }
+        return EtapaProcesal.TRAMITE;
+    }
+
+    private List<EtapaCatalogo> ordenarEtapasJerarquicas(List<EtapaCatalogo> etapas) {
+        return etapas.stream()
+                .sorted(Comparator
+                        .comparing((EtapaCatalogo e) -> e.getParent() != null ? e.getParent().getOrden() : e.getOrden(),
+                                Comparator.nullsLast(Integer::compareTo))
+                        .thenComparing(e -> e.getParent() != null ? e.getParent().getNombre() : e.getNombre(),
+                                String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(e -> e.getParent() != null ? 1 : 0)
+                        .thenComparing(EtapaCatalogo::getOrden, Comparator.nullsLast(Integer::compareTo))
+                        .thenComparing(EtapaCatalogo::getNombre, String.CASE_INSENSITIVE_ORDER))
+                .toList();
     }
 
     // --- API PARA SELECTORES EN CASCADA (NUEVO EXPEDIENTE) ---
@@ -792,6 +1018,26 @@ public class ExpedientesController {
     @ResponseBody
     public ResponseEntity<List<Materia>> obtenerMateriasPorGerencia(@PathVariable("gerenciaId") Integer gerenciaId) {
         return ResponseEntity.ok(materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(gerenciaId));
+    }
+
+    @GetMapping("/api/etapas-por-materia/{materiaId}")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> obtenerEtapasPorMateria(@PathVariable("materiaId") Integer materiaId) {
+        List<Map<String, Object>> etapas = ordenarEtapasJerarquicas(etapaCatalogoRepository
+                .findByMateriaIdAndActivoTrueOrderByOrdenAscNombreAsc(materiaId))
+                .stream()
+                .map(etapa -> {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    map.put("id", etapa.getId());
+                    map.put("nombre", etapa.getNombre());
+                    map.put("nombreJerarquico", etapa.getNombreJerarquico());
+                    map.put("cierraExpediente", Boolean.TRUE.equals(etapa.getCierraExpediente()));
+                    map.put("parentId", etapa.getParent() != null ? etapa.getParent().getId() : null);
+                    map.put("nivel", etapa.getParent() != null ? "SUBETAPA" : "ETAPA");
+                    return map;
+                })
+                .toList();
+        return ResponseEntity.ok(etapas);
     }
 
     @GetMapping("/api/abogados")

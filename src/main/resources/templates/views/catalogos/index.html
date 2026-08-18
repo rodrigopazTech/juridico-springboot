@@ -15,16 +15,166 @@
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
+        :root {
+            --catalogos-guinda: #611232;
+            --catalogos-guinda-soft: #f8eef2;
+            --catalogos-oro: #a57f2c;
+            --catalogos-verde: #10312b;
+            --catalogos-line: #e6dfe1;
+            --catalogos-ink: #1f1f22;
+        }
+
+        body {
+            background:
+                linear-gradient(180deg, #f7f4f2 0%, #f8faf9 260px, #f3f4f6 100%);
+        }
+
         .tab-active {
-            border-color: #9D2449;
-            color: #9D2449;
-            background: #fdf2f4;
+            border-color: var(--catalogos-oro);
+            color: var(--catalogos-guinda);
+            background: #fffaf0;
         }
 
         .card-gerencia-active {
-            border-color: #BC955C !important;
+            border-color: var(--catalogos-oro) !important;
             background: #fffbf2 !important;
-            box-shadow: 0 0 0 2px rgba(188, 149, 92, 0.3);
+            box-shadow: inset 3px 0 0 var(--catalogos-oro);
+        }
+
+        .catalogos-shell {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .catalogos-hero {
+            border: 1px solid #e4dadd;
+            border-top: 4px solid var(--catalogos-guinda);
+            background: #ffffff;
+            box-shadow: 0 14px 34px rgba(37, 37, 37, 0.06);
+        }
+
+        .catalogos-workspace {
+            display: grid;
+            grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+            gap: 1rem;
+            align-items: start;
+        }
+
+        .catalogos-nav {
+            position: sticky;
+            top: 124px;
+        }
+
+        .catalogos-nav-item {
+            width: 100%;
+            min-height: 56px;
+            border: 1px solid transparent;
+            border-left: 3px solid transparent;
+            border-radius: 8px;
+            color: #4b5563;
+            background: transparent;
+        }
+
+        .catalogos-nav-item:hover {
+            border-color: #eadfe2;
+            background: #fff;
+        }
+
+        .catalogos-nav-item.tab-active {
+            border-color: #ead2a6;
+            border-left-color: var(--catalogos-oro);
+            background: #fffaf0;
+            box-shadow: none;
+        }
+
+        .catalogos-nav-item .hidden {
+            display: inline !important;
+        }
+
+        .catalogos-panels > .tab-panel > div {
+            border-radius: 8px;
+            border-color: var(--catalogos-line);
+            box-shadow: 0 12px 28px rgba(30, 30, 30, 0.05);
+        }
+
+        .catalogos-panels h3 {
+            color: var(--catalogos-ink);
+        }
+
+        .catalogos-panels thead {
+            background: #f6f4f2;
+        }
+
+        .catalogos-panels th {
+            color: #675b60;
+            letter-spacing: .04em;
+        }
+
+        .catalogos-panels tbody tr:hover {
+            background: #fbfaf7;
+        }
+
+        .catalogos-panels input,
+        .catalogos-panels select {
+            border-radius: 8px !important;
+        }
+
+        .catalogos-panels input:focus,
+        .catalogos-panels select:focus {
+            border-color: var(--catalogos-oro) !important;
+            box-shadow: 0 0 0 3px rgba(165, 127, 44, .14) !important;
+        }
+
+        .etapa-switch {
+            width: 2rem;
+            height: 1rem;
+            appearance: none;
+            border: 1px solid #d1d5db;
+            border-radius: 999px;
+            background: #e5e7eb;
+            position: relative;
+            cursor: pointer;
+            transition: background .2s ease, border-color .2s ease;
+        }
+
+        .etapa-switch::after {
+            content: "";
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            width: .75rem;
+            height: .75rem;
+            border-radius: 999px;
+            background: #ffffff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, .18);
+            transition: transform .2s ease;
+        }
+
+        .etapa-switch:checked {
+            border-color: var(--catalogos-oro);
+            background: var(--catalogos-oro);
+        }
+
+        .etapa-switch:checked::after {
+            transform: translateX(1rem);
+        }
+
+        @media (max-width: 1024px) {
+            .catalogos-workspace {
+                grid-template-columns: 1fr;
+            }
+
+            .catalogos-nav {
+                position: static;
+            }
+
+            #tab-nav {
+                display: grid;
+                grid-auto-flow: column;
+                grid-auto-columns: minmax(190px, 1fr);
+                overflow-x: auto;
+                padding-bottom: .25rem;
+            }
         }
 
         @keyframes fadeSlide {
@@ -50,11 +200,26 @@
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <div class="p-4 sm:p-6 sm:ml-64 pt-[116px] sm:pt-[116px] md:pt-[116px] lg:pt-[116px]">
+    <div class="catalogos-shell p-4 sm:p-6 sm:ml-64 pt-[116px] sm:pt-[116px] md:pt-[116px] lg:pt-[116px]">
 
         <!-- ====== HEADER ====== -->
-        <div class="mb-10 flex flex-col items-center text-center">
-            <h1 class="text-3xl font-bold text-gob-guinda flex items-center justify-center gap-3">
+        <div class="catalogos-hero rounded-lg p-5 sm:p-6 mb-5">
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+                <span class="inline-flex items-center gap-2 rounded-md bg-gob-guinda/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-gob-guinda">
+                    <i class="fas fa-database text-gob-oro"></i> Gobierno de datos
+                </span>
+                <span th:if="${gerenciaSeleccionada != null}"
+                    class="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800">
+                    <i class="fas fa-building"></i>
+                    <span th:text="${gerenciaSeleccionada.nombre}">Gerencia</span>
+                </span>
+                <span class="inline-flex items-center gap-2 rounded-md px-3 py-1 text-xs font-bold"
+                    th:classappend="${puedeEditar} ? 'bg-gob-guinda text-white' : 'bg-gray-100 text-gray-600'">
+                    <i th:class="${puedeEditar} ? 'fas fa-pen' : 'fas fa-eye'"></i>
+                    <span th:text="${puedeEditar} ? 'Lectura y escritura' : 'Solo consulta'">Permiso</span>
+                </span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-normal flex items-center gap-3">
                 <i class="fas fa-cogs text-gob-oro"></i> Cat&aacute;logos
             </h1>
             <p class="text-base text-gray-500 mt-2 max-w-2xl">Gestiona los catálogos del sistema organizados por
@@ -62,16 +227,16 @@
         </div>
 
         <!-- ====== SELECTOR DE GERENCIA ====== -->
-        <div class="mb-10" th:if="${gerenciasDisponibles != null && !gerenciasDisponibles.isEmpty()}">
-            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 text-center">
+        <div class="mb-5 rounded-lg border border-gray-200 bg-white p-4" th:if="${gerenciasDisponibles != null && !gerenciasDisponibles.isEmpty()}">
+            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
                 <i class="fas fa-building mr-1"></i>
                 <span th:if="${esNivelAlto}">Seleccionar Gerencia</span>
                 <span th:unless="${esNivelAlto}">Tu Gerencia</span>
             </label>
-            <div class="flex flex-wrap justify-center gap-4">
+            <div class="flex gap-3 overflow-x-auto pb-1">
                 <a th:each="g : ${gerenciasDisponibles}" th:href="@{/catalogos(gerenciaId=${g.id})}"
                     th:classappend="${gerenciaSeleccionada != null && gerenciaSeleccionada.id == g.id ? 'card-gerencia-active' : ''}"
-                    class="bg-white border-2 border-gray-200 rounded-xl px-5 py-3 flex items-center gap-3 hover:border-gob-oro/50 hover:shadow-md transition-all cursor-pointer group min-w-[200px]">
+                    class="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center gap-3 hover:border-gob-oro/60 transition-all cursor-pointer group min-w-[220px]">
                     <div
                         class="p-2 bg-gob-guinda/10 text-gob-guinda rounded-lg group-hover:scale-110 transition-transform">
                         <i class="fas fa-building"></i>
@@ -85,15 +250,19 @@
         </div>
 
         <!-- ====== CONTENIDO PRINCIPAL (si hay gerencia seleccionada) ====== -->
-        <div th:if="${gerenciaSeleccionada != null}" class="animate-fade-slide">
+        <div th:if="${gerenciaSeleccionada != null}" class="catalogos-workspace animate-fade-slide">
 
             <!-- Tabs de catálogos -->
-            <div class="border-b border-gray-200 mb-8">
-                <ul class="flex flex-wrap justify-center -mb-px text-sm font-medium" id="tab-nav">
+            <aside class="catalogos-nav rounded-lg border border-gray-200 bg-white p-3">
+                <div class="px-2 pb-3 border-b border-gray-100">
+                    <div class="text-[11px] font-black uppercase tracking-wide text-gray-500">Cat&aacute;logos activos</div>
+                    <div class="text-xs text-gray-500 mt-1">Elige una familia para consultar o editar registros.</div>
+                </div>
+                <ul class="mt-3 space-y-1 text-sm font-medium" id="tab-nav">
 
-                    <li class="mr-1">
+                    <li>
                         <button type="button" data-tab="materias"
-                            class="tab-btn inline-flex items-center gap-2 px-3 sm:px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            class="tab-btn catalogos-nav-item flex items-center justify-between gap-3 px-3 py-2.5 transition-all">
                             <i class="fas fa-balance-scale"></i>
                             <span class="hidden sm:inline">Materias</span>
                             <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
@@ -101,9 +270,19 @@
                         </button>
                     </li>
 
-                    <li class="mr-1">
+                    <li>
+                        <button type="button" data-tab="etapas"
+                            class="tab-btn catalogos-nav-item flex items-center justify-between gap-3 px-3 py-2.5 transition-all">
+                            <i class="fas fa-sitemap"></i>
+                            <span class="hidden sm:inline">Etapas Procesales</span>
+                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
+                                th:text="${#lists.size(listaEtapasCatalogo)}">0</span>
+                        </button>
+                    </li>
+
+                    <li>
                         <button type="button" data-tab="organos"
-                            class="tab-btn inline-flex items-center gap-2 px-3 sm:px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            class="tab-btn catalogos-nav-item flex items-center justify-between gap-3 px-3 py-2.5 transition-all">
                             <i class="fas fa-landmark"></i>
                             <span class="hidden sm:inline">Órganos Jurisdiccionales</span>
                             <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
@@ -111,9 +290,9 @@
                         </button>
                     </li>
 
-                    <li class="mr-1">
+                    <li>
                         <button type="button" data-tab="tipos-audiencia"
-                            class="tab-btn inline-flex items-center gap-2 px-3 sm:px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            class="tab-btn catalogos-nav-item flex items-center justify-between gap-3 px-3 py-2.5 transition-all">
                             <i class="fas fa-gavel"></i>
                             <span class="hidden sm:inline">Tipos de Audiencia</span>
                             <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
@@ -121,9 +300,9 @@
                         </button>
                     </li>
 
-                    <li class="mr-1">
+                    <li>
                         <button type="button" data-tab="tipos-expediente"
-                            class="tab-btn inline-flex items-center gap-2 px-3 sm:px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            class="tab-btn catalogos-nav-item flex items-center justify-between gap-3 px-3 py-2.5 transition-all">
                             <i class="fas fa-folder"></i>
                             <span class="hidden sm:inline">Tipos de Expediente</span>
                             <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
@@ -131,9 +310,9 @@
                         </button>
                     </li>
 
-                    <li class="mr-1">
+                    <li>
                         <button type="button" data-tab="sedes"
-                            class="tab-btn inline-flex items-center gap-2 px-3 sm:px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            class="tab-btn catalogos-nav-item flex items-center justify-between gap-3 px-3 py-2.5 transition-all">
                             <i class="fas fa-map-marker-alt"></i>
                             <span class="hidden sm:inline">Sedes/Estados</span>
                             <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
@@ -141,9 +320,9 @@
                         </button>
                     </li>
 
-                    <li class="mr-1">
+                    <li>
                         <button type="button" data-tab="abogados"
-                            class="tab-btn inline-flex items-center gap-2 px-3 sm:px-5 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gob-guinda hover:border-gray-300 transition-all">
+                            class="tab-btn catalogos-nav-item flex items-center justify-between gap-3 px-3 py-2.5 transition-all">
                             <i class="fas fa-users"></i>
                             <span class="hidden sm:inline">Usuarios/Abogados</span>
                             <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
@@ -153,13 +332,13 @@
 
 
                 </ul>
-            </div>
+            </aside>
 
             <!-- Hidden data for JS -->
             <input type="hidden" id="gerencia-id-actual" th:value="${gerenciaSeleccionada.id}" />
             <input type="hidden" id="puede-editar" th:value="${puedeEditar}" />
 
-            <div class="max-w-5xl mx-auto">
+            <div class="catalogos-panels min-w-0 w-full">
 
                 <!-- ===================== TAB: MATERIAS ===================== -->
                 <div id="panel-materias" class="tab-panel hidden">
@@ -239,6 +418,148 @@
                                     <td colspan="4" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
                                         <i class="fas fa-folder-open text-2xl mb-2 block"></i>
                                         No hay materias registradas en el sistema.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+
+                <!-- ===================== TAB: ETAPAS PROCESALES ===================== -->
+                <div id="panel-etapas" class="tab-panel hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 border-b border-gray-100 bg-gray-50/50">
+                            <div>
+                                <h3 class="text-lg font-bold text-gob-gris flex items-center gap-2">
+                                    <i class="fas fa-sitemap text-gob-guinda"></i> Etapas procesales por materia
+                                </h3>
+                                <p class="text-xs text-gray-500 mt-1">Gestiona la jerarquia de etapas y subetapas para cada proceso juridico.</p>
+                            </div>
+                            <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full lg:w-auto">
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                                        <i class="fas fa-search text-xs"></i>
+                                    </span>
+                                    <input type="text" id="search-etapas" placeholder="Buscar..."
+                                        class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-full sm:w-52 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all">
+                                </div>
+                                <select id="filtro-etapas-materia"
+                                    class="px-3 py-2 border border-gray-200 rounded-lg text-sm w-full sm:w-48 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all bg-white">
+                                    <option value="">Materia</option>
+                                    <option th:each="m : ${listaMaterias}" th:value="${m.id}" th:text="${m.nombre}"></option>
+                                </select>
+                                <button type="button" onclick="limpiarFiltrosEtapas()"
+                                    class="px-3 py-2 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors">
+                                    Limpiar filtros
+                                </button>
+                                <button th:if="${puedeEditar}" onclick="abrirModalEtapa()"
+                                    class="bg-gob-guinda text-white px-4 py-2 rounded-lg text-sm hover:bg-opacity-90 shadow-sm transition-all flex items-center gap-2">
+                                    <i class="fas fa-plus"></i> Nueva
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="px-4 py-3 bg-amber-50 border-b border-amber-100 text-xs text-amber-800">
+                            <i class="fas fa-lightbulb mr-1"></i>
+                            Usa el filtro de materia para revisar sus etapas sin confundirlas con otras. La clave se genera automaticamente y no requiere captura manual.
+                        </div>
+
+                        <table class="w-full text-sm text-left block sm:table">
+                            <thead class="hidden sm:table-header-group text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-5 py-3 font-bold">Materia</th>
+                                    <th class="px-5 py-3 font-bold">Jerarquia</th>
+                                    <th class="px-5 py-3 font-bold">Nombre</th>
+                                    <th class="px-5 py-3 font-bold text-center">Orden</th>
+                                    <th class="px-5 py-3 font-bold">Estado/Uso</th>
+                                    <th th:if="${puedeEditar}" class="px-5 py-3 font-bold text-right w-32">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-etapas" class="grid grid-cols-1 sm:table-row-group gap-3 p-3 sm:p-0 bg-gray-50 sm:bg-transparent">
+                                <tr th:each="e : ${listaEtapasCatalogo}"
+                                    th:data-materia-id="${e.materia != null ? e.materia.id : ''}"
+                                    th:data-parent-id="${e.parent != null ? e.parent.id : ''}"
+                                    th:data-id="${e.id}"
+                                    th:data-nombre="${e.nombre}"
+                                    th:data-orden="${e.orden}"
+                                    class="bg-white border border-gray-200 sm:border-0 sm:border-b sm:border-gray-100 shadow-sm sm:shadow-none rounded-xl p-4 sm:p-0 flex flex-col justify-between gap-2.5 sm:table-row hover:bg-gray-50 transition-colors">
+                                    <td class="block sm:table-cell px-0 sm:px-5 py-0 sm:py-4">
+                                        <span class="inline-flex items-center rounded bg-gray-100 px-2 py-1 text-[11px] font-bold text-gray-600"
+                                            th:text="${e.materia != null ? e.materia.nombre : 'Sin materia'}">Materia</span>
+                                    </td>
+                                    <td class="block sm:table-cell px-0 sm:px-5 py-0 sm:py-4">
+                                        <div class="flex items-center gap-2">
+                                            <span th:if="${e.parent == null}" class="inline-flex h-6 w-6 items-center justify-center rounded border border-gob-oro/40 bg-gob-oro/10 text-gob-guinda text-[10px]">
+                                                <i class="fas fa-layer-group"></i>
+                                            </span>
+                                            <span th:if="${e.parent != null}" class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-200 bg-gray-50 text-gray-400 text-[10px] ml-4">
+                                                <i class="fas fa-level-up-alt fa-rotate-90"></i>
+                                            </span>
+                                            <div>
+                                                <span th:if="${e.parent == null}" class="text-xs font-bold text-gray-700">Principal</span>
+                                                <span th:if="${e.parent != null}" class="text-xs font-bold text-gray-500">Subetapa</span>
+                                                <div th:if="${e.parent != null}" class="text-[11px] text-gray-400"
+                                                    th:text="'de ' + ${e.parent.nombre}">de etapa padre</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="block sm:table-cell px-0 sm:px-5 py-0 sm:py-4">
+                                        <span class="font-semibold text-gray-800 text-sm sm:text-base" th:text="${e.nombre}">Etapa</span>
+                                    </td>
+                                    <td class="block sm:table-cell px-0 sm:px-5 py-0 sm:py-4 text-left sm:text-center">
+                                        <span class="inline-flex items-center justify-center min-w-8 px-2 py-1 rounded bg-white border border-gray-200 text-gray-700 text-xs font-bold"
+                                            th:text="${e.orden}">1</span>
+                                    </td>
+                                    <td class="block sm:table-cell px-0 sm:px-5 py-0 sm:py-4">
+                                        <div class="flex flex-wrap gap-2">
+                                            <span th:if="${e.activo}" class="text-[11px] px-2 py-1 rounded font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">Activa</span>
+                                            <span th:unless="${e.activo}" class="text-[11px] px-2 py-1 rounded font-bold bg-gray-100 text-gray-500 border border-gray-200">Inactiva</span>
+                                            <span th:if="${e.cierraExpediente}" class="text-[11px] px-2 py-1 rounded font-bold bg-amber-50 text-amber-700 border border-amber-100">Cierra expediente</span>
+                                        </div>
+                                    </td>
+                                    <td th:if="${puedeEditar}" class="block sm:table-cell px-0 sm:px-5 py-0 sm:py-4 text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <button th:data-id="${e.id}" th:data-nombre="${e.nombre}" th:data-clave="${e.clave}"
+                                                th:data-materia-id="${e.materia != null ? e.materia.id : ''}"
+                                                th:data-parent-id="${e.parent != null ? e.parent.id : ''}"
+                                                th:data-orden="${e.orden}"
+                                                th:data-activo="${e.activo}" th:data-cierra="${e.cierraExpediente}"
+                                                onclick="editarEtapa(this)"
+                                                class="text-gob-oro hover:text-gob-guinda transition-colors p-1.5 rounded hover:bg-gob-oro/10"
+                                                title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button th:data-id="${e.id}" th:data-nombre="${e.nombre}" onclick="eliminarEtapa(this)"
+                                                class="text-red-400 hover:text-red-600 transition-colors p-1.5 rounded hover:bg-red-50"
+                                                title="Desactivar">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr id="empty-etapas-filter" class="hidden">
+                                    <td colspan="6" class="px-6 py-5">
+                                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                                            <div class="flex items-center gap-3">
+                                                <span class="inline-flex h-9 w-9 items-center justify-center rounded bg-white text-gray-400 border border-gray-200">
+                                                    <i class="fas fa-filter"></i>
+                                                </span>
+                                                <div>
+                                                    <div class="font-bold text-gray-700">No hay etapas que coincidan con el filtro.</div>
+                                                    <div class="text-xs text-gray-500">Ajusta la materia o la busqueda para ver otros resultados.</div>
+                                                </div>
+                                            </div>
+                                            <button type="button" onclick="limpiarFiltrosEtapas()" class="self-start sm:self-auto px-3 py-2 rounded border border-gray-200 bg-white text-xs font-bold text-gray-600 hover:bg-gray-100">
+                                                Limpiar filtros
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(listaEtapasCatalogo)}" class="block sm:table-row">
+                                    <td colspan="6" class="block sm:table-cell px-6 py-8 text-center text-gray-400 italic">
+                                        <i class="fas fa-sitemap text-2xl mb-2 block"></i>
+                                        Aun no hay etapas configuradas para las materias de esta gerencia.
                                     </td>
                                 </tr>
                             </tbody>
@@ -709,6 +1030,90 @@
                     <button type="button" onclick="guardarItem()"
                         class="bg-gob-guinda text-white px-6 py-2 rounded-lg text-sm hover:bg-opacity-90 font-bold shadow-md transition-all">
                         <i class="fas fa-save mr-1"></i> Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== MODAL ETAPA PROCESAL ====== -->
+    <div id="modal-etapa"
+        class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all">
+            <div class="px-6 py-4 flex justify-between items-center border-b border-gray-200">
+                <h3 id="modal-etapa-titulo" class="text-gray-900 text-base font-bold">
+                    Nueva etapa procesal
+                </h3>
+                <button onclick="cerrarModalEtapa()" class="text-gray-400 hover:text-gray-700 transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="etapa-id" />
+                <div class="space-y-4">
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-gray-700">Materia</label>
+                        <select id="etapa-materia-id"
+                            class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gob-oro focus:border-gob-oro outline-none text-sm bg-white">
+                            <option value="">Selecciona una materia</option>
+                            <option th:each="m : ${listaMaterias}" th:value="${m.id}" th:text="${m.nombre}"></option>
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-gray-700">Etapa padre <span class="font-normal text-gray-400">(Opcional)</span></label>
+                        <select id="etapa-parent-id"
+                            class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gob-oro focus:border-gob-oro outline-none text-sm bg-white">
+                            <option value="">Ninguna (Etapa principal)</option>
+                            <option th:each="e : ${listaEtapasCatalogo}" th:if="${e.parent == null}"
+                                th:value="${e.id}" th:data-materia-id="${e.materia != null ? e.materia.id : ''}"
+                                th:data-parent-id="${e.parent != null ? e.parent.id : ''}"
+                                th:data-nombre="${e.nombre}"
+                                th:data-orden="${e.orden}"
+                                th:text="${e.materia != null ? e.materia.nombre + ' / ' + e.nombre : e.nombre}"></option>
+                        </select>
+                        <p class="text-xs text-gray-400">Si se deja en principal, se creara como una etapa de primer nivel.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-[1fr_110px] gap-4">
+                        <div class="space-y-1">
+                            <label class="block text-xs font-bold text-gray-700">Nombre de la etapa</label>
+                            <input type="text" id="etapa-nombre"
+                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gob-oro focus:border-gob-oro outline-none text-sm"
+                                placeholder="Ej. Presentacion de pruebas" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-xs font-bold text-gray-700">Orden</label>
+                            <input type="number" id="etapa-orden" min="1" value="1"
+                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gob-oro focus:border-gob-oro outline-none text-sm text-center" />
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-6 pt-3 border-t border-gray-200">
+                        <label class="inline-flex items-center gap-2 text-xs font-medium text-gray-600">
+                            <input type="checkbox" id="etapa-activo" checked class="etapa-switch">
+                            Etapa activa
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-xs font-medium text-gray-600">
+                            <input type="checkbox" id="etapa-cierra" class="etapa-switch">
+                            Cierra expediente
+                        </label>
+                    </div>
+                </div>
+                <input type="hidden" id="etapa-clave" />
+                <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    <div class="text-[10px] font-black uppercase tracking-wide text-gray-500 mb-2">
+                        Vista previa en lista
+                    </div>
+                    <div id="etapa-preview-orden" class="text-sm text-gray-500 bg-white border border-gray-200 rounded px-3 py-2">
+                        Selecciona materia y captura el nombre para ver la posicion.
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                    <button type="button" onclick="cerrarModalEtapa()"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm hover:bg-gray-50 font-medium transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="button" onclick="guardarEtapa()"
+                        class="bg-gob-guinda text-white px-6 py-2 rounded-lg text-sm hover:bg-opacity-90 font-bold shadow-md transition-all">
+                        <i class="fas fa-save mr-1"></i> Guardar etapa
                     </button>
                 </div>
             </div>

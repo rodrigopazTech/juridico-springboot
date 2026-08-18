@@ -70,7 +70,9 @@ public class ExpedienteExcelExporter {
             String abogado = e.getAbogadoResponsable() != null ? e.getAbogadoResponsable().getNombreCompleto() : e.getAbogadoResponsableNombre();
             createCell(row, columnCount++, abogado != null ? abogado : "Sin Asignar", style);
             
-            createCell(row, columnCount++, e.getEtapaProcesal(), style);
+            createCell(row, columnCount++,
+                    e.getEtapaCatalogo() != null ? e.getEtapaCatalogo().getNombreJerarquico() : e.getEtapaProcesal(),
+                    style);
             createCell(row, columnCount++, e.getPartes(), style);
             createCell(row, columnCount++, e.getDescripcion(), style);
             createCell(row, columnCount++, e.getPrioridad() != null ? e.getPrioridad().getNombre() : "N/A", style);

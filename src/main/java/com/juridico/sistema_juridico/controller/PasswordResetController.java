@@ -113,7 +113,7 @@ public class PasswordResetController {
         boolean tokenValido = passwordResetService.isTokenValid(token);
         model.addAttribute("token", token);
         model.addAttribute("tokenValido", tokenValido);
-        model.addAttribute("microsoftConfigured", microsoftAuthProperties.isConfigured());
+        model.addAttribute("microsoftConfigured", microsoftAuthProperties.isVisibleInUi());
         model.addAttribute("microsoftError", microsoftError);
 
         if (tokenValido) {

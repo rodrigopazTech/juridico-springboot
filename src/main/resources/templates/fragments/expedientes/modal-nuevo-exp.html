@@ -30,9 +30,9 @@
                 </div>
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Etapa Procesal*</label>
-                    <select name="etapaProcesal" required
-                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
-                        <option th:each="e : ${etapas}" th:value="${e}" th:text="${e}"></option>
+                    <select name="etapaCatalogo.id" id="select-etapa-exp" required disabled
+                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-gray-50">
+                        <option value="">Primero selecciona una materia...</option>
                     </select>
                 </div>
             </div>
@@ -69,7 +69,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block font-bold text-gray-600 mb-1">Materia*</label>
-                    <select name="materia.id" id="select-materia-exp" onchange="cargarAbogadosExpediente()"
+                    <select name="materia.id" id="select-materia-exp" onchange="cargarAbogadosExpediente(); cargarEtapasExpediente();"
                         class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-gray-50"
                         required disabled>
                         <option value="">Primero selecciona una gerencia...</option>

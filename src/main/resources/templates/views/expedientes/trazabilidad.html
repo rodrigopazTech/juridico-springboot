@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+
+<head>
+    <link rel="manifest" th:href="@{/manifest.json}" />
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any" />
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
+    <link rel="apple-touch-icon" th:href="@{/img/apple-touch-icon.png}" />
+    <meta name="theme-color" content="#691228" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trazabilidad del Expediente | Sistema Juridico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script th:src="@{/js/tailwind.config.js}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-gob-fondo text-gray-800 font-sans pb-10">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div class="sm:ml-64 flex flex-col min-h-screen">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <main class="p-4 sm:p-6 md:p-10 flex-1 pt-[116px]">
+            <div class="container mx-auto px-2 sm:px-4 space-y-6">
+                <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-5 sm:p-6">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <a th:href="@{/expedientes/{id}(id=${expediente.id})}"
+                                    class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-gray-100 text-gray-600 text-xs font-bold hover:bg-gray-200 transition">
+                                    <i class="fas fa-arrow-left"></i> Volver
+                                </a>
+                                <span class="px-2 py-1 rounded text-xs font-bold border bg-blue-50 text-blue-700 border-blue-200"
+                                    th:text="${expediente.etapaCatalogo != null ? expediente.etapaCatalogo.nombreJerarquico : expediente.etapaProcesal}">ETAPA</span>
+                            </div>
+                            <h1 class="mt-4 text-2xl sm:text-3xl font-extrabold text-gob-guinda leading-tight">
+                                Trazabilidad del expediente
+                            </h1>
+                            <p class="mt-1 text-sm text-gray-500">
+                                <span class="font-bold text-gray-700" th:text="${expediente.numero}">EXP</span>
+                                <span class="mx-2 text-gray-300">/</span>
+                                <span th:text="${expediente.materia != null ? expediente.materia.nombre : 'Sin materia'}">Materia</span>
+                            </p>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <a th:href="@{/expedientes/{id}/trazabilidad/exportar(id=${expediente.id})}"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition shadow-sm">
+                                <i class="fas fa-file-excel"></i> Exportar historial
+                            </a>
+                            <a th:href="@{/expedientes/{id}(id=${expediente.id})}"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md border border-gray-200 text-gray-600 text-sm font-bold hover:bg-gray-50 transition">
+                                <i class="fas fa-folder-open"></i> Detalle
+                            </a>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <p class="text-[10px] uppercase font-extrabold tracking-wide text-gray-400">Periodos registrados</p>
+                        <p class="mt-1 text-2xl font-extrabold text-gray-800" th:text="${#lists.size(bloquesTrazabilidad)}">0</p>
+                    </div>
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <p class="text-[10px] uppercase font-extrabold tracking-wide text-gray-400">Etapa actual</p>
+                        <p class="mt-1 text-2xl font-extrabold text-gob-guinda"
+                            th:text="${expediente.etapaCatalogo != null ? expediente.etapaCatalogo.nombreJerarquico : expediente.etapaProcesal}">TRAMITE</p>
+                    </div>
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <p class="text-[10px] uppercase font-extrabold tracking-wide text-gray-400">Abogado responsable</p>
+                        <p class="mt-1 text-sm font-bold text-gray-800 truncate"
+                            th:text="${expediente.abogadoResponsable != null ? expediente.abogadoResponsable.nombreCompleto : 'Sin asignar'}">
+                            Responsable
+                        </p>
+                    </div>
+                </section>
+
+                <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 sm:p-6">
+                    <div class="flex items-center justify-between gap-3 border-b border-gray-100 pb-4 mb-5">
+                        <div>
+                            <h2 class="text-sm font-extrabold uppercase tracking-wide text-gob-guinda">Linea procesal</h2>
+                            <p class="text-xs text-gray-500 mt-1">Movimientos agrupados por el periodo activo de cada etapa.</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4" th:if="${not #lists.isEmpty(bloquesTrazabilidad)}">
+                        <article th:each="bloque : ${bloquesTrazabilidad}"
+                            class="border border-gray-200 rounded-lg overflow-hidden bg-white">
+                            <div class="bg-gray-50 border-b border-gray-200 p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 rounded-md bg-gob-guinda text-white flex items-center justify-center">
+                                        <i class="fas fa-layer-group"></i>
+                                    </div>
+                                    <div>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <h3 class="text-lg font-extrabold text-gray-900"
+                                                th:text="${bloque.periodo.etapaCatalogo != null ? bloque.periodo.etapaCatalogo.nombreJerarquico : bloque.periodo.etapaProcesal}">ETAPA</h3>
+                                            <span th:if="${bloque.periodo.fechaFin == null}"
+                                                class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-extrabold uppercase">Activa</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            <span th:text="${#temporals.format(bloque.periodo.fechaInicio, 'dd MMM yyyy, HH:mm')}">Inicio</span>
+                                            <span class="mx-1 text-gray-300">-</span>
+                                            <span th:text="${bloque.periodo.fechaFin != null ? #temporals.format(bloque.periodo.fechaFin, 'dd MMM yyyy, HH:mm') : 'Actual'}">Fin</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap gap-2 text-xs">
+                                    <span class="px-2.5 py-1 rounded-md bg-white border border-gray-200 font-bold text-gray-600">
+                                        <i class="far fa-clock mr-1 text-gob-oro"></i>
+                                        <span th:text="${bloque.duracion}">0 min</span>
+                                    </span>
+                                    <span class="px-2.5 py-1 rounded-md bg-white border border-gray-200 font-bold text-gray-600">
+                                        <i class="fas fa-list-ul mr-1 text-gob-oro"></i>
+                                        <span th:text="${#lists.size(bloque.actividades)}">0</span> movimientos
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 xl:grid-cols-2 gap-0">
+                                <div class="p-4 border-b xl:border-b-0 xl:border-r border-gray-100">
+                                    <h4 class="text-xs font-extrabold uppercase tracking-wide text-gray-500 mb-3">Movimientos</h4>
+                                    <div class="space-y-3" th:if="${not #lists.isEmpty(bloque.actividades)}">
+                                        <div th:each="act : ${bloque.actividades}" class="pl-4 border-l-2 border-gob-oro/40">
+                                            <p class="text-[10px] text-gray-400 font-bold"
+                                                th:text="${#temporals.format(act.fechaRegistro, 'dd MMM, HH:mm')}">Fecha</p>
+                                            <p class="text-sm font-bold text-gray-800" th:text="${act.titulo}">Titulo</p>
+                                            <p class="text-xs text-gray-600 whitespace-pre-wrap" th:text="${act.descripcion}">Descripcion</p>
+                                            <p class="text-[10px] text-gray-400 italic mt-1" th:if="${act.usuario != null}"
+                                                th:text="${act.usuario.nombreCompleto}">Usuario</p>
+                                        </div>
+                                    </div>
+                                    <p th:if="${#lists.isEmpty(bloque.actividades)}" class="text-xs text-gray-400 italic">
+                                        Sin movimientos registrados en este periodo.
+                                    </p>
+                                </div>
+
+                                <div class="p-4">
+                                    <h4 class="text-xs font-extrabold uppercase tracking-wide text-gray-500 mb-3">Cambios de datos</h4>
+                                    <div class="overflow-x-auto" th:if="${not #lists.isEmpty(bloque.cambios)}">
+                                        <table class="min-w-full text-xs">
+                                            <thead>
+                                                <tr class="text-left text-gray-400 border-b">
+                                                    <th class="py-2 pr-3 font-bold">Campo</th>
+                                                    <th class="py-2 pr-3 font-bold">Anterior</th>
+                                                    <th class="py-2 pr-3 font-bold">Nuevo</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr th:each="cambio : ${bloque.cambios}" class="border-b border-gray-50">
+                                                    <td class="py-2 pr-3 font-bold text-gray-700" th:text="${cambio.campo}">Campo</td>
+                                                    <td class="py-2 pr-3 text-gray-500" th:text="${cambio.valorAnterior}">Antes</td>
+                                                    <td class="py-2 pr-3 text-gray-800" th:text="${cambio.valorNuevo}">Despues</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <p th:if="${#lists.isEmpty(bloque.cambios)}" class="text-xs text-gray-400 italic">
+                                        Sin cambios estructurados en este periodo.
+                                    </p>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(bloquesTrazabilidad)}"
+                        class="text-center py-12 text-gray-400">
+                        <i class="fas fa-route text-3xl mb-3"></i>
+                        <p class="font-bold">Aun no hay periodos de etapa registrados.</p>
+                        <p class="text-sm">Se generaran automaticamente con los nuevos movimientos del expediente.</p>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

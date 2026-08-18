@@ -10,6 +10,7 @@ import java.util.UUID;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.catalogo.OrganoJurisdiccional;
+import com.juridico.sistema_juridico.Entity.catalogo.EtapaCatalogo;
 
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
@@ -75,6 +76,10 @@ public class Expediente {
     @Column(name = "etapa_procesal", nullable = false, length = 30)
     @Builder.Default
     private EtapaProcesal etapaProcesal = EtapaProcesal.TRAMITE;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "etapa_catalogo_id")
+    private EtapaCatalogo etapaCatalogo;
 
     @Column(name = "es_temporal", nullable = true)
     @Builder.Default

@@ -5,6 +5,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.Entity.catalogo.EtapaCatalogo;
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 
 @Data
@@ -44,4 +45,17 @@ public class Comentario {
     @Enumerated(EnumType.STRING)
     @Column(name = "etapa_procesal", length = 30)
     private EtapaProcesal etapaProcesal;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "etapa_catalogo_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private EtapaCatalogo etapaCatalogo;
+
+    @Transient
+    public String getEtapaNombre() {
+        if (etapaCatalogo != null) {
+            return etapaCatalogo.getNombreJerarquico();
+        }
+        return etapaProcesal != null ? etapaProcesal.name() : null;
+    }
 }

@@ -1,50 +1,127 @@
-<div th:fragment="filtros" class="bg-white border border-gray-200 rounded-lg shadow-sm px-3 py-3">
-    <form id="form-filtros" th:action="@{/agenda}" method="get"
-        class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-[minmax(150px,0.8fr)_minmax(150px,0.8fr)_minmax(180px,1fr)_minmax(180px,1fr)_auto] gap-3 items-end">
-        <input type="hidden" name="tab" th:value="${activeTab}">
+<div th:fragment="filtros" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+    <form id="form-filtros" th:action="@{/agenda}" method="get" class="p-3 sm:p-4 space-y-3">
+        <input type="hidden" name="tab" id="agenda-active-tab" th:value="${activeTab}">
         <input type="hidden" name="keyword" id="historial-keyword" th:value="${paramKeyword}">
 
-        <div class="space-y-1">
-            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Desde</label>
-            <input type="date" name="fechaInicio" th:value="${paramFechaInicio}" onchange="actualizarAgendaAsincrono()"
-                class="w-full h-9 bg-gray-50 border border-gray-200 rounded-md px-2 text-xs text-gray-700 outline-none focus:bg-white focus:border-gob-guinda focus:ring-2 focus:ring-gob-guinda/10 transition-all"
-                title="Fecha inicio">
-        </div>
+        <div class="flex flex-col xl:flex-row xl:items-center gap-3">
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-1 flex flex-col sm:flex-row gap-1 w-full xl:w-auto">
+                <button type="button" onclick="window.cambiarTabPill('audiencias')" id="btn-tab-audiencias"
+                    class="tab-btn-pill inline-flex items-center justify-center gap-2 h-9 px-4 text-[11px] font-extrabold uppercase tracking-wide rounded-md transition-all duration-200 whitespace-nowrap"
+                    th:classappend="${activeTab == 'audiencias' ? 'bg-gob-guinda text-white shadow-sm' : 'text-gray-500 hover:bg-white hover:text-gray-700'}">
+                    <i class="fas fa-gavel text-[11px]"></i>
+                    Audiencias concluidas
+                </button>
+                <button type="button" onclick="window.cambiarTabPill('terminos')" id="btn-tab-terminos"
+                    class="tab-btn-pill inline-flex items-center justify-center gap-2 h-9 px-4 text-[11px] font-extrabold uppercase tracking-wide rounded-md transition-all duration-200 whitespace-nowrap"
+                    th:classappend="${activeTab == 'terminos' ? 'bg-gob-guinda text-white shadow-sm' : 'text-gray-500 hover:bg-white hover:text-gray-700'}">
+                    <i class="fas fa-clock text-[11px]"></i>
+                    Términos concluidos
+                </button>
+            </div>
 
-        <div class="space-y-1">
-            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Hasta</label>
-            <input type="date" name="fechaFin" th:value="${paramFechaFin}" onchange="actualizarAgendaAsincrono()"
-                class="w-full h-9 bg-gray-50 border border-gray-200 rounded-md px-2 text-xs text-gray-700 outline-none focus:bg-white focus:border-gob-guinda focus:ring-2 focus:ring-gob-guinda/10 transition-all"
-                title="Fecha fin">
-        </div>
+            <div class="relative flex-1 min-w-0">
+                <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                    <i class="fas fa-search text-gray-400 text-sm"></i>
+                </div>
+                <input type="text" th:value="${paramKeyword}" id="search-agenda-global"
+                    class="agenda-search w-full h-10 bg-gray-50 border border-gray-200 text-gob-gris text-sm rounded-lg focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 ps-10 pe-3 outline-none transition-all font-medium"
+                    placeholder="Buscar expediente, partes, actuación o abogado...">
+            </div>
 
-        <div sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR')" class="space-y-1">
-            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Gerencia</label>
-            <select name="gerenciaId" onchange="actualizarAgendaAsincrono()"
-                class="w-full h-9 bg-gray-50 border border-gray-200 rounded-md px-2 text-xs text-gray-700 outline-none focus:bg-white focus:border-gob-guinda focus:ring-2 focus:ring-gob-guinda/10 transition-all">
-                <option value="">Todas</option>
-                <option th:each="g : ${listaGerencias}" th:value="${g.id}" th:text="${g.nombre}"
-                    th:selected="${paramGerenciaId != null and paramGerenciaId.toString() == g.id.toString()}"></option>
-            </select>
-        </div>
-
-        <div sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO')"
-            class="space-y-1">
-            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Materia</label>
-            <select name="materiaId" onchange="actualizarAgendaAsincrono()"
-                class="w-full h-9 bg-gray-50 border border-gray-200 rounded-md px-2 text-xs text-gray-700 outline-none focus:bg-white focus:border-gob-guinda focus:ring-2 focus:ring-gob-guinda/10 transition-all">
-                <option value="">Todas</option>
-                <option th:each="m : ${listaMaterias}" th:value="${m.id}" th:text="${m.nombre}"
-                    th:selected="${paramMateriaId != null and paramMateriaId.toString() == m.id.toString()}"></option>
-            </select>
-        </div>
-
-        <div class="col-span-2 md:col-span-4 xl:col-span-1 flex justify-end">
             <a th:href="@{/agenda(tab=${activeTab})}"
-                class="inline-flex items-center justify-center gap-2 h-9 px-3 rounded-md border border-gray-200 bg-white text-xs font-bold text-gray-600 hover:text-gob-guinda hover:border-gob-guinda/40 hover:bg-gob-guinda/5 transition-all">
+                class="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg border border-gray-200 bg-white text-xs font-bold text-gray-600 hover:text-gob-guinda hover:border-gob-guinda/40 hover:bg-gob-guinda/5 transition-all">
                 <i class="fas fa-rotate-left text-[11px]"></i>
                 Limpiar
             </a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-8 gap-3 items-end">
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Rango</label>
+                <select name="rangoFecha" id="agenda-rango-fecha" onchange="manejarRangoFechaChange()"
+                    class="agenda-filter-control w-full h-9 bg-gray-50 border border-gray-200 rounded-md px-2 text-xs text-gray-700 outline-none focus:bg-white focus:border-gob-guinda focus:ring-2 focus:ring-gob-guinda/10 transition-all">
+                    <option value="">Personalizado</option>
+                    <option value="hoy" th:selected="${paramRangoFecha == 'hoy'}">Hoy</option>
+                    <option value="semana" th:selected="${paramRangoFecha == 'semana'}">Esta semana</option>
+                    <option value="mes" th:selected="${paramRangoFecha == 'mes'}">Este mes</option>
+                    <option value="mes_anterior" th:selected="${paramRangoFecha == 'mes_anterior'}">Mes anterior</option>
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Desde</label>
+                <input type="date" name="fechaInicio" th:value="${paramFechaInicio}" onchange="manejarFechaManualChange()"
+                    class="agenda-filter-control w-full h-9 bg-gray-50 border border-gray-200 rounded-md px-2 text-xs text-gray-700 outline-none focus:bg-white focus:border-gob-guinda focus:ring-2 focus:ring-gob-guinda/10 transition-all"
+                    title="Fecha inicio">
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Hasta</label>
+                <input type="date" name="fechaFin" th:value="${paramFechaFin}" onchange="manejarFechaManualChange()"
+                    class="agenda-filter-control w-full h-9 bg-gray-50 border border-gray-200 rounded-md px-2 text-xs text-gray-700 outline-none focus:bg-white focus:border-gob-guinda focus:ring-2 focus:ring-gob-guinda/10 transition-all"
+                    title="Fecha fin">
+            </div>
+
+            <div sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR')" class="space-y-1">
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Gerencia</label>
+                <select name="gerenciaId" data-agenda-filter="gerencia"
+                    class="agenda-filter-control w-full h-9 bg-gray-50 border border-gray-200 rounded-md px-2 text-xs text-gray-700 outline-none focus:bg-white focus:border-gob-guinda focus:ring-2 focus:ring-gob-guinda/10 transition-all">
+                    <option value="">Todas</option>
+                    <option th:each="g : ${listaGerencias}" th:value="${g.id}" th:text="${g.nombre}"
+                        th:selected="${paramGerenciaId != null and paramGerenciaId.toString() == g.id.toString()}"></option>
+                </select>
+            </div>
+
+            <div sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO')"
+                class="space-y-1">
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Materia</label>
+                <select name="materiaId" data-agenda-filter="materia"
+                    class="agenda-filter-control w-full h-9 bg-gray-50 border border-gray-200 rounded-md px-2 text-xs text-gray-700 outline-none focus:bg-white focus:border-gob-guinda focus:ring-2 focus:ring-gob-guinda/10 transition-all">
+                    <option value="">Todas</option>
+                    <option th:each="m : ${listaMaterias}" th:value="${m.id}" th:text="${m.nombre}"
+                        th:selected="${paramMateriaId != null and paramMateriaId.toString() == m.id.toString()}"></option>
+                </select>
+            </div>
+
+            <div th:if="${rolActual != null and rolActual.name() != 'ABOGADO'}" class="space-y-1">
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Abogado</label>
+                <select name="abogadoId" data-agenda-filter="abogado"
+                    class="agenda-filter-control w-full h-9 bg-gray-50 border border-gray-200 rounded-md px-2 text-xs text-gray-700 outline-none focus:bg-white focus:border-gob-guinda focus:ring-2 focus:ring-gob-guinda/10 transition-all">
+                    <option value="">Todos</option>
+                    <option th:each="a : ${listaAbogados}" th:value="${a.id}" th:text="${a.nombreCompleto}"
+                        th:selected="${paramAbogadoId != null and paramAbogadoId.toString() == a.id.toString()}"></option>
+                </select>
+            </div>
+
+            <div class="space-y-1 agenda-filter-audiencias" th:classappend="${activeTab == 'audiencias' ? '' : ' hidden'}">
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Tipo audiencia</label>
+                <select name="tipoAudienciaId" data-agenda-filter="tipoAudiencia"
+                    class="agenda-filter-control w-full h-9 bg-gray-50 border border-gray-200 rounded-md px-2 text-xs text-gray-700 outline-none focus:bg-white focus:border-gob-guinda focus:ring-2 focus:ring-gob-guinda/10 transition-all">
+                    <option value="">Todos</option>
+                    <option th:each="t : ${listaTiposAudiencia}" th:value="${t.id}" th:text="${t.nombre}"
+                        th:selected="${paramTipoAudienciaId != null and paramTipoAudienciaId.toString() == t.id.toString()}"></option>
+                </select>
+            </div>
+
+            <div class="space-y-1 agenda-filter-terminos" th:classappend="${activeTab == 'terminos' ? '' : ' hidden'}">
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Prioridad</label>
+                <select name="prioridadId" data-agenda-filter="prioridad"
+                    class="agenda-filter-control w-full h-9 bg-gray-50 border border-gray-200 rounded-md px-2 text-xs text-gray-700 outline-none focus:bg-white focus:border-gob-guinda focus:ring-2 focus:ring-gob-guinda/10 transition-all">
+                    <option value="">Todas</option>
+                    <option th:each="p : ${listaPrioridades}" th:value="${p.id}" th:text="${p.nombre}"
+                        th:selected="${paramPrioridadId != null and paramPrioridadId.toString() == p.id.toString()}"></option>
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Documento</label>
+                <select name="documento" data-agenda-filter="documento"
+                    class="agenda-filter-control w-full h-9 bg-gray-50 border border-gray-200 rounded-md px-2 text-xs text-gray-700 outline-none focus:bg-white focus:border-gob-guinda focus:ring-2 focus:ring-gob-guinda/10 transition-all">
+                    <option value="">Todos</option>
+                    <option value="con" th:selected="${paramDocumento == 'con'}">Con documento</option>
+                    <option value="sin" th:selected="${paramDocumento == 'sin'}">Sin documento</option>
+                </select>
+            </div>
         </div>
     </form>
 </div>

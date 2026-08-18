@@ -81,7 +81,7 @@
                 <span>Su sesión ha expirado, vuelve a iniciar sesión.</span>
             </div>
 
-            <div th:if="${microsoftError}"
+            <div th:if="${microsoftLoginConfigured and microsoftError}"
                 class="flex items-center p-4 mb-4 text-sm text-amber-900 border-l-4 border-amber-700 bg-amber-50 rounded shadow-sm"
                 role="alert">
                 <i class="fas fa-circle-info mr-3"></i>
@@ -139,8 +139,7 @@
                 </div>
             </form>
 
-            <a th:href="@{/auth/microsoft/login}"
-                th:classappend="${!microsoftLoginConfigured} ? ' opacity-80' : ''"
+            <a th:if="${microsoftLoginConfigured}" th:href="@{/auth/microsoft/login}"
                 class="group relative w-full flex justify-center items-center gap-2 py-3 px-4 mt-4 border border-gray-300 text-sm font-bold rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gob-guinda shadow-sm transition-all font-headings">
                 <i class="fab fa-microsoft text-blue-600"></i>
                 Continuar con correo institucional

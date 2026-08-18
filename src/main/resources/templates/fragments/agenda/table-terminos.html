@@ -53,9 +53,9 @@
                     <td class="px-6 py-4 text-center">
                         <div class="flex justify-center gap-2">
                             <a th:if="${t.acuse != null || t.acuseNombre != null}" 
-                                th:href="${#strings.startsWith(t.acuse, 'http')} ? ${t.acuse} : @{/terminos/descargar/{id}(id=${t.id})}"
-                                th:target="${#strings.startsWith(t.acuse, 'http')} ? '_blank' : '_self'"
-                                class="text-red-600 hover:text-red-800 transition-colors" title="Descargar Acuse">
+                                th:href="${#strings.startsWith(t.acuse, 'http')} ? ${t.acuse} : @{/terminos/preview/{id}(id=${t.id})}"
+                                target="_blank"
+                                class="text-red-600 hover:text-red-800 transition-colors" title="Ver acuse">
                                 <i class="fas fa-file-pdf fa-lg"></i>
                             </a>
                             <button type="button" th:data-id="${t.id}"
@@ -124,9 +124,9 @@
                 <!-- Acciones -->
                 <div class="flex items-center gap-2">
                     <a th:if="${t.acuse != null || t.acuseNombre != null}" 
-                        th:href="${#strings.startsWith(t.acuse, 'http')} ? ${t.acuse} : @{/terminos/descargar/{id}(id=${t.id})}"
-                        th:target="${#strings.startsWith(t.acuse, 'http')} ? '_blank' : '_self'"
-                        class="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors" title="Descargar Acuse">
+                        th:href="${#strings.startsWith(t.acuse, 'http')} ? ${t.acuse} : @{/terminos/preview/{id}(id=${t.id})}"
+                        target="_blank"
+                        class="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors" title="Ver acuse">
                         <i class="fas fa-file-pdf fa-lg"></i>
                     </a>
 
@@ -149,13 +149,13 @@
         </span>
         <div class="flex gap-2">
             <a th:if="${terminos.hasPrevious()}"
-                th:href="@{/agenda(page=${terminos.number - 1}, tab='terminos', keyword=${paramKeyword}, fechaInicio=${paramFechaInicio}, fechaFin=${paramFechaFin}, gerenciaId=${paramGerenciaId}, materiaId=${paramMateriaId})}"
+                th:href="@{/agenda(page=${terminos.number - 1}, tab='terminos', keyword=${paramKeyword}, fechaInicio=${paramFechaInicio}, fechaFin=${paramFechaFin}, rangoFecha=${paramRangoFecha}, gerenciaId=${paramGerenciaId}, materiaId=${paramMateriaId}, abogadoId=${paramAbogadoId}, tipoAudienciaId=${paramTipoAudienciaId}, prioridadId=${paramPrioridadId}, documento=${paramDocumento})}"
                 class="px-3 py-1 border border-gray-300 rounded hover:bg-white text-sm bg-white text-gray-600 transition-colors">
                 <i class="fas fa-chevron-left mr-1"></i> Anterior
             </a>
 
             <a th:if="${terminos.hasNext()}"
-                th:href="@{/agenda(page=${terminos.number + 1}, tab='terminos', keyword=${paramKeyword}, fechaInicio=${paramFechaInicio}, fechaFin=${paramFechaFin}, gerenciaId=${paramGerenciaId}, materiaId=${paramMateriaId})}"
+                th:href="@{/agenda(page=${terminos.number + 1}, tab='terminos', keyword=${paramKeyword}, fechaInicio=${paramFechaInicio}, fechaFin=${paramFechaFin}, rangoFecha=${paramRangoFecha}, gerenciaId=${paramGerenciaId}, materiaId=${paramMateriaId}, abogadoId=${paramAbogadoId}, tipoAudienciaId=${paramTipoAudienciaId}, prioridadId=${paramPrioridadId}, documento=${paramDocumento})}"
                 class="px-3 py-1 border border-gray-300 rounded hover:bg-white text-sm bg-white text-gray-600 transition-colors">
                 Siguiente <i class="fas fa-chevron-right ml-1"></i>
             </a>

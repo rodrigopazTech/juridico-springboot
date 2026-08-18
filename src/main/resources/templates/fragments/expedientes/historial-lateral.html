@@ -3,6 +3,17 @@
         <i class="fas fa-history text-gob-oro"></i> Historial de Cambios
     </h3>
 
+    <div class="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <a th:href="@{/expedientes/{id}/trazabilidad(id=${expediente.id})}"
+            class="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-gob-guinda text-white text-xs font-bold hover:bg-gob-guinda-claro transition">
+            <i class="fas fa-route"></i> Ver trazabilidad
+        </a>
+        <a th:href="@{/expedientes/{id}/trazabilidad/exportar(id=${expediente.id})}"
+            class="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-green-200 text-green-700 bg-green-50 text-xs font-bold hover:bg-green-100 transition">
+            <i class="fas fa-file-excel"></i> Exportar
+        </a>
+    </div>
+
     <div class="max-h-[280px] lg:max-h-[600px] overflow-y-auto pr-2 custom-scrollbar space-y-4 relative border-l-2 border-gray-100 ml-2"
         th:if="${not #lists.isEmpty(actividades)}">
         <div th:each="act : ${actividades}" class="ml-4 relative">
@@ -16,6 +27,10 @@
                 th:text="${#temporals.format(act.fechaRegistro, 'dd MMM, HH:mm')}">
                 Fecha</p>
             <p class="text-xs font-bold text-gray-800" th:text="${act.titulo}">Título</p>
+            <p class="mt-1" th:if="${act.etapaProcesal != null}">
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded border bg-gray-50 text-[9px] font-bold text-gray-500 uppercase"
+                    th:text="${act.etapaCatalogo != null ? act.etapaCatalogo.nombreJerarquico : act.etapaProcesal}">ETAPA</span>
+            </p>
             <p class="text-[11px] text-gray-600 leading-tight mt-0.5 whitespace-pre-wrap" th:text="${act.descripcion}">
                 Descripción</p>
             <p class="text-[9px] text-gray-400 italic mt-1" th:if="${act.usuario != null}">

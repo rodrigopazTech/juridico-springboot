@@ -75,17 +75,24 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block font-bold text-gray-600 mb-1">Etapa Procesal</label>
-                        <select name="etapaProcesal"
+                        <select name="etapaCatalogo.id" id="select-etapa-exp-edit"
                             class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
-                            <option value="TRAMITE" th:selected="${expediente.etapaProcesal.name() == 'TRAMITE'}">
+                            <option value="">Selecciona etapa...</option>
+                            <option th:each="e : ${etapasCatalogo}" th:value="${e.id}"
+                                th:text="${e.parent != null ? '- ' + e.nombreJerarquico : e.nombreJerarquico}"
+                                th:selected="${expediente.etapaCatalogo != null and expediente.etapaCatalogo.id == e.id}">
+                                Etapa
+                            </option>
+                            <option th:if="${false}" value="TRAMITE" th:selected="${expediente.etapaProcesal.name() == 'TRAMITE'}">
                                 Trámite</option>
-                            <option value="LAUDO" th:selected="${expediente.etapaProcesal.name() == 'LAUDO'}">Laudo
+                            <option th:if="${false}" value="LAUDO" th:selected="${expediente.etapaProcesal.name() == 'LAUDO'}">Laudo
                             </option>
-                            <option value="FIRME" th:selected="${expediente.etapaProcesal.name() == 'FIRME'}">Firme
+                            <option th:if="${false}" value="FIRME" th:selected="${expediente.etapaProcesal.name() == 'FIRME'}">Firme
                             </option>
-                            <option value="CONCLUIDO" th:selected="${expediente.etapaProcesal.name() == 'CONCLUIDO'}">
+                            <option th:if="${false}" value="CONCLUIDO" th:selected="${expediente.etapaProcesal.name() == 'CONCLUIDO'}">
                                 Concluido</option>
                         </select>
+                        <p class="text-[10px] text-gray-400 mt-1">Las opciones dependen de la materia seleccionada.</p>
                     </div>
                 </div>
 

@@ -3,6 +3,7 @@ package com.juridico.sistema_juridico.service;
 import com.juridico.sistema_juridico.Entity.expediente.ActividadExpediente;
 import com.juridico.sistema_juridico.Entity.expediente.BitacoraDato;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
+import com.juridico.sistema_juridico.Entity.expediente.ExpedienteEtapaPeriodo;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.usuario.ActividadUsuario;
 import com.juridico.sistema_juridico.repository.Expediente.ActividadExpedienteRepository;
@@ -24,6 +25,7 @@ public class AuditoriaService {
         private final ActividadExpedienteRepository actividadRepository;
         private final BitacoraDatoRepository bitacoraDatoRepository;
         private final ActividadUsuarioRepository actividadUsuarioRepository;
+        private final ExpedienteEtapaPeriodoService etapaPeriodoService;
 
         /**
          * Registra una actividad general en el historial del expediente.
@@ -31,12 +33,18 @@ public class AuditoriaService {
         @Transactional
         public void registrar(Expediente expediente, String titulo, String descripcion, String tipoIcono,
                         Usuario usuario) {
+                ExpedienteEtapaPeriodo periodo = etapaPeriodoService.asegurarPeriodoActivo(expediente, usuario);
                 ActividadExpediente actividad = ActividadExpediente.builder()
                                 .expediente(expediente)
                                 .titulo(titulo)
                                 .descripcion(descripcion)
                                 .tipoIcono(tipoIcono)
                                 .usuario(usuario)
+                                .etapaProcesal(periodo != null ? periodo.getEtapaProcesal()
+                                                : expediente != null ? expediente.getEtapaProcesal() : null)
+                                .etapaCatalogo(periodo != null ? periodo.getEtapaCatalogo()
+                                                : expediente != null ? expediente.getEtapaCatalogo() : null)
+                                .etapaPeriodo(periodo)
                                 .fechaRegistro(LocalDateTime.now())
                                 .build();
                 actividadRepository.save(actividad);
@@ -112,9 +120,13 @@ public class AuditoriaService {
 
                 if (!cambios.isEmpty()) {
                         System.out.println("AUDITORIA: Detectados " + cambios.size() + " cambios.");
+                        ExpedienteEtapaPeriodo periodo = etapaPeriodoService.asegurarPeriodoActivo(actual, usuario);
                         for (BitacoraDato cambio : cambios) {
                                 cambio.setUsuario(usuario);
                                 cambio.setFecha(LocalDateTime.now());
+                                cambio.setEtapaProcesal(periodo != null ? periodo.getEtapaProcesal() : actual.getEtapaProcesal());
+                                cambio.setEtapaCatalogo(periodo != null ? periodo.getEtapaCatalogo() : actual.getEtapaCatalogo());
+                                cambio.setEtapaPeriodo(periodo);
                                 bitacoraDatoRepository.save(cambio);
 
                                 resumen.append(cambio.getCampo()).append(": ")
