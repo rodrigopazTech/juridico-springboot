@@ -293,6 +293,59 @@ def get_test_details(name: str, rol: str, tanda: str):
             ]
         }
 
+    # 8. Fase 4: Resiliencia ante Fallos Externos
+    if "resilience_phase4" in name:
+        if "smtp_failure" in name:
+            return {
+                "title": "Resiliencia de Correo: Manejo Seguro ante Caída de SMTP",
+                "description": "Verifica que ante la indisponibilidad del servidor SMTP, el flujo de recuperación de contraseña no arroje errores 500 y proteja contra enumeración de correos.",
+                "steps": [
+                    "Solicitar enlace de recuperación hacia correo institucional",
+                    "Simular ausencia de conexión con servidor de correo",
+                    "Validar mensaje de respuesta seguro y ausencia de stacktraces"
+                ]
+            }
+        elif "rate_limiting" in name:
+            return {
+                "title": "Resiliencia contra Abuso: Rate Limiting en Restablecimiento",
+                "description": "Comprueba que ante ráfagas sucesivas de solicitudes de contraseña, el limitador de tasa bloquee el abuso limpiamente.",
+                "steps": [
+                    "Disparar múltiples solicitudes sucesivas desde la misma IP",
+                    "Validar activación del estado RATE_LIMITED",
+                    "Verificar respuesta limpia sin errores 500"
+                ]
+            }
+        elif "oauth_error" in name or "oauth_invalid" in name:
+            return {
+                "title": "Resiliencia OAuth2: Tolerancia a Errores en Microsoft Graph",
+                "description": "Evalúa cancelaciones de usuario, estados CSRF adulterados o errores devueltos por el proveedor de identidad de Microsoft.",
+                "steps": [
+                    "Simular callback de error o state manipulado",
+                    "Verificar intercepción en MicrosoftAuthController",
+                    "Comprobar redirección limpia al login sin romper la sesión"
+                ]
+            }
+        elif "tampered_password_reset" in name:
+            return {
+                "title": "Resiliencia de Seguridad: Tokens Manipulados o Expirados",
+                "description": "Intenta acceder a la pantalla de cambio de contraseña con un token aleatorio inexistente, validando rechazo estricto.",
+                "steps": [
+                    "Navegar a /auth/reset-password?token={UUID_falso}",
+                    "Verificar que se bloquee el formulario de contraseña",
+                    "Validar mensaje 'El enlace es inválido o ha expirado'"
+                ]
+            }
+        elif "migration_api" in name:
+            return {
+                "title": "Resiliencia de Integraciones: Seguridad en APIs de Migración",
+                "description": "Comprueba que llamadas no autorizadas a endpoints de migración masiva sean rechazadas con HTTP 401 sin exponer trazas internas.",
+                "steps": [
+                    "Invocar /api/migracion/expedientes sin API Key",
+                    "Validar respuesta HTTP 401 Unauthorized",
+                    "Comprobar formato JSON estructurado del error"
+                ]
+            }
+
     # Fallback general
     clean_title = name.replace("tests_test_", "").replace("_passed", "").replace("_failed", "").replace("__", " - ")
     return {
@@ -333,6 +386,8 @@ def generate_interactive_dashboard():
             tanda = "Fase 2: Gestor Documental y Carga de Archivos"
         elif "load_concurrency_phase3" in name:
             tanda = "Fase 3: Carga, Rendimiento y Concurrencia"
+        elif "resilience_phase4" in name:
+            tanda = "Fase 4: Resiliencia ante Fallos Externos"
 
         # Identificar rol
         rol = "TODOS"
@@ -461,6 +516,7 @@ def generate_interactive_dashboard():
                         <option value="Fase 1: Seguridad">Fase 1: Seguridad IDOR y Sanitización</option>
                         <option value="Fase 2: Gestor Documental">Fase 2: Gestor Documental y Carga de Archivos</option>
                         <option value="Fase 3: Carga">Fase 3: Carga, Rendimiento y Concurrencia</option>
+                        <option value="Fase 4: Resiliencia">Fase 4: Resiliencia ante Fallos Externos</option>
                     </select>
                     <select id="roleFilter" onchange="filterTests()" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer">
                         <option value="ALL">Todos los Roles</option>
