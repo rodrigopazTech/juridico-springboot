@@ -281,6 +281,18 @@ def get_test_details(name: str, rol: str, tanda: str):
                 ]
             }
 
+    # 7. Fase 3: Carga, Rendimiento y Concurrencia
+    if "load_concurrency_phase3" in name:
+        return {
+            "title": "Prueba de Carga y Concurrencia: 100 Peticiones Concurrentes",
+            "description": "Evalúa el comportamiento del servidor bajo tráfico cruzado simultáneo (10 hilos en paralelo), midiendo Throughput (RPS), percentil 95 de latencia y estabilidad del pool HikariCP.",
+            "steps": [
+                "Iniciar 10 sesiones concurrentes para diversos roles",
+                "Disparar 100 peticiones en paralelo hacia Dashboard, Búsquedas y Audiencias",
+                "Verificar 0% tasa de fallos y latencia P95 < 600 ms"
+            ]
+        }
+
     # Fallback general
     clean_title = name.replace("tests_test_", "").replace("_passed", "").replace("_failed", "").replace("__", " - ")
     return {
@@ -319,6 +331,8 @@ def generate_interactive_dashboard():
             tanda = "Fase 1: Seguridad IDOR y Sanitización"
         elif "document_manager_phase2" in name:
             tanda = "Fase 2: Gestor Documental y Carga de Archivos"
+        elif "load_concurrency_phase3" in name:
+            tanda = "Fase 3: Carga, Rendimiento y Concurrencia"
 
         # Identificar rol
         rol = "TODOS"
@@ -446,6 +460,7 @@ def generate_interactive_dashboard():
                         <option value="Geometría Visual">Geometría Visual y Usabilidad</option>
                         <option value="Fase 1: Seguridad">Fase 1: Seguridad IDOR y Sanitización</option>
                         <option value="Fase 2: Gestor Documental">Fase 2: Gestor Documental y Carga de Archivos</option>
+                        <option value="Fase 3: Carga">Fase 3: Carga, Rendimiento y Concurrencia</option>
                     </select>
                     <select id="roleFilter" onchange="filterTests()" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer">
                         <option value="ALL">Todos los Roles</option>
