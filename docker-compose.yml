@@ -11,7 +11,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-villalobos_admin}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-password123}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD requerido}
       POSTGRES_DB: ${DB_NAME:-sistema_juridico}
     ports:
       - "${DB_PORT_EXT:-5433}:5432"
@@ -32,7 +32,7 @@ services:
     restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-ricardo@juridico.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASS:-admin}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASS:?PGADMIN_PASS requerido}
     ports:
       - "5051:80"
     networks:

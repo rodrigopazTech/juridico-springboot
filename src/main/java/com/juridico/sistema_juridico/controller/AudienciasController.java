@@ -44,6 +44,7 @@ import org.springframework.http.HttpStatus;
 import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
+import com.juridico.sistema_juridico.service.FileStorageService;
 import com.juridico.sistema_juridico.util.AudienciaExcelExporter;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -57,7 +58,6 @@ import java.time.LocalDate;
 import java.util.UUID;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.EnumMap;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -84,6 +84,8 @@ public class AudienciasController {
     private com.juridico.sistema_juridico.service.NotificacionService notificacionService;
     @Autowired
     private com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository colaboradorExpedienteRepository;
+    @Autowired
+    private FileStorageService fileStorageService;
 
     // @Autowired private ColaboradorExpedienteRepository colaboradorRepository;
     @Autowired
@@ -828,8 +830,7 @@ public String guardar(@ModelAttribute Audiencia audiencia,
                 return ResponseEntity.notFound().build();
             }
 
-            java.nio.file.Path rutaArchivo = java.nio.file.Paths.get("uploads/audiencias")
-                    .resolve(audiencia.getActaDocumento());
+            java.nio.file.Path rutaArchivo = fileStorageService.obtenerArchivo(rutaActaRelativa(audiencia.getActaDocumento()));
             Resource recurso = new UrlResource(rutaArchivo.toUri());
 
             if (recurso.exists() || recurso.isReadable()) {
@@ -867,8 +868,7 @@ public String guardar(@ModelAttribute Audiencia audiencia,
                 return ResponseEntity.notFound().build();
             }
 
-            java.nio.file.Path rutaArchivo = java.nio.file.Paths.get("uploads/audiencias")
-                    .resolve(audiencia.getActaDocumento());
+            java.nio.file.Path rutaArchivo = fileStorageService.obtenerArchivo(rutaActaRelativa(audiencia.getActaDocumento()));
             Resource recurso = new UrlResource(rutaArchivo.toUri());
 
             if (!recurso.exists() && !recurso.isReadable()) {
@@ -886,6 +886,14 @@ public String guardar(@ModelAttribute Audiencia audiencia,
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    private String rutaActaRelativa(String actaDocumento) {
+        String rutaNormalizada = actaDocumento.replace("\\", "/");
+        if (rutaNormalizada.startsWith("audiencias/")) {
+            return rutaNormalizada;
+        }
+        return "audiencias/" + java.nio.file.Paths.get(actaDocumento).getFileName().toString();
     }
 
     @GetMapping("/exportar-excel")

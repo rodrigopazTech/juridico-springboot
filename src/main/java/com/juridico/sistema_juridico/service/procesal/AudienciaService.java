@@ -30,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -88,15 +87,8 @@ public class AudienciaService {
             throw new com.juridico.sistema_juridico.exception.BadRequestException("Por favor selecciona un archivo.");
         }
 
-        fileStorageService.validarArchivo(archivo);
-
-        String carpeta = "uploads/audiencias/";
-        Path ruta = Paths.get(carpeta);
-        if (!Files.exists(ruta))
-            Files.createDirectories(ruta);
-
-        String nombreArchivo = id + "_ACTA_" + archivo.getOriginalFilename();
-        Files.copy(archivo.getInputStream(), ruta.resolve(nombreArchivo), StandardCopyOption.REPLACE_EXISTING);
+        String rutaActa = fileStorageService.guardarArchivoEnRutaRelativa(archivo, "audiencias");
+        String nombreArchivo = java.nio.file.Paths.get(rutaActa).getFileName().toString();
 
         audiencia.setActaDocumento(nombreArchivo);
         // Lógica de Estatus: Si estaba pendiente, ahora tiene acta
@@ -143,7 +135,7 @@ public class AudienciaService {
                             .expedienteId(audiencia.getExpediente().getId())
                             .nombreArchivo(nombreOriginal)
                             .nombreOriginal(nombreOriginal)
-                            .rutaArchivo("audiencias/" + nombreArchivo)
+                            .rutaArchivo(rutaActa)
                             .tipoMime(archivo.getContentType())
                             .tamanioBytes(archivo.getSize())
                             .carpeta(carpetaSist)

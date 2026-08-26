@@ -4,14 +4,14 @@
     "@capacitor/local-notifications": "^8.2.0",
     "@modelcontextprotocol/server-postgres": "^0.6.2",
     "exceljs": "^4.4.0",
-    "playwright": "^1.58.2",
-    "xlsx": "^0.18.5"
+    "playwright": "^1.58.2"
   },
   "name": "juridico-siaj-1",
   "version": "1.0.0",
   "description": "API REST Backend para el Sistema de Agenda Jurídica Gob.MX V3.",
   "main": "capture_screenshots.js",
   "scripts": {
+    "qa:browser-basic": "node scripts/qa-browser-basic.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

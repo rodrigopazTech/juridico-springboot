@@ -3,8 +3,6 @@ package com.juridico.sistema_juridico.controller;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -1064,7 +1062,7 @@ public class TerminosController {
             if (termino.getAcuse() == null) {
                 return ResponseEntity.notFound().build();
             }
-            Path rutaArchivo = Paths.get("uploads/terminos").resolve(termino.getAcuse());
+            Path rutaArchivo = fileStorageService.obtenerArchivo(rutaLegadoTermino(termino.getAcuse(), "terminos"));
             Resource recurso = new UrlResource(rutaArchivo.toUri());
             if (recurso.exists() || recurso.isReadable()) {
                 return ResponseEntity.ok()
@@ -1219,7 +1217,7 @@ public class TerminosController {
                 return ResponseEntity.notFound().build();
             }
 
-            Path rutaArchivo = Paths.get("uploads/acuses").resolve(acuse.getAcuseDocumento());
+            Path rutaArchivo = fileStorageService.obtenerArchivo(rutaLegadoTermino(acuse.getAcuseDocumento(), "acuses"));
             Resource recurso = new UrlResource(rutaArchivo.toUri());
             if (recurso.exists() || recurso.isReadable()) {
                 return ResponseEntity.ok()
@@ -1235,6 +1233,14 @@ public class TerminosController {
     @GetMapping("/preview/{id}")
     public ResponseEntity<Resource> previsualizarArchivo(@PathVariable("id") Integer id) {
         return servirArchivoTermino(id, false);
+    }
+
+    private String rutaLegadoTermino(String nombreArchivo, String carpeta) {
+        String rutaNormalizada = nombreArchivo.replace("\\", "/");
+        if (rutaNormalizada.startsWith(carpeta + "/")) {
+            return rutaNormalizada;
+        }
+        return carpeta + "/" + java.nio.file.Paths.get(nombreArchivo).getFileName().toString();
     }
 
     private ResponseEntity<Resource> servirArchivoTermino(Integer id, boolean descarga) {
@@ -1264,7 +1270,7 @@ public class TerminosController {
             if (termino.getAcuse() == null) {
                 return ResponseEntity.notFound().build();
             }
-            Path rutaArchivo = Paths.get("uploads/terminos").resolve(termino.getAcuse());
+            Path rutaArchivo = fileStorageService.obtenerArchivo(rutaLegadoTermino(termino.getAcuse(), "terminos"));
             Resource recurso = new UrlResource(rutaArchivo.toUri());
             if (recurso.exists() || recurso.isReadable()) {
                 String nombre = termino.getAcuseNombre() != null ? termino.getAcuseNombre() : recurso.getFilename();

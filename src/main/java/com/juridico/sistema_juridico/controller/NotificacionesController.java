@@ -182,12 +182,13 @@ public class NotificacionesController {
                 return "/";
             }
 
-            String path = uri.getPath();
-            if (path == null || path.isBlank() || path.startsWith("/notificaciones/leer")) {
+            String path = uri.getRawPath();
+            if (path == null || path.isBlank() || !path.startsWith("/") || path.startsWith("//")
+                    || path.contains("\\") || path.startsWith("/notificaciones/leer")) {
                 return "/";
             }
 
-            String query = uri.getQuery();
+            String query = uri.getRawQuery();
             return query != null && !query.isBlank() ? path + "?" + query : path;
         } catch (IllegalArgumentException ex) {
             return "/";
@@ -355,9 +356,9 @@ public class NotificacionesController {
             notificacionRepository.save(notificacion);
         }
 
-        String referer = request.getHeader("Referer");
-        if (referer != null && !referer.contains("/leer/")) {
-            return "redirect:" + referer;
+        String rutaRetorno = obtenerRutaLocalDesdeReferer(request);
+        if (!rutaRetorno.contains("/leer/")) {
+            return "redirect:" + rutaRetorno;
         }
         return "redirect:/notificaciones";
     }
@@ -373,9 +374,9 @@ public class NotificacionesController {
             notificacionRepository.save(notificacion);
         }
 
-        String referer = request.getHeader("Referer");
-        if (referer != null) {
-            return "redirect:" + referer;
+        String rutaRetorno = obtenerRutaLocalDesdeReferer(request);
+        if (!"/".equals(rutaRetorno)) {
+            return "redirect:" + rutaRetorno;
         }
         return "redirect:/notificaciones/papelera";
     }

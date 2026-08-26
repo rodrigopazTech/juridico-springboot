@@ -3,6 +3,7 @@ package com.juridico.sistema_juridico.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.http.HttpMethod;
@@ -21,6 +22,7 @@ import com.juridico.sistema_juridico.security.JwtAuthenticationEntryPoint;
 import com.juridico.sistema_juridico.security.JwtAuthenticationFilter; // <-- Importación necesaria
 import com.juridico.sistema_juridico.security.JwtTokenProvider;
 import com.juridico.sistema_juridico.service.AuditoriaTecnicaService;
+import java.net.URI;
 
 @Configuration
 @EnableWebSecurity
@@ -60,6 +62,12 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+                .headers(headers -> headers
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31536000))
+                        .contentTypeOptions(Customizer.withDefaults())
+                        .frameOptions(frame -> frame.sameOrigin()))
                 .exceptionHandling(exception -> exception
                         .defaultAuthenticationEntryPointFor(
                                 jwtAuthenticationEntryPoint,
@@ -149,7 +157,7 @@ public class SecurityConfig {
                             org.springframework.security.web.savedrequest.SavedRequest savedRequest = requestCache
                                     .getRequest(request, response);
                             if (savedRequest != null) {
-                                String redirectUrl = savedRequest.getRedirectUrl();
+                                String redirectUrl = resolverRedirectLocalSeguro(savedRequest.getRedirectUrl(), request);
                                 if (redirectUrl.contains(".well-known") ||
                                         redirectUrl.contains("favicon") ||
                                         redirectUrl.contains("manifest.json") ||
@@ -225,5 +233,28 @@ public class SecurityConfig {
         return request.getRequestURI().startsWith("/api/")
                 || (accept != null && accept.contains("application/json"))
                 || (contentType != null && contentType.contains("application/json"));
+    }
+
+    private String resolverRedirectLocalSeguro(String redirectUrl, jakarta.servlet.http.HttpServletRequest request) {
+        if (redirectUrl == null || redirectUrl.isBlank()) {
+            return "/dashboard";
+        }
+
+        try {
+            URI uri = URI.create(redirectUrl);
+            if (uri.getHost() != null && !uri.getHost().equalsIgnoreCase(request.getServerName())) {
+                return "/dashboard";
+            }
+
+            String path = uri.getRawPath();
+            if (path == null || path.isBlank() || !path.startsWith("/") || path.startsWith("//") || path.contains("\\")) {
+                return "/dashboard";
+            }
+
+            String query = uri.getRawQuery();
+            return query != null && !query.isBlank() ? path + "?" + query : path;
+        } catch (IllegalArgumentException ex) {
+            return "/dashboard";
+        }
     }
 }

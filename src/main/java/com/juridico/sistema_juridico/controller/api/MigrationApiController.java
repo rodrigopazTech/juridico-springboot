@@ -2,10 +2,14 @@ package com.juridico.sistema_juridico.controller.api;
 
 import com.juridico.sistema_juridico.service.procesal.LoteMigracionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Map;
 
 @RestController
@@ -15,10 +19,16 @@ public class MigrationApiController {
     @Autowired 
     private LoteMigracionService loteMigracionService;
 
-    private final String API_KEY_SECRETA = "n8nAgendaLegalF1N4813NGDSA6D54";
+    @Value("${migration.api.key:}")
+    private String migrationApiKey;
 
     private boolean esLlaveInvalida(String apiKey) {
-        return apiKey == null || !apiKey.equals(API_KEY_SECRETA);
+        if (!StringUtils.hasText(apiKey) || !StringUtils.hasText(migrationApiKey)) {
+            return true;
+        }
+        return !MessageDigest.isEqual(
+                apiKey.getBytes(StandardCharsets.UTF_8),
+                migrationApiKey.getBytes(StandardCharsets.UTF_8));
     }
 
     // 1. Endpoint para Términos (Individual)

@@ -1,0 +1,4908 @@
+﻿[
+    {
+        "table": "actividad_expedientes",
+        "columns": [
+            {
+                "type": "bigint",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "descripcion",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_registro",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "tipo_icono",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "character varying",
+                "column": "titulo",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "uuid",
+                "column": "expediente_id",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "NO",
+                "data_type": "uuid",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "actividad_expedientes_pkey: CREATE UNIQUE INDEX actividad_expedientes_pkey ON public.actividad_expedientes USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fkjnko884f21s9u9qrnx65c9mt1",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            },
+            {
+                "column": "expediente_id",
+                "constraint": "fkpxpfk1j1efqgo8c0abu3rmj0x",
+                "foreign_table": "expedientes",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "actividad_usuarios",
+        "columns": [
+            {
+                "type": "bigint",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "descripcion",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_registro",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "tipo_icono",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "character varying",
+                "column": "titulo",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "actividad_usuarios_pkey: CREATE UNIQUE INDEX actividad_usuarios_pkey ON public.actividad_usuarios USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fkiwarg06waxi0wm0nmfyaphl7k",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "audiencia_contextos",
+        "columns": [
+            {
+                "type": "bigint",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "descripcion",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "numero_expediente_snapshot",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "text",
+                "column": "organo_jurisdiccional_texto",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "origen",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "text",
+                "column": "partes",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "sede",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 150
+            },
+            {
+                "type": "integer",
+                "column": "gerencia_id",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "materia_id",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "organo_jurisdiccional_id",
+                "default": null,
+                "ordinal": 10,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "audiencia_contextos_pkey: CREATE UNIQUE INDEX audiencia_contextos_pkey ON public.audiencia_contextos USING btree (id)",
+            "idx_audiencia_contexto_gerencia: CREATE INDEX idx_audiencia_contexto_gerencia ON public.audiencia_contextos USING btree (gerencia_id)",
+            "idx_audiencia_contexto_materia: CREATE INDEX idx_audiencia_contexto_materia ON public.audiencia_contextos USING btree (materia_id)",
+            "idx_audiencia_contexto_origen: CREATE INDEX idx_audiencia_contexto_origen ON public.audiencia_contextos USING btree (origen)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "gerencia_id",
+                "constraint": "fkbdu4j8d2ejho98oi08369endx",
+                "foreign_table": "gerencias",
+                "foreign_column": "id"
+            },
+            {
+                "column": "organo_jurisdiccional_id",
+                "constraint": "fkp1paxjyvpxulyqnukqmd0d13c",
+                "foreign_table": "organos_jurisdiccionales",
+                "foreign_column": "id"
+            },
+            {
+                "column": "materia_id",
+                "constraint": "fktfcon5wnhwo0ph22a2wt5y6im",
+                "foreign_table": "materias",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "audiencias",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "acta_documento",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 500
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "es_virtual",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "estatus_audiencia",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "date",
+                "column": "fecha_audiencia",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "NO",
+                "data_type": "date",
+                "max_length": null
+            },
+            {
+                "type": "date",
+                "column": "fecha_desahogo",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "date",
+                "max_length": null
+            },
+            {
+                "type": "time without time zone",
+                "column": "hora_audiencia",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "NO",
+                "data_type": "time without time zone",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "observaciones",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "sala_lugar",
+                "default": null,
+                "ordinal": 10,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "updated_at",
+                "default": null,
+                "ordinal": 11,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "url_reunion",
+                "default": null,
+                "ordinal": 12,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "abogado_comparece_id",
+                "default": null,
+                "ordinal": 13,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "uuid",
+                "column": "expediente_id",
+                "default": null,
+                "ordinal": 14,
+                "nullable": "NO",
+                "data_type": "uuid",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "tipo_audiencia_id",
+                "default": null,
+                "ordinal": 15,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "bigint",
+                "column": "contexto_id",
+                "default": null,
+                "ordinal": 17,
+                "nullable": "YES",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_delegado_id",
+                "default": null,
+                "ordinal": 18,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "audiencias_pkey: CREATE UNIQUE INDEX audiencias_pkey ON public.audiencias USING btree (id)",
+            "idx_audiencias_expediente: CREATE INDEX idx_audiencias_expediente ON public.audiencias USING btree (expediente_id)",
+            "idx_audiencias_fecha: CREATE INDEX idx_audiencias_fecha ON public.audiencias USING btree (fecha_audiencia)",
+            "uk6yco257iom67jk0pilkinvda3: CREATE UNIQUE INDEX uk6yco257iom67jk0pilkinvda3 ON public.audiencias USING btree (contexto_id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "expediente_id",
+                "constraint": "fk4csl8qte7scamolg89kofnal3",
+                "foreign_table": "expedientes",
+                "foreign_column": "id"
+            },
+            {
+                "column": "tipo_audiencia_id",
+                "constraint": "fk7wchckhcv7ce6x99xekj5e9dx",
+                "foreign_table": "tipos_audiencia",
+                "foreign_column": "id"
+            },
+            {
+                "column": "usuario_delegado_id",
+                "constraint": "fkgsv5padg0wab4wkm8no4mfx59",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            },
+            {
+                "column": "contexto_id",
+                "constraint": "fkgy6f4qct07n42s9vecon4e792",
+                "foreign_table": "audiencia_contextos",
+                "foreign_column": "id"
+            },
+            {
+                "column": "abogado_comparece_id",
+                "constraint": "fkpkiu3klwkc0lr9f9ebbpwsqc1",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+            {
+                "column": "contexto_id",
+                "constraint": "uk6yco257iom67jk0pilkinvda3"
+            }
+        ]
+    },
+    {
+        "table": "audiencias_desahogadas",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "expediente_numero",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "date",
+                "column": "fecha_audiencia",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "NO",
+                "data_type": "date",
+                "max_length": null
+            },
+            {
+                "type": "date",
+                "column": "fecha_desahogo",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "NO",
+                "data_type": "date",
+                "max_length": null
+            },
+            {
+                "type": "time without time zone",
+                "column": "hora_audiencia",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "time without time zone",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "sincronizado_at",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "audiencia_id",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "audiencias_desahogadas_pkey: CREATE UNIQUE INDEX audiencias_desahogadas_pkey ON public.audiencias_desahogadas USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "audiencia_id",
+                "constraint": "fkq40pjs1rrg3mj5qdcl74hawwa",
+                "foreign_table": "audiencias",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "auditoria_eventos",
+        "columns": [
+            {
+                "type": "bigint",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "accion",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 120
+            },
+            {
+                "type": "integer",
+                "column": "codigo_http",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "descripcion",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "detalle_json",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "email",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 150
+            },
+            {
+                "type": "character varying",
+                "column": "entidad_id",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 120
+            },
+            {
+                "type": "character varying",
+                "column": "entidad_tipo",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 80
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "ip",
+                "default": null,
+                "ordinal": 10,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 80
+            },
+            {
+                "type": "character varying",
+                "column": "metodo_http",
+                "default": null,
+                "ordinal": 11,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 12
+            },
+            {
+                "type": "character varying",
+                "column": "modulo",
+                "default": null,
+                "ordinal": 12,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 80
+            },
+            {
+                "type": "character varying",
+                "column": "resultado",
+                "default": null,
+                "ordinal": 13,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "character varying",
+                "column": "rol",
+                "default": null,
+                "ordinal": 14,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "character varying",
+                "column": "ruta",
+                "default": null,
+                "ordinal": 15,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 500
+            },
+            {
+                "type": "character varying",
+                "column": "session_id",
+                "default": null,
+                "ordinal": 16,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "ordinal": 17,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 18,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "auditoria_eventos_pkey: CREATE UNIQUE INDEX auditoria_eventos_pkey ON public.auditoria_eventos USING btree (id)",
+            "idx_auditoria_eventos_fecha: CREATE INDEX idx_auditoria_eventos_fecha ON public.auditoria_eventos USING btree (fecha)",
+            "idx_auditoria_eventos_modulo: CREATE INDEX idx_auditoria_eventos_modulo ON public.auditoria_eventos USING btree (modulo)",
+            "idx_auditoria_eventos_resultado: CREATE INDEX idx_auditoria_eventos_resultado ON public.auditoria_eventos USING btree (resultado)",
+            "idx_auditoria_eventos_session: CREATE INDEX idx_auditoria_eventos_session ON public.auditoria_eventos USING btree (session_id)",
+            "idx_auditoria_eventos_usuario: CREATE INDEX idx_auditoria_eventos_usuario ON public.auditoria_eventos USING btree (usuario_id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fk5vp43v3gpt1fcpqr9jg6v5cqf",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "auditoria_sesiones",
+        "columns": [
+            {
+                "type": "bigint",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "email",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 150
+            },
+            {
+                "type": "character varying",
+                "column": "estado",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_cierre",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_inicio",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_ultima_actividad",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "ip",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 80
+            },
+            {
+                "type": "character varying",
+                "column": "motivo_cierre",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 80
+            },
+            {
+                "type": "character varying",
+                "column": "rol",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "character varying",
+                "column": "session_id",
+                "default": null,
+                "ordinal": 10,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "text",
+                "column": "user_agent",
+                "default": null,
+                "ordinal": 11,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 12,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "auditoria_sesiones_pkey: CREATE UNIQUE INDEX auditoria_sesiones_pkey ON public.auditoria_sesiones USING btree (id)",
+            "idx_auditoria_sesiones_estado: CREATE INDEX idx_auditoria_sesiones_estado ON public.auditoria_sesiones USING btree (estado)",
+            "idx_auditoria_sesiones_inicio: CREATE INDEX idx_auditoria_sesiones_inicio ON public.auditoria_sesiones USING btree (fecha_inicio)",
+            "idx_auditoria_sesiones_session: CREATE INDEX idx_auditoria_sesiones_session ON public.auditoria_sesiones USING btree (session_id)",
+            "idx_auditoria_sesiones_usuario: CREATE INDEX idx_auditoria_sesiones_usuario ON public.auditoria_sesiones USING btree (usuario_id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fkpxnctjgkcgh29p5ux063wxj06",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "bitacora_datos",
+        "columns": [
+            {
+                "type": "bigint",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "campo",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 100
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "valor_anterior",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "valor_nuevo",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "uuid",
+                "column": "expediente_id",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "NO",
+                "data_type": "uuid",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "bitacora_datos_pkey: CREATE UNIQUE INDEX bitacora_datos_pkey ON public.bitacora_datos USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "expediente_id",
+                "constraint": "fka4jw9flw2hdgx2eufguvxbvtk",
+                "foreign_table": "expedientes",
+                "foreign_column": "id"
+            },
+            {
+                "column": "usuario_id",
+                "constraint": "fkd2e3cn3q5cbep5g7f8tm3t660",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "bk_auth_gerencias_20260727_131223_usuario_gerencias",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "gerencia_id",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+        ],
+        "primary_key": [
+        ],
+        "foreign_keys": [
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "bk_auth_gerencias_20260727_131223_usuario_materias",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "materia_id",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+        ],
+        "primary_key": [
+        ],
+        "foreign_keys": [
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "bk_auth_gerencias_20260727_131223_usuarios",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "activo",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "email",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 100
+            },
+            {
+                "type": "boolean",
+                "column": "force_password_change",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "nombre_completo",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 200
+            },
+            {
+                "type": "character varying",
+                "column": "password_hash",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "password_updated_at",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "rol",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "ultimo_acceso",
+                "default": null,
+                "ordinal": 10,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "updated_at",
+                "default": null,
+                "ordinal": 11,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "gerencia_id",
+                "default": null,
+                "ordinal": 12,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "creado_por_id",
+                "default": null,
+                "ordinal": 13,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+        ],
+        "primary_key": [
+        ],
+        "foreign_keys": [
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "carpetas",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "uuid",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "es_sistema",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "uuid",
+                "column": "expediente_id",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "NO",
+                "data_type": "uuid",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_creacion",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "nombre",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "integer",
+                "column": "orden",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "uuid",
+                "column": "carpeta_padre_id",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "uuid",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_creador_id",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "carpetas_pkey: CREATE UNIQUE INDEX carpetas_pkey ON public.carpetas USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_creador_id",
+                "constraint": "fk7oriagmf0utemgy3ub8iy7myt",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            },
+            {
+                "column": "carpeta_padre_id",
+                "constraint": "fkel65g9qwjoep94aixiveex7fm",
+                "foreign_table": "carpetas",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "cat_estados",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "activo",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "nombre",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "integer",
+                "column": "gerencia_id",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "cat_estados_pkey: CREATE UNIQUE INDEX cat_estados_pkey ON public.cat_estados USING btree (id)",
+            "uknst6hp4h4jox86rou3fpxfmd0: CREATE UNIQUE INDEX uknst6hp4h4jox86rou3fpxfmd0 ON public.cat_estados USING btree (nombre)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fks243iav8cbu2feurmh2qjaiy6",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            },
+            {
+                "column": "gerencia_id",
+                "constraint": "fksvk5hct1ehr5jejuecfr59pih",
+                "foreign_table": "gerencias",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+            {
+                "column": "nombre",
+                "constraint": "uknst6hp4h4jox86rou3fpxfmd0"
+            }
+        ]
+    },
+    {
+        "table": "cat_prioridad",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "activo",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "color",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 100
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "nombre",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "updated_at",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "cat_prioridad_pkey: CREATE UNIQUE INDEX cat_prioridad_pkey ON public.cat_prioridad USING btree (id)",
+            "ukp238eocvbwiipffxptyq0uq07: CREATE UNIQUE INDEX ukp238eocvbwiipffxptyq0uq07 ON public.cat_prioridad USING btree (nombre)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+            {
+                "column": "nombre",
+                "constraint": "ukp238eocvbwiipffxptyq0uq07"
+            }
+        ]
+    },
+    {
+        "table": "cat_tipo_expediente",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "activo",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "descripcion",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "nombre",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 100
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "updated_at",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "gerencia_id",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "cat_tipo_expediente_pkey: CREATE UNIQUE INDEX cat_tipo_expediente_pkey ON public.cat_tipo_expediente USING btree (id)",
+            "uk9cslxj82xdh4mfg9baolqj7xu: CREATE UNIQUE INDEX uk9cslxj82xdh4mfg9baolqj7xu ON public.cat_tipo_expediente USING btree (nombre)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fk72utcny5h8l8oeddw7p2ducwb",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            },
+            {
+                "column": "gerencia_id",
+                "constraint": "fkk792qaf01pxxgna4hd5yakesh",
+                "foreign_table": "gerencias",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+            {
+                "column": "nombre",
+                "constraint": "uk9cslxj82xdh4mfg9baolqj7xu"
+            }
+        ]
+    },
+    {
+        "table": "catalogos_migracion",
+        "columns": [
+            {
+                "type": "bigint",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "estatus",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 20
+            },
+            {
+                "type": "bigint",
+                "column": "id_mapeado",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "nuevo_valor",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "character varying",
+                "column": "tipo_catalogo",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "character varying",
+                "column": "valor_original",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "bigint",
+                "column": "lote_id",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "NO",
+                "data_type": "bigint",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "catalogos_migracion_pkey: CREATE UNIQUE INDEX catalogos_migracion_pkey ON public.catalogos_migracion USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "lote_id",
+                "constraint": "fkbcm7hlj12jkry23uud6vp5b7q",
+                "foreign_table": "lotes_migracion",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "colaboradores_expediente",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_expiracion",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "motivo",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "permiso_nivel",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "uuid",
+                "column": "expediente_id",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "uuid",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "colaboradores_expediente_pkey: CREATE UNIQUE INDEX colaboradores_expediente_pkey ON public.colaboradores_expediente USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fkfmyo4j16g3shpn1jqc846sril",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            },
+            {
+                "column": "expediente_id",
+                "constraint": "fkmajsh6pilw2o7d2lusf1yfewt",
+                "foreign_table": "expedientes",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "comentarios",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "comentario",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "entidad_id",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "character varying",
+                "column": "entidad_tipo",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "character varying",
+                "column": "etapa_procesal",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "character varying",
+                "column": "usuario_nombre",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "comentarios_pkey: CREATE UNIQUE INDEX comentarios_pkey ON public.comentarios USING btree (id)",
+            "idx_comentarios_entidad: CREATE INDEX idx_comentarios_entidad ON public.comentarios USING btree (entidad_tipo, entidad_id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fkdts62yj83qe3k748cgcjvm48r",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "configuraciones_alerta",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "activa",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "asunto_id",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 100
+            },
+            {
+                "type": "character varying",
+                "column": "asunto_tipo",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "dias_anticipacion",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "nivel",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "boolean",
+                "column": "obligatoria",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "NO",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "tipo_evento",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "updated_at",
+                "default": null,
+                "ordinal": 10,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "gerencia_id",
+                "default": null,
+                "ordinal": 11,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 12,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "configuraciones_alerta_pkey: CREATE UNIQUE INDEX configuraciones_alerta_pkey ON public.configuraciones_alerta USING btree (id)",
+            "idx_config_alerta_asunto: CREATE INDEX idx_config_alerta_asunto ON public.configuraciones_alerta USING btree (asunto_tipo, asunto_id)",
+            "idx_config_alerta_gerencia: CREATE INDEX idx_config_alerta_gerencia ON public.configuraciones_alerta USING btree (gerencia_id)",
+            "idx_config_alerta_tipo_activa: CREATE INDEX idx_config_alerta_tipo_activa ON public.configuraciones_alerta USING btree (tipo_evento, activa)",
+            "idx_config_alerta_usuario: CREATE INDEX idx_config_alerta_usuario ON public.configuraciones_alerta USING btree (usuario_id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "gerencia_id",
+                "constraint": "fkjuixqrp11exyu0hxda62mjaly",
+                "foreign_table": "gerencias",
+                "foreign_column": "id"
+            },
+            {
+                "column": "usuario_id",
+                "constraint": "fkp2ofjofsj1ohidlux3q1jylxr",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "configuraciones_semaforo",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "amarillo_hasta",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "nivel",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "integer",
+                "column": "rojo_hasta",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "tipo_evento",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "updated_at",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "gerencia_id",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "configuraciones_semaforo_pkey: CREATE UNIQUE INDEX configuraciones_semaforo_pkey ON public.configuraciones_semaforo USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "gerencia_id",
+                "constraint": "fkpncb84gi9iflcalxgkyf6chdk",
+                "foreign_table": "gerencias",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "documentos",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "uuid",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "descripcion",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "uuid",
+                "column": "expediente_id",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "NO",
+                "data_type": "uuid",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_subida",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "nombre_archivo",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "character varying",
+                "column": "nombre_original",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "character varying",
+                "column": "ruta_archivo",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 500
+            },
+            {
+                "type": "bigint",
+                "column": "tamanio_bytes",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "NO",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "tipo_mime",
+                "default": null,
+                "ordinal": 10,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 100
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "updated_at",
+                "default": null,
+                "ordinal": 11,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "uuid",
+                "column": "carpeta_id",
+                "default": null,
+                "ordinal": 12,
+                "nullable": "YES",
+                "data_type": "uuid",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_subida_id",
+                "default": null,
+                "ordinal": 13,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "uuid",
+                "column": "carpeta_original_id",
+                "default": null,
+                "ordinal": 14,
+                "nullable": "YES",
+                "data_type": "uuid",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "carpeta_original_ruta",
+                "default": null,
+                "ordinal": 15,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 1024
+            },
+            {
+                "type": "boolean",
+                "column": "eliminado",
+                "default": "false",
+                "ordinal": 16,
+                "nullable": "NO",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "eliminado_definitivo",
+                "default": "false",
+                "ordinal": 17,
+                "nullable": "NO",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_eliminacion",
+                "default": null,
+                "ordinal": 18,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_eliminacion_definitiva",
+                "default": null,
+                "ordinal": 19,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_eliminacion_id",
+                "default": null,
+                "ordinal": 20,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "documentos_pkey: CREATE UNIQUE INDEX documentos_pkey ON public.documentos USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_eliminacion_id",
+                "constraint": "fkapnjaa6i0jmcmp0adsrclumti",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            },
+            {
+                "column": "carpeta_id",
+                "constraint": "fki77q0aw3d7cix0fty95p5halt",
+                "foreign_table": "carpetas",
+                "foreign_column": "id"
+            },
+            {
+                "column": "usuario_subida_id",
+                "constraint": "fkou5fwjxrh4strb85eehbd3535",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "documentos_expediente",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "descripcion",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "mime_type",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 100
+            },
+            {
+                "type": "character varying",
+                "column": "nombre_archivo",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 300
+            },
+            {
+                "type": "character varying",
+                "column": "ruta_archivo",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 500
+            },
+            {
+                "type": "bigint",
+                "column": "tamanio_bytes",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "tipo_documento",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "uploaded_at",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "uuid",
+                "column": "expediente_id",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "NO",
+                "data_type": "uuid",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "uploaded_by",
+                "default": null,
+                "ordinal": 10,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "documentos_expediente_pkey: CREATE UNIQUE INDEX documentos_expediente_pkey ON public.documentos_expediente USING btree (id)",
+            "idx_documentos_expediente: CREATE INDEX idx_documentos_expediente ON public.documentos_expediente USING btree (expediente_id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "expediente_id",
+                "constraint": "fk93ari8ojm8gv9htiv787wbxms",
+                "foreign_table": "expedientes",
+                "foreign_column": "id"
+            },
+            {
+                "column": "uploaded_by",
+                "constraint": "fkmnmduqxe42khc46ssomlsi4ki",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "eventos_calendario",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "categoria",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "character varying",
+                "column": "color",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 7
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "descripcion",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "entidad_id",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "entidad_tipo",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_fin",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_inicio",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "titulo",
+                "default": null,
+                "ordinal": 10,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 200
+            },
+            {
+                "type": "boolean",
+                "column": "todo_el_dia",
+                "default": null,
+                "ordinal": 11,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 12,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "eventos_calendario_pkey: CREATE UNIQUE INDEX eventos_calendario_pkey ON public.eventos_calendario USING btree (id)",
+            "idx_eventos_fecha_inicio: CREATE INDEX idx_eventos_fecha_inicio ON public.eventos_calendario USING btree (fecha_inicio)",
+            "idx_eventos_usuario: CREATE INDEX idx_eventos_usuario ON public.eventos_calendario USING btree (usuario_id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fkkerk9013d75pe0retvvpoali4",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "expedientes",
+        "columns": [
+            {
+                "type": "uuid",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "uuid",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "abogado_responsable_nombre",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 200
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "descripcion",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "NO",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "etapa_procesal",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "character varying",
+                "column": "numero",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "text",
+                "column": "organo_jurisdiccional_texto",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "partes",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "sede",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 150
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "updated_at",
+                "default": null,
+                "ordinal": 10,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "abogado_responsable_id",
+                "default": null,
+                "ordinal": 11,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "gerencia_id",
+                "default": null,
+                "ordinal": 12,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "materia_id",
+                "default": null,
+                "ordinal": 13,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "organo_jurisdiccional_id",
+                "default": null,
+                "ordinal": 14,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "prioridad_id",
+                "default": null,
+                "ordinal": 15,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "tipo_expediente_id",
+                "default": null,
+                "ordinal": 16,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "es_temporal",
+                "default": null,
+                "ordinal": 17,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "expedientes_pkey: CREATE UNIQUE INDEX expedientes_pkey ON public.expedientes USING btree (id)",
+            "idx_expedientes_abogado: CREATE INDEX idx_expedientes_abogado ON public.expedientes USING btree (abogado_responsable_id)",
+            "idx_expedientes_etapa: CREATE INDEX idx_expedientes_etapa ON public.expedientes USING btree (etapa_procesal)",
+            "idx_expedientes_numero: CREATE INDEX idx_expedientes_numero ON public.expedientes USING btree (numero)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "organo_jurisdiccional_id",
+                "constraint": "fk4ko1kuyjwubjuk8pqc6uj7nkl",
+                "foreign_table": "organos_jurisdiccionales",
+                "foreign_column": "id"
+            },
+            {
+                "column": "materia_id",
+                "constraint": "fk58skvtk8tcu7wlxc6q6bd9kbt",
+                "foreign_table": "materias",
+                "foreign_column": "id"
+            },
+            {
+                "column": "gerencia_id",
+                "constraint": "fkbichuxp9f2p9t665qhevw9hv",
+                "foreign_table": "gerencias",
+                "foreign_column": "id"
+            },
+            {
+                "column": "prioridad_id",
+                "constraint": "fkjd2xfb8uvwn3bfcsxc8vy3clj",
+                "foreign_table": "cat_prioridad",
+                "foreign_column": "id"
+            },
+            {
+                "column": "abogado_responsable_id",
+                "constraint": "fkof8a43swfcvf2dv5mo6q5thd6",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            },
+            {
+                "column": "tipo_expediente_id",
+                "constraint": "fkq1uvxy2ws1qxvxrgqovf9tq1s",
+                "foreign_table": "cat_tipo_expediente",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "gerencias",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "activo",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "descripcion",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "nombre",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 200
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "updated_at",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "gerencias_pkey: CREATE UNIQUE INDEX gerencias_pkey ON public.gerencias USING btree (id)",
+            "uk5nv105r1e4j3r6hrfxxa4fxeg: CREATE UNIQUE INDEX uk5nv105r1e4j3r6hrfxxa4fxeg ON public.gerencias USING btree (nombre)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+            {
+                "column": "nombre",
+                "constraint": "uk5nv105r1e4j3r6hrfxxa4fxeg"
+            }
+        ]
+    },
+    {
+        "table": "lotes_migracion",
+        "columns": [
+            {
+                "type": "bigint",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "estatus",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 20
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_creacion",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "paso_actual",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "gerencia_global_id",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_responsable_id",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "lotes_migracion_pkey: CREATE UNIQUE INDEX lotes_migracion_pkey ON public.lotes_migracion USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "gerencia_global_id",
+                "constraint": "fkml1x7t5vox3isbj11ai4dvx8b",
+                "foreign_table": "gerencias",
+                "foreign_column": "id"
+            },
+            {
+                "column": "usuario_responsable_id",
+                "constraint": "fkt3ttkjr7t5lfi88ketoe4osee",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "materias",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "activo",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "descripcion",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "nombre",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 100
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "updated_at",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "gerencia_id",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "materias_pkey: CREATE UNIQUE INDEX materias_pkey ON public.materias USING btree (id)",
+            "uk35p3esp62g4obf0xvgxkrgh2e: CREATE UNIQUE INDEX uk35p3esp62g4obf0xvgxkrgh2e ON public.materias USING btree (nombre, gerencia_id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fk88y1xy72ng7x0aa9orpy942p7",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            },
+            {
+                "column": "gerencia_id",
+                "constraint": "fkkf13pj696ynk5lfcetip9d5oy",
+                "foreign_table": "gerencias",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+            {
+                "column": "nombre",
+                "constraint": "uk35p3esp62g4obf0xvgxkrgh2e"
+            },
+            {
+                "column": "gerencia_id",
+                "constraint": "uk35p3esp62g4obf0xvgxkrgh2e"
+            }
+        ]
+    },
+    {
+        "table": "notificaciones",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "entidad_id",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "character varying",
+                "column": "entidad_tipo",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_leida",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "leida",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "mensaje",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "NO",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "notificar_en",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "tipo",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "character varying",
+                "column": "titulo",
+                "default": null,
+                "ordinal": 10,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 200
+            },
+            {
+                "type": "integer",
+                "column": "prioridad_id",
+                "default": null,
+                "ordinal": 11,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 12,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "evento",
+                "default": null,
+                "ordinal": 13,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 80
+            },
+            {
+                "type": "character varying",
+                "column": "titulo2",
+                "default": null,
+                "ordinal": 14,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 200
+            }
+        ],
+        "indexes": [
+            "notificaciones_pkey: CREATE UNIQUE INDEX notificaciones_pkey ON public.notificaciones USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fk1mxbjb81ft61gwlh0kabubndc",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            },
+            {
+                "column": "prioridad_id",
+                "constraint": "fkhedeo9jm98y2dq7nbpp9fg7q1",
+                "foreign_table": "cat_prioridad",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "organos_jurisdiccionales",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "activo",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "nombre",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 300
+            },
+            {
+                "type": "character varying",
+                "column": "sede",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 100
+            },
+            {
+                "type": "character varying",
+                "column": "tipo",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "updated_at",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "gerencia_id",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "organos_jurisdiccionales_pkey: CREATE UNIQUE INDEX organos_jurisdiccionales_pkey ON public.organos_jurisdiccionales USING btree (id)",
+            "ukmc16d9k9cfsrevrlbjdt9cctb: CREATE UNIQUE INDEX ukmc16d9k9cfsrevrlbjdt9cctb ON public.organos_jurisdiccionales USING btree (nombre)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fk139ctye6aj13npxjakubnphj5",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            },
+            {
+                "column": "gerencia_id",
+                "constraint": "fkp3dc7r1182p73giiehvc1a3kw",
+                "foreign_table": "gerencias",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+            {
+                "column": "nombre",
+                "constraint": "ukmc16d9k9cfsrevrlbjdt9cctb"
+            }
+        ]
+    },
+    {
+        "table": "password_reset_tokens",
+        "columns": [
+            {
+                "type": "bigint",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "activo",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "email",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 150
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_creacion",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_expiracion",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "fecha_uso",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "token",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 120
+            },
+            {
+                "type": "boolean",
+                "column": "usado",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "NO",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "idx_password_reset_expiracion: CREATE INDEX idx_password_reset_expiracion ON public.password_reset_tokens USING btree (fecha_expiracion)",
+            "idx_password_reset_token: CREATE UNIQUE INDEX idx_password_reset_token ON public.password_reset_tokens USING btree (token)",
+            "idx_password_reset_usuario: CREATE INDEX idx_password_reset_usuario ON public.password_reset_tokens USING btree (usuario_id)",
+            "password_reset_tokens_pkey: CREATE UNIQUE INDEX password_reset_tokens_pkey ON public.password_reset_tokens USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fkp3log76r68owjybas53j8jaig",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+            {
+                "column": "token",
+                "constraint": "idx_password_reset_token"
+            }
+        ]
+    },
+    {
+        "table": "preferencias_notificacion",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "notificar_nueva_audiencia",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "notificar_nuevo_termino",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "notificar_reasignacion",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "notificar_termino_vencer",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "preferencias_notificacion_pkey: CREATE UNIQUE INDEX preferencias_notificacion_pkey ON public.preferencias_notificacion USING btree (id)",
+            "uke1fpwe1mmm24nh837d91ymwnh: CREATE UNIQUE INDEX uke1fpwe1mmm24nh837d91ymwnh ON public.preferencias_notificacion USING btree (usuario_id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fk401s19rwxg52aeg4lnbgdno3d",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+            {
+                "column": "usuario_id",
+                "constraint": "uke1fpwe1mmm24nh837d91ymwnh"
+            }
+        ]
+    },
+    {
+        "table": "preferencias_notificacion_evento",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "evento",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 80
+            },
+            {
+                "type": "boolean",
+                "column": "habilitada",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "NO",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "preferencias_notificacion_evento_pkey: CREATE UNIQUE INDEX preferencias_notificacion_evento_pkey ON public.preferencias_notificacion_evento USING btree (id)",
+            "uk_pref_notif_evento_usuario: CREATE UNIQUE INDEX uk_pref_notif_evento_usuario ON public.preferencias_notificacion_evento USING btree (usuario_id, evento)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fkq824i3pvktkmtaa0m7l1g1ry0",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+            {
+                "column": "usuario_id",
+                "constraint": "uk_pref_notif_evento_usuario"
+            },
+            {
+                "column": "evento",
+                "constraint": "uk_pref_notif_evento_usuario"
+            }
+        ]
+    },
+    {
+        "table": "push_subscriptions",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": "nextval('push_subscriptions_id_seq'::regclass)",
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "endpoint",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "NO",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "p256dh",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "character varying",
+                "column": "auth",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "character varying",
+                "column": "device_id",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": "CURRENT_TIMESTAMP",
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "session_id",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 255
+            }
+        ],
+        "indexes": [
+            "idx_push_sub_endpoint: CREATE INDEX idx_push_sub_endpoint ON public.push_subscriptions USING btree (endpoint)",
+            "idx_push_sub_usuario: CREATE INDEX idx_push_sub_usuario ON public.push_subscriptions USING btree (usuario_id)",
+            "push_subscriptions_pkey: CREATE UNIQUE INDEX push_subscriptions_pkey ON public.push_subscriptions USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "push_subscriptions_usuario_id_fkey",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "recordatorios",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "completado",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "detalles",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "date",
+                "column": "fecha_recordatorio",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "date",
+                "max_length": null
+            },
+            {
+                "type": "time without time zone",
+                "column": "hora_recordatorio",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "NO",
+                "data_type": "time without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "titulo",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 200
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "updated_at",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "prioridad_id",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 10,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "recordatorios_pkey: CREATE UNIQUE INDEX recordatorios_pkey ON public.recordatorios USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "prioridad_id",
+                "constraint": "fk476hi0yoplmls066xtrc5otb",
+                "foreign_table": "cat_prioridad",
+                "foreign_column": "id"
+            },
+            {
+                "column": "usuario_id",
+                "constraint": "fkc52iceqg5fu1wn3jrijliai38",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "registros_migracion",
+        "columns": [
+            {
+                "type": "bigint",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "estatus",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 20
+            },
+            {
+                "type": "text",
+                "column": "mensaje_error",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "numero_expediente_extraido",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 100
+            },
+            {
+                "type": "text",
+                "column": "payload_json",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "NO",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "processed_at",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "tipo_dato",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "bigint",
+                "column": "lote_id",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "YES",
+                "data_type": "bigint",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "registros_migracion_pkey: CREATE UNIQUE INDEX registros_migracion_pkey ON public.registros_migracion USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "lote_id",
+                "constraint": "fk5dyhaybpntdsmofm5ek0c55f4",
+                "foreign_table": "lotes_migracion",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "termino_archivos",
+        "columns": [
+            {
+                "type": "bigint",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "etapa",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "character varying",
+                "column": "nombre_original",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "character varying",
+                "column": "ruta_archivo",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 700
+            },
+            {
+                "type": "bigint",
+                "column": "tamanio_bytes",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "tipo_documento",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 20
+            },
+            {
+                "type": "character varying",
+                "column": "tipo_mime",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 120
+            },
+            {
+                "type": "integer",
+                "column": "termino_id",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_subida_id",
+                "default": null,
+                "ordinal": 10,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "idx_termino_archivos_fecha: CREATE INDEX idx_termino_archivos_fecha ON public.termino_archivos USING btree (created_at)",
+            "idx_termino_archivos_termino: CREATE INDEX idx_termino_archivos_termino ON public.termino_archivos USING btree (termino_id)",
+            "idx_termino_archivos_tipo: CREATE INDEX idx_termino_archivos_tipo ON public.termino_archivos USING btree (tipo_documento)",
+            "termino_archivos_pkey: CREATE UNIQUE INDEX termino_archivos_pkey ON public.termino_archivos USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "termino_id",
+                "constraint": "fkhgdafpg9sqy4788ma60xfixbx",
+                "foreign_table": "terminos",
+                "foreign_column": "id"
+            },
+            {
+                "column": "usuario_subida_id",
+                "constraint": "fklrxl92lqj7h66ktvsk2bdw68u",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "termino_contextos",
+        "columns": [
+            {
+                "type": "bigint",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "descripcion",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "numero_expediente_snapshot",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "text",
+                "column": "organo_jurisdiccional_texto",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "origen",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "text",
+                "column": "partes",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "sede",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 150
+            },
+            {
+                "type": "integer",
+                "column": "gerencia_id",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "materia_id",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "organo_jurisdiccional_id",
+                "default": null,
+                "ordinal": 10,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "idx_termino_contexto_gerencia: CREATE INDEX idx_termino_contexto_gerencia ON public.termino_contextos USING btree (gerencia_id)",
+            "idx_termino_contexto_materia: CREATE INDEX idx_termino_contexto_materia ON public.termino_contextos USING btree (materia_id)",
+            "idx_termino_contexto_origen: CREATE INDEX idx_termino_contexto_origen ON public.termino_contextos USING btree (origen)",
+            "termino_contextos_pkey: CREATE UNIQUE INDEX termino_contextos_pkey ON public.termino_contextos USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "materia_id",
+                "constraint": "fk6bqlx8xoy5y68c306ugj3x9it",
+                "foreign_table": "materias",
+                "foreign_column": "id"
+            },
+            {
+                "column": "organo_jurisdiccional_id",
+                "constraint": "fkhcuyhk60prwmu8wdx5lq7dw8t",
+                "foreign_table": "organos_jurisdiccionales",
+                "foreign_column": "id"
+            },
+            {
+                "column": "gerencia_id",
+                "constraint": "fkiyg3nqpnf53flv1ovxvp94t5h",
+                "foreign_table": "gerencias",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "terminos",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "acuse",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 500
+            },
+            {
+                "type": "character varying",
+                "column": "acuse_nombre",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 500
+            },
+            {
+                "type": "text",
+                "column": "asunto",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "estatus_termino",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 30
+            },
+            {
+                "type": "date",
+                "column": "fecha_ingreso",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "date",
+                "max_length": null
+            },
+            {
+                "type": "date",
+                "column": "fecha_presentacion",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "YES",
+                "data_type": "date",
+                "max_length": null
+            },
+            {
+                "type": "date",
+                "column": "fecha_vencimiento",
+                "default": null,
+                "ordinal": 10,
+                "nullable": "NO",
+                "data_type": "date",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "observaciones",
+                "default": null,
+                "ordinal": 11,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "updated_at",
+                "default": null,
+                "ordinal": 12,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "abogado_responsable_id",
+                "default": null,
+                "ordinal": 13,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "uuid",
+                "column": "expediente_id",
+                "default": null,
+                "ordinal": 14,
+                "nullable": "YES",
+                "data_type": "uuid",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "prioridad_id",
+                "default": null,
+                "ordinal": 15,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "date",
+                "column": "fecha_creacion",
+                "default": null,
+                "ordinal": 16,
+                "nullable": "YES",
+                "data_type": "date",
+                "max_length": null
+            },
+            {
+                "type": "bigint",
+                "column": "contexto_id",
+                "default": null,
+                "ordinal": 17,
+                "nullable": "YES",
+                "data_type": "bigint",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "archivo_word",
+                "default": null,
+                "ordinal": 18,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 500
+            },
+            {
+                "type": "character varying",
+                "column": "prioridad",
+                "default": null,
+                "ordinal": 19,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 20
+            }
+        ],
+        "indexes": [
+            "idx_terminos_expediente: CREATE INDEX idx_terminos_expediente ON public.terminos USING btree (expediente_id)",
+            "idx_terminos_fecha_vencimiento: CREATE INDEX idx_terminos_fecha_vencimiento ON public.terminos USING btree (fecha_vencimiento)",
+            "terminos_pkey: CREATE UNIQUE INDEX terminos_pkey ON public.terminos USING btree (id)",
+            "ukjcdu631eit28n3wdtg3y1elgb: CREATE UNIQUE INDEX ukjcdu631eit28n3wdtg3y1elgb ON public.terminos USING btree (contexto_id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "contexto_id",
+                "constraint": "fk2dw1fq3hmoqxkj4o25awskock",
+                "foreign_table": "termino_contextos",
+                "foreign_column": "id"
+            },
+            {
+                "column": "prioridad_id",
+                "constraint": "fk4gjcyyda149hmwyj6v7fjcot2",
+                "foreign_table": "cat_prioridad",
+                "foreign_column": "id"
+            },
+            {
+                "column": "expediente_id",
+                "constraint": "fkcoe42fxbdjqjek2ks0ghkmowd",
+                "foreign_table": "expedientes",
+                "foreign_column": "id"
+            },
+            {
+                "column": "abogado_responsable_id",
+                "constraint": "fko59hv5s9ul7bqg35p4oanxlkr",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+            {
+                "column": "contexto_id",
+                "constraint": "ukjcdu631eit28n3wdtg3y1elgb"
+            }
+        ]
+    },
+    {
+        "table": "terminos_presentados",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "acuse_documento",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 500
+            },
+            {
+                "type": "character varying",
+                "column": "expediente_numero",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "date",
+                "column": "fecha_presentacion",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "NO",
+                "data_type": "date",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "sincronizado_at",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "termino_id",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "terminos_presentados_pkey: CREATE UNIQUE INDEX terminos_presentados_pkey ON public.terminos_presentados USING btree (id)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "termino_id",
+                "constraint": "fk1brocrvr9fxbfek662npjjn5l",
+                "foreign_table": "terminos",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "tipos_audiencia",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "activo",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "text",
+                "column": "descripcion",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "YES",
+                "data_type": "text",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "nombre",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 100
+            },
+            {
+                "type": "integer",
+                "column": "gerencia_id",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "tipos_audiencia_pkey: CREATE UNIQUE INDEX tipos_audiencia_pkey ON public.tipos_audiencia USING btree (id)",
+            "ukhwdw390hju3jpv9r2pvbn7eat: CREATE UNIQUE INDEX ukhwdw390hju3jpv9r2pvbn7eat ON public.tipos_audiencia USING btree (nombre)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fk1kml027csdf02fbsgarvpaacn",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            },
+            {
+                "column": "gerencia_id",
+                "constraint": "fklhw4n232t69p6wb8mkmubvkl6",
+                "foreign_table": "gerencias",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+            {
+                "column": "nombre",
+                "constraint": "ukhwdw390hju3jpv9r2pvbn7eat"
+            }
+        ]
+    },
+    {
+        "table": "usuario_gerencias",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "gerencia_id",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "usuario_gerencias_pkey: CREATE UNIQUE INDEX usuario_gerencias_pkey ON public.usuario_gerencias USING btree (usuario_id, gerencia_id)"
+        ],
+        "primary_key": [
+            "usuario_id",
+            "gerencia_id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "gerencia_id",
+                "constraint": "fkai89eqag1l6q65v4f2w54b2gd",
+                "foreign_table": "gerencias",
+                "foreign_column": "id"
+            },
+            {
+                "column": "usuario_id",
+                "constraint": "fkk2iku7uhxeu1b8r5j2qo8kl82",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "usuario_materias",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "materia_id",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            }
+        ],
+        "indexes": [
+            "usuario_materias_pkey: CREATE UNIQUE INDEX usuario_materias_pkey ON public.usuario_materias USING btree (usuario_id, materia_id)"
+        ],
+        "primary_key": [
+            "usuario_id",
+            "materia_id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fkblixcl3jed4e5u1r4cbuxo233",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            },
+            {
+                "column": "materia_id",
+                "constraint": "fkgmypxwp3xdvi5ckk7xsd6flna",
+                "foreign_table": "materias",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "usuario_permisos_adicionales",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "usuario_id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "permiso",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 80
+            }
+        ],
+        "indexes": [
+            "usuario_permisos_adicionales_pkey: CREATE UNIQUE INDEX usuario_permisos_adicionales_pkey ON public.usuario_permisos_adicionales USING btree (usuario_id, permiso)"
+        ],
+        "primary_key": [
+            "usuario_id",
+            "permiso"
+        ],
+        "foreign_keys": [
+            {
+                "column": "usuario_id",
+                "constraint": "fkjml13xi25qa1awrohharg2hc3",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+        ]
+    },
+    {
+        "table": "usuarios",
+        "columns": [
+            {
+                "type": "integer",
+                "column": "id",
+                "default": null,
+                "ordinal": 1,
+                "nullable": "NO",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "activo",
+                "default": null,
+                "ordinal": 2,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "created_at",
+                "default": null,
+                "ordinal": 3,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "email",
+                "default": null,
+                "ordinal": 4,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 100
+            },
+            {
+                "type": "boolean",
+                "column": "force_password_change",
+                "default": null,
+                "ordinal": 5,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "nombre_completo",
+                "default": null,
+                "ordinal": 6,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 200
+            },
+            {
+                "type": "character varying",
+                "column": "password_hash",
+                "default": null,
+                "ordinal": 7,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 255
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "password_updated_at",
+                "default": null,
+                "ordinal": 8,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "rol",
+                "default": null,
+                "ordinal": 9,
+                "nullable": "NO",
+                "data_type": "character varying",
+                "max_length": 50
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "ultimo_acceso",
+                "default": null,
+                "ordinal": 10,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "updated_at",
+                "default": null,
+                "ordinal": 11,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "gerencia_id",
+                "default": null,
+                "ordinal": 12,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "integer",
+                "column": "creado_por_id",
+                "default": null,
+                "ordinal": 13,
+                "nullable": "YES",
+                "data_type": "integer",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "username",
+                "default": null,
+                "ordinal": 14,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 80
+            },
+            {
+                "type": "character varying",
+                "column": "numero_empleado",
+                "default": null,
+                "ordinal": 15,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 40
+            },
+            {
+                "type": "character varying",
+                "column": "microsoft_business_phones",
+                "default": null,
+                "ordinal": 16,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 300
+            },
+            {
+                "type": "character varying",
+                "column": "microsoft_display_name",
+                "default": null,
+                "ordinal": 17,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 200
+            },
+            {
+                "type": "character varying",
+                "column": "microsoft_job_title",
+                "default": null,
+                "ordinal": 18,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 160
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "microsoft_last_sync_at",
+                "default": null,
+                "ordinal": 19,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "timestamp without time zone",
+                "column": "microsoft_linked_at",
+                "default": null,
+                "ordinal": 20,
+                "nullable": "YES",
+                "data_type": "timestamp without time zone",
+                "max_length": null
+            },
+            {
+                "type": "boolean",
+                "column": "microsoft_login_enabled",
+                "default": null,
+                "ordinal": 21,
+                "nullable": "YES",
+                "data_type": "boolean",
+                "max_length": null
+            },
+            {
+                "type": "character varying",
+                "column": "microsoft_mobile_phone",
+                "default": null,
+                "ordinal": 22,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 80
+            },
+            {
+                "type": "character varying",
+                "column": "microsoft_object_id",
+                "default": null,
+                "ordinal": 23,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 80
+            },
+            {
+                "type": "character varying",
+                "column": "microsoft_office_location",
+                "default": null,
+                "ordinal": 24,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 180
+            },
+            {
+                "type": "character varying",
+                "column": "microsoft_user_principal_name",
+                "default": null,
+                "ordinal": 25,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 180
+            },
+            {
+                "type": "character varying",
+                "column": "puesto",
+                "default": null,
+                "ordinal": 26,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 160
+            },
+            {
+                "type": "character varying",
+                "column": "telefono_institucional",
+                "default": null,
+                "ordinal": 27,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 120
+            },
+            {
+                "type": "character varying",
+                "column": "telefono_movil",
+                "default": null,
+                "ordinal": 28,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 80
+            },
+            {
+                "type": "character varying",
+                "column": "ubicacion_oficina",
+                "default": null,
+                "ordinal": 29,
+                "nullable": "YES",
+                "data_type": "character varying",
+                "max_length": 180
+            }
+        ],
+        "indexes": [
+            "idx_usuarios_email: CREATE INDEX idx_usuarios_email ON public.usuarios USING btree (email)",
+            "idx_usuarios_rol: CREATE INDEX idx_usuarios_rol ON public.usuarios USING btree (rol)",
+            "ukkfsp0s1tflm1cwlj8idhqsad0: CREATE UNIQUE INDEX ukkfsp0s1tflm1cwlj8idhqsad0 ON public.usuarios USING btree (email)",
+            "ukr2mnk6pyydgygq94im0nmaps5: CREATE UNIQUE INDEX ukr2mnk6pyydgygq94im0nmaps5 ON public.usuarios USING btree (microsoft_object_id)",
+            "usuarios_pkey: CREATE UNIQUE INDEX usuarios_pkey ON public.usuarios USING btree (id)",
+            "ux_usuarios_numero_empleado_lower: CREATE UNIQUE INDEX ux_usuarios_numero_empleado_lower ON public.usuarios USING btree (lower((numero_empleado)::text)) WHERE (numero_empleado IS NOT NULL)",
+            "ux_usuarios_username_lower: CREATE UNIQUE INDEX ux_usuarios_username_lower ON public.usuarios USING btree (lower((username)::text)) WHERE (username IS NOT NULL)"
+        ],
+        "primary_key": [
+            "id"
+        ],
+        "foreign_keys": [
+            {
+                "column": "creado_por_id",
+                "constraint": "fkhy8fli5s85u3iut9tvcjggx77",
+                "foreign_table": "usuarios",
+                "foreign_column": "id"
+            },
+            {
+                "column": "gerencia_id",
+                "constraint": "fkrel3m11jpih4a77lseyy3h3ad",
+                "foreign_table": "gerencias",
+                "foreign_column": "id"
+            }
+        ],
+        "table_comment": null,
+        "unique_constraints": [
+            {
+                "column": "email",
+                "constraint": "ukkfsp0s1tflm1cwlj8idhqsad0"
+            },
+            {
+                "column": "microsoft_object_id",
+                "constraint": "ukr2mnk6pyydgygq94im0nmaps5"
+            }
+        ]
+    }
+]

@@ -76,6 +76,9 @@ qa-*.tmp
 qa-*-results*.json
 docs/credenciales-usuarios-pruebas-*.csv
 
-```,oldString:
 node_modules/
 test-results/
+reports/
+tests_e2e/reports/
+.pytest_cache/
+tmp/

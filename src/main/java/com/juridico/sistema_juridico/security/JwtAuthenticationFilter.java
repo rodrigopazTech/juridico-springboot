@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -16,6 +17,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import jakarta.servlet.http.Cookie;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Collections;
 
 @Component
@@ -26,6 +29,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private CustomUserDetailsService userDetailsService;
+
+    @Value("${migration.api.key:}")
+    private String migrationApiKey;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, 
@@ -43,7 +49,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 0. NUEVO: REVISAR SI TRAE LA LLAVE MAESTRA (X-API-KEY)
         // =========================================================
         String apiKey = request.getHeader("X-API-KEY");
-        if ("n8nAgendaLegalF1N4813NGDSA6D54".equals(apiKey)) {
+        if (esApiKeyValida(apiKey)) {
             // Creamos un usuario "fantasma" con rol de ADMIN para n8n/ThunderClient
             UsernamePasswordAuthenticationToken apiAuth = new UsernamePasswordAuthenticationToken(
                     "n8n_system", 
@@ -97,5 +103,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         return null;
+    }
+
+    private boolean esApiKeyValida(String apiKey) {
+        if (!StringUtils.hasText(apiKey) || !StringUtils.hasText(migrationApiKey)) {
+            return false;
+        }
+        return MessageDigest.isEqual(
+                apiKey.getBytes(StandardCharsets.UTF_8),
+                migrationApiKey.getBytes(StandardCharsets.UTF_8));
     }
 }

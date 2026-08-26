@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -49,6 +50,11 @@ public class WebPushService {
 
     @PostConstruct
     public void init() {
+        if (!StringUtils.hasText(publicKey) || !StringUtils.hasText(privateKey) || !StringUtils.hasText(subject)) {
+            log.warn("Servicio Web Push deshabilitado: faltan claves VAPID o subject.");
+            return;
+        }
+
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
         }
@@ -62,6 +68,11 @@ public class WebPushService {
 
     @Async
     public void enviarNotificacion(Usuario usuario, String titulo, String mensaje, String url) {
+        if (pushService == null) {
+            log.debug("Notificacion Web Push omitida: servicio no inicializado.");
+            return;
+        }
+
         List<PushSubscription> subscriptions = subscriptionRepository.findByUsuarioId(usuario.getId());
         if (subscriptions.isEmpty()) {
             return;
