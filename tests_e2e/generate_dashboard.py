@@ -163,6 +163,70 @@ def get_test_details(name: str, rol: str, tanda: str):
                 ]
             }
 
+    # 5. Fase 1: Seguridad IDOR y Sanitización
+    if "security_phase1" in name:
+        if "expediente_detail" in name:
+            return {
+                "title": "Prevención de IDOR: Aislamiento de Detalle de Expedientes entre Gerencias",
+                "description": "Audita que un Abogado de Gerencia Civil no pueda consultar el detalle de un expediente perteneciente a Gerencia Laboral mediante manipulación de UUID en la URL. El sistema bloquea y redirige sin filtrar datos.",
+                "steps": [
+                    "Iniciar sesión como 'abogado' (Gerencia Civil)",
+                    "Forzar navegación directa a /expedientes/{UUID_Laboral}",
+                    "Verificar que el servidor bloquee el acceso y redirija de forma segura",
+                    "Comprobar que no exista fuga de información en el DOM (0 coincidencias de número ajeno)"
+                ]
+            }
+        elif "trazabilidad_forbidden" in name:
+            return {
+                "title": "Prevención de IDOR: Bloqueo de Trazabilidad Cruzada entre Gerencias",
+                "description": "Valida que el timeline y la bitácora histórica de trazabilidad de un expediente no sean accesibles por abogados de otras gerencias.",
+                "steps": [
+                    "Iniciar sesión como 'abogado' (Gerencia Civil)",
+                    "Intentar abrir /expedientes/{UUID_Laboral}/trazabilidad",
+                    "Verificar expulsión fuera de la vista de trazabilidad protegida"
+                ]
+            }
+        elif "trazabilidad_export" in name:
+            return {
+                "title": "Prevención de IDOR: Bloqueo de Descarga de Reporte Excel Ajeno",
+                "description": "Asegura que el endpoint de exportación de trazabilidad (/trazabilidad/exportar) no entregue archivos a usuarios no autorizados.",
+                "steps": [
+                    "Iniciar sesión como 'abogado'",
+                    "Intentar descargar /expedientes/{UUID_Laboral}/trazabilidad/exportar",
+                    "Comprobar que no se descargue el archivo y se aplique control de acceso"
+                ]
+            }
+        elif "gerente_cross" in name:
+            return {
+                "title": "Prevención de IDOR: Aislamiento entre Gerentes de Distintas Áreas",
+                "description": "Comprueba que un Gerente de Área Civil no tenga acceso a los expedientes exclusivos del Gerente de Área Laboral.",
+                "steps": [
+                    "Iniciar sesión como 'gerente' (Gerencia Civil)",
+                    "Intentar acceder al expediente laboral ajeno",
+                    "Validar bloqueo y ausencia de fuga de datos en pantalla"
+                ]
+            }
+        elif "sql_injection" in name:
+            return {
+                "title": "Sanitización de Entradas: Payloads SQL Injection y XSS en Buscador",
+                "description": "Envía payloads agresivos (' OR '1'='1, DROP TABLE, tags script, traversal) al buscador de expedientes, asegurando que el backend los trate como texto plano sin errores 500 ni ejecución de scripts.",
+                "steps": [
+                    "Iniciar sesión como ADMIN y cargar buscador de expedientes",
+                    "Probar payloads de inyección SQL y XSS",
+                    "Evaluar en el navegador que window.__xss_test sea falso y la consola esté limpia"
+                ]
+            }
+        elif "xss_in_notes" in name:
+            return {
+                "title": "Sanitización de Entradas: Prevención de XSS en Observaciones",
+                "description": "Evalúa el módulo de comentarios y notas de expedientes, asegurando que cualquier entrada con código HTML/JS sea sanitizada y escapada al renderizarse.",
+                "steps": [
+                    "Ingresar a la vista de observaciones",
+                    "Verificar que las etiquetas script no se ejecuten en el DOM",
+                    "Comprobar 0 errores de consola de JavaScript"
+                ]
+            }
+
     # Fallback general
     clean_title = name.replace("tests_test_", "").replace("_passed", "").replace("_failed", "").replace("__", " - ")
     return {
@@ -195,6 +259,10 @@ def generate_interactive_dashboard():
             tanda = "Tanda 3: Botones y Pantallas"
         elif "e2e_workflows" in name:
             tanda = "Tanda 4: Flujos E2E Completos"
+        elif "visual_and_usability" in name:
+            tanda = "Geometría Visual y Usabilidad"
+        elif "security_phase1" in name:
+            tanda = "Fase 1: Seguridad IDOR y Sanitización"
 
         # Identificar rol
         rol = "TODOS"
@@ -314,11 +382,13 @@ def generate_interactive_dashboard():
                 </div>
                 <div class="flex flex-wrap gap-2 w-full md:w-auto">
                     <select id="tandaFilter" onchange="filterTests()" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer">
-                        <option value="ALL">Todas las Tandas</option>
+                        <option value="ALL">Todas las Tandas y Fases</option>
                         <option value="Tanda 1">Tanda 1: Autenticación (Smoke)</option>
                         <option value="Tanda 2">Tanda 2: Matriz de Roles (RBAC)</option>
                         <option value="Tanda 3">Tanda 3: Botones y Pantallas</option>
                         <option value="Tanda 4">Tanda 4: Flujos E2E</option>
+                        <option value="Geometría Visual">Geometría Visual y Usabilidad</option>
+                        <option value="Fase 1: Seguridad">Fase 1: Seguridad IDOR y Sanitización</option>
                     </select>
                     <select id="roleFilter" onchange="filterTests()" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer">
                         <option value="ALL">Todos los Roles</option>
