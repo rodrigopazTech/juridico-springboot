@@ -12,12 +12,12 @@
          onclick="toggleSidebar()"></div>
 
     <aside id="logo-sidebar"
-        class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0 bg-gob-verde border-r border-gob-oro shadow-2xl"
+        class="fixed top-0 left-0 z-40 w-64 h-screen min-h-screen transition-transform -translate-x-full sm:translate-x-0 bg-gob-verde border-r border-gob-oro shadow-2xl flex flex-col"
         aria-label="Sidebar">
 
-        <div class="h-full pt-0 pb-5 overflow-y-auto bg-gob-verde flex flex-col custom-scrollbar">
+        <div class="h-full min-h-full pt-0 pb-5 overflow-y-auto bg-gob-verde flex flex-col flex-1 custom-scrollbar">
 
-            <div class="flex items-center justify-between px-6 h-[72px] border-b border-white/10 mb-6">
+            <div class="flex items-center justify-between px-6 h-[72px] border-b border-white/10 mb-6 shrink-0">
                 <a th:href="@{/dashboard}" class="flex items-center group">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-gob-oro to-yellow-600 flex items-center justify-center shadow-lg group-hover:shadow-gob-oro/50 transition-all duration-300">
                         <i class="fas fa-balance-scale text-white text-xl group-hover:scale-110 transition-transform duration-300"></i>
@@ -41,8 +41,7 @@
                     <span class="text-[10px] font-extrabold text-white/40 uppercase tracking-widest">Principal</span>
                 </li>
 
-                <li
-                    sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO', 'ABOGADO')">
+                <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO', 'ABOGADO')">
                     <a th:href="@{/dashboard}"
                         class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
                         th:classappend="${activePage == 'dashboard' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
@@ -191,16 +190,6 @@
                         <i class="fas fa-shield-halved w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
                             th:classappend="${activePage == 'auditoria' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
                         <span class="ms-3 text-sm">Auditoria Tecnica</span>
-                    </a>
-                </li>
-
-                <li class="hidden">
-                    <a th:href="@{/catalogos}"
-                        class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
-                        th:classappend="${activePage == 'catalogos' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
-                        <i class="fas fa-database w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
-                            th:classappend="${activePage == 'catalogos' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
-                        <span class="ms-3 text-sm">Cat&aacute;logos</span>
                     </a>
                 </li>
 
