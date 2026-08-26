@@ -227,6 +227,60 @@ def get_test_details(name: str, rol: str, tanda: str):
                 ]
             }
 
+    # 6. Fase 2: Gestor Documental y Carga de Archivos
+    if "document_manager_phase2" in name:
+        if "valid_document_pdf" in name:
+            return {
+                "title": "Gestor Documental: Carga Exitosa de Documento Legal (PDF)",
+                "description": "Prueba la subida de un documento de demanda inicial en formato PDF a la carpeta raíz del expediente, validando persistencia segura en disco y base de datos.",
+                "steps": [
+                    "Autenticar como ADMIN e invocar API multipart",
+                    "Subir archivo PDF con nombre único y metadatos",
+                    "Verificar respuesta HTTP 200 y registro de auditoría"
+                ]
+            }
+        elif "forbidden_extensions" in name:
+            return {
+                "title": "Seguridad de Archivos: Bloqueo de Extensiones Ejecutables y Scripts",
+                "description": "Audita la lista blanca de extensiones rechazando archivos potencialmente maliciosos (.exe, .sh, .bat, .jsp, .php) con código HTTP 400 Bad Request.",
+                "steps": [
+                    "Intentar subir script o ejecutable al expediente",
+                    "Validar que el servidor intercepte la extensión en FileStorageService",
+                    "Comprobar respuesta HTTP 400 con mensaje explicativo de bloqueo"
+                ]
+            }
+        elif "idor_protection" in name:
+            return {
+                "title": "Seguridad de Archivos: Control de Acceso en Descarga y Previsualización",
+                "description": "Verifica que un Abogado de Gerencia Civil no pueda descargar ni previsualizar un documento confidencial perteneciente a un expediente de Gerencia Laboral.",
+                "steps": [
+                    "Admin sube documento confidencial a expediente laboral",
+                    "Cerrar sesión e iniciar como Abogado civil",
+                    "Intentar invocar /api/documentos/{id}/download y /preview",
+                    "Comprobar bloqueo estricto con HTTP 403 Forbidden"
+                ]
+            }
+        elif "storage_info" in name:
+            return {
+                "title": "Gestor Documental: Monitoreo de Cuotas y Espacio Ocupado",
+                "description": "Consulta métricas de almacenamiento por expediente, verificando el cálculo exacto en bytes, MB y GB consumidos.",
+                "steps": [
+                    "Consultar endpoint /storage-info del expediente",
+                    "Validar estructura de datos de consumo de disco",
+                    "Verificar respuesta 200 OK con métricas correctas"
+                ]
+            }
+        elif "ui_interaction" in name:
+            return {
+                "title": "Gestor Documental: Integración en Interfaz de Usuario",
+                "description": "Valida que el módulo documental dentro del detalle del expediente cargue sin errores de frontend ni fallos de renderizado.",
+                "steps": [
+                    "Navegar a la pantalla de detalle del expediente",
+                    "Validar presencia de pestañas y botones del gestor documental",
+                    "Verificar 0 errores en consola de JavaScript"
+                ]
+            }
+
     # Fallback general
     clean_title = name.replace("tests_test_", "").replace("_passed", "").replace("_failed", "").replace("__", " - ")
     return {
@@ -263,6 +317,8 @@ def generate_interactive_dashboard():
             tanda = "Geometría Visual y Usabilidad"
         elif "security_phase1" in name:
             tanda = "Fase 1: Seguridad IDOR y Sanitización"
+        elif "document_manager_phase2" in name:
+            tanda = "Fase 2: Gestor Documental y Carga de Archivos"
 
         # Identificar rol
         rol = "TODOS"
@@ -389,6 +445,7 @@ def generate_interactive_dashboard():
                         <option value="Tanda 4">Tanda 4: Flujos E2E</option>
                         <option value="Geometría Visual">Geometría Visual y Usabilidad</option>
                         <option value="Fase 1: Seguridad">Fase 1: Seguridad IDOR y Sanitización</option>
+                        <option value="Fase 2: Gestor Documental">Fase 2: Gestor Documental y Carga de Archivos</option>
                     </select>
                     <select id="roleFilter" onchange="filterTests()" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer">
                         <option value="ALL">Todos los Roles</option>

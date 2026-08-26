@@ -18,33 +18,50 @@ import com.juridico.sistema_juridico.exception.BadRequestException;
 @Service
 public class FileStorageService {
 
-    private static final long MAX_SIZE_BYTES = 1024L * 1024 * 1024;
-    private static final Set<String> EXTENSIONES_PERMITIDAS = Set.of(
-            "txt",
-            "pdf",
-            "doc", "docx", "docm",
-            "xls", "xlsx", "xlsm", "xlsb",
-            "ppt", "pptx",
-            "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "svg",
+    private static final long MAX_SIZE_VIDEO_AUDIO_BYTES = 1024L * 1024 * 1024;   // 1 GB
+    private static final long MAX_SIZE_DOCUMENTOS_BYTES = 150L * 1024 * 1024;      // 150 MB
+    private static final long MAX_SIZE_IMAGENES_BYTES = 30L * 1024 * 1024;          // 30 MB
+
+    private static final Set<String> EXTENSIONES_VIDEO_AUDIO = Set.of(
             "mp4", "avi", "mkv", "mov", "wmv", "flv", "webm", "mpeg", "3gp",
             "mp3", "wav", "ogg", "m4a", "aac", "flac", "wma");
+
+    private static final Set<String> EXTENSIONES_DOCUMENTOS = Set.of(
+            "txt", "pdf", "doc", "docx", "docm", "xls", "xlsx", "xlsm", "xlsb", "ppt", "pptx");
+
+    private static final Set<String> EXTENSIONES_IMAGENES = Set.of(
+            "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "svg");
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
     public void validarArchivo(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new BadRequestException("El archivo esta vacio.");
-        }
-
-        if (file.getSize() > MAX_SIZE_BYTES) {
-            throw new BadRequestException("El archivo excede el tamano maximo permitido de 1GB.");
+            throw new BadRequestException("El archivo está vacío.");
         }
 
         String extension = obtenerExtensionSegura(file.getOriginalFilename());
-        if (!EXTENSIONES_PERMITIDAS.contains(extension)) {
+        
+        long maxPermitido;
+        String limiteLegible;
+
+        if (EXTENSIONES_VIDEO_AUDIO.contains(extension)) {
+            maxPermitido = MAX_SIZE_VIDEO_AUDIO_BYTES;
+            limiteLegible = "1 GB";
+        } else if (EXTENSIONES_DOCUMENTOS.contains(extension)) {
+            maxPermitido = MAX_SIZE_DOCUMENTOS_BYTES;
+            limiteLegible = "150 MB";
+        } else if (EXTENSIONES_IMAGENES.contains(extension)) {
+            maxPermitido = MAX_SIZE_IMAGENES_BYTES;
+            limiteLegible = "30 MB";
+        } else {
             throw new BadRequestException("El formato de archivo '." + extension
-                    + "' no esta permitido. Solo se admiten archivos PDF, Office (Word, Excel, PowerPoint), imagenes, videos y audio.");
+                    + "' no está permitido. Solo se admiten documentos PDF, Office, imágenes, video y audio.");
+        }
+
+        if (file.getSize() > maxPermitido) {
+            throw new BadRequestException("El archivo '" + file.getOriginalFilename()
+                    + "' excede el tamaño máximo permitido para este tipo de contenido (" + limiteLegible + ").");
         }
     }
 
