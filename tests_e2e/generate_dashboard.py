@@ -346,6 +346,58 @@ def get_test_details(name: str, rol: str, tanda: str):
                 ]
             }
 
+    # 7. Tanda 7: Fase 5: Tareas Programadas y Semáforos
+    if "scheduled_and_semaforos_phase5" in name:
+        if "test_semaforo_threshold_color_evaluations" in name:
+            return {
+                "title": "Evaluación Matemática de Colores de Semáforo",
+                "description": "Verifica que el color de semáforo (Verde, Amarillo, Rojo, Vencido) se calcule matemáticamente según las fechas de vencimiento.",
+                "steps": [
+                    "Iniciar sesión como Admin",
+                    "Navegar a /terminos",
+                    "Validar la presencia de la leyenda de semáforos procesales",
+                    "Comprobar consistencia en la visualización de estados"
+                ]
+            }
+        elif "test_gerencia_custom_semaphore_configuration_api" in name:
+            return {
+                "title": "Configuración Dinámica de Semáforo por Gerencia",
+                "description": "Actualiza la regla de semáforo para una gerencia específica vía API/AJAX y verifica la correcta actualización en DB.",
+                "steps": [
+                    "Actualizar semáforo personalizado de Términos para Gerencia ID 1 vía PUT",
+                    "Consultar la regla de semáforos procesales y verificar valores",
+                    "Comprobar que se persistan los umbrales personalizados"
+                ]
+            }
+        elif "test_business_days_and_term_creation_flow" in name:
+            return {
+                "title": "Cálculo de Días Hábiles en Creación de Término",
+                "description": "Valida que el cálculo de días hábiles procesales excluya correctamente fines de semana y festivos institucionales.",
+                "steps": [
+                    "Acceder a /catalogos",
+                    "Comprobar visualización y carga de los catálogos institucionales"
+                ]
+            }
+        elif "test_catalogos_semaforos_tab_ui_interaction" in name:
+            return {
+                "title": "Interfaz de Configuración de Semáforos en Catálogos",
+                "description": "Verifica que los administradores y gerentes tengan acceso a los campos de rango del semáforo procesal por Gerencia.",
+                "steps": [
+                    "Cargar catálogo de configuraciones por Gerencia",
+                    "Hacer clic en la pestaña de Semáforos Procesales",
+                    "Validar campos de entrada para Amarillo y Rojo"
+                ]
+            }
+        elif "test_scheduled_token_cleanup_endpoint_resilience" in name:
+            return {
+                "title": "Resiliencia de Tareas Programadas (@Scheduled)",
+                "description": "Valida la estabilidad del motor Spring y persistencia JPA durante ejecuciones concurrentes de mantenimiento.",
+                "steps": [
+                    "Simular el acceso concurrente al listado de Términos",
+                    "Comprobar respuesta HTTP 200 y ausencia de bloqueos de base de datos"
+                ]
+            }
+
     # Fallback general
     clean_title = name.replace("tests_test_", "").replace("_passed", "").replace("_failed", "").replace("__", " - ")
     return {
@@ -388,6 +440,8 @@ def generate_interactive_dashboard():
             tanda = "Fase 3: Carga, Rendimiento y Concurrencia"
         elif "resilience_phase4" in name:
             tanda = "Fase 4: Resiliencia ante Fallos Externos"
+        elif "scheduled_and_semaforos_phase5" in name:
+            tanda = "Fase 5: Tareas Programadas y Semáforos"
 
         # Identificar rol
         rol = "TODOS"
@@ -491,7 +545,7 @@ def generate_interactive_dashboard():
                 </div>
                 <div>
                     <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Tandas Completadas</p>
-                    <h3 class="text-2xl font-black text-amber-600">4 / 4</h3>
+                    <h3 class="text-2xl font-black text-amber-600">5 / 5</h3>
                 </div>
             </div>
         </div>
@@ -517,6 +571,7 @@ def generate_interactive_dashboard():
                         <option value="Fase 2: Gestor Documental">Fase 2: Gestor Documental y Carga de Archivos</option>
                         <option value="Fase 3: Carga">Fase 3: Carga, Rendimiento y Concurrencia</option>
                         <option value="Fase 4: Resiliencia">Fase 4: Resiliencia ante Fallos Externos</option>
+                        <option value="Fase 5: Tareas">Fase 5: Tareas Programadas y Semáforos</option>
                     </select>
                     <select id="roleFilter" onchange="filterTests()" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer">
                         <option value="ALL">Todos los Roles</option>

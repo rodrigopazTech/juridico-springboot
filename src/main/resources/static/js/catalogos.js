@@ -689,3 +689,41 @@ function initWebSocketCatalogos() {
     // Retrasar ligeramente para no competir con el WS del Navbar
     setTimeout(intentarConectar, 2500);
 }
+
+async function guardarSemaforoGerencia(tipoEvento) {
+    const gerenciaId = document.getElementById('gerencia-id-actual')?.value;
+    const rojo = parseInt(document.getElementById(`semaforo-${tipoEvento.toLowerCase()}-rojo`)?.value);
+    const amarillo = parseInt(document.getElementById(`semaforo-${tipoEvento.toLowerCase()}-amarillo`)?.value);
+
+    if (!rojo || !amarillo || rojo < 1 || amarillo <= rojo) {
+        Swal.fire('Atención', 'El rango amarillo debe ser mayor al rango rojo y ambos deben ser mayores a 0.', 'warning');
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/configuracion-alertas/semaforos?nivel=GERENCIA&gerenciaId=${gerenciaId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tipoEvento: tipoEvento,
+                rojoHasta: rojo,
+                amarilloHasta: amarillo
+            })
+        });
+
+        if (res.ok) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Semáforo Actualizado',
+                text: `Se guardaron los días de alerta para ${tipoEvento}s en esta gerencia.`,
+                timer: 2000,
+                showConfirmButton: false
+            });
+        } else {
+            const err = await res.json();
+            Swal.fire('Error', err.message || 'No fue posible guardar la configuración.', 'error');
+        }
+    } catch (e) {
+        Swal.fire('Error', 'Fallo de conexión al guardar el semáforo.', 'error');
+    }
+}

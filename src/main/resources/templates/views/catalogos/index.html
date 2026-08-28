@@ -330,7 +330,14 @@
                         </button>
                     </li>
 
-
+                    <li>
+                        <button type="button" data-tab="semaforos"
+                            class="tab-btn catalogos-nav-item flex items-center justify-between gap-3 px-3 py-2.5 transition-all">
+                            <i class="fas fa-traffic-light text-gob-oro"></i>
+                            <span class="hidden sm:inline font-bold">Semáforos Procesales</span>
+                            <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Reglas</span>
+                        </button>
+                    </li>
                 </ul>
             </aside>
 
@@ -980,6 +987,86 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+                <!-- ===================== TAB: SEMÁFOROS PROCESALES ===================== -->
+                <div id="panel-semaforos" class="tab-panel hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6 space-y-6">
+                        <div class="border-b border-gray-100 pb-4">
+                            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <i class="fas fa-traffic-light text-gob-oro"></i> Configuración de Semáforos Procesales
+                            </h3>
+                            <p class="text-xs text-gray-500 mt-1">Establece los días límite para activar las alertas preventivas (Rojo y Amarillo) en los expedientes de esta gerencia.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Tarjeta Semáforo Términos -->
+                            <div class="border border-gray-200 rounded-xl p-5 bg-slate-50/50 space-y-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-gob-guinda text-white flex items-center justify-center text-lg font-bold shadow-md">
+                                        <i class="fas fa-hourglass-half"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-extrabold text-gray-900 text-sm">Semáforo de Términos</h4>
+                                        <span class="text-[11px] text-gray-500">Alertas de Vencimiento de Actuaciones</span>
+                                    </div>
+                                </div>
+                                <div class="space-y-3 pt-2">
+                                    <div>
+                                        <label class="block text-xs font-bold text-red-700 uppercase tracking-wider mb-1">
+                                            <i class="fas fa-circle text-red-500 mr-1"></i> Rango Rojo (Crítico) - Hasta N Días
+                                        </label>
+                                        <input type="number" id="semaforo-termino-rojo" value="3" min="1" max="30"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">
+                                            <i class="fas fa-circle text-yellow-400 mr-1"></i> Rango Amarillo (Advertencia) - Hasta N Días
+                                        </label>
+                                        <input type="number" id="semaforo-termino-amarillo" value="7" min="2" max="60"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none" />
+                                    </div>
+                                </div>
+                                <button onclick="guardarSemaforoGerencia('TERMINO')"
+                                    class="w-full bg-gob-guinda hover:bg-gob-guindaDark text-white font-bold text-xs px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
+                                    <i class="fas fa-save"></i> Guardar Semáforo Términos
+                                </button>
+                            </div>
+
+                            <!-- Tarjeta Semáforo Audiencias -->
+                            <div class="border border-gray-200 rounded-xl p-5 bg-slate-50/50 space-y-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-blue-900 text-white flex items-center justify-center text-lg font-bold shadow-md">
+                                        <i class="fas fa-gavel"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-extrabold text-gray-900 text-sm">Semáforo de Audiencias</h4>
+                                        <span class="text-[11px] text-gray-500">Alertas de Proximidad de Fechas de Audiencia</span>
+                                    </div>
+                                </div>
+                                <div class="space-y-3 pt-2">
+                                    <div>
+                                        <label class="block text-xs font-bold text-red-700 uppercase tracking-wider mb-1">
+                                            <i class="fas fa-circle text-red-500 mr-1"></i> Rango Rojo (Crítico) - Hasta N Días
+                                        </label>
+                                        <input type="number" id="semaforo-audiencia-rojo" value="1" min="1" max="15"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">
+                                            <i class="fas fa-circle text-yellow-400 mr-1"></i> Rango Amarillo (Advertencia) - Hasta N Días
+                                        </label>
+                                        <input type="number" id="semaforo-audiencia-amarillo" value="3" min="2" max="30"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none" />
+                                    </div>
+                                </div>
+                                <button onclick="guardarSemaforoGerencia('AUDIENCIA')"
+                                    class="w-full bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
+                                    <i class="fas fa-save"></i> Guardar Semáforo Audiencias
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
