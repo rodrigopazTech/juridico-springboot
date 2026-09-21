@@ -10,7 +10,8 @@
                 <div class="px-6 pt-6 pb-4 bg-white">
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="text-2xl font-bold text-gob-guinda font-headings" id="modal-title">
-                            <i class="fas fa-edit mr-2 text-gob-oro"></i> Nueva Tarea
+                            <i class="fas fa-clipboard-list mr-2 text-gob-oro"></i>
+                            <span id="modal-tarea-titulo">Nueva Tarea</span>
                         </h3>
                         <button type="button" onclick="cerrarModalTarea()" class="text-gray-400 hover:text-gray-600 transition-colors">
                             <i class="fas fa-times text-lg"></i>
@@ -23,6 +24,21 @@
                             <input type="text" name="titulo" id="titulo" required
                                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gob-oro focus:border-gob-oro sm:text-sm"
                                 placeholder="Ej: Revisar Amparo Expediente 123/2023">
+                        </div>
+
+                        <div class="rounded-xl border border-gob-oro/30 bg-amber-50/70 px-4 py-3" aria-live="polite">
+                            <div class="flex items-start gap-3">
+                                <i class="fas fa-bell mt-0.5 text-gob-oro"></i>
+                                <div>
+                                    <p class="text-xs font-extrabold uppercase tracking-wider text-gob-guinda">Aviso de la tarea</p>
+                                    <p id="resumen-recordatorio" class="mt-1 text-sm text-gray-700">
+                                        Selecciona fecha y hora para calcular el recordatorio.
+                                    </p>
+                                    <p class="mt-1 text-[11px] leading-relaxed text-gray-500">
+                                        Recibirás un solo aviso, 15 minutos antes. La prioridad solo cambia el color del aviso.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -61,7 +77,7 @@
                         class="px-4 py-2 text-sm font-bold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
                         Cancelar
                     </button>
-                    <button type="submit"
+                    <button type="submit" id="btn-guardar-tarea"
                         class="px-4 py-2 text-sm font-bold text-white bg-gob-guinda rounded-lg shadow hover:bg-gob-guindaDark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gob-guinda transition-colors">
                         Crear Tarea
                     </button>

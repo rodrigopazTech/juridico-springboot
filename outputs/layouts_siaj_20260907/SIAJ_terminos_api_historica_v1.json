@@ -1,0 +1,19 @@
+[
+  {
+    "numeroExpediente": "EXP-001/2026",
+    "gerencia": "Gerencia Laboral y Penal",
+    "materia": "Laboral",
+    "descripcion": "Asunto de ejemplo",
+    "partes": "Actor: Persona A; Demandado: Entidad B",
+    "sede": "Ciudad de México",
+    "organoJurisdiccional": "Tribunal de ejemplo",
+    "abogadoResponsable": "Ana Pérez López",
+    "asunto": "Presentar contestación",
+    "fechaVencimiento": "2026-09-15",
+    "fechaIngreso": "2026-09-07",
+    "prioridad": "MEDIA",
+    "acuse": "acuse-001.pdf",
+    "acuseNombre": "Acuse de recibo",
+    "observaciones": "Observación de ejemplo"
+  }
+]

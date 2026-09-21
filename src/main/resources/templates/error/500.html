@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Error 500 | Sistema de Gestión Jurídica</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --guinda: #691228;
+            --guinda-oscuro: #4e0c1d;
+            --oro: #d4c19c;
+            --texto: #3f3f46;
+            --fondo: #f5f5f5;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            padding: 2rem;
+            background: linear-gradient(145deg, #ffffff 0%, var(--fondo) 60%, #eee7e9 100%);
+            color: var(--texto);
+            font-family: "Noto Sans", Arial, sans-serif;
+        }
+
+        main {
+            width: min(100%, 42rem);
+            padding: clamp(2rem, 6vw, 4rem);
+            text-align: center;
+            background: #ffffff;
+            border-top: 0.4rem solid var(--guinda);
+            border-radius: 1rem;
+            box-shadow: 0 1.5rem 4rem rgba(78, 12, 29, 0.14);
+        }
+
+        .status {
+            margin: 0;
+            color: var(--guinda);
+            font-size: clamp(4.5rem, 15vw, 8rem);
+            font-weight: 800;
+            line-height: 0.9;
+            letter-spacing: -0.06em;
+        }
+
+        h1 {
+            margin: 1.5rem 0 0.75rem;
+            color: var(--guinda-oscuro);
+            font-size: clamp(1.5rem, 5vw, 2.25rem);
+        }
+
+        p {
+            margin: 0 auto;
+            max-width: 32rem;
+            line-height: 1.65;
+        }
+
+        .path {
+            margin-top: 1rem;
+            color: #71717a;
+            font-size: 0.875rem;
+            overflow-wrap: anywhere;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 0.8rem 1.4rem;
+            border-radius: 0.5rem;
+            background: var(--guinda);
+            color: #ffffff;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 150ms ease, transform 150ms ease;
+        }
+
+        a:hover,
+        a:focus-visible {
+            background: var(--guinda-oscuro);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+
+<body>
+    <main role="main" aria-labelledby="error-title">
+        <p class="status" aria-hidden="true" th:text="${status}">500</p>
+        <h1 id="error-title">Ocurrió un error inesperado</h1>
+        <p th:text="${message}">No fue posible completar la solicitud. Intente nuevamente más tarde.</p>
+        <p class="path" th:if="${path}" th:text="|Solicitud: ${path}|">Solicitud</p>
+        <a th:href="@{/}">Volver al inicio</a>
+    </main>
+</body>
+
+</html>

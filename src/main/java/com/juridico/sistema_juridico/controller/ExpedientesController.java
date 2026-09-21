@@ -570,11 +570,11 @@ public class ExpedientesController {
 
         } catch (DataIntegrityViolationException e) {
             log.error("Error de integridad de datos al guardar expediente: {}", e.getMessage(), e);
-            redirectAttrs.addFlashAttribute("mensaje", "Error de integridad al guardar el expediente. Verifica que los datos sean correctos.");
+            redirectAttrs.addFlashAttribute("mensaje", "No pudimos guardar el expediente. Revisa los datos e inténtalo de nuevo.");
             redirectAttrs.addFlashAttribute("tipo", "error");
         } catch (Exception e) {
             log.error("Error inesperado al guardar expediente: {}", e.getMessage(), e);
-            redirectAttrs.addFlashAttribute("mensaje", "Ocurrió un error interno al guardar.");
+            redirectAttrs.addFlashAttribute("mensaje", "No pudimos guardar el expediente. Inténtalo de nuevo más tarde.");
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
 

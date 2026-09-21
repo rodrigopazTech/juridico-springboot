@@ -111,6 +111,8 @@ public class TerminosController {
     private AuditoriaService auditoriaService;
     @Autowired
     private ConfiguracionSemaforoService configuracionSemaforoService;
+    @Autowired
+    private com.juridico.sistema_juridico.service.catalogo.TipoTerminoService tipoTerminoService;
 
     // --- MATRIZ DE PERMISOS ---
     private static final Map<EstatusTermino, List<RolUsuario>> PERMISOS_ETAPAS = new HashMap<>();
@@ -227,6 +229,8 @@ public class TerminosController {
             fechaFin = ym.atEndOfMonth();
         }
 
+
+
         Page<Termino> paginaTerminos = terminoRepository.buscarConFiltros(
                 id, searchKeyword, estatus, prioridadId,
                 filtroAbogadoSeguro, filtroGerenciaSeguro,
@@ -276,11 +280,11 @@ public class TerminosController {
         model.addAttribute("gerenciasParaModal", gerenciasParaModal);
         model.addAttribute("listaMaterias", materiaRepository.findAll());
         model.addAttribute("listaPrioridades", catPrioridadRepository.findAll());
+        model.addAttribute("listaTiposTermino", tipoTerminoService.listarActivos());
         model.addAttribute("listaEstatus", EstatusTermino.values());
 
-        // --- 5. LOGICA ANTI-FANTASMAS (EXPEDIENTES DISPONIBLES) - OPTIMIZADA ---
+        // --- 5. LOGICA ANTI-FANTASMAS (EXPEDIENTES DISPONIBLES) ---
         List<Expediente> expedientesParaDropdown;
-
         if (usuarioActual.getRol() == RolUsuario.ABOGADO || usuarioActual.getRol() == RolUsuario.GERENTE) {
             if (usuarioActual.getGerencia() != null) {
                 expedientesParaDropdown = expedienteRepository.findAllByGerenciaId(usuarioActual.getGerencia().getId());
@@ -301,7 +305,6 @@ public class TerminosController {
 
         model.addAttribute("rolActual", usuarioActual.getRol());
         model.addAttribute("usuarioActual", usuarioActual);
-        model.addAttribute("mapaPermisos", PERMISOS_ETAPAS);
         model.addAttribute("ordenEtapas", ORDEN_ETAPAS);
 
         // Mantener valores

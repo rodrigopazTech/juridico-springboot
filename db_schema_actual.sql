@@ -1233,6 +1233,7 @@ CREATE TABLE public.recordatorios (
     detalles text,
     fecha_recordatorio date NOT NULL,
     hora_recordatorio time(6) without time zone NOT NULL,
+    recordatorio_revision integer DEFAULT 0 NOT NULL,
     titulo character varying(200) NOT NULL,
     updated_at timestamp(6) without time zone,
     prioridad_id integer,

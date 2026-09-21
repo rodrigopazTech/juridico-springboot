@@ -1,5 +1,17 @@
 <div th:fragment="form">
     <form th:action="@{/perfil/preferencias/guardar}" method="post" id="formPreferenciasNotificaciones">
+        <div class="mb-7 rounded-2xl border border-gob-oro/25 bg-amber-50/60 p-4">
+            <div class="flex items-start gap-3">
+                <i class="fas fa-info-circle mt-0.5 text-gob-oro"></i>
+                <div>
+                    <p class="text-sm font-extrabold text-gray-800">Controla qué avisos deseas recibir</p>
+                    <p class="mt-1 text-xs leading-relaxed text-gray-600">
+                        Para tareas recibirás un solo aviso, 15 minutos antes de la hora programada.
+                        Aquí puedes activarlo o desactivarlo; la anticipación es una regla general del sistema.
+                    </p>
+                </div>
+            </div>
+        </div>
         <div class="space-y-8">
             <div th:each="grupo : ${gruposPreferencias}" class="space-y-3">
                 <div>

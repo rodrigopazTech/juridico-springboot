@@ -127,9 +127,9 @@ public enum NotificacionEvento {
             "TAREA",
             "RECORDATORIO",
             "tarea",
-            NotificacionCategoria.TERMINOS,
+            NotificacionCategoria.TAREAS,
             "Recordatorio de tarea",
-            "Te recuerda tus tareas personales programadas para el dia.",
+            "Revisa cada minuto e intenta avisarte 15 minutos antes de la hora programada.",
             true);
 
     private final String tipoVisual;

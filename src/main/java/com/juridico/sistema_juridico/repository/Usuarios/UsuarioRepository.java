@@ -16,7 +16,9 @@ import java.util.Optional;
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
-    Optional<Usuario> findByEmail(String email);
+    @Query("SELECT u FROM Usuario u WHERE LOWER(u.email) = LOWER(:identifier) "
+            + "OR (u.email IS NULL AND LOWER(u.username) = LOWER(:identifier))")
+    Optional<Usuario> findByEmail(@Param("identifier") String identifier);
 
     Optional<Usuario> findByEmailIgnoreCase(String email);
 
@@ -28,11 +30,19 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     boolean existsByEmail(String email);
 
+    boolean existsByEmailIgnoreCase(String email);
+
     boolean existsByUsernameIgnoreCase(String username);
 
     boolean existsByNumeroEmpleadoIgnoreCase(String numeroEmpleado);
 
-    @Query("SELECT u FROM Usuario u WHERE LOWER(u.username) = LOWER(:identifier) OR LOWER(u.numeroEmpleado) = LOWER(:identifier)")
+    long countByCreadoPorId(Integer creadoPorId);
+
+    @Query("SELECT u FROM Usuario u WHERE u.email IS NULL OR TRIM(u.email) = '' ORDER BY u.id")
+    List<Usuario> findUsuariosSinCorreo();
+
+    @Query("SELECT u FROM Usuario u WHERE LOWER(u.username) = LOWER(:identifier) "
+            + "OR LOWER(u.numeroEmpleado) = LOWER(:identifier) OR LOWER(u.email) = LOWER(:identifier)")
     Optional<Usuario> findByLoginIdentifier(@Param("identifier") String identifier);
 
     // 1. Para el Select del Modal (Solo mostrar ABOGADOS activos)

@@ -43,7 +43,7 @@ class UsernameRecoveryServiceTest {
         when(request.getHeader("X-Forwarded-For")).thenReturn(null);
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
         when(rateLimitService.isAllowed("username:nadie@finabien.gob.mx", "127.0.0.1")).thenReturn(true);
-        when(usuarioRepository.findByEmail("nadie@finabien.gob.mx")).thenReturn(Optional.empty());
+        when(usuarioRepository.findByEmailIgnoreCase("nadie@finabien.gob.mx")).thenReturn(Optional.empty());
 
         UsernameRecoveryService.UsernameRecoveryResult result =
                 service.requestUsernameReminder(" Nadie@FINABIEN.gob.mx ", request);
@@ -63,7 +63,7 @@ class UsernameRecoveryServiceTest {
         when(request.getHeader("X-Forwarded-For")).thenReturn(null);
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
         when(rateLimitService.isAllowed("username:rodrigo.paz@finabien.gob.mx", "127.0.0.1")).thenReturn(true);
-        when(usuarioRepository.findByEmail("rodrigo.paz@finabien.gob.mx")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByEmailIgnoreCase("rodrigo.paz@finabien.gob.mx")).thenReturn(Optional.of(usuario));
         when(emailService.sendUsernameReminderEmail("rodrigo.paz@finabien.gob.mx", "rodrigo.paz", "E0099"))
                 .thenReturn(true);
 

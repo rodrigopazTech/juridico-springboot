@@ -331,6 +331,16 @@
                     </li>
 
                     <li>
+                        <button type="button" data-tab="tipos-termino"
+                            class="tab-btn catalogos-nav-item flex items-center justify-between gap-3 px-3 py-2.5 transition-all">
+                            <i class="fas fa-hourglass-start text-gob-oro"></i>
+                            <span class="hidden sm:inline font-bold">Tipos de Término</span>
+                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
+                                th:text="${listaTiposTermino != null ? #lists.size(listaTiposTermino) : 0}">0</span>
+                        </button>
+                    </li>
+
+                    <li>
                         <button type="button" data-tab="semaforos"
                             class="tab-btn catalogos-nav-item flex items-center justify-between gap-3 px-3 py-2.5 transition-all">
                             <i class="fas fa-traffic-light text-gob-oro"></i>
@@ -395,7 +405,7 @@
                                                 <div class="text-xs text-gray-400" th:text="${m.usuario.email}">email</div>
                                             </div>
                                         </div>
-                                        <span th:unless="${m.usuario != null}" class="text-xs text-gray-400 italic">Simbólico / Sistema</span>
+                                        <span th:unless="${m.usuario != null}" class="text-xs text-gray-400 italic">Registro predeterminado</span>
                                     </td>
                                     <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-right sm:text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
                                         <span th:if="${m.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold"
@@ -623,7 +633,7 @@
                                                 <div class="text-xs text-gray-400" th:text="${o.usuario.email}">email</div>
                                             </div>
                                         </div>
-                                        <span th:unless="${o.usuario != null}" class="text-xs text-gray-400 italic">Simbólico / Sistema</span>
+                                        <span th:unless="${o.usuario != null}" class="text-xs text-gray-400 italic">Registro predeterminado</span>
                                     </td>
                                     <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-right sm:text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
                                         <span th:if="${o.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold"
@@ -708,7 +718,7 @@
                                                 <div class="text-xs text-gray-400" th:text="${t.usuario.email}">email</div>
                                             </div>
                                         </div>
-                                        <span th:unless="${t.usuario != null}" class="text-xs text-gray-400 italic">Simbólico / Sistema</span>
+                                        <span th:unless="${t.usuario != null}" class="text-xs text-gray-400 italic">Registro predeterminado</span>
                                     </td>
                                     <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-right sm:text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
                                         <span th:if="${t.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold"
@@ -795,7 +805,7 @@
                                                 <div class="text-xs text-gray-400" th:text="${te.usuario.email}">email</div>
                                             </div>
                                         </div>
-                                        <span th:unless="${te.usuario != null}" class="text-xs text-gray-400 italic">Simbólico / Sistema</span>
+                                        <span th:unless="${te.usuario != null}" class="text-xs text-gray-400 italic">Registro predeterminado</span>
                                     </td>
                                     <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-right sm:text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
                                         <span th:if="${te.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold"
@@ -885,7 +895,7 @@
                                                 <div class="text-xs text-gray-400" th:text="${u.creadoPor.email}">email</div>
                                             </div>
                                         </div>
-                                        <span th:unless="${u.creadoPor != null}" class="text-xs text-gray-400 italic">Simbólico / Sistema</span>
+                                        <span th:unless="${u.creadoPor != null}" class="text-xs text-gray-400 italic">Registro predeterminado</span>
                                     </td>
                                     <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-right sm:text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
                                         <span class="text-xs px-2 py-1 rounded-full font-bold"
@@ -953,7 +963,7 @@
                                                 <div class="text-xs text-gray-400" th:text="${s.usuario.email}">email</div>
                                             </div>
                                         </div>
-                                        <span th:unless="${s.usuario != null}" class="text-xs text-gray-400 italic">Simbólico / Sistema</span>
+                                        <span th:unless="${s.usuario != null}" class="text-xs text-gray-400 italic">Registro predeterminado</span>
                                     </td>
                                     <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-right sm:text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
                                         <span th:if="${s.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold"
@@ -997,7 +1007,7 @@
                             <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
                                 <i class="fas fa-traffic-light text-gob-oro"></i> Configuración de Semáforos Procesales
                             </h3>
-                            <p class="text-xs text-gray-500 mt-1">Establece los días límite para activar las alertas preventivas (Rojo y Amarillo) en los expedientes de esta gerencia.</p>
+                            <p class="text-xs text-gray-500 mt-1">Define con cuántos días de anticipación se mostrarán las alertas amarilla y roja.</p>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1015,14 +1025,14 @@
                                 <div class="space-y-3 pt-2">
                                     <div>
                                         <label class="block text-xs font-bold text-red-700 uppercase tracking-wider mb-1">
-                                            <i class="fas fa-circle text-red-500 mr-1"></i> Rango Rojo (Crítico) - Hasta N Días
+                                            <i class="fas fa-circle text-red-500 mr-1"></i> Rojo: vence en este número de días o menos
                                         </label>
                                         <input type="number" id="semaforo-termino-rojo" value="3" min="1" max="30"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none" />
                                     </div>
                                     <div>
                                         <label class="block text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">
-                                            <i class="fas fa-circle text-yellow-400 mr-1"></i> Rango Amarillo (Advertencia) - Hasta N Días
+                                            <i class="fas fa-circle text-yellow-400 mr-1"></i> Amarillo: vence en este número de días o menos
                                         </label>
                                         <input type="number" id="semaforo-termino-amarillo" value="7" min="2" max="60"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none" />
@@ -1048,14 +1058,14 @@
                                 <div class="space-y-3 pt-2">
                                     <div>
                                         <label class="block text-xs font-bold text-red-700 uppercase tracking-wider mb-1">
-                                            <i class="fas fa-circle text-red-500 mr-1"></i> Rango Rojo (Crítico) - Hasta N Días
+                                            <i class="fas fa-circle text-red-500 mr-1"></i> Rojo: vence en este número de días o menos
                                         </label>
                                         <input type="number" id="semaforo-audiencia-rojo" value="1" min="1" max="15"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none" />
                                     </div>
                                     <div>
                                         <label class="block text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">
-                                            <i class="fas fa-circle text-yellow-400 mr-1"></i> Rango Amarillo (Advertencia) - Hasta N Días
+                                            <i class="fas fa-circle text-yellow-400 mr-1"></i> Amarillo: vence en este número de días o menos
                                         </label>
                                         <input type="number" id="semaforo-audiencia-amarillo" value="3" min="2" max="30"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none" />

@@ -14,6 +14,12 @@
     <script th:src="@{/js/tailwind.config.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
+    <style>
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+            display: none;
+        }
+    </style>
 
     <!-- Script global de navegación de pestañas -->
     <script th:inline="javascript">
@@ -92,7 +98,7 @@
                             <button onclick="showTab('seguridad')"
                                 class="tab-btn w-full flex items-center gap-3 px-6 py-4 text-sm font-bold transition-all border-l-4 border-transparent text-gray-500 hover:bg-gray-50"
                                 id="btn-seguridad">
-                                <i class="fas fa-shield-alt"></i> Contrase&ntilde;a
+                                <i class="fas fa-shield-alt"></i> Seguridad
                             </button>
 
                             <div class="border-t border-gray-100 px-4 py-4">
@@ -131,7 +137,7 @@
                     <div id="tab-seguridad" class="tab-content hidden animate-fade-in">
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
                             <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2 justify-center">
-                                <i class="fas fa-lock text-gob-oro"></i> Cambio de Contraseña
+                                <i class="fas fa-lock text-gob-oro"></i> Seguridad
                             </h3>
                             <div th:replace="~{fragments/perfil/seguridad :: form}"></div>
                         </div>

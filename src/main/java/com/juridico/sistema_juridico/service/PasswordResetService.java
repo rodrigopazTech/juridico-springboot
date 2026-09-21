@@ -1,9 +1,11 @@
 package com.juridico.sistema_juridico.service;
 
 import com.juridico.sistema_juridico.Entity.usuario.PasswordResetToken;
+import com.juridico.sistema_juridico.Entity.usuario.ManualRecoveryCode;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.dto.request.auth.PasswordResetConfirmRequest;
 import com.juridico.sistema_juridico.repository.Usuarios.PasswordResetTokenRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.ManualRecoveryCodeRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -36,15 +38,28 @@ public class PasswordResetService {
         WEAK_PASSWORD
     }
 
+    public enum ManualRecoveryResult {
+        SUCCESS,
+        INVALID_CODE,
+        INACTIVE_USER,
+        PASSWORD_MISMATCH,
+        WEAK_PASSWORD
+    }
+
+    public record ManualRecoveryCodeResult(String code, LocalDateTime expiresAt) {
+    }
+
     private final UsuarioRepository usuarioRepository;
     private final PasswordResetTokenRepository tokenRepository;
+    private final ManualRecoveryCodeRepository manualRecoveryCodeRepository;
     private final PasswordResetRateLimitService rateLimitService;
     private final PasswordResetMailer emailService;
     private final PasswordEncoder passwordEncoder;
     private final AuditoriaTecnicaService auditoriaTecnicaService;
     private final PasswordPolicyService passwordPolicyService;
+    private final SessionRevocationService sessionRevocationService;
     private static final SecureRandom TEMP_PASSWORD_RANDOM = new SecureRandom();
-    private static final char[] TEMP_PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%".toCharArray();
+    private static final char[] MANUAL_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".toCharArray();
 
     @Value("${app.password-reset.expiration-minutes:30}")
     private int expirationMinutes;
@@ -144,29 +159,92 @@ public class PasswordResetService {
     }
 
     @Transactional
-    public String createTemporaryPassword(Usuario usuario, String requestedPassword, HttpServletRequest request) {
-        String temporaryPassword = requestedPassword == null || requestedPassword.isBlank()
-                ? generateTemporaryPassword()
-                : requestedPassword.trim();
-
-        if (temporaryPassword.length() < 8) {
-            throw new IllegalArgumentException("La contrasena temporal debe tener al menos 8 caracteres.");
-        }
-        if (!temporaryPassword.matches("[A-Za-z0-9!@#$%._-]+")) {
-            throw new IllegalArgumentException("La contrasena temporal solo puede usar letras, numeros y ! @ # $ % . _ -");
+    public ManualRecoveryCodeResult createManualRecoveryCode(Usuario usuario, Usuario actor, String motivo,
+            String origen, HttpServletRequest request) {
+        String normalizedReason = motivo == null ? "" : motivo.trim();
+        if (normalizedReason.length() < 10) {
+            throw new IllegalArgumentException("Indica un motivo de al menos 10 caracteres para la recuperacion manual.");
         }
 
+        manualRecoveryCodeRepository.invalidateActiveCodesByUsuarioId(usuario.getId());
         tokenRepository.invalidateActiveTokensByUsuarioId(usuario.getId());
-        usuario.setPassword(passwordEncoder.encode(temporaryPassword));
-        usuario.setForcePasswordChange(true);
+        String code = generateManualCode();
+        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(15);
+        manualRecoveryCodeRepository.save(ManualRecoveryCode.builder()
+                .usuario(usuario)
+                .emitidoPor(actor)
+                .codigoHash(passwordEncoder.encode(code))
+                .motivo(normalizedReason)
+                .origen(origen)
+                .fechaExpiracion(expiresAt)
+                .usado(false)
+                .activo(true)
+                .build());
+
+        auditoriaTecnicaService.registrarRecuperacionManual(actor, usuario, request,
+                "MANUAL_RECOVERY_CODE_ISSUED", "EXITOSO", 201,
+                "Se emitio un codigo manual de un uso. Origen: " + origen + ". Motivo: " + normalizedReason);
+        return new ManualRecoveryCodeResult(code, expiresAt);
+    }
+
+    @Transactional
+    public ManualRecoveryResult confirmManualRecovery(String rawIdentifier, String code, String newPassword,
+            String confirmation, HttpServletRequest request) {
+        if (newPassword == null || !newPassword.equals(confirmation)) {
+            return ManualRecoveryResult.PASSWORD_MISMATCH;
+        }
+        if (!passwordPolicyService.isValid(newPassword)) {
+            return ManualRecoveryResult.WEAK_PASSWORD;
+        }
+
+        Optional<Usuario> userOpt = usuarioRepository.findByLoginIdentifier(normalizeIdentifier(rawIdentifier));
+        if (userOpt.isEmpty()) {
+            auditoriaTecnicaService.registrarEventoSeguridad(null, rawIdentifier, request,
+                    "MANUAL_RECOVERY_CODE_INVALID", "FALLIDO", 400,
+                    "Intento de recuperacion manual para una cuenta inexistente.", "USUARIO", rawIdentifier);
+            return ManualRecoveryResult.INVALID_CODE;
+        }
+
+        Usuario usuario = userOpt.get();
+        if (!Boolean.TRUE.equals(usuario.getActivo())) {
+            auditoriaTecnicaService.registrarEventoSeguridad(usuario, usuario.getEmail(), request,
+                    "MANUAL_RECOVERY_INACTIVE_USER", "DENEGADO", 409,
+                    "Se rechazo la recuperacion manual porque la cuenta esta inactiva.",
+                    "USUARIO", String.valueOf(usuario.getId()));
+            return ManualRecoveryResult.INACTIVE_USER;
+        }
+        Optional<ManualRecoveryCode> codeOpt = manualRecoveryCodeRepository
+                .findFirstByUsuarioIdAndActivoTrueAndUsadoFalseOrderByFechaCreacionDesc(usuario.getId());
+        if (codeOpt.isEmpty() || codeOpt.get().getFechaExpiracion().isBefore(LocalDateTime.now())
+                || code == null || !passwordEncoder.matches(code.trim(), codeOpt.get().getCodigoHash())) {
+            codeOpt.ifPresent(saved -> {
+                if (saved.getFechaExpiracion().isBefore(LocalDateTime.now())) {
+                    saved.setActivo(false);
+                    manualRecoveryCodeRepository.save(saved);
+                }
+            });
+            auditoriaTecnicaService.registrarEventoSeguridad(usuario, usuario.getEmail(), request,
+                    "MANUAL_RECOVERY_CODE_INVALID", "FALLIDO", 400,
+                    "Se intento usar un codigo manual invalido, vencido o ya utilizado.", "USUARIO", String.valueOf(usuario.getId()));
+            return ManualRecoveryResult.INVALID_CODE;
+        }
+
+        ManualRecoveryCode recoveryCode = codeOpt.get();
+        usuario.setPassword(passwordEncoder.encode(newPassword));
+        usuario.setForcePasswordChange(false);
         usuario.setPasswordUpdatedAt(LocalDateTime.now());
         usuarioRepository.save(usuario);
-
+        recoveryCode.setUsado(true);
+        recoveryCode.setActivo(false);
+        recoveryCode.setFechaUso(LocalDateTime.now());
+        manualRecoveryCodeRepository.save(recoveryCode);
+        tokenRepository.invalidateActiveTokensByUsuarioId(usuario.getId());
+        sessionRevocationService.revokeAll(usuario, "RECUPERACION_MANUAL");
         auditoriaTecnicaService.registrarEventoSeguridad(usuario, usuario.getEmail(), request,
-                "PASSWORD_TEMPORAL_ADMIN_GENERADA", "EXITOSO", 200,
-                "Se genero una contrasena temporal administrativa y se forzo cambio al iniciar sesion.",
+                "MANUAL_RECOVERY_CODE_USED", "EXITOSO", 200,
+                "El usuario establecio una nueva contrasena con un codigo manual de un uso.",
                 "USUARIO", String.valueOf(usuario.getId()));
-        return temporaryPassword;
+        return ManualRecoveryResult.SUCCESS;
     }
 
     @Transactional
@@ -213,6 +291,8 @@ public class PasswordResetService {
         token.setFechaUso(LocalDateTime.now());
         tokenRepository.save(token);
 
+        sessionRevocationService.revokeAll(usuario, "PASSWORD_RESET");
+
         auditoriaTecnicaService.registrarEventoSeguridad(usuario, usuario.getEmail(), request,
                 "PASSWORD_RESET_CONFIRMADO", "EXITOSO", 200,
                 "Contrasena actualizada por recuperacion con token.", "USUARIO", String.valueOf(usuario.getId()));
@@ -250,12 +330,12 @@ public class PasswordResetService {
         return tokenRepository.save(token);
     }
 
-    private String generateTemporaryPassword() {
-        StringBuilder password = new StringBuilder(12);
-        for (int i = 0; i < 12; i++) {
-            password.append(TEMP_PASSWORD_CHARS[TEMP_PASSWORD_RANDOM.nextInt(TEMP_PASSWORD_CHARS.length)]);
+    private String generateManualCode() {
+        StringBuilder code = new StringBuilder(10);
+        for (int i = 0; i < 10; i++) {
+            code.append(MANUAL_CODE_CHARS[TEMP_PASSWORD_RANDOM.nextInt(MANUAL_CODE_CHARS.length)]);
         }
-        return password.toString();
+        return code.toString();
     }
 
     private String normalizeIdentifier(String value) {

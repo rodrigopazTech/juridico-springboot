@@ -34,7 +34,7 @@ Conéctate a tu base de datos local (o dentro de tu contenedor Docker de Postgre
 
 3. **Actualizar Triggers de Base de Datos:**
    Ejecuta el script completo de triggers para sincronizar el envío de notificaciones en tiempo real en la BD:
-   `src/main/resources/update_triggers.sql`
+   `deploy/database/02-realtime-notifications.sql`
 
 ---
 

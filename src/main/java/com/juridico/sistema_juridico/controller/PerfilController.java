@@ -4,6 +4,7 @@ import com.juridico.sistema_juridico.Entity.enums.NotificacionEvento;
 import com.juridico.sistema_juridico.Entity.usuario.PreferenciaNotificacion;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.dto.response.notificaciones.GrupoPreferenciaNotificacionResponse;
+import com.juridico.sistema_juridico.config.MicrosoftAuthProperties;
 import com.juridico.sistema_juridico.repository.Usuarios.PreferenciaNotificacionRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.security.CustomUserDetails;
@@ -43,6 +44,9 @@ public class PerfilController {
     @Autowired
     private PreferenciaNotificacionEventoService preferenciaEventoService;
 
+    @Autowired
+    private MicrosoftAuthProperties microsoftAuthProperties;
+
     @GetMapping
     public String verPerfil(
             @RequestParam(value = "tab", defaultValue = "datos") String tab,
@@ -60,6 +64,7 @@ public class PerfilController {
         model.addAttribute("pageTitle", "Mi Cuenta");
         model.addAttribute("activePage", "perfil");
         model.addAttribute("tabInicial", tab);
+        model.addAttribute("microsoftConfigured", microsoftAuthProperties.isVisibleInUi());
 
         return "views/perfil/index";
     }

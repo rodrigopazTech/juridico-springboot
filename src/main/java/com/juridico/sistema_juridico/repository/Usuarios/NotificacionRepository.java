@@ -27,6 +27,16 @@ public interface NotificacionRepository extends JpaRepository<Notificacion, Inte
     // Método para la API de Toasts/Campana
     List<Notificacion> findByUsuarioIdAndLeidaFalseOrderByCreatedAtDesc(Integer usuarioId);
 
+    /** Notificaciones de tareas del usuario, incluidas las que ya fueron leídas. */
+    List<Notificacion> findByUsuarioAndEventoOrderByNotificarEnDesc(
+            Usuario usuario, NotificacionEvento evento);
+
+    List<Notificacion> findByUsuarioAndEventoAndLeidaFalseAndEntidadId(
+            Usuario usuario, NotificacionEvento evento, String entidadId);
+
+    List<Notificacion> findByUsuarioAndEventoAndLeidaFalseAndEntidadIdStartingWith(
+            Usuario usuario, NotificacionEvento evento, String entidadIdPrefix);
+
     // Busca notificaciones LEÍDAS para la papelera
     Page<Notificacion> findByUsuarioAndLeidaTrueOrderByCreatedAtDesc(Usuario usuario, Pageable pageable);
 

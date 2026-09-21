@@ -11,13 +11,14 @@
                 <th class="px-4 py-4 w-24">Hora</th>
                 <th class="px-4 py-4 w-24 text-center">Prioridad</th>
                 <th class="px-4 py-4 w-28 text-center">Estado</th>
-                <th class="px-4 py-4 w-28 text-center">Calendario</th>
-                <th class="px-4 py-4 w-16 text-right"></th>
+                <th class="px-4 py-4 w-40">Aviso</th>
+                <th class="px-4 py-4 w-24 text-right">Acciones</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-50" id="body-tareas">
             
-            <tr th:each="r : ${recordatoriosTodos}" 
+            <tr th:each="r : ${recordatoriosTodos}"
+                th:with="notificadoEn=${avisosEnviadosPorTarea[r.id]}"
                 class="hover:bg-gray-50/80 transition-colors group fila-tarea h-16"
                 th:data-estado="${r.completado ? 'completada' : 'pendiente'}"
                 th:classappend="${r.completado ? 'opacity-60 bg-gray-50/50' : ''}">
@@ -71,9 +72,43 @@
                     <span th:if="${r.completado}" class="text-[10px] px-2.5 py-1 rounded-full font-bold bg-green-50 text-green-600 border border-green-100">Completada</span>
                 </td>
 
+                <td class="px-4 py-2 whitespace-nowrap"
+                    th:with="programada=${r.fechaRecordatorio.atTime(r.horaRecordatorio)}, aviso=${r.fechaRecordatorio.atTime(r.horaRecordatorio).minusMinutes(minutosAnticipacion)}">
+                    <div class="text-xs font-bold text-gob-guinda">
+                        <i class="far fa-bell mr-1 text-gob-oro"></i>
+                        <span th:if="${r.completado}">No requiere aviso</span>
+                        <span th:if="${!r.completado and notificadoEn != null}">Ya notificado</span>
+                        <span th:if="${!r.completado and notificadoEn == null and aviso.isAfter(T(java.time.LocalDateTime).now())}"
+                              th:text="${#temporals.format(aviso, 'dd/MM HH:mm')}">21/09 11:35</span>
+                        <span th:if="${!r.completado and notificadoEn == null and !aviso.isAfter(T(java.time.LocalDateTime).now()) and programada.isAfter(T(java.time.LocalDateTime).now())}">Se notificará en breve</span>
+                        <span th:if="${!r.completado and notificadoEn == null and !programada.isAfter(T(java.time.LocalDateTime).now())}" class="text-red-600">Hora vencida</span>
+                    </div>
+                    <span th:if="${r.completado}" class="text-[10px] text-gray-400">Tarea completada</span>
+                    <span th:if="${!r.completado and notificadoEn != null}" class="text-[10px] text-gray-400"
+                          th:text="${notificadoEn.toLocalDate().equals(T(java.time.LocalDate).now()) ? 'Hoy a las ' + #temporals.format(notificadoEn, 'HH:mm') : #temporals.format(notificadoEn, 'dd/MM/yyyy HH:mm')}">Hoy a las 13:26</span>
+                    <span th:if="${!r.completado and notificadoEn == null and aviso.isAfter(T(java.time.LocalDateTime).now())}" class="text-[10px] text-gray-400">15 minutos antes de la hora programada</span>
+                    <span th:if="${!r.completado and notificadoEn == null and !aviso.isAfter(T(java.time.LocalDateTime).now()) and programada.isAfter(T(java.time.LocalDateTime).now())}" class="text-[10px] text-gray-400">Antes de la hora programada</span>
+                </td>
+
                 <td class="px-4 py-2 text-right whitespace-nowrap">
+                    <button th:if="${!r.completado}"
+                            type="button"
+                            onclick="abrirModalEditarTarea(this)"
+                            th:data-id="${r.id}"
+                            th:data-titulo="${r.titulo}"
+                            th:data-detalles="${r.detalles}"
+                            th:data-fecha="${r.fechaRecordatorio}"
+                            th:data-hora="${r.horaRecordatorio}"
+                            th:data-prioridad-id="${r.prioridad != null ? r.prioridad.id : ''}"
+                            th:data-notificado-en="${notificadoEn != null ? #temporals.format(notificadoEn, 'yyyy-MM-dd''T''HH:mm') : ''}"
+                            th:data-fecha-original="${r.fechaRecordatorio}"
+                            th:data-hora-original="${r.horaRecordatorio}"
+                            class="text-gray-400 hover:text-gob-guinda transition-all p-2 rounded hover:bg-gob-guinda/5"
+                            title="Editar tarea" aria-label="Editar tarea">
+                        <i class="fas fa-pen"></i>
+                    </button>
                     <button th:onclick="'confirmarEliminarTarea(' + ${r.id} + ')'"
-                            class="text-gray-300 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all p-2 rounded hover:bg-red-50" title="Eliminar">
+                            class="text-gray-300 hover:text-red-600 transition-all p-2 rounded hover:bg-red-50" title="Eliminar" aria-label="Eliminar tarea">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </td>
@@ -98,6 +133,7 @@
 
         <!-- Tarjeta por tarea -->
         <div th:each="r : ${recordatoriosTodos}"
+             th:with="notificadoEn=${avisosEnviadosPorTarea[r.id]}"
              class="bg-white rounded-2xl border border-gray-200 shadow-md overflow-hidden fila-tarea"
              th:data-estado="${r.completado ? 'completada' : 'pendiente'}"
              th:classappend="${r.completado ? 'opacity-60' : ''}">
@@ -143,12 +179,42 @@
                     <!-- Estado -->
                     <span th:if="${!r.completado}" class="text-[9px] px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-600 border border-amber-100">Pendiente</span>
                     <span th:if="${r.completado}" class="text-[9px] px-2 py-0.5 rounded-full font-bold bg-green-50 text-green-600 border border-green-100">Completada</span>
+                    <!-- Editar -->
+                    <button th:if="${!r.completado}"
+                            type="button"
+                            onclick="abrirModalEditarTarea(this)"
+                            th:data-id="${r.id}"
+                            th:data-titulo="${r.titulo}"
+                            th:data-detalles="${r.detalles}"
+                            th:data-fecha="${r.fechaRecordatorio}"
+                            th:data-hora="${r.horaRecordatorio}"
+                            th:data-prioridad-id="${r.prioridad != null ? r.prioridad.id : ''}"
+                            th:data-notificado-en="${notificadoEn != null ? #temporals.format(notificadoEn, 'yyyy-MM-dd''T''HH:mm') : ''}"
+                            th:data-fecha-original="${r.fechaRecordatorio}"
+                            th:data-hora-original="${r.horaRecordatorio}"
+                            class="p-1.5 text-gray-400 hover:text-gob-guinda hover:bg-gob-guinda/5 rounded-lg transition-all"
+                            title="Editar tarea" aria-label="Editar tarea">
+                        <i class="fas fa-pen text-xs"></i>
+                    </button>
                     <!-- Eliminar -->
                     <button th:onclick="'confirmarEliminarTarea(' + ${r.id} + ')'"
                             class="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Eliminar">
                         <i class="fas fa-trash-alt text-xs"></i>
                     </button>
                 </div>
+            </div>
+            <div class="mx-4 mb-3 rounded-lg bg-amber-50 px-3 py-2 text-[11px] text-gray-600"
+                 th:with="programada=${r.fechaRecordatorio.atTime(r.horaRecordatorio)}, aviso=${r.fechaRecordatorio.atTime(r.horaRecordatorio).minusMinutes(minutosAnticipacion)}">
+                <i class="far fa-bell mr-1 text-gob-oro"></i>
+                <span th:if="${r.completado}">Aviso: <strong>No requiere aviso</strong></span>
+                <span th:if="${!r.completado and notificadoEn != null}">Aviso: <strong>Ya notificado</strong>
+                    <span class="ml-1" th:text="${notificadoEn.toLocalDate().equals(T(java.time.LocalDate).now()) ? 'Hoy a las ' + #temporals.format(notificadoEn, 'HH:mm') : #temporals.format(notificadoEn, 'dd/MM/yyyy HH:mm')}">Hoy a las 13:26</span>
+                </span>
+                <span th:if="${!r.completado and notificadoEn == null and aviso.isAfter(T(java.time.LocalDateTime).now())}">Aviso programado:
+                    <strong th:text="${#temporals.format(aviso, 'dd/MM/yyyy HH:mm')}">21/09/2026 11:35</strong>
+                </span>
+                <span th:if="${!r.completado and notificadoEn == null and !aviso.isAfter(T(java.time.LocalDateTime).now()) and programada.isAfter(T(java.time.LocalDateTime).now())}">Aviso: <strong>Se notificará en breve</strong></span>
+                <span th:if="${!r.completado and notificadoEn == null and !programada.isAfter(T(java.time.LocalDateTime).now())}" class="text-red-600">Aviso: <strong>Hora vencida</strong></span>
             </div>
         </div>
     </div><!-- /VISTA MÓVIL -->

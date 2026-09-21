@@ -21,6 +21,7 @@ public interface AuditoriaSesionRepository extends JpaRepository<AuditoriaSesion
     long countByFechaCierreBetween(LocalDateTime inicio, LocalDateTime fin);
     List<AuditoriaSesion> findByEstadoAndFechaUltimaActividadBefore(String estado, LocalDateTime fecha);
     List<AuditoriaSesion> findByEstadoAndUsuarioIdAndSessionIdNot(String estado, Integer usuarioId, String sessionId);
+    List<AuditoriaSesion> findByEstadoAndUsuarioId(String estado, Integer usuarioId);
     @Query("select s from AuditoriaSesion s left join s.usuario u where s.estado = :estado order by u.id asc, s.fechaUltimaActividad desc")
     List<AuditoriaSesion> findActivasOrdenadasParaNormalizar(@Param("estado") String estado);
     List<AuditoriaSesion> findTop12ByEstadoAndFechaUltimaActividadAfterOrderByFechaUltimaActividadDesc(String estado, LocalDateTime fecha);

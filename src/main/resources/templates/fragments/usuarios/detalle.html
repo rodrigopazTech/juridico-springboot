@@ -32,7 +32,7 @@
                 <div class="flex gap-2 flex-shrink-0"
                     th:if="${puedeAdministrarUsuarios}">
                     <button id="btn-estatus"
-                        class="px-3 py-1.5 bg-white/10 hover:bg-red-500/80 rounded-lg text-sm font-bold transition-colors backdrop-blur-sm border border-white/10 shadow-sm"><i
+                        class="px-4 py-2 bg-white text-red-800 hover:bg-red-50 rounded-lg text-sm font-bold transition-colors border border-red-200 shadow-sm focus-visible:ring-2 focus-visible:ring-white"><i
                             class="fas fa-ban mr-1"></i> Desactivar</button>
                 </div>
             </div>
@@ -50,7 +50,7 @@
             </button>
             <button id="tab-btn-terminos" onclick="cambiarTabAbogado('terminos')"
                 class="tab-abogado py-3 px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors">
-                <i class="fas fa-gavel mr-1"></i> TÃ©rminos y Audiencias
+                <i class="fas fa-gavel mr-1"></i> Términos y Audiencias
             </button>
             <button id="tab-btn-historial" onclick="cambiarTabAbogado('historial')"
                 class="tab-abogado py-3 px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors">
@@ -84,7 +84,7 @@
                                     <th class="px-6 py-4">Caso / Asunto</th>
                                     <th class="px-6 py-4">Contraparte</th>
                                     <th class="px-6 py-4">Estado</th>
-                                    <th class="px-6 py-4 text-right">PrÃ³x. Audiencia</th>
+                                    <th class="px-6 py-4 text-right">Próx. Audiencia</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-casos" class="divide-y divide-gray-100">
@@ -118,7 +118,7 @@
                                 class="text-xs text-white uppercase bg-gob-verde font-bold tracking-wider sticky top-0 z-10">
                                 <tr>
                                     <th class="px-6 py-4">Tipo</th>
-                                    <th class="px-6 py-4">DescripciÃ³n</th>
+                                    <th class="px-6 py-4">Descripción</th>
                                     <th class="px-6 py-4">Vencimiento / Fecha</th>
                                 </tr>
                             </thead>
@@ -135,7 +135,7 @@
                         <i class="fas fa-calendar-check text-2xl"></i>
                     </div>
                     <h4 class="text-lg font-bold text-gray-700">Agenda Libre</h4>
-                    <p class="text-sm text-gray-500 mt-1">No hay tÃ©rminos ni audiencias programadas prÃ³ximamente.</p>
+                    <p class="text-sm text-gray-500 mt-1">No hay términos ni audiencias programadas próximamente.</p>
                 </div>
             </div>
 
@@ -158,7 +158,7 @@
 
                 <div id="container-historial"
                     class="space-y-4 hidden max-h-[500px] overflow-y-auto scrollbar-thin pr-2">
-                    <!-- AquÃ­ se inyectarÃ¡ el historial -->
+                    <!-- Aquí se inyectará el historial -->
                 </div>
 
                 <div id="empty-historial"
@@ -167,6 +167,8 @@
                         class="w-16 h-16 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-4">
                         <i class="fas fa-clipboard-list text-2xl"></i>
                     </div>
+                    <h4 id="empty-historial-title" class="text-base font-bold text-gray-700">Sin actividad registrada</h4>
+                    <p id="empty-historial-message" class="mt-1 text-sm text-gray-500">Este usuario aún no tiene eventos en su historial.</p>
                 </div>
             </div>
 
@@ -175,42 +177,102 @@
                 <form th:action="@{/usuarios/guardar}" method="post" id="form-editar-abogado" class="space-y-6"
                     data-email-loading-form
                     data-loading-text="Guardando..."
-                    data-loading-status="Guardando usuario. Si es nuevo, se enviara el enlace de activacion.">
+                    data-loading-status="Guardando la información del usuario.">
                     <input type="hidden" name="id" id="det-input-id">
 
+                    <p class="text-sm text-gray-600">
+                        Los campos marcados como <span class="rounded bg-gob-guinda px-2 py-0.5 text-xs font-bold text-white">Obligatorio</span>
+                        deben capturarse antes de guardar.
+                    </p>
+
                     <!-- Secciones del formulario -->
-                    <div class="bg-white rounded-xl border border-gray-150 p-6 shadow-sm space-y-4">
+                    <div class="space-y-4 border-b border-gray-200 pb-5">
                         <h3 id="det-form-titulo" class="text-sm font-bold text-gray-700 uppercase tracking-wider border-b border-gray-100 pb-2">
-                            <i class="fas fa-id-card mr-2 text-gob-guinda"></i> Datos Generales
+                            <i class="fas fa-id-card mr-2 text-gob-guinda"></i> Datos principales
                         </h3>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Nombre Completo *</label>
+                                <label for="det-input-nombre" class="mb-1 flex items-center justify-between gap-2 text-xs font-bold uppercase text-gray-700">Nombre completo <span class="rounded bg-gob-guinda px-1.5 py-0.5 text-[9px] text-white">Obligatorio</span></label>
                                 <input type="text" name="nombreCompleto" id="det-input-nombre" required
-                                    class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-gob-oro focus:border-gob-oro outline-none">
+                                    autocomplete="name" class="w-full border border-gray-400 rounded-lg p-2.5 text-sm focus-visible:ring-2 focus-visible:ring-gob-oro focus-visible:border-gob-oro outline-none">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Correo Institucional *</label>
-                                <input type="email" name="email" id="det-input-email" required
-                                    class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-gob-oro focus:border-gob-oro outline-none">
+                                <label for="det-input-numero-empleado" class="mb-1 flex items-center justify-between gap-2 text-xs font-bold uppercase text-gray-700">Número de empleado <span class="rounded bg-gob-guinda px-1.5 py-0.5 text-[9px] text-white">Obligatorio</span></label>
+                                <input type="text" name="numeroEmpleado" id="det-input-numero-empleado" required
+                                    autocomplete="off" class="w-full border border-gray-400 rounded-lg p-2.5 text-sm focus-visible:ring-2 focus-visible:ring-gob-oro focus-visible:border-gob-oro outline-none">
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Nombre de usuario *</label>
-                                <input type="text" name="username" id="det-input-username" required
-                                    class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-gob-oro focus:border-gob-oro outline-none">
+                                <label for="det-select-rol" class="mb-1 flex items-center justify-between gap-2 text-xs font-bold uppercase text-gray-700">Rol <span class="rounded bg-gob-guinda px-1.5 py-0.5 text-[9px] text-white">Obligatorio</span></label>
+                                <select name="rol" id="det-select-rol" required onchange="actualizarFormularioEdicionPorRol(); actualizarNombreUsuarioGenerado()"
+                                    class="w-full border border-gray-400 rounded-lg p-2.5 text-sm bg-white focus-visible:ring-2 focus-visible:ring-gob-oro focus-visible:border-gob-oro outline-none">
+                                    <option th:each="rol : ${listaRoles}" th:value="${rol}" th:text="${rol}"></option>
+                                </select>
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Numero de empleado</label>
-                                <input type="text" name="numeroEmpleado" id="det-input-numero-empleado"
-                                    class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-gob-oro focus:border-gob-oro outline-none">
+                            <div id="det-div-gerencia-asignada">
+                                <label for="det-select-usuario-gerencia" class="mb-1 flex items-center justify-between gap-2 text-xs font-bold uppercase text-gray-700">Área <span class="rounded bg-gob-guinda px-1.5 py-0.5 text-[9px] text-white">Obligatorio</span></label>
+                                <select name="gerenciasIds" id="det-select-usuario-gerencia" required onchange="cargarMateriasDeGerenciaEdicion(event); actualizarNombreUsuarioGenerado()"
+                                    class="w-full border border-gray-400 rounded-lg p-2.5 text-sm bg-white focus-visible:ring-2 focus-visible:ring-gob-oro focus-visible:border-gob-oro outline-none">
+                                    <option value="" selected disabled>Selecciona un área</option>
+                                    <option th:each="g : ${allGerencias}" th:value="${g.id}" th:text="${g.nombre}"></option>
+                                </select>
                             </div>
                         </div>
 
-                        <div class="pt-2 space-y-4">
+                        <div>
+                            <label for="det-input-username" class="block text-xs font-bold text-gray-500 mb-1 uppercase">Nombre de usuario</label>
+                            <input type="text" name="username" id="det-input-username" readonly
+                                autocomplete="username" spellcheck="false" aria-describedby="det-username-help"
+                                class="w-full border border-gray-300 rounded-lg bg-gray-100 p-2.5 text-sm font-semibold text-gray-700 outline-none cursor-not-allowed">
+                            <p id="det-username-help" class="mt-1 text-[10px] text-gray-500">Se genera automáticamente al completar nombre, número de empleado, rol y área.</p>
+                        </div>
+
+                        <div id="det-seccion-asignacion" class="space-y-4 pt-2">
+                            <div id="det-asignacion-error" role="alert" aria-live="polite"
+                                class="hidden rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-800"></div>
+
+                            <div id="det-contenedor-materias" class="hidden">
+                                <label class="mb-2 flex items-center justify-between gap-2 text-xs font-bold uppercase text-gray-700">Materias autorizadas <span class="rounded bg-gob-guinda px-1.5 py-0.5 text-[9px] text-white">Obligatorio para jefatura y abogado</span></label>
+                                <div id="det-lista-materias-checkboxes"
+                                    class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 max-h-36 overflow-y-auto">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 border-b border-gray-200 pb-5">
+                        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider border-b border-gray-100 pb-2">
+                            <i class="fas fa-envelope mr-2 text-gob-guinda"></i> Correo institucional
+                        </h3>
+                        <div>
+                            <label for="det-input-email" class="block text-xs font-bold uppercase text-gray-700 mb-1">Correo institucional <span class="text-[10px] font-medium normal-case text-gray-500">(opcional)</span></label>
+                            <input type="email" name="email" id="det-input-email"
+                                autocomplete="email" spellcheck="false" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus-visible:ring-2 focus-visible:ring-gob-oro focus-visible:border-gob-oro outline-none">
+                            <p id="det-email-help" class="mt-1 text-[10px] text-gray-500">Si lo proporcionas, se enviará un enlace de activación y el usuario podrá vincular su cuenta Microsoft.</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 border-b border-gray-200 pb-5">
+                        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider border-b border-gray-100 pb-2">
+                            <i class="fas fa-address-card mr-2 text-gob-guinda"></i> Datos opcionales
+                        </h3>
+                        <div id="det-email-autocomplete-note"
+                            class="hidden rounded-lg border border-blue-200 bg-blue-50 px-3 py-3 text-xs leading-relaxed text-blue-900"
+                            role="note" aria-live="polite">
+                            <i class="fas fa-circle-info mr-1 text-blue-600"></i>
+                            Como proporcionaste un correo institucional, puedes dejar vacíos el puesto, los teléfonos y la ubicación; se completarán automáticamente cuando el usuario se autentique por primera vez con Microsoft.
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="flex items-center h-10">
+                                <input type="checkbox" name="activo" id="det-check-activo"
+                                    class="w-4 h-4 text-gob-guinda bg-gray-100 border-gray-300 rounded focus:ring-gob-oro">
+                                <label for="det-check-activo" class="ms-2 text-sm font-medium text-gray-900">Usuario activo</label>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Puesto</label>
                                 <input type="text" name="puesto" id="det-input-puesto"
@@ -234,49 +296,9 @@
                                     class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-gob-oro focus:border-gob-oro outline-none">
                             </div>
                         </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Rol *</label>
-                                <select name="rol" id="det-select-rol" onchange="actualizarFormularioEdicionPorRol()"
-                                    class="w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-white focus:ring-gob-oro focus:border-gob-oro outline-none">
-                                    <option th:each="rol : ${listaRoles}" th:value="${rol}" th:text="${rol}"></option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Estado</label>
-                                <div class="flex items-center h-10 mt-1">
-                                    <input type="checkbox" name="activo" id="det-check-activo"
-                                        class="w-4 h-4 text-gob-guinda bg-gray-100 border-gray-300 rounded focus:ring-gob-oro">
-                                    <label for="det-check-activo" class="ms-2 text-sm font-medium text-gray-900">Usuario Activo</label>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
-                    <div id="det-seccion-asignacion" class="bg-white rounded-xl border border-gray-150 p-6 shadow-sm space-y-4">
-                        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider border-b border-gray-100 pb-2">
-                            <i class="fas fa-building mr-2 text-gob-guinda"></i> AdscripciÃ³n y Especialidad
-                        </h3>
-
-                        <div id="det-div-gerencia-asignada" class="hidden">
-                            <label class="block text-xs font-bold text-gray-500 mb-2 uppercase">Gerencias Asignadas</label>
-                            <select name="gerenciasIds" id="det-select-usuario-gerencia" multiple="multiple" onchange="cargarMateriasDeGerenciaEdicion(event)"
-                                class="w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-blue-50 focus:ring-gob-oro outline-none">
-                                <option th:each="g : ${allGerencias}" th:value="${g.id}" th:text="${g.nombre}"></option>
-                            </select>
-                            <p class="text-[10px] text-gray-400 mt-1 ml-1">* Puedes seleccionar multiples gerencias. Requerido para roles operativos.</p>
-                        </div>
-
-                        <div id="det-contenedor-materias" class="hidden">
-                            <label class="block text-xs font-bold text-gray-500 mb-2 uppercase">Materias Autorizadas</label>
-                            <div id="det-lista-materias-checkboxes"
-                                class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 max-h-36 overflow-y-auto">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="det-seccion-seguridad" class="bg-white rounded-xl border border-gray-150 p-6 shadow-sm space-y-4">
+                    <div id="det-seccion-seguridad" class="space-y-4 border-b border-gray-200 pb-5">
                         <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider border-b border-gray-100 pb-2">
                             <i class="fas fa-shield-alt mr-2 text-gob-guinda"></i> Seguridad
                         </h3>
@@ -288,11 +310,11 @@
                             </div>
                             <input type="hidden" id="det-input-password-temporal" name="password" value="" disabled>
                             <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                                <button type="button" id="det-btn-generar-password" onclick="abrirModalPasswordTemporalEdicion()"
+                                <button type="button" id="det-btn-generar-password" onclick="abrirModalRecuperacionManualEdicion()"
                                     th:if="${puedeAdministrarUsuarios}"
-                                    class="flex items-center justify-center gap-2 border-2 border-dashed border-gob-guinda text-gob-guinda bg-red-50 hover:bg-gob-guinda hover:text-white rounded-lg px-4 py-2 text-sm font-bold transition-all">
-                                    <i class="fas fa-key"></i>
-                                    <span>Restablecer manual</span>
+                                    class="hidden flex items-center justify-center gap-2 border-2 border-dashed border-gob-guinda text-gob-guinda bg-red-50 hover:bg-gob-guinda hover:text-white rounded-lg px-4 py-2 text-sm font-bold transition-all">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>Generar codigo manual</span>
                                 </button>
                                 <button type="button" id="det-btn-enviar-reset" onclick="enviarEnlaceRestablecimientoEdicion()"
                                     th:disabled="${emailMaintenance}"
@@ -309,7 +331,7 @@
                         </div>
                     </div>
 
-                    <!-- Botones de AcciÃ³n -->
+                    <!-- Botones de Acción -->
                     <div class="flex justify-between items-center pt-2">
                         <button type="button" id="det-btn-eliminar-usuario" onclick="eliminarUsuarioDesdeDetalle()"
                             th:if="${puedeAdministrarUsuarios}"
@@ -325,7 +347,7 @@
                             </button>
                             <button type="submit"
                                 data-email-loading-button
-                                class="px-6 py-2.5 bg-gob-guinda text-white rounded-lg hover:bg-opacity-90 transition-colors shadow-md font-bold text-sm">
+                                class="px-6 py-2.5 bg-gob-guinda text-white rounded-lg hover:bg-[#4f0d1e] transition-colors shadow-md font-bold text-sm focus-visible:ring-2 focus-visible:ring-gob-oro focus-visible:ring-offset-2">
                                 <i class="fas fa-save mr-1"></i> <span id="det-submit-label">Guardar Cambios</span>
                             </button>
                         </div>

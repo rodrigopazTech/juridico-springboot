@@ -25,14 +25,15 @@ public class MicrosoftIdentityService {
             throw new UnauthorizedException("Microsoft no regreso un identificador valido para la cuenta.");
         }
 
-        String email = profile.preferredEmail();
         Usuario usuario = usuarioRepository.findByMicrosoftObjectId(profile.id())
-                .or(() -> email == null ? java.util.Optional.empty() : usuarioRepository.findByEmailIgnoreCase(email))
                 .orElseThrow(() -> new UnauthorizedException(
-                        "La cuenta Microsoft autenticada no esta registrada en SIAJ."));
+                        "No existe una vinculacion Microsoft para esta cuenta SIAJ."));
 
         if (!Boolean.TRUE.equals(usuario.getActivo())) {
             throw new UnauthorizedException("El usuario SIAJ esta inactivo.");
+        }
+        if (!Boolean.TRUE.equals(usuario.getMicrosoftLoginEnabled())) {
+            throw new UnauthorizedException("La vinculacion Microsoft se encuentra deshabilitada.");
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -68,6 +69,14 @@ public class MicrosoftIdentityService {
         return usuarioRepository.save(usuario);
     }
 
+    @Transactional(readOnly = true)
+    public java.util.Optional<Usuario> buscarCuentaActivaPorCorreoMicrosoft(MicrosoftUserProfile profile) {
+        if (profile == null) {
+            return java.util.Optional.empty();
+        }
+        return findByMicrosoftIdentity(profile).filter(usuario -> Boolean.TRUE.equals(usuario.getActivo()));
+    }
+
     @Transactional
     public Usuario vincularPerfilAUsuario(Usuario usuario, MicrosoftUserProfile profile) {
         if (usuario == null) {
@@ -77,9 +86,7 @@ public class MicrosoftIdentityService {
             throw new UnauthorizedException("Microsoft no regreso un identificador valido para la cuenta.");
         }
 
-        String microsoftEmail = profile.preferredEmail();
-        if (isBlank(microsoftEmail) || isBlank(usuario.getEmail())
-                || !usuario.getEmail().trim().equalsIgnoreCase(microsoftEmail)) {
+        if (isBlank(usuario.getEmail()) || !profileMatchesLocalEmail(profile, usuario.getEmail())) {
             throw new UnauthorizedException("El correo autenticado en Microsoft no coincide con el usuario registrado en SIAJ.");
         }
 
@@ -118,6 +125,47 @@ public class MicrosoftIdentityService {
         }
 
         return usuarioRepository.save(usuario);
+    }
+
+    @Transactional
+    public Usuario desvincularPerfilMicrosoft(Usuario usuario) {
+        if (usuario == null) {
+            throw new UnauthorizedException("No existe usuario local para desvincular.");
+        }
+        usuario.setMicrosoftObjectId(null);
+        usuario.setMicrosoftUserPrincipalName(null);
+        usuario.setMicrosoftDisplayName(null);
+        usuario.setMicrosoftJobTitle(null);
+        usuario.setMicrosoftBusinessPhones(null);
+        usuario.setMicrosoftMobilePhone(null);
+        usuario.setMicrosoftOfficeLocation(null);
+        usuario.setMicrosoftLinkedAt(null);
+        usuario.setMicrosoftLastSyncAt(null);
+        usuario.setMicrosoftLoginEnabled(false);
+        return usuarioRepository.save(usuario);
+    }
+
+    private java.util.Optional<Usuario> findByMicrosoftIdentity(MicrosoftUserProfile profile) {
+        java.util.Optional<Usuario> byMail = findByEmail(profile.mail());
+        java.util.Optional<Usuario> byUpn = findByEmail(profile.userPrincipalName());
+
+        if (byMail.isPresent() && byUpn.isPresent() && !byMail.get().getId().equals(byUpn.get().getId())) {
+            throw new UnauthorizedException("Los identificadores de Microsoft coinciden con dos usuarios distintos de SIAJ.");
+        }
+        return byMail.isPresent() ? byMail : byUpn;
+    }
+
+    private java.util.Optional<Usuario> findByEmail(String value) {
+        return isBlank(value) ? java.util.Optional.empty() : usuarioRepository.findByEmailIgnoreCase(value.trim());
+    }
+
+    private boolean profileMatchesLocalEmail(MicrosoftUserProfile profile, String localEmail) {
+        return equalsIgnoreCase(localEmail, profile.mail())
+                || equalsIgnoreCase(localEmail, profile.userPrincipalName());
+    }
+
+    private boolean equalsIgnoreCase(String first, String second) {
+        return !isBlank(first) && !isBlank(second) && first.trim().equalsIgnoreCase(second.trim());
     }
 
     private boolean isBlank(String value) {

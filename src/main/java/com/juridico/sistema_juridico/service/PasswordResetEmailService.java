@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -15,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.email.maintenance", havingValue = "false", matchIfMissing = true)
 public class PasswordResetEmailService implements PasswordResetMailer {
 
     private final ObjectProvider<JavaMailSender> mailSenderProvider;
@@ -106,7 +108,6 @@ public class PasswordResetEmailService implements PasswordResetMailer {
             log.warn("{} No se envio correo de {} a {}", failure, emailType, to);
             return false;
         }
-
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, false, StandardCharsets.UTF_8.name());

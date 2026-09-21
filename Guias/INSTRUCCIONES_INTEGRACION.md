@@ -47,7 +47,7 @@ CREATE INDEX idx_push_sub_endpoint ON push_subscriptions(endpoint);
 
 ### B. Ejecución de Triggers Actualizados
 Para que las notificaciones en tiempo real incluyan la severidad/prioridad correcta y para dar soporte a la tabla renombrada `cat_tipo_expediente`, debes ejecutar en la base de datos el script ubicado en:
-`src/main/resources/update_triggers.sql`
+`deploy/database/02-realtime-notifications.sql`
 
 ### C. Limpieza de Datos Operativos (Opcional)
 Si necesitas limpiar la base de datos para pruebas operativas manteniendo únicamente los usuarios, gerencias y materias configuradas, ejecuta:

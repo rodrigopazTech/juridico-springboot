@@ -4,6 +4,8 @@ import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.security.CustomUserDetails;
 import com.juridico.sistema_juridico.service.PasswordPolicyService;
+import com.juridico.sistema_juridico.service.SessionRevocationService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -27,6 +29,9 @@ public class CambiarPasswordController {
     @Autowired
     private PasswordPolicyService passwordPolicyService;
 
+    @Autowired
+    private SessionRevocationService sessionRevocationService;
+
     @GetMapping("/cambiar-password")
     public String mostrarFormulario(
             @RequestParam(value = "razon", defaultValue = "primera-vez") String razon,
@@ -39,6 +44,7 @@ public class CambiarPasswordController {
     public String procesarCambioPassword(@RequestParam("newPassword") String newPassword,
             @RequestParam("confirmPassword") String confirmPassword,
             @RequestParam(value = "razon", defaultValue = "primera-vez") String razon,
+            HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
 
         if (!newPassword.equals(confirmPassword)) {
@@ -64,6 +70,8 @@ public class CambiarPasswordController {
                 usuario.setPasswordUpdatedAt(java.time.LocalDateTime.now()); // Registro de caducidad
                 usuarioRepository.save(usuario);
 
+                sessionRevocationService.revokeAll(usuario, "PASSWORD_CHANGED");
+
                 // Actualizar el Authentication tag en session
                 if (auth.getPrincipal() instanceof CustomUserDetails) {
                     CustomUserDetails principal = (CustomUserDetails) auth.getPrincipal();
@@ -81,8 +89,11 @@ public class CambiarPasswordController {
                     SecurityContextHolder.getContext().setAuthentication(newAuth);
                 }
 
-                redirectAttributes.addFlashAttribute("success", "Contraseña actualizada exitosamente.");
-                return "redirect:/";
+                SecurityContextHolder.clearContext();
+                if (request.getSession(false) != null) {
+                    request.getSession(false).invalidate();
+                }
+                return "redirect:/?passwordChanged=true";
             }
         }
 

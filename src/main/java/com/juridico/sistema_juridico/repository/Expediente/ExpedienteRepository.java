@@ -179,4 +179,5 @@ public interface ExpedienteRepository extends JpaRepository<Expediente, UUID> {
         List<Object[]> contarExpedientesCompletadosPorMesYGerenciaYMateriaIn(@Param("gerenciaId") Long gerenciaId, @Param("materiaIds") List<Integer> materiaIds);
 
         List<Expediente> findAllByAbogadoResponsableId(Integer abogadoId);
+
 }

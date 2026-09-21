@@ -22,13 +22,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 3. Activar Buscador de Recordatorios
-    const inputRec = document.getElementById('search-recordatorios');
-    if(inputRec) {
-        inputRec.addEventListener('keyup', function() {
-            filtrarTarjetas('search-recordatorios', 'grid-recordatorios-container');
-        });
-    }
 });
 
 // --- FUNCIONES GLOBALES (Window) PARA EVITAR REFERENCE ERROR ---

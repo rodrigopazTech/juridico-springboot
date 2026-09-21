@@ -54,6 +54,8 @@ public class UsuariosController {
     @Autowired
     private com.juridico.sistema_juridico.service.PasswordResetService passwordResetService;
     @Autowired
+    private com.juridico.sistema_juridico.service.AuditoriaTecnicaService auditoriaTecnicaService;
+    @Autowired
     private ExpedienteRepository expedienteRepository;
     @Autowired
     private AudienciaRepository audienciaRepository;
@@ -141,6 +143,8 @@ public class UsuariosController {
 
         model.addAttribute("listaUsuarios", usuariosPage);
         model.addAttribute("q", q);
+        model.addAttribute("coincidenciasBusqueda",
+                hayBusqueda ? construirCoincidenciasBusqueda(usuariosPage.getContent(), q.trim()) : Collections.emptyMap());
 
         if (!rolesConAccesoTotal.contains(usuarioActual.getRol()) && !usuarioActual.getGerencias().isEmpty()) {
             model.addAttribute("allGerencias", usuarioActual.getGerencias());
@@ -182,9 +186,22 @@ public class UsuariosController {
             jakarta.servlet.http.HttpServletRequest request,
             RedirectAttributes redirectAttrs) {
         boolean esNuevo = usuario.getId() == null;
-        Usuario guardado = usuarioService.guardarUsuario(usuario, gerenciasIds, materiasIds);
+        Usuario guardado;
+        try {
+            guardado = usuarioService.guardarUsuario(usuario, gerenciasIds, materiasIds);
+        } catch (IllegalArgumentException ex) {
+            redirectAttrs.addFlashAttribute("mensaje", ex.getMessage());
+            redirectAttrs.addFlashAttribute("tipo", "error");
+            return "redirect:/usuarios";
+        }
         syncService.sincronizarNombreUsuario(guardado);
         if (esNuevo) {
+            if (guardado.getEmail() == null || guardado.getEmail().isBlank()) {
+                redirectAttrs.addFlashAttribute("mensaje",
+                        "Usuario creado correctamente. El nombre de usuario generado es " + guardado.getUsername() + ".");
+                redirectAttrs.addFlashAttribute("tipo", "success");
+                return "redirect:/usuarios";
+            }
             if (emailMaintenance) {
                 redirectAttrs.addFlashAttribute("mensaje", "Usuario creado. " + emailMaintenanceMessage);
                 redirectAttrs.addFlashAttribute("tipo", "warning");
@@ -194,10 +211,11 @@ public class UsuariosController {
             redirectAttrs.addFlashAttribute("mensaje", enviado
                     ? "Usuario creado. Se envio el enlace de activacion a " + guardado.getEmail() + "."
                     : "Usuario creado, pero no se pudo enviar el enlace de activacion. Revisa SMTP y reenvia el enlace.");
+            redirectAttrs.addFlashAttribute("tipo", enviado ? "success" : "warning");
         } else {
             redirectAttrs.addFlashAttribute("mensaje", "Usuario guardado correctamente.");
+            redirectAttrs.addFlashAttribute("tipo", "success");
         }
-        redirectAttrs.addFlashAttribute("tipo", "success");
         return "redirect:/usuarios";
     }
 
@@ -205,11 +223,9 @@ public class UsuariosController {
     public String toggleStatusUsuario(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
         Usuario usuario = usuarioService.buscarPorId(id);
         validarPuedeVerUsuario(usuario);
-        usuario.setActivo(!usuario.getActivo());
-        List<Integer> gerenciasIds = usuario.getGerencias().stream().map(Gerencia::getId).collect(Collectors.toList());
-        List<Integer> materiasIds = usuario.getMaterias().stream().map(Materia::getId).collect(Collectors.toList());
-        usuarioService.guardarUsuario(usuario, gerenciasIds, materiasIds);
-        String estado = usuario.getActivo() ? "activado" : "desactivado";
+        boolean nuevoEstado = !Boolean.TRUE.equals(usuario.getActivo());
+        usuarioService.cambiarEstadoUsuario(id, nuevoEstado);
+        String estado = nuevoEstado ? "activado" : "desactivado";
         redirectAttrs.addFlashAttribute("mensaje", "Usuario " + estado + " correctamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
         return "redirect:/usuarios";
@@ -217,9 +233,14 @@ public class UsuariosController {
 
     @GetMapping("/eliminar/{id}")
     public String eliminarUsuario(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
-        usuarioService.eliminarUsuario(id);
-        redirectAttrs.addFlashAttribute("mensaje", "Usuario eliminado.");
-        redirectAttrs.addFlashAttribute("tipo", "success");
+        try {
+            usuarioService.eliminarUsuario(id);
+            redirectAttrs.addFlashAttribute("mensaje", "Usuario eliminado.");
+            redirectAttrs.addFlashAttribute("tipo", "success");
+        } catch (com.juridico.sistema_juridico.exception.ConflictException ex) {
+            redirectAttrs.addFlashAttribute("mensaje", ex.getMessage());
+            redirectAttrs.addFlashAttribute("tipo", "error");
+        }
         return "redirect:/usuarios";
     }
 
@@ -327,6 +348,41 @@ public class UsuariosController {
         return "ACCIONES";
     }
 
+    private Map<Integer, Map<String, String>> construirCoincidenciasBusqueda(List<Usuario> usuarios, String query) {
+        Map<Integer, Map<String, String>> coincidencias = new HashMap<>();
+        String buscado = query.toLowerCase(java.util.Locale.ROOT);
+        for (Usuario usuario : usuarios) {
+            Map<String, String> coincidencia = primeraCoincidencia(usuario, buscado);
+            if (!coincidencia.isEmpty()) {
+                coincidencias.put(usuario.getId(), coincidencia);
+            }
+        }
+        return coincidencias;
+    }
+
+    private Map<String, String> primeraCoincidencia(Usuario usuario, String buscado) {
+        List<Map.Entry<String, String>> campos = List.of(
+                Map.entry("Nombre de usuario", valor(usuario.getUsername())),
+                Map.entry("Número de empleado", valor(usuario.getNumeroEmpleado())),
+                Map.entry("Correo", valor(usuario.getEmail())),
+                Map.entry("Nombre", valor(usuario.getNombreCompleto())),
+                Map.entry("Rol", usuario.getRol() != null ? usuario.getRol().name() : ""));
+        for (Map.Entry<String, String> campo : campos) {
+            String texto = campo.getValue();
+            String normalizado = texto.toLowerCase(java.util.Locale.ROOT);
+            if (normalizado.contains(buscado)) {
+                String relevancia = normalizado.equals(buscado) || normalizado.startsWith(buscado)
+                        ? "Alta" : "Media";
+                return Map.of("campo", campo.getKey(), "texto", texto, "relevancia", relevancia);
+            }
+        }
+        return Collections.emptyMap();
+    }
+
+    private String valor(String texto) {
+        return texto == null ? "" : texto;
+    }
+
     @GetMapping("/api/{id}/historial")
     @ResponseBody
     public org.springframework.http.ResponseEntity<List<Map<String, Object>>> obtenerHistorialReal(
@@ -373,11 +429,11 @@ public class UsuariosController {
         return org.springframework.http.ResponseEntity.ok(response);
     }
 
-    @PostMapping("/api/password-temporal")
+    @PostMapping("/api/{id}/recuperacion-manual")
     @ResponseBody
-    public org.springframework.http.ResponseEntity<?> actualizarPasswordTemporal(
-            @RequestParam("id") Integer id,
-            @RequestParam(value = "passwordTemporal", required = false) String passwordTemporal,
+    public org.springframework.http.ResponseEntity<?> generarCodigoRecuperacionManual(
+            @PathVariable("id") Integer id,
+            @RequestParam("motivo") String motivo,
             jakarta.servlet.http.HttpServletRequest request) {
         try {
             String actorEmail = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -392,14 +448,36 @@ public class UsuariosController {
             Usuario usuarioModificado = usuarioService.buscarPorId(id);
             validarPuedeVerUsuario(actor, usuarioModificado);
             usuarioService.validarPuedeAdministrarUsuario(actor, usuarioModificado);
-            String temporal = passwordResetService.createTemporaryPassword(usuarioModificado, passwordTemporal, request);
+            if (!Boolean.TRUE.equals(usuarioModificado.getActivo())) {
+                return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT)
+                        .body(Map.of("mensaje", "No se puede generar un codigo de recuperacion porque el usuario se encuentra inactivo. Primero reactive la cuenta."));
+            }
 
-            auditoriaService.registrarActividadGeneral(usuarioModificado, "Contrasena Temporal Generada",
-                    "Se genero una contrasena temporal por el usuario: " + actor.getNombreCompleto(), "KEY");
+            String origen;
+            if (usuarioModificado.getEmail() == null || usuarioModificado.getEmail().isBlank()) {
+                origen = "SIN_CORREO_INSTITUCIONAL";
+            } else if (emailMaintenance) {
+                origen = "SERVICIO_CORREO_NO_DISPONIBLE";
+            } else if (auditoriaTecnicaService.existeFalloRecienteDeCorreo(usuarioModificado.getId(),
+                    java.time.Duration.ofMinutes(15))) {
+                origen = "ENVIO_SMTP_FALLIDO";
+            } else {
+                return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT)
+                        .body(Map.of("mensaje", "Primero envia el enlace al correo institucional. La recuperacion manual se habilita solo si el envio falla."));
+            }
+
+            com.juridico.sistema_juridico.service.PasswordResetService.ManualRecoveryCodeResult codigo =
+                    passwordResetService.createManualRecoveryCode(usuarioModificado, actor, motivo, origen, request);
+
+            auditoriaService.registrarActividadGeneral(usuarioModificado, "Codigo de Recuperacion Manual Emitido",
+                    "Se emitio un codigo de un uso por el usuario: " + actor.getNombreCompleto(), "KEY");
 
             return org.springframework.http.ResponseEntity.ok(Map.of(
-                    "mensaje", "Contrasena temporal creada. El usuario debera cambiarla al iniciar sesion.",
-                    "passwordTemporal", temporal));
+                    "mensaje", "El codigo no es una contrasena. El usuario debe capturarlo en Recuperacion manual y establecer una nueva contrasena.",
+                    "codigo", codigo.code(),
+                    "venceEn", codigo.expiresAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+                    "recoveryUrl", request.getContextPath() + "/auth/recuperacion-manual",
+                    "origen", origen));
         } catch (Exception e) {
             return org.springframework.http.ResponseEntity.badRequest().body(Map.of("mensaje", e.getMessage()));
         }
@@ -415,14 +493,26 @@ public class UsuariosController {
                     .orElseThrow(() -> new ResourceNotFoundException("Usuario actual no encontrado."));
             Usuario usuario = usuarioService.buscarPorId(id);
             validarPuedeVerUsuario(actor, usuario);
+            if (!Boolean.TRUE.equals(usuario.getActivo())) {
+                return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT)
+                        .body(Map.of("mensaje",
+                                "No se puede recuperar la contrasena porque el usuario se encuentra inactivo. Primero reactive la cuenta.",
+                                "manualRecoveryAvailable", false));
+            }
+            if (usuario.getEmail() == null || usuario.getEmail().isBlank()) {
+                return org.springframework.http.ResponseEntity.badRequest()
+                        .body(Map.of("mensaje", "Este usuario no tiene correo institucional. Se puede usar recuperacion manual con codigo.",
+                                "manualRecoveryAvailable", true));
+            }
             if (emailMaintenance) {
                 return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE)
-                        .body(Map.of("mensaje", emailMaintenanceMessage));
+                        .body(Map.of("mensaje", emailMaintenanceMessage, "manualRecoveryAvailable", true));
             }
             boolean enviado = passwordResetService.sendResetLinkForUser(usuario, request);
             if (!enviado) {
                 return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.BAD_GATEWAY)
-                        .body(Map.of("mensaje", "No se pudo enviar el enlace de restablecimiento."));
+                        .body(Map.of("mensaje", "No se pudo enviar el enlace de restablecimiento. Ya puedes generar un codigo de recuperacion manual.",
+                                "manualRecoveryAvailable", true));
             }
 
             auditoriaService.registrarActividadGeneral(usuario, "Enlace de Restablecimiento Enviado",

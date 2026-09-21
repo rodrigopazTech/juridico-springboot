@@ -24,10 +24,10 @@
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1">Correo Institucional *</label>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Correo institucional *</label>
                 <input type="email" th:field="*{email}" id="input-usuario-email" required
                     class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-gob-oro focus:border-gob-oro outline-none">
-                <p class="text-[10px] text-gray-400 mt-1">Se enviara un enlace de activacion a este correo.</p>
+                <p id="usuario-email-help" class="text-[10px] text-gray-400 mt-1">Se enviara un enlace de activacion a este correo.</p>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
@@ -116,7 +116,7 @@
 
             <div class="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
                 <i class="fas fa-envelope mr-1"></i>
-                Al guardar, SIAJ enviara por SMTP un enlace de activacion para que el usuario cree su contrasena.
+                SIAJ enviara un enlace de activacion al correo institucional registrado.
             </div>
 
             <div class="flex justify-end items-center mt-6 pt-4 border-t border-gray-100 gap-3">

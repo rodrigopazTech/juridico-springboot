@@ -190,6 +190,37 @@ public class AuditoriaTecnicaService {
         eventoRepository.save(evento);
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void registrarRecuperacionManual(Usuario actor, Usuario destino, HttpServletRequest request,
+            String accion, String resultado, Integer codigoHttp, String descripcion) {
+        AuditoriaEvento evento = eventoBase(request, actor, "SEGURIDAD", accion, resultado, codigoHttp);
+        evento.setDescripcion(descripcion);
+        evento.setEntidadTipo("USUARIO");
+        evento.setEntidadId(String.valueOf(destino.getId()));
+        eventoRepository.save(evento);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existeFalloRecienteDeCorreo(Integer usuarioId, java.time.Duration ventana) {
+        LocalDateTime limite = LocalDateTime.now().minus(ventana);
+        return eventoRepository.existsByAccionAndEntidadIdAndFechaAfter(
+                "PASSWORD_RESET_ADMIN_EMAIL_ERROR", String.valueOf(usuarioId), limite);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void cerrarSesionesActivasUsuario(Usuario usuario, String motivo) {
+        if (usuario == null || usuario.getId() == null) {
+            return;
+        }
+        for (AuditoriaSesion sesion : sesionRepository.findByEstadoAndUsuarioId("ACTIVA", usuario.getId())) {
+            sesion.setEstado("CERRADA");
+            sesion.setMotivoCierre(motivo);
+            sesion.setFechaCierre(LocalDateTime.now());
+            sesion.setFechaUltimaActividad(LocalDateTime.now());
+            sesionRepository.save(sesion);
+        }
+    }
+
     @Transactional
     public Map<String, Object> obtenerResumen() {
         cerrarSesionesInactivas();

@@ -53,4 +53,12 @@ public class Recordatorio {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    /**
+     * Cambia cuando se reprograma la fecha u hora. Permite generar un nuevo aviso
+     * sin borrar el historial de la programación anterior.
+     */
+    @Builder.Default
+    @Column(name = "recordatorio_revision", nullable = false)
+    private Integer recordatorioRevision = 0;
+
 }

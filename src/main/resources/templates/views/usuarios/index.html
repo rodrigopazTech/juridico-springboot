@@ -35,7 +35,35 @@
         </div>
     </div>
 
-    <div th:replace="~{fragments/usuarios/modal-usuario :: modal}"></div>
+    <div id="modal-confirmar-generico"
+         class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 px-4"
+         role="dialog" aria-modal="true" aria-labelledby="modal-confirmar-titulo">
+        <div id="modal-confirmar-border"
+             class="relative w-full max-w-sm rounded-lg border-t-4 border-amber-500 bg-white shadow-2xl">
+            <div class="p-6 text-center">
+                <div id="modal-confirmar-icon-bg"
+                     class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
+                    <i id="modal-confirmar-icon" class="fas fa-exclamation-triangle text-2xl text-amber-600"></i>
+                </div>
+                <h3 id="modal-confirmar-titulo" class="mb-2 text-lg font-bold text-gray-900">Confirmar accion</h3>
+                <p id="modal-confirmar-texto" class="mb-4 text-sm text-gray-600"></p>
+                <div id="modal-confirmar-advertencia-box"
+                     class="mb-5 hidden rounded border border-amber-200 bg-amber-50 p-3 text-left">
+                    <p id="modal-confirmar-advertencia" class="text-xs text-amber-900"></p>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="cerrarModalConfirmarGenerico()"
+                            class="flex-1 rounded border border-gray-300 px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                    <button type="button" onclick="ejecutarAccionConfirmada()" id="btn-modal-confirmar-accion"
+                            class="flex-1 rounded bg-gob-guinda px-4 py-2 text-sm font-bold text-white shadow-md hover:bg-opacity-95">
+                        Aceptar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <script th:inline="javascript">

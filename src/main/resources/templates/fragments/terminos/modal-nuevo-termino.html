@@ -119,6 +119,29 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Tipo de Término / Plazo Legal</label>
+                            <select name="tipoTerminoId" id="select-tipo-termino"
+                                class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm bg-white shadow-sm transition-all">
+                                <option value="">-- Seleccionar Tipo de Término --</option>
+                                <option th:each="tt : ${listaTiposTermino}" th:value="${tt.id}"
+                                    th:text="${tt.nombre + ' (' + tt.diasPredeterminados + ' días ' + tt.tipoDias + ')'}"></option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Modalidad de Plazo</label>
+                            <div class="flex items-center gap-3 py-2">
+                                <label class="inline-flex items-center text-xs font-bold text-gray-700 cursor-pointer">
+                                    <input type="radio" name="esTiempoDinamico" value="false" checked class="text-gob-guinda mr-1"> Plazo Fijo por Ley
+                                </label>
+                                <label class="inline-flex items-center text-xs font-bold text-amber-800 cursor-pointer">
+                                    <input type="radio" name="esTiempoDinamico" value="true" class="text-gob-guinda mr-1"> Fecha Dinámica
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
                             <label class="block text-sm font-bold text-gray-700 mb-1">Actuación / Asunto *</label>
                             <input type="text" name="asunto" id="input-asunto" required
                                 placeholder="Ej. Contestación de demanda"

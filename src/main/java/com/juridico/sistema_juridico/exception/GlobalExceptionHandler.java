@@ -1,10 +1,13 @@
 package com.juridico.sistema_juridico.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.ControllerAdvice; // <--- OJO: No @RestControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
 
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -15,6 +18,8 @@ import com.juridico.sistema_juridico.service.AuditoriaTecnicaService;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private final AuditoriaTecnicaService auditoriaTecnicaService;
 
@@ -45,20 +50,20 @@ public class GlobalExceptionHandler {
     public Object handleSpringAccessDenied(org.springframework.security.access.AccessDeniedException ex, HttpServletRequest request) {
         auditoriaTecnicaService.registrarAccesoDenegado(request, ex.getMessage());
         if (isApiRequest(request) || isJsonRequest(request)) {
-            return jsonError(HttpStatus.FORBIDDEN, "Acceso Denegado: " + ex.getMessage());
+            return jsonError(HttpStatus.FORBIDDEN, "No tienes permiso para realizar esta acción.");
         }
 
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acceso Denegado: " + ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permiso para realizar esta acción.");
     }
 
     @ExceptionHandler({ForbiddenException.class, UnauthorizedException.class})
     public Object handleSecurityErrors(RuntimeException ex, RedirectAttributes attrs, HttpServletRequest request) {
         auditoriaTecnicaService.registrarAccesoDenegado(request, ex.getMessage());
         if (isApiRequest(request)) {
-            return jsonError(HttpStatus.FORBIDDEN, "Acceso Denegado: " + ex.getMessage());
+            return jsonError(HttpStatus.FORBIDDEN, "No tienes permiso para realizar esta acción.");
         }
 
-        attrs.addFlashAttribute("mensaje", "Acceso Denegado: " + ex.getMessage());
+        attrs.addFlashAttribute("mensaje", "No tienes permiso para realizar esta acción.");
         attrs.addFlashAttribute("tipo", "warning"); // Alerta Amarilla
         return new RedirectView(getRefererOrHome(request));
     }
@@ -79,37 +84,35 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public Object handleDatabaseError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
         auditoriaTecnicaService.registrarError(request, ex);
-        System.err.println("--- ERROR DE INTEGRIDAD DE DATOS CAPTURADO POR GLOBAL HANDLER ---");
-        System.err.println("Mensaje: " + ex.getMessage());
-        ex.printStackTrace();
+        LOGGER.error("No fue posible guardar cambios por una relación de datos", ex);
 
         if (isApiRequest(request)) {
             return jsonError(HttpStatus.CONFLICT,
-                    "No se puede realizar la accion: El registro esta vinculado a otros datos o ya existe.");
+                    "No pudimos guardar los cambios porque el registro está relacionado con otros datos o ya existe.");
         }
 
-        attrs.addFlashAttribute("mensaje", "No se puede realizar la acción: El registro está vinculado a otros datos o ya existe.");
+        attrs.addFlashAttribute("mensaje", "No pudimos guardar los cambios porque el registro está relacionado con otros datos o ya existe.");
         attrs.addFlashAttribute("tipo", "error");
         return new RedirectView(getRefererOrHome(request));
     }
 
     // 5. ERROR GENERAL (Cualquier otra cosa)
     @ExceptionHandler(Exception.class)
-    public Object handleGeneralError(Exception ex, RedirectAttributes attrs, HttpServletRequest request) {
-        auditoriaTecnicaService.registrarError(request, ex);
-        // Imprimimos el error real en la consola
-        System.err.println("--- ERROR CAPTURADO POR GLOBAL HANDLER ---");
-        System.err.println("Mensaje: " + ex.getMessage());
-        ex.printStackTrace();
+    public Object handleGeneralError(Exception ex, HttpServletRequest request) {
+        registrarErrorDeFormaSegura(request, ex);
+        LOGGER.error("Error inesperado procesando {} {}", request.getMethod(), request.getRequestURI(), ex);
 
         if (isApiRequest(request)) {
-            return jsonError(HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrio un error inesperado en el sistema.");
+            return jsonError(HttpStatus.INTERNAL_SERVER_ERROR, "No pudimos completar la acción. Inténtalo de nuevo más tarde.");
         }
-        
-        attrs.addFlashAttribute("mensaje", "Ocurrió un error inesperado en el sistema.");
-        attrs.addFlashAttribute("tipo", "error");
-        
-        return new RedirectView(getRefererOrHome(request));
+
+        ModelAndView errorPage = new ModelAndView("error/500");
+        errorPage.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+        errorPage.addObject("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+        errorPage.addObject("error", "No pudimos completar la acción");
+        errorPage.addObject("message", "Inténtalo de nuevo más tarde. Si el problema continúa, contacta a la administración.");
+        errorPage.addObject("path", request.getRequestURI());
+        return errorPage;
     }
 
     // 6. TAMAÑO DE ARCHIVO EXCEDIDO (1GB)
@@ -146,5 +149,13 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<Map<String, String>> jsonError(HttpStatus status, String mensaje) {
         return ResponseEntity.status(status).body(Map.of("error", mensaje));
+    }
+
+    private void registrarErrorDeFormaSegura(HttpServletRequest request, Exception ex) {
+        try {
+            auditoriaTecnicaService.registrarError(request, ex);
+        } catch (Exception auditError) {
+            LOGGER.warn("No fue posible registrar el error en la auditoria tecnica", auditError);
+        }
     }
 }

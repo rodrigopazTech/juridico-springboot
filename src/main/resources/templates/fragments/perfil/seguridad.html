@@ -67,10 +67,46 @@
         <div class="mt-8 flex justify-center">
             <button id="btnSubmitPassword" type="submit"
                 class="w-full bg-gob-guinda text-white px-8 py-3 rounded-xl hover:bg-gob-guindaDark font-bold shadow-xl transition-all flex items-center justify-center gap-2">
-                <i class="fas fa-key"></i> Actualizar Credenciales
+                <i class="fas fa-key"></i> Cambiar contraseña
             </button>
         </div>
     </form>
+
+    <section class="max-w-md mx-auto mt-10 border-t border-gray-200 pt-8" aria-labelledby="cuentaMicrosoftTitulo">
+        <h4 id="cuentaMicrosoftTitulo" class="text-lg font-bold text-gray-800 flex items-center gap-2">
+            <i class="fab fa-microsoft text-gob-oro"></i> Cuenta Microsoft
+        </h4>
+
+        <div th:if="${usuario.microsoftLoginEnabled == true and usuario.microsoftObjectId != null}"
+             class="mt-4 rounded-xl border border-green-200 bg-green-50 p-4">
+            <p class="font-bold text-green-800">Cuenta vinculada</p>
+            <p class="mt-1 text-sm text-green-700"
+               th:text="${usuario.microsoftUserPrincipalName != null ? usuario.microsoftUserPrincipalName : usuario.email}">
+                usuario@institucion.gob.mx
+            </p>
+            <form th:action="@{/perfil/seguridad/microsoft/desvincular}" method="post" class="mt-4">
+                <button type="submit"
+                    class="w-full rounded-lg border border-red-700 px-4 py-2.5 text-sm font-bold text-red-700 hover:bg-red-50">
+                    Desvincular cuenta Microsoft
+                </button>
+            </form>
+        </div>
+
+        <div th:unless="${usuario.microsoftLoginEnabled == true and usuario.microsoftObjectId != null}"
+             class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <p class="font-bold text-gray-800">Cuenta no vinculada</p>
+            <p class="mt-1 text-sm text-gray-600">
+                Puedes vincular tu correo institucional para utilizar Microsoft como método de acceso.
+            </p>
+            <a th:if="${microsoftConfigured}" th:href="@{/perfil/seguridad/microsoft/vincular}"
+               class="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[#691228] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#4e0c1d]">
+                <i class="fab fa-microsoft"></i> Vincular cuenta Microsoft
+            </a>
+            <p th:unless="${microsoftConfigured}" class="mt-3 text-sm font-medium text-amber-700">
+                El acceso con Microsoft no está habilitado en este entorno.
+            </p>
+        </div>
+    </section>
 
     <!-- ═══════════════════════════════════════════════
          Script 1: Toggle de visibilidad

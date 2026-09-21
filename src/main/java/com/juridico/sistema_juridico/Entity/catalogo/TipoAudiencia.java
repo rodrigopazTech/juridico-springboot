@@ -30,6 +30,18 @@ public class TipoAudiencia {
 
     @Builder.Default
     private Boolean activo = true;
+
+    @Column(name = "dias_notificacion_previa")
+    @Builder.Default
+    private Integer diasNotificacionPrevia = 3;
+
+    @Column(name = "semaforo_rojo_dias")
+    @Builder.Default
+    private Integer semaforoRojoDias = 1;
+
+    @Column(name = "semaforo_amarillo_dias")
+    @Builder.Default
+    private Integer semaforoAmarilloDias = 3;
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;

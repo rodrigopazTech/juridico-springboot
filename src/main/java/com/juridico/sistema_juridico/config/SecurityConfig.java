@@ -15,6 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 
 import com.juridico.sistema_juridico.security.CustomUserDetailsService;
 import com.juridico.sistema_juridico.security.ForcePasswordChangeFilter;
@@ -59,7 +61,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, SessionRegistry sessionRegistry) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .headers(headers -> headers
@@ -175,7 +177,11 @@ public class SecurityConfig {
                         .failureHandler((request, response, exception) -> {
                             auditoriaTecnicaService.registrarLoginFallido(request.getParameter("username"), request,
                                     exception.getMessage());
-                            response.sendRedirect("/?error=true");
+                            if (exception instanceof org.springframework.security.authentication.DisabledException) {
+                                response.sendRedirect("/?inactive=true");
+                            } else {
+                                response.sendRedirect("/?error=true");
+                            }
                         })
                         .permitAll())
                 .logout(logout -> logout
@@ -204,6 +210,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .invalidSessionUrl("/?timeout=true")
                         .maximumSessions(3)
+                        .sessionRegistry(sessionRegistry)
                         .expiredUrl("/?timeout=true"));
 
         return http.build();
@@ -225,6 +232,11 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
+    }
+
+    @Bean
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
     }
 
     private boolean isJsonRequest(jakarta.servlet.http.HttpServletRequest request) {

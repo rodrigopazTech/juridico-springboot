@@ -80,6 +80,17 @@ public class UsuarioIdentityService implements ApplicationRunner {
         return uniqueUsername(baseUsername(usuario), usernames);
     }
 
+    public String generateUsernameFromName(Usuario usuario) {
+        Set<String> usernames = new HashSet<>();
+        usuarioRepository.findAll().forEach(u -> {
+            if (u.getUsername() != null && !u.getUsername().isBlank()
+                    && (usuario.getId() == null || !u.getId().equals(usuario.getId()))) {
+                usernames.add(u.getUsername().trim().toLowerCase(Locale.ROOT));
+            }
+        });
+        return uniqueUsername(normalizeUsername(usuario.getNombreCompleto()), usernames);
+    }
+
     private String baseUsername(Usuario usuario) {
         if (usuario.getUsername() != null && !usuario.getUsername().isBlank()) {
             return normalizeUsername(usuario.getUsername());

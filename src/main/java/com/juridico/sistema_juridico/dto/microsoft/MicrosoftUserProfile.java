@@ -10,7 +10,7 @@ public record MicrosoftUserProfile(
         String jobTitle,
         String mail,
         String mobilePhone,
-        String officeLocation) {
+        String officeLocation) implements java.io.Serializable {
 
     public String preferredEmail() {
         if (mail != null && !mail.isBlank()) {

@@ -94,7 +94,7 @@ document.addEventListener('submit', function (e) {
         } else if (action.includes('retroceder')) {
             showSpinner('Regresando a la etapa anterior...');
         } else if (action.includes('inyectar')) {
-            showSpinner('Inyectando datos a la base oficial...');
+            showSpinner('Importando datos...');
         } else if (action.includes('guardar-gerencia-global')) {
             showSpinner('Guardando gerencia del lote...');
         } else if (action.includes('cancelar')) {
@@ -580,7 +580,7 @@ function confirmarInyeccion() {
         showCancelButton: true,
         confirmButtonColor: '#16332cff',
         cancelButtonColor: '#7b1c2e',
-        confirmButtonText: 'Sí, ¡Inyectar ahora!',
+        confirmButtonText: 'Sí, importar ahora',
         cancelButtonText: 'Revisar de nuevo'
     }).then((result) => {
         if (result.isConfirmed) {

@@ -63,7 +63,7 @@
                 role="alert">
                 <i class="fas fa-exclamation-circle mr-3"></i>
                 <div>
-                    <span class="font-bold font-headings">Error de acceso.</span> Verifique credenciales.
+                    <span class="font-bold font-headings">No pudiste iniciar sesión.</span> Revisa tu correo y contraseña.
                 </div>
             </div>
 
@@ -71,21 +71,42 @@
                 class="flex items-center p-4 mb-4 text-sm text-gob-verde border-l-4 border-gob-verde bg-green-50 rounded shadow-sm"
                 role="alert">
                 <i class="fas fa-check-circle mr-3"></i>
-                <span>Sesión cerrada correctamente.</span>
+                <span>Cerraste sesión correctamente.</span>
             </div>
 
             <div th:if="${param.timeout}"
                 class="flex items-center p-4 mb-4 text-sm text-blue-800 border-l-4 border-blue-800 bg-blue-50 rounded shadow-sm"
                 role="alert">
                 <i class="fas fa-info-circle mr-3"></i>
-                <span>Su sesión ha expirado, vuelve a iniciar sesión.</span>
+                <span>Tu sesión terminó. Inicia sesión nuevamente.</span>
             </div>
 
-            <div th:if="${microsoftLoginConfigured and microsoftError}"
+            <div th:if="${microsoftLoginConfigured and microsoftError != null}"
                 class="flex items-center p-4 mb-4 text-sm text-amber-900 border-l-4 border-amber-700 bg-amber-50 rounded shadow-sm"
                 role="alert">
                 <i class="fas fa-circle-info mr-3"></i>
                 <span th:text="${microsoftError}">No fue posible iniciar sesion con Microsoft.</span>
+            </div>
+
+            <div th:if="${param.inactive}"
+                class="flex items-center p-4 mb-4 text-sm text-amber-900 border-l-4 border-amber-700 bg-amber-50 rounded shadow-sm"
+                role="alert">
+                <i class="fas fa-user-slash mr-3"></i>
+                <span>Tu cuenta está inactiva. Contacta a la administración.</span>
+            </div>
+
+            <div th:if="${param.passwordChanged}"
+                class="flex items-center p-4 mb-4 text-sm text-green-800 border-l-4 border-green-700 bg-green-50 rounded shadow-sm"
+                role="alert">
+                <i class="fas fa-check-circle mr-3"></i>
+                <span>Contrasena actualizada. Inicia sesion nuevamente.</span>
+            </div>
+
+            <div th:if="${param.disabled}"
+                class="flex items-center p-4 mb-4 text-sm text-amber-900 border-l-4 border-amber-700 bg-amber-50 rounded shadow-sm"
+                role="alert">
+                <i class="fas fa-ban mr-3"></i>
+                <span>Tu cuenta está suspendida. Contacta a la administración.</span>
             </div>
 
             <form th:action="@{/perform_login}" method="POST" class="mt-8 space-y-6">
@@ -127,6 +148,11 @@
                         Recuperar contrasena
                     </a>
                 </div>
+
+                <a th:href="@{/auth/recuperacion-manual}"
+                    class="block text-center text-xs font-bold text-gob-guinda hover:underline">
+                    <i class="fas fa-shield-alt mr-1"></i> Tengo un codigo de recuperacion
+                </a>
 
                 <div class="pt-2">
                     <button type="submit"

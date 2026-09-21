@@ -256,11 +256,11 @@ public class AdminImportController {
             // Corrección automática post-inyección: garantizar que ningún expediente
             // quede con materia "Por Asignar" si su gerencia permite inferirla.
             int corregidos = loteMigracionService.corregirMateriasPorAsignar();
-            String msg = "¡Inyección Exitosa! Todos los datos del lote han sido migrados a la base de datos oficial.";
-            if (corregidos > 0) msg += " (" + corregidos + " expediente(s) recibieron su materia por defecto según gerencia.)";
+            String msg = "Los datos del lote se importaron correctamente.";
+            if (corregidos > 0) msg += " Se asignó una materia predeterminada a " + corregidos + " expediente(s).";
             redirectAttributes.addFlashAttribute("mensaje", msg);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error durante la inyección: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "No pudimos importar el lote. Revisa los datos e inténtalo de nuevo.");
         }
         return "redirect:/admin/importar";
     }
@@ -277,7 +277,7 @@ public class AdminImportController {
             redirectAttributes.addFlashAttribute("mensaje",
                 "Corrección completada: " + corregidos + " expediente(s) actualizados con materia por defecto según su gerencia.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error en la corrección: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "No pudimos actualizar las materias. Inténtalo de nuevo.");
         }
         return "redirect:/admin/importar";
     }

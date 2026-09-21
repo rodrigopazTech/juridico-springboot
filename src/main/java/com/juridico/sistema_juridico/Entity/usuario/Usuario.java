@@ -37,7 +37,7 @@ public class Usuario {
     @Column(name = "nombre_completo", nullable = false, length = 200)
     private String nombreCompleto;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(unique = true, length = 100)
     private String email;
 
     @Column(name = "username", unique = true, length = 80)
@@ -128,6 +128,10 @@ public class Usuario {
      */
     @Column(name = "password_updated_at")
     private LocalDateTime passwordUpdatedAt;
+
+    @Column(name = "security_version")
+    @Builder.Default
+    private Integer securityVersion = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creado_por_id")

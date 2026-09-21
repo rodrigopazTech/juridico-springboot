@@ -1,0 +1,17 @@
+{
+  "db_schema_actual.sql": "3a5f266ec1516161b6803b306824540e41405072303e8edb68058782780aa750",
+  "src/main/java/com/juridico/sistema_juridico/controller/AdminImportController.java": "00f7afefab00b9655193828d383d8f9562efac49b9dffd73fecdf2dd12e6ba4d",
+  "src/main/java/com/juridico/sistema_juridico/controller/api/MigrationApiController.java": "c1825e8205e3469632228a46b8675eb59ae3960ac37fdc1b4d2b3c60f5bee4bc",
+  "src/main/java/com/juridico/sistema_juridico/service/procesal/LoteMigracionService.java": "8c8821bb2a36e7b051d32bd8afad561719891301862139c0acbbda8648f13ab1",
+  "src/main/java/com/juridico/sistema_juridico/service/procesal/TerminoImportService.java": "4cc097d0988ff2e25f8c8ce45fe02c0abf4838aa5d1f1552769878054582b30b",
+  "src/main/java/com/juridico/sistema_juridico/service/ImportService.java": "cddaf9077f6d365788e3e496eaf3e2f512a6c82ddbf5ee299aa6b1b345addf71",
+  "src/main/java/com/juridico/sistema_juridico/controller/AudienciasController.java": "be59ab4f33045973732656e66844816120926be79ac4c2881832f36ea2837479",
+  "src/main/java/com/juridico/sistema_juridico/controller/TerminosController.java": "5d2ea33cfb4749f15b3d720664b355114e61c9794489394fffa563680c30f1eb",
+  "src/main/java/com/juridico/sistema_juridico/controller/CatalogosController.java": "7080408fa4073581987d815eebd5a9ef60a33d50411c382d8c13eb35b467ef2e",
+  "src/main/java/com/juridico/sistema_juridico/service/UsuarioService.java": "211db32731a9562ebd46e54e1c1b6b5f833dd1b41855d335e7734cfa233483ef",
+  "src/main/java/com/juridico/sistema_juridico/service/configuracion/ConfiguracionAlertaService.java": "d997c24ba96d00d173d8675262988ba028dcac243f6d4da9eba9ebf8cb226e60",
+  "src/main/java/com/juridico/sistema_juridico/service/configuracion/ConfiguracionSemaforoService.java": "c34ff0c4859b1d9ce6c7fc39aa05a97b168782ecddefff0ccff0c1daa986b680",
+  "src/main/java/com/juridico/sistema_juridico/service/FileStorageService.java": "5c1253b378230d9fd5c16a0f383360cd56d4969b51b82d66f04c607f1cf7064d",
+  "src/main/java/com/juridico/sistema_juridico/config/DataInitializer.java": "801abbd9a813adb1aaa6d3222546bcd280d1817d7359db833655d556ff4d3955",
+  "deploy/database/03-allow-local-only-users.sql": "904a515d857f70056c0298759af5a4089e2d1b6cbd9021926212109715de5d8e"
+}

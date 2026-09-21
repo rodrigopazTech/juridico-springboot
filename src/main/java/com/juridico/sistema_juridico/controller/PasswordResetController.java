@@ -7,11 +7,13 @@ import com.juridico.sistema_juridico.dto.request.auth.PasswordResetRequest;
 import com.juridico.sistema_juridico.dto.response.auth.PasswordResetResponse;
 import com.juridico.sistema_juridico.service.PasswordResetService;
 import com.juridico.sistema_juridico.service.PasswordResetService.ConfirmResetResult;
+import com.juridico.sistema_juridico.service.PasswordResetService.ManualRecoveryResult;
 import com.juridico.sistema_juridico.service.PasswordResetService.ResetRequestResult;
 import com.juridico.sistema_juridico.service.PasswordPolicyService;
 import com.juridico.sistema_juridico.service.UsernameRecoveryService;
 import com.juridico.sistema_juridico.service.UsernameRecoveryService.UsernameRecoveryResult;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,10 +35,14 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PasswordResetController {
 
+    public static final String ACTIVATED_USER_ID = "SIAJ_ACTIVATED_USER_ID";
+
     private static final String GENERIC_RESET_MESSAGE =
             "Si la cuenta existe, enviaremos un enlace al correo institucional registrado por el administrador.";
     private static final String GENERIC_USERNAME_MESSAGE =
             "Si el correo institucional esta registrado, enviaremos tu usuario a ese correo.";
+    private static final String EMAIL_UNAVAILABLE_MESSAGE =
+            "No fue posible enviar el correo en este momento. Solicita a un responsable autorizado un codigo de recuperacion.";
 
     private final PasswordResetService passwordResetService;
     private final PasswordPolicyService passwordPolicyService;
@@ -66,11 +72,11 @@ public class PasswordResetController {
             return "redirect:/auth/solicitar-reset";
         }
         ResetRequestResult result = passwordResetService.requestPasswordReset(resetRequest.getIdentifier(), servletRequest);
-        if (result == ResetRequestResult.RATE_LIMITED) {
-            redirectAttributes.addFlashAttribute("error",
+        switch (result) {
+            case RATE_LIMITED -> redirectAttributes.addFlashAttribute("error",
                     "Se alcanzaron demasiadas solicitudes. Intenta nuevamente mas tarde.");
-        } else {
-            redirectAttributes.addFlashAttribute("success", GENERIC_RESET_MESSAGE);
+            case EMAIL_ERROR -> redirectAttributes.addFlashAttribute("error", EMAIL_UNAVAILABLE_MESSAGE);
+            case SENT, GENERIC -> redirectAttributes.addFlashAttribute("success", GENERIC_RESET_MESSAGE);
         }
         return "redirect:/auth/solicitar-reset";
     }
@@ -89,11 +95,11 @@ public class PasswordResetController {
             return "redirect:/auth/recordar-usuario";
         }
         UsernameRecoveryResult result = usernameRecoveryService.requestUsernameReminder(email, servletRequest);
-        if (result == UsernameRecoveryResult.RATE_LIMITED) {
-            redirectAttributes.addFlashAttribute("error",
+        switch (result) {
+            case RATE_LIMITED -> redirectAttributes.addFlashAttribute("error",
                     "Se alcanzaron demasiadas solicitudes. Intenta nuevamente mas tarde.");
-        } else {
-            redirectAttributes.addFlashAttribute("success", GENERIC_USERNAME_MESSAGE);
+            case EMAIL_ERROR -> redirectAttributes.addFlashAttribute("error", EMAIL_UNAVAILABLE_MESSAGE);
+            case SENT, GENERIC -> redirectAttributes.addFlashAttribute("success", GENERIC_USERNAME_MESSAGE);
         }
         return "redirect:/auth/recordar-usuario";
     }
@@ -129,7 +135,11 @@ public class PasswordResetController {
     public String confirmarResetWeb(@RequestParam("token") String token,
             @RequestParam("nuevaContrasena") String nuevaContrasena,
             @RequestParam("confirmacionContrasena") String confirmacionContrasena,
+            @RequestParam(value = "activation", defaultValue = "false") boolean activation,
             HttpServletRequest servletRequest, RedirectAttributes redirectAttributes) {
+        Usuario usuarioActivado = activation
+                ? passwordResetService.findUserForValidToken(token).orElse(null)
+                : null;
         PasswordResetConfirmRequest request = new PasswordResetConfirmRequest();
         request.setToken(token);
         request.setNuevaContrasena(nuevaContrasena);
@@ -137,6 +147,10 @@ public class PasswordResetController {
 
         ConfirmResetResult result = passwordResetService.confirmReset(request, servletRequest);
         if (result == ConfirmResetResult.SUCCESS) {
+            if (activation && usuarioActivado != null) {
+                servletRequest.getSession(true).setAttribute(ACTIVATED_USER_ID, usuarioActivado.getId());
+                return "redirect:/auth/activacion-completada";
+            }
             redirectAttributes.addFlashAttribute("logoutSuccess", false);
             redirectAttributes.addFlashAttribute("passwordResetSuccess",
                     "Contrasena actualizada. Ya puedes iniciar sesion.");
@@ -144,7 +158,40 @@ public class PasswordResetController {
         }
 
         redirectAttributes.addFlashAttribute("error", messageFor(result));
-        return "redirect:/auth/reset-password?token=" + token;
+        return activation
+                ? "redirect:/auth/activar?token=" + token
+                : "redirect:/auth/reset-password?token=" + token;
+    }
+
+    @GetMapping("/auth/activacion-completada")
+    public String mostrarActivacionCompletada(HttpSession session, Model model) {
+        if (session.getAttribute(ACTIVATED_USER_ID) == null) {
+            return "redirect:/";
+        }
+        model.addAttribute("microsoftConfigured", microsoftAuthProperties.isVisibleInUi());
+        return "views/auth/activacion-completada";
+    }
+
+    @GetMapping("/auth/recuperacion-manual")
+    public String mostrarRecuperacionManual() {
+        return "views/auth/recuperacion-manual";
+    }
+
+    @PostMapping("/auth/recuperacion-manual")
+    public String confirmarRecuperacionManual(@RequestParam("usuario") String usuario,
+            @RequestParam("codigo") String codigo,
+            @RequestParam("nuevaContrasena") String nuevaContrasena,
+            @RequestParam("confirmacionContrasena") String confirmacionContrasena,
+            HttpServletRequest request, RedirectAttributes redirectAttributes) {
+        ManualRecoveryResult result = passwordResetService.confirmManualRecovery(usuario, codigo,
+                nuevaContrasena, confirmacionContrasena, request);
+        if (result == ManualRecoveryResult.SUCCESS) {
+            redirectAttributes.addFlashAttribute("passwordResetSuccess",
+                    "Contrasena actualizada. Ya puedes iniciar sesion.");
+            return "redirect:/";
+        }
+        redirectAttributes.addFlashAttribute("error", messageForManualRecovery(result));
+        return "redirect:/auth/recuperacion-manual";
     }
 
     @PostMapping("/api/auth/solicitar-reset")
@@ -160,6 +207,10 @@ public class PasswordResetController {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                     .body(new PasswordResetResponse("RATE_LIMITED",
                             "Demasiadas solicitudes. Intenta nuevamente mas tarde."));
+        }
+        if (result == ResetRequestResult.EMAIL_ERROR) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(new PasswordResetResponse("EMAIL_UNAVAILABLE", EMAIL_UNAVAILABLE_MESSAGE));
         }
         return ResponseEntity.accepted()
                 .body(new PasswordResetResponse("ACCEPTED", GENERIC_RESET_MESSAGE));
@@ -188,6 +239,16 @@ public class PasswordResetController {
     private String messageFor(ConfirmResetResult result) {
         return switch (result) {
             case INVALID_TOKEN -> "El enlace es invalido o ha expirado.";
+            case PASSWORD_MISMATCH -> "Las contrasenas no coinciden.";
+            case WEAK_PASSWORD -> passwordPolicyService.description();
+            case SUCCESS -> "Contrasena actualizada correctamente.";
+        };
+    }
+
+    private String messageForManualRecovery(ManualRecoveryResult result) {
+        return switch (result) {
+            case INVALID_CODE -> "El usuario o codigo es invalido, vencio o ya fue utilizado.";
+            case INACTIVE_USER -> "El usuario SIAJ se encuentra inactivo. La recuperacion de contrasena no esta disponible; comuniquese con el administrador.";
             case PASSWORD_MISMATCH -> "Las contrasenas no coinciden.";
             case WEAK_PASSWORD -> passwordPolicyService.description();
             case SUCCESS -> "Contrasena actualizada correctamente.";

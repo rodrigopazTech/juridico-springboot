@@ -33,7 +33,7 @@ public class MicrosoftAuthProperties {
     }
 
     public boolean isVisibleInUi() {
-        return uiVisible && isConfigured();
+        return isConfigured();
     }
 
     private boolean hasText(String value) {

@@ -1,0 +1,21 @@
+[
+  {
+    "numeroExpediente": "EXP-001/2026",
+    "gerencia": "Gerencia Laboral y Penal",
+    "materia": "Laboral",
+    "descripcion": "Asunto de ejemplo",
+    "partes": "Actor: Persona A; Demandado: Entidad B",
+    "sede": "Ciudad de México",
+    "organoJurisdiccional": "Tribunal de ejemplo",
+    "abogadoResponsable": "Ana Pérez López",
+    "tipoAudiencia": "Conciliación",
+    "fechaAudiencia": "2026-09-15",
+    "horaAudiencia": "09:30",
+    "sala": "Sala 1",
+    "abogadoCompareciente": "Ana Pérez López",
+    "esEnLinea": false,
+    "enlaceReunion": "https://example.org/reunion/123",
+    "actaDocumento": "acta-001.pdf",
+    "observaciones": "Observación de ejemplo"
+  }
+]

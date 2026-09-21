@@ -1,0 +1,21 @@
+[Unit]
+Description=SIAJ - Sistema Integral de Agenda Juridica
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ajappprod
+Group=ajappprod
+WorkingDirectory=/home/ajappprod/siaj
+EnvironmentFile=/etc/siaj/siaj.env
+ExecStart=/usr/bin/java -jar /home/ajappprod/siaj/app/siaj.jar
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -4,7 +4,8 @@ public enum NotificacionCategoria {
     EXPEDIENTES("Expedientes", 1),
     TERMINOS("Terminos", 2),
     AUDIENCIAS("Audiencias", 3),
-    SEGURIDAD("Seguridad", 4);
+    TAREAS("Tareas", 4),
+    SEGURIDAD("Seguridad", 5);
 
     private final String nombreVisible;
     private final int orden;

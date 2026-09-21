@@ -78,6 +78,21 @@ public class Termino {
     @Column(name = "acuse_nombre", length = 500)
     private String acuseNombre;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tipo_termino_id")
+    private com.juridico.sistema_juridico.Entity.catalogo.TipoTermino tipoTerminoRef;
+
+    @Column(name = "es_tiempo_dinamico")
+    @Builder.Default
+    private Boolean esTiempoDinamico = false;
+
+    @Column(name = "tipo_dias_calculado", length = 20)
+    @Builder.Default
+    private String tipoDiasCalculado = "HABILES";
+
+    @Column(name = "desglose_dias_texto", columnDefinition = "TEXT")
+    private String desgloseDiasTexto;
+
     @Transient
     @Builder.Default
     private Integer semaforoRojoHasta = 3;
@@ -151,15 +166,22 @@ public class Termino {
 
         long diasRestantes = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaVencimiento);
 
+        int rojo = (this.tipoTerminoRef != null && this.tipoTerminoRef.getSemaforoRojoDias() != null)
+                ? this.tipoTerminoRef.getSemaforoRojoDias() : (semaforoRojoHasta != null ? semaforoRojoHasta : 3);
+
+        int amarillo = (this.tipoTerminoRef != null && this.tipoTerminoRef.getSemaforoAmarilloDias() != null)
+                ? this.tipoTerminoRef.getSemaforoAmarilloDias() : (semaforoAmarilloHasta != null ? semaforoAmarilloHasta : 7);
+
         if (diasRestantes < 0) return "bg-red-800";      // Vencido (Rojo Oscuro)
-        if (diasRestantes <= semaforoRojoHasta) return "bg-red-500";     // Crítico (Rojo Brillante)
-        if (diasRestantes <= semaforoAmarilloHasta) return "bg-yellow-400";  // Advertencia (Amarillo)
+        if (diasRestantes <= rojo) return "bg-red-500";     // Crítico (Rojo Brillante)
+        if (diasRestantes <= amarillo) return "bg-yellow-400";  // Advertencia (Amarillo)
         return "bg-green-500";                           // A tiempo (Verde)
     }
 
-    
     public String getDiasRestantesTexto() {
-        if (this.estatusTermino == EstatusTermino.CONCLUIDO) return "Término Concluido";
+        if (this.estatusTermino == EstatusTermino.CONCLUIDO || this.estatusTermino == EstatusTermino.PRESENTADO) {
+            return "Término Concluido";
+        }
         
         long dias = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaVencimiento);
         

@@ -19,6 +19,8 @@ import java.util.UUID;
 @Repository
 public interface TerminoRepository extends JpaRepository<Termino, Integer> {
 
+    long countByAbogadoResponsableId(Integer abogadoResponsableId);
+
     // 1. CONSULTA PARA EXCEL
     @Query("SELECT t FROM Termino t " +
            "LEFT JOIN t.expediente e " +

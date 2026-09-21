@@ -6,10 +6,13 @@ import java.time.LocalTime;
 
 @Data
 public class RecordatorioResponse {
-    private Long id;
+    private Integer id;
     private String titulo;
-    private LocalDate fecha;
-    private LocalTime hora;
-    private String prioridad; // urgent, normal
+    private LocalDate fechaRecordatorio;
+    private LocalTime horaRecordatorio;
+    private Integer prioridadId;
+    private String prioridad;
     private String detalles;
+    private boolean completado;
+    private Integer recordatorioRevision;
 }

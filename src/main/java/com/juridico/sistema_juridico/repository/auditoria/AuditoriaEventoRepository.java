@@ -20,6 +20,7 @@ public interface AuditoriaEventoRepository extends JpaRepository<AuditoriaEvento
     List<AuditoriaEvento> findTop20ByOrderByFechaDesc();
     Page<AuditoriaEvento> findAllByOrderByFechaDesc(Pageable pageable);
     Page<AuditoriaEvento> findByResultadoInOrderByFechaDesc(Collection<String> resultados, Pageable pageable);
+    boolean existsByAccionAndEntidadIdAndFechaAfter(String accion, String entidadId, LocalDateTime fecha);
 
     @Query("""
             select e from AuditoriaEvento e

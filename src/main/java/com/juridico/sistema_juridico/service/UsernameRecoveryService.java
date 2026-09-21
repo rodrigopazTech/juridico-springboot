@@ -35,7 +35,7 @@ public class UsernameRecoveryService {
             return UsernameRecoveryResult.RATE_LIMITED;
         }
 
-        Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(email);
+        Optional<Usuario> usuarioOpt = usuarioRepository.findByEmailIgnoreCase(email);
         if (usuarioOpt.isEmpty()) {
             auditoriaTecnicaService.registrarEventoSeguridad(null, email, request,
                     "USERNAME_RECOVERY_SOLICITADO", "GENERICO", 202,

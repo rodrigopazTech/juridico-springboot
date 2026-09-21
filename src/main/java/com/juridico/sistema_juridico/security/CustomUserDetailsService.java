@@ -49,8 +49,11 @@ public class CustomUserDetailsService implements UserDetailsService {
         }
 
         // 3. Retornamos el objeto CustomUserDetails
+        String principal = usuario.getEmail() != null && !usuario.getEmail().isBlank()
+                ? usuario.getEmail()
+                : usuario.getUsername();
         return new CustomUserDetails(
-                usuario.getEmail(),
+                principal,
                 usuario.getPassword(),
                 usuario.getActivo(), // Enabled
                 true, // Account Non Expired

@@ -62,12 +62,12 @@ let documentosActualesGlobal = [];
 
 async function verificarRespuestaApi(response) {
     if (response.redirected && response.url.includes('/login')) {
-        mostrarNotificacion('Tu sesión ha expirado. Redirigiendo al inicio de sesión...', 'warning');
+        mostrarNotificacion('Tu sesión terminó. Te llevaremos al inicio de sesión…', 'warning');
         setTimeout(() => window.location.href = '/', 2500);
         throw new Error('SESION_EXPIRADA');
     }
     if (response.status === 401) {
-        mostrarNotificacion('Tu sesión ha expirado. Redirigiendo...', 'warning');
+        mostrarNotificacion('Tu sesión terminó. Te llevaremos al inicio de sesión…', 'warning');
         setTimeout(() => window.location.href = '/', 2500);
         throw new Error('SESION_EXPIRADA');
     }

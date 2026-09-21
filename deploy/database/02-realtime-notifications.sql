@@ -1,4 +1,4 @@
--- 1. Actualizar la función de notificación en tiempo real
+-- Paso 2 del despliegue: notificaciones en tiempo real mediante PostgreSQL LISTEN/NOTIFY.
 CREATE OR REPLACE FUNCTION public.fn_notify_realtime()
  RETURNS trigger
  LANGUAGE plpgsql

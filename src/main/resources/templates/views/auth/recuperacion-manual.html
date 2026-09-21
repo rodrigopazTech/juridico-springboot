@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperacion manual | SIAJ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = { theme: { extend: { colors: { 'gob-guinda': '#691228', 'gob-guindaDark': '#4e0c1d', 'gob-gris': '#545454', 'gob-fondo': '#F5F5F5' } } } }
+    </script>
+</head>
+<body class="bg-gob-fondo min-h-screen flex items-center justify-center px-6">
+    <main class="w-full max-w-md bg-white border border-gray-200 rounded-lg shadow-lg p-8">
+        <div class="text-center mb-7">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gob-guinda/10 mb-4">
+                <i class="fas fa-shield-alt text-3xl text-gob-guinda"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gob-guindaDark">Recuperacion manual</h1>
+            <p class="mt-2 text-sm text-gob-gris">Usa el codigo entregado por el responsable autorizado para crear una nueva contrasena.</p>
+        </div>
+        <div class="mb-5 p-4 text-sm text-blue-900 border-l-4 border-blue-600 bg-blue-50 rounded">
+            <strong>El codigo no sustituye tu contrasena.</strong>
+            Captura tu usuario y el codigo recibido. Despues define la contrasena que usaras para iniciar sesion.
+            El codigo vence en 15 minutos y funciona una sola vez.
+        </div>
+        <div th:if="${error}" class="mb-4 p-4 text-sm text-red-800 border-l-4 border-red-700 bg-red-50 rounded" th:text="${error}">Error.</div>
+        <form th:action="@{/auth/recuperacion-manual}" method="POST" class="space-y-4">
+            <div>
+                <label for="usuario" class="block text-xs font-bold text-gray-500 uppercase mb-1">Usuario o numero de empleado</label>
+                <input id="usuario" name="usuario" required autocomplete="username" class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gob-guinda">
+            </div>
+            <div>
+                <label for="codigo" class="block text-xs font-bold text-gray-500 uppercase mb-1">Codigo de recuperacion</label>
+                <input id="codigo" name="codigo" required maxlength="10" autocomplete="one-time-code" class="block w-full px-3 py-3 border border-gray-300 rounded-lg font-mono tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-gob-guinda">
+            </div>
+            <div>
+                <label for="nuevaContrasena" class="block text-xs font-bold text-gray-500 uppercase mb-1">Nueva contrasena</label>
+                <input id="nuevaContrasena" name="nuevaContrasena" type="password" required minlength="8" autocomplete="new-password" class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gob-guinda">
+            </div>
+            <div>
+                <label for="confirmacionContrasena" class="block text-xs font-bold text-gray-500 uppercase mb-1">Confirmar contrasena</label>
+                <input id="confirmacionContrasena" name="confirmacionContrasena" type="password" required minlength="8" autocomplete="new-password" class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gob-guinda">
+            </div>
+            <div id="password-policy-manual"></div>
+            <button id="btnSubmitManualRecovery" type="submit" class="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-lg text-sm font-bold text-white bg-gob-guinda hover:bg-gob-guindaDark">
+                <i class="fas fa-save"></i> Establecer contrasena
+            </button>
+        </form>
+        <div class="mt-6 text-center">
+            <a th:href="@{/}" class="text-sm font-bold text-gob-guinda hover:underline">
+                <i class="fas fa-arrow-left mr-1"></i> Volver al inicio de sesion
+            </a>
+        </div>
+    </main>
+    <script th:src="@{/js/password-policy-validator.js}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => attachPasswordPolicyValidator({ passwordInputId: 'nuevaContrasena', confirmInputId: 'confirmacionContrasena', submitButtonId: 'btnSubmitManualRecovery', containerId: 'password-policy-manual' }));
+    </script>
+</body>
+</html>

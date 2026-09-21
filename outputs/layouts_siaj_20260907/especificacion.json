@@ -1,0 +1,4928 @@
+{
+  "layouts": [
+    {
+      "key": "gerencias",
+      "name": "Gerencias",
+      "file": "SIAJ_gerencias_v1.xlsx",
+      "sheet": "gerencias",
+      "description": "Captura de gerencias para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "activo",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "activo boolean",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Activo",
+          "example": "true"
+        },
+        {
+          "name": "descripcion",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "descripcion text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Descripcion",
+          "example": "Seguimiento del asunto de ejemplo"
+        },
+        {
+          "name": "nombre",
+          "type": "Texto",
+          "length": "200",
+          "required": "Sí (BD)",
+          "raw": "nombre character varying(200) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Nombre",
+          "example": "Valor del catálogo"
+        }
+      ],
+      "rules": [
+        "Nombre obligatorio y único en el dump. Cargar antes de materias y usuarios."
+      ],
+      "deps": [],
+      "constraints": [
+        "gerencias_pkey PRIMARY KEY (id)",
+        "uk5nv105r1e4j3r6hrfxxa4fxeg UNIQUE (nombre)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "key": "materias",
+      "name": "Materias",
+      "file": "SIAJ_materias_v1.xlsx",
+      "sheet": "materias",
+      "description": "Captura de materias para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "activo",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "activo boolean",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Activo",
+          "example": "true"
+        },
+        {
+          "name": "descripcion",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "descripcion text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Descripcion",
+          "example": "Seguimiento del asunto de ejemplo"
+        },
+        {
+          "name": "nombre",
+          "type": "Texto",
+          "length": "100",
+          "required": "Sí (BD)",
+          "raw": "nombre character varying(100) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Nombre",
+          "example": "Valor del catálogo"
+        },
+        {
+          "name": "gerencia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "gerencia_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "gerencias",
+          "rule": "Debe existir en gerencias; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Gerencias",
+          "example": "1"
+        },
+        {
+          "name": "usuario_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "usuario_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "La gerencia es obligatoria en BD. Homologar por nombre y gerencia; el dump conserva unicidad global del nombre: no asumir que puede repetirse entre gerencias."
+      ],
+      "deps": [
+        "usuario_id → usuarios.id",
+        "gerencia_id → gerencias.id"
+      ],
+      "constraints": [
+        "materias_pkey PRIMARY KEY (id)",
+        "uk35p3esp62g4obf0xvgxkrgh2e UNIQUE (nombre, gerencia_id)",
+        "fk88y1xy72ng7x0aa9orpy942p7 FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)",
+        "fkkf13pj696ynk5lfcetip9d5oy FOREIGN KEY (gerencia_id) REFERENCES public.gerencias(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "key": "cat_estados",
+      "name": "Estados y sedes",
+      "file": "SIAJ_cat_estados_v1.xlsx",
+      "sheet": "cat_estados",
+      "description": "Catálogo de estados/sedes utilizado para homologar ubicaciones de los asuntos.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "activo",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "activo boolean",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Activo",
+          "example": "true"
+        },
+        {
+          "name": "nombre",
+          "type": "Texto",
+          "length": "255",
+          "required": "Sí (propuesta)",
+          "raw": "nombre character varying(255)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Nombre",
+          "example": "Valor del catálogo"
+        },
+        {
+          "name": "gerencia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "gerencia_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "gerencias",
+          "rule": "Debe existir en gerencias; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Gerencias",
+          "example": "1"
+        },
+        {
+          "name": "usuario_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "usuario_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Catálogo usado como sede; no existe FK desde expedientes.sede. Homologar el texto por catálogo vigente. Nombre no es NOT NULL en dump; se exige en el layout como regla propuesta."
+      ],
+      "deps": [
+        "usuario_id → usuarios.id",
+        "gerencia_id → gerencias.id"
+      ],
+      "constraints": [
+        "cat_estados_pkey PRIMARY KEY (id)",
+        "uknst6hp4h4jox86rou3fpxfmd0 UNIQUE (nombre)",
+        "fks243iav8cbu2feurmh2qjaiy6 FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)",
+        "fksvk5hct1ehr5jejuecfr59pih FOREIGN KEY (gerencia_id) REFERENCES public.gerencias(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at"
+      ]
+    },
+    {
+      "key": "cat_prioridad",
+      "name": "Prioridades",
+      "file": "SIAJ_cat_prioridad_v1.xlsx",
+      "sheet": "cat_prioridad",
+      "description": "Captura de prioridades para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "activo",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "activo boolean",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Activo",
+          "example": "true"
+        },
+        {
+          "name": "color",
+          "type": "Texto",
+          "length": "100",
+          "required": "No",
+          "raw": "color character varying(100)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Color",
+          "example": "bg-red-100 text-red-800"
+        },
+        {
+          "name": "nombre",
+          "type": "Texto",
+          "length": "50",
+          "required": "Sí (BD)",
+          "raw": "nombre character varying(50) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Nombre",
+          "example": "Valor del catálogo"
+        }
+      ],
+      "rules": [
+        "ALTA, MEDIA y BAJA son semillas de DataInitializer; el catálogo en BD es editable. Exportar IDs vigentes, no asumir 1/2/3. El campo color contiene clases CSS en las semillas, no necesariamente hexadecimal."
+      ],
+      "deps": [],
+      "constraints": [
+        "cat_prioridad_pkey PRIMARY KEY (id)",
+        "ukp238eocvbwiipffxptyq0uq07 UNIQUE (nombre)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "key": "cat_tipo_expediente",
+      "name": "Tipos de expediente",
+      "file": "SIAJ_cat_tipo_expediente_v1.xlsx",
+      "sheet": "cat_tipo_expediente",
+      "description": "Captura de tipos de expediente para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "activo",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "activo boolean",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Activo",
+          "example": "true"
+        },
+        {
+          "name": "descripcion",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "descripcion text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Descripcion",
+          "example": "Seguimiento del asunto de ejemplo"
+        },
+        {
+          "name": "nombre",
+          "type": "Texto",
+          "length": "100",
+          "required": "Sí (BD)",
+          "raw": "nombre character varying(100) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Nombre",
+          "example": "Valor del catálogo"
+        },
+        {
+          "name": "gerencia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "gerencia_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "gerencias",
+          "rule": "Debe existir en gerencias; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Gerencias",
+          "example": "1"
+        },
+        {
+          "name": "usuario_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "usuario_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Nombre único en dump. Confirmar ámbito global o por gerencia antes de crear duplicados."
+      ],
+      "deps": [
+        "usuario_id → usuarios.id",
+        "gerencia_id → gerencias.id"
+      ],
+      "constraints": [
+        "cat_tipo_expediente_pkey PRIMARY KEY (id)",
+        "uk9cslxj82xdh4mfg9baolqj7xu UNIQUE (nombre)",
+        "fk72utcny5h8l8oeddw7p2ducwb FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)",
+        "fkk792qaf01pxxgna4hd5yakesh FOREIGN KEY (gerencia_id) REFERENCES public.gerencias(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "key": "organos_jurisdiccionales",
+      "name": "Órganos jurisdiccionales",
+      "file": "SIAJ_organos_jurisdiccionales_v1.xlsx",
+      "sheet": "organos_jurisdiccionales",
+      "description": "Catálogo de autoridades ante las que se tramita el expediente.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "activo",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "activo boolean",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Activo",
+          "example": "true"
+        },
+        {
+          "name": "nombre",
+          "type": "Texto",
+          "length": "300",
+          "required": "Sí (BD)",
+          "raw": "nombre character varying(300) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Nombre",
+          "example": "Valor del catálogo"
+        },
+        {
+          "name": "sede",
+          "type": "Texto",
+          "length": "100",
+          "required": "No",
+          "raw": "sede character varying(100)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Sede",
+          "example": "Ciudad de México"
+        },
+        {
+          "name": "tipo",
+          "type": "Texto",
+          "length": "50",
+          "required": "No",
+          "raw": "tipo character varying(50)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Tipo",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "gerencia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "gerencia_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "gerencias",
+          "rule": "Debe existir en gerencias; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Gerencias",
+          "example": "1"
+        },
+        {
+          "name": "usuario_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "usuario_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Representa autoridades jurisdiccionales, incluidos juzgados y salas cuando corresponda. tipo es texto sin enum/CHECK en el dump. No equiparar automáticamente organismos administrativos con órganos jurisdiccionales."
+      ],
+      "deps": [
+        "usuario_id → usuarios.id",
+        "gerencia_id → gerencias.id"
+      ],
+      "constraints": [
+        "organos_jurisdiccionales_pkey PRIMARY KEY (id)",
+        "ukmc16d9k9cfsrevrlbjdt9cctb UNIQUE (nombre)",
+        "fk139ctye6aj13npxjakubnphj5 FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)",
+        "fkp3dc7r1182p73giiehvc1a3kw FOREIGN KEY (gerencia_id) REFERENCES public.gerencias(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "key": "tipos_audiencia",
+      "name": "Tipos de audiencia",
+      "file": "SIAJ_tipos_audiencia_v1.xlsx",
+      "sheet": "tipos_audiencia",
+      "description": "Captura de tipos de audiencia para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "activo",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "activo boolean",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Activo",
+          "example": "true"
+        },
+        {
+          "name": "descripcion",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "descripcion text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Descripcion",
+          "example": "Seguimiento del asunto de ejemplo"
+        },
+        {
+          "name": "nombre",
+          "type": "Texto",
+          "length": "100",
+          "required": "Sí (BD)",
+          "raw": "nombre character varying(100) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Nombre",
+          "example": "Valor del catálogo"
+        },
+        {
+          "name": "gerencia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "gerencia_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "gerencias",
+          "rule": "Debe existir en gerencias; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Gerencias",
+          "example": "1"
+        },
+        {
+          "name": "usuario_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "usuario_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Unicidad (nombre, gerencia_id) en dump. Respetar ámbito de gerencia y visibilidad por usuario; exportar catálogo activo."
+      ],
+      "deps": [
+        "usuario_id → usuarios.id",
+        "gerencia_id → gerencias.id"
+      ],
+      "constraints": [
+        "tipos_audiencia_pkey PRIMARY KEY (id)",
+        "ukhwdw390hju3jpv9r2pvbn7eat UNIQUE (nombre)",
+        "fk1kml027csdf02fbsgarvpaacn FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)",
+        "fklhw4n232t69p6wb8mkmubvkl6 FOREIGN KEY (gerencia_id) REFERENCES public.gerencias(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at"
+      ]
+    },
+    {
+      "key": "cat_tipos_termino",
+      "name": "Tipos de término",
+      "file": "SIAJ_cat_tipos_termino_v1.xlsx",
+      "sheet": "cat_tipos_termino",
+      "description": "Captura de tipos de término para carga inicial o migración controlada.",
+      "status": "JPA sin tabla en dump; validar despliegue",
+      "cols": [
+        {
+          "name": "nombre",
+          "type": "Texto",
+          "length": "100",
+          "required": "Sí (JPA)",
+          "example": "Valor del catálogo",
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "enum": [],
+          "source": "Entity/catalogo/TipoTermino.java",
+          "description": "Nombre"
+        },
+        {
+          "name": "descripcion",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "example": "Seguimiento del asunto de ejemplo",
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "enum": [],
+          "source": "Entity/catalogo/TipoTermino.java",
+          "description": "Descripcion"
+        },
+        {
+          "name": "dias_predeterminados",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (JPA)",
+          "example": "15",
+          "rule": "Sin decimales; IDs del ambiente destino.",
+          "enum": [],
+          "source": "Entity/catalogo/TipoTermino.java",
+          "description": "Dias predeterminados"
+        },
+        {
+          "name": "tipo_dias",
+          "type": "Texto",
+          "length": "20",
+          "required": "Sí (JPA)",
+          "example": "HABILES",
+          "rule": "Permitidos: HABILES, NATURALES. Texto literal; conservar ceros iniciales en identificadores.",
+          "enum": [
+            "HABILES",
+            "NATURALES"
+          ],
+          "source": "Entity/catalogo/TipoTermino.java",
+          "description": "Tipo dias"
+        },
+        {
+          "name": "semaforo_rojo_dias",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "example": "3",
+          "rule": "Sin decimales; IDs del ambiente destino.",
+          "enum": [],
+          "source": "Entity/catalogo/TipoTermino.java",
+          "description": "Semaforo rojo dias"
+        },
+        {
+          "name": "semaforo_amarillo_dias",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "example": "7",
+          "rule": "Sin decimales; IDs del ambiente destino.",
+          "enum": [],
+          "source": "Entity/catalogo/TipoTermino.java",
+          "description": "Semaforo amarillo dias"
+        },
+        {
+          "name": "activo",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "example": "true",
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "enum": [],
+          "source": "Entity/catalogo/TipoTermino.java",
+          "description": "Activo"
+        },
+        {
+          "name": "materia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "example": "1",
+          "rule": "Sin decimales; IDs del ambiente destino.",
+          "enum": [],
+          "source": "Entity/catalogo/TipoTermino.java",
+          "description": "Materia id"
+        },
+        {
+          "name": "gerencia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "example": "1",
+          "rule": "Sin decimales; IDs del ambiente destino.",
+          "enum": [],
+          "source": "Entity/catalogo/TipoTermino.java",
+          "description": "Gerencia id"
+        }
+      ],
+      "rules": [
+        "Modelo actual no presente en dump. Nombre obligatorio y único; validación del servicio rechaza duplicados. HABILES/NATURALES provienen del modelo, no de un CHECK del dump. Valores predeterminados: 15 días, rojo 3, amarillo 7, activo true. Validar calendario inhábil y cálculo antes de habilitar carga."
+      ],
+      "deps": [
+        "materia_id → materias.id",
+        "gerencia_id → gerencias.id"
+      ],
+      "constraints": [
+        "PK id INTEGER generado (JPA)",
+        "UNIQUE nombre (JPA)"
+      ],
+      "source": "Entity/catalogo/TipoTermino.java",
+      "excluded": []
+    },
+    {
+      "key": "cat_etapas_procesales",
+      "name": "Etapas y subetapas procesales",
+      "file": "SIAJ_cat_etapas_procesales_v1.xlsx",
+      "sheet": "cat_etapas_procesales",
+      "description": "Captura de etapas y subetapas procesales para carga inicial o migración controlada.",
+      "status": "JPA sin tabla en dump; validar despliegue",
+      "cols": [
+        {
+          "name": "nombre",
+          "type": "Texto",
+          "length": "120",
+          "required": "Sí (JPA)",
+          "example": "Valor del catálogo",
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "enum": [],
+          "source": "Entity/catalogo/EtapaCatalogo.java",
+          "description": "Nombre"
+        },
+        {
+          "name": "clave",
+          "type": "Texto",
+          "length": "80",
+          "required": "No",
+          "example": "Texto de ejemplo",
+          "rule": "Se genera desde nombre si se omite. Texto literal; conservar ceros iniciales en identificadores.",
+          "enum": [],
+          "source": "Entity/catalogo/EtapaCatalogo.java",
+          "description": "Clave"
+        },
+        {
+          "name": "orden",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (JPA)",
+          "example": "1",
+          "rule": "Sin decimales; IDs del ambiente destino.",
+          "enum": [],
+          "source": "Entity/catalogo/EtapaCatalogo.java",
+          "description": "Orden"
+        },
+        {
+          "name": "descripcion",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "example": "Seguimiento del asunto de ejemplo",
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "enum": [],
+          "source": "Entity/catalogo/EtapaCatalogo.java",
+          "description": "Descripcion"
+        },
+        {
+          "name": "activo",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "example": "true",
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "enum": [],
+          "source": "Entity/catalogo/EtapaCatalogo.java",
+          "description": "Activo"
+        },
+        {
+          "name": "cierra_expediente",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "example": "false",
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "enum": [],
+          "source": "Entity/catalogo/EtapaCatalogo.java",
+          "description": "Cierra expediente"
+        },
+        {
+          "name": "etapa_legacy",
+          "type": "Texto",
+          "length": "30",
+          "required": "No",
+          "example": "TRAMITE",
+          "rule": "Permitidos: TRAMITE, LAUDO, FIRME, CONCLUIDO. Texto literal; conservar ceros iniciales en identificadores.",
+          "enum": [
+            "TRAMITE",
+            "LAUDO",
+            "FIRME",
+            "CONCLUIDO"
+          ],
+          "source": "Entity/catalogo/EtapaCatalogo.java",
+          "description": "Etapa legacy"
+        },
+        {
+          "name": "materia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (JPA)",
+          "example": "1",
+          "rule": "Sin decimales; IDs del ambiente destino.",
+          "enum": [],
+          "source": "Entity/catalogo/EtapaCatalogo.java",
+          "description": "Materia id"
+        },
+        {
+          "name": "parent_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "example": "1",
+          "rule": "Sin decimales; IDs del ambiente destino.",
+          "enum": [],
+          "source": "Entity/catalogo/EtapaCatalogo.java",
+          "description": "Etapa superior"
+        }
+      ],
+      "rules": [
+        "Modelo no presente en dump. Padre de la misma materia, máximo dos niveles; no autorreferencia. Una etapa con hijos no se convierte en subetapa (CatalogosController). clave se normaliza desde nombre si se omite."
+      ],
+      "deps": [
+        "materia_id → materias.id",
+        "parent_id → cat_etapas_procesales.id"
+      ],
+      "constraints": [
+        "PK id INTEGER generado (JPA)",
+        "UNIQUE (materia_id, nombre, parent_id) (JPA); verificar semántica de NULL para raíces"
+      ],
+      "source": "Entity/catalogo/EtapaCatalogo.java",
+      "excluded": []
+    },
+    {
+      "key": "usuarios",
+      "name": "Usuarios",
+      "file": "SIAJ_usuarios_v1.xlsx",
+      "sheet": "usuarios",
+      "description": "Cuentas, identidad laboral, roles y alcance de acceso al sistema.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "activo",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "activo boolean",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Activo",
+          "example": "true"
+        },
+        {
+          "name": "email",
+          "type": "Texto",
+          "length": "100",
+          "required": "Condicional: ver discrepancia BD/JPA",
+          "raw": "email character varying(100) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Correo de acceso o contacto",
+          "example": "ana.perez@example.org"
+        },
+        {
+          "name": "nombre_completo",
+          "type": "Texto",
+          "length": "200",
+          "required": "Sí (BD)",
+          "raw": "nombre_completo character varying(200) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Nombre completo",
+          "example": "Ana Pérez López"
+        },
+        {
+          "name": "rol",
+          "type": "Texto",
+          "length": "50",
+          "required": "Sí (BD)",
+          "raw": "rol character varying(50) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [
+            "ADMIN",
+            "DIRECTOR_PRINCIPAL",
+            "DIRECTOR",
+            "SUBDIRECTOR",
+            "GERENTE",
+            "JEFE_DEPTO",
+            "ABOGADO"
+          ],
+          "rule": "Permitidos: ADMIN, DIRECTOR_PRINCIPAL, DIRECTOR, SUBDIRECTOR, GERENTE, JEFE_DEPTO, ABOGADO. Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Rol",
+          "example": "ADMIN"
+        },
+        {
+          "name": "username",
+          "type": "Texto",
+          "length": "80",
+          "required": "No",
+          "raw": "username character varying(80)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Nombre de acceso local",
+          "example": "ana.perez"
+        },
+        {
+          "name": "numero_empleado",
+          "type": "Texto",
+          "length": "40",
+          "required": "No",
+          "raw": "numero_empleado character varying(40)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Numero empleado",
+          "example": "000123"
+        },
+        {
+          "name": "puesto",
+          "type": "Texto",
+          "length": "160",
+          "required": "No",
+          "raw": "puesto character varying(160)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Puesto",
+          "example": "Abogada"
+        },
+        {
+          "name": "telefono_institucional",
+          "type": "Texto",
+          "length": "120",
+          "required": "No",
+          "raw": "telefono_institucional character varying(120)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Telefono institucional",
+          "example": "5550000000 ext. 100"
+        },
+        {
+          "name": "telefono_movil",
+          "type": "Texto",
+          "length": "80",
+          "required": "No",
+          "raw": "telefono_movil character varying(80)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Telefono movil",
+          "example": "5550000000"
+        },
+        {
+          "name": "ubicacion_oficina",
+          "type": "Texto",
+          "length": "180",
+          "required": "No",
+          "raw": "ubicacion_oficina character varying(180)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Ubicacion oficina",
+          "example": "Oficina 1"
+        }
+      ],
+      "rules": [
+        "email es obligatorio en dump, pero opcional en JPA y migración 03-allow-local-only-users.sql. Confirmar aplicación de esa migración.",
+        "Username se normaliza/genera por UsuarioIdentityService; username y número de empleado son únicos ignorando mayúsculas. Número de empleado se recorta y pasa a mayúsculas; email a minúsculas.",
+        "Alta mediante UsuarioService, respetando jerarquía del operador y alcance de gerencias/materias. Contraseñas, hashes y vínculos Microsoft no se solicitan en Excel; provisionar credencial/activación mediante el flujo autorizado.",
+        "El modelo usa usuario_gerencias; gerencia_id legado del dump requiere reconciliación."
+      ],
+      "deps": [
+        "creado_por_id → usuarios.id",
+        "gerencia_id → gerencias.id"
+      ],
+      "constraints": [
+        "ukkfsp0s1tflm1cwlj8idhqsad0 UNIQUE (email)",
+        "ukr2mnk6pyydgygq94im0nmaps5 UNIQUE (microsoft_object_id)",
+        "usuarios_pkey PRIMARY KEY (id)",
+        "fkhy8fli5s85u3iut9tvcjggx77 FOREIGN KEY (creado_por_id) REFERENCES public.usuarios(id)",
+        "fkrel3m11jpih4a77lseyy3h3ad FOREIGN KEY (gerencia_id) REFERENCES public.gerencias(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at",
+        "force_password_change",
+        "password_hash",
+        "password_updated_at",
+        "ultimo_acceso",
+        "updated_at",
+        "gerencia_id",
+        "creado_por_id",
+        "microsoft_business_phones",
+        "microsoft_display_name",
+        "microsoft_job_title",
+        "microsoft_last_sync_at",
+        "microsoft_linked_at",
+        "microsoft_login_enabled",
+        "microsoft_mobile_phone",
+        "microsoft_object_id",
+        "microsoft_office_location",
+        "microsoft_user_principal_name"
+      ]
+    },
+    {
+      "key": "usuario_gerencias",
+      "name": "Asignación de gerencias a usuarios",
+      "file": "SIAJ_usuario_gerencias_v1.xlsx",
+      "sheet": "usuario_gerencias",
+      "description": "Captura de asignación de gerencias a usuarios para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "usuario_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "usuario_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        },
+        {
+          "name": "gerencia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "gerencia_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "gerencias",
+          "rule": "Debe existir en gerencias; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Gerencias",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Una fila por usuario y gerencia, sin duplicar el par. No enviar listas separadas por comas en una celda."
+      ],
+      "deps": [
+        "gerencia_id → gerencias.id",
+        "usuario_id → usuarios.id"
+      ],
+      "constraints": [
+        "usuario_gerencias_pkey PRIMARY KEY (usuario_id, gerencia_id)",
+        "fkai89eqag1l6q65v4f2w54b2gd FOREIGN KEY (gerencia_id) REFERENCES public.gerencias(id)",
+        "fkk2iku7uhxeu1b8r5j2qo8kl82 FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": []
+    },
+    {
+      "key": "usuario_materias",
+      "name": "Asignación de materias a usuarios",
+      "file": "SIAJ_usuario_materias_v1.xlsx",
+      "sheet": "usuario_materias",
+      "description": "Captura de asignación de materias a usuarios para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "usuario_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "usuario_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        },
+        {
+          "name": "materia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "materia_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "materias",
+          "rule": "Debe existir en materias; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Materias",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Una fila por usuario y materia; materia coherente con gerencias asignadas. Verificar alcance en servicios de autorización."
+      ],
+      "deps": [
+        "usuario_id → usuarios.id",
+        "materia_id → materias.id"
+      ],
+      "constraints": [
+        "usuario_materias_pkey PRIMARY KEY (usuario_id, materia_id)",
+        "fkblixcl3jed4e5u1r4cbuxo233 FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)",
+        "fkgmypxwp3xdvi5ckk7xsd6flna FOREIGN KEY (materia_id) REFERENCES public.materias(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": []
+    },
+    {
+      "key": "usuario_permisos_adicionales",
+      "name": "Permisos adicionales",
+      "file": "SIAJ_usuario_permisos_adicionales_v1.xlsx",
+      "sheet": "usuario_permisos_adicionales",
+      "description": "Captura de permisos adicionales para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "usuario_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "usuario_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        },
+        {
+          "name": "permiso",
+          "type": "Texto",
+          "length": "80",
+          "required": "Sí (BD)",
+          "raw": "permiso character varying(80) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [
+            "DASHBOARD_VER",
+            "AGENDA_VER",
+            "CATALOGOS_VER",
+            "USUARIOS_VER",
+            "ADMIN_PANEL",
+            "EXPEDIENTES_VER",
+            "EXPEDIENTES_SUPERVISION",
+            "TERMINOS_VER",
+            "TERMINOS_SUPERVISION",
+            "AUDIENCIAS_VER",
+            "AUDIENCIAS_SUPERVISION",
+            "DOCUMENTOS_SUPERVISION",
+            "ALERTAS_CONFIGURAR"
+          ],
+          "rule": "Permitidos: DASHBOARD_VER, AGENDA_VER, CATALOGOS_VER, USUARIOS_VER, ADMIN_PANEL, EXPEDIENTES_VER, EXPEDIENTES_SUPERVISION, TERMINOS_VER, TERMINOS_SUPERVISION, AUDIENCIAS_VER, AUDIENCIAS_SUPERVISION, DOCUMENTOS_SUPERVISION, ALERTAS_CONFIGURAR. Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Permiso",
+          "example": "DASHBOARD_VER"
+        }
+      ],
+      "rules": [
+        "Permisos de PermisoSistema; sólo asignación administrativa. No usar la carga para eludir jerarquías."
+      ],
+      "deps": [
+        "usuario_id → usuarios.id"
+      ],
+      "constraints": [
+        "usuario_permisos_adicionales_pkey PRIMARY KEY (usuario_id, permiso)",
+        "fkjml13xi25qa1awrohharg2hc3 FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": []
+    },
+    {
+      "key": "expedientes",
+      "name": "Expedientes",
+      "file": "SIAJ_expedientes_v1.xlsx",
+      "sheet": "expedientes",
+      "description": "Registro central del asunto jurídico y sus relaciones organizacionales, responsables y etapa.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "descripcion",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "Sí (BD)",
+          "raw": "descripcion text NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Descripcion",
+          "example": "Seguimiento del asunto de ejemplo"
+        },
+        {
+          "name": "etapa_procesal",
+          "type": "Texto",
+          "length": "30",
+          "required": "Sí (BD)",
+          "raw": "etapa_procesal character varying(30) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [
+            "TRAMITE",
+            "LAUDO",
+            "FIRME",
+            "CONCLUIDO"
+          ],
+          "rule": "Permitidos: TRAMITE, LAUDO, FIRME, CONCLUIDO. Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Etapa procesal",
+          "example": "TRAMITE"
+        },
+        {
+          "name": "numero",
+          "type": "Texto",
+          "length": "50",
+          "required": "Sí (BD)",
+          "raw": "numero character varying(50) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Numero",
+          "example": "EXP-001/2026"
+        },
+        {
+          "name": "organo_jurisdiccional_texto",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "organo_jurisdiccional_texto text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Organo jurisdiccional texto",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "partes",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "partes text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Identificación textual de las partes procesales",
+          "example": "Actor: Persona A; Demandado: Entidad B"
+        },
+        {
+          "name": "sede",
+          "type": "Texto",
+          "length": "150",
+          "required": "No",
+          "raw": "sede character varying(150)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Sede",
+          "example": "Ciudad de México"
+        },
+        {
+          "name": "abogado_responsable_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "abogado_responsable_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        },
+        {
+          "name": "gerencia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "gerencia_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "gerencias",
+          "rule": "Debe existir en gerencias; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Gerencias",
+          "example": "1"
+        },
+        {
+          "name": "materia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "materia_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "materias",
+          "rule": "Debe existir en materias; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Materias",
+          "example": "1"
+        },
+        {
+          "name": "organo_jurisdiccional_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "organo_jurisdiccional_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "organos_jurisdiccionales",
+          "rule": "Debe existir en organos_jurisdiccionales; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Órganos jurisdiccionales",
+          "example": "1"
+        },
+        {
+          "name": "prioridad_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "prioridad_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "cat_prioridad",
+          "rule": "Debe existir en cat_prioridad; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Prioridades",
+          "example": "1"
+        },
+        {
+          "name": "tipo_expediente_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "tipo_expediente_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "cat_tipo_expediente",
+          "rule": "Debe existir en cat_tipo_expediente; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Tipos de expediente",
+          "example": "1"
+        },
+        {
+          "name": "etapa_catalogo_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "example": "1",
+          "rule": "Sólo JPA; no existe en el dump. Etapa de la materia del expediente. Sin decimales; IDs del ambiente destino.",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Etapa configurable de la materia"
+        }
+      ],
+      "rules": [
+        "Número obligatorio, máximo 50. No hay UNIQUE(numero) en el dump. No usar sólo el número para conciliar expedientes homónimos.",
+        "Materia y gerencia son NOT NULL en dump y DTO; JPA no declara la misma obligatoriedad. Exigir ambas y coherencia entre ellas.",
+        "Descripción obligatoria; etapa enum obligatorio con valor inicial TRAMITE en JPA. partes es texto libre sin estructura normalizada de actores/demandados.",
+        "El asistente deriva expedientes de audiencias y términos; este layout independiente necesita importador. es_temporal corresponde a manejo interno, no a captura ordinaria."
+      ],
+      "deps": [
+        "organo_jurisdiccional_id → organos_jurisdiccionales.id",
+        "materia_id → materias.id",
+        "gerencia_id → gerencias.id",
+        "prioridad_id → cat_prioridad.id",
+        "abogado_responsable_id → usuarios.id",
+        "tipo_expediente_id → cat_tipo_expediente.id",
+        "etapa_catalogo_id → cat_etapas_procesales.id (JPA)"
+      ],
+      "constraints": [
+        "expedientes_pkey PRIMARY KEY (id)",
+        "fk4ko1kuyjwubjuk8pqc6uj7nkl FOREIGN KEY (organo_jurisdiccional_id) REFERENCES public.organos_jurisdiccionales(id)",
+        "fk58skvtk8tcu7wlxc6q6bd9kbt FOREIGN KEY (materia_id) REFERENCES public.materias(id)",
+        "fkbichuxp9f2p9t665qhevw9hv FOREIGN KEY (gerencia_id) REFERENCES public.gerencias(id)",
+        "fkjd2xfb8uvwn3bfcsxc8vy3clj FOREIGN KEY (prioridad_id) REFERENCES public.cat_prioridad(id)",
+        "fkof8a43swfcvf2dv5mo6q5thd6 FOREIGN KEY (abogado_responsable_id) REFERENCES public.usuarios(id)",
+        "fkq1uvxy2ws1qxvxrgqovf9tq1s FOREIGN KEY (tipo_expediente_id) REFERENCES public.cat_tipo_expediente(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "abogado_responsable_nombre",
+        "created_at",
+        "updated_at",
+        "es_temporal"
+      ]
+    },
+    {
+      "key": "audiencia_contextos",
+      "name": "Contextos de audiencia",
+      "file": "SIAJ_audiencia_contextos_v1.xlsx",
+      "sheet": "audiencia_contextos",
+      "description": "Captura de contextos de audiencia para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "descripcion",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "Sí (BD)",
+          "raw": "descripcion text NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Descripcion",
+          "example": "Seguimiento del asunto de ejemplo"
+        },
+        {
+          "name": "numero_expediente_snapshot",
+          "type": "Texto",
+          "length": "50",
+          "required": "No",
+          "raw": "numero_expediente_snapshot character varying(50)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Numero expediente snapshot",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "organo_jurisdiccional_texto",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "organo_jurisdiccional_texto text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Organo jurisdiccional texto",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "origen",
+          "type": "Texto",
+          "length": "30",
+          "required": "Sí (BD)",
+          "raw": "origen character varying(30) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [
+            "EXPEDIENTE",
+            "ASUNTO_UNICO"
+          ],
+          "rule": "Permitidos: EXPEDIENTE, ASUNTO_UNICO. Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Origen",
+          "example": "EXPEDIENTE"
+        },
+        {
+          "name": "partes",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "partes text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Identificación textual de las partes procesales",
+          "example": "Actor: Persona A; Demandado: Entidad B"
+        },
+        {
+          "name": "sede",
+          "type": "Texto",
+          "length": "150",
+          "required": "No",
+          "raw": "sede character varying(150)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Sede",
+          "example": "Ciudad de México"
+        },
+        {
+          "name": "gerencia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "gerencia_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "gerencias",
+          "rule": "Debe existir en gerencias; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Gerencias",
+          "example": "1"
+        },
+        {
+          "name": "materia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "materia_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "materias",
+          "rule": "Debe existir en materias; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Materias",
+          "example": "1"
+        },
+        {
+          "name": "organo_jurisdiccional_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "organo_jurisdiccional_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "organos_jurisdiccionales",
+          "rule": "Debe existir en organos_jurisdiccionales; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Órganos jurisdiccionales",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Captura complementaria de materia, gerencia, descripción y partes. No compartir contexto entre audiencias: UNIQUE contexto_id en audiencias. Puede generarse como snapshot desde expediente."
+      ],
+      "deps": [
+        "gerencia_id → gerencias.id",
+        "organo_jurisdiccional_id → organos_jurisdiccionales.id",
+        "materia_id → materias.id"
+      ],
+      "constraints": [
+        "audiencia_contextos_pkey PRIMARY KEY (id)",
+        "fkbdu4j8d2ejho98oi08369endx FOREIGN KEY (gerencia_id) REFERENCES public.gerencias(id)",
+        "fkp1paxjyvpxulyqnukqmd0d13c FOREIGN KEY (organo_jurisdiccional_id) REFERENCES public.organos_jurisdiccionales(id)",
+        "fktfcon5wnhwo0ph22a2wt5y6im FOREIGN KEY (materia_id) REFERENCES public.materias(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id"
+      ]
+    },
+    {
+      "key": "termino_contextos",
+      "name": "Contextos de término",
+      "file": "SIAJ_termino_contextos_v1.xlsx",
+      "sheet": "termino_contextos",
+      "description": "Captura de contextos de término para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "descripcion",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "Sí (BD)",
+          "raw": "descripcion text NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Descripcion",
+          "example": "Seguimiento del asunto de ejemplo"
+        },
+        {
+          "name": "numero_expediente_snapshot",
+          "type": "Texto",
+          "length": "50",
+          "required": "No",
+          "raw": "numero_expediente_snapshot character varying(50)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Numero expediente snapshot",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "organo_jurisdiccional_texto",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "organo_jurisdiccional_texto text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Organo jurisdiccional texto",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "origen",
+          "type": "Texto",
+          "length": "30",
+          "required": "Sí (BD)",
+          "raw": "origen character varying(30) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [
+            "EXPEDIENTE",
+            "ASUNTO_UNICO"
+          ],
+          "rule": "Permitidos: EXPEDIENTE, ASUNTO_UNICO. Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Origen",
+          "example": "EXPEDIENTE"
+        },
+        {
+          "name": "partes",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "partes text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Identificación textual de las partes procesales",
+          "example": "Actor: Persona A; Demandado: Entidad B"
+        },
+        {
+          "name": "sede",
+          "type": "Texto",
+          "length": "150",
+          "required": "No",
+          "raw": "sede character varying(150)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Sede",
+          "example": "Ciudad de México"
+        },
+        {
+          "name": "gerencia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "gerencia_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "gerencias",
+          "rule": "Debe existir en gerencias; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Gerencias",
+          "example": "1"
+        },
+        {
+          "name": "materia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "materia_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "materias",
+          "rule": "Debe existir en materias; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Materias",
+          "example": "1"
+        },
+        {
+          "name": "organo_jurisdiccional_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "organo_jurisdiccional_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "organos_jurisdiccionales",
+          "rule": "Debe existir en organos_jurisdiccionales; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Órganos jurisdiccionales",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Captura complementaria para origen EXPEDIENTE o ASUNTO_UNICO. No compartir contexto entre términos: UNIQUE contexto_id en terminos."
+      ],
+      "deps": [
+        "materia_id → materias.id",
+        "organo_jurisdiccional_id → organos_jurisdiccionales.id",
+        "gerencia_id → gerencias.id"
+      ],
+      "constraints": [
+        "termino_contextos_pkey PRIMARY KEY (id)",
+        "fk6bqlx8xoy5y68c306ugj3x9it FOREIGN KEY (materia_id) REFERENCES public.materias(id)",
+        "fkhcuyhk60prwmu8wdx5lq7dw8t FOREIGN KEY (organo_jurisdiccional_id) REFERENCES public.organos_jurisdiccionales(id)",
+        "fkiyg3nqpnf53flv1ovxvp94t5h FOREIGN KEY (gerencia_id) REFERENCES public.gerencias(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id"
+      ]
+    },
+    {
+      "key": "audiencias",
+      "name": "Audiencias",
+      "file": "SIAJ_audiencias_v1.xlsx",
+      "sheet": "audiencias",
+      "description": "Programación y seguimiento de comparecencias vinculadas a un expediente.",
+      "status": "Layout completo propuesto; API histórica parcial existente",
+      "cols": [
+        {
+          "name": "acta_documento",
+          "type": "Texto",
+          "length": "500",
+          "required": "No",
+          "raw": "acta_documento character varying(500)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Acta documento",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "es_virtual",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "es_virtual boolean",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Indica audiencia por videoconferencia",
+          "example": "true"
+        },
+        {
+          "name": "estatus_audiencia",
+          "type": "Texto",
+          "length": "30",
+          "required": "No",
+          "raw": "estatus_audiencia character varying(30)",
+          "source": "db_schema_actual.sql",
+          "enum": [
+            "PENDIENTE",
+            "CON_ACTA",
+            "CONCLUIDA"
+          ],
+          "rule": "Permitidos: PENDIENTE, CON_ACTA, CONCLUIDA. Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Estatus audiencia",
+          "example": "PENDIENTE"
+        },
+        {
+          "name": "fecha_audiencia",
+          "type": "Fecha",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "fecha_audiencia date NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "AAAA-MM-DD, fecha real; no fórmulas.",
+          "description": "Fecha audiencia",
+          "example": "2026-09-15"
+        },
+        {
+          "name": "fecha_desahogo",
+          "type": "Fecha",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "fecha_desahogo date",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "AAAA-MM-DD, fecha real; no fórmulas.",
+          "description": "Fecha desahogo",
+          "example": "2026-09-15"
+        },
+        {
+          "name": "hora_audiencia",
+          "type": "Hora",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "hora_audiencia time(6) without time zone NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "HH:mm, reloj de 24 horas.",
+          "description": "Hora audiencia",
+          "example": "09:30"
+        },
+        {
+          "name": "observaciones",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "observaciones text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Observaciones",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "sala_lugar",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "sala_lugar text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Sala lugar",
+          "example": "Sala 1"
+        },
+        {
+          "name": "url_reunion",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "url_reunion text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Url reunion",
+          "example": "https://example.org/reunion/123"
+        },
+        {
+          "name": "abogado_comparece_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "abogado_comparece_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        },
+        {
+          "name": "expediente_id",
+          "type": "UUID",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "expediente_id uuid NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "expedientes",
+          "rule": "Debe existir en expedientes; consultar hoja Catalogos.",
+          "description": "Referencia a Expedientes",
+          "example": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "name": "tipo_audiencia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (controlador)",
+          "raw": "tipo_audiencia_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "tipos_audiencia",
+          "rule": "Debe existir en tipos_audiencia; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Tipos de audiencia",
+          "example": "1"
+        },
+        {
+          "name": "contexto_id",
+          "type": "Entero 64 bits",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "contexto_id bigint",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "audiencia_contextos",
+          "rule": "Debe existir en audiencia_contextos; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Contextos de audiencia",
+          "example": "1"
+        },
+        {
+          "name": "usuario_delegado_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "usuario_delegado_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Fecha y hora obligatorias en BD; tipo requerido por controlador aunque nullable en BD. expediente_id NOT NULL en dump.",
+        "Estado: PENDIENTE, CON_ACTA, CONCLUIDA. Para estados con acta/desahogo, validar evidencia mediante el flujo correspondiente.",
+        "Contexto es único por audiencia. El esquema admite contexto ASUNTO_UNICO pero no permite expediente_id nulo: no habilitar audiencia independiente sin resolver esa contradicción.",
+        "Propuesta de calidad: si es_virtual=true exigir URL de reunión; validar que compareciente y delegado tengan acceso al expediente."
+      ],
+      "deps": [
+        "expediente_id → expedientes.id",
+        "tipo_audiencia_id → tipos_audiencia.id",
+        "usuario_delegado_id → usuarios.id",
+        "contexto_id → audiencia_contextos.id",
+        "abogado_comparece_id → usuarios.id"
+      ],
+      "constraints": [
+        "audiencias_pkey PRIMARY KEY (id)",
+        "uk6yco257iom67jk0pilkinvda3 UNIQUE (contexto_id)",
+        "fk4csl8qte7scamolg89kofnal3 FOREIGN KEY (expediente_id) REFERENCES public.expedientes(id)",
+        "fk7wchckhcv7ce6x99xekj5e9dx FOREIGN KEY (tipo_audiencia_id) REFERENCES public.tipos_audiencia(id)",
+        "fkgsv5padg0wab4wkm8no4mfx59 FOREIGN KEY (usuario_delegado_id) REFERENCES public.usuarios(id)",
+        "fkgy6f4qct07n42s9vecon4e792 FOREIGN KEY (contexto_id) REFERENCES public.audiencia_contextos(id)",
+        "fkpkiu3klwkc0lr9f9ebbpwsqc1 FOREIGN KEY (abogado_comparece_id) REFERENCES public.usuarios(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "key": "terminos",
+      "name": "Términos",
+      "file": "SIAJ_terminos_v1.xlsx",
+      "sheet": "terminos",
+      "description": "Control de actuaciones y vencimientos, responsables y estado de revisión/presentación.",
+      "status": "Layout completo propuesto; API histórica parcial existente",
+      "cols": [
+        {
+          "name": "acuse",
+          "type": "Texto",
+          "length": "500",
+          "required": "No",
+          "raw": "acuse character varying(500)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Acuse",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "acuse_nombre",
+          "type": "Texto",
+          "length": "500",
+          "required": "No",
+          "raw": "acuse_nombre character varying(500)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Acuse nombre",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "asunto",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "Sí (controlador)",
+          "raw": "asunto text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Asunto",
+          "example": "Presentar contestación"
+        },
+        {
+          "name": "estatus_termino",
+          "type": "Texto",
+          "length": "30",
+          "required": "Sí (BD)",
+          "raw": "estatus_termino character varying(30) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [
+            "PROYECTISTA",
+            "REVISION",
+            "GERENCIA",
+            "DIRECCION",
+            "LIBERADO",
+            "PRESENTADO",
+            "CONCLUIDO"
+          ],
+          "rule": "Permitidos: PROYECTISTA, REVISION, GERENCIA, DIRECCION, LIBERADO, PRESENTADO, CONCLUIDO. Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Estatus termino",
+          "example": "PROYECTISTA"
+        },
+        {
+          "name": "fecha_ingreso",
+          "type": "Fecha",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "fecha_ingreso date",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "AAAA-MM-DD, fecha real; no fórmulas.",
+          "description": "Fecha de ingreso de la actuación",
+          "example": "2026-09-15"
+        },
+        {
+          "name": "fecha_presentacion",
+          "type": "Fecha",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "fecha_presentacion date",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "AAAA-MM-DD, fecha real; no fórmulas.",
+          "description": "Fecha presentacion",
+          "example": "2026-09-15"
+        },
+        {
+          "name": "fecha_vencimiento",
+          "type": "Fecha",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "fecha_vencimiento date NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "AAAA-MM-DD, fecha real; no fórmulas.",
+          "description": "Fecha límite registrada para la actuación",
+          "example": "2026-09-15"
+        },
+        {
+          "name": "observaciones",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "observaciones text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Observaciones",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "abogado_responsable_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "abogado_responsable_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        },
+        {
+          "name": "expediente_id",
+          "type": "UUID",
+          "length": "No aplica",
+          "required": "Condicional: origen del asunto",
+          "raw": "expediente_id uuid",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "expedientes",
+          "rule": "Debe existir en expedientes; consultar hoja Catalogos.",
+          "description": "Referencia a Expedientes",
+          "example": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "name": "prioridad_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "prioridad_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "cat_prioridad",
+          "rule": "Debe existir en cat_prioridad; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Prioridades",
+          "example": "1"
+        },
+        {
+          "name": "contexto_id",
+          "type": "Entero 64 bits",
+          "length": "No aplica",
+          "required": "Condicional: origen del asunto",
+          "raw": "contexto_id bigint",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "termino_contextos",
+          "rule": "Debe existir en termino_contextos; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Contextos de término",
+          "example": "1"
+        },
+        {
+          "name": "tipo_termino_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "example": "1",
+          "rule": "Sólo JPA; no existe en el dump. Validar despliegue y cálculo antes de importar. Sin decimales; IDs del ambiente destino.",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Tipo configurable para plazo"
+        },
+        {
+          "name": "es_tiempo_dinamico",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "example": "false",
+          "rule": "Sólo JPA; no existe en el dump. Validar despliegue y cálculo antes de importar. true o false; no sustituir vacío por false sin regla.",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Es tiempo dinamico"
+        },
+        {
+          "name": "tipo_dias_calculado",
+          "type": "Texto",
+          "length": "20",
+          "required": "No",
+          "example": "HABILES",
+          "rule": "Sólo JPA; no existe en el dump. Validar despliegue y cálculo antes de importar. Permitidos: HABILES, NATURALES. Texto literal; conservar ceros iniciales en identificadores.",
+          "enum": [
+            "HABILES",
+            "NATURALES"
+          ],
+          "source": "Propuesta de layout",
+          "description": "Tipo dias calculado"
+        },
+        {
+          "name": "desglose_dias_texto",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "example": "Texto de ejemplo",
+          "rule": "Sólo JPA; no existe en el dump. Validar despliegue y cálculo antes de importar. Texto literal; conservar ceros iniciales en identificadores.",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Desglose dias texto"
+        }
+      ],
+      "rules": [
+        "Asunto obligatorio en controlador aunque nullable en BD. Vencimiento obligatorio.",
+        "Puede vincularse a expediente o a contexto de ASUNTO_UNICO. Para asunto único, controlador exige materia, gerencia y descripción. No exigir siempre expediente a partir del DTO legado asuntoId Integer.",
+        "Estados: PROYECTISTA, REVISION, GERENCIA, DIRECCION, LIBERADO, PRESENTADO, CONCLUIDO. Conservar transición y permisos del flujo. PRESENTADO debe acompañarse de presentación y acuse validados.",
+        "prioridad_id es relación usada por JPA. Las columnas prioridad y archivo_word del dump no están mapeadas en Termino actual; no cargarlas directamente.",
+        "Cálculo dinámico y tipo de término son añadidos JPA: validar esquema desplegado, tipo de días y calendario; no inferir vencimiento legal automáticamente desde esta documentación."
+      ],
+      "deps": [
+        "contexto_id → termino_contextos.id",
+        "prioridad_id → cat_prioridad.id",
+        "expediente_id → expedientes.id",
+        "abogado_responsable_id → usuarios.id",
+        "tipo_termino_id → cat_tipos_termino.id (JPA)"
+      ],
+      "constraints": [
+        "terminos_pkey PRIMARY KEY (id)",
+        "ukjcdu631eit28n3wdtg3y1elgb UNIQUE (contexto_id)",
+        "fk2dw1fq3hmoqxkj4o25awskock FOREIGN KEY (contexto_id) REFERENCES public.termino_contextos(id)",
+        "fk4gjcyyda149hmwyj6v7fjcot2 FOREIGN KEY (prioridad_id) REFERENCES public.cat_prioridad(id)",
+        "fkcoe42fxbdjqjek2ks0ghkmowd FOREIGN KEY (expediente_id) REFERENCES public.expedientes(id)",
+        "fko59hv5s9ul7bqg35p4oanxlkr FOREIGN KEY (abogado_responsable_id) REFERENCES public.usuarios(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at",
+        "updated_at",
+        "fecha_creacion",
+        "archivo_word",
+        "prioridad"
+      ]
+    },
+    {
+      "key": "colaboradores_expediente",
+      "name": "Colaboradores de expediente",
+      "file": "SIAJ_colaboradores_expediente_v1.xlsx",
+      "sheet": "colaboradores_expediente",
+      "description": "Captura de colaboradores de expediente para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "fecha_expiracion",
+          "type": "Fecha y hora",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "fecha_expiracion timestamp(6) without time zone NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "AAAA-MM-DDTHH:mm:ss; confirmar zona del servidor.",
+          "description": "Fecha expiracion",
+          "example": "2026-09-15T09:30:00"
+        },
+        {
+          "name": "motivo",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "motivo text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Motivo",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "permiso_nivel",
+          "type": "Texto",
+          "length": "255",
+          "required": "No",
+          "raw": "permiso_nivel character varying(255)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Permiso nivel",
+          "example": "Pendiente de catálogo"
+        },
+        {
+          "name": "expediente_id",
+          "type": "UUID",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "expediente_id uuid NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "expedientes",
+          "rule": "Debe existir en expedientes; consultar hoja Catalogos.",
+          "description": "Referencia a Expedientes",
+          "example": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "name": "usuario_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "usuario_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Expediente, usuario y fecha de expiración obligatorios. permiso_nivel es texto sin CHECK; exportar valores usados por el flujo antes de habilitarlo. Propuesta: impedir duplicación de colaboración activa del mismo usuario/expediente."
+      ],
+      "deps": [
+        "usuario_id → usuarios.id",
+        "expediente_id → expedientes.id"
+      ],
+      "constraints": [
+        "colaboradores_expediente_pkey PRIMARY KEY (id)",
+        "fkfmyo4j16g3shpn1jqc846sril FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)",
+        "fkmajsh6pilw2o7d2lusf1yfewt FOREIGN KEY (expediente_id) REFERENCES public.expedientes(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id"
+      ]
+    },
+    {
+      "key": "carpetas",
+      "name": "Carpetas",
+      "file": "SIAJ_carpetas_v1.xlsx",
+      "sheet": "carpetas",
+      "description": "Captura de carpetas para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "expediente_id",
+          "type": "UUID",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "expediente_id uuid NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "",
+          "description": "Expediente id",
+          "example": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "name": "nombre",
+          "type": "Texto",
+          "length": "255",
+          "required": "Sí (BD)",
+          "raw": "nombre character varying(255) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Nombre",
+          "example": "Valor del catálogo"
+        },
+        {
+          "name": "orden",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "orden integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Sin decimales; IDs del ambiente destino.",
+          "description": "Orden",
+          "example": "1"
+        },
+        {
+          "name": "carpeta_padre_id",
+          "type": "UUID",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "carpeta_padre_id uuid",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "carpetas",
+          "rule": "Debe existir en carpetas; consultar hoja Catalogos.",
+          "description": "Referencia a Carpetas",
+          "example": "00000000-0000-4000-8000-000000000001"
+        }
+      ],
+      "rules": [
+        "Padre previamente cargado, mismo expediente y sin ciclos (regla de importación propuesta). Carpeta de sistema, orden técnico y fecha de creación se generan mediante servicio."
+      ],
+      "deps": [
+        "usuario_creador_id → usuarios.id",
+        "carpeta_padre_id → carpetas.id"
+      ],
+      "constraints": [
+        "carpetas_pkey PRIMARY KEY (id)",
+        "fk7oriagmf0utemgy3ub8iy7myt FOREIGN KEY (usuario_creador_id) REFERENCES public.usuarios(id)",
+        "fkel65g9qwjoep94aixiveex7fm FOREIGN KEY (carpeta_padre_id) REFERENCES public.carpetas(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "es_sistema",
+        "fecha_creacion",
+        "usuario_creador_id"
+      ]
+    },
+    {
+      "key": "documentos",
+      "name": "Documentos de expediente",
+      "file": "SIAJ_documentos_v1.xlsx",
+      "sheet": "documentos",
+      "description": "Manifiesto para incorporar archivos al repositorio del expediente.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "descripcion",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "descripcion text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Descripcion",
+          "example": "Seguimiento del asunto de ejemplo"
+        },
+        {
+          "name": "expediente_id",
+          "type": "UUID",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "expediente_id uuid NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "",
+          "description": "Expediente id",
+          "example": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "name": "nombre_original",
+          "type": "Texto",
+          "length": "255",
+          "required": "Sí (BD)",
+          "raw": "nombre_original character varying(255) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Nombre original",
+          "example": "acuse-001.pdf"
+        },
+        {
+          "name": "carpeta_id",
+          "type": "UUID",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "carpeta_id uuid",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "carpetas",
+          "rule": "Debe existir en carpetas; consultar hoja Catalogos.",
+          "description": "Referencia a Carpetas",
+          "example": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "name": "archivo_relativo",
+          "type": "Texto",
+          "length": "255 (propuesta)",
+          "required": "Sí (propuesta)",
+          "example": "documentos/acuse-001.pdf",
+          "rule": "Archivo real dentro del paquete; sin rutas absolutas ni ../. El importador almacena y genera metadatos.",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Archivo a incorporar"
+        }
+      ],
+      "rules": [
+        "Entregar manifiesto más archivos reales. Nombre/ruta/tamaño internos se generan al almacenar; el texto de una ruta no sube el archivo.",
+        "FileStorageService limita documentos a 150 MiB, imágenes a 30 MiB y audio/video a 1 GiB. Verificar además límite HTTP/proxy de destino.",
+        "Carpeta debe corresponder al expediente. No importar flags de papelera ni rutas absolutas del equipo de origen como rutas del servidor."
+      ],
+      "deps": [
+        "usuario_eliminacion_id → usuarios.id",
+        "carpeta_id → carpetas.id",
+        "usuario_subida_id → usuarios.id"
+      ],
+      "constraints": [
+        "documentos_pkey PRIMARY KEY (id)",
+        "fkapnjaa6i0jmcmp0adsrclumti FOREIGN KEY (usuario_eliminacion_id) REFERENCES public.usuarios(id)",
+        "fki77q0aw3d7cix0fty95p5halt FOREIGN KEY (carpeta_id) REFERENCES public.carpetas(id)",
+        "fkou5fwjxrh4strb85eehbd3535 FOREIGN KEY (usuario_subida_id) REFERENCES public.usuarios(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at",
+        "fecha_subida",
+        "nombre_archivo",
+        "ruta_archivo",
+        "tamanio_bytes",
+        "tipo_mime",
+        "updated_at",
+        "usuario_subida_id",
+        "carpeta_original_id",
+        "carpeta_original_ruta",
+        "eliminado",
+        "eliminado_definitivo",
+        "fecha_eliminacion",
+        "fecha_eliminacion_definitiva",
+        "usuario_eliminacion_id"
+      ]
+    },
+    {
+      "key": "termino_archivos",
+      "name": "Archivos de término",
+      "file": "SIAJ_termino_archivos_v1.xlsx",
+      "sheet": "termino_archivos",
+      "description": "Captura de archivos de término para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "etapa",
+          "type": "Texto",
+          "length": "30",
+          "required": "Sí (BD)",
+          "raw": "etapa character varying(30) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [
+            "PROYECTISTA",
+            "REVISION",
+            "GERENCIA",
+            "DIRECCION",
+            "LIBERADO",
+            "PRESENTADO",
+            "CONCLUIDO"
+          ],
+          "rule": "Permitidos: PROYECTISTA, REVISION, GERENCIA, DIRECCION, LIBERADO, PRESENTADO, CONCLUIDO. Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Etapa",
+          "example": "PROYECTISTA"
+        },
+        {
+          "name": "nombre_original",
+          "type": "Texto",
+          "length": "255",
+          "required": "Sí (BD)",
+          "raw": "nombre_original character varying(255) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Nombre original",
+          "example": "acuse-001.pdf"
+        },
+        {
+          "name": "tipo_documento",
+          "type": "Texto",
+          "length": "20",
+          "required": "Sí (BD)",
+          "raw": "tipo_documento character varying(20) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [
+            "BORRADOR",
+            "ACUSE"
+          ],
+          "rule": "Permitidos: BORRADOR, ACUSE. Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Tipo documento",
+          "example": "BORRADOR"
+        },
+        {
+          "name": "termino_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "termino_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "terminos",
+          "rule": "Debe existir en terminos; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Términos",
+          "example": "1"
+        },
+        {
+          "name": "archivo_relativo",
+          "type": "Texto",
+          "length": "255 (propuesta)",
+          "required": "Sí (propuesta)",
+          "example": "documentos/acuse-001.pdf",
+          "rule": "Archivo real dentro del paquete; sin rutas absolutas ni ../. El importador almacena y genera metadatos.",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Archivo a incorporar"
+        }
+      ],
+      "rules": [
+        "Manifiesto y binarios. BORRADOR/ACUSE son valores del enum. Etapa usa estados de término. Validar permisos y flujo al subir acuse.",
+        "Ruta, tamaño, MIME y autor se registran por el servicio de almacenamiento; preservar metadatos históricos sólo mediante migración controlada."
+      ],
+      "deps": [
+        "termino_id → terminos.id",
+        "usuario_subida_id → usuarios.id"
+      ],
+      "constraints": [
+        "termino_archivos_pkey PRIMARY KEY (id)",
+        "fkhgdafpg9sqy4788ma60xfixbx FOREIGN KEY (termino_id) REFERENCES public.terminos(id)",
+        "fklrxl92lqj7h66ktvsk2bdw68u FOREIGN KEY (usuario_subida_id) REFERENCES public.usuarios(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at",
+        "ruta_archivo",
+        "tamanio_bytes",
+        "tipo_mime",
+        "usuario_subida_id"
+      ]
+    },
+    {
+      "key": "comentarios",
+      "name": "Comentarios y observaciones",
+      "file": "SIAJ_comentarios_v1.xlsx",
+      "sheet": "comentarios",
+      "description": "Captura de comentarios y observaciones para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "comentario",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "Sí (BD)",
+          "raw": "comentario text NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Comentario",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "entidad_id",
+          "type": "Texto",
+          "length": "50",
+          "required": "Sí (BD)",
+          "raw": "entidad_id character varying(50) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Entidad id",
+          "example": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "name": "entidad_tipo",
+          "type": "Texto",
+          "length": "30",
+          "required": "Sí (BD)",
+          "raw": "entidad_tipo character varying(30) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Entidad tipo",
+          "example": "EXPEDIENTE"
+        },
+        {
+          "name": "etapa_procesal",
+          "type": "Texto",
+          "length": "30",
+          "required": "No",
+          "raw": "etapa_procesal character varying(30)",
+          "source": "db_schema_actual.sql",
+          "enum": [
+            "TRAMITE",
+            "LAUDO",
+            "FIRME",
+            "CONCLUIDO"
+          ],
+          "rule": "Permitidos: TRAMITE, LAUDO, FIRME, CONCLUIDO. Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Etapa procesal",
+          "example": "TRAMITE"
+        },
+        {
+          "name": "usuario_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "usuario_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "entidad_id es texto polimórfico sin FK: validar manualmente tipo y existencia de entidad. Usuario y fecha deben conservarse sólo para migración histórica autorizada.",
+        "etapa_procesal acepta sólo enum de expediente; no confundir con estados de término."
+      ],
+      "deps": [
+        "usuario_id → usuarios.id"
+      ],
+      "constraints": [
+        "comentarios_pkey PRIMARY KEY (id)",
+        "fkdts62yj83qe3k748cgcjvm48r FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at",
+        "usuario_nombre"
+      ]
+    },
+    {
+      "key": "recordatorios",
+      "name": "Tareas y recordatorios",
+      "file": "SIAJ_recordatorios_v1.xlsx",
+      "sheet": "recordatorios",
+      "description": "Captura de tareas y recordatorios para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "completado",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "completado boolean",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Completado",
+          "example": "true"
+        },
+        {
+          "name": "detalles",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "detalles text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Detalles",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "fecha_recordatorio",
+          "type": "Fecha",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "fecha_recordatorio date NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "AAAA-MM-DD, fecha real; no fórmulas.",
+          "description": "Fecha recordatorio",
+          "example": "2026-09-15"
+        },
+        {
+          "name": "hora_recordatorio",
+          "type": "Hora",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "hora_recordatorio time(6) without time zone NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "HH:mm, reloj de 24 horas.",
+          "description": "Hora recordatorio",
+          "example": "09:30"
+        },
+        {
+          "name": "titulo",
+          "type": "Texto",
+          "length": "200",
+          "required": "Sí (BD)",
+          "raw": "titulo character varying(200) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Titulo",
+          "example": "Revisar escrito"
+        },
+        {
+          "name": "prioridad_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "prioridad_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "cat_prioridad",
+          "rule": "Debe existir en cat_prioridad; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Prioridades",
+          "example": "1"
+        },
+        {
+          "name": "usuario_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "usuario_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Título, fecha, hora y usuario obligatorios. DTO usa prioridad normal/urgent, mientras BD usa prioridad_id: definir equivalencia explícita, no asumir identidad de códigos."
+      ],
+      "deps": [
+        "prioridad_id → cat_prioridad.id",
+        "usuario_id → usuarios.id"
+      ],
+      "constraints": [
+        "recordatorios_pkey PRIMARY KEY (id)",
+        "fk476hi0yoplmls066xtrc5otb FOREIGN KEY (prioridad_id) REFERENCES public.cat_prioridad(id)",
+        "fkc52iceqg5fu1wn3jrijliai38 FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "key": "eventos_calendario",
+      "name": "Eventos de calendario",
+      "file": "SIAJ_eventos_calendario_v1.xlsx",
+      "sheet": "eventos_calendario",
+      "description": "Captura de eventos de calendario para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "categoria",
+          "type": "Texto",
+          "length": "30",
+          "required": "Sí (BD)",
+          "raw": "categoria character varying(30) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Categoria",
+          "example": "Pendiente de catálogo"
+        },
+        {
+          "name": "color",
+          "type": "Texto",
+          "length": "7",
+          "required": "No",
+          "raw": "color character varying(7)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Color",
+          "example": "bg-red-100 text-red-800"
+        },
+        {
+          "name": "descripcion",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "raw": "descripcion text",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Descripcion",
+          "example": "Seguimiento del asunto de ejemplo"
+        },
+        {
+          "name": "entidad_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "entidad_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Sin decimales; IDs del ambiente destino.",
+          "description": "Entidad id",
+          "example": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "name": "entidad_tipo",
+          "type": "Texto",
+          "length": "30",
+          "required": "No",
+          "raw": "entidad_tipo character varying(30)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Entidad tipo",
+          "example": "EXPEDIENTE"
+        },
+        {
+          "name": "fecha_fin",
+          "type": "Fecha y hora",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "fecha_fin timestamp(6) without time zone",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "AAAA-MM-DDTHH:mm:ss; confirmar zona del servidor.",
+          "description": "Fecha fin",
+          "example": "2026-09-15T09:30:00"
+        },
+        {
+          "name": "fecha_inicio",
+          "type": "Fecha y hora",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "fecha_inicio timestamp(6) without time zone NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "AAAA-MM-DDTHH:mm:ss; confirmar zona del servidor.",
+          "description": "Fecha inicio",
+          "example": "2026-09-15T09:30:00"
+        },
+        {
+          "name": "titulo",
+          "type": "Texto",
+          "length": "200",
+          "required": "Sí (BD)",
+          "raw": "titulo character varying(200) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Titulo",
+          "example": "Revisar escrito"
+        },
+        {
+          "name": "todo_el_dia",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "todo_el_dia boolean",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Todo el dia",
+          "example": "true"
+        },
+        {
+          "name": "usuario_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "usuario_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "categoría es texto sin CHECK. Confirmar valores del servicio antes de importar. No duplicar eventos derivados de audiencias/términos.",
+        "Propuesta: fecha_fin >= fecha_inicio. entidad_id es Integer: no admite directamente UUID de expediente."
+      ],
+      "deps": [
+        "usuario_id → usuarios.id"
+      ],
+      "constraints": [
+        "eventos_calendario_pkey PRIMARY KEY (id)",
+        "fkkerk9013d75pe0retvvpoali4 FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at"
+      ]
+    },
+    {
+      "key": "configuraciones_alerta",
+      "name": "Configuraciones de alertas",
+      "file": "SIAJ_configuraciones_alerta_v1.xlsx",
+      "sheet": "configuraciones_alerta",
+      "description": "Captura de configuraciones de alertas para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "activa",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "activa boolean NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Activa",
+          "example": "true"
+        },
+        {
+          "name": "asunto_id",
+          "type": "Texto",
+          "length": "100",
+          "required": "No",
+          "raw": "asunto_id character varying(100)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Asunto id",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "asunto_tipo",
+          "type": "Texto",
+          "length": "30",
+          "required": "No",
+          "raw": "asunto_tipo character varying(30)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Asunto tipo",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "dias_anticipacion",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "dias_anticipacion integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Sin decimales; IDs del ambiente destino.",
+          "description": "Dias anticipacion",
+          "example": "1"
+        },
+        {
+          "name": "nivel",
+          "type": "Texto",
+          "length": "30",
+          "required": "Sí (BD)",
+          "raw": "nivel character varying(30) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [
+            "SISTEMA",
+            "GERENCIA",
+            "USUARIO",
+            "ASUNTO"
+          ],
+          "rule": "Permitidos: SISTEMA, GERENCIA, USUARIO, ASUNTO. Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Nivel",
+          "example": "SISTEMA"
+        },
+        {
+          "name": "obligatoria",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "obligatoria boolean NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Obligatoria",
+          "example": "true"
+        },
+        {
+          "name": "tipo_evento",
+          "type": "Texto",
+          "length": "30",
+          "required": "Sí (BD)",
+          "raw": "tipo_evento character varying(30) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [
+            "TERMINO",
+            "AUDIENCIA"
+          ],
+          "rule": "Permitidos: TERMINO, AUDIENCIA. Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Tipo evento",
+          "example": "TERMINO"
+        },
+        {
+          "name": "gerencia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "gerencia_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "gerencias",
+          "rule": "Debe existir en gerencias; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Gerencias",
+          "example": "1"
+        },
+        {
+          "name": "usuario_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "usuario_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Una fila por día de anticipación. Servicio admite días 0..365. Tipo TERMINO o AUDIENCIA.",
+        "Nivel SISTEMA, GERENCIA, USUARIO o ASUNTO; identificar gerencia/usuario/asunto según nivel. Definir precedencia mediante servicio, no insertar reglas contradictorias."
+      ],
+      "deps": [
+        "gerencia_id → gerencias.id",
+        "usuario_id → usuarios.id"
+      ],
+      "constraints": [
+        "configuraciones_alerta_pkey PRIMARY KEY (id)",
+        "fkjuixqrp11exyu0hxda62mjaly FOREIGN KEY (gerencia_id) REFERENCES public.gerencias(id)",
+        "fkp2ofjofsj1ohidlux3q1jylxr FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "key": "configuraciones_semaforo",
+      "name": "Configuraciones de semáforo",
+      "file": "SIAJ_configuraciones_semaforo_v1.xlsx",
+      "sheet": "configuraciones_semaforo",
+      "description": "Captura de configuraciones de semáforo para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "amarillo_hasta",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "amarillo_hasta integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Sin decimales; IDs del ambiente destino.",
+          "description": "Amarillo hasta",
+          "example": "1"
+        },
+        {
+          "name": "nivel",
+          "type": "Texto",
+          "length": "30",
+          "required": "Sí (BD)",
+          "raw": "nivel character varying(30) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [
+            "SISTEMA",
+            "GERENCIA"
+          ],
+          "rule": "Permitidos: SISTEMA, GERENCIA. Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Nivel",
+          "example": "SISTEMA"
+        },
+        {
+          "name": "rojo_hasta",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "rojo_hasta integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Sin decimales; IDs del ambiente destino.",
+          "description": "Rojo hasta",
+          "example": "1"
+        },
+        {
+          "name": "tipo_evento",
+          "type": "Texto",
+          "length": "30",
+          "required": "Sí (BD)",
+          "raw": "tipo_evento character varying(30) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [
+            "TERMINO",
+            "AUDIENCIA"
+          ],
+          "rule": "Permitidos: TERMINO, AUDIENCIA. Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Tipo evento",
+          "example": "TERMINO"
+        },
+        {
+          "name": "gerencia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "gerencia_id integer",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "gerencias",
+          "rule": "Debe existir en gerencias; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Gerencias",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Servicio sólo admite SISTEMA y GERENCIA aunque CHECK incluye USUARIO y ASUNTO. Gerencia requerida para nivel GERENCIA.",
+        "rojo_hasta >= 0 y amarillo_hasta > rojo_hasta. Persistir usando servicio para conservar unicidad lógica por tipo/nivel/gerencia."
+      ],
+      "deps": [
+        "gerencia_id → gerencias.id"
+      ],
+      "constraints": [
+        "configuraciones_semaforo_pkey PRIMARY KEY (id)",
+        "fkpncb84gi9iflcalxgkyf6chdk FOREIGN KEY (gerencia_id) REFERENCES public.gerencias(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "key": "preferencias_notificacion",
+      "name": "Preferencias generales de notificación",
+      "file": "SIAJ_preferencias_notificacion_v1.xlsx",
+      "sheet": "preferencias_notificacion",
+      "description": "Captura de preferencias generales de notificación para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "notificar_nueva_audiencia",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "notificar_nueva_audiencia boolean",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Notificar nueva audiencia",
+          "example": "true"
+        },
+        {
+          "name": "notificar_nuevo_termino",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "notificar_nuevo_termino boolean",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Notificar nuevo termino",
+          "example": "true"
+        },
+        {
+          "name": "notificar_reasignacion",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "notificar_reasignacion boolean",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Notificar reasignacion",
+          "example": "true"
+        },
+        {
+          "name": "notificar_termino_vencer",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "raw": "notificar_termino_vencer boolean",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Notificar termino vencer",
+          "example": "true"
+        },
+        {
+          "name": "usuario_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "usuario_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Una preferencia por usuario según UNIQUE. Modelo general previo al esquema por evento: confirmar cuál prevalece."
+      ],
+      "deps": [
+        "usuario_id → usuarios.id"
+      ],
+      "constraints": [
+        "preferencias_notificacion_pkey PRIMARY KEY (id)",
+        "uke1fpwe1mmm24nh837d91ymwnh UNIQUE (usuario_id)",
+        "fk401s19rwxg52aeg4lnbgdno3d FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id"
+      ]
+    },
+    {
+      "key": "preferencias_notificacion_evento",
+      "name": "Preferencias por evento",
+      "file": "SIAJ_preferencias_notificacion_evento_v1.xlsx",
+      "sheet": "preferencias_notificacion_event",
+      "description": "Captura de preferencias por evento para carga inicial o migración controlada.",
+      "status": "Diseño propuesto; requiere importador",
+      "cols": [
+        {
+          "name": "evento",
+          "type": "Texto",
+          "length": "80",
+          "required": "Sí (BD)",
+          "raw": "evento character varying(80) NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [
+            "EXPEDIENTE_NUEVO",
+            "EXPEDIENTE_REASIGNADO",
+            "EXPEDIENTE_OBSERVACION_NUEVA",
+            "TERMINO_ASIGNADO",
+            "TERMINO_NUEVO",
+            "TERMINO_CAMBIO_ETAPA",
+            "TERMINO_VALIDADO_CONCLUIDO",
+            "TERMINO_RECORDATORIO",
+            "AUDIENCIA_NUEVA",
+            "AUDIENCIA_COMPARECENCIA_ASIGNADA",
+            "AUDIENCIA_DELEGADA",
+            "AUDIENCIA_RECORDATORIO",
+            "AUDIENCIA_ACTA_DISPONIBLE",
+            "AUDIENCIA_VALIDADA_CONCLUIDA",
+            "SEGURIDAD_PASSWORD_POR_VENCER",
+            "TAREA_RECORDATORIO"
+          ],
+          "rule": "Permitidos: EXPEDIENTE_NUEVO, EXPEDIENTE_REASIGNADO, EXPEDIENTE_OBSERVACION_NUEVA, TERMINO_ASIGNADO, TERMINO_NUEVO, TERMINO_CAMBIO_ETAPA, TERMINO_VALIDADO_CONCLUIDO, TERMINO_RECORDATORIO, AUDIENCIA_NUEVA, AUDIENCIA_COMPARECENCIA_ASIGNADA, AUDIENCIA_DELEGADA, AUDIENCIA_RECORDATORIO, AUDIENCIA_ACTA_DISPONIBLE, AUDIENCIA_VALIDADA_CONCLUIDA, SEGURIDAD_PASSWORD_POR_VENCER, TAREA_RECORDATORIO. Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Evento",
+          "example": "EXPEDIENTE_NUEVO"
+        },
+        {
+          "name": "habilitada",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "habilitada boolean NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "true o false; no sustituir vacío por false sin regla.",
+          "description": "Habilitada",
+          "example": "true"
+        },
+        {
+          "name": "usuario_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "usuario_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "usuarios",
+          "rule": "Debe existir en usuarios; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Usuarios",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Par (usuario_id, evento) único. Validar contra enum y CHECK; no cambiar notificaciones de seguridad obligatorias por un importador genérico sin comprobar servicio."
+      ],
+      "deps": [
+        "usuario_id → usuarios.id"
+      ],
+      "constraints": [
+        "preferencias_notificacion_evento_pkey PRIMARY KEY (id)",
+        "uk_pref_notif_evento_usuario UNIQUE (usuario_id, evento)",
+        "fkq824i3pvktkmtaa0m7l1g1ry0 FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id"
+      ]
+    },
+    {
+      "key": "expediente_etapa_periodos",
+      "name": "Historial de etapas de expediente",
+      "file": "SIAJ_expediente_etapa_periodos_v1.xlsx",
+      "sheet": "expediente_etapa_periodos",
+      "description": "Captura de historial de etapas de expediente para carga inicial o migración controlada.",
+      "status": "Sólo migración histórica controlada",
+      "cols": [
+        {
+          "name": "expediente_id",
+          "type": "UUID",
+          "length": "No aplica",
+          "required": "Sí (JPA)",
+          "example": "00000000-0000-4000-8000-000000000001",
+          "rule": "",
+          "enum": [],
+          "source": "Entity/expediente/ExpedienteEtapaPeriodo.java",
+          "description": "Expediente id"
+        },
+        {
+          "name": "etapa_procesal",
+          "type": "Texto",
+          "length": "30",
+          "required": "Sí (JPA)",
+          "example": "TRAMITE",
+          "rule": "Permitidos: TRAMITE, LAUDO, FIRME, CONCLUIDO. Texto literal; conservar ceros iniciales en identificadores.",
+          "enum": [
+            "TRAMITE",
+            "LAUDO",
+            "FIRME",
+            "CONCLUIDO"
+          ],
+          "source": "Entity/expediente/ExpedienteEtapaPeriodo.java",
+          "description": "Etapa procesal"
+        },
+        {
+          "name": "etapa_catalogo_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "example": "1",
+          "rule": "Sin decimales; IDs del ambiente destino.",
+          "enum": [],
+          "source": "Entity/expediente/ExpedienteEtapaPeriodo.java",
+          "description": "Etapa configurable de la materia"
+        },
+        {
+          "name": "fecha_inicio",
+          "type": "Fecha y hora",
+          "length": "No aplica",
+          "required": "Sí (JPA)",
+          "example": "2026-09-15T09:30:00",
+          "rule": "AAAA-MM-DDTHH:mm:ss; confirmar zona del servidor.",
+          "enum": [],
+          "source": "Entity/expediente/ExpedienteEtapaPeriodo.java",
+          "description": "Fecha inicio"
+        },
+        {
+          "name": "fecha_fin",
+          "type": "Fecha y hora",
+          "length": "No aplica",
+          "required": "No",
+          "example": "2026-09-15T09:30:00",
+          "rule": "AAAA-MM-DDTHH:mm:ss; confirmar zona del servidor.",
+          "enum": [],
+          "source": "Entity/expediente/ExpedienteEtapaPeriodo.java",
+          "description": "Fecha fin"
+        },
+        {
+          "name": "usuario_inicio_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "example": "1",
+          "rule": "Sin decimales; IDs del ambiente destino.",
+          "enum": [],
+          "source": "Entity/expediente/ExpedienteEtapaPeriodo.java",
+          "description": "Usuario inicio id"
+        },
+        {
+          "name": "usuario_fin_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "example": "1",
+          "rule": "Sin decimales; IDs del ambiente destino.",
+          "enum": [],
+          "source": "Entity/expediente/ExpedienteEtapaPeriodo.java",
+          "description": "Usuario fin id"
+        },
+        {
+          "name": "motivo_cambio",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "example": "Texto de ejemplo",
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "enum": [],
+          "source": "Entity/expediente/ExpedienteEtapaPeriodo.java",
+          "description": "Motivo cambio"
+        }
+      ],
+      "rules": [
+        "Histórico técnico generado por cambios de etapa. Sólo migración histórica, no alta ordinaria. Propuesta: fin >= inicio, sin períodos superpuestos y un período abierto por expediente."
+      ],
+      "deps": [
+        "expediente_id → expedientes.id",
+        "etapa_catalogo_id → cat_etapas_procesales.id",
+        "usuario_inicio_id / usuario_fin_id → usuarios.id"
+      ],
+      "constraints": [
+        "PK id BIGINT generado (JPA)"
+      ],
+      "source": "Entity/expediente/ExpedienteEtapaPeriodo.java",
+      "excluded": []
+    },
+    {
+      "key": "audiencias_desahogadas",
+      "name": "Audiencias desahogadas",
+      "file": "SIAJ_audiencias_desahogadas_v1.xlsx",
+      "sheet": "audiencias_desahogadas",
+      "description": "Captura de audiencias desahogadas para carga inicial o migración controlada.",
+      "status": "Sólo migración histórica controlada",
+      "cols": [
+        {
+          "name": "expediente_numero",
+          "type": "Texto",
+          "length": "50",
+          "required": "No",
+          "raw": "expediente_numero character varying(50)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Expediente numero",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "fecha_audiencia",
+          "type": "Fecha",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "fecha_audiencia date NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "AAAA-MM-DD, fecha real; no fórmulas.",
+          "description": "Fecha audiencia",
+          "example": "2026-09-15"
+        },
+        {
+          "name": "fecha_desahogo",
+          "type": "Fecha",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "fecha_desahogo date NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "AAAA-MM-DD, fecha real; no fórmulas.",
+          "description": "Fecha desahogo",
+          "example": "2026-09-15"
+        },
+        {
+          "name": "hora_audiencia",
+          "type": "Hora",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "hora_audiencia time(6) without time zone NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "HH:mm, reloj de 24 horas.",
+          "description": "Hora audiencia",
+          "example": "09:30"
+        },
+        {
+          "name": "audiencia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "audiencia_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "audiencias",
+          "rule": "Debe existir en audiencias; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Audiencias",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Tabla de sincronización/resultado. Generar mediante flujo de desahogo; no carga paralela de usuario. Migración histórica debe conciliar audiencia y fechas. No hay UNIQUE audiencia_id en dump."
+      ],
+      "deps": [
+        "audiencia_id → audiencias.id"
+      ],
+      "constraints": [
+        "audiencias_desahogadas_pkey PRIMARY KEY (id)",
+        "fkq40pjs1rrg3mj5qdcl74hawwa FOREIGN KEY (audiencia_id) REFERENCES public.audiencias(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "sincronizado_at"
+      ]
+    },
+    {
+      "key": "terminos_presentados",
+      "name": "Términos presentados",
+      "file": "SIAJ_terminos_presentados_v1.xlsx",
+      "sheet": "terminos_presentados",
+      "description": "Captura de términos presentados para carga inicial o migración controlada.",
+      "status": "Sólo migración histórica controlada",
+      "cols": [
+        {
+          "name": "acuse_documento",
+          "type": "Texto",
+          "length": "500",
+          "required": "No",
+          "raw": "acuse_documento character varying(500)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Acuse documento",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "expediente_numero",
+          "type": "Texto",
+          "length": "50",
+          "required": "No",
+          "raw": "expediente_numero character varying(50)",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "Texto literal; conservar ceros iniciales en identificadores.",
+          "description": "Expediente numero",
+          "example": "Texto de ejemplo"
+        },
+        {
+          "name": "fecha_presentacion",
+          "type": "Fecha",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "fecha_presentacion date NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "rule": "AAAA-MM-DD, fecha real; no fórmulas.",
+          "description": "Fecha presentacion",
+          "example": "2026-09-15"
+        },
+        {
+          "name": "termino_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "Sí (BD)",
+          "raw": "termino_id integer NOT NULL",
+          "source": "db_schema_actual.sql",
+          "enum": [],
+          "fk": "terminos",
+          "rule": "Debe existir en terminos; consultar hoja Catalogos. Sin decimales; IDs del ambiente destino.",
+          "description": "Referencia a Términos",
+          "example": "1"
+        }
+      ],
+      "rules": [
+        "Tabla de sincronización/resultado. Generar mediante flujo de presentación; no carga paralela de usuario. Migración histórica debe conciliar término, fecha y acuse. No hay UNIQUE termino_id en dump."
+      ],
+      "deps": [
+        "termino_id → terminos.id"
+      ],
+      "constraints": [
+        "terminos_presentados_pkey PRIMARY KEY (id)",
+        "fk1brocrvr9fxbfek662npjjn5l FOREIGN KEY (termino_id) REFERENCES public.terminos(id)"
+      ],
+      "source": "db_schema_actual.sql",
+      "excluded": [
+        "id",
+        "sincronizado_at"
+      ]
+    },
+    {
+      "key": "terminos_excel_legado",
+      "name": "Términos: Excel legado",
+      "file": "SIAJ_terminos_excel_legado_v1.xlsx",
+      "sheet": "terminos_excel_legado",
+      "description": "Contrato de siete columnas leído por TerminoImportService; servicio existente sin invocación desde controlador encontrada.",
+      "status": "Servicio existente; ruta de carga no confirmada",
+      "cols": [
+        {
+          "name": "NumeroExpediente",
+          "description": "NumeroExpediente",
+          "type": "Texto",
+          "length": "50",
+          "required": "Sí",
+          "example": "EXP-001/2026",
+          "rule": "Columna posicional; conservar este orden. Primera hoja y primera fila de encabezados.",
+          "enum": [],
+          "source": "service/procesal/TerminoImportService.java"
+        },
+        {
+          "name": "Materia",
+          "description": "Materia",
+          "type": "Texto",
+          "length": "100",
+          "required": "Recomendado",
+          "example": "Laboral",
+          "rule": "Columna posicional; conservar este orden. Primera hoja y primera fila de encabezados.",
+          "enum": [],
+          "source": "service/procesal/TerminoImportService.java"
+        },
+        {
+          "name": "OrganoJurisdiccional",
+          "description": "OrganoJurisdiccional",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "example": "Tribunal de ejemplo",
+          "rule": "Columna posicional; conservar este orden. Primera hoja y primera fila de encabezados.",
+          "enum": [],
+          "source": "service/procesal/TerminoImportService.java"
+        },
+        {
+          "name": "EmailAbogadoResponsable",
+          "description": "EmailAbogadoResponsable",
+          "type": "Texto",
+          "length": "100",
+          "required": "Recomendado",
+          "example": "ana.perez@example.org",
+          "rule": "Columna posicional; conservar este orden. Primera hoja y primera fila de encabezados.",
+          "enum": [],
+          "source": "service/procesal/TerminoImportService.java"
+        },
+        {
+          "name": "Actuacion",
+          "description": "Actuacion",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "Sí (propuesta)",
+          "example": "Presentar contestación",
+          "rule": "Columna posicional; conservar este orden. Primera hoja y primera fila de encabezados.",
+          "enum": [],
+          "source": "service/procesal/TerminoImportService.java"
+        },
+        {
+          "name": "FechaVencimiento",
+          "description": "FechaVencimiento",
+          "type": "Fecha",
+          "length": "No aplica",
+          "required": "Sí",
+          "example": "2026-09-15",
+          "rule": "Columna posicional; conservar este orden. Primera hoja y primera fila de encabezados.",
+          "enum": [],
+          "source": "service/procesal/TerminoImportService.java"
+        },
+        {
+          "name": "Prioridad",
+          "description": "Prioridad",
+          "type": "Texto",
+          "length": "50",
+          "required": "Recomendado",
+          "example": "MEDIA",
+          "rule": "Columna posicional; conservar este orden. Primera hoja y primera fila de encabezados.",
+          "enum": [],
+          "source": "service/procesal/TerminoImportService.java"
+        }
+      ],
+      "deps": [
+        "Usuarios por email",
+        "Gerencias",
+        "Materias",
+        "Prioridades",
+        "Expedientes por número"
+      ],
+      "constraints": [],
+      "excluded": [],
+      "source": "service/procesal/TerminoImportService.java",
+      "rules": [
+        "XLSX auténtico; primera hoja, encabezado fila 1 y datos desde fila 2. Filas sin número se omiten.",
+        "Fecha nativa Excel o texto AAAA-MM-DD/dd/MM/aaaa; preferir ISO. Número de expediente siempre texto.",
+        "Si expediente no existe, crea expediente en TRAMITE con descripción automática; toma gerencia del abogado o la primera disponible y materia por nombre o la primera disponible. Esto puede asignar incorrectamente: exigir homologación previa.",
+        "Email inexistente deja abogado nulo. Prioridad desconocida cae en MEDIA o null. Crea un nuevo término por fila sin deduplicación; no reimportar el mismo archivo."
+      ]
+    },
+    {
+      "key": "audiencias_api_historica",
+      "name": "Audiencias: API histórica",
+      "file": "SIAJ_audiencias_api_historica_v1.json",
+      "sheet": "audiencias_api_historica",
+      "description": "Contrato recomendado dentro de las claves leídas por la API y el asistente. La hoja Excel requiere transformación a JSON, no se carga directamente.",
+      "status": "API existente; homologación e inyección posteriores",
+      "cols": [
+        {
+          "name": "numeroExpediente",
+          "description": "numeroExpediente",
+          "type": "Texto",
+          "length": "50",
+          "required": "Sí (propuesta)",
+          "example": "EXP-001/2026",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "gerencia",
+          "description": "gerencia",
+          "type": "Texto",
+          "length": "200",
+          "required": "Sí o global del lote",
+          "example": "Gerencia Laboral y Penal",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "materia",
+          "description": "materia",
+          "type": "Texto",
+          "length": "100",
+          "required": "Sí (propuesta)",
+          "example": "Laboral",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "descripcion",
+          "description": "descripcion",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "Recomendado",
+          "example": "Asunto de ejemplo",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "partes",
+          "description": "partes",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "Recomendado",
+          "example": "Actor: Persona A; Demandado: Entidad B",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "sede",
+          "description": "sede",
+          "type": "Texto",
+          "length": "150",
+          "required": "No",
+          "example": "Ciudad de México",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "organoJurisdiccional",
+          "description": "organoJurisdiccional",
+          "type": "Texto",
+          "length": "300",
+          "required": "No",
+          "example": "Tribunal de ejemplo",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "abogadoResponsable",
+          "description": "abogadoResponsable",
+          "type": "Texto",
+          "length": "200",
+          "required": "Recomendado",
+          "example": "Ana Pérez López",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "tipoAudiencia",
+          "description": "tipoAudiencia",
+          "type": "Texto",
+          "length": "100",
+          "required": "Sí (propuesta)",
+          "example": "Conciliación",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "fechaAudiencia",
+          "description": "fechaAudiencia",
+          "type": "Fecha",
+          "length": "No aplica",
+          "required": "Sí (propuesta)",
+          "example": "2026-09-15",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. Formato ISO AAAA-MM-DD obligatorio en la propuesta."
+        },
+        {
+          "name": "horaAudiencia",
+          "description": "horaAudiencia",
+          "type": "Hora",
+          "length": "No aplica",
+          "required": "Sí (propuesta)",
+          "example": "09:30",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. Formato HH:mm."
+        },
+        {
+          "name": "sala",
+          "description": "sala",
+          "type": "Texto",
+          "length": "490",
+          "required": "No",
+          "example": "Sala 1",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "abogadoCompareciente",
+          "description": "abogadoCompareciente",
+          "type": "Texto",
+          "length": "200",
+          "required": "No",
+          "example": "Ana Pérez López",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "esEnLinea",
+          "description": "esEnLinea",
+          "type": "Booleano",
+          "length": "No aplica",
+          "required": "No",
+          "example": "false",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "enlaceReunion",
+          "description": "enlaceReunion",
+          "type": "Texto",
+          "length": "490",
+          "required": "Condicional: virtual",
+          "example": "https://example.org/reunion/123",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "actaDocumento",
+          "description": "actaDocumento",
+          "type": "Texto",
+          "length": "490",
+          "required": "No",
+          "example": "acta-001.pdf",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "observaciones",
+          "description": "observaciones",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "example": "Observación de ejemplo",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        }
+      ],
+      "deps": [
+        "Catálogos homologados en lote",
+        "Gerencia global si falta en filas",
+        "Usuarios",
+        "Expedientes derivados"
+      ],
+      "constraints": [],
+      "excluded": [],
+      "source": "service/procesal/LoteMigracionService.java",
+      "rules": [
+        "POST /api/migration/lote/audiencias admite lista de objetos; X-API-KEY configurada. Recepción no equivale a persistencia final.",
+        "El asistente homologa catálogos, revisa expedientes, audiencias y términos antes de inyectar.",
+        "Fechas vacías o inválidas se sustituyen por HOY y hora inválida por 00:00; prevalidarlas y rechazar errores antes de enviar.",
+        "La inyección asigna CONCLUIDO/CONCLUIDA si la fecha es anterior a HOY; en otro caso PROYECTISTA/PENDIENTE. No conserva un estado histórico enviado arbitrariamente.",
+        "Deduplica términos por expediente+asunto+vencimiento y audiencias por expediente+fecha+hora; esto no prueba identidad de negocio y puede omitir eventos distintos.",
+        "Campos de archivos son referencias textuales; no transfieren binarios. Longitudes 490 reflejan truncamiento del importador en campos señalados.",
+        "Para términos usar asunto, sin enviar simultáneamente prestacion/actuacion; la vista e inyección no resuelven esos alias de la misma manera. archivoWord se asigna a acuseNombre en el importador, no al documento de borrador."
+      ]
+    },
+    {
+      "key": "terminos_api_historica",
+      "name": "Terminos: API histórica",
+      "file": "SIAJ_terminos_api_historica_v1.json",
+      "sheet": "terminos_api_historica",
+      "description": "Contrato recomendado dentro de las claves leídas por la API y el asistente. La hoja Excel requiere transformación a JSON, no se carga directamente.",
+      "status": "API existente; homologación e inyección posteriores",
+      "cols": [
+        {
+          "name": "numeroExpediente",
+          "description": "numeroExpediente",
+          "type": "Texto",
+          "length": "50",
+          "required": "Sí (propuesta)",
+          "example": "EXP-001/2026",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "gerencia",
+          "description": "gerencia",
+          "type": "Texto",
+          "length": "200",
+          "required": "Sí o global del lote",
+          "example": "Gerencia Laboral y Penal",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "materia",
+          "description": "materia",
+          "type": "Texto",
+          "length": "100",
+          "required": "Sí (propuesta)",
+          "example": "Laboral",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "descripcion",
+          "description": "descripcion",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "Recomendado",
+          "example": "Asunto de ejemplo",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "partes",
+          "description": "partes",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "Recomendado",
+          "example": "Actor: Persona A; Demandado: Entidad B",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "sede",
+          "description": "sede",
+          "type": "Texto",
+          "length": "150",
+          "required": "No",
+          "example": "Ciudad de México",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "organoJurisdiccional",
+          "description": "organoJurisdiccional",
+          "type": "Texto",
+          "length": "300",
+          "required": "No",
+          "example": "Tribunal de ejemplo",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "abogadoResponsable",
+          "description": "abogadoResponsable",
+          "type": "Texto",
+          "length": "200",
+          "required": "Recomendado",
+          "example": "Ana Pérez López",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "asunto",
+          "description": "asunto",
+          "type": "Texto",
+          "length": "490",
+          "required": "Sí (propuesta)",
+          "example": "Presentar contestación",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "fechaVencimiento",
+          "description": "fechaVencimiento",
+          "type": "Fecha",
+          "length": "No aplica",
+          "required": "Sí (propuesta)",
+          "example": "2026-09-15",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. Formato ISO AAAA-MM-DD obligatorio en la propuesta."
+        },
+        {
+          "name": "fechaIngreso",
+          "description": "fechaIngreso",
+          "type": "Fecha",
+          "length": "No aplica",
+          "required": "Recomendado",
+          "example": "2026-09-07",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. Formato ISO AAAA-MM-DD obligatorio en la propuesta."
+        },
+        {
+          "name": "prioridad",
+          "description": "prioridad",
+          "type": "Texto",
+          "length": "50",
+          "required": "Recomendado",
+          "example": "MEDIA",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "acuse",
+          "description": "acuse",
+          "type": "Texto",
+          "length": "490",
+          "required": "No",
+          "example": "acuse-001.pdf",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "acuseNombre",
+          "description": "acuseNombre",
+          "type": "Texto",
+          "length": "490",
+          "required": "No",
+          "example": "Acuse de recibo",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        },
+        {
+          "name": "observaciones",
+          "description": "observaciones",
+          "type": "Texto",
+          "length": "Sin límite declarado",
+          "required": "No",
+          "example": "Observación de ejemplo",
+          "enum": [],
+          "source": "service/procesal/LoteMigracionService.java",
+          "rule": "Clave JSON exacta. Nombres de catálogos/usuarios homologados en asistente. "
+        }
+      ],
+      "deps": [
+        "Catálogos homologados en lote",
+        "Gerencia global si falta en filas",
+        "Usuarios",
+        "Expedientes derivados"
+      ],
+      "constraints": [],
+      "excluded": [],
+      "source": "service/procesal/LoteMigracionService.java",
+      "rules": [
+        "POST /api/migration/lote/terminos admite lista de objetos; X-API-KEY configurada. Recepción no equivale a persistencia final.",
+        "El asistente homologa catálogos, revisa expedientes, audiencias y términos antes de inyectar.",
+        "Fechas vacías o inválidas se sustituyen por HOY y hora inválida por 00:00; prevalidarlas y rechazar errores antes de enviar.",
+        "La inyección asigna CONCLUIDO/CONCLUIDA si la fecha es anterior a HOY; en otro caso PROYECTISTA/PENDIENTE. No conserva un estado histórico enviado arbitrariamente.",
+        "Deduplica términos por expediente+asunto+vencimiento y audiencias por expediente+fecha+hora; esto no prueba identidad de negocio y puede omitir eventos distintos.",
+        "Campos de archivos son referencias textuales; no transfieren binarios. Longitudes 490 reflejan truncamiento del importador en campos señalados.",
+        "Para términos usar asunto, sin enviar simultáneamente prestacion/actuacion; la vista e inyección no resuelven esos alias de la misma manera. archivoWord se asigna a acuseNombre en el importador, no al documento de borrador."
+      ]
+    },
+    {
+      "key": "actores",
+      "name": "Actores",
+      "file": "SIAJ_actores_levantamiento_v1.xlsx",
+      "sheet": "actores",
+      "description": "Levantamiento preliminar, sin tabla independiente encontrada. Destino posible: expedientes.partes.",
+      "status": "Levantamiento; no importable como entidad independiente",
+      "cols": [
+        {
+          "name": "expediente_id",
+          "type": "UUID",
+          "length": "No aplica",
+          "required": "Sí (propuesta)",
+          "example": "00000000-0000-4000-8000-000000000001",
+          "rule": "",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Expediente id"
+        },
+        {
+          "name": "nombre_actor",
+          "type": "Texto",
+          "length": "Por definir",
+          "required": "Sí (propuesta)",
+          "example": "Texto de ejemplo",
+          "rule": "",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Nombre actor"
+        }
+      ],
+      "deps": [
+        "Expedientes u órganos jurisdiccionales según significado"
+      ],
+      "constraints": [
+        "No existe PK ni unicidad específica confirmada para esta entidad"
+      ],
+      "excluded": [],
+      "source": "Inventario SQL y entidades JPA",
+      "rules": [
+        "No importar esta hoja directamente. Validar modelo y correspondencia funcional.",
+        "Para actores y demandados, el texto partes permite múltiples nombres pero pierde identificación estructurada; no inventar RFC, CURP, domicilios, personalidad o llaves únicas.",
+        "Para salas/juzgados, usar el layout de órganos si representan autoridad; sala_lugar si se trata del recinto. JUZGADO es ejemplo propuesto, no valor de catálogo confirmado."
+      ]
+    },
+    {
+      "key": "demandados",
+      "name": "Demandados",
+      "file": "SIAJ_demandados_levantamiento_v1.xlsx",
+      "sheet": "demandados",
+      "description": "Levantamiento preliminar, sin tabla independiente encontrada. Destino posible: expedientes.partes.",
+      "status": "Levantamiento; no importable como entidad independiente",
+      "cols": [
+        {
+          "name": "expediente_id",
+          "type": "UUID",
+          "length": "No aplica",
+          "required": "Sí (propuesta)",
+          "example": "00000000-0000-4000-8000-000000000001",
+          "rule": "",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Expediente id"
+        },
+        {
+          "name": "nombre_demandado",
+          "type": "Texto",
+          "length": "Por definir",
+          "required": "Sí (propuesta)",
+          "example": "Texto de ejemplo",
+          "rule": "",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Nombre demandado"
+        }
+      ],
+      "deps": [
+        "Expedientes u órganos jurisdiccionales según significado"
+      ],
+      "constraints": [
+        "No existe PK ni unicidad específica confirmada para esta entidad"
+      ],
+      "excluded": [],
+      "source": "Inventario SQL y entidades JPA",
+      "rules": [
+        "No importar esta hoja directamente. Validar modelo y correspondencia funcional.",
+        "Para actores y demandados, el texto partes permite múltiples nombres pero pierde identificación estructurada; no inventar RFC, CURP, domicilios, personalidad o llaves únicas.",
+        "Para salas/juzgados, usar el layout de órganos si representan autoridad; sala_lugar si se trata del recinto. JUZGADO es ejemplo propuesto, no valor de catálogo confirmado."
+      ]
+    },
+    {
+      "key": "organismos",
+      "name": "Organismos",
+      "file": "SIAJ_organismos_levantamiento_v1.xlsx",
+      "sheet": "organismos",
+      "description": "Levantamiento preliminar, sin tabla independiente encontrada. Destino posible: Sin destino inequívoco.",
+      "status": "Levantamiento; no importable como entidad independiente",
+      "cols": [
+        {
+          "name": "nombre_organismo",
+          "type": "Texto",
+          "length": "Por definir",
+          "required": "Sí (propuesta)",
+          "example": "Texto de ejemplo",
+          "rule": "",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Nombre organismo"
+        },
+        {
+          "name": "funcion_en_asunto",
+          "type": "Texto",
+          "length": "Por definir",
+          "required": "Sí (propuesta)",
+          "example": "Texto de ejemplo",
+          "rule": "",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Funcion en asunto"
+        }
+      ],
+      "deps": [
+        "Expedientes u órganos jurisdiccionales según significado"
+      ],
+      "constraints": [
+        "No existe PK ni unicidad específica confirmada para esta entidad"
+      ],
+      "excluded": [],
+      "source": "Inventario SQL y entidades JPA",
+      "rules": [
+        "Confirmar si se trata de parte demandada, autoridad jurisdiccional o unidad administrativa. Definir atributos, claves, relaciones y catálogo antes de implementar."
+      ]
+    },
+    {
+      "key": "salas",
+      "name": "Salas",
+      "file": "SIAJ_salas_levantamiento_v1.xlsx",
+      "sheet": "salas",
+      "description": "Levantamiento preliminar, sin tabla independiente encontrada. Destino posible: audiencias.sala_lugar o organos_jurisdiccionales, según significado.",
+      "status": "Levantamiento; no importable como entidad independiente",
+      "cols": [
+        {
+          "name": "expediente_id",
+          "type": "UUID",
+          "length": "No aplica",
+          "required": "Sí (propuesta)",
+          "example": "00000000-0000-4000-8000-000000000001",
+          "rule": "",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Expediente id"
+        },
+        {
+          "name": "sala",
+          "type": "Texto",
+          "length": "Sin límite SQL; 490 en migración",
+          "required": "Sí (propuesta)",
+          "example": "Texto de ejemplo",
+          "rule": "",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Sala"
+        }
+      ],
+      "deps": [
+        "Expedientes u órganos jurisdiccionales según significado"
+      ],
+      "constraints": [
+        "No existe PK ni unicidad específica confirmada para esta entidad"
+      ],
+      "excluded": [],
+      "source": "Inventario SQL y entidades JPA",
+      "rules": [
+        "No importar esta hoja directamente. Validar modelo y correspondencia funcional.",
+        "Para actores y demandados, el texto partes permite múltiples nombres pero pierde identificación estructurada; no inventar RFC, CURP, domicilios, personalidad o llaves únicas.",
+        "Para salas/juzgados, usar el layout de órganos si representan autoridad; sala_lugar si se trata del recinto. JUZGADO es ejemplo propuesto, no valor de catálogo confirmado."
+      ]
+    },
+    {
+      "key": "juzgados",
+      "name": "Juzgados",
+      "file": "SIAJ_juzgados_levantamiento_v1.xlsx",
+      "sheet": "juzgados",
+      "description": "Levantamiento preliminar, sin tabla independiente encontrada. Destino posible: organos_jurisdiccionales.",
+      "status": "Levantamiento; no importable como entidad independiente",
+      "cols": [
+        {
+          "name": "nombre",
+          "type": "Texto",
+          "length": "300",
+          "required": "Sí (propuesta)",
+          "example": "Valor del catálogo",
+          "rule": "",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Nombre"
+        },
+        {
+          "name": "gerencia_id",
+          "type": "Entero",
+          "length": "No aplica",
+          "required": "No",
+          "example": "1",
+          "rule": "",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Gerencia id"
+        },
+        {
+          "name": "sede",
+          "type": "Texto",
+          "length": "100",
+          "required": "No",
+          "example": "Ciudad de México",
+          "rule": "",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Sede"
+        },
+        {
+          "name": "tipo",
+          "type": "Texto",
+          "length": "50",
+          "required": "No",
+          "example": "JUZGADO",
+          "rule": "",
+          "enum": [],
+          "source": "Propuesta de layout",
+          "description": "Tipo"
+        }
+      ],
+      "deps": [
+        "Expedientes u órganos jurisdiccionales según significado"
+      ],
+      "constraints": [
+        "No existe PK ni unicidad específica confirmada para esta entidad"
+      ],
+      "excluded": [],
+      "source": "Inventario SQL y entidades JPA",
+      "rules": [
+        "No importar esta hoja directamente. Validar modelo y correspondencia funcional.",
+        "Para actores y demandados, el texto partes permite múltiples nombres pero pierde identificación estructurada; no inventar RFC, CURP, domicilios, personalidad o llaves únicas.",
+        "Para salas/juzgados, usar el layout de órganos si representan autoridad; sala_lugar si se trata del recinto. JUZGADO es ejemplo propuesto, no valor de catálogo confirmado."
+      ]
+    }
+  ],
+  "catalog": [
+    [
+      "materias",
+      "gerencia_id",
+      "Exportar id, nombre, activo y ámbito de gerencias",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "materias",
+      "usuario_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "cat_estados",
+      "gerencia_id",
+      "Exportar id, nombre, activo y ámbito de gerencias",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "cat_estados",
+      "usuario_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "cat_tipo_expediente",
+      "gerencia_id",
+      "Exportar id, nombre, activo y ámbito de gerencias",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "cat_tipo_expediente",
+      "usuario_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "organos_jurisdiccionales",
+      "gerencia_id",
+      "Exportar id, nombre, activo y ámbito de gerencias",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "organos_jurisdiccionales",
+      "usuario_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "tipos_audiencia",
+      "gerencia_id",
+      "Exportar id, nombre, activo y ámbito de gerencias",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "tipos_audiencia",
+      "usuario_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "cat_tipos_termino",
+      "tipo_dias",
+      "HABILES, NATURALES",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "cat_etapas_procesales",
+      "etapa_legacy",
+      "TRAMITE, LAUDO, FIRME, CONCLUIDO",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "usuarios",
+      "rol",
+      "ADMIN, DIRECTOR_PRINCIPAL, DIRECTOR, SUBDIRECTOR, GERENTE, JEFE_DEPTO, ABOGADO",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "usuario_gerencias",
+      "usuario_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "usuario_gerencias",
+      "gerencia_id",
+      "Exportar id, nombre, activo y ámbito de gerencias",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "usuario_materias",
+      "usuario_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "usuario_materias",
+      "materia_id",
+      "Exportar id, nombre, activo y ámbito de materias",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "usuario_permisos_adicionales",
+      "usuario_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "usuario_permisos_adicionales",
+      "permiso",
+      "DASHBOARD_VER, AGENDA_VER, CATALOGOS_VER, USUARIOS_VER, ADMIN_PANEL, EXPEDIENTES_VER, EXPEDIENTES_SUPERVISION, TERMINOS_VER, TERMINOS_SUPERVISION, AUDIENCIAS_VER, AUDIENCIAS_SUPERVISION, DOCUMENTOS_SUPERVISION, ALERTAS_CONFIGURAR",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "expedientes",
+      "etapa_procesal",
+      "TRAMITE, LAUDO, FIRME, CONCLUIDO",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "expedientes",
+      "abogado_responsable_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "expedientes",
+      "gerencia_id",
+      "Exportar id, nombre, activo y ámbito de gerencias",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "expedientes",
+      "materia_id",
+      "Exportar id, nombre, activo y ámbito de materias",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "expedientes",
+      "organo_jurisdiccional_id",
+      "Exportar id, nombre, activo y ámbito de organos_jurisdiccionales",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "expedientes",
+      "prioridad_id",
+      "Exportar id, nombre, activo y ámbito de cat_prioridad",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "expedientes",
+      "tipo_expediente_id",
+      "Exportar id, nombre, activo y ámbito de cat_tipo_expediente",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "audiencia_contextos",
+      "origen",
+      "EXPEDIENTE, ASUNTO_UNICO",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "audiencia_contextos",
+      "gerencia_id",
+      "Exportar id, nombre, activo y ámbito de gerencias",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "audiencia_contextos",
+      "materia_id",
+      "Exportar id, nombre, activo y ámbito de materias",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "audiencia_contextos",
+      "organo_jurisdiccional_id",
+      "Exportar id, nombre, activo y ámbito de organos_jurisdiccionales",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "termino_contextos",
+      "origen",
+      "EXPEDIENTE, ASUNTO_UNICO",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "termino_contextos",
+      "gerencia_id",
+      "Exportar id, nombre, activo y ámbito de gerencias",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "termino_contextos",
+      "materia_id",
+      "Exportar id, nombre, activo y ámbito de materias",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "termino_contextos",
+      "organo_jurisdiccional_id",
+      "Exportar id, nombre, activo y ámbito de organos_jurisdiccionales",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "audiencias",
+      "estatus_audiencia",
+      "PENDIENTE, CON_ACTA, CONCLUIDA",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "audiencias",
+      "abogado_comparece_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "audiencias",
+      "expediente_id",
+      "Exportar id, nombre, activo y ámbito de expedientes",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "audiencias",
+      "tipo_audiencia_id",
+      "Exportar id, nombre, activo y ámbito de tipos_audiencia",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "audiencias",
+      "contexto_id",
+      "Exportar id, nombre, activo y ámbito de audiencia_contextos",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "audiencias",
+      "usuario_delegado_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "terminos",
+      "estatus_termino",
+      "PROYECTISTA, REVISION, GERENCIA, DIRECCION, LIBERADO, PRESENTADO, CONCLUIDO",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "terminos",
+      "abogado_responsable_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "terminos",
+      "expediente_id",
+      "Exportar id, nombre, activo y ámbito de expedientes",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "terminos",
+      "prioridad_id",
+      "Exportar id, nombre, activo y ámbito de cat_prioridad",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "terminos",
+      "contexto_id",
+      "Exportar id, nombre, activo y ámbito de termino_contextos",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "terminos",
+      "tipo_dias_calculado",
+      "HABILES, NATURALES",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "colaboradores_expediente",
+      "expediente_id",
+      "Exportar id, nombre, activo y ámbito de expedientes",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "colaboradores_expediente",
+      "usuario_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "carpetas",
+      "carpeta_padre_id",
+      "Exportar id, nombre, activo y ámbito de carpetas",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "documentos",
+      "carpeta_id",
+      "Exportar id, nombre, activo y ámbito de carpetas",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "termino_archivos",
+      "etapa",
+      "PROYECTISTA, REVISION, GERENCIA, DIRECCION, LIBERADO, PRESENTADO, CONCLUIDO",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "termino_archivos",
+      "tipo_documento",
+      "BORRADOR, ACUSE",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "termino_archivos",
+      "termino_id",
+      "Exportar id, nombre, activo y ámbito de terminos",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "comentarios",
+      "etapa_procesal",
+      "TRAMITE, LAUDO, FIRME, CONCLUIDO",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "comentarios",
+      "usuario_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "recordatorios",
+      "prioridad_id",
+      "Exportar id, nombre, activo y ámbito de cat_prioridad",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "recordatorios",
+      "usuario_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "eventos_calendario",
+      "usuario_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "configuraciones_alerta",
+      "nivel",
+      "SISTEMA, GERENCIA, USUARIO, ASUNTO",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "configuraciones_alerta",
+      "tipo_evento",
+      "TERMINO, AUDIENCIA",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "configuraciones_alerta",
+      "gerencia_id",
+      "Exportar id, nombre, activo y ámbito de gerencias",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "configuraciones_alerta",
+      "usuario_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "configuraciones_semaforo",
+      "nivel",
+      "SISTEMA, GERENCIA",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "configuraciones_semaforo",
+      "tipo_evento",
+      "TERMINO, AUDIENCIA",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "configuraciones_semaforo",
+      "gerencia_id",
+      "Exportar id, nombre, activo y ámbito de gerencias",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "preferencias_notificacion",
+      "usuario_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "preferencias_notificacion_evento",
+      "evento",
+      "EXPEDIENTE_NUEVO, EXPEDIENTE_REASIGNADO, EXPEDIENTE_OBSERVACION_NUEVA, TERMINO_ASIGNADO, TERMINO_NUEVO, TERMINO_CAMBIO_ETAPA, TERMINO_VALIDADO_CONCLUIDO, TERMINO_RECORDATORIO, AUDIENCIA_NUEVA, AUDIENCIA_COMPARECENCIA_ASIGNADA, AUDIENCIA_DELEGADA, AUDIENCIA_RECORDATORIO, AUDIENCIA_ACTA_DISPONIBLE, AUDIENCIA_VALIDADA_CONCLUIDA, SEGURIDAD_PASSWORD_POR_VENCER, TAREA_RECORDATORIO",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "preferencias_notificacion_evento",
+      "usuario_id",
+      "Exportar id, nombre, activo y ámbito de usuarios",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "expediente_etapa_periodos",
+      "etapa_procesal",
+      "TRAMITE, LAUDO, FIRME, CONCLUIDO",
+      "Valores cerrados según CHECK/modelo/servicio indicado; ver regla de entidad"
+    ],
+    [
+      "audiencias_desahogadas",
+      "audiencia_id",
+      "Exportar id, nombre, activo y ámbito de audiencias",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "terminos_presentados",
+      "termino_id",
+      "Exportar id, nombre, activo y ámbito de terminos",
+      "Cargar previamente; IDs reales pendientes del ambiente destino"
+    ],
+    [
+      "cat_prioridad",
+      "nombre",
+      "ALTA, MEDIA, BAJA",
+      "Semillas DataInitializer; no lista inmutable de BD"
+    ],
+    [
+      "materias",
+      "nombre",
+      "Civil, Mercantil, Fiscal, Administrativo, Laboral, Penal, Amparo, Transparencia",
+      "Semillas DataInitializer; confirmar catálogo vigente"
+    ],
+    [
+      "cat_tipos_termino",
+      "tipo_dias",
+      "HABILES, NATURALES",
+      "Convención JPA; falta confirmar calendario inhábil"
+    ],
+    [
+      "recordatorios",
+      "prioridad DTO",
+      "normal, urgent",
+      "No equivalen automáticamente a IDs de cat_prioridad"
+    ],
+    [
+      "organos_jurisdiccionales",
+      "tipo",
+      "Pendiente de catálogo vigente",
+      "Texto libre; JUZGADO/SALA no son enum confirmado"
+    ],
+    [
+      "colaboradores_expediente",
+      "permiso_nivel",
+      "Pendiente de valores vigentes",
+      "Texto libre sin CHECK"
+    ],
+    [
+      "eventos_calendario",
+      "categoria",
+      "Pendiente de valores vigentes",
+      "Texto libre sin CHECK"
+    ]
+  ],
+  "gaps": [
+    [
+      "G01",
+      "Esquema destino",
+      "SQL/JPA difieren: email, multi-gerencia, tipos de término, etapas y períodos, columnas dinámicas de término. DBA debe entregar DDL vigente y versión desplegada.",
+      "DBA / técnico"
+    ],
+    [
+      "G02",
+      "Plantillas descargables",
+      "AdminImportController devuelve bytes de encabezados separados por comas con extensión .xlsx; generar OOXML real y probar lector.",
+      "Técnico"
+    ],
+    [
+      "G03",
+      "Rutas Excel",
+      "ImportService de audiencias sólo itera filas y no guarda. TerminoImportService tiene lógica, pero no se encontró controlador que lo invoque. Confirmar o implementar ruta.",
+      "Técnico"
+    ],
+    [
+      "G04",
+      "Calidad de migración",
+      "parseDate usa HOY y parseTime 00:00 ante error; rechazar entrada inválida y registrar error por fila.",
+      "Técnico / funcional"
+    ],
+    [
+      "G05",
+      "Estados históricos",
+      "No concluir por antigüedad de fecha: acordar conservación de estado, desahogo, presentación y evidencia documental; modificar el importador.",
+      "Funcional / técnico"
+    ],
+    [
+      "G06",
+      "Conciliación",
+      "La inyección captura excepciones por registro y después marca PROCESADO; el estado del lote no garantiza persistencia. Conciliar cantidades y claves contra destino.",
+      "Técnico / datos"
+    ],
+    [
+      "G07",
+      "Duplicados",
+      "Número de expediente no es único en BD. Definir clave de negocio y política de coincidencia por materia/gerencia/órgano/partes; no fusionar homónimos.",
+      "Funcional / datos"
+    ],
+    [
+      "G08",
+      "Entidades no normalizadas",
+      "Actores, demandados y organismos carecen de estructura inequívoca; definir identificación, cardinalidad, atributos y reglas. Salas y juzgados requieren precisar autoridad vs recinto.",
+      "Funcional"
+    ],
+    [
+      "G09",
+      "Catálogos vigentes",
+      "No se dispone de datos del ambiente destino. Exportar id, nombre, activo, gerencia/materia y usuario propietario; resolver valores obsoletos y duplicados.",
+      "Administrador / datos"
+    ],
+    [
+      "G10",
+      "Asuntos únicos",
+      "Audiencia exige expediente en dump/controlador. Validar cómo se crean expedientes temporales y contextos; no importar audiencias huérfanas.",
+      "Técnico / funcional"
+    ],
+    [
+      "G11",
+      "Plazos y calendario",
+      "Definir calendario de inhábiles, tipo de días, fecha base y zona horaria. No existe evidencia suficiente para garantizar cálculo de vencimientos jurídicos.",
+      "Funcional"
+    ],
+    [
+      "G12",
+      "Almacenamiento",
+      "Validar raíces, límites HTTP/proxy, extensiones y flujo de acta/acuse. Referencias JSON no suben binarios.",
+      "Técnico"
+    ],
+    [
+      "G13",
+      "Semántica histórica",
+      "Definir autores/fechas originales, actualizaciones vs altas, reintentos, lotes atómicos y reversión. Propuesta de clave_origen requiere implementación.",
+      "Funcional / técnico"
+    ],
+    [
+      "G14",
+      "Campos incompatibles",
+      "DTO asuntoId Integer no equivale al expediente UUID; prioridad/archivo_word del dump y archivoWord del JSON no equivalen al modelo de archivos actual.",
+      "Técnico"
+    ],
+    [
+      "G15",
+      "Configuración",
+      "Validar valores de permiso_nivel, categoría de evento, entidad_tipo, equivalencia normal/urgent y precedencia de preferencias general/por evento.",
+      "Funcional / técnico"
+    ]
+  ],
+  "excluded": [
+    [
+      "actividad_expedientes",
+      "Sin archivo de carga de usuario",
+      "Auditoría/trazabilidad generada por operaciones; sólo conservación histórica técnica, sin edición por usuarios."
+    ],
+    [
+      "actividad_usuarios",
+      "Sin archivo de carga de usuario",
+      "Auditoría/trazabilidad generada por operaciones; sólo conservación histórica técnica, sin edición por usuarios."
+    ],
+    [
+      "auditoria_eventos",
+      "Sin archivo de carga de usuario",
+      "Auditoría/trazabilidad generada por operaciones; sólo conservación histórica técnica, sin edición por usuarios."
+    ],
+    [
+      "auditoria_sesiones",
+      "Sin archivo de carga de usuario",
+      "Auditoría/trazabilidad generada por operaciones; sólo conservación histórica técnica, sin edición por usuarios."
+    ],
+    [
+      "bitacora_datos",
+      "Sin archivo de carga de usuario",
+      "Auditoría/trazabilidad generada por operaciones; sólo conservación histórica técnica, sin edición por usuarios."
+    ],
+    [
+      "bk_auth_gerencias_20260727_131223_usuario_gerencias",
+      "Sin archivo de carga de usuario",
+      "Respaldo histórico: no restaurar como datos maestros ni incluir en carga ordinaria."
+    ],
+    [
+      "bk_auth_gerencias_20260727_131223_usuario_materias",
+      "Sin archivo de carga de usuario",
+      "Respaldo histórico: no restaurar como datos maestros ni incluir en carga ordinaria."
+    ],
+    [
+      "bk_auth_gerencias_20260727_131223_usuarios",
+      "Sin archivo de carga de usuario",
+      "Respaldo histórico: no restaurar como datos maestros ni incluir en carga ordinaria."
+    ],
+    [
+      "catalogos_migracion",
+      "Sin archivo de carga de usuario",
+      "Staging y homologación generados por asistente/API; no insertar mediante plantilla de usuario."
+    ],
+    [
+      "documentos_expediente",
+      "Sin archivo de carga de usuario",
+      "Tabla presente en dump sin entidad Documento correspondiente (actual usa documentos). Validar si es legado antes de migrar; no duplicar archivos."
+    ],
+    [
+      "lotes_migracion",
+      "Sin archivo de carga de usuario",
+      "Staging y homologación generados por asistente/API; no insertar mediante plantilla de usuario."
+    ],
+    [
+      "notificaciones",
+      "Sin archivo de carga de usuario",
+      "Uso técnico interno; no carga de usuario final."
+    ],
+    [
+      "password_reset_tokens",
+      "Sin archivo de carga de usuario",
+      "Tokens/credenciales/suscripciones de seguridad; se generan o registran en sesión, no se migran por Excel."
+    ],
+    [
+      "push_subscriptions",
+      "Sin archivo de carga de usuario",
+      "Tokens/credenciales/suscripciones de seguridad; se generan o registran en sesión, no se migran por Excel."
+    ],
+    [
+      "registros_migracion",
+      "Sin archivo de carga de usuario",
+      "Staging y homologación generados por asistente/API; no insertar mediante plantilla de usuario."
+    ],
+    [
+      "manual_recovery_codes (JPA/script)",
+      "Sin archivo de carga de usuario",
+      "Códigos de recuperación de seguridad; no distribuir ni importar en plantilla."
+    ]
+  ]
+}

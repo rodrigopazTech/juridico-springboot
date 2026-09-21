@@ -4,14 +4,14 @@
       <i class="fas fa-spell-check mr-2"></i> Etapa 1: Homologación de Catálogos y Usuarios
     </h2>
     <p class="text-gray-600 mb-6">
-      Empareja los textos detectados con los catálogos y cuentas oficiales del sistema.
+      Relaciona los datos detectados con los catálogos y cuentas disponibles.
     </p>
 
     <div th:if="${#maps.isEmpty(catalogosAgrupados)}"
       class="text-center p-8 bg-green-50 rounded-xl border border-green-200">
       <i class="fas fa-check-circle text-4xl text-gob-verde mb-3"></i>
       <h3 class="font-bold text-lg text-green-800">
-        No se detectaron catálogos sucios.
+        No hay valores pendientes de revisar.
       </h3>
       <p class="text-sm text-green-700 mt-1">
         Todos los valores ya están homologados. Puedes continuar.
@@ -89,8 +89,8 @@
             <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
               <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-xs tracking-wider">
                 <tr>
-                  <th scope="col" class="px-6 py-4 w-1/2">Texto Detectado (n8n)</th>
-                  <th scope="col" class="px-6 py-4 w-1/2">Mapear al Sistema</th>
+                  <th scope="col" class="px-6 py-4 w-1/2">Dato detectado</th>
+                  <th scope="col" class="px-6 py-4 w-1/2">Relacionar con</th>
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
@@ -151,7 +151,7 @@
                           <div>
                             <div class="font-bold text-sm">✓ Datos homologados</div>
                             <div class="text-[10px] opacity-80 uppercase tracking-widest font-bold">Auto-detectado en el
-                              sistema</div>
+                              lote</div>
                           </div>
                         </div>
                         <input type="hidden" th:name="'cat_' + ${cat.id}" th:value="${cat.idMapeado}" />

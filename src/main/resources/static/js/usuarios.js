@@ -1,11 +1,100 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Usuarios cargados");
+    const formulario = document.getElementById('form-editar-abogado');
+    if (formulario) formulario.addEventListener('submit', validarAsignacionFormulario);
+    ['det-input-nombre', 'det-input-numero-empleado'].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', actualizarNombreUsuarioGenerado);
+    });
+    [
+        'det-input-email',
+        'det-input-puesto',
+        'det-input-telefono-institucional',
+        'det-input-telefono-movil',
+        'det-input-ubicacion-oficina'
+    ].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', actualizarLeyendaAutocompletado);
+    });
 });
 
 let materiasUsuarioActual = [];
 let materiasUsuarioEdicion = [];
 let usuarioSeleccionadoId = null;
 let creandoUsuario = false;
+
+function validarAsignacionFormulario(event) {
+    const rol = document.getElementById('det-select-rol')?.value || '';
+    const gerencias = Array.from(document.getElementById('det-select-usuario-gerencia')?.selectedOptions || []);
+    const materias = document.querySelectorAll('#det-lista-materias-checkboxes input[name="materiasIds"]:checked');
+    const error = document.getElementById('det-asignacion-error');
+    if (error) error.classList.add('hidden');
+
+    let mensaje = '';
+    if (gerencias.length !== 1 || !gerencias[0].value) {
+        mensaje = 'Selecciona el área del usuario.';
+    } else if ((rol === 'JEFE_DEPTO' || rol === 'ABOGADO') && materias.length === 0) {
+        mensaje = 'Selecciona al menos una materia para el usuario.';
+    }
+
+    if (mensaje) {
+        event.preventDefault();
+        if (error) {
+            error.innerText = mensaje;
+            error.classList.remove('hidden');
+            error.focus({ preventScroll: true });
+        }
+        document.getElementById('det-seccion-asignacion')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function actualizarNombreUsuarioGenerado() {
+    if (!creandoUsuario) return;
+
+    const nombre = document.getElementById('det-input-nombre')?.value?.trim() || '';
+    const numeroEmpleado = document.getElementById('det-input-numero-empleado')?.value?.trim() || '';
+    const rol = document.getElementById('det-select-rol')?.value || '';
+    const area = document.getElementById('det-select-usuario-gerencia')?.value || '';
+    const inputUsername = document.getElementById('det-input-username');
+    if (!inputUsername) return;
+
+    if (!nombre || !numeroEmpleado || !rol || !area) {
+        inputUsername.value = '';
+        return;
+    }
+
+    inputUsername.value = normalizarNombreUsuario(nombre);
+}
+
+function normalizarNombreUsuario(nombre) {
+    return nombre
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9._-]+/g, '.')
+        .replace(/\.{2,}/g, '.')
+        .replace(/^\.|\.$/g, '')
+        .substring(0, 80);
+}
+
+function actualizarLeyendaAutocompletado() {
+    const email = document.getElementById('det-input-email')?.value?.trim() || '';
+    const datosInstitucionales = [
+        'det-input-puesto',
+        'det-input-telefono-institucional',
+        'det-input-telefono-movil',
+        'det-input-ubicacion-oficina'
+    ];
+    const todosVacios = datosInstitucionales.every(id =>
+        !(document.getElementById(id)?.value?.trim())
+    );
+    const leyenda = document.getElementById('det-email-autocomplete-note');
+    if (leyenda) leyenda.classList.toggle('hidden', !email || !todosVacios);
+}
+
+function mostrarRecuperacionManual(visible) {
+    const button = document.getElementById('det-btn-generar-password');
+    if (button) button.classList.toggle('hidden', !visible);
+}
 
 // --- 1. LÓGICA DE MAESTRO - DETALLE ---
 
@@ -34,6 +123,7 @@ function seleccionarAbogado(cardElement) {
     const telefonoMovil = cardElement.getAttribute('data-telefono-movil') || '';
     const ubicacionOficina = cardElement.getAttribute('data-ubicacion-oficina') || '';
     const rol = cardElement.getAttribute('data-rol');
+    const microsoftLoginEnabled = cardElement.getAttribute('data-microsoft-login-enabled') === 'true';
     const gerenciaNombre = cardElement.getAttribute('data-gerencia-nombre');
     const gerenciasIdsStr = cardElement.getAttribute('data-gerencias-ids');
     const gerenciasIdsArray = gerenciasIdsStr ? gerenciasIdsStr.split(',').map(Number) : [];
@@ -59,7 +149,7 @@ function seleccionarAbogado(cardElement) {
     // 5. Inyectar datos en el panel derecho (Vista de consulta)
     document.getElementById('det-avatar').innerText = nombre.charAt(0).toUpperCase();
     document.getElementById('det-nombre').innerText = nombre;
-    document.getElementById('det-email').innerText = email;
+    document.getElementById('det-email').innerText = email || 'Sin correo institucional';
     const detIdentity = document.getElementById('det-identity');
     if (detIdentity) {
         detIdentity.innerText = numeroEmpleado ? `${username} · ${numeroEmpleado}` : username;
@@ -73,6 +163,13 @@ function seleccionarAbogado(cardElement) {
         badgesHtml += `<span class="bg-green-500/20 border border-green-400/50 text-green-300 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fas fa-check-circle mr-1"></i>Activo</span>`;
     } else {
         badgesHtml += `<span class="bg-red-500/30 border border-red-400/50 text-red-300 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fas fa-ban mr-1"></i>Inactivo</span>`;
+    }
+    if (!email) {
+        badgesHtml += '<span class="bg-amber-500/20 border border-amber-400/50 text-amber-100 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fas fa-key mr-1"></i>Acceso local</span>';
+    } else if (microsoftLoginEnabled) {
+        badgesHtml += '<span class="bg-blue-500/20 border border-blue-300/50 text-blue-100 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fab fa-microsoft mr-1"></i>Microsoft vinculado</span>';
+    } else {
+        badgesHtml += '<span class="bg-amber-500/20 border border-amber-400/50 text-amber-100 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fas fa-envelope mr-1"></i>Activacion pendiente</span>';
     }
 
     // Materias
@@ -90,6 +187,7 @@ function seleccionarAbogado(cardElement) {
         document.getElementById('det-input-id').value = id;
         document.getElementById('det-input-nombre').value = nombre;
         document.getElementById('det-input-email').value = email;
+        actualizarLeyendaAutocompletado();
         document.getElementById('det-input-username').value = username;
         document.getElementById('det-input-numero-empleado').value = numeroEmpleado;
         const detPuesto = document.getElementById('det-input-puesto');
@@ -100,6 +198,7 @@ function seleccionarAbogado(cardElement) {
         if (detTelefonoMovil) detTelefonoMovil.value = telefonoMovil;
         const detUbicacionOficina = document.getElementById('det-input-ubicacion-oficina');
         if (detUbicacionOficina) detUbicacionOficina.value = ubicacionOficina;
+        actualizarLeyendaAutocompletado();
         document.getElementById('det-select-rol').value = rol;
         document.getElementById('det-check-activo').checked = activo;
 
@@ -114,7 +213,7 @@ function seleccionarAbogado(cardElement) {
         const detSeguridad = document.getElementById('det-seccion-seguridad');
         if (detSeguridad) detSeguridad.classList.remove('hidden');
         const detFormTitulo = document.getElementById('det-form-titulo');
-        if (detFormTitulo) detFormTitulo.innerHTML = '<i class="fas fa-id-card mr-2 text-gob-guinda"></i> Datos Generales';
+        if (detFormTitulo) detFormTitulo.innerHTML = '<i class="fas fa-id-card mr-2 text-gob-guinda"></i> Datos principales';
         const detSubmitLabel = document.getElementById('det-submit-label');
         if (detSubmitLabel) detSubmitLabel.innerText = 'Guardar Cambios';
 
@@ -134,7 +233,9 @@ function seleccionarAbogado(cardElement) {
     const btnEstatus = document.getElementById('btn-estatus');
     if (btnEstatus) {
         btnEstatus.innerHTML = activo ? '<i class="fas fa-ban mr-1"></i> Desactivar' : '<i class="fas fa-check-circle mr-1"></i> Activar';
-        btnEstatus.className = activo ? 'px-3 py-1.5 bg-white/10 hover:bg-red-500/80 rounded-lg text-sm font-bold transition-colors backdrop-blur-sm border border-white/10 shadow-sm' : 'px-3 py-1.5 bg-white/10 hover:bg-green-500/80 rounded-lg text-sm font-bold transition-colors backdrop-blur-sm border border-white/10 shadow-sm';
+        btnEstatus.className = activo
+            ? 'px-4 py-2 bg-white text-red-800 hover:bg-red-50 rounded-lg text-sm font-bold transition-colors border border-red-200 shadow-sm focus-visible:ring-2 focus-visible:ring-white'
+            : 'px-4 py-2 bg-white text-emerald-800 hover:bg-emerald-50 rounded-lg text-sm font-bold transition-colors border border-emerald-200 shadow-sm focus-visible:ring-2 focus-visible:ring-white';
         btnEstatus.onclick = () => confirmarCambioEstatus(id);
     }
     if (document.getElementById('tab-btn-editar')) {
@@ -175,7 +276,7 @@ function iniciarNuevoUsuarioEnDetalle() {
     document.getElementById('det-avatar').innerText = '+';
     document.getElementById('det-nombre').innerText = 'Nuevo Usuario';
     document.getElementById('det-identity').innerText = 'Captura los datos para crear el acceso';
-    document.getElementById('det-email').innerText = 'Se enviara enlace de activacion al correo institucional';
+    document.getElementById('det-email').innerText = 'Correo institucional opcional';
     document.getElementById('det-badges').innerHTML =
         '<span class="bg-white/10 border border-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">ALTA</span>';
 
@@ -195,6 +296,7 @@ function iniciarNuevoUsuarioEnDetalle() {
     if (detSubmitLabel) detSubmitLabel.innerText = 'Crear Usuario';
 
     actualizarFormularioEdicionPorRol();
+    actualizarNombreUsuarioGenerado();
     cambiarTabAbogado('editar');
 
     const panelLista = document.getElementById('panel-lista');
@@ -242,6 +344,7 @@ function limpiarFormularioDetalleUsuario() {
         const input = document.getElementById(id);
         if (input) input.value = '';
     });
+    actualizarLeyendaAutocompletado();
     const pass = document.getElementById('det-input-password-temporal');
     if (pass) {
         pass.value = '';
@@ -828,6 +931,7 @@ function cargarAgendaAbogado(idUsuario) {
 }
 
 let historialDatosCargados = [];
+let historialFiltroActual = 'TODOS';
 
 function cargarHistorialAbogado(idUsuario) {
     const container = document.getElementById('container-historial');
@@ -836,15 +940,19 @@ function cargarHistorialAbogado(idUsuario) {
     document.getElementById('loading-historial').classList.remove('hidden');
 
     document.querySelectorAll('.btn-filtro-historial').forEach(btn => {
-        btn.className = "btn-filtro-historial px-3 py-1.5 text-xs rounded-full bg-white text-slate-600 font-medium border border-slate-200 hover:bg-slate-50 transition-all";
+        btn.className = "btn-filtro-historial px-3 py-1.5 text-xs rounded-full bg-white text-slate-600 font-medium border border-slate-200 hover:bg-slate-50 transition-colors";
     });
     const defaultBtn = document.querySelector('.btn-filtro-historial[onclick*="TODOS"]');
     if (defaultBtn) {
-        defaultBtn.className = "btn-filtro-historial active px-3 py-1.5 text-xs rounded-full bg-slate-200 text-slate-700 font-bold border border-transparent shadow-sm transition-all";
+        defaultBtn.className = "btn-filtro-historial active px-3 py-1.5 text-xs rounded-full bg-slate-200 text-slate-700 font-bold border border-transparent shadow-sm transition-colors";
     }
+    historialFiltroActual = 'TODOS';
 
     fetch(`/usuarios/api/${idUsuario}/historial`)
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error(`No fue posible cargar el historial (${res.status}).`);
+            return res.json();
+        })
         .then(data => {
             document.getElementById('loading-historial').classList.add('hidden');
             historialDatosCargados = data;
@@ -852,15 +960,38 @@ function cargarHistorialAbogado(idUsuario) {
         }).catch(err => {
             console.error(err);
             document.getElementById('loading-historial').classList.add('hidden');
+            mostrarHistorialVacio('No se pudo cargar el historial', 'Actualiza la página o intenta nuevamente.');
         });
+}
+
+function mostrarHistorialVacio(titulo, mensaje) {
+    const container = document.getElementById('container-historial');
+    const empty = document.getElementById('empty-historial');
+    container.innerHTML = '';
+    container.classList.add('hidden');
+    document.getElementById('empty-historial-title').innerText = titulo;
+    document.getElementById('empty-historial-message').innerText = mensaje;
+    empty.classList.remove('hidden');
+}
+
+function escaparHtml(valor) {
+    const elemento = document.createElement('span');
+    elemento.textContent = valor == null ? '' : String(valor);
+    return elemento.innerHTML;
 }
 
 function renderizarHistorial(data) {
     const container = document.getElementById('container-historial');
     if (!data || data.length === 0) {
-        container.innerHTML = '';
-        container.classList.add('hidden');
-        document.getElementById('empty-historial').classList.remove('hidden');
+        const etiqueta = historialFiltroActual === 'ASIGNACION' ? 'asignaciones'
+            : historialFiltroActual === 'DOCUMENTAL' ? 'documentos'
+            : historialFiltroActual === 'SEGURIDAD' ? 'eventos de seguridad'
+            : historialFiltroActual === 'ACCIONES' ? 'acciones'
+            : 'actividad';
+        const mensaje = categoria === 'asignacion'
+            ? 'No hay asignaciones registradas para este usuario.'
+            : `No hay ${etiqueta} registrados para este usuario.`;
+        mostrarHistorialVacio(`Sin ${etiqueta}`, mensaje);
         return;
     }
 
@@ -893,13 +1024,13 @@ function renderizarHistorial(data) {
                 </div>
                 <div class="flex-1 min-w-0">
                     <div class="flex justify-between items-start">
-                        <p class="text-sm font-bold text-slate-800 truncate">${act.accion}</p>
-                        <span class="text-[10px] text-slate-400 whitespace-nowrap ml-2">${act.fecha}</span>
+                        <p class="text-sm font-bold text-slate-800 truncate">${escaparHtml(act.accion)}</p>
+                        <span class="text-[10px] text-slate-400 whitespace-nowrap ml-2">${escaparHtml(act.fecha)}</span>
                     </div>
-                    <p class="text-xs text-slate-600 mt-1">${act.detalles}</p>
+                    <p class="text-xs text-slate-600 mt-1">${escaparHtml(act.detalles)}</p>
                     ${act.expediente !== 'General' ? `
                     <p class="text-xs font-medium text-gob-guinda flex items-center gap-1 mt-2">
-                        <i class="fas fa-file-alt"></i> Exp: ${act.expediente}
+                        <i class="fas fa-file-alt"></i> Exp: ${escaparHtml(act.expediente)}
                     </p>` : ''}
                 </div>
             </div>
@@ -909,11 +1040,12 @@ function renderizarHistorial(data) {
 }
 
 function filtrarHistorial(categoria) {
+    historialFiltroActual = categoria;
     document.querySelectorAll('.btn-filtro-historial').forEach(btn => {
         if (btn.getAttribute('onclick').includes(`'${categoria}'`)) {
-            btn.className = "btn-filtro-historial active px-3 py-1.5 text-xs rounded-full bg-slate-200 text-slate-700 font-bold border border-transparent shadow-sm transition-all";
+            btn.className = "btn-filtro-historial active px-3 py-1.5 text-xs rounded-full bg-slate-200 text-slate-700 font-bold border border-transparent shadow-sm transition-colors";
         } else {
-            btn.className = "btn-filtro-historial px-3 py-1.5 text-xs rounded-full bg-white text-slate-600 font-medium border border-slate-200 hover:bg-slate-50 transition-all";
+            btn.className = "btn-filtro-historial px-3 py-1.5 text-xs rounded-full bg-white text-slate-600 font-medium border border-slate-200 hover:bg-slate-50 transition-colors";
         }
     });
 
@@ -931,22 +1063,23 @@ function actualizarFormularioEdicionPorRol() {
     const selectRol = document.getElementById('det-select-rol');
     if (!selectRol) return;
     const rol = selectRol.value;
-    const divGerencia = document.getElementById('det-div-gerencia-asignada');
     const contenedorMaterias = document.getElementById('det-contenedor-materias');
 
     if (rol === 'ADMIN' || rol === 'DIRECTOR_PRINCIPAL' || rol === 'DIRECTOR' || rol === 'SUBDIRECTOR') {
-        if (divGerencia) divGerencia.classList.add('hidden');
         if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
     } else {
-        if (divGerencia) divGerencia.classList.remove('hidden');
         const selectGerencias = document.getElementById('det-select-usuario-gerencia');
-        const selectedGerencias = selectGerencias ? Array.from(selectGerencias.selectedOptions) : [];
+        const selectedGerencias = selectGerencias
+            ? Array.from(selectGerencias.selectedOptions).filter(opt => opt.value)
+            : [];
         if (selectedGerencias.length > 0) {
             if (contenedorMaterias) contenedorMaterias.classList.remove('hidden');
         } else {
             if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
         }
     }
+    const selectGerencias = document.getElementById('det-select-usuario-gerencia');
+    if (selectGerencias) selectGerencias.required = true;
     cargarMateriasDeGerenciaEdicion();
 }
 
@@ -974,7 +1107,9 @@ function cargarMateriasDeGerenciaEdicion(event) {
         materiasUsuarioEdicion = [];
     }
 
-    const checkedGerencias = selectGerencias ? Array.from(selectGerencias.selectedOptions).map(opt => opt.value) : [];
+    const checkedGerencias = selectGerencias
+        ? Array.from(selectGerencias.selectedOptions).map(opt => opt.value).filter(Boolean)
+        : [];
     const contenedor = document.getElementById('det-contenedor-materias');
     const lista = document.getElementById('det-lista-materias-checkboxes');
 
@@ -1117,22 +1252,22 @@ function abrirModalPasswordTemporalEdicionLegacy() {
     });
 }
 
-function abrirModalPasswordTemporalEdicion() {
+function abrirModalRecuperacionManualEdicion() {
     Swal.fire({
         width: '36rem',
-        title: '<i class="fas fa-key text-gob-guinda mr-2"></i>Restablecimiento manual',
+        title: '<i class="fas fa-shield-alt text-gob-guinda mr-2"></i>Codigo de recuperacion manual',
         html: `
-            <p class="text-sm text-gray-600 mb-4">Crea una contrasena temporal para compartirla manualmente con el usuario. Al iniciar sesion, SIAJ le pedira establecer su contrasena definitiva.</p>
+            <p class="text-sm text-gray-600 mb-4">El usuario recibira un codigo de un uso y establecera personalmente su nueva contrasena.</p>
             <div class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-4 text-left">
-                <label for="swal-password-temporal" class="block text-xs font-bold text-gray-500 uppercase mb-1">Contrasena temporal</label>
-                <input id="swal-password-temporal" type="text" minlength="8"
+                <label for="swal-motivo-recuperacion" class="block text-xs font-bold text-gray-500 uppercase mb-1">Motivo</label>
+                <textarea id="swal-motivo-recuperacion" minlength="10" required rows="3"
                     class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-gob-oro focus:border-gob-oro outline-none"
-                    placeholder="Opcional, minimo 8 caracteres">
-                <p class="text-[10px] text-gray-500 mt-2">Se mostrara una sola vez. Al iniciar sesion, el usuario debera cambiarla por una contrasena definitiva.</p>
+                    placeholder="Describe por que no puede usarse el enlace por correo."></textarea>
+                <p class="text-[10px] text-gray-500 mt-2">El codigo vence en 15 minutos, se muestra una sola vez y queda auditado.</p>
             </div>
         `,
         showCancelButton: true,
-        confirmButtonText: '<i class="fas fa-key mr-1"></i> Restablecer',
+        confirmButtonText: '<i class="fas fa-shield-alt mr-1"></i> Generar codigo',
         cancelButtonText: 'Cancelar',
         confirmButtonColor: '#691228',
         cancelButtonColor: '#808590ff',
@@ -1145,52 +1280,65 @@ function abrirModalPasswordTemporalEdicion() {
             return;
         }
 
-        const formData = new FormData();
-        formData.append('id', userId);
-        const requestedPassword = document.getElementById('swal-password-temporal')?.value || '';
-        if (requestedPassword.trim()) {
-            formData.append('passwordTemporal', requestedPassword.trim());
+        const motivo = document.getElementById('swal-motivo-recuperacion')?.value?.trim() || '';
+        if (motivo.length < 10) {
+            Swal.fire('Motivo requerido', 'Describe el motivo con al menos 10 caracteres.', 'warning');
+            return;
         }
+        const formData = new FormData();
+        formData.append('motivo', motivo);
 
         Swal.fire({
-            title: 'Restableciendo contrasena...',
-            html: 'Estamos actualizando el acceso del usuario.',
+            title: 'Generando codigo...',
+            html: 'El usuario establecera su propia contrasena.',
             allowOutsideClick: false,
             allowEscapeKey: false,
             didOpen: () => Swal.showLoading()
         });
 
-        fetch('/usuarios/api/password-temporal', {
+        fetch(`/usuarios/api/${userId}/recuperacion-manual`, {
             method: 'POST',
             body: formData
         })
             .then(res => {
                 if (!res.ok) {
                     return res.json().then(data => {
-                        throw new Error(data.mensaje || 'Error al generar la contrasena temporal.');
+                        throw new Error(data.mensaje || 'Error al generar el codigo de recuperacion.');
                     });
                 }
                 return res.json();
             })
             .then(data => {
-                const temporalEscapada = encodeURIComponent(data.passwordTemporal || '');
+                const codigoEscapado = encodeURIComponent(data.codigo || '');
+                const recoveryUrl = data.recoveryUrl || '/auth/recuperacion-manual';
+                const instrucciones = `Este codigo no es tu contrasena. Entra a ${recoveryUrl}, captura tu usuario y el codigo ${data.codigo || ''}, y crea una nueva contrasena. Vence: ${data.venceEn}.`;
+                const instruccionesEscapadas = encodeURIComponent(instrucciones);
                 const badge = document.getElementById('det-badge-pass-generado');
                 if (badge) {
-                    badge.innerHTML = '<i class="fas fa-check-circle text-sm"></i> Restablecimiento manual activo';
+                    badge.innerHTML = '<i class="fas fa-check-circle text-sm"></i> Codigo manual emitido';
                     badge.classList.remove('hidden');
                 }
                 Swal.fire({
-                    title: 'Restablecimiento manual listo',
+                    title: 'Codigo de recuperacion listo',
                     html: `
-                        <p class="text-sm text-gray-600 mb-3">${data.mensaje || 'El usuario debera cambiarla al iniciar sesion.'}</p>
-                        <p class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-3">Comparte esta contrasena por un canal autorizado. Se mostrara una sola vez.</p>
+                        <p class="text-sm text-gray-600 mb-3">${data.mensaje || 'El usuario establecera su propia contrasena.'}</p>
+                        <p class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-3">Comparte este codigo por un canal autorizado. Vence: ${data.venceEn}. Se mostrara una sola vez.</p>
+                        <p class="text-xs text-blue-800 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 mb-3">
+                            El codigo no sustituye la contrasena. El usuario debe capturarlo en
+                            <a class="font-bold underline" href="${recoveryUrl}" target="_blank" rel="noopener">Recuperacion manual</a>
+                            y crear una nueva contrasena.
+                        </p>
                         <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-3">
-                            <code id="swal-pass-code-edicion" class="flex-1 text-left text-lg font-bold text-gob-guinda break-all">${data.passwordTemporal || ''}</code>
-                            <button type="button" onclick="copiarPasswordTemporalEdicion(decodeURIComponent('${temporalEscapada}'))"
+                            <code id="swal-pass-code-edicion" class="flex-1 text-left text-lg font-bold text-gob-guinda break-all">${data.codigo || ''}</code>
+                            <button type="button" onclick="copiarPasswordTemporalEdicion(decodeURIComponent('${codigoEscapado}'))"
                                 class="bg-gob-guinda text-white rounded px-3 py-2 text-xs font-bold">
                                 <i class="fas fa-copy mr-1"></i>Copiar
                             </button>
                         </div>
+                        <button type="button" onclick="copiarPasswordTemporalEdicion(decodeURIComponent('${instruccionesEscapadas}'))"
+                            class="mt-3 w-full border border-gob-guinda text-gob-guinda rounded px-3 py-2 text-xs font-bold">
+                            <i class="fas fa-copy mr-1"></i>Copiar codigo e instrucciones
+                        </button>
                     `,
                     icon: 'success',
                     confirmButtonColor: '#691228'
@@ -1199,7 +1347,7 @@ function abrirModalPasswordTemporalEdicion() {
             .catch(err => {
                 Swal.fire({
                     title: 'Error',
-                    text: err.message || 'No se pudo generar la contrasena temporal.',
+                    text: err.message || 'No se pudo generar el codigo de recuperacion.',
                     icon: 'error',
                     confirmButtonColor: '#691228'
                 });
@@ -1244,11 +1392,11 @@ function enviarEnlaceRestablecimientoEdicion() {
         });
 
         fetch(`/usuarios/api/${userId}/enviar-restablecimiento`, { method: 'POST' })
-            .then(res => {
+            .then(async res => {
                 if (!res.ok) {
-                    return res.json().then(data => {
-                        throw new Error(data.mensaje || 'Error al enviar el enlace.');
-                    });
+                    const data = await res.json();
+                    if (data.manualRecoveryAvailable) mostrarRecuperacionManual(true);
+                    throw new Error(data.mensaje || 'Error al enviar el enlace.');
                 }
                 return res.json();
             })

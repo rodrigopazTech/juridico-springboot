@@ -1,0 +1,320 @@
+
+FILE Layout_Audiencias.xlsx
+SHEET CATALOGOS rows=14 cols=14
+1: A=ROLES | B=ETAPAS_PROCESALES | C=ESTATUS_AUDIENCIA | D=ESTATUS_TERMINO | E=PRIORIDADES | F=BOOLEANOS | G=PERMISOS | H=GERENCIAS | I=MATERIAS | J=TIPOS_EXPEDIENTE | K=ORGANOS | L=TIPOS_AUDIENCIA | M=SEDES | N=USUARIOS
+2: A=ADMIN | B=TRAMITE | C=PENDIENTE | D=PROYECTISTA | E=ALTA | F=true | G=DASHBOARD_VER | H=GER-LAB | I=LABORAL | J=JUICIO | K=JLT-01 | L=CONCILIACION | M=CDMX | N=ana.perez@ejemplo.gob.mx
+3: A=DIRECTOR_PRINCIPAL | B=LAUDO | C=CON_ACTA | D=REVISION | E=MEDIA | F=false | G=AGENDA_VER
+4: A=DIRECTOR | B=FIRME | C=CONCLUIDA | D=GERENCIA | E=BAJA | G=CATALOGOS_VER
+5: A=SUBDIRECTOR | B=CONCLUIDO | D=DIRECCION | G=USUARIOS_VER
+6: A=GERENTE | D=LIBERADO | G=ADMIN_PANEL
+7: A=JEFE_DEPTO | D=PRESENTADO | G=EXPEDIENTES_VER
+8: A=ABOGADO | D=CONCLUIDO | G=EXPEDIENTES_SUPERVISION
+9: G=TERMINOS_VER
+10: G=TERMINOS_SUPERVISION
+11: G=AUDIENCIAS_VER
+12: G=AUDIENCIAS_SUPERVISION
+13: G=DOCUMENTOS_SUPERVISION
+14: G=ALERTAS_CONFIGURAR
+VALIDATIONS []
+SHEET CAPTURA rows=205 cols=15
+1: A=Layout oficial de carga histórica — Audiencias
+2: A=Complete esta hoja. El encabezado no se modifica. Campos ámbar: captura del usuario. Consulte INSTRUCCIONES y DICCIONARIO.
+5: A=clave_origen | B=gerencia_codigo | C=expediente_clave_origen | D=tipo_audiencia_codigo | E=fecha_audiencia | F=hora_audiencia | G=estatus_audiencia | H=sala_lugar | I=es_virtual | J=url_reunion | K=abogado_compareciente_email | L=usuario_delegado_email | M=fecha_desahogo | N=acta_archivo | O=observaciones
+VALIDATIONS [('B6:B205', 'list', 'CATALOGOS!$H$2:$H$2', False), ('D6:D205', 'list', 'CATALOGOS!$L$2:$L$2', False), ('G6:G205', 'list', 'CATALOGOS!$C$2:$C$4', False), ('I6:I205', 'list', 'CATALOGOS!$F$2:$F$3', False), ('K6:K205', 'list', 'CATALOGOS!$N$2:$N$2', False), ('L6:L205', 'list', 'CATALOGOS!$N$2:$N$2', False)]
+SHEET INSTRUCCIONES rows=11 cols=2
+1: A=Layout oficial de carga histórica — Audiencias
+3: A=Tema | B=Instrucción
+4: A=Propósito | B=Una fila por audiencia. Debe referirse a una clave_origen de expediente del mismo bloque de Gerencia.
+5: A=Ámbito de carga | B=Cada archivo debe contener registros de una sola Gerencia. Capture el mismo gerencia_codigo en todas las filas operativas.
+6: A=Uso | B=Capture únicamente en la hoja CAPTURA. No cambie los encabezados ni agregue columnas. Una fila representa un registro.
+7: A=Fechas y horas | B=Fechas AAAA-MM-DD y horas HH:mm. Use valores reales, no texto como N/A o NULL.
+8: A=Relaciones | B=Use códigos y correos de catálogos/usuarios previamente aprobados. No use nombres como sustituto de códigos.
+9: A=Adjuntos | B=Los campos *_archivo contienen sólo nombre relativo dentro de un paquete controlado de archivos; no incluya rutas absolutas.
+10: A=Campos obligatorios | B=Sí = obligatorio. Condicional = obligatorio cuando lo indique la validación del diccionario.
+11: A=Decisión aplicada | B=La Gerencia es la unidad de preparación y carga. Dirección y Subdirección sólo se incluyen como usuarios y permisos, sin layouts operativos propios.
+VALIDATIONS []
+SHEET DICCIONARIO rows=16 cols=8
+1: A=Campo | B=Descripción | C=Tipo de dato | D=Obligatorio | E=Longitud máxima | F=Ejemplo válido | G=Validación | H=Catálogo relacionado
+2: A=clave_origen | B=Identificador histórico único de la audiencia. | C=Texto | D=Sí | E=100 | F=AUD-HIS-0001 | G=Único dentro del archivo y de la Gerencia.
+3: A=gerencia_codigo | B=Gerencia responsable. | C=Texto | D=Sí | E=100 | F=GER-LAB | G=Debe existir y coincidir con el expediente. | H=GERENCIAS
+4: A=expediente_clave_origen | B=Clave histórica del expediente relacionado. | C=Texto | D=Sí | E=100 | F=EXP-HIS-0001 | G=Debe existir en el layout de Expedientes del mismo bloque.
+5: A=tipo_audiencia_codigo | B=Tipo de audiencia. | C=Texto | D=Sí | E=100 | F=CONCILIACION | G=Debe existir y estar activo en TIPOS_AUDIENCIA. | H=TIPOS_AUDIENCIA
+6: A=fecha_audiencia | B=Fecha programada o histórica. | C=Fecha | D=Sí | E=AAAA-MM-DD | F=2024-06-20 | G=Fecha real con formato AAAA-MM-DD.
+7: A=hora_audiencia | B=Hora de audiencia. | C=Hora | D=Sí | E=HH:mm | F=10:30 | G=Hora real de 24 horas HH:mm.
+8: A=estatus_audiencia | B=Estado final o vigente. | C=Texto | D=Sí | E=30 | F=CONCLUIDA | G=Valor permitido de ESTATUS_AUDIENCIA. | H=ESTATUS_AUDIENCIA
+9: A=sala_lugar | B=Sala, recinto o lugar. | C=Texto | D=No | E=500 | F=Sala 2 | G=Texto libre.
+10: A=es_virtual | B=Indica modalidad virtual. | C=Booleano | D=Sí | E=No aplica | F=false | G=Sólo true o false. | H=BOOLEANOS
+11: A=url_reunion | B=Enlace de reunión virtual. | C=Texto | D=Condicional | E=32767 | F=https://reunion.ejemplo.gob.mx/abc | G=Obligatorio cuando es_virtual=true; URL válida.
+12: A=abogado_compareciente_email | B=Usuario que comparece. | C=Texto | D=No | E=100 | F=ana.perez@ejemplo.gob.mx | G=Debe ser usuario activo con alcance en Gerencia. | H=USUARIOS
+13: A=usuario_delegado_email | B=Usuario delegado. | C=Texto | D=No | E=100 | F=luis.gomez@ejemplo.gob.mx | G=Debe ser usuario activo con alcance en Gerencia. | H=USUARIOS
+14: A=fecha_desahogo | B=Fecha efectiva de desahogo. | C=Fecha | D=Condicional | E=AAAA-MM-DD | F=2024-06-20 | G=Obligatoria cuando estatus_audiencia=CONCLUIDA.
+15: A=acta_archivo | B=Nombre relativo del acta dentro del paquete de adjuntos. | C=Texto | D=Condicional | E=500 | F=AUD-HIS-0001_acta.pdf | G=Obligatorio cuando estatus_audiencia=CON_ACTA. No usar ruta absoluta.
+16: A=observaciones | B=Notas de la audiencia. | C=Texto | D=No | E=32767 | F=Se celebró sin incidencias. | G=Texto libre.
+VALIDATIONS []
+
+FILE Layout_Catalogos.xlsx
+SHEET CATALOGOS rows=14 cols=14
+1: A=ROLES | B=ETAPAS_PROCESALES | C=ESTATUS_AUDIENCIA | D=ESTATUS_TERMINO | E=PRIORIDADES | F=BOOLEANOS | G=PERMISOS | H=GERENCIAS | I=MATERIAS | J=TIPOS_EXPEDIENTE | K=ORGANOS | L=TIPOS_AUDIENCIA | M=SEDES | N=USUARIOS
+2: A=ADMIN | B=TRAMITE | C=PENDIENTE | D=PROYECTISTA | E=ALTA | F=true | G=DASHBOARD_VER | H=GER-LAB | I=LABORAL | J=JUICIO | K=JLT-01 | L=CONCILIACION | M=CDMX | N=ana.perez@ejemplo.gob.mx
+3: A=DIRECTOR_PRINCIPAL | B=LAUDO | C=CON_ACTA | D=REVISION | E=MEDIA | F=false | G=AGENDA_VER
+4: A=DIRECTOR | B=FIRME | C=CONCLUIDA | D=GERENCIA | E=BAJA | G=CATALOGOS_VER
+5: A=SUBDIRECTOR | B=CONCLUIDO | D=DIRECCION | G=USUARIOS_VER
+6: A=GERENTE | D=LIBERADO | G=ADMIN_PANEL
+7: A=JEFE_DEPTO | D=PRESENTADO | G=EXPEDIENTES_VER
+8: A=ABOGADO | D=CONCLUIDO | G=EXPEDIENTES_SUPERVISION
+9: G=TERMINOS_VER
+10: G=TERMINOS_SUPERVISION
+11: G=AUDIENCIAS_VER
+12: G=AUDIENCIAS_SUPERVISION
+13: G=DOCUMENTOS_SUPERVISION
+14: G=ALERTAS_CONFIGURAR
+VALIDATIONS []
+SHEET GERENCIAS rows=205 cols=4
+1: A=Layout oficial de carga histórica — Catálogos / GERENCIAS
+2: A=Complete esta hoja. El encabezado no se modifica. Campos ámbar: captura del usuario. Consulte INSTRUCCIONES y DICCIONARIO.
+5: A=gerencia_codigo | B=nombre | C=descripcion | D=activo
+VALIDATIONS []
+SHEET MATERIAS rows=205 cols=5
+1: A=Layout oficial de carga histórica — Catálogos / MATERIAS
+2: A=Complete esta hoja. El encabezado no se modifica. Campos ámbar: captura del usuario. Consulte INSTRUCCIONES y DICCIONARIO.
+5: A=materia_codigo | B=gerencia_codigo | C=nombre | D=descripcion | E=activo
+VALIDATIONS [('B6:B205', 'list', 'CATALOGOS!$H$2:$H$2', False)]
+SHEET PRIORIDADES rows=205 cols=4
+1: A=Layout oficial de carga histórica — Catálogos / PRIORIDADES
+2: A=Complete esta hoja. El encabezado no se modifica. Campos ámbar: captura del usuario. Consulte INSTRUCCIONES y DICCIONARIO.
+5: A=prioridad_codigo | B=nombre | C=color | D=activo
+VALIDATIONS [('A6:A205', 'list', 'CATALOGOS!$E$2:$E$4', False)]
+SHEET TIPOS_EXPEDIENTE rows=205 cols=5
+1: A=Layout oficial de carga histórica — Catálogos / TIPOS_EXPEDIENTE
+2: A=Complete esta hoja. El encabezado no se modifica. Campos ámbar: captura del usuario. Consulte INSTRUCCIONES y DICCIONARIO.
+5: A=tipo_expediente_codigo | B=nombre | C=descripcion | D=gerencia_codigo | E=activo
+VALIDATIONS [('D6:D205', 'list', 'CATALOGOS!$H$2:$H$2', False)]
+SHEET ORGANOS rows=205 cols=6
+1: A=Layout oficial de carga histórica — Catálogos / ORGANOS
+2: A=Complete esta hoja. El encabezado no se modifica. Campos ámbar: captura del usuario. Consulte INSTRUCCIONES y DICCIONARIO.
+5: A=organo_codigo | B=gerencia_codigo | C=nombre | D=sede_codigo | E=tipo | F=activo
+VALIDATIONS [('B6:B205', 'list', 'CATALOGOS!$H$2:$H$2', False), ('D6:D205', 'list', 'CATALOGOS!$M$2:$M$2', False)]
+SHEET TIPOS_AUDIENCIA rows=205 cols=5
+1: A=Layout oficial de carga histórica — Catálogos / TIPOS_AUDIENCIA
+2: A=Complete esta hoja. El encabezado no se modifica. Campos ámbar: captura del usuario. Consulte INSTRUCCIONES y DICCIONARIO.
+5: A=tipo_audiencia_codigo | B=gerencia_codigo | C=nombre | D=descripcion | E=activo
+VALIDATIONS [('B6:B205', 'list', 'CATALOGOS!$H$2:$H$2', False)]
+SHEET SEDES rows=205 cols=4
+1: A=Layout oficial de carga histórica — Catálogos / SEDES
+2: A=Complete esta hoja. El encabezado no se modifica. Campos ámbar: captura del usuario. Consulte INSTRUCCIONES y DICCIONARIO.
+5: A=sede_codigo | B=nombre | C=gerencia_codigo | D=activo
+VALIDATIONS [('C6:C205', 'list', 'CATALOGOS!$H$2:$H$2', False)]
+SHEET INSTRUCCIONES rows=13 cols=2
+1: A=Layout oficial de carga histórica — Catálogos
+3: A=Tema | B=Instrucción
+4: A=Propósito | B=Cada Gerencia prepara los catálogos de su ámbito. Cargar GERENCIAS antes de MATERIAS y el resto de referencias.
+5: A=Ámbito de carga | B=Cada archivo debe contener registros de una sola Gerencia. Capture el mismo gerencia_codigo en todas las filas operativas.
+6: A=Uso | B=Capture únicamente en la hoja CAPTURA. No cambie los encabezados ni agregue columnas. Una fila representa un registro.
+7: A=Fechas y horas | B=Fechas AAAA-MM-DD y horas HH:mm. Use valores reales, no texto como N/A o NULL.
+8: A=Relaciones | B=Use códigos y correos de catálogos/usuarios previamente aprobados. No use nombres como sustituto de códigos.
+9: A=Adjuntos | B=Los campos *_archivo contienen sólo nombre relativo dentro de un paquete controlado de archivos; no incluya rutas absolutas.
+10: A=Campos obligatorios | B=Sí = obligatorio. Condicional = obligatorio cuando lo indique la validación del diccionario.
+11: A=Decisión aplicada | B=La Gerencia es la unidad de preparación y carga. Dirección y Subdirección sólo se incluyen como usuarios y permisos, sin layouts operativos propios.
+12: A=Orden de carga | B=GERENCIAS → MATERIAS → SEDES / PRIORIDADES / TIPOS_EXPEDIENTE / ORGANOS / TIPOS_AUDIENCIA.
+13: A=Uso de códigos | B=Los códigos se convierten en las referencias de Usuarios, Expedientes, Audiencias y Términos. No reutilice un código para otro registro.
+VALIDATIONS []
+SHEET DICCIONARIO rows=59 cols=8
+1: A=GERENCIAS
+2: A=Campo | B=Descripción | C=Tipo de dato | D=Obligatorio | E=Longitud máxima | F=Ejemplo válido | G=Validación | H=Catálogo relacionado
+3: A=gerencia_codigo | B=Código único de Gerencia. | C=Texto | D=Sí | E=100 | F=GER-LAB | G=Único. No modificar después de usarse.
+4: A=nombre | B=Nombre de la Gerencia. | C=Texto | D=Sí | E=200 | F=Gerencia Laboral y Penal | G=Único.
+5: A=descripcion | B=Descripción. | C=Texto | D=No | E=32767 | F=Atención de asuntos laborales y penales. | G=Texto libre.
+6: A=activo | B=Indica vigencia. | C=Booleano | D=Sí | E=No aplica | F=true | G=Sólo true o false.
+9: A=MATERIAS
+10: A=Campo | B=Descripción | C=Tipo de dato | D=Obligatorio | E=Longitud máxima | F=Ejemplo válido | G=Validación | H=Catálogo relacionado
+11: A=materia_codigo | B=Código único de materia. | C=Texto | D=Sí | E=100 | F=LABORAL | G=Único.
+12: A=gerencia_codigo | B=Gerencia propietaria. | C=Texto | D=Sí | E=100 | F=GER-LAB | G=Debe existir en GERENCIAS. | H=GERENCIAS
+13: A=nombre | B=Nombre de materia. | C=Texto | D=Sí | E=100 | F=Laboral | G=No vacío.
+14: A=descripcion | B=Descripción. | C=Texto | D=No | E=32767 | F=Materia laboral. | G=Texto libre.
+15: A=activo | B=Indica vigencia. | C=Booleano | D=Sí | E=No aplica | F=true | G=Sólo true o false.
+18: A=PRIORIDADES
+19: A=Campo | B=Descripción | C=Tipo de dato | D=Obligatorio | E=Longitud máxima | F=Ejemplo válido | G=Validación | H=Catálogo relacionado
+20: A=prioridad_codigo | B=Código de prioridad. | C=Texto | D=Sí | E=50 | F=ALTA | G=ALTA, MEDIA o BAJA. | H=PRIORIDADES
+21: A=nombre | B=Nombre visible. | C=Texto | D=Sí | E=50 | F=ALTA | G=No vacío.
+22: A=color | B=Color o clase visual. | C=Texto | D=No | E=100 | F=bg-red-100 text-red-800 | G=Texto libre compatible con configuración SIAJ.
+23: A=activo | B=Indica vigencia. | C=Booleano | D=Sí | E=No aplica | F=true | G=Sólo true o false.
+26: A=TIPOS_EXPEDIENTE
+27: A=Campo | B=Descripción | C=Tipo de dato | D=Obligatorio | E=Longitud máxima | F=Ejemplo válido | G=Validación | H=Catálogo relacionado
+28: A=tipo_expediente_codigo | B=Código único. | C=Texto | D=Sí | E=100 | F=JUICIO | G=Único.
+29: A=nombre | B=Nombre visible. | C=Texto | D=Sí | E=100 | F=Juicio | G=No vacío.
+30: A=descripcion | B=Descripción. | C=Texto | D=No | E=32767 | F=Expediente de juicio. | G=Texto libre.
+31: A=gerencia_codigo | B=Gerencia aplicable. | C=Texto | D=No | E=100 | F=GER-LAB | G=Si se captura, debe existir. | H=GERENCIAS
+32: A=activo | B=Indica vigencia. | C=Booleano | D=Sí | E=No aplica | F=true | G=Sólo true o false.
+35: A=ORGANOS
+36: A=Campo | B=Descripción | C=Tipo de dato | D=Obligatorio | E=Longitud máxima | F=Ejemplo válido | G=Validación | H=Catálogo relacionado
+37: A=organo_codigo | B=Código único. | C=Texto | D=Sí | E=300 | F=JLT-01 | G=Único.
+38: A=gerencia_codigo | B=Gerencia aplicable. | C=Texto | D=No | E=100 | F=GER-LAB | G=Si se captura, debe existir. | H=GERENCIAS
+39: A=nombre | B=Nombre oficial. | C=Texto | D=Sí | E=300 | F=Junta Local de Conciliación y Arbitraje | G=No vacío.
+40: A=sede_codigo | B=Sede. | C=Texto | D=No | E=255 | F=CDMX | G=Debe existir en SEDES. | H=SEDES
+41: A=tipo | B=Tipo de órgano. | C=Texto | D=No | E=50 | F=JUNTA | G=Texto libre controlado por la Gerencia.
+42: A=activo | B=Indica vigencia. | C=Booleano | D=Sí | E=No aplica | F=true | G=Sólo true o false.
+45: A=TIPOS_AUDIENCIA
+46: A=Campo | B=Descripción | C=Tipo de dato | D=Obligatorio | E=Longitud máxima | F=Ejemplo válido | G=Validación | H=Catálogo relacionado
+47: A=tipo_audiencia_codigo | B=Código único. | C=Texto | D=Sí | E=100 | F=CONCILIACION | G=Único dentro de la Gerencia.
+48: A=gerencia_codigo | B=Gerencia aplicable. | C=Texto | D=Sí | E=100 | F=GER-LAB | G=Debe existir. | H=GERENCIAS
+49: A=nombre | B=Nombre visible. | C=Texto | D=Sí | E=100 | F=Conciliación | G=No vacío.
+50: A=descripcion | B=Descripción. | C=Texto | D=No | E=32767 | F=Audiencia de conciliación. | G=Texto libre.
+51: A=activo | B=Indica vigencia. | C=Booleano | D=Sí | E=No aplica | F=true | G=Sólo true o false.
+54: A=SEDES
+55: A=Campo | B=Descripción | C=Tipo de dato | D=Obligatorio | E=Longitud máxima | F=Ejemplo válido | G=Validación | H=Catálogo relacionado
+56: A=sede_codigo | B=Código único. | C=Texto | D=Sí | E=255 | F=CDMX | G=Único.
+57: A=nombre | B=Nombre de sede o estado. | C=Texto | D=Sí | E=255 | F=Ciudad de México | G=No vacío.
+58: A=gerencia_codigo | B=Gerencia aplicable. | C=Texto | D=No | E=100 | F=GER-LAB | G=Si se captura, debe existir. | H=GERENCIAS
+59: A=activo | B=Indica vigencia. | C=Booleano | D=Sí | E=No aplica | F=true | G=Sólo true o false.
+VALIDATIONS []
+
+FILE Layout_Expedientes.xlsx
+SHEET CATALOGOS rows=14 cols=14
+1: A=ROLES | B=ETAPAS_PROCESALES | C=ESTATUS_AUDIENCIA | D=ESTATUS_TERMINO | E=PRIORIDADES | F=BOOLEANOS | G=PERMISOS | H=GERENCIAS | I=MATERIAS | J=TIPOS_EXPEDIENTE | K=ORGANOS | L=TIPOS_AUDIENCIA | M=SEDES | N=USUARIOS
+2: A=ADMIN | B=TRAMITE | C=PENDIENTE | D=PROYECTISTA | E=ALTA | F=true | G=DASHBOARD_VER | H=GER-LAB | I=LABORAL | J=JUICIO | K=JLT-01 | L=CONCILIACION | M=CDMX | N=ana.perez@ejemplo.gob.mx
+3: A=DIRECTOR_PRINCIPAL | B=LAUDO | C=CON_ACTA | D=REVISION | E=MEDIA | F=false | G=AGENDA_VER
+4: A=DIRECTOR | B=FIRME | C=CONCLUIDA | D=GERENCIA | E=BAJA | G=CATALOGOS_VER
+5: A=SUBDIRECTOR | B=CONCLUIDO | D=DIRECCION | G=USUARIOS_VER
+6: A=GERENTE | D=LIBERADO | G=ADMIN_PANEL
+7: A=JEFE_DEPTO | D=PRESENTADO | G=EXPEDIENTES_VER
+8: A=ABOGADO | D=CONCLUIDO | G=EXPEDIENTES_SUPERVISION
+9: G=TERMINOS_VER
+10: G=TERMINOS_SUPERVISION
+11: G=AUDIENCIAS_VER
+12: G=AUDIENCIAS_SUPERVISION
+13: G=DOCUMENTOS_SUPERVISION
+14: G=ALERTAS_CONFIGURAR
+VALIDATIONS []
+SHEET CAPTURA rows=205 cols=12
+1: A=Layout oficial de carga histórica — Expedientes
+2: A=Complete esta hoja. El encabezado no se modifica. Campos ámbar: captura del usuario. Consulte INSTRUCCIONES y DICCIONARIO.
+5: A=clave_origen | B=gerencia_codigo | C=numero_expediente | D=materia_codigo | E=descripcion | F=etapa_procesal | G=tipo_expediente_codigo | H=prioridad_codigo | I=organo_codigo | J=sede_codigo | K=partes | L=abogado_responsable_email
+VALIDATIONS [('B6:B205', 'list', 'CATALOGOS!$H$2:$H$2', False), ('D6:D205', 'list', 'CATALOGOS!$I$2:$I$2', False), ('F6:F205', 'list', 'CATALOGOS!$B$2:$B$5', False), ('G6:G205', 'list', 'CATALOGOS!$J$2:$J$2', False), ('H6:H205', 'list', 'CATALOGOS!$E$2:$E$4', False), ('I6:I205', 'list', 'CATALOGOS!$K$2:$K$2', False), ('J6:J205', 'list', 'CATALOGOS!$M$2:$M$2', False), ('L6:L205', 'list', 'CATALOGOS!$N$2:$N$2', False)]
+SHEET INSTRUCCIONES rows=11 cols=2
+1: A=Layout oficial de carga histórica — Expedientes
+3: A=Tema | B=Instrucción
+4: A=Propósito | B=Una fila por expediente. Todos los expedientes de este archivo pertenecen a una Gerencia responsable.
+5: A=Ámbito de carga | B=Cada archivo debe contener registros de una sola Gerencia. Capture el mismo gerencia_codigo en todas las filas operativas.
+6: A=Uso | B=Capture únicamente en la hoja CAPTURA. No cambie los encabezados ni agregue columnas. Una fila representa un registro.
+7: A=Fechas y horas | B=Fechas AAAA-MM-DD y horas HH:mm. Use valores reales, no texto como N/A o NULL.
+8: A=Relaciones | B=Use códigos y correos de catálogos/usuarios previamente aprobados. No use nombres como sustituto de códigos.
+9: A=Adjuntos | B=Los campos *_archivo contienen sólo nombre relativo dentro de un paquete controlado de archivos; no incluya rutas absolutas.
+10: A=Campos obligatorios | B=Sí = obligatorio. Condicional = obligatorio cuando lo indique la validación del diccionario.
+11: A=Decisión aplicada | B=La Gerencia es la unidad de preparación y carga. Dirección y Subdirección sólo se incluyen como usuarios y permisos, sin layouts operativos propios.
+VALIDATIONS []
+SHEET DICCIONARIO rows=13 cols=8
+1: A=Campo | B=Descripción | C=Tipo de dato | D=Obligatorio | E=Longitud máxima | F=Ejemplo válido | G=Validación | H=Catálogo relacionado
+2: A=clave_origen | B=Identificador único y estable del expediente en la fuente histórica. | C=Texto | D=Sí | E=100 | F=EXP-HIS-0001 | G=Único dentro del archivo y de la Gerencia. No cambiar entre archivos relacionados.
+3: A=gerencia_codigo | B=Gerencia responsable del expediente. | C=Texto | D=Sí | E=100 | F=GER-LAB | G=Debe existir en GERENCIAS. | H=GERENCIAS
+4: A=numero_expediente | B=Número oficial del expediente. | C=Texto | D=Sí | E=50 | F=123/2024 | G=No vacío. Capturar como texto para conservar ceros y diagonales.
+5: A=materia_codigo | B=Materia jurídica del expediente. | C=Texto | D=Sí | E=100 | F=LABORAL | G=Debe existir en MATERIAS y pertenecer a la Gerencia. | H=MATERIAS
+6: A=descripcion | B=Descripción del asunto. | C=Texto | D=Sí | E=32767 | F=Juicio laboral promovido por la parte actora. | G=No vacío. Excel admite hasta 32767 caracteres por celda.
+7: A=etapa_procesal | B=Etapa procesal vigente. | C=Texto | D=Sí | E=30 | F=TRAMITE | G=Valor permitido de ETAPAS_PROCESALES. | H=ETAPAS_PROCESALES
+8: A=tipo_expediente_codigo | B=Tipo de expediente. | C=Texto | D=No | E=100 | F=JUICIO | G=Debe existir y estar activo en TIPOS_EXPEDIENTE. | H=TIPOS_EXPEDIENTE
+9: A=prioridad_codigo | B=Prioridad de seguimiento. | C=Texto | D=No | E=50 | F=MEDIA | G=Debe existir y estar activa en PRIORIDADES. | H=PRIORIDADES
+10: A=organo_codigo | B=Órgano jurisdiccional. | C=Texto | D=No | E=300 | F=JLT-01 | G=Debe existir y corresponder a la Gerencia cuando aplique. | H=ORGANOS
+11: A=sede_codigo | B=Sede o estado. | C=Texto | D=No | E=255 | F=CDMX | G=Debe existir y estar activa en SEDES. | H=SEDES
+12: A=partes | B=Texto de partes procesales. | C=Texto | D=No | E=32767 | F=Actor: María López; Demandado: Institución X | G=Texto libre; separar partes con punto y coma.
+13: A=abogado_responsable_email | B=Correo del abogado responsable. | C=Texto | D=No | E=100 | F=ana.perez@ejemplo.gob.mx | G=Debe identificar un usuario activo con alcance en Gerencia y Materia. | H=USUARIOS
+VALIDATIONS []
+
+FILE Layout_Terminos.xlsx
+SHEET CATALOGOS rows=14 cols=14
+1: A=ROLES | B=ETAPAS_PROCESALES | C=ESTATUS_AUDIENCIA | D=ESTATUS_TERMINO | E=PRIORIDADES | F=BOOLEANOS | G=PERMISOS | H=GERENCIAS | I=MATERIAS | J=TIPOS_EXPEDIENTE | K=ORGANOS | L=TIPOS_AUDIENCIA | M=SEDES | N=USUARIOS
+2: A=ADMIN | B=TRAMITE | C=PENDIENTE | D=PROYECTISTA | E=ALTA | F=true | G=DASHBOARD_VER | H=GER-LAB | I=LABORAL | J=JUICIO | K=JLT-01 | L=CONCILIACION | M=CDMX | N=ana.perez@ejemplo.gob.mx
+3: A=DIRECTOR_PRINCIPAL | B=LAUDO | C=CON_ACTA | D=REVISION | E=MEDIA | F=false | G=AGENDA_VER
+4: A=DIRECTOR | B=FIRME | C=CONCLUIDA | D=GERENCIA | E=BAJA | G=CATALOGOS_VER
+5: A=SUBDIRECTOR | B=CONCLUIDO | D=DIRECCION | G=USUARIOS_VER
+6: A=GERENTE | D=LIBERADO | G=ADMIN_PANEL
+7: A=JEFE_DEPTO | D=PRESENTADO | G=EXPEDIENTES_VER
+8: A=ABOGADO | D=CONCLUIDO | G=EXPEDIENTES_SUPERVISION
+9: G=TERMINOS_VER
+10: G=TERMINOS_SUPERVISION
+11: G=AUDIENCIAS_VER
+12: G=AUDIENCIAS_SUPERVISION
+13: G=DOCUMENTOS_SUPERVISION
+14: G=ALERTAS_CONFIGURAR
+VALIDATIONS []
+SHEET CAPTURA rows=205 cols=12
+1: A=Layout oficial de carga histórica — Términos
+2: A=Complete esta hoja. El encabezado no se modifica. Campos ámbar: captura del usuario. Consulte INSTRUCCIONES y DICCIONARIO.
+5: A=clave_origen | B=gerencia_codigo | C=expediente_clave_origen | D=asunto | E=fecha_vencimiento | F=fecha_ingreso | G=estatus_termino | H=prioridad_codigo | I=abogado_responsable_email | J=fecha_presentacion | K=acuse_archivo | L=observaciones
+VALIDATIONS [('B6:B205', 'list', 'CATALOGOS!$H$2:$H$2', False), ('G6:G205', 'list', 'CATALOGOS!$D$2:$D$8', False), ('H6:H205', 'list', 'CATALOGOS!$E$2:$E$4', False), ('I6:I205', 'list', 'CATALOGOS!$N$2:$N$2', False)]
+SHEET INSTRUCCIONES rows=11 cols=2
+1: A=Layout oficial de carga histórica — Términos
+3: A=Tema | B=Instrucción
+4: A=Propósito | B=Una fila por término. Debe referirse a una clave_origen de expediente del mismo bloque de Gerencia.
+5: A=Ámbito de carga | B=Cada archivo debe contener registros de una sola Gerencia. Capture el mismo gerencia_codigo en todas las filas operativas.
+6: A=Uso | B=Capture únicamente en la hoja CAPTURA. No cambie los encabezados ni agregue columnas. Una fila representa un registro.
+7: A=Fechas y horas | B=Fechas AAAA-MM-DD y horas HH:mm. Use valores reales, no texto como N/A o NULL.
+8: A=Relaciones | B=Use códigos y correos de catálogos/usuarios previamente aprobados. No use nombres como sustituto de códigos.
+9: A=Adjuntos | B=Los campos *_archivo contienen sólo nombre relativo dentro de un paquete controlado de archivos; no incluya rutas absolutas.
+10: A=Campos obligatorios | B=Sí = obligatorio. Condicional = obligatorio cuando lo indique la validación del diccionario.
+11: A=Decisión aplicada | B=La Gerencia es la unidad de preparación y carga. Dirección y Subdirección sólo se incluyen como usuarios y permisos, sin layouts operativos propios.
+VALIDATIONS []
+SHEET DICCIONARIO rows=13 cols=8
+1: A=Campo | B=Descripción | C=Tipo de dato | D=Obligatorio | E=Longitud máxima | F=Ejemplo válido | G=Validación | H=Catálogo relacionado
+2: A=clave_origen | B=Identificador histórico único del término. | C=Texto | D=Sí | E=100 | F=TER-HIS-0001 | G=Único dentro del archivo y de la Gerencia.
+3: A=gerencia_codigo | B=Gerencia responsable. | C=Texto | D=Sí | E=100 | F=GER-LAB | G=Debe existir y coincidir con el expediente. | H=GERENCIAS
+4: A=expediente_clave_origen | B=Clave histórica del expediente relacionado. | C=Texto | D=Sí | E=100 | F=EXP-HIS-0001 | G=Debe existir en el layout de Expedientes del mismo bloque.
+5: A=asunto | B=Actuación o asunto del término. | C=Texto | D=Sí | E=32767 | F=Presentar contestación de demanda. | G=No vacío.
+6: A=fecha_vencimiento | B=Fecha de vencimiento registrada. | C=Fecha | D=Sí | E=AAAA-MM-DD | F=2024-07-05 | G=Fecha real con formato AAAA-MM-DD.
+7: A=fecha_ingreso | B=Fecha de ingreso de la actuación. | C=Fecha | D=No | E=AAAA-MM-DD | F=2024-06-21 | G=Fecha real con formato AAAA-MM-DD.
+8: A=estatus_termino | B=Estado vigente o final del término. | C=Texto | D=Sí | E=30 | F=PRESENTADO | G=Valor permitido de ESTATUS_TERMINO. | H=ESTATUS_TERMINO
+9: A=prioridad_codigo | B=Prioridad de seguimiento. | C=Texto | D=No | E=50 | F=ALTA | G=Debe existir y estar activa en PRIORIDADES. | H=PRIORIDADES
+10: A=abogado_responsable_email | B=Correo del abogado responsable. | C=Texto | D=No | E=100 | F=ana.perez@ejemplo.gob.mx | G=Debe ser usuario activo con alcance en Gerencia y Materia. | H=USUARIOS
+11: A=fecha_presentacion | B=Fecha de presentación. | C=Fecha | D=Condicional | E=AAAA-MM-DD | F=2024-07-04 | G=Obligatoria cuando estatus_termino=PRESENTADO o CONCLUIDO por presentación.
+12: A=acuse_archivo | B=Nombre relativo del acuse dentro del paquete de adjuntos. | C=Texto | D=Condicional | E=500 | F=TER-HIS-0001_acuse.pdf | G=Obligatorio cuando estatus_termino=PRESENTADO. No usar ruta absoluta.
+13: A=observaciones | B=Notas del término. | C=Texto | D=No | E=32767 | F=Acuse recibido. | G=Texto libre.
+VALIDATIONS []
+
+FILE Layout_Usuarios.xlsx
+SHEET CATALOGOS rows=14 cols=14
+1: A=ROLES | B=ETAPAS_PROCESALES | C=ESTATUS_AUDIENCIA | D=ESTATUS_TERMINO | E=PRIORIDADES | F=BOOLEANOS | G=PERMISOS | H=GERENCIAS | I=MATERIAS | J=TIPOS_EXPEDIENTE | K=ORGANOS | L=TIPOS_AUDIENCIA | M=SEDES | N=USUARIOS
+2: A=ADMIN | B=TRAMITE | C=PENDIENTE | D=PROYECTISTA | E=ALTA | F=true | G=DASHBOARD_VER | H=GER-LAB | I=LABORAL | J=JUICIO | K=JLT-01 | L=CONCILIACION | M=CDMX | N=ana.perez@ejemplo.gob.mx
+3: A=DIRECTOR_PRINCIPAL | B=LAUDO | C=CON_ACTA | D=REVISION | E=MEDIA | F=false | G=AGENDA_VER
+4: A=DIRECTOR | B=FIRME | C=CONCLUIDA | D=GERENCIA | E=BAJA | G=CATALOGOS_VER
+5: A=SUBDIRECTOR | B=CONCLUIDO | D=DIRECCION | G=USUARIOS_VER
+6: A=GERENTE | D=LIBERADO | G=ADMIN_PANEL
+7: A=JEFE_DEPTO | D=PRESENTADO | G=EXPEDIENTES_VER
+8: A=ABOGADO | D=CONCLUIDO | G=EXPEDIENTES_SUPERVISION
+9: G=TERMINOS_VER
+10: G=TERMINOS_SUPERVISION
+11: G=AUDIENCIAS_VER
+12: G=AUDIENCIAS_SUPERVISION
+13: G=DOCUMENTOS_SUPERVISION
+14: G=ALERTAS_CONFIGURAR
+VALIDATIONS []
+SHEET CAPTURA rows=205 cols=13
+1: A=Layout oficial de carga histórica — Usuarios
+2: A=Complete esta hoja. El encabezado no se modifica. Campos ámbar: captura del usuario. Consulte INSTRUCCIONES y DICCIONARIO.
+5: A=gerencia_codigo | B=nombre_completo | C=email | D=username | E=numero_empleado | F=rol | G=puesto | H=telefono_institucional | I=telefono_movil | J=ubicacion_oficina | K=materias_codigos | L=permisos_adicionales | M=activo
+VALIDATIONS [('A6:A205', 'list', 'CATALOGOS!$H$2:$H$2', False), ('F6:F205', 'list', 'CATALOGOS!$A$2:$A$8', False), ('K6:K205', 'list', 'CATALOGOS!$I$2:$I$2', False), ('L6:L205', 'list', 'CATALOGOS!$G$2:$G$14', False), ('M6:M205', 'list', 'CATALOGOS!$F$2:$F$3', False)]
+SHEET INSTRUCCIONES rows=11 cols=2
+1: A=Layout oficial de carga histórica — Usuarios
+3: A=Tema | B=Instrucción
+4: A=Propósito | B=Una fila por usuario. La Gerencia es obligatoria para GERENTE, JEFE_DEPTO y ABOGADO; opcional para ADMIN, DIRECTOR_PRINCIPAL, DIRECTOR y SUBDIRECTOR.
+5: A=Ámbito de carga | B=Cada archivo debe contener registros de una sola Gerencia. Capture el mismo gerencia_codigo en todas las filas operativas.
+6: A=Uso | B=Capture únicamente en la hoja CAPTURA. No cambie los encabezados ni agregue columnas. Una fila representa un registro.
+7: A=Fechas y horas | B=Fechas AAAA-MM-DD y horas HH:mm. Use valores reales, no texto como N/A o NULL.
+8: A=Relaciones | B=Use códigos y correos de catálogos/usuarios previamente aprobados. No use nombres como sustituto de códigos.
+9: A=Adjuntos | B=Los campos *_archivo contienen sólo nombre relativo dentro de un paquete controlado de archivos; no incluya rutas absolutas.
+10: A=Campos obligatorios | B=Sí = obligatorio. Condicional = obligatorio cuando lo indique la validación del diccionario.
+11: A=Decisión aplicada | B=La Gerencia es la unidad de preparación y carga. Dirección y Subdirección sólo se incluyen como usuarios y permisos, sin layouts operativos propios.
+VALIDATIONS []
+SHEET DICCIONARIO rows=14 cols=8
+1: A=Campo | B=Descripción | C=Tipo de dato | D=Obligatorio | E=Longitud máxima | F=Ejemplo válido | G=Validación | H=Catálogo relacionado
+2: A=gerencia_codigo | B=Código de la Gerencia a la que pertenece el usuario. | C=Texto | D=Condicional | E=100 | F=GER-LAB | G=Obligatorio para GERENTE, JEFE_DEPTO y ABOGADO. Debe existir en GERENCIAS. | H=GERENCIAS
+3: A=nombre_completo | B=Nombre completo del usuario. | C=Texto | D=Sí | E=200 | F=Ana Pérez López | G=No vacío. No usar abreviaturas como único nombre.
+4: A=email | B=Correo institucional o de contacto. | C=Texto | D=No | E=100 | F=ana.perez@ejemplo.gob.mx | G=Si se captura, debe ser único. Formato correo válido.
+5: A=username | B=Nombre de usuario local. | C=Texto | D=No | E=80 | F=ana.perez | G=Si se omite, el sistema lo genera. Si se captura, único sin distinguir mayúsculas.
+6: A=numero_empleado | B=Identificador laboral. | C=Texto | D=No | E=40 | F=000123 | G=Único sin distinguir mayúsculas; conservar ceros iniciales.
+7: A=rol | B=Rol principal del sistema. | C=Texto | D=Sí | E=50 | F=ABOGADO | G=Valor permitido de ROLES. | H=ROLES
+8: A=puesto | B=Puesto institucional. | C=Texto | D=No | E=160 | F=Abogada litigante | G=Texto libre.
+9: A=telefono_institucional | B=Teléfono institucional. | C=Texto | D=No | E=120 | F=55 0000 0000 ext. 123 | G=Texto libre.
+10: A=telefono_movil | B=Teléfono móvil. | C=Texto | D=No | E=80 | F=55 0000 0001 | G=Texto libre.
+11: A=ubicacion_oficina | B=Ubicación física. | C=Texto | D=No | E=180 | F=Piso 2, oficina 210 | G=Texto libre.
+12: A=materias_codigos | B=Materias autorizadas, separadas por punto y coma. | C=Texto | D=No | E=500 | F=LABORAL;PENAL | G=Cada código debe existir en MATERIAS y pertenecer a una Gerencia asignada. | H=MATERIAS
+13: A=permisos_adicionales | B=Permisos adicionales, separados por punto y coma. | C=Texto | D=No | E=1000 | F=EXPEDIENTES_VER;TERMINOS_VER | G=Cada valor debe existir en PERMISOS. No sustituye el rol. | H=PERMISOS
+14: A=activo | B=Indica si la cuenta queda habilitada. | C=Booleano | D=Sí | E=No aplica | F=true | G=Sólo true o false. | H=BOOLEANOS
+VALIDATIONS []

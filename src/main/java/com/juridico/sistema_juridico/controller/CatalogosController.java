@@ -33,6 +33,7 @@ public class CatalogosController {
     @Autowired private TipoExpedienteRepository tipoExpedienteRepository;
     @Autowired private EtapaCatalogoRepository etapaCatalogoRepository;
     @Autowired private com.juridico.sistema_juridico.service.CatalogosSyncService syncService;
+    @Autowired private com.juridico.sistema_juridico.service.catalogo.TipoTerminoService tipoTerminoService;
 
     // ===============================================================
     // VISTA PRINCIPAL
@@ -150,6 +151,7 @@ public class CatalogosController {
         model.addAttribute("listaMaterias", materias);
         model.addAttribute("listaTiposExpediente", tiposExpediente);
         model.addAttribute("listaEtapasCatalogo", etapasCatalogo);
+        model.addAttribute("listaTiposTermino", tipoTerminoService.listarTodos());
         
         model.addAttribute("fechaLimiteNuevo", java.time.LocalDateTime.now().minusDays(7));
 
@@ -892,4 +894,33 @@ public class CatalogosController {
         return "redirect:/catalogos" + (gId != null ? "?gerenciaId=" + gId : "");
     }
 
+    // ===============================================================
+    // CRUD - TIPOS DE TÉRMINO
+    // ===============================================================
+    @PostMapping("/tipos-termino/guardar")
+    public String guardarTipoTermino(@ModelAttribute com.juridico.sistema_juridico.Entity.catalogo.TipoTermino tipoTermino, RedirectAttributes ra) {
+        try {
+            if (tipoTermino.getId() == null) {
+                tipoTerminoService.crear(tipoTermino);
+                ra.addFlashAttribute("mensajeExito", "Tipo de término creado correctamente.");
+            } else {
+                tipoTerminoService.actualizar(tipoTermino.getId(), tipoTermino);
+                ra.addFlashAttribute("mensajeExito", "Tipo de término actualizado correctamente.");
+            }
+        } catch (Exception e) {
+            ra.addFlashAttribute("mensajeError", "Error al guardar el tipo de término: " + e.getMessage());
+        }
+        return "redirect:/catalogos";
+    }
+
+    @PostMapping("/tipos-termino/estado/{id}")
+    public String cambiarEstadoTipoTermino(@PathVariable Integer id, @RequestParam boolean activo, RedirectAttributes ra) {
+        try {
+            tipoTerminoService.cambiarEstado(id, activo);
+            ra.addFlashAttribute("mensajeExito", "Estado del tipo de término actualizado.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("mensajeError", "Error al cambiar el estado del tipo de término: " + e.getMessage());
+        }
+        return "redirect:/catalogos";
+    }
 }

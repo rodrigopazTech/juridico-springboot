@@ -14,6 +14,7 @@ import com.juridico.sistema_juridico.Entity.usuario.Recordatorio;
 import com.juridico.sistema_juridico.repository.Usuarios.RecordatorioRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.NotificacionRepository;
 import com.juridico.sistema_juridico.service.NotificacionService;
+import com.juridico.sistema_juridico.service.TareaService;
 
 @Component
 public class RecordatorioNotificacionScheduler {
@@ -27,40 +28,9 @@ public class RecordatorioNotificacionScheduler {
     @Autowired
     private NotificacionRepository notificacionRepository;
 
-    // Se ejecuta todos los días a las 7:30 AM
-    @Scheduled(cron = "0 30 7 * * ?")
-    @Transactional
-    public void notificarRecordatoriosHoy() {
-        LocalDate hoy = LocalDate.now();
-        List<Recordatorio> recordatoriosHoy = recordatorioRepository
-                .findByFechaRecordatorioAndCompletadoFalse(hoy);
-
-        for (Recordatorio r : recordatoriosHoy) {
-            if (r.getUsuario() == null) {
-                continue;
-            }
-
-            String tituloNotif = "Tarea para hoy: " + r.getTitulo();
-            String mensaje = String.format("Tienes una tarea programada para hoy a las %s. Detalles: %s",
-                    r.getHoraRecordatorio() != null ? r.getHoraRecordatorio().toString() : "sin hora",
-                    r.getDetalles() != null ? r.getDetalles() : "");
-
-            // Crear y enviar la notificación (al ser personal, silenciamos superiores)
-            notificacionService.crearNotificacion(
-                    r.getUsuario(),
-                    null,
-                    NotificacionEvento.TAREA_RECORDATORIO,
-                    tituloNotif,
-                    mensaje,
-                    r.getPrioridad(),
-                    String.valueOf(r.getId()),
-                    true // Silenciar superiores = true
-            );
-        }
-    }
-
-    // Se ejecuta cada minuto para detectar tareas creadas en el mismo día
-    // y notificarlas 15 minutos antes de su vencimiento
+    // Única regla de tareas: se ejecuta cada minuto y genera el aviso desde
+    // 15 minutos antes. Si la tarea se crea dentro de esa ventana, se avisará
+    // en el siguiente minuto disponible.
     @Scheduled(cron = "0 * * * * ?")
     @Transactional
     public void notificarRecordatoriosIntraday() {
@@ -76,11 +46,11 @@ public class RecordatorioNotificacionScheduler {
             }
 
             // Si la hora actual es mayor o igual al límite (15 min antes)
-            LocalTime limiteAviso = r.getHoraRecordatorio().minusMinutes(15);
+            LocalTime limiteAviso = r.getHoraRecordatorio().minusMinutes(TareaService.MINUTOS_ANTICIPACION);
             if (ahora.isAfter(limiteAviso) || ahora.equals(limiteAviso)) {
                 // Verificar si ya fue notificado previamente
                 boolean yaNotificado = notificacionRepository.existsByEventoAndEntidadId(
-                        NotificacionEvento.TAREA_RECORDATORIO, String.valueOf(r.getId()));
+                        NotificacionEvento.TAREA_RECORDATORIO, entidadIdRecordatorio(r));
 
                 if (!yaNotificado) {
                     String tituloNotif = "Recordatorio de tarea: " + r.getTitulo();
@@ -96,11 +66,20 @@ public class RecordatorioNotificacionScheduler {
                             tituloNotif,
                             mensaje,
                             r.getPrioridad(),
-                            String.valueOf(r.getId()),
+                            entidadIdRecordatorio(r),
                             true // Silenciar superiores = true
                     );
                 }
             }
         }
+    }
+
+    private String entidadIdRecordatorio(Recordatorio recordatorio) {
+        int revision = recordatorio.getRecordatorioRevision() == null
+                ? 0
+                : recordatorio.getRecordatorioRevision();
+        return revision == 0
+                ? String.valueOf(recordatorio.getId())
+                : recordatorio.getId() + ":" + revision;
     }
 }

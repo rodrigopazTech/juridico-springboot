@@ -197,7 +197,10 @@ public class NotificacionesController {
 
     private boolean recordatorioExiste(String idStr, Usuario usuario) {
         try {
-            return recordatorioRepository.findByIdAndUsuario(Integer.valueOf(idStr), usuario).isPresent();
+            String idBase = idStr != null && idStr.contains(":")
+                    ? idStr.substring(0, idStr.indexOf(':'))
+                    : idStr;
+            return recordatorioRepository.findByIdAndUsuario(Integer.valueOf(idBase), usuario).isPresent();
         } catch (Exception e) {
             return false;
         }
