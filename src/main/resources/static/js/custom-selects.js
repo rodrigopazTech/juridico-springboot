@@ -52,7 +52,6 @@
 
 const SELECT_URLS = {
     'organo': '/catalogos/organos/guardar',
-    'tipo-audiencia': '/catalogos/tipos-audiencia/guardar',
     'sede': '/catalogos/sedes/guardar',
     'materia': '/catalogos/materias/guardar'
 };
@@ -151,7 +150,7 @@ function initSearchableSelect(elementSelector, options = {}) {
                     }
                 }
                 // Solo bloquear si el tipo realmente necesita gerencia y no la hay
-                if (!gerenciaIdVal && (tipo === 'organo' || tipo === 'tipo-audiencia')) {
+                if (!gerenciaIdVal && tipo === 'organo') {
                     Swal.fire({
                         icon: 'info',
                         title: 'Gerencia / Expediente requerido',
@@ -165,7 +164,7 @@ function initSearchableSelect(elementSelector, options = {}) {
             // 2. Diálogo de confirmación SweetAlert2 antes de guardar
             Swal.fire({
                 title: '¿Crear nuevo elemento?',
-                text: `¿Deseas agregar "${trimmedInput}" al catálogo de ${tipo === 'tipo-audiencia' ? 'tipos de audiencia' : tipo === 'organo' ? 'órganos jurisdiccionales' : tipo}?`,
+                text: `¿Deseas agregar "${trimmedInput}" al catálogo de ${tipo === 'organo' ? 'órganos jurisdiccionales' : tipo}?`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#9D2449',

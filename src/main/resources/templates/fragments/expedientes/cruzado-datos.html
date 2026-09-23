@@ -42,9 +42,10 @@
                     </tr>
                     <tr th:each="t : ${terminos}" class="border-b border-gray-100 hover:bg-gray-50/50 transition">
                         <td class="px-4 py-3 font-semibold text-gray-800">
-                            <div class="flex items-center gap-2" th:title="${t.diasRestantesTexto}">
-                                <div class="w-2.5 h-2.5 rounded-full border border-gray-200 shadow-sm" th:classappend="${t.semaforoColor}"></div>
-                                <span th:text="${#temporals.format(t.fechaVencimiento, 'yyyy-MM-dd')}">2026-01-01</span>
+                            <div class="flex items-center gap-2" th:with="at=${@atencionTemporal.evaluarTermino(t)}" th:title="${at.explicacion()}">
+                                <div class="w-2.5 h-2.5 rounded-full border border-gray-200 shadow-sm" th:classappend="${at.clasesPunto()}"></div>
+                                <span class="text-[10px] font-bold" th:text="${at.etiqueta()}">A tiempo</span>
+                                <span th:text="${t.fechaVencimiento != null ? #temporals.format(t.fechaVencimiento, 'yyyy-MM-dd') : 'Sin vencimiento'}">2026-01-01</span>
                             </div>
                         </td>
                         <td class="px-4 py-3 font-medium text-gray-800" th:text="${t.asunto}">Actuación</td>
@@ -84,8 +85,9 @@
                     </tr>
                     <tr th:each="a : ${audiencias}" class="border-b border-gray-100 hover:bg-gray-50/50 transition">
                         <td class="px-4 py-3 font-semibold text-gray-800">
-                            <div class="flex items-center gap-2" th:title="${a.textoDiasRestantes}">
-                                <div class="w-2.5 h-2.5 rounded-full border border-gray-200 shadow-sm" th:classappend="${a.semaforoColor}"></div>
+                            <div class="flex items-center gap-2" th:with="at=${@atencionTemporal.evaluarAudiencia(a)}" th:title="${at.explicacion()}">
+                                <div class="w-2.5 h-2.5 rounded-full border border-gray-200 shadow-sm" th:classappend="${at.clasesPunto()}"></div>
+                                <span class="text-[10px] font-bold" th:text="${at.etiqueta()}">Programada</span>
                                 <span th:text="${#temporals.format(a.fechaAudiencia, 'yyyy-MM-dd') + ' ' + a.horaAudiencia}">2026-01-01 10:00</span>
                             </div>
                         </td>

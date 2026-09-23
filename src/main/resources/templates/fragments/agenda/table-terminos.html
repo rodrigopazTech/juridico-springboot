@@ -24,7 +24,7 @@
                         <div class="flex items-center gap-2">
                             <i class="fas fa-circle text-xs text-gray-400"></i>
                             <span class="font-bold text-gray-800"
-                                th:text="${t.updatedAt != null ? #temporals.format(t.updatedAt, 'yyyy-MM-dd') : #temporals.format(t.fechaVencimiento, 'yyyy-MM-dd')}">2025-01-14</span>
+                                th:text="${t.updatedAt != null ? #temporals.format(t.updatedAt, 'yyyy-MM-dd') : (t.fechaVencimiento != null ? #temporals.format(t.fechaVencimiento, 'yyyy-MM-dd') : 'Sin fecha')}">2025-01-14</span>
                         </div>
                     </td>
                     <td class="px-6 py-4">
@@ -86,7 +86,7 @@
                     <span class="text-xs font-bold text-gray-400" th:text="'#' + ${t.id}">#1</span>
                     <div class="flex flex-col">
                         <span class="text-xs font-bold text-gray-900"
-                            th:text="${t.updatedAt != null ? #temporals.format(t.updatedAt, 'yyyy-MM-dd') : #temporals.format(t.fechaVencimiento, 'yyyy-MM-dd')}">2025-01-14</span>
+                            th:text="${t.updatedAt != null ? #temporals.format(t.updatedAt, 'yyyy-MM-dd') : (t.fechaVencimiento != null ? #temporals.format(t.fechaVencimiento, 'yyyy-MM-dd') : 'Sin fecha')}">2025-01-14</span>
                         <span class="text-[10px] text-gray-400">Conclusion</span>
                     </div>
                 </div>

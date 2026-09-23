@@ -47,7 +47,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
+import com.juridico.sistema_juridico.Entity.catalogo.TipoTermino;
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
+import com.juridico.sistema_juridico.Entity.enums.ModoPlazoTermino;
 import com.juridico.sistema_juridico.Entity.enums.NotificacionEvento;
 import com.juridico.sistema_juridico.Entity.enums.OrigenTermino;
 import com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro;
@@ -71,8 +73,8 @@ import com.juridico.sistema_juridico.service.AuditoriaService;
 import com.juridico.sistema_juridico.service.NotificacionService;
 import com.juridico.sistema_juridico.util.TerminoExcelExporter;
 import com.juridico.sistema_juridico.service.procesal.TerminoArchivoService;
+import com.juridico.sistema_juridico.service.procesal.CalculadoraPlazoService;
 import com.juridico.sistema_juridico.service.FileStorageService;
-import com.juridico.sistema_juridico.service.configuracion.ConfiguracionSemaforoService;
 import com.juridico.sistema_juridico.Entity.enums.TipoDocumentoTermino;
 import com.juridico.sistema_juridico.Entity.procesal.TerminoArchivo;
 
@@ -110,9 +112,9 @@ public class TerminosController {
     @Autowired
     private AuditoriaService auditoriaService;
     @Autowired
-    private ConfiguracionSemaforoService configuracionSemaforoService;
-    @Autowired
     private com.juridico.sistema_juridico.service.catalogo.TipoTerminoService tipoTerminoService;
+    @Autowired
+    private CalculadoraPlazoService calculadoraPlazoService;
 
     // --- MATRIZ DE PERMISOS ---
     private static final Map<EstatusTermino, List<RolUsuario>> PERMISOS_ETAPAS = new HashMap<>();
@@ -238,7 +240,6 @@ public class TerminosController {
                 materiaId, filtroMateriaIds,
                 pageable);
 
-        configuracionSemaforoService.aplicarATerminos(paginaTerminos.getContent());
         model.addAttribute("terminos", paginaTerminos);
 
         // --- 3. FILTRO DE ABOGADOS PARA EL MODAL (SEGURIDAD) ---
@@ -383,6 +384,7 @@ public class TerminosController {
     public Object guardar(@ModelAttribute Termino terminoForm,
             @RequestParam(value = "expedienteId", required = false) UUID expedienteId,
             @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
+            @RequestParam(value = "tipoTerminoId", required = false) Integer tipoTerminoId,
             @RequestParam(value = "origenTermino", required = false, defaultValue = "EXPEDIENTE") OrigenTermino origenTermino,
             @RequestParam(value = "contextoMateriaId", required = false) Integer contextoMateriaId,
             @RequestParam(value = "contextoGerenciaId", required = false) Integer contextoGerenciaId,
@@ -397,12 +399,37 @@ public class TerminosController {
             Usuario actor = getUsuarioActual();
             Termino terminoGuardar;
             boolean esNuevo = false;
+            TipoTermino tipoSeleccionado = null;
+
+            if (terminoForm.getId() == null && tipoTerminoId == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Selecciona un Tipo de Término.");
+            }
+            if (tipoTerminoId != null) {
+                tipoSeleccionado = tipoTerminoService.obtenerPorId(tipoTerminoId);
+                if (!Boolean.TRUE.equals(tipoSeleccionado.getActivo())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El Tipo de Término seleccionado está inactivo.");
+                }
+                terminoForm.setTipoTerminoRef(tipoSeleccionado);
+                terminoForm.setTipoDiasCalculado(tipoSeleccionado.getTipoDias());
+            } else if (terminoForm.getId() != null) {
+                tipoSeleccionado = terminoRepository.findById(terminoForm.getId())
+                        .map(Termino::getTipoTerminoRef)
+                        .orElse(null);
+            }
 
             if (terminoForm.getAsunto() == null || terminoForm.getAsunto().trim().isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El campo asunto/actuación es obligatorio.");
             }
-            if (terminoForm.getFechaVencimiento() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha de vencimiento es obligatoria.");
+            if (tipoSeleccionado != null) {
+                LocalDate fechaOrigen = terminoForm.getFechaIngreso() != null
+                        ? terminoForm.getFechaIngreso() : LocalDate.now();
+                terminoForm.setFechaIngreso(fechaOrigen);
+                terminoForm.setFechaVencimiento(calculadoraPlazoService.resolverVencimiento(
+                        tipoSeleccionado, fechaOrigen, terminoForm.getFechaVencimiento()));
+                terminoForm.setEsTiempoDinamico(tipoSeleccionado.getModoPlazo() == ModoPlazoTermino.CAPTURADO);
+            } else if (terminoForm.getFechaVencimiento() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "El término no tiene un Tipo de Término válido ni una fecha de vencimiento.");
             }
 
             if (actor.getRol() == RolUsuario.ABOGADO) {
@@ -500,7 +527,13 @@ public class TerminosController {
                 validarAccesoTermino(existente, actor);
 
                 existente.setAsunto(terminoForm.getAsunto());
+                existente.setFechaIngreso(terminoForm.getFechaIngreso());
                 existente.setFechaVencimiento(terminoForm.getFechaVencimiento());
+                existente.setEsTiempoDinamico(terminoForm.getEsTiempoDinamico());
+                if (terminoForm.getTipoTerminoRef() != null) {
+                    existente.setTipoTerminoRef(terminoForm.getTipoTerminoRef());
+                    existente.setTipoDiasCalculado(terminoForm.getTipoDiasCalculado());
+                }
 
                 if (terminoForm.getAbogadoResponsable() != null) {
                     existente.setAbogadoResponsable(terminoForm.getAbogadoResponsable());
@@ -536,7 +569,7 @@ public class TerminosController {
                 esNuevo = true;
                 terminoGuardar = terminoForm;
                 terminoGuardar.setFechaCreacion(LocalDate.now());
-                terminoGuardar.setFechaIngreso(LocalDate.now());
+                if (terminoGuardar.getFechaIngreso() == null) terminoGuardar.setFechaIngreso(LocalDate.now());
                 terminoGuardar.setEstatusTermino(EstatusTermino.PROYECTISTA);
                 terminoGuardar.setCreatedAt(LocalDateTime.now());
                 terminoGuardar.setUpdatedAt(LocalDateTime.now());

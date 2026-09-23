@@ -163,6 +163,16 @@
                     </a>
                 </li>
 
+                <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR')">
+                    <a th:href="@{/administracion/plazos-alertas}"
+                        class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
+                        th:classappend="${activePage == 'plazos-alertas' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">
+                        <i class="fas fa-sliders w-5 text-center text-lg transition-transform duration-300 group-hover:scale-110"
+                            th:classappend="${activePage == 'plazos-alertas' ? 'text-gob-oro drop-shadow-md' : 'text-white/40 group-hover:text-white/80'}"></i>
+                        <span class="ms-3 text-sm">Plazos y alertas</span>
+                    </a>
+                </li>
+
                 <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO')">
                     <a th:href="@{/usuarios}"
                         class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"

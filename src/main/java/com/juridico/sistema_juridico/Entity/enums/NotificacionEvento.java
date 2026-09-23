@@ -65,7 +65,7 @@ public enum NotificacionEvento {
             "termino",
             NotificacionCategoria.TERMINOS,
             "Recordatorios de vencimiento",
-            "Te recuerda terminos proximos a vencer segun el semaforo configurado.",
+            "Te recuerda términos próximos a vencer según el perfil de alerta aplicado.",
             true),
     AUDIENCIA_NUEVA(
             "AUDIENCIA",

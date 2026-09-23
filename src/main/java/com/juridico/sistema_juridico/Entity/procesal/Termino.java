@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
@@ -45,7 +44,7 @@ public class Termino {
     @Column(name = "fecha_ingreso")
     private LocalDate fechaIngreso;
 
-    @Column(name = "fecha_vencimiento", nullable = false)
+    @Column(name = "fecha_vencimiento")
     private LocalDate fechaVencimiento;
 
     @Enumerated(EnumType.STRING)
@@ -92,14 +91,6 @@ public class Termino {
 
     @Column(name = "desglose_dias_texto", columnDefinition = "TEXT")
     private String desgloseDiasTexto;
-
-    @Transient
-    @Builder.Default
-    private Integer semaforoRojoHasta = 3;
-
-    @Transient
-    @Builder.Default
-    private Integer semaforoAmarilloHasta = 7;
 
     @PrePersist
     protected void onCreate() {
@@ -158,36 +149,4 @@ public class Termino {
         return this.contexto != null ? this.contexto.getDescripcion() : null;
     }
 
-    public String getSemaforoColor() {
-        // Si ya está terminado, semáforo gris (apagado)
-        if (this.estatusTermino == EstatusTermino.CONCLUIDO || this.estatusTermino == EstatusTermino.PRESENTADO) {
-            return "bg-gray-400"; 
-        }
-
-        long diasRestantes = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaVencimiento);
-
-        int rojo = (this.tipoTerminoRef != null && this.tipoTerminoRef.getSemaforoRojoDias() != null)
-                ? this.tipoTerminoRef.getSemaforoRojoDias() : (semaforoRojoHasta != null ? semaforoRojoHasta : 3);
-
-        int amarillo = (this.tipoTerminoRef != null && this.tipoTerminoRef.getSemaforoAmarilloDias() != null)
-                ? this.tipoTerminoRef.getSemaforoAmarilloDias() : (semaforoAmarilloHasta != null ? semaforoAmarilloHasta : 7);
-
-        if (diasRestantes < 0) return "bg-red-800";      // Vencido (Rojo Oscuro)
-        if (diasRestantes <= rojo) return "bg-red-500";     // Crítico (Rojo Brillante)
-        if (diasRestantes <= amarillo) return "bg-yellow-400";  // Advertencia (Amarillo)
-        return "bg-green-500";                           // A tiempo (Verde)
-    }
-
-    public String getDiasRestantesTexto() {
-        if (this.estatusTermino == EstatusTermino.CONCLUIDO || this.estatusTermino == EstatusTermino.PRESENTADO) {
-            return "Término Concluido";
-        }
-        
-        long dias = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaVencimiento);
-        
-        if (dias < 0) return "Vencido hace " + Math.abs(dias) + " días";
-        if (dias == 0) return "¡Vence HOY!";
-        if (dias == 1) return "Vence MAÑANA";
-        return "Faltan " + dias + " días";
-    }
 }

@@ -21,9 +21,7 @@ import com.juridico.sistema_juridico.Entity.procesal.Audiencia;
 import com.juridico.sistema_juridico.Entity.procesal.Termino;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.dto.request.configuracion.ConfiguracionAlertaRequest;
-import com.juridico.sistema_juridico.dto.request.configuracion.ConfiguracionSemaforoRequest;
 import com.juridico.sistema_juridico.dto.response.configuracion.ConfiguracionAlertaResponse;
-import com.juridico.sistema_juridico.dto.response.configuracion.ConfiguracionSemaforoResponse;
 import com.juridico.sistema_juridico.exception.BadRequestException;
 import com.juridico.sistema_juridico.exception.ForbiddenException;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
@@ -32,14 +30,12 @@ import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
 import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
 import com.juridico.sistema_juridico.service.configuracion.ConfiguracionAlertaService;
-import com.juridico.sistema_juridico.service.configuracion.ConfiguracionSemaforoService;
 
 @RestController
 @RequestMapping("/api/configuracion-alertas")
 public class ConfiguracionAlertasController {
 
     private final ConfiguracionAlertaService configuracionAlertaService;
-    private final ConfiguracionSemaforoService configuracionSemaforoService;
     private final UsuarioRepository usuarioRepository;
     private final GerenciaRepository gerenciaRepository;
     private final TerminoRepository terminoRepository;
@@ -47,13 +43,11 @@ public class ConfiguracionAlertasController {
 
     public ConfiguracionAlertasController(
             ConfiguracionAlertaService configuracionAlertaService,
-            ConfiguracionSemaforoService configuracionSemaforoService,
             UsuarioRepository usuarioRepository,
             GerenciaRepository gerenciaRepository,
             TerminoRepository terminoRepository,
             AudienciaRepository audienciaRepository) {
         this.configuracionAlertaService = configuracionAlertaService;
-        this.configuracionSemaforoService = configuracionSemaforoService;
         this.usuarioRepository = usuarioRepository;
         this.gerenciaRepository = gerenciaRepository;
         this.terminoRepository = terminoRepository;
@@ -124,29 +118,6 @@ public class ConfiguracionAlertasController {
         return ResponseEntity.ok(configuracionAlertaService.reemplazarConfiguracion(
                 tipoEvento, NivelConfiguracionAlerta.ASUNTO, null, null, tipoEvento.name(), asuntoId,
                 request.diasAnticipacion(), false));
-    }
-
-    @GetMapping("/semaforos")
-    public ResponseEntity<ConfiguracionSemaforoResponse> obtenerSemaforo(
-            @RequestParam TipoEventoAlerta tipoEvento,
-            @RequestParam(required = false) Integer gerenciaId) {
-        Usuario actor = getUsuarioActual();
-        Gerencia gerencia = gerenciaId != null ? getGerencia(gerenciaId) : actor.getGerencia();
-        return ResponseEntity.ok(configuracionSemaforoService.obtener(tipoEvento, gerencia));
-    }
-
-    @PutMapping("/semaforos")
-    public ResponseEntity<ConfiguracionSemaforoResponse> guardarSemaforo(
-            @RequestParam NivelConfiguracionAlerta nivel,
-            @RequestParam(required = false) Integer gerenciaId,
-            @RequestBody ConfiguracionSemaforoRequest request) {
-        if (request == null || request.tipoEvento() == null) {
-            throw new BadRequestException("El tipo de evento es obligatorio.");
-        }
-        Usuario actor = getUsuarioActual();
-        Gerencia gerencia = validarAdministracion(actor, nivel, gerenciaId);
-        return ResponseEntity.ok(configuracionSemaforoService.guardar(
-                request.tipoEvento(), nivel, gerencia, request.rojoHasta(), request.amarilloHasta()));
     }
 
     private Gerencia validarAdministracion(Usuario actor, NivelConfiguracionAlerta nivel, Integer gerenciaId) {

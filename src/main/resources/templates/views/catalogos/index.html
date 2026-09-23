@@ -340,14 +340,6 @@
                         </button>
                     </li>
 
-                    <li>
-                        <button type="button" data-tab="semaforos"
-                            class="tab-btn catalogos-nav-item flex items-center justify-between gap-3 px-3 py-2.5 transition-all">
-                            <i class="fas fa-traffic-light text-gob-oro"></i>
-                            <span class="hidden sm:inline font-bold">Semáforos Procesales</span>
-                            <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Reglas</span>
-                        </button>
-                    </li>
                 </ul>
             </aside>
 
@@ -685,7 +677,7 @@
                                     <input type="text" id="search-tipos-audiencia" placeholder="Buscar..."
                                         class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-52 focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all">
                                 </div>
-                                <button th:if="${puedeEditar}" onclick="abrirModalNuevo('tipo-audiencia')"
+                                <button th:if="${puedeEditar}" onclick="nuevoTipoAudienciaCompleto()"
                                     class="bg-gob-guinda text-white px-4 py-2 rounded-lg text-sm hover:bg-opacity-90 shadow-sm transition-all flex items-center gap-2">
                                     <i class="fas fa-plus"></i> Nuevo
                                 </button>
@@ -695,8 +687,8 @@
                             <thead class="hidden sm:table-header-group text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th class="px-6 py-3 font-bold">Nombre</th>
-                                    <th class="px-6 py-3 font-bold">Creado Por</th>
-                                    <th class="px-6 py-3 font-bold text-center">Rol</th>
+                                    <th class="px-6 py-3 font-bold">Perfil</th>
+                                    <th class="px-6 py-3 font-bold text-center">Acta</th>
                                     <th th:if="${puedeEditar}" class="px-6 py-3 font-bold text-center w-36">Acciones</th>
                                 </tr>
                             </thead>
@@ -709,28 +701,14 @@
                                             <span th:if="${t.createdAt != null and t.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
                                         </div>
                                     </td>
-                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4">
-                                        <div th:if="${t.usuario != null}" class="flex items-center gap-3">
-                                            <div class="w-8 h-8 bg-gob-guinda/10 text-gob-guinda rounded-full flex items-center justify-center text-xs font-bold"
-                                                th:text="${#strings.substring(t.usuario.nombreCompleto, 0, 1)}">U</div>
-                                            <div>
-                                                <span class="font-semibold text-gray-800 text-sm" th:text="${t.usuario.nombreCompleto}">Nombre</span>
-                                                <div class="text-xs text-gray-400" th:text="${t.usuario.email}">email</div>
-                                            </div>
-                                        </div>
-                                        <span th:unless="${t.usuario != null}" class="text-xs text-gray-400 italic">Registro predeterminado</span>
-                                    </td>
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4"><div class="font-semibold text-gray-800" th:text="${t.perfilRecordatorio != null ? t.perfilRecordatorio.nombre : 'Sin perfil'}"></div><div class="text-xs text-gray-400" th:if="${t.perfilRecordatorio != null}" th:text="${t.perfilRecordatorio.anticipacionAmarillaHoras + ' h / ' + t.perfilRecordatorio.anticipacionRojaHoras + ' h'}"></div></td>
                                     <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-right sm:text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
-                                        <span th:if="${t.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold"
-                                            th:classappend="${t.usuario.rol.name() == 'GERENTE' ? 'bg-purple-100 text-purple-700' : 
-                                                           (t.usuario.rol.name() == 'JEFE_DEPTO' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700')}"
-                                            th:text="${t.usuario.rol.name()}">ROL</span>
-                                        <span th:unless="${t.usuario != null}" class="text-xs px-2 py-1 rounded-full font-bold bg-gray-100 text-gray-500">SISTEMA</span>
+                                        <span class="text-xs px-2 py-1 rounded-full font-bold" th:classappend="${t.requiereActa ? 'bg-amber-50 text-amber-800' : 'bg-gray-100 text-gray-600'}" th:text="${t.requiereActa ? 'Requerida' : 'No requerida'}"></span>
                                     </td>
                                     <td th:if="${puedeEditar}" class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
                                         <div class="flex items-center justify-end sm:justify-center gap-2">
-                                            <button th:data-id="${t.id}" th:data-nombre="${t.nombre}"
-                                                onclick="editarItem('tipo-audiencia', this)"
+                                            <button th:data-id="${t.id}" th:data-codigo="${t.codigo}" th:data-nombre="${t.nombre}" th:data-descripcion="${t.descripcion}" th:data-perfil="${t.perfilRecordatorio != null ? t.perfilRecordatorio.id : ''}" th:data-duracion="${t.duracionPredeterminadaMinutos}" th:data-modalidades="${t.modalidadesPermitidas}" th:data-modalidad="${t.modalidadPredeterminada}" th:data-acta="${t.requiereActa}" th:data-excepcion="${t.permiteExcepcionSinActa}" th:data-validacion="${t.requiereValidacionActa}"
+                                                onclick="editarTipoAudienciaCompleto(this)"
                                                 class="text-gob-oro hover:text-gob-guinda transition-colors p-1.5 rounded-lg hover:bg-gob-oro/10"
                                                 title="Editar">
                                                 <i class="fas fa-edit"></i>
@@ -753,6 +731,16 @@
                                 </tr>
                             </tbody>
                         </table>
+                        <form id="form-tipo-audiencia-completo" th:if="${puedeEditar}" th:action="@{/catalogos/tipos-audiencia/guardar-completo}" method="post" class="m-5 p-5 border border-gray-200 bg-gray-50 rounded-xl space-y-3">
+                            <div class="flex justify-between"><div><h4 class="font-bold text-gray-900">Configurar Tipo de Audiencia</h4><p class="text-xs text-gray-500">La proximidad y los recordatorios proceden del perfil publicado.</p></div><a th:href="@{/administracion/plazos-alertas#audiencias}" class="text-xs font-bold text-gob-guinda hover:underline">Administrar perfiles</a></div>
+                            <input type="hidden" name="id" id="ta-id"><input type="hidden" name="gerenciaId" th:value="${gerenciaSeleccionada.id}"><input type="hidden" name="activo" value="true">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><label class="text-xs font-bold">Código<input name="codigo" id="ta-codigo" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label><label class="text-xs font-bold">Nombre<input name="nombre" id="ta-nombre" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label></div>
+                            <label class="block text-xs font-bold">Descripción de uso<textarea name="descripcion" id="ta-descripcion" required rows="2" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></textarea></label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><label class="text-xs font-bold">Perfil de recordatorio<select name="perfilRecordatorio.id" id="ta-perfil" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"><option value="">Selecciona…</option><option th:each="p : ${perfilesAudiencia}" th:value="${p.id}" th:text="${p.nombre + ' · ' + p.anticipacionAmarillaHoras + ' h / ' + p.anticipacionRojaHoras + ' h'}"></option></select></label><label class="text-xs font-bold">Duración sugerida (min)<input name="duracionPredeterminadaMinutos" id="ta-duracion" type="number" min="1" value="60" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><fieldset class="border rounded-lg p-3"><legend class="text-xs font-bold px-1">Modalidades permitidas</legend><label class="text-xs mr-3"><input type="checkbox" class="ta-modalidad" value="PRESENCIAL" checked> Presencial</label><label class="text-xs mr-3"><input type="checkbox" class="ta-modalidad" value="VIRTUAL" checked> Virtual</label><label class="text-xs"><input type="checkbox" class="ta-modalidad" value="HIBRIDA" checked> Híbrida</label><input type="hidden" name="modalidadesPermitidas" id="ta-modalidades"></fieldset><label class="text-xs font-bold">Modalidad predeterminada<select name="modalidadPredeterminada" id="ta-modalidad" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"><option value="PRESENCIAL">Presencial</option><option value="VIRTUAL">Virtual</option><option value="HIBRIDA">Híbrida</option></select></label></div>
+                            <fieldset class="border rounded-lg p-3 flex flex-wrap gap-4 text-xs"><legend class="px-1 font-bold">Control documental</legend><input type="hidden" name="_requiereActa" value="on"><input type="hidden" name="_permiteExcepcionSinActa" value="on"><input type="hidden" name="_requiereValidacionActa" value="on"><label><input type="checkbox" name="requiereActa" id="ta-acta" value="true" checked> Requiere acta</label><label><input type="checkbox" name="permiteExcepcionSinActa" id="ta-excepcion" value="true"> Permite excepción</label><label><input type="checkbox" name="requiereValidacionActa" id="ta-validacion" value="true" checked> Requiere validación</label></fieldset>
+                            <button onclick="prepararTipoAudiencia()" class="bg-gob-guinda text-white px-5 py-2.5 rounded-lg font-bold"><i class="fas fa-save mr-2"></i>Guardar Tipo</button>
+                        </form>
                     </div>
                 </div>
 
@@ -1000,83 +988,36 @@
                     </div>
                 </div>
 
-                <!-- ===================== TAB: SEMÁFOROS PROCESALES ===================== -->
-                <div id="panel-semaforos" class="tab-panel hidden">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6 space-y-6">
-                        <div class="border-b border-gray-100 pb-4">
-                            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <i class="fas fa-traffic-light text-gob-oro"></i> Configuración de Semáforos Procesales
-                            </h3>
-                            <p class="text-xs text-gray-500 mt-1">Define con cuántos días de anticipación se mostrarán las alertas amarilla y roja.</p>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Tarjeta Semáforo Términos -->
-                            <div class="border border-gray-200 rounded-xl p-5 bg-slate-50/50 space-y-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-lg bg-gob-guinda text-white flex items-center justify-center text-lg font-bold shadow-md">
-                                        <i class="fas fa-hourglass-half"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-extrabold text-gray-900 text-sm">Semáforo de Términos</h4>
-                                        <span class="text-[11px] text-gray-500">Alertas de Vencimiento de Actuaciones</span>
-                                    </div>
-                                </div>
-                                <div class="space-y-3 pt-2">
-                                    <div>
-                                        <label class="block text-xs font-bold text-red-700 uppercase tracking-wider mb-1">
-                                            <i class="fas fa-circle text-red-500 mr-1"></i> Rojo: vence en este número de días o menos
-                                        </label>
-                                        <input type="number" id="semaforo-termino-rojo" value="3" min="1" max="30"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none" />
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">
-                                            <i class="fas fa-circle text-yellow-400 mr-1"></i> Amarillo: vence en este número de días o menos
-                                        </label>
-                                        <input type="number" id="semaforo-termino-amarillo" value="7" min="2" max="60"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none" />
-                                    </div>
-                                </div>
-                                <button onclick="guardarSemaforoGerencia('TERMINO')"
-                                    class="w-full bg-gob-guinda hover:bg-gob-guindaDark text-white font-bold text-xs px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
-                                    <i class="fas fa-save"></i> Guardar Semáforo Términos
-                                </button>
+                <!-- ===================== TAB: TIPOS DE TÉRMINO ===================== -->
+                <div id="panel-tipos-termino" class="tab-panel hidden">
+                    <div class="grid grid-cols-1 xl:grid-cols-[1.2fr_.8fr] gap-5">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-start justify-between gap-4">
+                                <div><h3 class="text-lg font-bold text-gray-900"><i class="fas fa-hourglass-start text-gob-oro mr-2"></i>Tipos de Término</h3><p class="text-xs text-gray-500 mt-1">El tipo define el modo y selecciona una regla publicada compatible.</p></div>
+                                <a th:href="@{/administracion/plazos-alertas}" class="text-xs font-bold text-gob-guinda hover:underline">Administrar perfiles</a>
                             </div>
-
-                            <!-- Tarjeta Semáforo Audiencias -->
-                            <div class="border border-gray-200 rounded-xl p-5 bg-slate-50/50 space-y-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-lg bg-blue-900 text-white flex items-center justify-center text-lg font-bold shadow-md">
-                                        <i class="fas fa-gavel"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-extrabold text-gray-900 text-sm">Semáforo de Audiencias</h4>
-                                        <span class="text-[11px] text-gray-500">Alertas de Proximidad de Fechas de Audiencia</span>
-                                    </div>
-                                </div>
-                                <div class="space-y-3 pt-2">
-                                    <div>
-                                        <label class="block text-xs font-bold text-red-700 uppercase tracking-wider mb-1">
-                                            <i class="fas fa-circle text-red-500 mr-1"></i> Rojo: vence en este número de días o menos
-                                        </label>
-                                        <input type="number" id="semaforo-audiencia-rojo" value="1" min="1" max="15"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none" />
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">
-                                            <i class="fas fa-circle text-yellow-400 mr-1"></i> Amarillo: vence en este número de días o menos
-                                        </label>
-                                        <input type="number" id="semaforo-audiencia-amarillo" value="3" min="2" max="30"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none" />
-                                    </div>
-                                </div>
-                                <button onclick="guardarSemaforoGerencia('AUDIENCIA')"
-                                    class="w-full bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
-                                    <i class="fas fa-save"></i> Guardar Semáforo Audiencias
-                                </button>
-                            </div>
+                            <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-gray-50 text-xs uppercase text-gray-500"><tr><th class="text-left px-5 py-3">Tipo</th><th class="text-left px-5 py-3">Modo</th><th class="text-left px-5 py-3">Perfil</th><th class="text-left px-5 py-3">Estado</th><th class="px-5 py-3"></th></tr></thead><tbody class="divide-y divide-gray-100">
+                                <tr th:each="t : ${listaTiposTermino}">
+                                    <td class="px-5 py-4"><div class="font-bold text-gray-900" th:text="${t.nombre}"></div><div class="text-xs text-gray-500" th:text="${t.codigo}"></div></td>
+                                    <td class="px-5 py-4" th:text="${t.modoPlazo != null ? t.modoPlazo.descripcion : 'Sin configurar'}"></td>
+                                    <td class="px-5 py-4" th:text="${t.perfilAlerta != null ? t.perfilAlerta.nombre : 'No aplica'}"></td>
+                                    <td class="px-5 py-4"><span class="text-xs font-bold" th:text="${t.activo ? 'Vigente' : 'Inactivo'}"></span></td>
+                                    <td class="px-5 py-4 text-right"><button type="button" class="text-gob-guinda font-bold hover:underline" th:data-id="${t.id}" th:data-codigo="${t.codigo}" th:data-nombre="${t.nombre}" th:data-descripcion="${t.descripcion}" th:data-modo="${t.modoPlazo}" th:data-dias="${t.diasPredeterminados}" th:data-tipo-dias="${t.tipoDias}" th:data-perfil="${t.perfilAlerta != null ? t.perfilAlerta.id : ''}" th:data-doc="${t.requiereDocumentoLiberado}" th:data-acuse="${t.requiereAcuse}" th:data-excepcion="${t.permiteExcepcionSinAcuse}" th:data-validacion="${t.requiereValidacionAcuse}" onclick="editarTipoTermino(this)">Editar</button></td>
+                                </tr>
+                            </tbody></table></div>
                         </div>
+                        <form id="form-tipo-termino" th:action="@{/catalogos/tipos-termino/guardar}" method="post" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-3">
+                            <div><h3 class="font-bold text-gray-900">Configurar Tipo de Término</h3><p class="text-xs text-gray-500">El usuario operativo nunca seleccionará el perfil.</p></div>
+                            <input type="hidden" name="id" id="tt-id">
+                            <div class="grid grid-cols-2 gap-3"><label class="text-xs font-bold">Código<input name="codigo" id="tt-codigo" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label><label class="text-xs font-bold">Nombre<input name="nombre" id="tt-nombre" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label></div>
+                            <label class="block text-xs font-bold">Descripción de uso<textarea name="descripcion" id="tt-descripcion" required rows="2" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></textarea></label>
+                            <label class="block text-xs font-bold">Modo de plazo<select name="modoPlazo" id="tt-modo" required onchange="actualizarTipoTermino()" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"><option th:each="m : ${modosPlazoTermino}" th:value="${m}" th:text="${m.descripcion}"></option></select></label>
+                            <div id="tt-regla" class="grid grid-cols-2 gap-3"><label class="text-xs font-bold">Cantidad de días<input name="diasPredeterminados" id="tt-dias" type="number" min="1" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label><label class="text-xs font-bold">Tipo de días<select name="tipoDias" id="tt-tipo-dias" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"><option value="NATURALES">Naturales</option><option value="HABILES">Hábiles</option></select></label></div>
+                            <label id="tt-perfil-label" class="block text-xs font-bold">Perfil publicado<select name="perfilAlerta.id" id="tt-perfil" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"><option value="">Selecciona…</option><option th:each="p : ${perfilesTerminoDias}" th:value="${p.id}" th:data-modo="DIAS_RESTANTES" th:text="${p.nombre + ' · amarillo ' + p.amarilloDias + ' / rojo ' + p.rojoDias}"></option><option th:each="p : ${perfilesTerminoProporcionales}" th:value="${p.id}" th:data-modo="PROPORCIONAL_LIMITADO" th:text="${p.nombre + ' · ' + p.amarilloPorcentaje + '% / ' + p.rojoPorcentaje + '%'}"></option></select></label>
+                            <fieldset class="border rounded-lg p-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs"><legend class="px-1 font-bold">Controles documentales</legend><input type="hidden" name="_requiereDocumentoLiberado" value="on"><input type="hidden" name="_requiereAcuse" value="on"><input type="hidden" name="_permiteExcepcionSinAcuse" value="on"><input type="hidden" name="_requiereValidacionAcuse" value="on"><label><input type="checkbox" name="requiereDocumentoLiberado" id="tt-doc" value="true"> Documento liberado</label><label><input type="checkbox" name="requiereAcuse" id="tt-acuse" value="true"> Acuse para presentar</label><label><input type="checkbox" name="permiteExcepcionSinAcuse" id="tt-excepcion" value="true"> Excepción sin acuse</label><label><input type="checkbox" name="requiereValidacionAcuse" id="tt-validacion" value="true"> Validar acuse</label></fieldset>
+                            <input type="hidden" name="activo" value="true">
+                            <button class="w-full bg-gob-guinda text-white rounded-lg py-2.5 font-bold"><i class="fas fa-save mr-2"></i>Guardar Tipo</button>
+                        </form>
                     </div>
                 </div>
 

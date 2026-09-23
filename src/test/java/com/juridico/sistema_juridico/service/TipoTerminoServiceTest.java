@@ -15,8 +15,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.juridico.sistema_juridico.Entity.catalogo.TipoTermino;
+import com.juridico.sistema_juridico.Entity.configuracion.PerfilAlertaTermino;
+import com.juridico.sistema_juridico.Entity.enums.EstadoPerfil;
+import com.juridico.sistema_juridico.Entity.enums.ModoPerfilAlerta;
+import com.juridico.sistema_juridico.Entity.enums.ModoPlazoTermino;
 import com.juridico.sistema_juridico.exception.BadRequestException;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoTerminoRepository;
+import com.juridico.sistema_juridico.repository.configuracion.PerfilAlertaTerminoRepository;
 import com.juridico.sistema_juridico.service.catalogo.TipoTerminoService;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,6 +30,9 @@ class TipoTerminoServiceTest {
     @Mock
     private TipoTerminoRepository tipoTerminoRepository;
 
+    @Mock
+    private PerfilAlertaTerminoRepository perfilAlertaTerminoRepository;
+
     @InjectMocks
     private TipoTerminoService tipoTerminoService;
 
@@ -32,15 +40,22 @@ class TipoTerminoServiceTest {
 
     @BeforeEach
     void setUp() {
+        PerfilAlertaTermino perfil = PerfilAlertaTermino.builder()
+                .id(1).codigo("PLAZO_MEDIO").nombre("Plazo medio").descripcion("Perfil de prueba")
+                .modo(ModoPerfilAlerta.DIAS_RESTANTES).amarilloDias(5).rojoDias(2)
+                .estado(EstadoPerfil.PUBLICADO).version(1).build();
         tipoPrueba = TipoTermino.builder()
                 .id(1)
+                .codigo("CONTESTACION")
                 .nombre("Contestación de Demanda")
+                .descripcion("Contestación dentro del plazo legal")
+                .modoPlazo(ModoPlazoTermino.CALCULADO)
                 .diasPredeterminados(15)
                 .tipoDias("HABILES")
-                .semaforoRojoDias(3)
-                .semaforoAmarilloDias(7)
+                .perfilAlerta(perfil)
                 .activo(true)
                 .build();
+        lenient().when(perfilAlertaTerminoRepository.findById(1)).thenReturn(Optional.of(perfil));
     }
 
     @Test

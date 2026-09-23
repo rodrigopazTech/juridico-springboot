@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#691228">
+    <title>Plazos y alertas | Sistema Jurídico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script th:src="@{/js/tailwind.config.js}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --vino:#691228; --oro:#bc955c; --verde:#10312b; --papel:#f5f1eb; --tinta:#252322; }
+        body { background: radial-gradient(circle at 88% 0%, rgba(188,149,92,.14), transparent 28rem), var(--papel); color:var(--tinta); }
+        .folio-card { box-shadow: 0 14px 38px rgba(56,35,33,.08); }
+        .rule-line { background:linear-gradient(90deg,var(--vino),var(--oro)); height:3px; }
+        .reveal { animation: reveal .45s ease-out both; }
+        @keyframes reveal { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+        input:focus, select:focus, textarea:focus { outline:none; border-color:var(--oro); box-shadow:0 0 0 3px rgba(188,149,92,.18); }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <main class="p-4 sm:ml-64 min-h-screen pt-[116px]">
+        <div class="max-w-7xl mx-auto space-y-6 reveal">
+            <header class="bg-white border border-stone-200 rounded-xl overflow-hidden folio-card">
+                <div class="rule-line"></div>
+                <div class="p-6 lg:p-8 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
+                    <div>
+                        <p class="text-xs tracking-[.22em] uppercase font-bold text-[#8a6a37]">Administración · SIAJ 2.0</p>
+                        <h1 class="text-3xl font-serif font-bold text-[#10312b] mt-2">Plazos y alertas</h1>
+                        <p class="text-sm text-stone-600 mt-2 max-w-3xl">Define reglas reutilizables. Los colores no se capturan: SIAJ deriva el nivel de atención a partir del perfil vinculado a cada tipo.</p>
+                    </div>
+                    <div class="flex items-center gap-3 rounded-lg bg-stone-50 border border-stone-200 px-4 py-3 text-sm">
+                        <i class="fas fa-shield-halved text-[#691228]"></i>
+                        <span><strong>Versionado:</strong> un perfil publicado es inmutable.</span>
+                    </div>
+                </div>
+            </header>
+
+            <div th:if="${mensajeExito}" role="status" class="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-900 px-4 py-3" th:text="${mensajeExito}"></div>
+            <div th:if="${mensajeError}" role="alert" class="rounded-lg border border-red-200 bg-red-50 text-red-900 px-4 py-3" th:text="${mensajeError}"></div>
+
+            <nav aria-label="Secciones de perfiles" class="flex flex-wrap gap-2">
+                <a href="#terminos" class="px-4 py-2 rounded-full bg-[#691228] text-white text-sm font-bold"><i class="fas fa-hourglass-half mr-2"></i>Términos</a>
+                <a href="#audiencias" class="px-4 py-2 rounded-full bg-white border border-stone-300 text-stone-700 text-sm font-bold"><i class="fas fa-gavel mr-2"></i>Audiencias</a>
+            </nav>
+
+            <section id="terminos" class="grid grid-cols-1 xl:grid-cols-[1.35fr_.65fr] gap-6 scroll-mt-28">
+                <div class="bg-white border border-stone-200 rounded-xl folio-card overflow-hidden">
+                    <div class="p-5 border-b border-stone-200 flex items-start justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-serif font-bold text-[#10312b]">Perfiles de alerta de Términos</h2>
+                            <p class="text-sm text-stone-500 mt-1">Días restantes para plazos calculados; proporción limitada para fechas capturadas.</p>
+                        </div>
+                        <span class="text-xs font-bold rounded-full bg-stone-100 px-3 py-1" th:text="${#lists.size(perfilesTermino) + ' perfiles'}">0 perfiles</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-stone-50 text-stone-500 text-xs uppercase tracking-wide">
+                                <tr><th class="text-left px-5 py-3">Perfil</th><th class="text-left px-5 py-3">Regla</th><th class="text-left px-5 py-3">Estado</th><th class="text-right px-5 py-3">Acción</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-stone-100">
+                                <tr th:each="p : ${perfilesTermino}" class="hover:bg-amber-50/30">
+                                    <td class="px-5 py-4"><div class="font-bold text-stone-900" th:text="${p.nombre}">Perfil</div><div class="text-xs text-stone-500" th:text="${p.codigo + ' · v' + p.version}">COD · v1</div></td>
+                                    <td class="px-5 py-4">
+                                        <div class="font-semibold" th:text="${p.modo.descripcion}">Modo</div>
+                                        <div th:if="${p.modo.name() == 'DIAS_RESTANTES'}" class="text-xs text-stone-500" th:text="${'Amarillo ' + p.amarilloDias + ' días · Rojo ' + p.rojoDias + ' días'}"></div>
+                                        <div th:if="${p.modo.name() == 'PROPORCIONAL_LIMITADO'}" class="text-xs text-stone-500" th:text="${'Amarillo ' + p.amarilloPorcentaje + '% · Rojo ' + p.rojoPorcentaje + '%'}"></div>
+                                    </td>
+                                    <td class="px-5 py-4"><span class="inline-flex px-2.5 py-1 rounded-full text-xs font-bold" th:classappend="${p.estado.name() == 'PUBLICADO' ? 'bg-emerald-50 text-emerald-800' : (p.estado.name() == 'BORRADOR' ? 'bg-amber-50 text-amber-800' : 'bg-stone-100 text-stone-600')}" th:text="${p.estado.descripcion}">Estado</span></td>
+                                    <td class="px-5 py-4 text-right">
+                                        <form th:if="${p.estado.name() == 'BORRADOR'}" th:action="@{/administracion/plazos-alertas/terminos/{id}/publicar(id=${p.id})}" method="post"><button class="text-[#691228] font-bold hover:underline">Publicar</button></form>
+                                        <form th:if="${p.estado.name() == 'PUBLICADO'}" th:action="@{/administracion/plazos-alertas/terminos/{id}/inactivar(id=${p.id})}" method="post"><button class="text-stone-600 font-semibold hover:underline">Inactivar</button></form>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <form th:action="@{/administracion/plazos-alertas/terminos}" th:object="${nuevoPerfilTermino}" method="post" class="bg-white border border-stone-200 rounded-xl folio-card p-5 space-y-4">
+                    <div><p class="text-xs uppercase tracking-widest text-[#8a6a37] font-bold">Nueva regla</p><h3 class="font-serif text-xl font-bold text-[#10312b] mt-1">Perfil de Término</h3></div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="text-sm font-semibold">Código<input th:field="*{codigo}" required placeholder="PLAZO_ESPECIAL" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label>
+                        <label class="text-sm font-semibold">Versión<input th:field="*{version}" type="number" min="1" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label>
+                    </div>
+                    <label class="block text-sm font-semibold">Nombre<input th:field="*{nombre}" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label>
+                    <label class="block text-sm font-semibold">Descripción<textarea th:field="*{descripcion}" required rows="2" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></textarea></label>
+                    <label class="block text-sm font-semibold">Aplicación<select th:field="*{modo}" id="modo-perfil-termino" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal" onchange="actualizarModoPerfil()"><option th:each="m : ${modosPerfil}" th:value="${m}" th:text="${m.descripcion}"></option></select></label>
+
+                    <div id="regla-dias" class="grid grid-cols-2 gap-3 rounded-lg bg-stone-50 border p-3">
+                        <label class="text-xs font-bold text-amber-800">Amarillo · días<input th:field="*{amarilloDias}" type="number" min="1" value="5" class="mt-1 w-full border rounded px-2 py-2 text-stone-800"></label>
+                        <label class="text-xs font-bold text-red-800">Rojo · días<input th:field="*{rojoDias}" type="number" min="0" value="2" class="mt-1 w-full border rounded px-2 py-2 text-stone-800"></label>
+                    </div>
+
+                    <div id="regla-proporcional" class="hidden space-y-3 rounded-lg bg-stone-50 border p-3">
+                        <div class="grid grid-cols-3 gap-2"><label class="text-xs font-bold text-amber-800">Amarillo %<input th:field="*{amarilloPorcentaje}" type="number" min="0" max="100" class="mt-1 w-full border rounded px-2 py-2"></label><label class="text-xs">Mínimo<input th:field="*{amarilloMinimoDias}" type="number" min="0" class="mt-1 w-full border rounded px-2 py-2"></label><label class="text-xs">Máximo<input th:field="*{amarilloMaximoDias}" type="number" min="0" class="mt-1 w-full border rounded px-2 py-2"></label></div>
+                        <div class="grid grid-cols-3 gap-2"><label class="text-xs font-bold text-red-800">Rojo %<input th:field="*{rojoPorcentaje}" type="number" min="0" max="100" class="mt-1 w-full border rounded px-2 py-2"></label><label class="text-xs">Mínimo<input th:field="*{rojoMinimoDias}" type="number" min="0" class="mt-1 w-full border rounded px-2 py-2"></label><label class="text-xs">Máximo<input th:field="*{rojoMaximoDias}" type="number" min="0" class="mt-1 w-full border rounded px-2 py-2"></label></div>
+                        <div class="border-t pt-3"><label class="text-xs font-bold">Simular duración<input id="sim-duracion" type="number" min="1" value="20" class="ml-2 w-20 border rounded px-2 py-1" oninput="simularPerfil()"></label><p id="sim-resultado" class="mt-2 text-xs text-stone-600" aria-live="polite"></p></div>
+                    </div>
+                    <button class="w-full bg-[#691228] hover:bg-[#511020] text-white rounded-lg px-4 py-2.5 font-bold"><i class="fas fa-floppy-disk mr-2"></i>Guardar borrador</button>
+                </form>
+            </section>
+
+            <section id="audiencias" class="grid grid-cols-1 xl:grid-cols-[1.35fr_.65fr] gap-6 scroll-mt-28 pb-10">
+                <div class="bg-white border border-stone-200 rounded-xl folio-card overflow-hidden">
+                    <div class="p-5 border-b border-stone-200"><h2 class="text-xl font-serif font-bold text-[#10312b]">Perfiles de recordatorio de Audiencias</h2><p class="text-sm text-stone-500 mt-1">La proximidad se expresa en tiempo absoluto; nunca en porcentajes.</p></div>
+                    <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-stone-50 text-stone-500 text-xs uppercase"><tr><th class="text-left px-5 py-3">Perfil</th><th class="text-left px-5 py-3">Proximidad</th><th class="text-left px-5 py-3">Estado</th><th class="text-right px-5 py-3">Acción</th></tr></thead><tbody class="divide-y divide-stone-100">
+                        <tr th:each="p : ${perfilesAudiencia}"><td class="px-5 py-4"><div class="font-bold" th:text="${p.nombre}"></div><div class="text-xs text-stone-500" th:text="${p.codigo + ' · v' + p.version}"></div></td><td class="px-5 py-4"><div th:text="${'Atención: ' + p.anticipacionAmarillaHoras + ' h'}"></div><div class="text-xs text-stone-500" th:text="${'Inminente: ' + p.anticipacionRojaHoras + ' h'}"></div></td><td class="px-5 py-4"><span class="text-xs font-bold" th:text="${p.estado.descripcion}"></span></td><td class="px-5 py-4 text-right"><form th:if="${p.estado.name() == 'BORRADOR'}" th:action="@{/administracion/plazos-alertas/audiencias/{id}/publicar(id=${p.id})}" method="post"><button class="text-[#691228] font-bold hover:underline">Publicar</button></form><form th:if="${p.estado.name() == 'PUBLICADO'}" th:action="@{/administracion/plazos-alertas/audiencias/{id}/inactivar(id=${p.id})}" method="post"><button class="text-stone-600 font-semibold hover:underline">Inactivar</button></form></td></tr>
+                    </tbody></table></div>
+                </div>
+                <form th:action="@{/administracion/plazos-alertas/audiencias}" th:object="${nuevoPerfilAudiencia}" method="post" class="bg-white border border-stone-200 rounded-xl folio-card p-5 space-y-4">
+                    <div><p class="text-xs uppercase tracking-widest text-[#8a6a37] font-bold">Nueva regla</p><h3 class="font-serif text-xl font-bold text-[#10312b] mt-1">Perfil de Audiencia</h3></div>
+                    <div class="grid grid-cols-2 gap-3"><label class="text-sm font-semibold">Código<input th:field="*{codigo}" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label><label class="text-sm font-semibold">Versión<input th:field="*{version}" type="number" min="1" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label></div>
+                    <label class="block text-sm font-semibold">Nombre<input th:field="*{nombre}" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label>
+                    <label class="block text-sm font-semibold">Descripción<textarea th:field="*{descripcion}" required rows="2" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></textarea></label>
+                    <div class="grid grid-cols-2 gap-3"><label class="text-xs font-bold text-amber-800">Atención · horas<input th:field="*{anticipacionAmarillaHoras}" type="number" min="1" required class="mt-1 w-full border rounded px-2 py-2 text-stone-800"></label><label class="text-xs font-bold text-red-800">Inminente · horas<input th:field="*{anticipacionRojaHoras}" type="number" min="0" required class="mt-1 w-full border rounded px-2 py-2 text-stone-800"></label></div>
+                    <label class="block text-sm font-semibold">Recordatorios en minutos<input th:field="*{recordatoriosMinutos}" required pattern="[0-9]+(,[0-9]+)*" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"><span class="block text-xs text-stone-500 mt-1">Ejemplo: 10080,4320,1440,120 equivale a 7 días, 3 días, 1 día y 2 horas.</span></label>
+                    <button class="w-full bg-[#10312b] hover:bg-[#09221e] text-white rounded-lg px-4 py-2.5 font-bold"><i class="fas fa-floppy-disk mr-2"></i>Guardar borrador</button>
+                </form>
+            </section>
+        </div>
+    </main>
+    <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
+    <script>
+        function actualizarModoPerfil() {
+            const proporcional = document.getElementById('modo-perfil-termino').value === 'PROPORCIONAL_LIMITADO';
+            document.getElementById('regla-dias').classList.toggle('hidden', proporcional);
+            document.getElementById('regla-proporcional').classList.toggle('hidden', !proporcional);
+            document.querySelectorAll('#regla-dias input').forEach(i => i.required = !proporcional);
+            document.querySelectorAll('#regla-proporcional input:not(#sim-duracion)').forEach(i => i.required = proporcional);
+            if (proporcional) simularPerfil();
+        }
+        function simularPerfil() {
+            const value = id => Number(document.getElementById(id)?.value || 0);
+            const clamp = (n,min,max) => Math.max(min,Math.min(n,max));
+            const duracion = value('sim-duracion');
+            const amarillo = clamp(Math.ceil(duracion * value('amarilloPorcentaje') / 100), value('amarilloMinimoDias'), value('amarilloMaximoDias'));
+            const rojo = clamp(Math.ceil(duracion * value('rojoPorcentaje') / 100), value('rojoMinimoDias'), value('rojoMaximoDias'));
+            document.getElementById('sim-resultado').textContent = `Duración ${duracion} días → amarillo con ${amarillo} días · rojo con ${rojo} días.`;
+        }
+        document.addEventListener('DOMContentLoaded', actualizarModoPerfil);
+    </script>
+</body>
+</html>

@@ -72,13 +72,6 @@ const TIPOS_CONFIG = {
         urlEliminar: '/catalogos/organos/eliminar/',
         placeholder: 'Ej. Juzgado 1° de Distrito en Materia Civil'
     },
-    'tipo-audiencia': {
-        titulo: 'Tipo de Audiencia',
-        icono: 'fa-gavel',
-        urlGuardar: '/catalogos/tipos-audiencia/guardar',
-        urlEliminar: '/catalogos/tipos-audiencia/eliminar/',
-        placeholder: 'Ej. Conciliación y Arbitraje'
-    },
     'tipo-expediente': {
         titulo: 'Tipo de Expediente',
         icono: 'fa-folder',
@@ -690,40 +683,85 @@ function initWebSocketCatalogos() {
     setTimeout(intentarConectar, 2500);
 }
 
-async function guardarSemaforoGerencia(tipoEvento) {
-    const gerenciaId = document.getElementById('gerencia-id-actual')?.value;
-    const rojo = parseInt(document.getElementById(`semaforo-${tipoEvento.toLowerCase()}-rojo`)?.value);
-    const amarillo = parseInt(document.getElementById(`semaforo-${tipoEvento.toLowerCase()}-amarillo`)?.value);
+function actualizarTipoTermino() {
+    const modo = document.getElementById('tt-modo')?.value;
+    const esCalculado = modo === 'CALCULADO';
+    const sinVencimiento = modo === 'SIN_VENCIMIENTO';
+    const regla = document.getElementById('tt-regla');
+    const perfilLabel = document.getElementById('tt-perfil-label');
+    const dias = document.getElementById('tt-dias');
+    const perfil = document.getElementById('tt-perfil');
 
-    if (!rojo || !amarillo || rojo < 1 || amarillo <= rojo) {
-        Swal.fire('Atención', 'El rango amarillo debe ser mayor al rango rojo y ambos deben ser mayores a 0.', 'warning');
-        return;
+    regla?.classList.toggle('hidden', sinVencimiento);
+    perfilLabel?.classList.toggle('hidden', sinVencimiento);
+    if (dias) {
+        dias.closest('label')?.classList.toggle('hidden', !esCalculado);
+        dias.required = esCalculado;
     }
-
-    try {
-        const res = await fetch(`/api/configuracion-alertas/semaforos?nivel=GERENCIA&gerenciaId=${gerenciaId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                tipoEvento: tipoEvento,
-                rojoHasta: rojo,
-                amarilloHasta: amarillo
-            })
+    if (perfil) {
+        perfil.required = !sinVencimiento;
+        const compatible = esCalculado ? 'DIAS_RESTANTES' : 'PROPORCIONAL_LIMITADO';
+        Array.from(perfil.options).forEach(option => {
+            if (!option.value) return;
+            option.hidden = option.dataset.modo !== compatible;
         });
-
-        if (res.ok) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Semáforo Actualizado',
-                text: `Se guardaron los días de alerta para ${tipoEvento}s en esta gerencia.`,
-                timer: 2000,
-                showConfirmButton: false
-            });
-        } else {
-            const err = await res.json();
-            Swal.fire('Error', err.message || 'No fue posible guardar la configuración.', 'error');
-        }
-    } catch (e) {
-        Swal.fire('Error', 'Fallo de conexión al guardar el semáforo.', 'error');
+        if (perfil.selectedOptions[0]?.hidden || sinVencimiento) perfil.value = '';
     }
 }
+
+function editarTipoTermino(button) {
+    const valor = id => document.getElementById(id);
+    valor('tt-id').value = button.dataset.id || '';
+    valor('tt-codigo').value = button.dataset.codigo || '';
+    valor('tt-nombre').value = button.dataset.nombre || '';
+    valor('tt-descripcion').value = button.dataset.descripcion || '';
+    valor('tt-modo').value = button.dataset.modo || 'CALCULADO';
+    valor('tt-dias').value = button.dataset.dias || '';
+    valor('tt-tipo-dias').value = button.dataset.tipoDias || 'HABILES';
+    valor('tt-doc').checked = button.dataset.doc === 'true';
+    valor('tt-acuse').checked = button.dataset.acuse === 'true';
+    valor('tt-excepcion').checked = button.dataset.excepcion === 'true';
+    valor('tt-validacion').checked = button.dataset.validacion === 'true';
+    actualizarTipoTermino();
+    valor('tt-perfil').value = button.dataset.perfil || '';
+    valor('form-tipo-termino').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.addEventListener('DOMContentLoaded', actualizarTipoTermino);
+
+function prepararTipoAudiencia() {
+    const seleccionadas = Array.from(document.querySelectorAll('.ta-modalidad:checked')).map(input => input.value);
+    document.getElementById('ta-modalidades').value = seleccionadas.join(',');
+}
+
+function nuevoTipoAudienciaCompleto() {
+    const form = document.getElementById('form-tipo-audiencia-completo');
+    if (!form) return;
+    form.reset();
+    document.getElementById('ta-id').value = '';
+    document.getElementById('ta-duracion').value = '60';
+    document.querySelectorAll('.ta-modalidad').forEach(input => input.checked = true);
+    prepararTipoAudiencia();
+    form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('ta-nombre')?.focus();
+}
+
+function editarTipoAudienciaCompleto(button) {
+    const valor = id => document.getElementById(id);
+    valor('ta-id').value = button.dataset.id || '';
+    valor('ta-codigo').value = button.dataset.codigo || '';
+    valor('ta-nombre').value = button.dataset.nombre || '';
+    valor('ta-descripcion').value = button.dataset.descripcion || '';
+    valor('ta-perfil').value = button.dataset.perfil || '';
+    valor('ta-duracion').value = button.dataset.duracion || '60';
+    valor('ta-modalidad').value = button.dataset.modalidad || 'PRESENCIAL';
+    const permitidas = (button.dataset.modalidades || '').split(',');
+    document.querySelectorAll('.ta-modalidad').forEach(input => input.checked = permitidas.includes(input.value));
+    valor('ta-acta').checked = button.dataset.acta === 'true';
+    valor('ta-excepcion').checked = button.dataset.excepcion === 'true';
+    valor('ta-validacion').checked = button.dataset.validacion === 'true';
+    prepararTipoAudiencia();
+    valor('form-tipo-audiencia-completo').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+document.getElementById('form-tipo-audiencia-completo')?.addEventListener('submit', prepararTipoAudiencia);

@@ -3,6 +3,10 @@ package com.juridico.sistema_juridico.controller;
 import com.juridico.sistema_juridico.Entity.catalogo.*;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
+import com.juridico.sistema_juridico.Entity.enums.ModoPerfilAlerta;
+import com.juridico.sistema_juridico.Entity.enums.ModoPlazoTermino;
+import com.juridico.sistema_juridico.Entity.configuracion.PerfilAlertaTermino;
+import com.juridico.sistema_juridico.Entity.configuracion.PerfilRecordatorioAudiencia;
 import com.juridico.sistema_juridico.service.UsuarioService;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.*;
@@ -34,6 +38,8 @@ public class CatalogosController {
     @Autowired private EtapaCatalogoRepository etapaCatalogoRepository;
     @Autowired private com.juridico.sistema_juridico.service.CatalogosSyncService syncService;
     @Autowired private com.juridico.sistema_juridico.service.catalogo.TipoTerminoService tipoTerminoService;
+    @Autowired private com.juridico.sistema_juridico.service.catalogo.TipoAudienciaService tipoAudienciaService;
+    @Autowired private com.juridico.sistema_juridico.service.configuracion.PerfilAtencionService perfilAtencionService;
 
     // ===============================================================
     // VISTA PRINCIPAL
@@ -152,6 +158,10 @@ public class CatalogosController {
         model.addAttribute("listaTiposExpediente", tiposExpediente);
         model.addAttribute("listaEtapasCatalogo", etapasCatalogo);
         model.addAttribute("listaTiposTermino", tipoTerminoService.listarTodos());
+        model.addAttribute("perfilesTerminoDias", perfilAtencionService.publicados(ModoPerfilAlerta.DIAS_RESTANTES));
+        model.addAttribute("perfilesTerminoProporcionales", perfilAtencionService.publicados(ModoPerfilAlerta.PROPORCIONAL_LIMITADO));
+        model.addAttribute("perfilesAudiencia", perfilAtencionService.audienciasPublicadas());
+        model.addAttribute("modosPlazoTermino", ModoPlazoTermino.values());
         
         model.addAttribute("fechaLimiteNuevo", java.time.LocalDateTime.now().minusDays(7));
 
@@ -322,63 +332,21 @@ public class CatalogosController {
     // ===============================================================
     // CRUD - TIPOS DE AUDIENCIA
     // ===============================================================
-    @PostMapping("/tipos-audiencia/guardar")
-    @ResponseBody
-    public ResponseEntity<?> guardarTipoAudiencia(@RequestBody Map<String, String> payload) {
+    @PostMapping("/tipos-audiencia/guardar-completo")
+    public String guardarTipoAudienciaCompleto(@ModelAttribute TipoAudiencia tipo,
+            @RequestParam(required = false) Integer gerenciaId, RedirectAttributes ra) {
         try {
-            String nombre = payload.get("nombre");
-            String idStr = payload.get("id");
-            String gerenciaIdStr = payload.get("gerenciaId");
-
-            if (nombre == null || nombre.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("error", "El nombre es obligatorio."));
-            }
-
-            String email = SecurityContextHolder.getContext().getAuthentication().getName();
-            Usuario usuarioActual = usuarioRepository.findByEmail(email).orElseThrow();
-
-            Gerencia gerenciaPermitida = resolverGerenciaPermitida(gerenciaIdStr, usuarioActual);
-
-            TipoAudiencia tipo;
-            if (idStr != null && !idStr.isEmpty()) {
-                // EDICIÃ“N
-                tipo = usuarioService.buscarTipoAudienciaPorId(Integer.parseInt(idStr));
-                validarAlcanceGerencia(tipo.getGerencia(), usuarioActual, "tipos de audiencia");
-                tipo.setNombre(nombre.trim());
-            } else {
-                // CREACIÃ“N: Primero verificar si ya existe uno ACTIVO
-                Optional<TipoAudiencia> activoOpt = tipoAudienciaRepository.findByNombreIgnoreCase(nombre.trim())
-                    .filter(t -> Boolean.TRUE.equals(t.getActivo()));
-                if (activoOpt.isPresent()) {
-                    return ResponseEntity.ok(Map.of("status", "exists", "id", activoOpt.get().getId(), "mensaje", "El Tipo de Audiencia ya existe."));
-                }
-
-                // CREACIÃ“N: buscar si ya existe uno inactivo con el mismo nombre
-                tipo = tipoAudienciaRepository.findByNombreIgnoreCase(nombre.trim())
-                    .filter(t -> Boolean.FALSE.equals(t.getActivo()))
-                    .orElse(null);
-
-                if (tipo != null) {
-                    // Reactivar el existente
-                    tipo.setActivo(true);
-                    tipo.setUsuario(usuarioActual);
-                    tipo.setGerencia(gerenciaPermitida);
-                } else {
-                    tipo = new TipoAudiencia();
-                    tipo.setNombre(nombre.trim());
-                    tipo.setActivo(true);
-                    tipo.setUsuario(usuarioActual);
-                    tipo.setGerencia(gerenciaPermitida);
-                }
-            }
-
-            usuarioService.guardarTipoAudiencia(tipo);
-            return ResponseEntity.ok(Map.of("status", "ok", "id", tipo.getId(), "mensaje", "Tipo de Audiencia guardado correctamente."));
-        } catch (org.springframework.security.access.AccessDeniedException e) {
-            return forbidden(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+            Usuario usuarioActual = getUsuarioActual();
+            validarPuedeEditarCatalogos(usuarioActual);
+            Gerencia gerencia = resolverGerenciaPermitida(gerenciaId == null ? null : gerenciaId.toString(), usuarioActual);
+            tipo.setGerencia(gerencia);
+            tipo.setUsuario(usuarioActual);
+            tipoAudienciaService.guardar(tipo);
+            ra.addFlashAttribute("mensajeExito", "Tipo de Audiencia guardado correctamente.");
+        } catch (Exception ex) {
+            ra.addFlashAttribute("mensajeError", "No se pudo guardar el Tipo de Audiencia: " + ex.getMessage());
         }
+        return "redirect:/catalogos?tab=tipos-audiencia";
     }
 
     @DeleteMapping("/tipos-audiencia/eliminar/{id}")
@@ -910,7 +878,7 @@ public class CatalogosController {
         } catch (Exception e) {
             ra.addFlashAttribute("mensajeError", "Error al guardar el tipo de término: " + e.getMessage());
         }
-        return "redirect:/catalogos";
+        return "redirect:/catalogos?tab=tipos-termino";
     }
 
     @PostMapping("/tipos-termino/estado/{id}")
@@ -921,6 +889,6 @@ public class CatalogosController {
         } catch (Exception e) {
             ra.addFlashAttribute("mensajeError", "Error al cambiar el estado del tipo de término: " + e.getMessage());
         }
-        return "redirect:/catalogos";
+        return "redirect:/catalogos?tab=tipos-termino";
     }
 }

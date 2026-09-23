@@ -13,6 +13,8 @@ import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.Entity.enums.EtapaProcesal;
 import com.juridico.sistema_juridico.Entity.enums.PeriodoFiltro;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
+import com.juridico.sistema_juridico.Entity.enums.NivelAtencionTemporal;
+import com.juridico.sistema_juridico.service.procesal.EvaluadorAtencionTemporalService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
@@ -28,6 +30,7 @@ public class DashboardService {
     private final RecordatorioRepository recordatorioRepository;
     private final NotificacionRepository notificacionRepository;
     private final UsuarioRepository usuarioRepository;
+    private final EvaluadorAtencionTemporalService evaluadorAtencion;
 
     // Constantes para grupos de gerencias
     public static final List<Long> GRUPO_CIVIL_MERCANTIL = Arrays.asList(1L, 2L, 3L, 4L); // Civil, Mercantil, Fiscal,
@@ -40,13 +43,15 @@ public class DashboardService {
             TerminoRepository terminoRepository,
             RecordatorioRepository recordatorioRepository,
             NotificacionRepository notificacionRepository,
-            UsuarioRepository usuarioRepository) {
+            UsuarioRepository usuarioRepository,
+            EvaluadorAtencionTemporalService evaluadorAtencion) {
         this.expedienteRepository = expedienteRepository;
         this.audienciaRepository = audienciaRepository;
         this.terminoRepository = terminoRepository;
         this.recordatorioRepository = recordatorioRepository;
         this.notificacionRepository = notificacionRepository;
         this.usuarioRepository = usuarioRepository;
+        this.evaluadorAtencion = evaluadorAtencion;
     }
 
     /**
@@ -179,25 +184,27 @@ public class DashboardService {
         
         data.put("cargaTrabajoUsuarios", Map.of("labels", labelsTrabajo, "audiencias", audiencias, "terminos", terminos));
 
-        // === PRIORITY BAR: Audiencias por semáforo (calculado en Java) ===
+        // Audiencias agrupadas con la misma evaluación temporal utilizada en las pantallas.
         List<com.juridico.sistema_juridico.Entity.procesal.Audiencia> audList = materiaId == null
             ? audienciaRepository.fetchPendientesByAbogadoId(usuarioId)
             : audienciaRepository.fetchPendientesByAbogadoIdAndMateriaId(usuarioId, materiaId);
 
-        java.time.LocalDate hoy = java.time.LocalDate.now();
         // Orden fijo: ALTA, MEDIA, BAJA
         List<String> prioLabels = new ArrayList<>(java.util.Arrays.asList("ALTA", "MEDIA", "BAJA"));
-        java.util.Map<String, Integer> audSemaforo = new java.util.LinkedHashMap<>();
-        audSemaforo.put("ALTA", 0);
-        audSemaforo.put("MEDIA", 0);
-        audSemaforo.put("BAJA", 0);
+        java.util.Map<String, Integer> audAtencion = new java.util.LinkedHashMap<>();
+        audAtencion.put("ALTA", 0);
+        audAtencion.put("MEDIA", 0);
+        audAtencion.put("BAJA", 0);
 
         for (com.juridico.sistema_juridico.Entity.procesal.Audiencia a : audList) {
-            if (a.getFechaAudiencia() == null) continue;
-            long dias = java.time.temporal.ChronoUnit.DAYS.between(hoy, a.getFechaAudiencia());
-            if (dias <= 1)       audSemaforo.merge("ALTA", 1, Integer::sum);
-            else if (dias <= 3)  audSemaforo.merge("MEDIA", 1, Integer::sum);
-            else                 audSemaforo.merge("BAJA", 1, Integer::sum);
+            NivelAtencionTemporal nivel = evaluadorAtencion.evaluarAudiencia(a).nivel();
+            if (nivel == NivelAtencionTemporal.ROJO || nivel == NivelAtencionTemporal.PASADA_SIN_RESULTADO) {
+                audAtencion.merge("ALTA", 1, Integer::sum);
+            } else if (nivel == NivelAtencionTemporal.AMARILLO) {
+                audAtencion.merge("MEDIA", 1, Integer::sum);
+            } else {
+                audAtencion.merge("BAJA", 1, Integer::sum);
+            }
         }
 
         // === PRIORITY BAR: Términos por su propia prioridad ===
@@ -208,7 +215,7 @@ public class DashboardService {
         java.util.Map<String, Integer> terMap = new HashMap<>();
         terPrioRows.forEach(r -> terMap.put((String) r[0], ((Number) r[1]).intValue()));
 
-        List<Integer> audByPrio = prioLabels.stream().map(l -> audSemaforo.getOrDefault(l, 0)).collect(java.util.stream.Collectors.toList());
+        List<Integer> audByPrio = prioLabels.stream().map(l -> audAtencion.getOrDefault(l, 0)).collect(java.util.stream.Collectors.toList());
         List<Integer> terByPrio = prioLabels.stream().map(l -> terMap.getOrDefault(l, 0)).collect(java.util.stream.Collectors.toList());
 
         data.put("cargaTrabajoPrioridad", Map.of("labels", prioLabels, "audiencias", audByPrio, "terminos", terByPrio));

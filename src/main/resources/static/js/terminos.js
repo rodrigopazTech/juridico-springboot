@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
     //console.log("Sistema de Terminos Cargado");
     initMiniCalendar();
     initSearchTerminos();
+    mostrarReglaTipoTermino();
 
     // Si la navegación viene de notificaciones con un estatus objetivo, hacemos scroll y parpadeo
     const urlParams = new URLSearchParams(window.location.search);
@@ -839,6 +840,8 @@ function abrirModalNuevo() {
     const expSelect = document.getElementById('select-expediente-termino');
     const asuntoInput = document.getElementById('input-asunto');
     const vencimientoInput = document.getElementById('input-vencimiento');
+    const fechaOrigenInput = document.getElementById('input-fecha-origen');
+    const tipoTerminoSelect = document.getElementById('select-tipo-termino');
     const abogadoSelect = document.getElementById('select-abogado-termino');
     const observacionesInput = document.getElementById('input-observaciones-termino');
     const titulo = document.getElementById('modal-titulo');
@@ -851,6 +854,8 @@ function abrirModalNuevo() {
     }
     if (asuntoInput) asuntoInput.value = "";
     if (vencimientoInput) vencimientoInput.value = "";
+    if (fechaOrigenInput) fechaOrigenInput.value = new Date().toISOString().slice(0, 10);
+    if (tipoTerminoSelect) tipoTerminoSelect.value = "";
     if (observacionesInput) observacionesInput.value = "";
     ['select-contexto-materia', 'input-contexto-descripcion', 'input-contexto-partes', 'input-contexto-referencia']
         .forEach(id => {
@@ -909,6 +914,73 @@ function abrirModalNuevo() {
     }
     
     ajustarVisibilidadCamposPorRolYOrigen();
+    mostrarReglaTipoTermino();
+}
+
+function mostrarReglaTipoTermino() {
+    const select = document.getElementById('select-tipo-termino');
+    const resumen = document.getElementById('resumen-regla-tipo');
+    const vencimiento = document.getElementById('input-vencimiento');
+    const grupoVencimiento = document.getElementById('grupo-fecha-vencimiento');
+    const labelVencimiento = document.getElementById('label-fecha-vencimiento');
+    const ayuda = document.getElementById('ayuda-fecha-vencimiento');
+    if (!select || !vencimiento) return;
+
+    const opcion = select.selectedOptions?.[0];
+    const modo = opcion?.dataset?.modo || '';
+    if (!opcion?.value) {
+        if (resumen) resumen.textContent = 'Selecciona un tipo para consultar su modo y perfil. El nivel de atención no se captura.';
+        vencimiento.required = false;
+        vencimiento.disabled = false;
+        if (grupoVencimiento) grupoVencimiento.classList.remove('opacity-60');
+        return;
+    }
+
+    if (resumen) {
+        resumen.textContent = `Modo: ${opcion.dataset.regla || modo}. Perfil: ${opcion.dataset.perfil || 'No aplica'}. El sistema determina el nivel de atención.`;
+    }
+
+    if (modo === 'CAPTURADO') {
+        vencimiento.disabled = false;
+        vencimiento.required = true;
+        if (labelVencimiento) labelVencimiento.textContent = 'Fecha de vencimiento *';
+        if (ayuda) ayuda.textContent = 'Captura la fecha límite informada para este asunto.';
+        if (grupoVencimiento) grupoVencimiento.classList.remove('opacity-60');
+    } else if (modo === 'CALCULADO') {
+        vencimiento.required = false;
+        vencimiento.disabled = true;
+        vencimiento.value = calcularVistaPreviaVencimiento(
+            document.getElementById('input-fecha-origen')?.value,
+            Number(opcion.dataset.dias || 0),
+            opcion.dataset.tipoDias
+        );
+        if (labelVencimiento) labelVencimiento.textContent = 'Fecha de vencimiento';
+        if (ayuda) ayuda.textContent = 'Vista previa calculada. El servidor volverá a validar la fecha al guardar.';
+        if (grupoVencimiento) grupoVencimiento.classList.add('opacity-60');
+    } else if (modo === 'SIN_VENCIMIENTO') {
+        vencimiento.required = false;
+        vencimiento.disabled = true;
+        vencimiento.value = '';
+        if (labelVencimiento) labelVencimiento.textContent = 'Sin vencimiento';
+        if (ayuda) ayuda.textContent = 'Este tipo se seguirá sin una fecha límite ni nivel de urgencia.';
+        if (grupoVencimiento) grupoVencimiento.classList.add('opacity-60');
+    }
+}
+
+function calcularVistaPreviaVencimiento(fechaOrigen, dias, tipoDias) {
+    if (!fechaOrigen || !Number.isInteger(dias) || dias <= 0) return '';
+    const [anio, mes, dia] = fechaOrigen.split('-').map(Number);
+    const fecha = new Date(anio, mes - 1, dia);
+    let pendientes = dias;
+    while (pendientes > 0) {
+        fecha.setDate(fecha.getDate() + 1);
+        const diaSemana = fecha.getDay();
+        if (tipoDias !== 'HABILES' || (diaSemana !== 0 && diaSemana !== 6)) pendientes--;
+    }
+    const yyyy = fecha.getFullYear();
+    const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dd = String(fecha.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
 }
 
 // 2. EDITAR TÉRMINO (Con el botón amarillo)
@@ -1146,12 +1218,14 @@ function cargarMateriasYAbogadosPorGerencia(gerenciaId, callbackMateria = null, 
     }
 }
 
-function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogadoId, prioridad, observaciones = "", origenTermino = 'EXPEDIENTE', materiaId = '', gerenciaId = '', descripcion = '', partes = '', referencia = '') {
+function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogadoId, prioridad, observaciones = "", origenTermino = 'EXPEDIENTE', materiaId = '', gerenciaId = '', descripcion = '', partes = '', referencia = '', tipoTerminoId = '', fechaOrigen = '') {
 
     // Llenar datos en el formulario
     const idInput = document.getElementById('input-termino-id');
     const asuntoInput = document.getElementById('input-asunto');
     const vencimientoInput = document.getElementById('input-vencimiento');
+    const fechaOrigenInput = document.getElementById('input-fecha-origen');
+    const tipoTerminoSelect = document.getElementById('select-tipo-termino');
     const expSelect = document.getElementById('select-expediente-termino');
     const prioridadSelect = document.getElementById('select-prioridad');
     const observacionesInput = document.getElementById('input-observaciones-termino');
@@ -1167,6 +1241,8 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
     if (idInput) idInput.value = id;
     if (asuntoInput) asuntoInput.value = actuacion;
     if (vencimientoInput) vencimientoInput.value = fecha;
+    if (fechaOrigenInput) fechaOrigenInput.value = fechaOrigen || new Date().toISOString().slice(0, 10);
+    if (tipoTerminoSelect) tipoTerminoSelect.value = tipoTerminoId || '';
     if (prioridadSelect && prioridad) prioridadSelect.value = prioridad;
     if (observacionesInput) observacionesInput.value = observaciones;
 
@@ -1264,6 +1340,7 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
     }
     
     ajustarVisibilidadCamposPorRolYOrigen();
+    mostrarReglaTipoTermino();
 }
 
 function recargarDatosTerminoActual() {

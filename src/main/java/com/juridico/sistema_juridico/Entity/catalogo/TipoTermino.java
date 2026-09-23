@@ -2,8 +2,13 @@ package com.juridico.sistema_juridico.Entity.catalogo;
 
 import java.time.LocalDateTime;
 
+import com.juridico.sistema_juridico.Entity.configuracion.PerfilAlertaTermino;
+import com.juridico.sistema_juridico.Entity.enums.ModoPlazoTermino;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -33,10 +38,18 @@ public class TipoTermino {
     @Column(nullable = false, unique = true, length = 100)
     private String nombre;
 
+    @Column(nullable = false, unique = true, length = 50)
+    private String codigo;
+
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
-    @Column(name = "dias_predeterminados", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "modo_plazo", nullable = false, length = 30)
+    @Builder.Default
+    private ModoPlazoTermino modoPlazo = ModoPlazoTermino.CALCULADO;
+
+    @Column(name = "dias_predeterminados")
     @Builder.Default
     private Integer diasPredeterminados = 15;
 
@@ -44,13 +57,25 @@ public class TipoTermino {
     @Builder.Default
     private String tipoDias = "HABILES"; // HABILES, NATURALES
 
-    @Column(name = "semaforo_rojo_dias")
-    @Builder.Default
-    private Integer semaforoRojoDias = 3;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "perfil_alerta_id")
+    private PerfilAlertaTermino perfilAlerta;
 
-    @Column(name = "semaforo_amarillo_dias")
+    @Column(name = "requiere_documento_liberado", nullable = false)
     @Builder.Default
-    private Integer semaforoAmarilloDias = 7;
+    private Boolean requiereDocumentoLiberado = true;
+
+    @Column(name = "requiere_acuse", nullable = false)
+    @Builder.Default
+    private Boolean requiereAcuse = true;
+
+    @Column(name = "permite_excepcion_sin_acuse", nullable = false)
+    @Builder.Default
+    private Boolean permiteExcepcionSinAcuse = false;
+
+    @Column(name = "requiere_validacion_acuse", nullable = false)
+    @Builder.Default
+    private Boolean requiereValidacionAcuse = true;
 
     @Builder.Default
     private Boolean activo = true;
@@ -72,6 +97,9 @@ public class TipoTermino {
     @PrePersist
     protected void onCreate() {
         LocalDateTime ahora = LocalDateTime.now();
+        if (codigo == null || codigo.isBlank()) {
+            codigo = nombre == null ? "TIPO_TERMINO" : nombre.trim().toUpperCase().replaceAll("[^A-Z0-9]+", "_");
+        }
         if (createdAt == null) createdAt = ahora;
         if (updatedAt == null) updatedAt = ahora;
     }

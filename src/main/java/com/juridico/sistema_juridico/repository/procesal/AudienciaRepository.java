@@ -235,7 +235,7 @@ public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
         @Query("SELECT COUNT(a) FROM Audiencia a JOIN a.expediente e WHERE e.abogadoResponsable.id = :abogadoId AND e.materia.id = :materiaId AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
         long countPendientesByAbogadoIdAndMateriaId(@Param("abogadoId") Integer abogadoId, @Param("materiaId") Integer materiaId);
 
-        // Fetch audiencias pendientes como lista (para calcular semáforo en el service)
+        // Audiencias pendientes para evaluar su atención temporal en el servicio central.
         @Query("SELECT a FROM Audiencia a JOIN a.expediente e WHERE e.abogadoResponsable.id = :abogadoId AND a.estatusAudiencia = com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia.PENDIENTE")
         List<com.juridico.sistema_juridico.Entity.procesal.Audiencia> fetchPendientesByAbogadoId(@Param("abogadoId") Integer abogadoId);
 

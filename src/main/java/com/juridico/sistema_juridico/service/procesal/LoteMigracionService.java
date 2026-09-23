@@ -28,6 +28,8 @@ import org.springframework.transaction.support.TransactionTemplate;
     import com.juridico.sistema_juridico.repository.Expediente.ExpedienteRepository;
     import com.juridico.sistema_juridico.repository.procesal.AudienciaRepository;
     import com.juridico.sistema_juridico.repository.procesal.TerminoRepository;
+    import com.juridico.sistema_juridico.repository.configuracion.PerfilRecordatorioAudienciaRepository;
+    import com.juridico.sistema_juridico.Entity.enums.EstadoPerfil;
 
     import java.time.LocalDate;
     import java.time.LocalTime;
@@ -57,6 +59,7 @@ import org.springframework.transaction.support.TransactionTemplate;
         @Autowired private MateriaRepository materiaRepository;
         @Autowired private OrganoJurisdiccionalRepository organoRepository;
         @Autowired private TipoAudienciaRepository tipoAudienciaRepository;
+        @Autowired private PerfilRecordatorioAudienciaRepository perfilRecordatorioAudienciaRepository;
         @Autowired private CatPrioridadRepository catPrioridadRepository;
         @Autowired private EstadoRepository estadoRepository;
         @Autowired private PasswordEncoder passwordEncoder;
@@ -2005,6 +2008,10 @@ import org.springframework.transaction.support.TransactionTemplate;
                         t.setNombre(searchName); 
                         t.setActivo(true);
                         t.setGerencia(gerenciaContexto != null ? gerenciaContexto : getFallbackGerencia());
+                        t.setPerfilRecordatorio(perfilRecordatorioAudienciaRepository
+                            .findByEstadoOrderByNombreAsc(EstadoPerfil.PUBLICADO).stream().findFirst()
+                            .orElseThrow(() -> new IllegalStateException(
+                                "Configura y publica un perfil de audiencia antes de importar nuevos tipos.")));
                         existente = tipoAudienciaRepository.save(t);
                     }
                     c.setIdMapeado(existente.getId().longValue());

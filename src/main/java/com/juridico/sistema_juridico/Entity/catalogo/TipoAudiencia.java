@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 
-import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
+import com.juridico.sistema_juridico.Entity.configuracion.PerfilRecordatorioAudiencia;
 @Data
 @Builder
 @NoArgsConstructor
@@ -25,29 +25,51 @@ public class TipoAudiencia {
     @Column(nullable = false, unique = true, length = 100)
     private String nombre;
 
+    @Column(nullable = false, unique = true, length = 50)
+    private String codigo;
+
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
     @Builder.Default
     private Boolean activo = true;
 
-    @Column(name = "dias_notificacion_previa")
-    @Builder.Default
-    private Integer diasNotificacionPrevia = 3;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "perfil_recordatorio_id")
+    private PerfilRecordatorioAudiencia perfilRecordatorio;
 
-    @Column(name = "semaforo_rojo_dias")
+    @Column(name = "duracion_predeterminada_minutos")
     @Builder.Default
-    private Integer semaforoRojoDias = 1;
+    private Integer duracionPredeterminadaMinutos = 60;
 
-    @Column(name = "semaforo_amarillo_dias")
+    @Column(name = "modalidades_permitidas", nullable = false, length = 80)
     @Builder.Default
-    private Integer semaforoAmarilloDias = 3;
+    private String modalidadesPermitidas = "PRESENCIAL,VIRTUAL,HIBRIDA";
+
+    @Column(name = "modalidad_predeterminada", length = 20)
+    @Builder.Default
+    private String modalidadPredeterminada = "PRESENCIAL";
+
+    @Column(name = "requiere_acta", nullable = false)
+    @Builder.Default
+    private Boolean requiereActa = true;
+
+    @Column(name = "permite_excepcion_sin_acta", nullable = false)
+    @Builder.Default
+    private Boolean permiteExcepcionSinActa = false;
+
+    @Column(name = "requiere_validacion_acta", nullable = false)
+    @Builder.Default
+    private Boolean requiereValidacionActa = true;
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
+        if (codigo == null || codigo.isBlank()) {
+            codigo = nombre == null ? "TIPO_AUDIENCIA" : nombre.trim().toUpperCase().replaceAll("[^A-Z0-9]+", "_");
+        }
         if (createdAt == null) createdAt = LocalDateTime.now();
     }
 

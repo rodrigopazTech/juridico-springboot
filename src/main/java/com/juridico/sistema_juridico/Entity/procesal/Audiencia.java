@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -89,28 +88,6 @@ public class Audiencia {
 
     @Column(name = "observaciones", columnDefinition = "TEXT")
     private String observaciones; // Resultados o notas de la audiencia
-
-   public String getSemaforoColor() {
-        // Calculamos los días restantes
-        long dias = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaAudiencia);
-        
-        // El color ahora depende 100% del tiempo restante
-        if (dias < 0) return "bg-gray-400"; // Pasada (Gris)
-        if (dias <= 1) return "bg-red-600 animate-pulse"; // ¡HOY o MAÑANA! (Rojo parpadeante)
-        if (dias <= 3) return "bg-yellow-400"; // Próxima (Amarillo)
-        return "bg-green-500"; // Lejana (Verde)
-    }
-
-    public String getTextoDiasRestantes() {
-        if (EstatusAudiencia.CONCLUIDA.equals(this.estatusAudiencia)) return "Concluida";
-        
-        long dias = ChronoUnit.DAYS.between(LocalDate.now(), this.fechaAudiencia);
-        
-        if (dias == 0) return "¡ES HOY!";
-        if (dias == 1) return "¡MAÑANA!";
-        if (dias < 0) return "Fue hace " + Math.abs(dias) + " días";
-        return "Faltan " + dias + " días";
-    }
 
     public String getNumeroReferencia() {
         if (this.expediente != null) {

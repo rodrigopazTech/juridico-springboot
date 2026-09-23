@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.List;
@@ -218,18 +217,6 @@ public class TerminoService {
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
-    }
-
-    // 3. Lógica de Alertas (Sistema de 7, 3, 1 días)
-    public String calcularNivelAlerta(LocalDate fechaVencimiento) {
-        long diasRestantes = ChronoUnit.DAYS.between(LocalDate.now(), fechaVencimiento);
-        if (diasRestantes <= 1)
-            return "CRÍTICA (1 día)";
-        if (diasRestantes <= 3)
-            return "ALTA (3 días)";
-        if (diasRestantes <= 7)
-            return "MEDIA (7 días)";
-        return "NORMAL";
     }
 
 }

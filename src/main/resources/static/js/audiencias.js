@@ -947,7 +947,7 @@ function inicializarSelectsAudiencias() {
     if (selectTipo && !selectTipo.tomselect) {
         initSearchableSelect(selectTipo, { 
             tipo: 'tipo-audiencia',
-            createInline: true,
+            createInline: false,
             gerenciaSelector: '#input-expediente'
         });
     }

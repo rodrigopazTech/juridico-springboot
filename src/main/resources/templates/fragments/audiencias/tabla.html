@@ -35,7 +35,7 @@
                             <td colspan="7" class="px-4 py-6 text-center text-gray-400">No se encontraron audiencias registradas.</td>
                         </tr>
 
-                        <tr th:each="a : ${audiencias}" class="border-b hover:bg-gray-50/80 transition-all relative">
+                        <tr th:each="a : ${audiencias}" th:with="at=${@atencionTemporal.evaluarAudiencia(a)}" class="border-b hover:bg-gray-50/80 transition-all relative">
                             <!-- ID -->
                             <td class="px-2 py-4 text-center font-bold text-gray-500 border-r border-gray-50 w-20">
                                 <span th:text="${a.id}">1</span>
@@ -104,14 +104,12 @@
                             <td class="px-2.5 py-4 border-r border-gray-50 text-center">
                                 <div class="flex flex-col items-center gap-1.5">
                                     <span class="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-full text-[10px] font-bold border whitespace-nowrap"
-                                        th:classappend="${a.estatusAudiencia?.name() == 'CONCLUIDA' ? 'bg-green-50 text-green-700 border-green-100' : 
-                                                        (a.estatusAudiencia?.name() == 'CON_ACTA' ? 'bg-blue-50 text-blue-700 border-blue-100' : 
-                                                        'bg-orange-50 text-orange-700 border-orange-100')}">
-                                        <span class="w-1.5 h-1.5 rounded-full"
-                                            th:classappend="${a.estatusAudiencia?.name() == 'CONCLUIDA' ? 'bg-green-600' : 
-                                                              (a.estatusAudiencia?.name() == 'CON_ACTA' ? 'bg-blue-600' : 'bg-orange-600')}"></span>
-                                        <span th:text="${a.estatusAudiencia != null ? a.estatusAudiencia.descripcion : 'Pendiente'}">PENDIENTE</span>
+                                        th:classappend="${at.clasesBadge()}" th:title="${at.explicacion()}">
+                                        <i class="fas" th:classappend="${at.icono()}"></i>
+                                        <span th:text="${at.etiqueta()}">Programada</span>
                                     </span>
+                                    <span class="text-[10px] text-gray-500" th:text="${at.detalle()}">Audiencia en 3 días</span>
+                                    <span class="text-[9px] text-gray-400" th:text="${a.estatusAudiencia != null ? a.estatusAudiencia.descripcion : 'Pendiente'}">Pendiente</span>
                                 </div>
                             </td>
 
@@ -195,7 +193,7 @@
                 <p class="text-gray-400 text-sm">No se encontraron audiencias registradas.</p>
             </div>
 
-            <div th:each="a : ${audiencias}" class="bg-white rounded-2xl border border-gray-200 p-5 shadow-md space-y-3 relative">
+            <div th:each="a : ${audiencias}" th:with="at=${@atencionTemporal.evaluarAudiencia(a)}" class="bg-white rounded-2xl border border-gray-200 p-5 shadow-md space-y-3 relative">
                 
                 <!-- Encabezado de la Tarjeta (Fecha/Hora + Estatus) -->
                 <div class="flex items-center justify-between">
@@ -212,13 +210,9 @@
                     </div>
 
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border whitespace-nowrap"
-                        th:classappend="${a.estatusAudiencia?.name() == 'CONCLUIDA' ? 'bg-green-50 text-green-700 border-green-100' : 
-                                        (a.estatusAudiencia?.name() == 'CON_ACTA' ? 'bg-blue-50 text-blue-700 border-blue-100' : 
-                                        'bg-orange-50 text-orange-700 border-orange-100')}">
-                        <span class="w-1.5 h-1.5 rounded-full"
-                            th:classappend="${a.estatusAudiencia?.name() == 'CONCLUIDA' ? 'bg-green-600' : 
-                                              (a.estatusAudiencia?.name() == 'CON_ACTA' ? 'bg-blue-600' : 'bg-orange-600')}"></span>
-                        <span th:text="${a.estatusAudiencia != null ? a.estatusAudiencia.descripcion : 'Pendiente'}">PENDIENTE</span>
+                        th:classappend="${at.clasesBadge()}" th:title="${at.explicacion()}">
+                        <i class="fas" th:classappend="${at.icono()}"></i>
+                        <span th:text="${at.etiqueta()}">Programada</span>
                     </span>
                 </div>
 
