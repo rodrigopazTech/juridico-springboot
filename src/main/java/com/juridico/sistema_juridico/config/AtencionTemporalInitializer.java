@@ -64,6 +64,9 @@ public class AtencionTemporalInitializer implements ApplicationRunner {
             if (tipo.getCodigo() == null || tipo.getCodigo().isBlank()) {
                 tipo.setCodigo(codigo(tipo.getNombre(), "TIPO_AUDIENCIA_" + tipo.getId()));
             }
+            if (tipo.getRequiereActa() == null) tipo.setRequiereActa(false);
+            if (tipo.getPermiteExcepcionSinActa() == null) tipo.setPermiteExcepcionSinActa(false);
+            if (tipo.getRequiereValidacionActa() == null) tipo.setRequiereValidacionActa(false);
             if (tipo.getPerfilRecordatorio() == null) tipo.setPerfilRecordatorio(audiencia);
             tiposAudiencia.save(tipo);
         }

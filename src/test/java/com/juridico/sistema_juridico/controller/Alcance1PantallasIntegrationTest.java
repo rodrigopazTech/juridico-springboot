@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -74,5 +75,35 @@ class Alcance1PantallasIntegrationTest {
                 .andExpect(content().string(containsString("id=\"select-tipo-termino\"")))
                 .andExpect(content().string(containsString("id=\"input-fecha-origen\"")))
                 .andExpect(content().string(containsString("id=\"resumen-regla-tipo\"")));
+    }
+
+    @Test
+    @WithMockUser(username = "ui.abogado@siaj.test", authorities = "ABOGADO")
+    void abogadoPuedeConsultarYModificarCatalogosYPerfilesSinAprobacion() throws Exception {
+        Gerencia gerencia = gerencias.findAll().get(0);
+        if (usuarios.findByEmail("ui.abogado@siaj.test").isEmpty()) {
+            Usuario abogado = Usuario.builder()
+                    .nombreCompleto("Abogado UI")
+                    .email("ui.abogado@siaj.test")
+                    .username("ui.abogado")
+                    .password("test")
+                    .rol(RolUsuario.ABOGADO)
+                    .activo(true)
+                    .forcePasswordChange(false)
+                    .build();
+            abogado.getGerencias().add(gerencia);
+            usuarios.save(abogado);
+        }
+
+        mvc.perform(get("/catalogos"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Lectura y escritura")));
+        mvc.perform(post("/catalogos/tipos-termino/guardar").with(csrf()))
+                .andExpect(status().is3xxRedirection());
+        mvc.perform(get("/administracion/plazos-alertas"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Configuración compartida")));
+        mvc.perform(post("/administracion/plazos-alertas/terminos").with(csrf()))
+                .andExpect(status().is3xxRedirection());
     }
 }

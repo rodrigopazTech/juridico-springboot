@@ -149,7 +149,7 @@
                     </a>
                 </li>
 
-                <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR', 'GERENTE', 'JEFE_DEPTO')" class="px-6 mt-8 mb-3">
+                <li sec:authorize="isAuthenticated()" class="px-6 mt-8 mb-3">
                     <span class="text-[10px] font-extrabold text-white/40 uppercase tracking-widest">Administración</span>
                 </li>
 
@@ -163,7 +163,7 @@
                     </a>
                 </li>
 
-                <li sec:authorize="hasAnyAuthority('ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR')">
+                <li sec:authorize="isAuthenticated()">
                     <a th:href="@{/administracion/plazos-alertas}"
                         class="flex items-center px-4 py-2.5 mx-3 transition-all duration-300 rounded-xl group"
                         th:classappend="${activePage == 'plazos-alertas' ? 'bg-white/10 text-white font-bold shadow-sm' : 'text-white/60 hover:bg-white/5 hover:text-white'}">

@@ -18,7 +18,7 @@ import com.juridico.sistema_juridico.service.configuracion.PerfilAtencionService
 
 @Controller
 @RequestMapping("/administracion/plazos-alertas")
-@PreAuthorize("hasAnyAuthority('ADMIN','DIRECTOR_PRINCIPAL','DIRECTOR','SUBDIRECTOR')")
+@PreAuthorize("isAuthenticated()")
 public class PlazosAlertasController {
 
     private final PerfilAtencionService perfiles;

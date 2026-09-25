@@ -53,9 +53,7 @@ public class CatalogosController {
 
         // --- Determinar quÃ© gerencias puede ver ---
         boolean esNivelAlto = (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL || rol == RolUsuario.DIRECTOR || rol == RolUsuario.SUBDIRECTOR);
-        boolean esAbogado = (rol == RolUsuario.ABOGADO);
-
-        boolean puedeEditar = !esAbogado && (usuarioActual.getGerencia() != null || esNivelAlto);
+        boolean puedeEditar = usuarioActual.getGerencia() != null || esNivelAlto;
 
         List<Gerencia> gerenciasDisponibles;
         Gerencia gerenciaSeleccionada = null;
@@ -186,9 +184,6 @@ public class CatalogosController {
     }
 
     private void validarPuedeEditarCatalogos(Usuario usuarioActual) {
-        if (usuarioActual.getRol() == RolUsuario.ABOGADO) {
-            throw new org.springframework.security.access.AccessDeniedException("El ABOGADO no puede modificar catÃ¡logos.");
-        }
         if (!esNivelAlto(usuarioActual) && usuarioActual.getGerencia() == null) {
             throw new org.springframework.security.access.AccessDeniedException("No tienes una gerencia asignada para modificar catÃ¡logos.");
         }

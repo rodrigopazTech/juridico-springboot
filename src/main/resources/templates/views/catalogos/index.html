@@ -224,6 +224,12 @@
             </h1>
             <p class="text-base text-gray-500 mt-2 max-w-2xl">Gestiona los catálogos del sistema organizados por
                 gerencia.</p>
+            <div th:if="${gerenciaSeleccionada != null}"
+                class="mt-4 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                <i class="fas fa-triangle-exclamation mt-0.5 text-amber-700"></i>
+                <p><strong>Impacto compartido:</strong> cualquier alta, edición o cambio de estado se aplicará a todos los usuarios de
+                    <span class="font-bold" th:text="${gerenciaSeleccionada.nombre}">esta gerencia</span>.</p>
+            </div>
         </div>
 
         <!-- ====== SELECTOR DE GERENCIA ====== -->
@@ -703,7 +709,7 @@
                                     </td>
                                     <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4"><div class="font-semibold text-gray-800" th:text="${t.perfilRecordatorio != null ? t.perfilRecordatorio.nombre : 'Sin perfil'}"></div><div class="text-xs text-gray-400" th:if="${t.perfilRecordatorio != null}" th:text="${t.perfilRecordatorio.anticipacionAmarillaHoras + ' h / ' + t.perfilRecordatorio.anticipacionRojaHoras + ' h'}"></div></td>
                                     <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-right sm:text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
-                                        <span class="text-xs px-2 py-1 rounded-full font-bold" th:classappend="${t.requiereActa ? 'bg-amber-50 text-amber-800' : 'bg-gray-100 text-gray-600'}" th:text="${t.requiereActa ? 'Requerida' : 'No requerida'}"></span>
+                                        <span class="text-xs px-2 py-1 rounded-full font-bold" th:classappend="${t.requiereActa == true ? 'bg-amber-50 text-amber-800' : 'bg-gray-100 text-gray-600'}" th:text="${t.requiereActa == true ? 'Requerida' : 'No requerida'}"></span>
                                     </td>
                                     <td th:if="${puedeEditar}" class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
                                         <div class="flex items-center justify-end sm:justify-center gap-2">
@@ -1001,7 +1007,7 @@
                                     <td class="px-5 py-4"><div class="font-bold text-gray-900" th:text="${t.nombre}"></div><div class="text-xs text-gray-500" th:text="${t.codigo}"></div></td>
                                     <td class="px-5 py-4" th:text="${t.modoPlazo != null ? t.modoPlazo.descripcion : 'Sin configurar'}"></td>
                                     <td class="px-5 py-4" th:text="${t.perfilAlerta != null ? t.perfilAlerta.nombre : 'No aplica'}"></td>
-                                    <td class="px-5 py-4"><span class="text-xs font-bold" th:text="${t.activo ? 'Vigente' : 'Inactivo'}"></span></td>
+                                    <td class="px-5 py-4"><span class="text-xs font-bold" th:text="${t.activo == true ? 'Vigente' : 'Inactivo'}"></span></td>
                                     <td class="px-5 py-4 text-right"><button type="button" class="text-gob-guinda font-bold hover:underline" th:data-id="${t.id}" th:data-codigo="${t.codigo}" th:data-nombre="${t.nombre}" th:data-descripcion="${t.descripcion}" th:data-modo="${t.modoPlazo}" th:data-dias="${t.diasPredeterminados}" th:data-tipo-dias="${t.tipoDias}" th:data-perfil="${t.perfilAlerta != null ? t.perfilAlerta.id : ''}" th:data-doc="${t.requiereDocumentoLiberado}" th:data-acuse="${t.requiereAcuse}" th:data-excepcion="${t.permiteExcepcionSinAcuse}" th:data-validacion="${t.requiereValidacionAcuse}" onclick="editarTipoTermino(this)">Editar</button></td>
                                 </tr>
                             </tbody></table></div>
