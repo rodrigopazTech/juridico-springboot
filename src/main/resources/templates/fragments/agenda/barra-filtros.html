@@ -119,6 +119,8 @@
                     class="agenda-filter-control w-full h-9 bg-gray-50 border border-gray-200 rounded-md px-2 text-xs text-gray-700 outline-none focus:bg-white focus:border-gob-guinda focus:ring-2 focus:ring-gob-guinda/10 transition-all">
                     <option value="">Todos</option>
                     <option value="con" th:selected="${paramDocumento == 'con'}">Con documento</option>
+                    <option value="acuse" th:selected="${paramDocumento == 'acuse'}">Con Acuse</option>
+                    <option value="nota" th:selected="${paramDocumento == 'nota'}">Con Nota Informativa</option>
                     <option value="sin" th:selected="${paramDocumento == 'sin'}">Sin documento</option>
                 </select>
             </div>

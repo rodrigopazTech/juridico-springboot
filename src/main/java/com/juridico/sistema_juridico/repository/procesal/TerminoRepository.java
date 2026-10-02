@@ -189,6 +189,8 @@ public interface TerminoRepository extends JpaRepository<Termino, Integer> {
            "AND (:prioridadId IS NULL OR t.prioridad.id = :prioridadId) " +
            "AND (:documento IS NULL OR :documento = '' " +
            "OR (:documento = 'con' AND ((t.acuse IS NOT NULL AND t.acuse <> '') OR (t.acuseNombre IS NOT NULL AND t.acuseNombre <> ''))) " +
+           "OR (:documento = 'acuse' AND t.tipoEvidenciaPresentacion = com.juridico.sistema_juridico.Entity.enums.TipoEvidenciaPresentacion.ACUSE) " +
+           "OR (:documento = 'nota' AND t.tipoEvidenciaPresentacion = com.juridico.sistema_juridico.Entity.enums.TipoEvidenciaPresentacion.NOTA_INFORMATIVA) " +
            "OR (:documento = 'sin' AND (t.acuse IS NULL OR t.acuse = '') AND (t.acuseNombre IS NULL OR t.acuseNombre = ''))) " +
            "AND (:secGerenciaId IS NULL OR e.gerencia.id = :secGerenciaId OR c.gerencia.id = :secGerenciaId) " +
            "AND (" +

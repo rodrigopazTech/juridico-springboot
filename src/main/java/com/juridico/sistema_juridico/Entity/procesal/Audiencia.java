@@ -69,6 +69,21 @@ public class Audiencia {
     @Column(name = "acta_documento", length = 500)
     private String actaDocumento;
 
+    @Column(name = "nota_informativa_documento", length = 500)
+    private String notaInformativaDocumento;
+
+    @Column(name = "recordatorio_perfil_nombre", length = 120)
+    private String recordatorioPerfilNombre;
+
+    @Column(name = "recordatorio_perfil_version")
+    private Integer recordatorioPerfilVersion;
+
+    @Column(name = "recordatorio_amarillo_horas")
+    private Integer recordatorioAmarilloHoras;
+
+    @Column(name = "recordatorio_rojo_horas")
+    private Integer recordatorioRojoHoras;
+
     @Column(name = "fecha_desahogo")
     private LocalDate fechaDesahogo;
     

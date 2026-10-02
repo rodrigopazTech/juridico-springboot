@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.juridico.sistema_juridico.service.configuracion.CalendarioInstitucionalService;
 
 import com.juridico.sistema_juridico.Entity.catalogo.TipoTermino;
 import com.juridico.sistema_juridico.Entity.enums.ModoPlazoTermino;
@@ -12,6 +14,9 @@ import com.juridico.sistema_juridico.exception.BadRequestException;
 
 @Service
 public class CalculadoraPlazoService {
+
+    @Autowired(required = false)
+    private CalendarioInstitucionalService calendario;
 
     public LocalDate resolverVencimiento(TipoTermino tipo, LocalDate fechaOrigen,
             LocalDate fechaVencimientoCapturada) {
@@ -52,7 +57,7 @@ public class CalculadoraPlazoService {
         while (pendientes > 0) {
             resultado = resultado.plusDays(1);
             DayOfWeek dia = resultado.getDayOfWeek();
-            if (dia != DayOfWeek.SATURDAY && dia != DayOfWeek.SUNDAY) {
+            if (esHabil(resultado, dia)) {
                 pendientes--;
             }
         }
@@ -72,8 +77,13 @@ public class CalculadoraPlazoService {
         while (!cursor.equals(destino)) {
             cursor = cursor.plusDays(signo);
             DayOfWeek dia = cursor.getDayOfWeek();
-            if (dia != DayOfWeek.SATURDAY && dia != DayOfWeek.SUNDAY) dias += signo;
+            if (esHabil(cursor, dia)) dias += signo;
         }
         return dias;
+    }
+
+    private boolean esHabil(LocalDate fecha, DayOfWeek dia) {
+        return dia != DayOfWeek.SATURDAY && dia != DayOfWeek.SUNDAY
+                && (calendario == null || !calendario.esInhabil(fecha));
     }
 }

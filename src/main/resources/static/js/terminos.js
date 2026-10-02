@@ -780,7 +780,25 @@ document.addEventListener('submit', function (e) {
             });
     }
 
-    // D. Guardar/Editar Término
+    // D. Subir Nota Informativa
+    const formNota = e.target.closest('#modal-subir-nota form');
+    if (formNota) {
+        e.preventDefault();
+        const fd = new FormData(formNota);
+        Swal.fire({ title: 'Subiendo Nota Informativa...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        fetch(formNota.action, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(res => res.json().then(data => ({ ok: res.ok, data })))
+            .then(({ ok, data }) => {
+                Swal.close();
+                if (ok && data.success) {
+                    cerrarModal('modal-subir-nota');
+                    showSuccessToast(data.mensaje || 'Nota Informativa registrada.');
+                    actualizarTablaAsincrono();
+                } else showErrorModal(data.mensaje || 'No se pudo registrar la Nota Informativa.');
+            }).catch(() => { Swal.close(); showErrorModal('No se pudo registrar la Nota Informativa.'); });
+    }
+
+    // E. Guardar/Editar Término
     const formTermino = e.target.closest('#modal-nuevo-termino form');
     if (formTermino) {
         e.preventDefault();
@@ -917,7 +935,16 @@ function abrirModalNuevo() {
     mostrarReglaTipoTermino();
 }
 
-function mostrarReglaTipoTermino() {
+function activarSubidaNota(idTermino) {
+    const inputId = document.getElementById('input-nota-id');
+    const inputFile = document.getElementById('input-nota-file');
+    if (inputId) inputId.value = idTermino;
+    if (inputFile) inputFile.value = '';
+    const modal = document.getElementById('modal-subir-nota');
+    if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+}
+
+function mostrarReglaTipoTermino(conservarVencimiento = false) {
     const select = document.getElementById('select-tipo-termino');
     const resumen = document.getElementById('resumen-regla-tipo');
     const vencimiento = document.getElementById('input-vencimiento');
@@ -929,7 +956,7 @@ function mostrarReglaTipoTermino() {
     const opcion = select.selectedOptions?.[0];
     const modo = opcion?.dataset?.modo || '';
     if (!opcion?.value) {
-        if (resumen) resumen.textContent = 'Selecciona un tipo para consultar su modo y perfil. El nivel de atención no se captura.';
+        if (resumen) resumen.textContent = 'Selecciona un tipo para consultar cómo se define el plazo y qué Regla de alerta se aplicará.';
         vencimiento.required = false;
         vencimiento.disabled = false;
         if (grupoVencimiento) grupoVencimiento.classList.remove('opacity-60');
@@ -937,12 +964,13 @@ function mostrarReglaTipoTermino() {
     }
 
     if (resumen) {
-        resumen.textContent = `Modo: ${opcion.dataset.regla || modo}. Perfil: ${opcion.dataset.perfil || 'No aplica'}. El sistema determina el nivel de atención.`;
+        resumen.textContent = `Plazo: ${opcion.dataset.regla || modo}. Regla de alerta: ${opcion.dataset.reglaAlerta || 'No aplica'}. El sistema determina automáticamente el nivel de atención.`;
     }
 
     if (modo === 'CAPTURADO') {
         vencimiento.disabled = false;
         vencimiento.required = true;
+        if (!conservarVencimiento) vencimiento.value = '';
         if (labelVencimiento) labelVencimiento.textContent = 'Fecha de vencimiento *';
         if (ayuda) ayuda.textContent = 'Captura la fecha límite informada para este asunto.';
         if (grupoVencimiento) grupoVencimiento.classList.remove('opacity-60');
@@ -1340,7 +1368,7 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
     }
     
     ajustarVisibilidadCamposPorRolYOrigen();
-    mostrarReglaTipoTermino();
+    mostrarReglaTipoTermino(true);
 }
 
 function recargarDatosTerminoActual() {

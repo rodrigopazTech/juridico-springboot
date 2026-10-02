@@ -294,4 +294,19 @@
         </div>
     </div>
 
+    <div id="modal-suspender" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+      <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm"></div>
+      <div class="fixed inset-0 z-10 flex items-center justify-center p-4">
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
+          <div class="bg-gob-guinda text-white p-5 flex justify-between"><h3 class="text-lg font-bold"><i class="fas fa-pause-circle mr-2"></i>Suspender Audiencia</h3><button type="button" onclick="document.getElementById('modal-suspender').classList.add('hidden')"><i class="fas fa-times"></i></button></div>
+          <form th:action="@{/audiencias/suspender}" method="post" enctype="multipart/form-data" class="p-6">
+            <input type="hidden" name="id" id="suspender-audiencia-id">
+            <div class="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-950 mb-4">La Audiencia quedará en estado <strong>Suspendida</strong>. Para conservar la justificación institucional es obligatorio adjuntar una Nota Informativa.</div>
+            <label class="block text-sm font-bold">Nota Informativa *<input type="file" name="archivoNota" required accept=".pdf,image/*" class="mt-1 block w-full border rounded-lg p-2"></label>
+            <div class="mt-6 flex justify-end gap-3"><button type="button" onclick="document.getElementById('modal-suspender').classList.add('hidden')" class="px-4 py-2 border rounded-lg">Cancelar</button><button class="px-4 py-2 bg-gob-guinda text-white font-bold rounded-lg">Suspender Audiencia</button></div>
+          </form>
+        </div>
+      </div>
+    </div>
+
 </div>

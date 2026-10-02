@@ -45,6 +45,7 @@ import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.expediente.Expediente;
 import com.juridico.sistema_juridico.service.FileStorageService;
+import com.juridico.sistema_juridico.service.procesal.EvaluadorAtencionTemporalService;
 import com.juridico.sistema_juridico.util.AudienciaExcelExporter;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -86,6 +87,8 @@ public class AudienciasController {
     private com.juridico.sistema_juridico.repository.Expediente.ColaboradorExpedienteRepository colaboradorExpedienteRepository;
     @Autowired
     private FileStorageService fileStorageService;
+    @Autowired
+    private EvaluadorAtencionTemporalService evaluadorAtencionTemporalService;
 
     // @Autowired private ColaboradorExpedienteRepository colaboradorRepository;
     @Autowired
@@ -508,6 +511,14 @@ public String guardar(@ModelAttribute Audiencia audiencia,
         }
     }
 
+    com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia tipoGestionado = tipoAudienciaRepository
+            .findById(audiencia.getTipoAudiencia().getId())
+            .orElseThrow(() -> new ResourceNotFoundException("El Tipo de Audiencia no existe."));
+    audiencia.setTipoAudiencia(tipoGestionado);
+    if (esNueva) {
+        evaluadorAtencionTemporalService.fijarSnapshot(audiencia);
+    }
+
     // GUARDADO
     Audiencia guardada = audienciaRepository.save(audiencia);
 
@@ -695,6 +706,13 @@ public String guardar(@ModelAttribute Audiencia audiencia,
         }
 
         // GUARDADO
+        com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia tipoGestionado = tipoAudienciaRepository
+                .findById(audiencia.getTipoAudiencia().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("El Tipo de Audiencia no existe."));
+        audiencia.setTipoAudiencia(tipoGestionado);
+        if (esNueva) {
+            evaluadorAtencionTemporalService.fijarSnapshot(audiencia);
+        }
         Audiencia guardada = audienciaRepository.save(audiencia);
 
         // Notificación (Solo si es nueva)
@@ -741,6 +759,27 @@ public String guardar(@ModelAttribute Audiencia audiencia,
             redirectAttrs.addFlashAttribute("tipo", "success");
         } catch (Exception e) {
             redirectAttrs.addFlashAttribute("mensaje", "Error al subir acta: " + e.getMessage());
+            redirectAttrs.addFlashAttribute("tipo", "error");
+        }
+        return "redirect:/audiencias";
+    }
+
+    @PostMapping("/suspender")
+    public String suspender(@RequestParam("id") Integer id,
+            @RequestParam("archivoNota") MultipartFile archivo,
+            RedirectAttributes redirectAttrs) {
+        try {
+            Audiencia audiencia = audienciaRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Audiencia no encontrada"));
+            String identidad = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario usuario = usuarioRepository.findByEmail(identidad)
+                    .or(() -> usuarioRepository.findByUsernameIgnoreCase(identidad)).orElseThrow();
+            if (audiencia.getExpediente() != null) validarAccesoExpediente(audiencia.getExpediente(), usuario);
+            audienciaService.suspenderConNotaInformativa(id, archivo);
+            redirectAttrs.addFlashAttribute("mensaje", "Audiencia suspendida con Nota Informativa.");
+            redirectAttrs.addFlashAttribute("tipo", "success");
+        } catch (Exception ex) {
+            redirectAttrs.addFlashAttribute("mensaje", "Error al suspender la Audiencia: " + ex.getMessage());
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
         return "redirect:/audiencias";
@@ -851,6 +890,26 @@ public String guardar(@ModelAttribute Audiencia audiencia,
     @GetMapping("/preview-acta/{id}")
     public ResponseEntity<Resource> previsualizarActa(@PathVariable("id") Integer id) {
         return servirActa(id, false);
+    }
+
+    @GetMapping("/nota-informativa/{id}")
+    public ResponseEntity<Resource> verNotaInformativa(@PathVariable("id") Integer id) {
+        try {
+            Audiencia audiencia = audienciaRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Audiencia no encontrada"));
+            if (audiencia.getNotaInformativaDocumento() == null) return ResponseEntity.notFound().build();
+            java.nio.file.Path ruta = fileStorageService.obtenerArchivo(rutaActaRelativa(audiencia.getNotaInformativaDocumento()));
+            Resource recurso = new UrlResource(ruta.toUri());
+            if (!recurso.exists() || !recurso.isReadable()) return ResponseEntity.notFound().build();
+            String mime = java.nio.file.Files.probeContentType(ruta);
+            return ResponseEntity.ok().contentType(MediaType.parseMediaType(mime != null ? mime : "application/octet-stream"))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + recurso.getFilename() + "\"")
+                    .body(recurso);
+        } catch (MalformedURLException ex) {
+            return ResponseEntity.badRequest().build();
+        } catch (IOException ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     private ResponseEntity<Resource> servirActa(Integer id, boolean descarga) {

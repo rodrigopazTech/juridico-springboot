@@ -53,16 +53,20 @@ public class EvaluadorAtencionTemporalService {
         if (termino.getFechaVencimiento() == null) {
             return sinCalculo("Sin vencimiento", "No existe una fecha límite aplicable.");
         }
-        if (tipo == null || tipo.getPerfilAlerta() == null) {
-            return sinCalculo("Sin perfil", "El Tipo de Término debe tener un perfil de alerta publicado.");
+        boolean tieneSnapshot = termino.getAlertaAmarilloDias() != null && termino.getAlertaRojoDias() != null;
+        if (!tieneSnapshot && (tipo == null || tipo.getPerfilAlerta() == null)) {
+            return sinCalculo("Sin regla", "El Tipo de Término debe tener una Regla de alerta publicada.");
         }
 
-        PerfilAlertaTermino perfil = tipo.getPerfilAlerta();
-        int[] umbrales = resolverUmbrales(termino, perfil);
+        PerfilAlertaTermino perfil = tieneSnapshot ? null : tipo.getPerfilAlerta();
+        int[] umbrales = tieneSnapshot
+                ? new int[] {termino.getAlertaAmarilloDias(), termino.getAlertaRojoDias()}
+                : resolverUmbrales(termino, perfil);
         String tipoDias = resolverTipoDias(termino);
         long restantes = calculadoraPlazo.diasEntre(fechaEvaluacion, termino.getFechaVencimiento(), tipoDias);
         String unidad = "HABILES".equalsIgnoreCase(tipoDias) ? "días hábiles" : "días naturales";
-        String explicacion = "Perfil “" + perfil.getNombre() + "”: amarillo con " + umbrales[0]
+        String nombreRegla = tieneSnapshot ? termino.getAlertaPerfilNombre() : perfil.getNombre();
+        String explicacion = "Regla “" + nombreRegla + "”: amarillo con " + umbrales[0]
                 + " días y rojo con " + umbrales[1] + " días restantes.";
 
         if (restantes < 0) {
@@ -97,21 +101,28 @@ public class EvaluadorAtencionTemporalService {
             return sinCalculo("Sin fecha", "La audiencia no tiene fecha programada.");
         }
         if (audiencia.getEstatusAudiencia() != null && audiencia.getEstatusAudiencia() != EstatusAudiencia.PENDIENTE) {
+            if (audiencia.getEstatusAudiencia() == EstatusAudiencia.SUSPENDIDA) {
+                return cerrado("Suspendida", "La audiencia fue suspendida y cuenta con Nota Informativa.", "fa-pause-circle");
+            }
             String etiqueta = audiencia.getEstatusAudiencia() == EstatusAudiencia.CONCLUIDA ? "Concluida" : "Resultado registrado";
             return cerrado(etiqueta, "La proximidad dejó de estar activa.", "fa-circle-check");
         }
-        if (audiencia.getTipoAudiencia() == null || audiencia.getTipoAudiencia().getPerfilRecordatorio() == null) {
-            return sinCalculo("Sin perfil", "El Tipo de Audiencia debe tener un perfil de recordatorio publicado.");
+        boolean tieneSnapshot = audiencia.getRecordatorioAmarilloHoras() != null
+                && audiencia.getRecordatorioRojoHoras() != null;
+        if (!tieneSnapshot && (audiencia.getTipoAudiencia() == null
+                || audiencia.getTipoAudiencia().getPerfilRecordatorio() == null)) {
+            return sinCalculo("Sin regla", "El Tipo de Audiencia debe tener una Regla de alerta publicada.");
         }
 
-        PerfilRecordatorioAudiencia perfil = audiencia.getTipoAudiencia().getPerfilRecordatorio();
+        PerfilRecordatorioAudiencia perfil = tieneSnapshot ? null : audiencia.getTipoAudiencia().getPerfilRecordatorio();
         LocalDateTime fechaHora = audiencia.getFechaAudiencia().atTime(
                 audiencia.getHoraAudiencia() == null ? LocalTime.of(9, 0) : audiencia.getHoraAudiencia());
         long minutos = Duration.between(fechaEvaluacion, fechaHora).toMinutes();
-        int amarilloHoras = perfil.getAnticipacionAmarillaHoras();
-        int rojoHoras = perfil.getAnticipacionRojaHoras();
+        int amarilloHoras = tieneSnapshot ? audiencia.getRecordatorioAmarilloHoras() : perfil.getAnticipacionAmarillaHoras();
+        int rojoHoras = tieneSnapshot ? audiencia.getRecordatorioRojoHoras() : perfil.getAnticipacionRojaHoras();
         int[] umbrales = {amarilloHoras, rojoHoras};
-        String explicacion = "Perfil “" + perfil.getNombre() + "”: atención desde "
+        String nombreRegla = tieneSnapshot ? audiencia.getRecordatorioPerfilNombre() : perfil.getNombre();
+        String explicacion = "Regla “" + nombreRegla + "”: atención desde "
                 + formatoHoras(amarilloHoras) + " e inminente desde " + formatoHoras(rojoHoras) + ".";
 
         if (minutos < 0) {
@@ -149,6 +160,33 @@ public class EvaluadorAtencionTemporalService {
         int rojo = limitar((int) Math.ceil(duracion * perfil.getRojoPorcentaje() / 100.0),
                 perfil.getRojoMinimoDias(), perfil.getRojoMaximoDias());
         return new int[] {amarillo, rojo};
+    }
+
+    public void fijarSnapshot(Termino termino) {
+        if (termino == null || termino.getTipoTerminoRef() == null
+                || termino.getTipoTerminoRef().getPerfilAlerta() == null
+                || termino.getFechaVencimiento() == null) {
+            return;
+        }
+        PerfilAlertaTermino perfil = termino.getTipoTerminoRef().getPerfilAlerta();
+        int[] umbrales = resolverUmbrales(termino, perfil);
+        termino.setAlertaPerfilNombre(perfil.getNombre());
+        termino.setAlertaPerfilVersion(perfil.getVersion());
+        termino.setAlertaModo(perfil.getModo());
+        termino.setAlertaAmarilloDias(umbrales[0]);
+        termino.setAlertaRojoDias(umbrales[1]);
+    }
+
+    public void fijarSnapshot(Audiencia audiencia) {
+        if (audiencia == null || audiencia.getTipoAudiencia() == null
+                || audiencia.getTipoAudiencia().getPerfilRecordatorio() == null) {
+            return;
+        }
+        PerfilRecordatorioAudiencia perfil = audiencia.getTipoAudiencia().getPerfilRecordatorio();
+        audiencia.setRecordatorioPerfilNombre(perfil.getNombre());
+        audiencia.setRecordatorioPerfilVersion(perfil.getVersion());
+        audiencia.setRecordatorioAmarilloHoras(perfil.getAnticipacionAmarillaHoras());
+        audiencia.setRecordatorioRojoHoras(perfil.getAnticipacionRojaHoras());
     }
 
     private String resolverTipoDias(Termino termino) {

@@ -297,16 +297,6 @@
                     </li>
 
                     <li>
-                        <button type="button" data-tab="tipos-audiencia"
-                            class="tab-btn catalogos-nav-item flex items-center justify-between gap-3 px-3 py-2.5 transition-all">
-                            <i class="fas fa-gavel"></i>
-                            <span class="hidden sm:inline">Tipos de Audiencia</span>
-                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
-                                th:text="${#lists.size(listaTiposAudiencia)}">0</span>
-                        </button>
-                    </li>
-
-                    <li>
                         <button type="button" data-tab="tipos-expediente"
                             class="tab-btn catalogos-nav-item flex items-center justify-between gap-3 px-3 py-2.5 transition-all">
                             <i class="fas fa-folder"></i>
@@ -333,16 +323,6 @@
                             <span class="hidden sm:inline">Usuarios/Abogados</span>
                             <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
                                 th:text="${#lists.size(listaAbogados)}">0</span>
-                        </button>
-                    </li>
-
-                    <li>
-                        <button type="button" data-tab="tipos-termino"
-                            class="tab-btn catalogos-nav-item flex items-center justify-between gap-3 px-3 py-2.5 transition-all">
-                            <i class="fas fa-hourglass-start text-gob-oro"></i>
-                            <span class="hidden sm:inline font-bold">Tipos de Término</span>
-                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
-                                th:text="${listaTiposTermino != null ? #lists.size(listaTiposTermino) : 0}">0</span>
                         </button>
                     </li>
 
@@ -707,7 +687,7 @@
                                             <span th:if="${t.createdAt != null and t.createdAt.isAfter(fechaLimiteNuevo)}" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">NUEVO</span>
                                         </div>
                                     </td>
-                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4"><div class="font-semibold text-gray-800" th:text="${t.perfilRecordatorio != null ? t.perfilRecordatorio.nombre : 'Sin perfil'}"></div><div class="text-xs text-gray-400" th:if="${t.perfilRecordatorio != null}" th:text="${t.perfilRecordatorio.anticipacionAmarillaHoras + ' h / ' + t.perfilRecordatorio.anticipacionRojaHoras + ' h'}"></div></td>
+                                    <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4"><div class="font-semibold text-gray-800" th:text="${t.perfilRecordatorio != null ? t.perfilRecordatorio.nombre : 'Sin regla'}"></div><div class="text-xs text-gray-400" th:if="${t.perfilRecordatorio != null}" th:text="${t.perfilRecordatorio.anticipacionAmarillaHoras + ' h / ' + t.perfilRecordatorio.anticipacionRojaHoras + ' h'}"></div></td>
                                     <td class="block sm:table-cell px-0 sm:px-6 py-0 sm:py-4 text-right sm:text-center border-t border-gray-100 sm:border-0 pt-2 sm:pt-0">
                                         <span class="text-xs px-2 py-1 rounded-full font-bold" th:classappend="${t.requiereActa == true ? 'bg-amber-50 text-amber-800' : 'bg-gray-100 text-gray-600'}" th:text="${t.requiereActa == true ? 'Requerida' : 'No requerida'}"></span>
                                     </td>

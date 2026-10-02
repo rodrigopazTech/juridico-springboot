@@ -85,6 +85,14 @@ class EvaluadorAtencionTemporalServiceTest {
                 evaluador.evaluarAudiencia(audiencia(tipo, hoy.minusDays(1), LocalTime.NOON), ahora).nivel());
     }
 
+    @Test
+    void audienciaSuspendidaNoSeConfundeConResultadoRegistrado() {
+        Audiencia audiencia = audiencia(TipoAudiencia.builder().build(), hoy.plusDays(4), LocalTime.NOON);
+        audiencia.setEstatusAudiencia(EstatusAudiencia.SUSPENDIDA);
+
+        assertEquals("Suspendida", evaluador.evaluarAudiencia(audiencia).etiqueta());
+    }
+
     private PerfilAlertaTermino perfilDias() {
         return PerfilAlertaTermino.builder().nombre("Plazo corto").modo(ModoPerfilAlerta.DIAS_RESTANTES)
                 .amarilloDias(2).rojoDias(1).build();

@@ -1,152 +1,136 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#691228">
-    <title>Plazos y alertas | Sistema Jurídico</title>
+    <title>Plazos y alertas | SIAJ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script th:src="@{/js/tailwind.config.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --vino:#691228; --oro:#bc955c; --verde:#10312b; --papel:#f5f1eb; --tinta:#252322; }
-        body { background: radial-gradient(circle at 88% 0%, rgba(188,149,92,.14), transparent 28rem), var(--papel); color:var(--tinta); }
-        .folio-card { box-shadow: 0 14px 38px rgba(56,35,33,.08); }
-        .rule-line { background:linear-gradient(90deg,var(--vino),var(--oro)); height:3px; }
-        .reveal { animation: reveal .45s ease-out both; }
-        @keyframes reveal { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
-        input:focus, select:focus, textarea:focus { outline:none; border-color:var(--oro); box-shadow:0 0 0 3px rgba(188,149,92,.18); }
+        :root{--vino:#691228;--oro:#bc955c;--verde:#10312b;--papel:#f6f2ec}
+        body{background:radial-gradient(circle at 88% 0,rgba(188,149,92,.14),transparent 30rem),var(--papel)}
+        .card{background:#fff;border:1px solid #e7e5e4;border-radius:1rem;box-shadow:0 12px 32px rgba(56,35,33,.07)}
+        .field{width:100%;border:1px solid #d6d3d1;border-radius:.65rem;padding:.65rem .8rem;background:white}
+        .field:focus{outline:none;border-color:var(--oro);box-shadow:0 0 0 3px rgba(188,149,92,.18)}
+        .btn-main{border-radius:.65rem;background:var(--vino);color:#fff;font-weight:700;padding:.7rem 1rem}
+        .btn-soft{border-radius:.65rem;border:1px solid #d6d3d1;background:#fff;color:#44403c;font-weight:700;padding:.7rem 1rem}
+        .anchor{scroll-margin-top:8.5rem}
     </style>
 </head>
-<body class="min-h-screen">
-    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
+<body class="min-h-screen text-stone-800">
+<div th:replace="~{fragments/sidebar :: sidebar}"></div>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <main class="p-4 sm:ml-64 min-h-screen pt-[116px]">
-        <div class="max-w-7xl mx-auto space-y-6 reveal">
-            <header class="bg-white border border-stone-200 rounded-xl overflow-hidden folio-card">
-                <div class="rule-line"></div>
-                <div class="p-6 lg:p-8 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
-                    <div>
-                        <p class="text-xs tracking-[.22em] uppercase font-bold text-[#8a6a37]">Administración · SIAJ 2.0</p>
-                        <h1 class="text-3xl font-serif font-bold text-[#10312b] mt-2">Plazos y alertas</h1>
-                        <p class="text-sm text-stone-600 mt-2 max-w-3xl">Define reglas reutilizables. Los colores no se capturan: SIAJ deriva el nivel de atención a partir del perfil vinculado a cada tipo.</p>
-                    </div>
-                    <div class="flex items-center gap-3 rounded-lg bg-stone-50 border border-stone-200 px-4 py-3 text-sm">
-                        <i class="fas fa-shield-halved text-[#691228]"></i>
-                        <span><strong>Versionado:</strong> un perfil publicado es inmutable.</span>
-                    </div>
-                </div>
-            </header>
+<main class="p-4 sm:ml-64 min-h-screen pt-[116px]">
+  <div class="max-w-7xl mx-auto space-y-6">
+    <header class="card overflow-hidden">
+      <div class="h-1 bg-gradient-to-r from-[#691228] to-[#bc955c]"></div>
+      <div class="p-6 lg:p-8">
+        <p class="text-xs tracking-[.22em] uppercase font-bold text-[#8a6a37]">Configuración institucional</p>
+        <h1 class="text-3xl font-serif font-bold text-[#10312b] mt-2">Plazos y alertas</h1>
+        <p class="text-sm text-stone-600 mt-2 max-w-3xl">Administra en un solo lugar los tipos de Término y Audiencia y las reglas que calculan su nivel de atención.</p>
+      </div>
+    </header>
 
-            <div th:if="${mensajeExito}" role="status" class="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-900 px-4 py-3" th:text="${mensajeExito}"></div>
-            <div th:if="${mensajeError}" role="alert" class="rounded-lg border border-red-200 bg-red-50 text-red-900 px-4 py-3" th:text="${mensajeError}"></div>
+    <div th:if="${mensajeExito}" role="status" class="rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900 px-5 py-4" th:text="${mensajeExito}"></div>
+    <div th:if="${mensajeError}" role="alert" class="rounded-xl border border-red-200 bg-red-50 text-red-900 px-5 py-4" th:text="${mensajeError}"></div>
+    <div class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-950 flex gap-3">
+      <i class="fas fa-triangle-exclamation mt-1 text-amber-700"></i>
+      <div><strong>Configuración compartida.</strong> Cualquier cambio se aplica a la gerencia y puede modificar el comportamiento de otros usuarios. SIAJ conserva internamente el historial de las reglas publicadas.</div>
+    </div>
 
-            <div class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-950 flex items-start gap-3">
-                <i class="fas fa-triangle-exclamation mt-0.5 text-amber-700"></i>
-                <div><strong>Configuración compartida.</strong> Los perfiles quedan disponibles para todo el sistema y afectan a los tipos de Término o Audiencia que los tengan vinculados. Los perfiles publicados son inmutables.</div>
-            </div>
+    <nav class="sticky top-[104px] z-20 card p-2 flex gap-2 overflow-x-auto" aria-label="Secciones de Plazos y alertas">
+      <a href="#tipos-termino" class="whitespace-nowrap px-3 py-2 rounded-lg bg-[#691228] text-white text-sm font-bold">Tipos de Término</a>
+      <a href="#reglas-termino" class="whitespace-nowrap px-3 py-2 rounded-lg text-sm font-bold hover:bg-stone-100">Reglas de Término</a>
+      <a href="#tipos-audiencia" class="whitespace-nowrap px-3 py-2 rounded-lg text-sm font-bold hover:bg-stone-100">Tipos de Audiencia</a>
+      <a href="#reglas-audiencia" class="whitespace-nowrap px-3 py-2 rounded-lg text-sm font-bold hover:bg-stone-100">Reglas de Audiencia</a>
+      <a href="#calendario" class="whitespace-nowrap px-3 py-2 rounded-lg text-sm font-bold hover:bg-stone-100">Calendario</a>
+    </nav>
 
-            <nav aria-label="Secciones de perfiles" class="flex flex-wrap gap-2">
-                <a href="#terminos" class="px-4 py-2 rounded-full bg-[#691228] text-white text-sm font-bold"><i class="fas fa-hourglass-half mr-2"></i>Términos</a>
-                <a href="#audiencias" class="px-4 py-2 rounded-full bg-white border border-stone-300 text-stone-700 text-sm font-bold"><i class="fas fa-gavel mr-2"></i>Audiencias</a>
-            </nav>
-
-            <section id="terminos" class="grid grid-cols-1 xl:grid-cols-[1.35fr_.65fr] gap-6 scroll-mt-28">
-                <div class="bg-white border border-stone-200 rounded-xl folio-card overflow-hidden">
-                    <div class="p-5 border-b border-stone-200 flex items-start justify-between gap-4">
-                        <div>
-                            <h2 class="text-xl font-serif font-bold text-[#10312b]">Perfiles de alerta de Términos</h2>
-                            <p class="text-sm text-stone-500 mt-1">Días restantes para plazos calculados; proporción limitada para fechas capturadas.</p>
-                        </div>
-                        <span class="text-xs font-bold rounded-full bg-stone-100 px-3 py-1" th:text="${#lists.size(perfilesTermino) + ' perfiles'}">0 perfiles</span>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead class="bg-stone-50 text-stone-500 text-xs uppercase tracking-wide">
-                                <tr><th class="text-left px-5 py-3">Perfil</th><th class="text-left px-5 py-3">Regla</th><th class="text-left px-5 py-3">Estado</th><th class="text-right px-5 py-3">Acción</th></tr>
-                            </thead>
-                            <tbody class="divide-y divide-stone-100">
-                                <tr th:each="p : ${perfilesTermino}" class="hover:bg-amber-50/30">
-                                    <td class="px-5 py-4"><div class="font-bold text-stone-900" th:text="${p.nombre}">Perfil</div><div class="text-xs text-stone-500" th:text="${p.codigo + ' · v' + p.version}">COD · v1</div></td>
-                                    <td class="px-5 py-4">
-                                        <div class="font-semibold" th:text="${p.modo.descripcion}">Modo</div>
-                                        <div th:if="${p.modo.name() == 'DIAS_RESTANTES'}" class="text-xs text-stone-500" th:text="${'Amarillo ' + p.amarilloDias + ' días · Rojo ' + p.rojoDias + ' días'}"></div>
-                                        <div th:if="${p.modo.name() == 'PROPORCIONAL_LIMITADO'}" class="text-xs text-stone-500" th:text="${'Amarillo ' + p.amarilloPorcentaje + '% · Rojo ' + p.rojoPorcentaje + '%'}"></div>
-                                    </td>
-                                    <td class="px-5 py-4"><span class="inline-flex px-2.5 py-1 rounded-full text-xs font-bold" th:classappend="${p.estado.name() == 'PUBLICADO' ? 'bg-emerald-50 text-emerald-800' : (p.estado.name() == 'BORRADOR' ? 'bg-amber-50 text-amber-800' : 'bg-stone-100 text-stone-600')}" th:text="${p.estado.descripcion}">Estado</span></td>
-                                    <td class="px-5 py-4 text-right">
-                                        <form th:if="${p.estado.name() == 'BORRADOR'}" th:action="@{/administracion/plazos-alertas/terminos/{id}/publicar(id=${p.id})}" method="post"><button class="text-[#691228] font-bold hover:underline">Publicar</button></form>
-                                        <form th:if="${p.estado.name() == 'PUBLICADO'}" th:action="@{/administracion/plazos-alertas/terminos/{id}/inactivar(id=${p.id})}" method="post"><button class="text-stone-600 font-semibold hover:underline">Inactivar</button></form>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <form th:action="@{/administracion/plazos-alertas/terminos}" th:object="${nuevoPerfilTermino}" method="post" class="bg-white border border-stone-200 rounded-xl folio-card p-5 space-y-4">
-                    <div><p class="text-xs uppercase tracking-widest text-[#8a6a37] font-bold">Nueva regla</p><h3 class="font-serif text-xl font-bold text-[#10312b] mt-1">Perfil de Término</h3></div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <label class="text-sm font-semibold">Código<input th:field="*{codigo}" required placeholder="PLAZO_ESPECIAL" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label>
-                        <label class="text-sm font-semibold">Versión<input th:field="*{version}" type="number" min="1" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label>
-                    </div>
-                    <label class="block text-sm font-semibold">Nombre<input th:field="*{nombre}" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label>
-                    <label class="block text-sm font-semibold">Descripción<textarea th:field="*{descripcion}" required rows="2" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></textarea></label>
-                    <label class="block text-sm font-semibold">Aplicación<select th:field="*{modo}" id="modo-perfil-termino" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal" onchange="actualizarModoPerfil()"><option th:each="m : ${modosPerfil}" th:value="${m}" th:text="${m.descripcion}"></option></select></label>
-
-                    <div id="regla-dias" class="grid grid-cols-2 gap-3 rounded-lg bg-stone-50 border p-3">
-                        <label class="text-xs font-bold text-amber-800">Amarillo · días<input th:field="*{amarilloDias}" type="number" min="1" value="5" class="mt-1 w-full border rounded px-2 py-2 text-stone-800"></label>
-                        <label class="text-xs font-bold text-red-800">Rojo · días<input th:field="*{rojoDias}" type="number" min="0" value="2" class="mt-1 w-full border rounded px-2 py-2 text-stone-800"></label>
-                    </div>
-
-                    <div id="regla-proporcional" class="hidden space-y-3 rounded-lg bg-stone-50 border p-3">
-                        <div class="grid grid-cols-3 gap-2"><label class="text-xs font-bold text-amber-800">Amarillo %<input th:field="*{amarilloPorcentaje}" type="number" min="0" max="100" class="mt-1 w-full border rounded px-2 py-2"></label><label class="text-xs">Mínimo<input th:field="*{amarilloMinimoDias}" type="number" min="0" class="mt-1 w-full border rounded px-2 py-2"></label><label class="text-xs">Máximo<input th:field="*{amarilloMaximoDias}" type="number" min="0" class="mt-1 w-full border rounded px-2 py-2"></label></div>
-                        <div class="grid grid-cols-3 gap-2"><label class="text-xs font-bold text-red-800">Rojo %<input th:field="*{rojoPorcentaje}" type="number" min="0" max="100" class="mt-1 w-full border rounded px-2 py-2"></label><label class="text-xs">Mínimo<input th:field="*{rojoMinimoDias}" type="number" min="0" class="mt-1 w-full border rounded px-2 py-2"></label><label class="text-xs">Máximo<input th:field="*{rojoMaximoDias}" type="number" min="0" class="mt-1 w-full border rounded px-2 py-2"></label></div>
-                        <div class="border-t pt-3"><label class="text-xs font-bold">Simular duración<input id="sim-duracion" type="number" min="1" value="20" class="ml-2 w-20 border rounded px-2 py-1" oninput="simularPerfil()"></label><p id="sim-resultado" class="mt-2 text-xs text-stone-600" aria-live="polite"></p></div>
-                    </div>
-                    <button class="w-full bg-[#691228] hover:bg-[#511020] text-white rounded-lg px-4 py-2.5 font-bold"><i class="fas fa-floppy-disk mr-2"></i>Guardar borrador</button>
-                </form>
-            </section>
-
-            <section id="audiencias" class="grid grid-cols-1 xl:grid-cols-[1.35fr_.65fr] gap-6 scroll-mt-28 pb-10">
-                <div class="bg-white border border-stone-200 rounded-xl folio-card overflow-hidden">
-                    <div class="p-5 border-b border-stone-200"><h2 class="text-xl font-serif font-bold text-[#10312b]">Perfiles de recordatorio de Audiencias</h2><p class="text-sm text-stone-500 mt-1">La proximidad se expresa en tiempo absoluto; nunca en porcentajes.</p></div>
-                    <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-stone-50 text-stone-500 text-xs uppercase"><tr><th class="text-left px-5 py-3">Perfil</th><th class="text-left px-5 py-3">Proximidad</th><th class="text-left px-5 py-3">Estado</th><th class="text-right px-5 py-3">Acción</th></tr></thead><tbody class="divide-y divide-stone-100">
-                        <tr th:each="p : ${perfilesAudiencia}"><td class="px-5 py-4"><div class="font-bold" th:text="${p.nombre}"></div><div class="text-xs text-stone-500" th:text="${p.codigo + ' · v' + p.version}"></div></td><td class="px-5 py-4"><div th:text="${'Atención: ' + p.anticipacionAmarillaHoras + ' h'}"></div><div class="text-xs text-stone-500" th:text="${'Inminente: ' + p.anticipacionRojaHoras + ' h'}"></div></td><td class="px-5 py-4"><span class="text-xs font-bold" th:text="${p.estado.descripcion}"></span></td><td class="px-5 py-4 text-right"><form th:if="${p.estado.name() == 'BORRADOR'}" th:action="@{/administracion/plazos-alertas/audiencias/{id}/publicar(id=${p.id})}" method="post"><button class="text-[#691228] font-bold hover:underline">Publicar</button></form><form th:if="${p.estado.name() == 'PUBLICADO'}" th:action="@{/administracion/plazos-alertas/audiencias/{id}/inactivar(id=${p.id})}" method="post"><button class="text-stone-600 font-semibold hover:underline">Inactivar</button></form></td></tr>
-                    </tbody></table></div>
-                </div>
-                <form th:action="@{/administracion/plazos-alertas/audiencias}" th:object="${nuevoPerfilAudiencia}" method="post" class="bg-white border border-stone-200 rounded-xl folio-card p-5 space-y-4">
-                    <div><p class="text-xs uppercase tracking-widest text-[#8a6a37] font-bold">Nueva regla</p><h3 class="font-serif text-xl font-bold text-[#10312b] mt-1">Perfil de Audiencia</h3></div>
-                    <div class="grid grid-cols-2 gap-3"><label class="text-sm font-semibold">Código<input th:field="*{codigo}" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label><label class="text-sm font-semibold">Versión<input th:field="*{version}" type="number" min="1" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label></div>
-                    <label class="block text-sm font-semibold">Nombre<input th:field="*{nombre}" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label>
-                    <label class="block text-sm font-semibold">Descripción<textarea th:field="*{descripcion}" required rows="2" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></textarea></label>
-                    <div class="grid grid-cols-2 gap-3"><label class="text-xs font-bold text-amber-800">Atención · horas<input th:field="*{anticipacionAmarillaHoras}" type="number" min="1" required class="mt-1 w-full border rounded px-2 py-2 text-stone-800"></label><label class="text-xs font-bold text-red-800">Inminente · horas<input th:field="*{anticipacionRojaHoras}" type="number" min="0" required class="mt-1 w-full border rounded px-2 py-2 text-stone-800"></label></div>
-                    <label class="block text-sm font-semibold">Recordatorios en minutos<input th:field="*{recordatoriosMinutos}" required pattern="[0-9]+(,[0-9]+)*" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"><span class="block text-xs text-stone-500 mt-1">Ejemplo: 10080,4320,1440,120 equivale a 7 días, 3 días, 1 día y 2 horas.</span></label>
-                    <button class="w-full bg-[#10312b] hover:bg-[#09221e] text-white rounded-lg px-4 py-2.5 font-bold"><i class="fas fa-floppy-disk mr-2"></i>Guardar borrador</button>
-                </form>
-            </section>
+    <section id="tipos-termino" class="anchor grid xl:grid-cols-[1.35fr_.65fr] gap-6">
+      <div class="card overflow-hidden">
+        <div class="p-5 border-b"><h2 class="text-xl font-serif font-bold text-[#10312b]">Tipos de Término</h2><p class="text-sm text-stone-500 mt-1">Define cómo nace el vencimiento y qué regla se aplicará.</p></div>
+        <div class="overflow-x-auto"><table class="w-full text-sm">
+          <thead class="bg-stone-50 text-xs uppercase text-stone-500"><tr><th class="text-left p-4">Tipo</th><th class="text-left p-4">Plazo</th><th class="text-left p-4">Regla</th><th class="text-right p-4">Acciones</th></tr></thead>
+          <tbody class="divide-y">
+          <tr th:each="t:${listaTiposTermino}">
+            <td class="p-4"><div class="font-bold" th:text="${t.nombre}"></div><div class="text-xs text-stone-500" th:text="${t.codigo}"></div></td>
+            <td class="p-4"><span th:text="${t.modoPlazo.descripcion}"></span><div class="text-xs text-stone-500" th:if="${t.modoPlazo.name()=='CALCULADO'}" th:text="${t.diasPredeterminados+' días '+#strings.toLowerCase(t.tipoDias)}"></div></td>
+            <td class="p-4" th:text="${t.perfilAlerta != null ? t.perfilAlerta.nombre : 'Sin regla'}"></td>
+            <td class="p-4 text-right whitespace-nowrap">
+              <button type="button" class="font-bold text-[#691228] mr-3" th:attr="data-id=${t.id},data-nombre=${t.nombre},data-codigo=${t.codigo},data-descripcion=${t.descripcion},data-modo=${t.modoPlazo.name()},data-dias=${t.diasPredeterminados},data-tipodias=${t.tipoDias},data-perfil=${t.perfilAlerta != null ? t.perfilAlerta.id : ''}" onclick="editarTipoTermino(this)">Editar</button>
+              <form class="inline" th:action="@{/administracion/plazos-alertas/tipos-termino/{id}/estado(id=${t.id})}" method="post"><input type="hidden" name="activo" th:value="${!t.activo}"><button class="text-stone-600 font-semibold" th:text="${t.activo?'Inactivar':'Activar'}"></button></form>
+            </td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(listaTiposTermino)}"><td colspan="4" class="p-8 text-center text-stone-500">Aún no hay Tipos de Término.</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <form id="form-tipo-termino" class="card p-5 space-y-4" th:action="@{/administracion/plazos-alertas/tipos-termino}" method="post">
+        <div><h3 class="font-serif text-xl font-bold text-[#10312b]" id="titulo-tipo-termino">Nuevo Tipo de Término</h3><p class="text-xs text-stone-500 mt-1">La política documental es institucional y no necesita configurarse.</p></div>
+        <input type="hidden" name="id" id="tt-id">
+        <label class="block text-sm font-bold">Nombre<input class="field mt-1" name="nombre" id="tt-nombre" required maxlength="100"></label>
+        <label class="block text-sm font-bold">Código<input class="field mt-1" name="codigo" id="tt-codigo" required maxlength="50"></label>
+        <label class="block text-sm font-bold">Descripción<textarea class="field mt-1" name="descripcion" id="tt-descripcion" rows="2"></textarea></label>
+        <label class="block text-sm font-bold">Forma de definir el plazo<select class="field mt-1" name="modoPlazo" id="tt-modo" onchange="actualizarTipoTermino()"><option th:each="m:${modosPlazoTermino}" th:value="${m}" th:text="${m.descripcion}"></option></select></label>
+        <div id="tt-calculado" class="grid grid-cols-2 gap-3">
+          <label class="text-sm font-bold">Días<input class="field mt-1" type="number" min="1" name="diasPredeterminados" id="tt-dias" value="15"></label>
+          <label class="text-sm font-bold">Cómputo<select class="field mt-1" name="tipoDias" id="tt-tipodias"><option value="HABILES">Hábiles</option><option value="NATURALES">Naturales</option></select></label>
         </div>
-    </main>
-    <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
-    <script>
-        function actualizarModoPerfil() {
-            const proporcional = document.getElementById('modo-perfil-termino').value === 'PROPORCIONAL_LIMITADO';
-            document.getElementById('regla-dias').classList.toggle('hidden', proporcional);
-            document.getElementById('regla-proporcional').classList.toggle('hidden', !proporcional);
-            document.querySelectorAll('#regla-dias input').forEach(i => i.required = !proporcional);
-            document.querySelectorAll('#regla-proporcional input:not(#sim-duracion)').forEach(i => i.required = proporcional);
-            if (proporcional) simularPerfil();
-        }
-        function simularPerfil() {
-            const value = id => Number(document.getElementById(id)?.value || 0);
-            const clamp = (n,min,max) => Math.max(min,Math.min(n,max));
-            const duracion = value('sim-duracion');
-            const amarillo = clamp(Math.ceil(duracion * value('amarilloPorcentaje') / 100), value('amarilloMinimoDias'), value('amarilloMaximoDias'));
-            const rojo = clamp(Math.ceil(duracion * value('rojoPorcentaje') / 100), value('rojoMinimoDias'), value('rojoMaximoDias'));
-            document.getElementById('sim-resultado').textContent = `Duración ${duracion} días → amarillo con ${amarillo} días · rojo con ${rojo} días.`;
-        }
-        document.addEventListener('DOMContentLoaded', actualizarModoPerfil);
-    </script>
+        <label id="tt-regla-container" class="block text-sm font-bold">Regla de alerta<select class="field mt-1" name="perfilAlerta.id" id="tt-perfil"><option value="">Selecciona una regla publicada</option><optgroup label="Plazo calculado"><option th:each="p:${perfilesTerminoDias}" th:value="${p.id}" th:text="${p.nombre}" data-modo="CALCULADO"></option></optgroup><optgroup label="Fecha capturada"><option th:each="p:${perfilesTerminoProporcionales}" th:value="${p.id}" th:text="${p.nombre}" data-modo="CAPTURADO"></option></optgroup></select></label>
+        <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-900"><strong>Evidencia fija:</strong> proyecto final aprobado y Acuse o Nota Informativa para registrar la presentación.</div>
+        <div class="flex gap-2"><button class="btn-main flex-1">Guardar Tipo</button><button type="button" class="btn-soft hidden" id="cancelar-tt" onclick="limpiarTipoTermino()">Cancelar</button></div>
+      </form>
+    </section>
+
+    <section id="reglas-termino" class="anchor grid xl:grid-cols-[1.35fr_.65fr] gap-6">
+      <div class="card overflow-hidden"><div class="p-5 border-b"><h2 class="text-xl font-serif font-bold text-[#10312b]">Reglas de alerta para Términos</h2><p class="text-sm text-stone-500 mt-1">SIAJ calcula automáticamente la atención; el usuario nunca captura un color.</p></div>
+        <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-stone-50 text-xs uppercase text-stone-500"><tr><th class="text-left p-4">Regla</th><th class="text-left p-4">Umbrales</th><th class="text-left p-4">Estado</th><th class="text-right p-4">Acciones</th></tr></thead><tbody class="divide-y">
+          <tr th:each="p:${perfilesTermino}"><td class="p-4"><div class="font-bold" th:text="${p.nombre}"></div><div class="text-xs text-stone-500" th:text="${p.codigo}"></div></td><td class="p-4 text-xs"><span th:if="${p.modo.name()=='DIAS_RESTANTES'}" th:text="${'Atención: '+p.amarilloDias+' días · Crítico: '+p.rojoDias+' días'}"></span><span th:unless="${p.modo.name()=='DIAS_RESTANTES'}" th:text="${'Atención: '+p.amarilloPorcentaje+'% · Crítico: '+p.rojoPorcentaje+'%'}"></span></td><td class="p-4" th:text="${p.estado.descripcion}"></td><td class="p-4 text-right whitespace-nowrap"><button type="button" class="text-[#691228] font-bold mr-3" th:attr="data-id=${p.id},data-nombre=${p.nombre},data-codigo=${p.codigo},data-descripcion=${p.descripcion},data-modo=${p.modo.name()},data-ad=${p.amarilloDias},data-rd=${p.rojoDias},data-ap=${p.amarilloPorcentaje},data-rp=${p.rojoPorcentaje}" onclick="editarReglaTermino(this)">Editar</button><form th:if="${p.estado.name()=='BORRADOR'}" class="inline" th:action="@{/administracion/plazos-alertas/terminos/{id}/publicar(id=${p.id})}" method="post" onsubmit="return confirm('Esta Regla de alerta se aplicará a nivel de gerencia. ¿Deseas publicarla?')"><button class="font-bold text-emerald-700">Publicar</button></form><form th:if="${p.estado.name()=='PUBLICADO'}" class="inline" th:action="@{/administracion/plazos-alertas/terminos/{id}/inactivar(id=${p.id})}" method="post"><button class="font-semibold text-stone-600">Inactivar</button></form></td></tr>
+        </tbody></table></div>
+      </div>
+      <form id="form-regla-termino" class="card p-5 space-y-4" th:action="@{/administracion/plazos-alertas/terminos}" method="post" onsubmit="return confirmarPublicacion(event)">
+        <h3 class="font-serif text-xl font-bold text-[#10312b]" id="titulo-regla-termino">Nueva Regla de alerta</h3><input type="hidden" name="id" id="rt-id"><input type="hidden" name="version" id="rt-version" value="1">
+        <label class="block text-sm font-bold">Nombre<input class="field mt-1" name="nombre" id="rt-nombre" required></label><label class="block text-sm font-bold">Código<input class="field mt-1" name="codigo" id="rt-codigo" required></label><label class="block text-sm font-bold">Descripción<textarea class="field mt-1" name="descripcion" id="rt-descripcion" rows="2"></textarea></label>
+        <label class="block text-sm font-bold">Método<select class="field mt-1" name="modo" id="rt-modo" onchange="actualizarReglaTermino()"><option th:each="m:${modosPerfil}" th:value="${m}" th:text="${m.descripcion}"></option></select></label>
+        <div id="rt-dias" class="grid grid-cols-2 gap-3"><label class="text-sm font-bold">Atención (días)<input class="field mt-1" type="number" min="1" name="amarilloDias" id="rt-ad" value="5"></label><label class="text-sm font-bold">Crítico (días)<input class="field mt-1" type="number" min="0" name="rojoDias" id="rt-rd" value="2"></label></div>
+        <div id="rt-porcentaje" class="hidden grid-cols-2 gap-3"><label class="text-sm font-bold">Atención (%)<input class="field mt-1" type="number" min="1" max="100" name="amarilloPorcentaje" id="rt-ap" value="50"></label><label class="text-sm font-bold">Crítico (%)<input class="field mt-1" type="number" min="0" max="100" name="rojoPorcentaje" id="rt-rp" value="20"></label><input type="hidden" name="amarilloMinimoDias" value="3"><input type="hidden" name="amarilloMaximoDias" value="10"><input type="hidden" name="rojoMinimoDias" value="1"><input type="hidden" name="rojoMaximoDias" value="4"></div>
+        <div class="grid grid-cols-2 gap-2"><button class="btn-soft" name="accion" value="borrador">Guardar borrador</button><button class="btn-main" name="accion" value="publicar">Guardar y publicar</button><button type="button" class="btn-soft hidden col-span-2" id="cancelar-rt" onclick="limpiarReglaTermino()">Cancelar edición</button></div>
+      </form>
+    </section>
+
+    <section id="tipos-audiencia" class="anchor grid xl:grid-cols-[1.35fr_.65fr] gap-6">
+      <div class="card overflow-hidden"><div class="p-5 border-b"><h2 class="text-xl font-serif font-bold text-[#10312b]">Tipos de Audiencia</h2><p class="text-sm text-stone-500 mt-1">Define duración, modalidad y recordatorios esperados.</p></div><div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-stone-50 text-xs uppercase text-stone-500"><tr><th class="text-left p-4">Tipo</th><th class="text-left p-4">Modalidad</th><th class="text-left p-4">Regla</th><th class="text-right p-4">Acciones</th></tr></thead><tbody class="divide-y"><tr th:each="t:${listaTiposAudiencia}"><td class="p-4"><div class="font-bold" th:text="${t.nombre}"></div><div class="text-xs text-stone-500" th:text="${t.codigo}"></div></td><td class="p-4" th:text="${(t.modalidadPredeterminada != null ? t.modalidadPredeterminada : 'Sin modalidad') + ' · ' + (t.duracionPredeterminadaMinutos != null ? t.duracionPredeterminadaMinutos + ' min' : 'Sin duración')}"></td><td class="p-4" th:text="${t.perfilRecordatorio!=null?t.perfilRecordatorio.nombre:'Sin regla'}"></td><td class="p-4 text-right whitespace-nowrap"><button type="button" class="text-[#691228] font-bold mr-3" th:attr="data-id=${t.id},data-nombre=${t.nombre},data-codigo=${t.codigo},data-descripcion=${t.descripcion},data-duracion=${t.duracionPredeterminadaMinutos != null ? t.duracionPredeterminadaMinutos : 60},data-modalidad=${t.modalidadPredeterminada != null ? t.modalidadPredeterminada : 'PRESENCIAL'},data-modalidades=${t.modalidadesPermitidas != null ? t.modalidadesPermitidas : 'PRESENCIAL,VIRTUAL,HIBRIDA'},data-perfil=${t.perfilRecordatorio!=null?t.perfilRecordatorio.id:''}" onclick="editarTipoAudiencia(this)">Editar</button><form class="inline" th:action="@{/administracion/plazos-alertas/tipos-audiencia/{id}/estado(id=${t.id})}" method="post"><input type="hidden" name="activo" th:value="${!t.activo}"><button class="text-stone-600 font-semibold" th:text="${t.activo?'Inactivar':'Activar'}"></button></form></td></tr></tbody></table></div></div>
+      <form id="form-tipo-audiencia" class="card p-5 space-y-4" th:action="@{/administracion/plazos-alertas/tipos-audiencia}" method="post"><h3 class="font-serif text-xl font-bold text-[#10312b]" id="titulo-tipo-audiencia">Nuevo Tipo de Audiencia</h3><input type="hidden" name="id" id="ta-id"><label class="block text-sm font-bold">Nombre<input class="field mt-1" name="nombre" id="ta-nombre" required></label><label class="block text-sm font-bold">Código<input class="field mt-1" name="codigo" id="ta-codigo" required></label><label class="block text-sm font-bold">Descripción<textarea class="field mt-1" name="descripcion" id="ta-descripcion" rows="2"></textarea></label><div class="grid grid-cols-2 gap-3"><label class="text-sm font-bold">Duración (min)<input class="field mt-1" type="number" min="1" name="duracionPredeterminadaMinutos" id="ta-duracion" value="60"></label><label class="text-sm font-bold">Modalidad<select class="field mt-1" name="modalidadPredeterminada" id="ta-modalidad"><option>PRESENCIAL</option><option>VIRTUAL</option><option>HIBRIDA</option></select></label></div><input type="hidden" name="modalidadesPermitidas" id="ta-modalidades" value="PRESENCIAL,VIRTUAL,HIBRIDA"><label class="block text-sm font-bold">Regla de alerta<select class="field mt-1" name="perfilRecordatorio.id" id="ta-perfil" required><option value="">Selecciona una regla publicada</option><option th:each="p:${perfilesAudienciaPublicados}" th:value="${p.id}" th:text="${p.nombre}"></option></select></label><div class="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-900"><strong>Evidencia fija:</strong> Acta para resultado registrado o Nota Informativa si la Audiencia se suspende.</div><div class="flex gap-2"><button class="btn-main flex-1">Guardar Tipo</button><button type="button" class="btn-soft hidden" id="cancelar-ta" onclick="limpiarTipoAudiencia()">Cancelar</button></div></form>
+    </section>
+
+    <section id="reglas-audiencia" class="anchor grid xl:grid-cols-[1.35fr_.65fr] gap-6">
+      <div class="card overflow-hidden"><div class="p-5 border-b"><h2 class="text-xl font-serif font-bold text-[#10312b]">Reglas de alerta para Audiencias</h2><p class="text-sm text-stone-500 mt-1">Anticipación con la que una Audiencia requiere atención.</p></div><div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-stone-50 text-xs uppercase text-stone-500"><tr><th class="text-left p-4">Regla</th><th class="text-left p-4">Umbrales</th><th class="text-left p-4">Estado</th><th class="text-right p-4">Acciones</th></tr></thead><tbody class="divide-y"><tr th:each="p:${perfilesAudiencia}"><td class="p-4"><div class="font-bold" th:text="${p.nombre}"></div><div class="text-xs text-stone-500" th:text="${p.codigo}"></div></td><td class="p-4 text-xs" th:text="${'Atención: '+p.anticipacionAmarillaHoras+' h · Crítico: '+p.anticipacionRojaHoras+' h'}"></td><td class="p-4" th:text="${p.estado.descripcion}"></td><td class="p-4 text-right whitespace-nowrap"><button type="button" class="text-[#691228] font-bold mr-3" th:attr="data-id=${p.id},data-nombre=${p.nombre},data-codigo=${p.codigo},data-descripcion=${p.descripcion},data-ah=${p.anticipacionAmarillaHoras},data-rh=${p.anticipacionRojaHoras},data-recordatorios=${p.recordatoriosMinutos}" onclick="editarReglaAudiencia(this)">Editar</button><form th:if="${p.estado.name()=='BORRADOR'}" class="inline" th:action="@{/administracion/plazos-alertas/audiencias/{id}/publicar(id=${p.id})}" method="post" onsubmit="return confirm('Esta Regla de alerta se aplicará a nivel de gerencia. ¿Deseas publicarla?')"><button class="font-bold text-emerald-700">Publicar</button></form><form th:if="${p.estado.name()=='PUBLICADO'}" class="inline" th:action="@{/administracion/plazos-alertas/audiencias/{id}/inactivar(id=${p.id})}" method="post"><button class="font-semibold text-stone-600">Inactivar</button></form></td></tr></tbody></table></div></div>
+      <form id="form-regla-audiencia" class="card p-5 space-y-4" th:action="@{/administracion/plazos-alertas/audiencias}" method="post" onsubmit="return confirmarPublicacion(event)"><h3 class="font-serif text-xl font-bold text-[#10312b]" id="titulo-regla-audiencia">Nueva Regla de alerta</h3><input type="hidden" name="id" id="ra-id"><input type="hidden" name="version" id="ra-version" value="1"><label class="block text-sm font-bold">Nombre<input class="field mt-1" name="nombre" id="ra-nombre" required></label><label class="block text-sm font-bold">Código<input class="field mt-1" name="codigo" id="ra-codigo" required></label><label class="block text-sm font-bold">Descripción<textarea class="field mt-1" name="descripcion" id="ra-descripcion" rows="2"></textarea></label><div class="grid grid-cols-2 gap-3"><label class="text-sm font-bold">Atención (horas)<input class="field mt-1" type="number" min="1" name="anticipacionAmarillaHoras" id="ra-ah" value="72"></label><label class="text-sm font-bold">Crítico (horas)<input class="field mt-1" type="number" min="0" name="anticipacionRojaHoras" id="ra-rh" value="24"></label></div><label class="block text-sm font-bold">Recordatorios (minutos antes)<input class="field mt-1" name="recordatoriosMinutos" id="ra-recordatorios" value="10080,4320,1440,120"></label><div class="grid grid-cols-2 gap-2"><button class="btn-soft" name="accion" value="borrador">Guardar borrador</button><button class="btn-main" name="accion" value="publicar">Guardar y publicar</button><button type="button" class="btn-soft hidden col-span-2" id="cancelar-ra" onclick="limpiarReglaAudiencia()">Cancelar edición</button></div></form>
+    </section>
+
+    <section id="calendario" class="anchor grid xl:grid-cols-[1.35fr_.65fr] gap-6">
+      <div class="card overflow-hidden"><div class="p-5 border-b"><h2 class="text-xl font-serif font-bold text-[#10312b]">Calendario institucional</h2><p class="text-sm text-stone-600 mt-1">Los plazos hábiles omiten fines de semana y los días activos de esta lista.</p></div><div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-stone-50 text-xs uppercase text-stone-500"><tr><th class="text-left p-4">Fecha</th><th class="text-left p-4">Motivo</th><th class="text-left p-4">Estado</th><th class="text-right p-4">Acción</th></tr></thead><tbody class="divide-y"><tr th:each="d:${diasInhabiles}"><td class="p-4 font-bold" th:text="${#temporals.format(d.fecha,'dd/MM/yyyy')}"></td><td class="p-4" th:text="${d.descripcion}"></td><td class="p-4" th:text="${d.activo?'Activo':'Inactivo'}"></td><td class="p-4 text-right"><form th:action="@{/administracion/plazos-alertas/calendario/{id}/estado(id=${d.id})}" method="post"><input type="hidden" name="activo" th:value="${!d.activo}"><button class="font-bold text-[#691228]" th:text="${d.activo?'Inactivar':'Activar'}"></button></form></td></tr><tr th:if="${#lists.isEmpty(diasInhabiles)}"><td colspan="4" class="p-8 text-center text-stone-500">No hay días inhábiles registrados.</td></tr></tbody></table></div></div>
+      <form class="card p-5 space-y-4" th:action="@{/administracion/plazos-alertas/calendario}" method="post"><h3 class="font-serif text-xl font-bold text-[#10312b]">Agregar día inhábil</h3><label class="block text-sm font-bold">Fecha<input class="field mt-1" type="date" name="fecha" required></label><label class="block text-sm font-bold">Motivo<input class="field mt-1" name="descripcion" maxlength="160" required placeholder="Ej. Suspensión oficial de labores"></label><button class="btn-main w-full">Agregar al calendario</button></form>
+    </section>
+  </div>
+</main>
+<script>
+const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v??''};
+function actualizarTipoTermino(){const modo=document.getElementById('tt-modo').value;const calculado=modo==='CALCULADO';const sinVencimiento=modo==='SIN_VENCIMIENTO';const bloqueCalculo=document.getElementById('tt-calculado');const regla=document.getElementById('tt-perfil');bloqueCalculo.classList.toggle('hidden',!calculado);bloqueCalculo.querySelectorAll('input,select').forEach(c=>c.disabled=!calculado);document.getElementById('tt-regla-container').classList.toggle('hidden',sinVencimiento);regla.disabled=sinVencimiento;regla.required=!sinVencimiento;regla.querySelectorAll('option[data-modo]').forEach(o=>o.disabled=o.dataset.modo!==modo);if(sinVencimiento||(regla.selectedOptions[0]&&regla.selectedOptions[0].disabled))regla.value=''}
+function editarTipoTermino(b){const d=b.dataset;set('tt-id',d.id);set('tt-nombre',d.nombre);set('tt-codigo',d.codigo);set('tt-descripcion',d.descripcion);set('tt-modo',d.modo);set('tt-dias',d.dias);set('tt-tipodias',d.tipodias);set('tt-perfil',d.perfil);document.getElementById('titulo-tipo-termino').textContent='Editar Tipo de Término';document.getElementById('cancelar-tt').classList.remove('hidden');actualizarTipoTermino();document.getElementById('form-tipo-termino').scrollIntoView({behavior:'smooth',block:'center'})}
+function limpiarTipoTermino(){document.getElementById('form-tipo-termino').reset();set('tt-id','');document.getElementById('titulo-tipo-termino').textContent='Nuevo Tipo de Término';document.getElementById('cancelar-tt').classList.add('hidden');actualizarTipoTermino()}
+function actualizarReglaTermino(){const prop=document.getElementById('rt-modo').value==='PROPORCIONAL_LIMITADO';document.getElementById('rt-dias').classList.toggle('hidden',prop);document.getElementById('rt-porcentaje').classList.toggle('hidden',!prop);document.getElementById('rt-porcentaje').classList.toggle('grid',prop)}
+function editarReglaTermino(b){const d=b.dataset;set('rt-id',d.id);set('rt-nombre',d.nombre);set('rt-codigo',d.codigo);set('rt-descripcion',d.descripcion);set('rt-modo',d.modo);set('rt-ad',d.ad);set('rt-rd',d.rd);set('rt-ap',d.ap);set('rt-rp',d.rp);document.getElementById('titulo-regla-termino').textContent='Editar Regla de alerta';document.getElementById('cancelar-rt').classList.remove('hidden');actualizarReglaTermino();document.getElementById('form-regla-termino').scrollIntoView({behavior:'smooth',block:'center'})}
+function limpiarReglaTermino(){document.getElementById('form-regla-termino').reset();set('rt-id','');set('rt-version','1');document.getElementById('titulo-regla-termino').textContent='Nueva Regla de alerta';document.getElementById('cancelar-rt').classList.add('hidden');actualizarReglaTermino()}
+function editarTipoAudiencia(b){const d=b.dataset;set('ta-id',d.id);set('ta-nombre',d.nombre);set('ta-codigo',d.codigo);set('ta-descripcion',d.descripcion);set('ta-duracion',d.duracion);set('ta-modalidad',d.modalidad);set('ta-modalidades',d.modalidades);set('ta-perfil',d.perfil);document.getElementById('titulo-tipo-audiencia').textContent='Editar Tipo de Audiencia';document.getElementById('cancelar-ta').classList.remove('hidden');document.getElementById('form-tipo-audiencia').scrollIntoView({behavior:'smooth',block:'center'})}
+function limpiarTipoAudiencia(){document.getElementById('form-tipo-audiencia').reset();set('ta-id','');document.getElementById('titulo-tipo-audiencia').textContent='Nuevo Tipo de Audiencia';document.getElementById('cancelar-ta').classList.add('hidden')}
+function editarReglaAudiencia(b){const d=b.dataset;set('ra-id',d.id);set('ra-nombre',d.nombre);set('ra-codigo',d.codigo);set('ra-descripcion',d.descripcion);set('ra-ah',d.ah);set('ra-rh',d.rh);set('ra-recordatorios',d.recordatorios);document.getElementById('titulo-regla-audiencia').textContent='Editar Regla de alerta';document.getElementById('cancelar-ra').classList.remove('hidden');document.getElementById('form-regla-audiencia').scrollIntoView({behavior:'smooth',block:'center'})}
+function limpiarReglaAudiencia(){document.getElementById('form-regla-audiencia').reset();set('ra-id','');set('ra-version','1');document.getElementById('titulo-regla-audiencia').textContent='Nueva Regla de alerta';document.getElementById('cancelar-ra').classList.add('hidden')}
+function confirmarPublicacion(e){if(e.submitter&&e.submitter.value==='publicar')return confirm('Esta Regla de alerta se aplicará a nivel de gerencia. ¿Deseas guardarla y publicarla?');return true}
+actualizarTipoTermino();actualizarReglaTermino();
+</script>
 </body>
 </html>

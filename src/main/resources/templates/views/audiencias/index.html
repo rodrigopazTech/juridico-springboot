@@ -117,7 +117,7 @@
                                 </div>
                             </div>
 
-                            <!-- Con Acta -->
+                            <!-- Resultado registrado -->
                             <div id="kpi-card-con-acta" onclick="filtrarPorEstatus('CON_ACTA')"
                                 th:classappend="${paramEstatus == 'CON_ACTA' ? 'ring-2 ring-gob-oro border-gob-oro scale-105 z-10 bg-white' : 'bg-white opacity-80 hover:opacity-100 hover:shadow-md cursor-pointer border-gray-50'}"
                                 class="p-4 rounded-2xl shadow-sm border flex items-center gap-4 transition-all duration-500">
@@ -125,7 +125,7 @@
                                     <i class="fas fa-file-contract"></i>
                                 </div>
                                 <div class="flex-1">
-                                    <p class="text-[10px] uppercase text-gray-400 font-bold mb-0.5">Con Acta</p>
+                                    <p class="text-[10px] uppercase text-gray-400 font-bold mb-0.5">Resultado registrado</p>
                                     <h3 class="text-xl font-bold text-gray-800"
                                         th:text="${kpisAudiencias[T(com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia).CON_ACTA]}">
                                         0</h3>

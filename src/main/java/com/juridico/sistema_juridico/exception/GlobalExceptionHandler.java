@@ -103,7 +103,7 @@ public class GlobalExceptionHandler {
         LOGGER.error("Error inesperado procesando {} {}", request.getMethod(), request.getRequestURI(), ex);
 
         if (isApiRequest(request)) {
-            return jsonError(HttpStatus.INTERNAL_SERVER_ERROR, "No pudimos completar la acción. Inténtalo de nuevo más tarde.");
+            return jsonError(HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrió un error inesperado. Inténtalo de nuevo más tarde.");
         }
 
         ModelAndView errorPage = new ModelAndView("error/500");

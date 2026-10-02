@@ -2,8 +2,11 @@ package com.juridico.sistema_juridico.service.configuracion;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.juridico.sistema_juridico.Entity.configuracion.PerfilAlertaTermino;
@@ -14,12 +17,20 @@ import com.juridico.sistema_juridico.exception.BadRequestException;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 import com.juridico.sistema_juridico.repository.configuracion.PerfilAlertaTerminoRepository;
 import com.juridico.sistema_juridico.repository.configuracion.PerfilRecordatorioAudienciaRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.TipoTerminoRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
 
 @Service
 public class PerfilAtencionService {
 
     private final PerfilAlertaTerminoRepository terminoRepository;
     private final PerfilRecordatorioAudienciaRepository audienciaRepository;
+
+    @Autowired
+    private TipoTerminoRepository tipoTerminoRepository;
+
+    @Autowired
+    private TipoAudienciaRepository tipoAudienciaRepository;
 
     public PerfilAtencionService(PerfilAlertaTerminoRepository terminoRepository,
             PerfilRecordatorioAudienciaRepository audienciaRepository) {
@@ -28,11 +39,17 @@ public class PerfilAtencionService {
     }
 
     public List<PerfilAlertaTermino> listarTerminos() {
-        return terminoRepository.findAllByOrderByNombreAscVersionDesc();
+        Map<String, PerfilAlertaTermino> actuales = new LinkedHashMap<>();
+        terminoRepository.findAllByOrderByNombreAscVersionDesc()
+                .forEach(p -> actuales.putIfAbsent(p.getCodigo(), p));
+        return List.copyOf(actuales.values());
     }
 
     public List<PerfilRecordatorioAudiencia> listarAudiencias() {
-        return audienciaRepository.findAllByOrderByNombreAscVersionDesc();
+        Map<String, PerfilRecordatorioAudiencia> actuales = new LinkedHashMap<>();
+        audienciaRepository.findAllByOrderByNombreAscVersionDesc()
+                .forEach(p -> actuales.putIfAbsent(p.getCodigo(), p));
+        return List.copyOf(actuales.values());
     }
 
     public List<PerfilAlertaTermino> publicados(ModoPerfilAlerta modo) {
@@ -49,13 +66,18 @@ public class PerfilAtencionService {
         validar(perfil);
         if (perfil.getId() != null) {
             PerfilAlertaTermino existente = terminoRepository.findById(perfil.getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Perfil de término no encontrado."));
+                    .orElseThrow(() -> new ResourceNotFoundException("Regla de alerta para Términos no encontrada."));
             if (existente.estaPublicado()) {
-                throw new BadRequestException("Un perfil publicado es inmutable. Crea una nueva versión.");
+                PerfilAlertaTermino revision = copiarComoRevision(perfil, existente,
+                        terminoRepository.findFirstByCodigoOrderByVersionDesc(existente.getCodigo())
+                                .map(p -> p.getVersion() + 1).orElse(1));
+                normalizar(revision);
+                validar(revision);
+                return terminoRepository.save(revision);
             }
             perfil.setCreatedAt(existente.getCreatedAt());
         } else if (terminoRepository.existsByCodigoAndVersion(perfil.getCodigo(), perfil.getVersion())) {
-            throw new BadRequestException("Ya existe esa versión del perfil de término.");
+            throw new BadRequestException("Ya existe una revisión de esta Regla de alerta para Términos.");
         }
         return terminoRepository.save(perfil);
     }
@@ -66,13 +88,18 @@ public class PerfilAtencionService {
         validar(perfil);
         if (perfil.getId() != null) {
             PerfilRecordatorioAudiencia existente = audienciaRepository.findById(perfil.getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Perfil de audiencia no encontrado."));
+                    .orElseThrow(() -> new ResourceNotFoundException("Regla de alerta para Audiencias no encontrada."));
             if (existente.estaPublicado()) {
-                throw new BadRequestException("Un perfil publicado es inmutable. Crea una nueva versión.");
+                PerfilRecordatorioAudiencia revision = copiarComoRevision(perfil, existente,
+                        audienciaRepository.findFirstByCodigoOrderByVersionDesc(existente.getCodigo())
+                                .map(p -> p.getVersion() + 1).orElse(1));
+                normalizar(revision);
+                validar(revision);
+                return audienciaRepository.save(revision);
             }
             perfil.setCreatedAt(existente.getCreatedAt());
         } else if (audienciaRepository.existsByCodigoAndVersion(perfil.getCodigo(), perfil.getVersion())) {
-            throw new BadRequestException("Ya existe esa versión del perfil de audiencia.");
+            throw new BadRequestException("Ya existe una revisión de esta Regla de alerta para Audiencias.");
         }
         return audienciaRepository.save(perfil);
     }
@@ -80,27 +107,66 @@ public class PerfilAtencionService {
     @Transactional
     public void publicarTermino(Integer id) {
         PerfilAlertaTermino perfil = terminoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de término no encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Regla de alerta para Términos no encontrada."));
         validar(perfil);
+        List<PerfilAlertaTermino> anteriores = terminoRepository.findAll().stream()
+                .filter(p -> !p.getId().equals(perfil.getId()))
+                .filter(p -> p.getCodigo().equals(perfil.getCodigo()))
+                .filter(PerfilAlertaTermino::estaPublicado)
+                .toList();
+        anteriores.forEach(p -> {
+            p.setEstado(EstadoPerfil.INACTIVO);
+            p.setVigenteHasta(LocalDate.now());
+        });
+        terminoRepository.saveAll(anteriores);
         perfil.setEstado(EstadoPerfil.PUBLICADO);
         if (perfil.getVigenteDesde() == null) perfil.setVigenteDesde(LocalDate.now());
         terminoRepository.save(perfil);
+        if (tipoTerminoRepository != null && !anteriores.isEmpty()) {
+            var idsAnteriores = anteriores.stream().map(PerfilAlertaTermino::getId).toList();
+            tipoTerminoRepository.findAll().stream()
+                    .filter(t -> t.getPerfilAlerta() != null && idsAnteriores.contains(t.getPerfilAlerta().getId()))
+                    .forEach(t -> {
+                        t.setPerfilAlerta(perfil);
+                        tipoTerminoRepository.save(t);
+                    });
+        }
     }
 
     @Transactional
     public void publicarAudiencia(Integer id) {
         PerfilRecordatorioAudiencia perfil = audienciaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de audiencia no encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Regla de alerta para Audiencias no encontrada."));
         validar(perfil);
+        List<PerfilRecordatorioAudiencia> anteriores = audienciaRepository.findAll().stream()
+                .filter(p -> !p.getId().equals(perfil.getId()))
+                .filter(p -> p.getCodigo().equals(perfil.getCodigo()))
+                .filter(PerfilRecordatorioAudiencia::estaPublicado)
+                .toList();
+        anteriores.forEach(p -> {
+            p.setEstado(EstadoPerfil.INACTIVO);
+            p.setVigenteHasta(LocalDate.now());
+        });
+        audienciaRepository.saveAll(anteriores);
         perfil.setEstado(EstadoPerfil.PUBLICADO);
         if (perfil.getVigenteDesde() == null) perfil.setVigenteDesde(LocalDate.now());
         audienciaRepository.save(perfil);
+        if (tipoAudienciaRepository != null && !anteriores.isEmpty()) {
+            var idsAnteriores = anteriores.stream().map(PerfilRecordatorioAudiencia::getId).toList();
+            tipoAudienciaRepository.findAll().stream()
+                    .filter(t -> t.getPerfilRecordatorio() != null
+                            && idsAnteriores.contains(t.getPerfilRecordatorio().getId()))
+                    .forEach(t -> {
+                        t.setPerfilRecordatorio(perfil);
+                        tipoAudienciaRepository.save(t);
+                    });
+        }
     }
 
     @Transactional
     public void inactivarTermino(Integer id) {
         PerfilAlertaTermino perfil = terminoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de término no encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Regla de alerta para Términos no encontrada."));
         perfil.setEstado(EstadoPerfil.INACTIVO);
         perfil.setVigenteHasta(LocalDate.now());
         terminoRepository.save(perfil);
@@ -109,7 +175,7 @@ public class PerfilAtencionService {
     @Transactional
     public void inactivarAudiencia(Integer id) {
         PerfilRecordatorioAudiencia perfil = audienciaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de audiencia no encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Regla de alerta para Audiencias no encontrada."));
         perfil.setEstado(EstadoPerfil.INACTIVO);
         perfil.setVigenteHasta(LocalDate.now());
         audienciaRepository.save(perfil);
@@ -206,5 +272,39 @@ public class PerfilAtencionService {
 
     private void requerirTexto(String valor, String mensaje) {
         if (valor == null || valor.isBlank()) throw new BadRequestException(mensaje);
+    }
+
+    private PerfilAlertaTermino copiarComoRevision(PerfilAlertaTermino origen,
+            PerfilAlertaTermino anterior, int version) {
+        return PerfilAlertaTermino.builder()
+                .codigo(anterior.getCodigo())
+                .nombre(origen.getNombre())
+                .descripcion(origen.getDescripcion())
+                .modo(origen.getModo())
+                .amarilloDias(origen.getAmarilloDias())
+                .rojoDias(origen.getRojoDias())
+                .amarilloPorcentaje(origen.getAmarilloPorcentaje())
+                .amarilloMinimoDias(origen.getAmarilloMinimoDias())
+                .amarilloMaximoDias(origen.getAmarilloMaximoDias())
+                .rojoPorcentaje(origen.getRojoPorcentaje())
+                .rojoMinimoDias(origen.getRojoMinimoDias())
+                .rojoMaximoDias(origen.getRojoMaximoDias())
+                .version(version)
+                .estado(EstadoPerfil.BORRADOR)
+                .build();
+    }
+
+    private PerfilRecordatorioAudiencia copiarComoRevision(PerfilRecordatorioAudiencia origen,
+            PerfilRecordatorioAudiencia anterior, int version) {
+        return PerfilRecordatorioAudiencia.builder()
+                .codigo(anterior.getCodigo())
+                .nombre(origen.getNombre())
+                .descripcion(origen.getDescripcion())
+                .anticipacionAmarillaHoras(origen.getAnticipacionAmarillaHoras())
+                .anticipacionRojaHoras(origen.getAnticipacionRojaHoras())
+                .recordatoriosMinutos(origen.getRecordatoriosMinutos())
+                .version(version)
+                .estado(EstadoPerfil.BORRADOR)
+                .build();
     }
 }

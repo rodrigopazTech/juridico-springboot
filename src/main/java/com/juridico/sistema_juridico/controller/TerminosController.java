@@ -74,8 +74,10 @@ import com.juridico.sistema_juridico.service.NotificacionService;
 import com.juridico.sistema_juridico.util.TerminoExcelExporter;
 import com.juridico.sistema_juridico.service.procesal.TerminoArchivoService;
 import com.juridico.sistema_juridico.service.procesal.CalculadoraPlazoService;
+import com.juridico.sistema_juridico.service.procesal.EvaluadorAtencionTemporalService;
 import com.juridico.sistema_juridico.service.FileStorageService;
 import com.juridico.sistema_juridico.Entity.enums.TipoDocumentoTermino;
+import com.juridico.sistema_juridico.Entity.enums.TipoEvidenciaPresentacion;
 import com.juridico.sistema_juridico.Entity.procesal.TerminoArchivo;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -115,6 +117,8 @@ public class TerminosController {
     private com.juridico.sistema_juridico.service.catalogo.TipoTerminoService tipoTerminoService;
     @Autowired
     private CalculadoraPlazoService calculadoraPlazoService;
+    @Autowired
+    private EvaluadorAtencionTemporalService evaluadorAtencionTemporalService;
 
     // --- MATRIZ DE PERMISOS ---
     private static final Map<EstatusTermino, List<RolUsuario>> PERMISOS_ETAPAS = new HashMap<>();
@@ -584,6 +588,9 @@ public class TerminosController {
                 validarAccesoTermino(terminoGuardar, actor);
             }
 
+            if (esNuevo) {
+                evaluadorAtencionTemporalService.fijarSnapshot(terminoGuardar);
+            }
             Termino terminoGuardado = terminoRepository.save(terminoGuardar);
 
             if (esNuevo) {
@@ -919,6 +926,9 @@ public class TerminosController {
                 terminoPresentadoRepository.save(presentado);
 
                 termino.setAcuseNombre(ta.getNombreOriginal());
+                termino.setTipoEvidenciaPresentacion(TipoEvidenciaPresentacion.ACUSE);
+                termino.setEstatusTermino(EstatusTermino.PRESENTADO);
+                termino.setFechaPresentacion(LocalDate.now());
                 if (observaciones != null) {
                     termino.setObservaciones(observaciones);
                 }
@@ -936,12 +946,12 @@ public class TerminosController {
                     auditoriaService.registrarActividadGeneral(actor, "ARCHIVO CARGADO", "Acuse de término '" + termino.getAsunto() + "' cargado. " + logDesc, "UPLOAD");
                 }
 
-                redirectAttrs.addFlashAttribute("mensaje", "Acuse cargado correctamente. Ahora puedes avanzar el término a 'Presentado'.");
+                redirectAttrs.addFlashAttribute("mensaje", "Acuse cargado. El término ahora está Presentado.");
                 redirectAttrs.addFlashAttribute("tipo", "success");
                 if (ajax) {
                     Map<String, Object> response = new HashMap<>();
                     response.put("success", true);
-                    response.put("mensaje", "Acuse cargado correctamente. Ahora puedes avanzar el término a 'Presentado'.");
+                    response.put("mensaje", "Acuse cargado. El término ahora está Presentado.");
                     return ResponseEntity.ok(response);
                 }
             } else {
@@ -964,6 +974,56 @@ public class TerminosController {
                 return ResponseEntity.badRequest().body(response);
             }
             redirectAttrs.addFlashAttribute("mensaje", "Error: " + errorMsg);
+            redirectAttrs.addFlashAttribute("tipo", "error");
+        }
+        return "redirect:/terminos";
+    }
+
+    @PostMapping("/subir-nota-informativa")
+    public Object subirNotaInformativa(@RequestParam("id") Integer id,
+            @RequestParam("archivoNota") MultipartFile archivo,
+            @RequestParam(value = "observaciones", required = false) String observaciones,
+            RedirectAttributes redirectAttrs, HttpServletRequest request) {
+        boolean ajax = "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
+        Usuario actor = getUsuarioActual();
+        try {
+            if (!tienePermiso(EstatusTermino.LIBERADO, actor.getRol())) {
+                throw new ForbiddenException("No tienes permiso para registrar la presentación.");
+            }
+            Termino termino = terminoRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Término no encontrado"));
+            validarAccesoTermino(termino, actor);
+            if (termino.getEstatusTermino() != EstatusTermino.LIBERADO) {
+                throw new IllegalStateException("La Nota Informativa sólo puede cargarse cuando el término está Liberado.");
+            }
+            TerminoArchivo ta = terminoArchivoService.guardarArchivo(termino, archivo,
+                    TipoDocumentoTermino.NOTA_INFORMATIVA, actor);
+            terminoPresentadoRepository.save(TerminoPresentado.builder()
+                    .termino(termino)
+                    .expedienteNumero(termino.getExpediente() != null ? termino.getExpediente().getNumero() : "Sin Expediente")
+                    .fechaPresentacion(LocalDate.now())
+                    .acuseDocumento(ta.getNombreOriginal())
+                    .sincronizadoAt(LocalDateTime.now()).build());
+            termino.setAcuseNombre(ta.getNombreOriginal());
+            termino.setTipoEvidenciaPresentacion(TipoEvidenciaPresentacion.NOTA_INFORMATIVA);
+            termino.setEstatusTermino(EstatusTermino.PRESENTADO);
+            termino.setFechaPresentacion(LocalDate.now());
+            if (observaciones != null && !observaciones.isBlank()) termino.setObservaciones(observaciones);
+            termino.setUpdatedAt(LocalDateTime.now());
+            terminoRepository.save(termino);
+            String descripcion = "Nota Informativa cargada como evidencia alternativa: " + archivo.getOriginalFilename();
+            if (termino.getExpediente() != null) {
+                auditoriaService.registrar(termino.getExpediente(), "ARCHIVO CARGADO", descripcion, "UPLOAD", actor);
+            } else {
+                auditoriaService.registrarActividadGeneral(actor, "ARCHIVO CARGADO", descripcion, "UPLOAD");
+            }
+            String mensaje = "Nota Informativa cargada. El término ahora está Presentado.";
+            if (ajax) return ResponseEntity.ok(Map.of("success", true, "mensaje", mensaje));
+            redirectAttrs.addFlashAttribute("mensaje", mensaje);
+            redirectAttrs.addFlashAttribute("tipo", "success");
+        } catch (Exception ex) {
+            if (ajax) return ResponseEntity.badRequest().body(Map.of("success", false, "mensaje", ex.getMessage()));
+            redirectAttrs.addFlashAttribute("mensaje", "Error: " + ex.getMessage());
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
         return "redirect:/terminos";

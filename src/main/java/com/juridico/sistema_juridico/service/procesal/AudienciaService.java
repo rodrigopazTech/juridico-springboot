@@ -155,6 +155,47 @@ public class AudienciaService {
                 "UPLOAD");
     }
 
+    @Transactional
+    public void suspenderConNotaInformativa(Integer id, MultipartFile archivo) throws IOException {
+        Audiencia audiencia = audienciaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
+        if (archivo == null || archivo.isEmpty()) {
+            throw new com.juridico.sistema_juridico.exception.BadRequestException("La Nota Informativa es obligatoria para suspender la Audiencia.");
+        }
+        if (!EstatusAudiencia.PENDIENTE.equals(audiencia.getEstatusAudiencia())) {
+            throw new com.juridico.sistema_juridico.exception.BadRequestException("Sólo una Audiencia pendiente puede suspenderse.");
+        }
+        String ruta = fileStorageService.guardarArchivoEnRutaRelativa(archivo, "audiencias");
+        audiencia.setNotaInformativaDocumento(java.nio.file.Paths.get(ruta).getFileName().toString());
+        audiencia.setEstatusAudiencia(EstatusAudiencia.SUSPENDIDA);
+        audienciaRepository.save(audiencia);
+        sincronizarEvidencia(audiencia, archivo, ruta, "Nota Informativa de Audiencia suspendida");
+        registrarActividad(audiencia.getExpediente(), "AUDIENCIA SUSPENDIDA",
+                "Nota Informativa: " + archivo.getOriginalFilename(), "UPLOAD");
+    }
+
+    private void sincronizarEvidencia(Audiencia audiencia, MultipartFile archivo, String ruta, String descripcion) {
+        if (audiencia.getExpediente() == null) return;
+        try {
+            String identidad = SecurityContextHolder.getContext().getAuthentication().getName();
+            Usuario actor = usuarioRepository.findByEmail(identidad)
+                    .or(() -> usuarioRepository.findByUsernameIgnoreCase(identidad)).orElse(null);
+            Carpeta carpeta = carpetaRepository.findByExpedienteIdAndNombreAndCarpetaPadreIsNull(
+                    audiencia.getExpediente().getId(), "Audiencias").orElseGet(() -> carpetaRepository.save(Carpeta.builder()
+                            .expedienteId(audiencia.getExpediente().getId()).nombre("Audiencias")
+                            .usuarioCreador(actor).orden(0).esSistema(true).build()));
+            String original = archivo.getOriginalFilename();
+            if (!documentoRepository.existeNombreDuplicado(audiencia.getExpediente().getId(), carpeta.getId(), original)) {
+                documentoRepository.save(Documento.builder().expedienteId(audiencia.getExpediente().getId())
+                        .nombreArchivo(original).nombreOriginal(original).rutaArchivo(ruta)
+                        .tipoMime(archivo.getContentType()).tamanioBytes(archivo.getSize()).carpeta(carpeta)
+                        .descripcion(descripcion).usuarioSubida(actor).eliminado(false).build());
+            }
+        } catch (Exception ex) {
+            System.err.println("No se pudo sincronizar la Nota Informativa: " + ex.getMessage());
+        }
+    }
+
     // Método privado para enviar la alerta
     private void notificarSubidaActa(Audiencia audiencia) {
         try {
@@ -232,6 +273,18 @@ public class AudienciaService {
 
         // --- SEGURIDAD: Validar permisos de conclusión ---
         validarPermisoConclusion(audiencia, usuarioActual);
+
+        if (EstatusAudiencia.CON_ACTA.equals(audiencia.getEstatusAudiencia())) {
+            if (audiencia.getActaDocumento() == null || audiencia.getActaDocumento().isBlank()) {
+                throw new com.juridico.sistema_juridico.exception.BadRequestException("La Audiencia requiere Acta antes de concluir.");
+            }
+        } else if (EstatusAudiencia.SUSPENDIDA.equals(audiencia.getEstatusAudiencia())) {
+            if (audiencia.getNotaInformativaDocumento() == null || audiencia.getNotaInformativaDocumento().isBlank()) {
+                throw new com.juridico.sistema_juridico.exception.BadRequestException("La Audiencia suspendida requiere Nota Informativa antes de concluir.");
+            }
+        } else {
+            throw new com.juridico.sistema_juridico.exception.BadRequestException("Registra el resultado o suspende la Audiencia antes de concluir.");
+        }
 
         audiencia.setEstatusAudiencia(EstatusAudiencia.CONCLUIDA);
         audiencia.setFechaDesahogo(LocalDate.now());

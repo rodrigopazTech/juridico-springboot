@@ -30,9 +30,9 @@ public class TipoAudienciaService {
                         .orElseThrow(() -> new ResourceNotFoundException("Tipo de Audiencia no encontrado."));
         validar(datos);
         PerfilRecordatorioAudiencia perfil = perfilRepository.findById(datos.getPerfilRecordatorio().getId())
-                .orElseThrow(() -> new BadRequestException("El perfil de recordatorio no existe."));
+                .orElseThrow(() -> new BadRequestException("La Regla de alerta seleccionada no existe."));
         if (perfil.getEstado() != EstadoPerfil.PUBLICADO) {
-            throw new BadRequestException("Sólo se pueden utilizar perfiles publicados.");
+            throw new BadRequestException("Sólo se pueden utilizar Reglas de alerta publicadas.");
         }
         destino.setCodigo(normalizarCodigo(datos.getCodigo(), datos.getNombre()));
         destino.setNombre(datos.getNombre().trim());
@@ -45,8 +45,8 @@ public class TipoAudienciaService {
         destino.setPermiteExcepcionSinActa(Boolean.TRUE.equals(datos.getPermiteExcepcionSinActa()));
         destino.setRequiereValidacionActa(Boolean.TRUE.equals(datos.getRequiereValidacionActa()));
         destino.setActivo(datos.getActivo() == null || datos.getActivo());
-        destino.setGerencia(datos.getGerencia());
-        destino.setUsuario(datos.getUsuario());
+        if (datos.getGerencia() != null || datos.getId() == null) destino.setGerencia(datos.getGerencia());
+        if (datos.getUsuario() != null || datos.getId() == null) destino.setUsuario(datos.getUsuario());
         return tipoRepository.save(destino);
     }
 
@@ -58,7 +58,7 @@ public class TipoAudienciaService {
             throw new BadRequestException("La descripción de uso es obligatoria.");
         }
         if (tipo.getPerfilRecordatorio() == null || tipo.getPerfilRecordatorio().getId() == null) {
-            throw new BadRequestException("Selecciona un perfil de recordatorio.");
+            throw new BadRequestException("Selecciona una Regla de alerta.");
         }
         if (tipo.getDuracionPredeterminadaMinutos() != null && tipo.getDuracionPredeterminadaMinutos() <= 0) {
             throw new BadRequestException("La duración predeterminada debe ser mayor que cero.");

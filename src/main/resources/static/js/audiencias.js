@@ -460,6 +460,13 @@ function activarSubidaActa(id) {
     }
 }
 
+function abrirSuspension(id) {
+    const input = document.getElementById('suspender-audiencia-id');
+    if (input) input.value = id;
+    const modal = document.getElementById('modal-suspender');
+    if (modal) modal.classList.remove('hidden');
+}
+
 // ROD-186: Configuración de Notificaciones Estilo Proyecto
 const Toast = Swal.mixin({
     toast: true,

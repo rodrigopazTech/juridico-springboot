@@ -6,6 +6,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.juridico.sistema_juridico.Entity.enums.EstatusTermino;
+import com.juridico.sistema_juridico.Entity.enums.ModoPerfilAlerta;
+import com.juridico.sistema_juridico.Entity.enums.TipoEvidenciaPresentacion;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
 import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.catalogo.CatPrioridad;
@@ -77,6 +79,10 @@ public class Termino {
     @Column(name = "acuse_nombre", length = 500)
     private String acuseNombre;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_evidencia_presentacion", length = 30)
+    private TipoEvidenciaPresentacion tipoEvidenciaPresentacion;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tipo_termino_id")
     private com.juridico.sistema_juridico.Entity.catalogo.TipoTermino tipoTerminoRef;
@@ -91,6 +97,22 @@ public class Termino {
 
     @Column(name = "desglose_dias_texto", columnDefinition = "TEXT")
     private String desgloseDiasTexto;
+
+    @Column(name = "alerta_perfil_nombre", length = 120)
+    private String alertaPerfilNombre;
+
+    @Column(name = "alerta_perfil_version")
+    private Integer alertaPerfilVersion;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "alerta_modo", length = 30)
+    private ModoPerfilAlerta alertaModo;
+
+    @Column(name = "alerta_amarillo_dias")
+    private Integer alertaAmarilloDias;
+
+    @Column(name = "alerta_rojo_dias")
+    private Integer alertaRojoDias;
 
     @PrePersist
     protected void onCreate() {

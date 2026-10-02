@@ -55,16 +55,17 @@ class Alcance1PantallasIntegrationTest {
     void renderizaAdministracionDePlazosYPerfiles() throws Exception {
         mvc.perform(get("/administracion/plazos-alertas").with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("id=\"modo-perfil-termino\"")))
-                .andExpect(content().string(containsString("id=\"regla-proporcional\"")));
+                .andExpect(content().string(containsString("id=\"reglas-termino\"")))
+                .andExpect(content().string(containsString("Guardar y publicar")))
+                .andExpect(content().string(containsString("id=\"tipos-audiencia\"")));
     }
 
     @Test
     void renderizaCatalogosSinCatalogoDeSemaforos() throws Exception {
         mvc.perform(get("/catalogos").with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("id=\"form-tipo-termino\"")))
-                .andExpect(content().string(containsString("id=\"form-tipo-audiencia-completo\"")))
+                .andExpect(content().string(not(containsString("data-tab=\"tipos-termino\""))))
+                .andExpect(content().string(not(containsString("data-tab=\"tipos-audiencia\""))))
                 .andExpect(content().string(not(containsString("id=\"panel-semaforos\""))));
     }
 
