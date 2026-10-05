@@ -51,7 +51,7 @@
                             <input type="radio" name="origenTermino" value="ASUNTO_UNICO"
                                 onchange="toggleOrigenTermino()"
                                 class="text-gob-guinda focus:ring-gob-oro">
-                            <span><i class="fas fa-file-circle-plus mr-2"></i> Asunto Independiente</span>
+                            <span><i class="fas fa-file-circle-plus mr-2"></i> Sin expediente</span>
                         </label>
                     </div>
 
@@ -74,19 +74,37 @@
                     </div>
 
                     <div id="grupo-contexto-termino" class="hidden space-y-5 rounded-lg border border-gray-200 bg-white p-4">
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Asunto Independiente existente</label>
+                        <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                            <p class="text-sm font-bold text-amber-900">Este término se registrará sin expediente.</p>
+                            <p class="mt-1 text-xs text-amber-800">SIAJ creará un Asunto Independiente para conservarlo, localizarlo y vincularlo a un expediente posteriormente.</p>
+                        </div>
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm font-bold text-gray-800">Crear un asunto nuevo</p>
+                                <p class="text-xs text-gray-500">Es la opción normal para una actuación nueva sin expediente.</p>
+                            </div>
+                            <button type="button" id="btn-usar-asunto-existente-termino"
+                                onclick="mostrarSelectorAsuntoExistenteTermino()"
+                                class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:border-gob-guinda hover:text-gob-guinda">
+                                <i class="fas fa-link mr-2"></i>Usar un asunto existente
+                            </button>
+                        </div>
+                        <div id="grupo-asunto-existente-termino" class="hidden rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <label class="block text-sm font-bold text-indigo-900">Buscar asunto existente</label>
+                                <a th:href="@{/asuntos-independientes}" target="_blank" class="text-xs font-bold text-indigo-700 hover:underline">Consultar todos</a>
+                            </div>
                             <select name="asuntoIndependienteId" id="select-asunto-independiente-termino"
                                 onchange="seleccionarAsuntoIndependienteTermino(this)"
                                 class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm bg-white shadow-sm">
-                                <option value="">Crear un nuevo Asunto Independiente</option>
+                                <option value="">No usar un asunto existente</option>
                                 <option th:each="ai : ${asuntosIndependientesList}" th:value="${ai.id}"
                                     th:text="${ai.folioSiaj + ' · ' + ai.referencia + ' · ' + ai.parteInteresada}"
                                     th:data-gerencia="${ai.gerencia?.id}" th:data-materia="${ai.materia?.id}"
                                     th:data-referencia="${ai.referencia}" th:data-partes="${ai.parteInteresada}"
                                     th:data-descripcion="${ai.descripcion}"></option>
                             </select>
-                            <p class="mt-1 text-[11px] text-gray-500">Selecciónalo para agregar otra actuación al mismo asunto y evitar duplicados.</p>
+                            <p class="mt-2 text-[11px] text-indigo-800">Úsalo sólo si esta actuación pertenece al mismo asunto que ya registraste antes.</p>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 campos-nuevo-asunto-termino">
                             <div>
@@ -125,10 +143,10 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-1">Número o referencia *</label>
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">Nombre del asunto independiente *</label>
                                 <input type="text" name="contextoNumeroReferencia" id="input-contexto-referencia"
                                     required
-                                    placeholder="Ej. Oficio, folio o referencia interna"
+                                    placeholder="Ej. Atención a oficio de requerimiento"
                                     class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm">
                             </div>
                             <div>
@@ -171,7 +189,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Actuación / Asunto *</label>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Actuación del término *</label>
                             <input type="text" name="asunto" id="input-asunto" required
                                 placeholder="Ej. Contestación de demanda"
                                 class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm transition-all">

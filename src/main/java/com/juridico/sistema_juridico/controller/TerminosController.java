@@ -298,23 +298,10 @@ public class TerminosController {
         model.addAttribute("listaEstatus", EstatusTermino.values());
 
         // --- 5. LOGICA ANTI-FANTASMAS (EXPEDIENTES DISPONIBLES) ---
-        List<Expediente> expedientesParaDropdown;
-        if (usuarioActual.getRol() == RolUsuario.ABOGADO || usuarioActual.getRol() == RolUsuario.GERENTE) {
-            if (usuarioActual.getGerencia() != null) {
-                expedientesParaDropdown = expedienteRepository.findAllByGerenciaId(usuarioActual.getGerencia().getId());
-            } else {
-                expedientesParaDropdown = Collections.emptyList();
-            }
-        } else if (usuarioActual.getRol() == RolUsuario.JEFE_DEPTO) {
-            if (usuarioActual.getMaterias() != null && !usuarioActual.getMaterias().isEmpty()) {
-                List<Integer> materiaIds = usuarioActual.getMaterias().stream().map(m -> m.getId()).collect(Collectors.toList());
-                expedientesParaDropdown = expedienteRepository.findAllByMateriaIdIn(materiaIds);
-            } else {
-                expedientesParaDropdown = Collections.emptyList();
-            }
-        } else {
-            expedientesParaDropdown = expedienteRepository.findAll();
-        }
+        // El selector usa exactamente el mismo alcance que la validación del servidor.
+        List<Expediente> expedientesParaDropdown = expedienteRepository.findAll().stream()
+                .filter(expediente -> puedeAccederExpediente(expediente, usuarioActual))
+                .toList();
         model.addAttribute("expedientesList", expedientesParaDropdown);
 
         model.addAttribute("rolActual", usuarioActual.getRol());
@@ -871,14 +858,17 @@ public class TerminosController {
                 return ResponseEntity.ok(response);
             }
         } catch (Exception e) {
-            String errorMsg = e.getMessage();
+            String errorMsg = "No fue posible guardar el borrador. Verifica que el archivo sea válido e inténtalo nuevamente.";
+            if (e instanceof ForbiddenException || e instanceof ResourceNotFoundException) {
+                errorMsg = e.getMessage();
+            }
             if (ajax) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
-                response.put("mensaje", "Error: " + errorMsg);
+                response.put("mensaje", errorMsg);
                 return ResponseEntity.badRequest().body(response);
             }
-            redirectAttrs.addFlashAttribute("mensaje", "Error al guardar el archivo: " + errorMsg);
+            redirectAttrs.addFlashAttribute("mensaje", errorMsg);
             redirectAttrs.addFlashAttribute("tipo", "error");
         }
         return "redirect:/terminos";
@@ -1275,16 +1265,17 @@ public class TerminosController {
             Termino termino = terminoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Término no encontrado"));
             validarAccesoTermino(termino, getUsuarioActual());
 
-            // 1. Intentar persistencia avanzada (Acuse)
-            Optional<TerminoArchivo> taOpt = terminoArchivoService.obtenerUltimoPorTipo(id, TipoDocumentoTermino.ACUSE);
+            TipoDocumentoTermino tipoEvidencia = termino.getTipoEvidenciaPresentacion()
+                    == TipoEvidenciaPresentacion.NOTA_INFORMATIVA
+                    ? TipoDocumentoTermino.NOTA_INFORMATIVA
+                    : TipoDocumentoTermino.ACUSE;
+            Optional<TerminoArchivo> taOpt = terminoArchivoService.obtenerUltimoPorTipo(id, tipoEvidencia);
             if (taOpt.isPresent()) {
                 TerminoArchivo ta = taOpt.get();
                 Path rutaArchivo = fileStorageService.obtenerArchivo(ta.getRutaArchivo());
                 Resource recurso = new UrlResource(rutaArchivo.toUri());
                 if (recurso.exists() || recurso.isReadable()) {
-                    return ResponseEntity.ok()
-                            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + ta.getNombreOriginal() + "\"")
-                            .body(recurso);
+                    return respuestaDocumento(rutaArchivo, recurso, ta.getNombreOriginal(), false);
                 }
             }
 
@@ -1307,9 +1298,7 @@ public class TerminosController {
             Path rutaArchivo = fileStorageService.obtenerArchivo(rutaLegadoTermino(acuse.getAcuseDocumento(), "acuses"));
             Resource recurso = new UrlResource(rutaArchivo.toUri());
             if (recurso.exists() || recurso.isReadable()) {
-                return ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + recurso.getFilename() + "\"")
-                        .body(recurso);
+                return respuestaDocumento(rutaArchivo, recurso, recurso.getFilename(), false);
             }
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
@@ -1345,12 +1334,7 @@ public class TerminosController {
                 Path rutaArchivo = fileStorageService.obtenerArchivo(ta.getRutaArchivo());
                 Resource recurso = new UrlResource(rutaArchivo.toUri());
                 if (recurso.exists() || recurso.isReadable()) {
-                    String tipoMime = Files.probeContentType(rutaArchivo);
-                    return ResponseEntity.ok()
-                            .contentType(MediaType.parseMediaType(tipoMime != null ? tipoMime : "application/octet-stream"))
-                            .header(HttpHeaders.CONTENT_DISPOSITION,
-                                    (descarga ? "attachment" : "inline") + "; filename=\"" + ta.getNombreOriginal() + "\"")
-                            .body(recurso);
+                    return respuestaDocumento(rutaArchivo, recurso, ta.getNombreOriginal(), descarga);
                 }
             }
 
@@ -1360,13 +1344,8 @@ public class TerminosController {
             Path rutaArchivo = fileStorageService.obtenerArchivo(rutaLegadoTermino(termino.getAcuse(), "terminos"));
             Resource recurso = new UrlResource(rutaArchivo.toUri());
             if (recurso.exists() || recurso.isReadable()) {
-                String nombre = termino.getAcuseNombre() != null ? termino.getAcuseNombre() : recurso.getFilename();
-                String tipoMime = Files.probeContentType(rutaArchivo);
-                return ResponseEntity.ok()
-                        .contentType(MediaType.parseMediaType(tipoMime != null ? tipoMime : "application/octet-stream"))
-                        .header(HttpHeaders.CONTENT_DISPOSITION,
-                                (descarga ? "attachment" : "inline") + "; filename=\"" + nombre + "\"")
-                        .body(recurso);
+                String nombre = termino.getAcuse() != null ? termino.getAcuse() : recurso.getFilename();
+                return respuestaDocumento(rutaArchivo, recurso, nombre, descarga);
             }
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
@@ -1467,6 +1446,12 @@ public class TerminosController {
     }
 
     private void validarAccesoExpediente(Expediente e, Usuario usuario) {
+        if (!puedeAccederExpediente(e, usuario)) {
+            throw new ForbiddenException("No tienes acceso a este expediente.");
+        }
+    }
+
+    private boolean puedeAccederExpediente(Expediente e, Usuario usuario) {
         RolUsuario rol = usuario.getRol();
         boolean tienePermiso = false;
 
@@ -1494,9 +1479,22 @@ public class TerminosController {
             }
         }
 
-        if (!tienePermiso) {
-            throw new ForbiddenException("No tienes acceso a este expediente.");
+        return tienePermiso;
+    }
+
+    private ResponseEntity<Resource> respuestaDocumento(Path rutaArchivo, Resource recurso,
+            String nombreOriginal, boolean descargaSolicitada) throws IOException {
+        String tipoMime = Files.probeContentType(rutaArchivo);
+        if (tipoMime == null && nombreOriginal != null && nombreOriginal.toLowerCase().endsWith(".pdf")) {
+            tipoMime = MediaType.APPLICATION_PDF_VALUE;
         }
+        boolean esPdf = MediaType.APPLICATION_PDF_VALUE.equalsIgnoreCase(tipoMime);
+        String disposicion = !descargaSolicitada && esPdf ? "inline" : "attachment";
+        String nombreSeguro = nombreOriginal == null ? "documento" : nombreOriginal.replace("\"", "");
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(tipoMime != null ? tipoMime : MediaType.APPLICATION_OCTET_STREAM_VALUE))
+                .header(HttpHeaders.CONTENT_DISPOSITION, disposicion + "; filename=\"" + nombreSeguro + "\"")
+                .body(recurso);
     }
 
     @GetMapping("/api/materias-por-gerencia/{gerenciaId}")

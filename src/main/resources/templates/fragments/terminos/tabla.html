@@ -164,8 +164,8 @@
                                         </button>
 
                                         <a th:if="${t.acuse != null}"
-                                            th:href="${#strings.startsWith(t.acuse, 'http')} ? ${t.acuse} : @{/terminos/descargar/{id}(id=${t.id})}"
-                                            th:target="${#strings.startsWith(t.acuse, 'http')} ? '_blank' : '_self'"
+                                            th:href="${#strings.startsWith(t.acuse, 'http')} ? ${t.acuse} : @{/terminos/preview/{id}(id=${t.id})}"
+                                            target="_blank"
                                             class="block w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition flex items-center border-l-4 border-transparent hover:border-red-500">
                                             <i class="fas fa-file-pdf mr-3 w-4 text-center"></i>
                                             <span class="truncate font-medium">Ver documento</span>
@@ -192,6 +192,7 @@
 
                                         <a th:if="${t.acuseNombre != null}"
                                             th:href="@{/terminos/descargar-acuse/{id}(id=${t.id})}"
+                                            target="_blank"
                                             class="block w-full text-left px-4 py-3 text-sm text-purple-600 hover:bg-purple-50 transition flex items-center border-l-4 border-purple-400 bg-purple-50/30">
                                             <i class="fas fa-file-download mr-3 w-4 text-center text-purple-500"></i>
                                             <span class="truncate font-medium text-xs" th:text="${t.tipoEvidenciaPresentacion?.name() == 'NOTA_INFORMATIVA' ? 'Ver Nota Informativa' : 'Ver Acuse'}"></span>
@@ -205,17 +206,6 @@
                                             <i class="fas fa-arrow-right mr-3 w-4 text-center text-green-500"></i> Avanzar
                                             Etapa
                                         </a>
-
-                                        <div th:if="${(t.estatusTermino?.name() == 'CONCLUIDO' || t.estatusTermino?.name() == 'PRESENTADO') and t.acuseNombre != null}"
-                                            class="bg-gray-50 border-l-4 border-purple-400">
-                                            <a th:href="@{/terminos/descargar-acuse/{id}(id=${t.id})}"
-                                                class="block w-full text-left px-4 py-2 text-sm text-purple-700 hover:bg-purple-100 transition flex items-center font-bold">
-                                                <i class="fas fa-file-download mr-3 w-4 text-center text-purple-500"></i>
-                                                <span th:text="${t.tipoEvidenciaPresentacion?.name() == 'NOTA_INFORMATIVA' ? 'Ver Nota Informativa' : 'Ver Acuse'}">Ver evidencia</span>
-                                            </a>
-                                            <p class="px-4 pb-2 text-[10px] text-gray-400 truncate"
-                                                th:text="${t.acuseNombre}"></p>
-                                        </div>
 
                                         <div class="border-t border-purple-500"></div>
 
@@ -375,8 +365,8 @@
                         </button>
 
                         <a th:if="${t.acuse != null}"
-                            th:href="${#strings.startsWith(t.acuse, 'http')} ? ${t.acuse} : @{/terminos/descargar/{id}(id=${t.id})}"
-                            th:target="${#strings.startsWith(t.acuse, 'http')} ? '_blank' : '_self'"
+                            th:href="${#strings.startsWith(t.acuse, 'http')} ? ${t.acuse} : @{/terminos/preview/{id}(id=${t.id})}"
+                            target="_blank"
                             class="block w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition flex items-center border-l-4 border-transparent hover:border-red-500">
                             <i class="fas fa-file-pdf mr-3 w-4 text-center"></i>
                             <span class="truncate font-medium">Ver documento</span>
@@ -400,6 +390,7 @@
 
                         <a th:if="${t.acuseNombre != null}"
                             th:href="@{/terminos/descargar-acuse/{id}(id=${t.id})}"
+                            target="_blank"
                             class="block w-full text-left px-4 py-3 text-sm text-purple-600 hover:bg-purple-50 transition flex items-center border-l-4 border-purple-400 bg-purple-50/30">
                             <i class="fas fa-file-download mr-3 w-4 text-center text-purple-500"></i>
                             <span class="truncate font-medium text-xs" th:text="${t.tipoEvidenciaPresentacion?.name() == 'NOTA_INFORMATIVA' ? 'Ver Nota Informativa' : 'Ver Acuse'}"></span>
@@ -412,16 +403,6 @@
                             class="btn-avanzar-etapa block px-4 py-3 text-sm text-green-700 hover:bg-green-50 transition border-l-4 border-transparent hover:border-green-500">
                             <i class="fas fa-arrow-right mr-3 w-4 text-center text-green-500"></i> Avanzar Etapa
                         </a>
-
-                        <div th:if="${(t.estatusTermino?.name() == 'CONCLUIDO' || t.estatusTermino?.name() == 'PRESENTADO') and t.acuseNombre != null}"
-                            class="bg-gray-50 border-l-4 border-purple-400">
-                            <a th:href="@{/terminos/descargar-acuse/{id}(id=${t.id})}"
-                                class="block w-full text-left px-4 py-2 text-sm text-purple-700 hover:bg-purple-100 transition flex items-center font-bold">
-                                <i class="fas fa-file-download mr-3 w-4 text-center text-purple-500"></i>
-                                <span th:text="${t.tipoEvidenciaPresentacion?.name() == 'NOTA_INFORMATIVA' ? 'Ver Nota Informativa' : 'Ver Acuse'}">Ver evidencia</span>
-                            </a>
-                            <p class="px-4 pb-2 text-[10px] text-gray-400 truncate" th:text="${t.acuseNombre}"></p>
-                        </div>
 
                         <div class="border-t border-purple-500"></div>
 

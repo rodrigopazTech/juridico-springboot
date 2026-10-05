@@ -56,23 +56,15 @@ public class TerminoArchivoService {
                 .build();
         TerminoArchivo guardado = terminoArchivoRepository.save(ta);
 
+        // Un Asunto Independiente conserva sus archivos en su propia ruta. No se crea
+        // un expediente artificial para sincronizarlo con el Gestor Documental.
+        if (termino.getExpediente() == null) {
+            return guardado;
+        }
+
         // Sincronizar con el Gestor Documental
         try {
             com.juridico.sistema_juridico.Entity.expediente.Expediente expSinc = termino.getExpediente();
-            if (expSinc == null) {
-                // Si el término no tiene expediente, se asocia al expediente contenedor de huérfanos
-                expSinc = expedienteRepository.findByNumeroIgnoreCaseAndEsTemporal("EXP-ORFANOS", true).orElse(null);
-                if (expSinc == null) {
-                    expSinc = com.juridico.sistema_juridico.Entity.expediente.Expediente.builder()
-                            .numero("EXP-ORFANOS")
-                            .esTemporal(true)
-                            .descripcion("Contenedor para documentos huérfanos de términos")
-                            .abogadoResponsable(actor)
-                            .gerencia(actor != null ? actor.getGerencia() : null)
-                            .build();
-                    expSinc = expedienteRepository.save(expSinc);
-                }
-            }
 
             // Buscar o crear la carpeta raíz "Términos Legales" para el expediente correspondiente
             Carpeta carpetaSist = carpetaRepository.findByExpedienteIdAndNombreAndCarpetaPadreIsNull(

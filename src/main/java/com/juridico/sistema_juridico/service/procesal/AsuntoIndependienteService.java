@@ -49,6 +49,24 @@ public class AsuntoIndependienteService {
     }
 
     @Transactional(readOnly = true)
+    public List<AsuntoIndependiente> listarTodos(Usuario actor, String busqueda) {
+        String criterio = busqueda == null ? "" : busqueda.trim().toLowerCase();
+        return asuntoRepository.findAll().stream()
+                .filter(asunto -> estaEnAlcance(asunto, actor))
+                .filter(asunto -> criterio.isBlank()
+                        || contiene(asunto.getFolioSiaj(), criterio)
+                        || contiene(asunto.getReferencia(), criterio)
+                        || contiene(asunto.getParteInteresada(), criterio)
+                        || contiene(asunto.getDescripcion(), criterio))
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .toList();
+    }
+
+    private boolean contiene(String valor, String criterio) {
+        return valor != null && valor.toLowerCase().contains(criterio);
+    }
+
+    @Transactional(readOnly = true)
     public AsuntoIndependiente obtenerActivo(Long id) {
         AsuntoIndependiente asunto = asuntoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("El Asunto Independiente no existe."));

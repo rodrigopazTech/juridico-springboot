@@ -892,6 +892,7 @@ function abrirModalNuevo() {
         if (asuntoIndependienteSelect.tomselect) asuntoIndependienteSelect.tomselect.setValue('');
         else asuntoIndependienteSelect.value = '';
         seleccionarAsuntoIndependienteTermino(asuntoIndependienteSelect);
+        mostrarSelectorAsuntoExistenteTermino(false);
     }
     ['select-contexto-materia', 'input-contexto-descripcion', 'input-contexto-partes', 'input-contexto-referencia']
         .forEach(id => {
@@ -1142,6 +1143,27 @@ function seleccionarAsuntoIndependienteTermino(select) {
     });
 }
 
+function mostrarSelectorAsuntoExistenteTermino(forzarVisible = null) {
+    const grupo = document.getElementById('grupo-asunto-existente-termino');
+    const boton = document.getElementById('btn-usar-asunto-existente-termino');
+    if (!grupo) return;
+    const mostrar = forzarVisible === null ? grupo.classList.contains('hidden') : Boolean(forzarVisible);
+    grupo.classList.toggle('hidden', !mostrar);
+    if (boton) {
+        boton.innerHTML = mostrar
+            ? '<i class="fas fa-times mr-2"></i>Cancelar selección'
+            : '<i class="fas fa-link mr-2"></i>Usar un asunto existente';
+    }
+    if (!mostrar) {
+        const select = document.getElementById('select-asunto-independiente-termino');
+        if (select) {
+            if (select.tomselect) select.tomselect.setValue('', true);
+            else select.value = '';
+            seleccionarAsuntoIndependienteTermino(select);
+        }
+    }
+}
+
 function ajustarVisibilidadCamposPorRolYOrigen() {
     const userRol = document.getElementById('hdnUsuarioRol')?.value;
     const origen = document.querySelector('input[name="origenTermino"]:checked')?.value || 'EXPEDIENTE';
@@ -1331,6 +1353,7 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
     if (origenTermino === 'ASUNTO_UNICO') {
         const asuntoSelect = document.getElementById('select-asunto-independiente-termino');
         if (asuntoSelect && asuntoIndependienteId) {
+            mostrarSelectorAsuntoExistenteTermino(true);
             if (asuntoSelect.tomselect) asuntoSelect.tomselect.setValue(String(asuntoIndependienteId), true);
             else asuntoSelect.value = asuntoIndependienteId;
             seleccionarAsuntoIndependienteTermino(asuntoSelect);
