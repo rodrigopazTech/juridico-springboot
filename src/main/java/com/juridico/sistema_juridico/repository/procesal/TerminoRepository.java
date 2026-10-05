@@ -19,6 +19,8 @@ import java.util.UUID;
 @Repository
 public interface TerminoRepository extends JpaRepository<Termino, Integer> {
 
+    List<Termino> findByAsuntoIndependienteId(Long asuntoIndependienteId);
+
     long countByAbogadoResponsableId(Integer abogadoResponsableId);
 
     // 1. CONSULTA PARA EXCEL

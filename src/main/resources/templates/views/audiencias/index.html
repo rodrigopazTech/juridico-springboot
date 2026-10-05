@@ -172,6 +172,7 @@
     </div>
 
     <div th:replace="~{fragments/audiencias/modals :: modals}"></div>
+    <div th:replace="~{fragments/common/modal-vincular-asunto :: modalVincularAsunto('/audiencias')}"></div>
     <form id="form-subir-acta" th:action="@{/audiencias/subir-acta}" method="post" enctype="multipart/form-data"
         class="hidden">
         <input type="hidden" name="id" id="input-acta-id">
@@ -180,7 +181,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <script th:src="@{/js/custom-selects.js}"></script>
-    <script th:src="@{/js/audiencias.js(v=7)}"></script>
+    <script th:src="@{/js/audiencias.js(v=8)}"></script>
+    <script th:src="@{/js/vincular-asunto.js(v=2)}"></script>
     <script th:src="@{/js/realtime-search.js}"></script>
 
     <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>

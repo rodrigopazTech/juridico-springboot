@@ -122,6 +122,7 @@
     <div th:replace="~{fragments/terminos/modal-subir-acuse :: modal}"></div>
     <div th:replace="~{fragments/terminos/modal-subir-nota :: modal}"></div>
     <div th:replace="~{fragments/terminos/modal-concluir :: modal}"></div>
+    <div th:replace="~{fragments/common/modal-vincular-asunto :: modalVincularAsunto('/terminos')}"></div>
 
     <form id="form-upload" th:action="@{/terminos/subir-archivo}" method="post" enctype="multipart/form-data"
         class="hidden">
@@ -131,7 +132,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <script th:src="@{/js/custom-selects.js}"></script>
-    <script th:src="@{/js/terminos.js(v=5)}"></script>
+    <script th:src="@{/js/terminos.js(v=6)}"></script>
+    <script th:src="@{/js/vincular-asunto.js(v=2)}"></script>
     <script th:src="@{/js/realtime-search.js}"></script>
 
     <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>

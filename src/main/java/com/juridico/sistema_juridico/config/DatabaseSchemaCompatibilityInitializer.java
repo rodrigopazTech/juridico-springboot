@@ -47,6 +47,12 @@ public class DatabaseSchemaCompatibilityInitializer implements ApplicationRunner
                 "tipo_documento IN ('BORRADOR','ACUSE','NOTA_INFORMATIVA')");
         reemplazarCheckEnum("audiencias", "estatus_audiencia", "ck_audiencias_estatus_audiencia",
                 "estatus_audiencia IN ('PENDIENTE','CON_ACTA','SUSPENDIDA','CONCLUIDA')");
+        reemplazarCheck("terminos", "ck_terminos_origen_exclusivo",
+                "(expediente_id IS NOT NULL) <> (asunto_independiente_id IS NOT NULL)");
+        reemplazarCheck("audiencias", "ck_audiencias_origen_exclusivo",
+                "(expediente_id IS NOT NULL) <> (asunto_independiente_id IS NOT NULL)");
+        jdbcTemplate.execute("CREATE UNIQUE INDEX IF NOT EXISTS uk_asunto_ind_referencia_gerencia "
+                + "ON asuntos_independientes (gerencia_id, lower(referencia))");
     }
 
     private void eliminarUnicidadLegacyDeCodigo(String tabla) {
@@ -88,5 +94,11 @@ public class DatabaseSchemaCompatibilityInitializer implements ApplicationRunner
             jdbcTemplate.execute("ALTER TABLE " + tabla + " DROP CONSTRAINT \"" + identificadorSeguro + "\"");
         }
         jdbcTemplate.execute("ALTER TABLE " + tabla + " ADD CONSTRAINT " + nombre + " CHECK (" + condicion + ")");
+    }
+
+    private void reemplazarCheck(String tabla, String nombre, String condicion) {
+        jdbcTemplate.execute("ALTER TABLE " + tabla + " DROP CONSTRAINT IF EXISTS " + nombre);
+        jdbcTemplate.execute("ALTER TABLE " + tabla + " ADD CONSTRAINT " + nombre
+                + " CHECK (" + condicion + ")");
     }
 }

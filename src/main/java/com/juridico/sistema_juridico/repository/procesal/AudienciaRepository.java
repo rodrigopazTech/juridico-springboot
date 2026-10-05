@@ -18,6 +18,8 @@ import com.juridico.sistema_juridico.Entity.enums.EstatusAudiencia;
 @Repository
 public interface AudienciaRepository extends JpaRepository<Audiencia, Integer> {
 
+        List<Audiencia> findByAsuntoIndependienteId(Long asuntoIndependienteId);
+
         long countByAbogadoCompareceIdOrUsuarioDelegadoId(Integer abogadoCompareceId, Integer usuarioDelegadoId);
 
         // --- 1. BUSQUEDA PAGINADA (INDEX) ---

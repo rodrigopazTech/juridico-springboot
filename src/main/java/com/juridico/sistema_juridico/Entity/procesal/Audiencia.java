@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "audiencias", indexes = {
     @Index(name = "idx_audiencias_expediente", columnList = "expediente_id"),
+    @Index(name = "idx_audiencias_asunto_independiente", columnList = "asunto_independiente_id"),
     @Index(name = "idx_audiencias_fecha", columnList = "fecha_audiencia")
 })
 public class Audiencia {
@@ -35,6 +36,10 @@ public class Audiencia {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "expediente_id", nullable = true)
     private Expediente expediente;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "asunto_independiente_id")
+    private AsuntoIndependiente asuntoIndependiente;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "contexto_id")
@@ -108,17 +113,23 @@ public class Audiencia {
         if (this.expediente != null) {
             return this.expediente.getNumero();
         }
+        if (this.asuntoIndependiente != null) {
+            return this.asuntoIndependiente.getFolioSiaj();
+        }
         if (this.contexto != null
                 && this.contexto.getNumeroExpedienteSnapshot() != null
                 && !this.contexto.getNumeroExpedienteSnapshot().trim().isEmpty()) {
             return this.contexto.getNumeroExpedienteSnapshot();
         }
-        return "Asunto único";
+        return "Asunto independiente";
     }
 
     public String getPartesReferencia() {
         if (this.expediente != null) {
             return this.expediente.getPartes();
+        }
+        if (this.asuntoIndependiente != null) {
+            return this.asuntoIndependiente.getParteInteresada();
         }
         return this.contexto != null ? this.contexto.getPartes() : null;
     }
@@ -127,6 +138,9 @@ public class Audiencia {
         if (this.expediente != null) {
             return this.expediente.getMateria();
         }
+        if (this.asuntoIndependiente != null) {
+            return this.asuntoIndependiente.getMateria();
+        }
         return this.contexto != null ? this.contexto.getMateria() : null;
     }
 
@@ -134,12 +148,18 @@ public class Audiencia {
         if (this.expediente != null) {
             return this.expediente.getGerencia();
         }
+        if (this.asuntoIndependiente != null) {
+            return this.asuntoIndependiente.getGerencia();
+        }
         return this.contexto != null ? this.contexto.getGerencia() : null;
     }
 
     public String getDescripcionReferencia() {
         if (this.expediente != null) {
             return this.expediente.getDescripcion();
+        }
+        if (this.asuntoIndependiente != null) {
+            return this.asuntoIndependiente.getDescripcion();
         }
         return this.contexto != null ? this.contexto.getDescripcion() : null;
     }

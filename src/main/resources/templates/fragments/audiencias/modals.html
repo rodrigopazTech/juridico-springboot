@@ -5,7 +5,7 @@
         <div class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm transition-opacity"></div>
 
         <div class="fixed inset-0 z-10 overflow-y-auto">
-            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="flex min-h-full items-start justify-center p-4 py-8 text-center sm:py-10">
                 <div
                     class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all w-full max-w-2xl mx-4 sm:mx-auto border border-gray-200">
 
@@ -39,7 +39,7 @@
                                 </button>
                                 <button type="button" id="tab-asunto-unico" onclick="switchModoRegistro('ASUNTO_UNICO')"
                                     class="w-1/2 rounded-md py-1.5 text-xs font-bold transition-all text-gray-600 hover:text-gray-800 focus:outline-none">
-                                    <i class="fas fa-file-alt mr-1"></i> Asunto Único
+                                    <i class="fas fa-file-alt mr-1"></i> Asunto Independiente
                                 </button>
                             </div>
 
@@ -65,6 +65,33 @@
 
                             <!-- SECCIÓN: ASUNTO ÚNICO -->
                             <div id="seccion-asunto-unico" class="col-span-1 sm:col-span-2 hidden grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-2">
+                                <div class="col-span-1 sm:col-span-2">
+                                    <label class="block text-sm font-bold text-gray-700">Asunto Independiente existente</label>
+                                    <select name="asuntoIndependienteId" id="aud-select-asunto-independiente"
+                                        onchange="seleccionarAsuntoIndependienteAudiencia(this)"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm py-2 px-3 bg-white">
+                                        <option value="">Crear un nuevo Asunto Independiente</option>
+                                        <option th:each="ai : ${asuntosIndependientesList}" th:value="${ai.id}"
+                                            th:text="${ai.folioSiaj + ' · ' + ai.referencia + ' · ' + ai.parteInteresada}"
+                                            th:data-gerencia="${ai.gerencia?.id}" th:data-materia="${ai.materia?.id}"
+                                            th:data-referencia="${ai.referencia}" th:data-partes="${ai.parteInteresada}"
+                                            th:data-descripcion="${ai.descripcion}"></option>
+                                    </select>
+                                    <p class="mt-1 text-[11px] text-gray-500">Selecciónalo para registrar la audiencia en un asunto ya abierto.</p>
+                                </div>
+                                <div class="col-span-1 campos-nuevo-asunto-audiencia">
+                                    <label class="block text-sm font-bold text-gray-700">Tipo de referencia *</label>
+                                    <select name="tipoReferenciaAsunto" id="aud-tipo-referencia"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm py-2 px-3 bg-white">
+                                        <option th:each="tipo : ${tiposReferenciaAsunto}" th:value="${tipo.name()}" th:text="${tipo.descripcion}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-span-1 campos-nuevo-asunto-audiencia">
+                                    <label class="block text-sm font-bold text-gray-700">Fecha de referencia *</label>
+                                    <input type="date" name="fechaReferenciaAsunto" id="aud-fecha-referencia"
+                                        th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm px-3 py-2">
+                                </div>
                                 <div class="col-span-1">
                                     <label class="block text-sm font-bold text-gray-700">Gerencia *</label>
 
@@ -103,20 +130,20 @@
                                 </div>
 
                                 <div class="col-span-1 sm:col-span-2">
-                                    <label for="aud-contexto-referencia" class="block text-sm font-bold text-gray-700">Número de Referencia</label>
-                                    <input type="text" name="contextoNumeroReferencia" id="aud-contexto-referencia" placeholder="Ej. REF-2026-01"
+                                    <label for="aud-contexto-referencia" class="block text-sm font-bold text-gray-700">Número o referencia *</label>
+                                    <input type="text" name="contextoNumeroReferencia" id="aud-contexto-referencia" required placeholder="Ej. REF-2026-01"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2">
                                 </div>
 
                                 <div class="col-span-1 sm:col-span-2">
-                                    <label for="aud-contexto-partes" class="block text-sm font-bold text-gray-700">Partes Involucradas</label>
-                                    <input type="text" name="contextoPartes" id="aud-contexto-partes" placeholder="Ej. Actor vs Demandado"
+                                    <label for="aud-contexto-partes" class="block text-sm font-bold text-gray-700">Parte interesada *</label>
+                                    <input type="text" name="contextoPartes" id="aud-contexto-partes" required placeholder="Persona, área o contraparte"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2">
                                 </div>
 
                                 <div class="col-span-1 sm:col-span-2">
-                                    <label for="aud-contexto-descripcion" class="block text-sm font-bold text-gray-700">Descripción del Asunto</label>
-                                    <textarea name="contextoDescripcion" id="aud-contexto-descripcion" rows="2" placeholder="Detalles específicos del asunto único..."
+                                    <label for="aud-contexto-descripcion" class="block text-sm font-bold text-gray-700">Descripción del asunto *</label>
+                                    <textarea name="contextoDescripcion" id="aud-contexto-descripcion" rows="2" required placeholder="Detalles específicos del asunto independiente..."
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2 resize-none"></textarea>
                                 </div>
                             </div>

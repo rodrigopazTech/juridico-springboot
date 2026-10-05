@@ -57,6 +57,11 @@ public class RealtimeNotificationService {
 
     @PostConstruct
     public void startListener() {
+        if (dbUrl == null || !dbUrl.regionMatches(true, 0, "jdbc:postgresql:", 0, "jdbc:postgresql:".length())) {
+            running = false;
+            log.info("Servicio de escucha PostgreSQL deshabilitado para la base de datos actual.");
+            return;
+        }
         log.info("Iniciando servicio de escucha en tiempo real para PostgreSQL...");
         listenerExecutor.submit(this::listenLoop);
     }

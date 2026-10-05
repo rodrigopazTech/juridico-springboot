@@ -21,6 +21,9 @@ import com.juridico.sistema_juridico.repository.Catalogo.EstadoRepository;
 import com.juridico.sistema_juridico.Entity.procesal.AudienciaContexto;
 import com.juridico.sistema_juridico.repository.procesal.AudienciaContextoRepository;
 import com.juridico.sistema_juridico.Entity.enums.OrigenAudiencia;
+import com.juridico.sistema_juridico.Entity.enums.TipoReferenciaAsunto;
+import com.juridico.sistema_juridico.Entity.procesal.AsuntoIndependiente;
+import com.juridico.sistema_juridico.service.procesal.AsuntoIndependienteService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -29,6 +32,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -89,6 +93,8 @@ public class AudienciasController {
     private FileStorageService fileStorageService;
     @Autowired
     private EvaluadorAtencionTemporalService evaluadorAtencionTemporalService;
+    @Autowired
+    private AsuntoIndependienteService asuntoIndependienteService;
 
     // @Autowired private ColaboradorExpedienteRepository colaboradorRepository;
     @Autowired
@@ -395,6 +401,8 @@ public class AudienciasController {
         model.addAttribute("paramFecha", fecha != null ? fecha.toString() : null);
         model.addAttribute("usuarioActual", usuario);
         model.addAttribute("listaEstatus", EstatusAudiencia.values());
+        model.addAttribute("asuntosIndependientesList", asuntoIndependienteService.listarActivos(usuario));
+        model.addAttribute("tiposReferenciaAsunto", TipoReferenciaAsunto.values());
         model.addAttribute("sortBy", sortBy);
         model.addAttribute("sortDir", sortDir);
 
@@ -486,6 +494,8 @@ public String guardar(@ModelAttribute Audiencia audiencia,
         throw new BadRequestException("El expediente es obligatorio.");
     }
     validarAccesoExpediente(exp, usuario);
+    audiencia.setExpediente(exp);
+    audiencia.setAsuntoIndependiente(null);
 
     // Corrección para evitar conflictos con Hibernate si el ID del abogado viene vacío
     if (audiencia.getAbogadoComparece() != null && audiencia.getAbogadoComparece().getId() == null) {
@@ -571,12 +581,16 @@ public String guardar(@ModelAttribute Audiencia audiencia,
 }
 
     @PostMapping("/guardar-asunto-unico")
+    @Transactional
     public String guardarAsuntoUnico(@ModelAttribute Audiencia audiencia,
             @RequestParam(value = "contextoMateriaId", required = false) Integer contextoMateriaId,
             @RequestParam(value = "contextoGerenciaId", required = false) Integer contextoGerenciaId,
             @RequestParam(value = "contextoDescripcion", required = false) String contextoDescripcion,
             @RequestParam(value = "contextoPartes", required = false) String contextoPartes,
             @RequestParam(value = "contextoNumeroReferencia", required = false) String contextoNumeroReferencia,
+            @RequestParam(value = "asuntoIndependienteId", required = false) Long asuntoIndependienteId,
+            @RequestParam(value = "tipoReferenciaAsunto", required = false) TipoReferenciaAsunto tipoReferenciaAsunto,
+            @RequestParam(value = "fechaReferenciaAsunto", required = false) LocalDate fechaReferenciaAsunto,
             RedirectAttributes redirectAttrs) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -593,11 +607,18 @@ public String guardar(@ModelAttribute Audiencia audiencia,
         }
 
         AudienciaContexto contexto = null;
+        Audiencia audienciaExistente = null;
 
         if (!esNueva) {
-            Audiencia audienciaExistente = audienciaRepository.findById(audiencia.getId())
+            audienciaExistente = audienciaRepository.findById(audiencia.getId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "No se puede editar: La audiencia con ID " + audiencia.getId() + " no existe."));
+
+            if (audienciaExistente.getAsuntoIndependiente() != null) {
+                asuntoIndependienteService.validarAcceso(audienciaExistente.getAsuntoIndependiente(), usuario);
+            } else if (audienciaExistente.getExpediente() != null) {
+                validarAccesoExpediente(audienciaExistente.getExpediente(), usuario);
+            }
 
             // Preservamos los datos que no vienen en el formulario simple
             audiencia.setEstatusAudiencia(audienciaExistente.getEstatusAudiencia());
@@ -619,71 +640,34 @@ public String guardar(@ModelAttribute Audiencia audiencia,
             contexto = new AudienciaContexto();
         }
 
-        // Llenar datos del contexto
-        contexto.setOrigen(OrigenAudiencia.ASUNTO_UNICO);
-        if (contextoGerenciaId != null) {
-            contexto.setGerencia(gerenciaRepository.findById(contextoGerenciaId).orElse(null));
+        if (contextoGerenciaId == null && usuario.getGerencia() != null) {
+            contextoGerenciaId = usuario.getGerencia().getId();
         }
-        if (contextoMateriaId != null) {
-            contexto.setMateria(materiaRepository.findById(contextoMateriaId).orElse(null));
-        }
-        contexto.setDescripcion(contextoDescripcion);
-        contexto.setPartes(contextoPartes);
-        contexto.setNumeroExpedienteSnapshot(contextoNumeroReferencia);
+        Integer responsableId = audiencia.getAbogadoComparece() != null
+                ? audiencia.getAbogadoComparece().getId() : null;
+        AsuntoIndependiente asuntoIndependiente = asuntoIndependienteService.resolverOCrear(
+                asuntoIndependienteId, tipoReferenciaAsunto, contextoNumeroReferencia,
+                fechaReferenciaAsunto, contextoMateriaId, contextoGerenciaId,
+                contextoDescripcion, contextoPartes, responsableId, usuario);
 
-        // Guardar el contexto
+        contexto.setOrigen(OrigenAudiencia.ASUNTO_UNICO);
+        contexto.setGerencia(asuntoIndependiente.getGerencia());
+        contexto.setMateria(asuntoIndependiente.getMateria());
+        contexto.setDescripcion(asuntoIndependiente.getDescripcion());
+        contexto.setPartes(asuntoIndependiente.getParteInteresada());
+        contexto.setNumeroExpedienteSnapshot(asuntoIndependiente.getFolioSiaj());
         contexto = audienciaContextoRepository.save(contexto);
 
-        // Buscar o crear Expediente Temporal
-        Expediente expTemporal = null;
-        String ref = (contextoNumeroReferencia != null && !contextoNumeroReferencia.trim().isEmpty())
-                ? contextoNumeroReferencia.trim()
-                : null;
-        if (ref != null) {
-            expTemporal = expedienteRepository.findByNumeroIgnoreCaseAndEsTemporal(ref, true).orElse(null);
-        }
-        if (expTemporal == null) {
-            expTemporal = new Expediente();
-            expTemporal.setNumero(ref != null ? ref : "TEMP-" + java.util.UUID.randomUUID().toString().substring(0, 8));
-            expTemporal.setEsTemporal(true);
-            if (contextoMateriaId != null) {
-                expTemporal.setMateria(materiaRepository.findById(contextoMateriaId).orElse(null));
-            }
-            if (contextoGerenciaId != null) {
-                expTemporal.setGerencia(gerenciaRepository.findById(contextoGerenciaId).orElse(null));
-            } else if (usuario.getGerencia() != null) {
-                expTemporal.setGerencia(usuario.getGerencia());
-            }
-            expTemporal.setDescripcion(contextoDescripcion != null ? contextoDescripcion : "Asunto Único");
-            expTemporal.setPartes(contextoPartes);
-            expTemporal.setAbogadoResponsable(audiencia.getAbogadoComparece() != null ? audiencia.getAbogadoComparece() : usuario);
-            expTemporal = expedienteRepository.save(expTemporal);
-        } else {
-            if (contextoGerenciaId != null) {
-                expTemporal.setGerencia(gerenciaRepository.findById(contextoGerenciaId).orElse(null));
-            }
-            if (contextoMateriaId != null) {
-                expTemporal.setMateria(materiaRepository.findById(contextoMateriaId).orElse(null));
-            }
-            if (contextoDescripcion != null) {
-                expTemporal.setDescripcion(contextoDescripcion);
-            }
-            if (contextoPartes != null) {
-                expTemporal.setPartes(contextoPartes);
-            }
-            if (audiencia.getAbogadoComparece() != null) {
-                expTemporal.setAbogadoResponsable(audiencia.getAbogadoComparece());
-            }
-            expTemporal = expedienteRepository.save(expTemporal);
-        }
-
-        // Asociar el contexto y el expediente temporal
         audiencia.setContexto(contexto);
-        audiencia.setExpediente(expTemporal);
+        audiencia.setExpediente(null);
+        audiencia.setAsuntoIndependiente(asuntoIndependiente);
 
         // Corrección para evitar conflictos con Hibernate si el ID del abogado viene vacío
         if (audiencia.getAbogadoComparece() != null && audiencia.getAbogadoComparece().getId() == null) {
             audiencia.setAbogadoComparece(null);
+        }
+        if (!esNueva && audiencia.getAbogadoComparece() == null) {
+            audiencia.setAbogadoComparece(audienciaExistente.getAbogadoComparece());
         }
 
         // Limpiar delegado si viene vacío
@@ -727,7 +711,7 @@ public String guardar(@ModelAttribute Audiencia audiencia,
             audienciaService.notificarDelegacion(guardada, usuario);
         }
 
-        redirectAttrs.addFlashAttribute("mensaje", "Audiencia de asunto único guardada correctamente.");
+        redirectAttrs.addFlashAttribute("mensaje", "Audiencia de Asunto Independiente guardada correctamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
 
         return "redirect:/audiencias";

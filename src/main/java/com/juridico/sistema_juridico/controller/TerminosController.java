@@ -33,6 +33,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -78,7 +80,10 @@ import com.juridico.sistema_juridico.service.procesal.EvaluadorAtencionTemporalS
 import com.juridico.sistema_juridico.service.FileStorageService;
 import com.juridico.sistema_juridico.Entity.enums.TipoDocumentoTermino;
 import com.juridico.sistema_juridico.Entity.enums.TipoEvidenciaPresentacion;
+import com.juridico.sistema_juridico.Entity.enums.TipoReferenciaAsunto;
+import com.juridico.sistema_juridico.Entity.procesal.AsuntoIndependiente;
 import com.juridico.sistema_juridico.Entity.procesal.TerminoArchivo;
+import com.juridico.sistema_juridico.service.procesal.AsuntoIndependienteService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -119,6 +124,8 @@ public class TerminosController {
     private CalculadoraPlazoService calculadoraPlazoService;
     @Autowired
     private EvaluadorAtencionTemporalService evaluadorAtencionTemporalService;
+    @Autowired
+    private AsuntoIndependienteService asuntoIndependienteService;
 
     // --- MATRIZ DE PERMISOS ---
     private static final Map<EstatusTermino, List<RolUsuario>> PERMISOS_ETAPAS = new HashMap<>();
@@ -286,6 +293,8 @@ public class TerminosController {
         model.addAttribute("listaMaterias", materiaRepository.findAll());
         model.addAttribute("listaPrioridades", catPrioridadRepository.findAll());
         model.addAttribute("listaTiposTermino", tipoTerminoService.listarActivos());
+        model.addAttribute("asuntosIndependientesList", asuntoIndependienteService.listarActivos(usuarioActual));
+        model.addAttribute("tiposReferenciaAsunto", TipoReferenciaAsunto.values());
         model.addAttribute("listaEstatus", EstatusTermino.values());
 
         // --- 5. LOGICA ANTI-FANTASMAS (EXPEDIENTES DISPONIBLES) ---
@@ -385,6 +394,7 @@ public class TerminosController {
     }
 
     @PostMapping("/guardar")
+    @Transactional
     public Object guardar(@ModelAttribute Termino terminoForm,
             @RequestParam(value = "expedienteId", required = false) UUID expedienteId,
             @RequestParam(value = "abogadoId", required = false) Integer abogadoId,
@@ -395,6 +405,9 @@ public class TerminosController {
             @RequestParam(value = "contextoDescripcion", required = false) String contextoDescripcion,
             @RequestParam(value = "contextoPartes", required = false) String contextoPartes,
             @RequestParam(value = "contextoNumeroReferencia", required = false) String contextoNumeroReferencia,
+            @RequestParam(value = "asuntoIndependienteId", required = false) Long asuntoIndependienteId,
+            @RequestParam(value = "tipoReferenciaAsunto", required = false) TipoReferenciaAsunto tipoReferenciaAsunto,
+            @RequestParam(value = "fechaReferenciaAsunto", required = false) LocalDate fechaReferenciaAsunto,
             RedirectAttributes redirectAttrs,
             HttpServletRequest request) {
 
@@ -441,14 +454,15 @@ public class TerminosController {
             }
 
             if (origenTermino == OrigenTermino.ASUNTO_UNICO) {
-                if (actor.getRol() == RolUsuario.JEFE_DEPTO) {
+                if (asuntoIndependienteId == null && actor.getRol() == RolUsuario.JEFE_DEPTO) {
                     Set<Integer> misMateriasIds = actor.getMaterias().stream()
                             .map(Materia::getId)
                             .collect(Collectors.toSet());
                     if (contextoMateriaId == null || !misMateriasIds.contains(contextoMateriaId)) {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No tienes acceso a la materia seleccionada.");
                     }
-                } else if (actor.getRol() == RolUsuario.ABOGADO || actor.getRol() == RolUsuario.GERENTE) {
+                } else if (asuntoIndependienteId == null
+                        && (actor.getRol() == RolUsuario.ABOGADO || actor.getRol() == RolUsuario.GERENTE)) {
                     if (actor.getGerencia() == null) {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El usuario no tiene una gerencia asignada.");
                     }
@@ -457,16 +471,23 @@ public class TerminosController {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No tienes acceso a la materia seleccionada.");
                     }
                 }
-                if (actor.getGerencia() != null) {
+                if ((actor.getRol() == RolUsuario.ABOGADO || actor.getRol() == RolUsuario.JEFE_DEPTO
+                        || actor.getRol() == RolUsuario.GERENTE) && actor.getGerencia() != null) {
                     contextoGerenciaId = actor.getGerencia().getId();
                 }
-                terminoForm.setContexto(crearContextoAsuntoUnico(contextoMateriaId, contextoGerenciaId,
-                        contextoDescripcion, contextoPartes, contextoNumeroReferencia));
+                AsuntoIndependiente asuntoIndependiente = asuntoIndependienteService.resolverOCrear(
+                        asuntoIndependienteId, tipoReferenciaAsunto, contextoNumeroReferencia,
+                        fechaReferenciaAsunto, contextoMateriaId, contextoGerenciaId,
+                        contextoDescripcion, contextoPartes, abogadoId, actor);
+                terminoForm.setExpediente(null);
+                terminoForm.setAsuntoIndependiente(asuntoIndependiente);
+                terminoForm.setContexto(crearContextoDesdeAsuntoIndependiente(asuntoIndependiente));
             } else if (expedienteId != null) {
                 Expediente exp = expedienteRepository.findById(expedienteId)
                         .orElseThrow(() -> new ResourceNotFoundException("El expediente asociado no existe."));
                 validarAccesoExpediente(exp, actor);
                 terminoForm.setExpediente(exp);
+                terminoForm.setAsuntoIndependiente(null);
                 terminoForm.setContexto(crearContextoDesdeExpediente(exp));
             }
 
@@ -476,51 +497,6 @@ public class TerminosController {
                 terminoForm.setAbogadoResponsable(abogado);
             } else if (terminoForm.getId() == null && origenTermino == OrigenTermino.ASUNTO_UNICO) {
                 terminoForm.setAbogadoResponsable(actor);
-            }
-
-            if (origenTermino == OrigenTermino.ASUNTO_UNICO) {
-                Expediente expTemporal = null;
-                String ref = (contextoNumeroReferencia != null && !contextoNumeroReferencia.trim().isEmpty())
-                        ? contextoNumeroReferencia.trim()
-                        : null;
-                if (ref != null) {
-                    expTemporal = expedienteRepository.findByNumeroIgnoreCaseAndEsTemporal(ref, true).orElse(null);
-                }
-                if (expTemporal == null) {
-                    expTemporal = new Expediente();
-                    expTemporal.setNumero(ref != null ? ref : "TEMP-" + java.util.UUID.randomUUID().toString().substring(0, 8));
-                    expTemporal.setEsTemporal(true);
-                    if (contextoMateriaId != null) {
-                        expTemporal.setMateria(materiaRepository.findById(contextoMateriaId).orElse(null));
-                    }
-                    if (contextoGerenciaId != null) {
-                        expTemporal.setGerencia(gerenciaRepository.findById(contextoGerenciaId).orElse(null));
-                    } else if (actor.getGerencia() != null) {
-                        expTemporal.setGerencia(actor.getGerencia());
-                    }
-                    expTemporal.setDescripcion(contextoDescripcion != null ? contextoDescripcion : "Asunto Único");
-                    expTemporal.setPartes(contextoPartes);
-                    expTemporal.setAbogadoResponsable(terminoForm.getAbogadoResponsable() != null ? terminoForm.getAbogadoResponsable() : actor);
-                    expTemporal = expedienteRepository.save(expTemporal);
-                } else {
-                    if (contextoGerenciaId != null) {
-                        expTemporal.setGerencia(gerenciaRepository.findById(contextoGerenciaId).orElse(null));
-                    }
-                    if (contextoMateriaId != null) {
-                        expTemporal.setMateria(materiaRepository.findById(contextoMateriaId).orElse(null));
-                    }
-                    if (contextoDescripcion != null) {
-                        expTemporal.setDescripcion(contextoDescripcion);
-                    }
-                    if (contextoPartes != null) {
-                        expTemporal.setPartes(contextoPartes);
-                    }
-                    if (terminoForm.getAbogadoResponsable() != null) {
-                        expTemporal.setAbogadoResponsable(terminoForm.getAbogadoResponsable());
-                    }
-                    expTemporal = expedienteRepository.save(expTemporal);
-                }
-                terminoForm.setExpediente(expTemporal);
             }
 
             boolean expedienteCambiado = false;
@@ -545,16 +521,16 @@ public class TerminosController {
 
                 Expediente expAnterior = existente.getExpediente();
                 if (origenTermino == OrigenTermino.ASUNTO_UNICO) {
-                    if (expAnterior == null || !expAnterior.getId().equals(terminoForm.getExpediente().getId())) {
-                        expedienteCambiado = true;
-                    }
-                    existente.setExpediente(terminoForm.getExpediente());
+                    expedienteCambiado = expAnterior != null;
+                    existente.setExpediente(null);
+                    existente.setAsuntoIndependiente(terminoForm.getAsuntoIndependiente());
                     existente.setContexto(terminoForm.getContexto());
                 } else if (terminoForm.getExpediente() != null) {
                     if (expAnterior == null || !expAnterior.getId().equals(terminoForm.getExpediente().getId())) {
                         expedienteCambiado = true;
                     }
                     existente.setExpediente(terminoForm.getExpediente());
+                    existente.setAsuntoIndependiente(null);
                     existente.setContexto(terminoForm.getContexto());
                 }
                 if (terminoForm.getPrioridad() != null) {
@@ -566,9 +542,9 @@ public class TerminosController {
                 existente.setUpdatedAt(LocalDateTime.now());
                 terminoGuardar = existente;
             } else {
-                if (origenTermino != OrigenTermino.ASUNTO_UNICO && expedienteId == null && terminoForm.getExpediente() == null) {
+                if (terminoForm.getExpediente() == null && terminoForm.getAsuntoIndependiente() == null) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                            "El expediente asociado es obligatorio para crear un término.");
+                            "Selecciona un expediente o un Asunto Independiente.");
                 }
                 esNuevo = true;
                 terminoGuardar = terminoForm;
@@ -580,6 +556,9 @@ public class TerminosController {
 
                 if (terminoGuardar.getAbogadoResponsable() == null && terminoGuardar.getExpediente() != null) {
                     terminoGuardar.setAbogadoResponsable(terminoGuardar.getExpediente().getAbogadoResponsable());
+                }
+                if (terminoGuardar.getAbogadoResponsable() == null && terminoGuardar.getAsuntoIndependiente() != null) {
+                    terminoGuardar.setAbogadoResponsable(terminoGuardar.getAsuntoIndependiente().getResponsable());
                 }
                 if (terminoGuardar.getPrioridad() == null && terminoGuardar.getExpediente() != null) {
                     terminoGuardar.setPrioridad(terminoGuardar.getExpediente().getPrioridad());
@@ -657,6 +636,7 @@ public class TerminosController {
             return "redirect:/terminos";
 
         } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             String errorMsg = e instanceof ResponseStatusException ? ((ResponseStatusException) e).getReason() : e.getMessage();
             if (errorMsg == null) {
                 errorMsg = "Error al guardar el término.";
@@ -722,6 +702,17 @@ public class TerminosController {
                 .materia(materia)
                 .gerencia(gerencia)
                 .partes(normalizarTexto(partes))
+                .build();
+    }
+
+    private TerminoContexto crearContextoDesdeAsuntoIndependiente(AsuntoIndependiente asunto) {
+        return TerminoContexto.builder()
+                .origen(OrigenTermino.ASUNTO_UNICO)
+                .numeroExpedienteSnapshot(asunto.getFolioSiaj())
+                .descripcion(asunto.getDescripcion())
+                .materia(asunto.getMateria())
+                .gerencia(asunto.getGerencia())
+                .partes(asunto.getParteInteresada())
                 .build();
     }
 

@@ -4,6 +4,11 @@
  */
 
 document.addEventListener('DOMContentLoaded', function () {
+    const mensajeRecarga = sessionStorage.getItem('siajAudienciaGuardada');
+    if (mensajeRecarga) {
+        sessionStorage.removeItem('siajAudienciaGuardada');
+        setTimeout(() => showSuccessToast(mensajeRecarga), 150);
+    }
     console.log("Sistema de Audiencias Cargado");
     inicializarSelectsAudiencias();
 });
@@ -133,6 +138,12 @@ function abrirModalAudiencia() {
     if (salaSelect && salaSelect.tomselect) {
         salaSelect.tomselect.setValue('');
     }
+    const asuntoSelect = document.getElementById('aud-select-asunto-independiente');
+    if (asuntoSelect) {
+        if (asuntoSelect.tomselect) asuntoSelect.tomselect.setValue('');
+        else asuntoSelect.value = '';
+        seleccionarAsuntoIndependienteAudiencia(asuntoSelect);
+    }
 
     const gerenciaSelect = document.getElementById('aud-contexto-gerencia');
     if (gerenciaSelect && gerenciaSelect.tomselect) {
@@ -169,10 +180,13 @@ function abrirModalAudiencia() {
     // Inicializar en modo EXPEDIENTE por defecto
     switchModoRegistro('EXPEDIENTE');
 
-    document.getElementById('modal-audiencia').classList.remove('hidden');
+    const modal = document.getElementById('modal-audiencia');
+    modal.classList.remove('hidden');
+    const scrollContainer = modal.querySelector('.overflow-y-auto');
+    if (scrollContainer) scrollContainer.scrollTop = 0;
 }
 
-function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala, link, abogadoId, observaciones = "", origenAudiencia = "EXPEDIENTE", contextoGerenciaId = "", contextoMateriaId = "", contextoNumeroReferencia = "", contextoSede = "", contextoPartes = "", contextoDescripcion = "") {
+function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala, link, abogadoId, observaciones = "", origenAudiencia = "EXPEDIENTE", contextoGerenciaId = "", contextoMateriaId = "", contextoNumeroReferencia = "", contextoSede = "", contextoPartes = "", contextoDescripcion = "", asuntoIndependienteId = "") {
 
     if (origenAudiencia === 'EXPEDIENTE') {
         window.editandoAudienciaAbogadoId = abogadoId;
@@ -198,6 +212,12 @@ function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala
         // En expediente, el seteo del valor disparará el onChange que cargará los abogados
     } else {
         // Llenar campos de Asunto Único
+        const asuntoSelect = document.getElementById('aud-select-asunto-independiente');
+        if (asuntoSelect && asuntoIndependienteId) {
+            if (asuntoSelect.tomselect) asuntoSelect.tomselect.setValue(String(asuntoIndependienteId), true);
+            else asuntoSelect.value = asuntoIndependienteId;
+            seleccionarAsuntoIndependienteAudiencia(asuntoSelect);
+        }
         const gerenciaSelect = document.getElementById('aud-contexto-gerencia');
         if (gerenciaSelect) {
             if (gerenciaSelect.tomselect) {
@@ -297,7 +317,10 @@ function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala
     const titulo = document.getElementById('modal-titulo-audiencia');
     if (titulo) titulo.innerHTML = '<i class="fas fa-edit"></i> Editar Audiencia';
 
-    document.getElementById('modal-audiencia').classList.remove('hidden');
+    const modal = document.getElementById('modal-audiencia');
+    modal.classList.remove('hidden');
+    const scrollContainer = modal.querySelector('.overflow-y-auto');
+    if (scrollContainer) scrollContainer.scrollTop = 0;
 }
 
 // Helper para evitar errores si el input no existe
@@ -348,6 +371,8 @@ function switchModoRegistro(modo) {
     const contextoGerencia = document.getElementById('aud-contexto-gerencia');
     const contextoMateria = document.getElementById('aud-contexto-materia');
     const contextoReferencia = document.getElementById('aud-contexto-referencia');
+    const contextoPartes = document.getElementById('aud-contexto-partes');
+    const contextoDescripcion = document.getElementById('aud-contexto-descripcion');
     
     const abogadoSelect = document.getElementById('input-abogado');
 
@@ -392,6 +417,8 @@ function switchModoRegistro(modo) {
             contextoReferencia.removeAttribute('required');
             contextoReferencia.value = '';
         }
+        if (contextoPartes) contextoPartes.removeAttribute('required');
+        if (contextoDescripcion) contextoDescripcion.removeAttribute('required');
 
 
         setValueIfExists('aud-contexto-partes', '');
@@ -432,6 +459,8 @@ function switchModoRegistro(modo) {
         if (contextoGerencia) contextoGerencia.setAttribute('required', 'required');
         if (contextoMateria) contextoMateria.setAttribute('required', 'required');
         if (contextoReferencia) contextoReferencia.setAttribute('required', 'required');
+        if (contextoPartes) contextoPartes.setAttribute('required', 'required');
+        if (contextoDescripcion) contextoDescripcion.setAttribute('required', 'required');
 
         // Limpiar selector de sala (Sede de Expediente)
         const salaSelect = document.getElementById('input-sala');
@@ -449,6 +478,35 @@ function switchModoRegistro(modo) {
             cargarMateriasAsuntoUnico();
         }
     }
+}
+
+function seleccionarAsuntoIndependienteAudiencia(select) {
+    if (!select) return;
+    const option = select.options[select.selectedIndex];
+    const existente = Boolean(option && option.value);
+    const asignar = (id, valor) => {
+        const campo = document.getElementById(id);
+        if (!campo || !valor) return;
+        if (campo.tomselect) campo.tomselect.setValue(String(valor));
+        else campo.value = valor;
+    };
+    if (existente) {
+        asignar('aud-contexto-gerencia', option.dataset.gerencia);
+        cargarMateriasAsuntoUnico(option.dataset.materia);
+        asignar('aud-contexto-referencia', option.dataset.referencia);
+        asignar('aud-contexto-partes', option.dataset.partes);
+        asignar('aud-contexto-descripcion', option.dataset.descripcion);
+    }
+    document.querySelectorAll('.campos-nuevo-asunto-audiencia input, .campos-nuevo-asunto-audiencia select')
+        .forEach(campo => campo.disabled = existente);
+    ['aud-contexto-gerencia', 'aud-contexto-materia', 'aud-contexto-referencia',
+        'aud-contexto-partes', 'aud-contexto-descripcion'].forEach(id => {
+        const campo = document.getElementById(id);
+        if (campo) {
+            campo.readOnly = existente;
+            if (campo.tomselect) existente ? campo.tomselect.disable() : campo.tomselect.enable();
+        }
+    });
 }
 
 function activarSubidaActa(id) {
@@ -518,7 +576,7 @@ function showErrorModal(mensaje) {
 }
 
 // ROD-186: Listener para subida de acta y conclusión vía AJAX (Preserva filtros)
-document.addEventListener('submit', function (e) {
+document.addEventListener('submit', async function (e) {
     const formAudiencia = e.target.closest('#form-audiencia');
     // A. Concluir Audiencia
     const formConcluir = e.target.closest('#form-concluir');
@@ -554,6 +612,11 @@ document.addEventListener('submit', function (e) {
     // B. Guardar/Editar Audiencia
     if (formAudiencia) {
         e.preventDefault();
+        await Promise.all([window.cargaAbogadosAudiencia, window.cargaMateriasAudiencia].filter(Boolean));
+        if (!formAudiencia.checkValidity()) {
+            formAudiencia.reportValidity();
+            return;
+        }
         const formData = new FormData(formAudiencia);
 
         Swal.fire({
@@ -569,6 +632,13 @@ document.addEventListener('submit', function (e) {
         })
             .then(response => {
                 if (response.ok) {
+                    const creoAsuntoIndependiente = formData.get('origenAudiencia') === 'ASUNTO_UNICO'
+                        && !formData.get('asuntoIndependienteId') && !formData.get('id');
+                    if (creoAsuntoIndependiente) {
+                        sessionStorage.setItem('siajAudienciaGuardada', '¡Datos guardados correctamente!');
+                        window.location.reload();
+                        return;
+                    }
                     document.getElementById('modal-audiencia').classList.add('hidden');
                     showSuccessToast('¡Datos guardados correctamente!');
                     actualizarTablaAsincrono();
@@ -802,7 +872,7 @@ function cargarAbogadosAsuntoUnico(idPreseleccionado = null) {
         abogadoSelect.innerHTML = '<option>Buscando abogados disponibles...</option>';
     }
 
-    fetch(`/audiencias/api/abogados-por-gerencia/${gerenciaId}`)
+    window.cargaAbogadosAudiencia = fetch(`/audiencias/api/abogados-por-gerencia/${gerenciaId}`)
         .then(response => response.json())
         .then(abogados => {
             const options = abogados.map(a => ({
@@ -863,7 +933,7 @@ function cargarMateriasAsuntoUnico(idPreseleccionado = null) {
         materiaSelect.innerHTML = '<option>Buscando materias disponibles...</option>';
     }
 
-    fetch(`/audiencias/api/materias-por-gerencia/${gerenciaId}`)
+    window.cargaMateriasAudiencia = fetch(`/audiencias/api/materias-por-gerencia/${gerenciaId}`)
         .then(response => response.json())
         .then(materias => {
             const options = materias.map(m => ({
@@ -875,6 +945,8 @@ function cargarMateriasAsuntoUnico(idPreseleccionado = null) {
                 updateTomSelectOptions(materiaSelect.tomselect, options, '-- Seleccione Materia --');
                 if (idPreseleccionado) {
                     materiaSelect.tomselect.setValue(idPreseleccionado);
+                    const asuntoSeleccionado = document.getElementById('aud-select-asunto-independiente')?.value;
+                    if (asuntoSeleccionado) materiaSelect.tomselect.disable();
                 } else {
                     materiaSelect.tomselect.setValue('');
                 }
@@ -921,6 +993,14 @@ function inicializarSelectsAudiencias() {
     const selectExpediente = document.getElementById('input-expediente');
     const selectTipo = document.getElementById('input-tipo');
     const selectSala = document.getElementById('input-sala');
+    const selectAsunto = document.getElementById('aud-select-asunto-independiente');
+
+    if (selectAsunto && !selectAsunto.tomselect) {
+        initSearchableSelect(selectAsunto, {
+            placeholder: 'Buscar por folio, referencia o parte interesada...',
+            onChange: function() { seleccionarAsuntoIndependienteAudiencia(selectAsunto); }
+        });
+    }
 
     if (selectExpediente && !selectExpediente.tomselect) {
         // Leer opciones con data-gerencia-id ANTES de que Tom Select las virtualice

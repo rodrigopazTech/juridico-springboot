@@ -3,7 +3,7 @@
     <div class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm transition-opacity"></div>
 
     <div class="fixed inset-0 z-10 overflow-y-auto">
-        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="flex min-h-full items-start justify-center p-4 py-8 text-center sm:py-10">
             <div
                 class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all w-full max-w-2xl mx-4 sm:mx-auto border border-gray-200">
 
@@ -51,7 +51,7 @@
                             <input type="radio" name="origenTermino" value="ASUNTO_UNICO"
                                 onchange="toggleOrigenTermino()"
                                 class="text-gob-guinda focus:ring-gob-oro">
-                            <span><i class="fas fa-file-circle-plus mr-2"></i> Asunto único</span>
+                            <span><i class="fas fa-file-circle-plus mr-2"></i> Asunto Independiente</span>
                         </label>
                     </div>
 
@@ -74,6 +74,35 @@
                     </div>
 
                     <div id="grupo-contexto-termino" class="hidden space-y-5 rounded-lg border border-gray-200 bg-white p-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Asunto Independiente existente</label>
+                            <select name="asuntoIndependienteId" id="select-asunto-independiente-termino"
+                                onchange="seleccionarAsuntoIndependienteTermino(this)"
+                                class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm bg-white shadow-sm">
+                                <option value="">Crear un nuevo Asunto Independiente</option>
+                                <option th:each="ai : ${asuntosIndependientesList}" th:value="${ai.id}"
+                                    th:text="${ai.folioSiaj + ' · ' + ai.referencia + ' · ' + ai.parteInteresada}"
+                                    th:data-gerencia="${ai.gerencia?.id}" th:data-materia="${ai.materia?.id}"
+                                    th:data-referencia="${ai.referencia}" th:data-partes="${ai.parteInteresada}"
+                                    th:data-descripcion="${ai.descripcion}"></option>
+                            </select>
+                            <p class="mt-1 text-[11px] text-gray-500">Selecciónalo para agregar otra actuación al mismo asunto y evitar duplicados.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 campos-nuevo-asunto-termino">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Tipo de referencia *</label>
+                                <select name="tipoReferenciaAsunto" id="select-tipo-referencia-asunto-termino"
+                                    class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 sm:text-sm bg-white shadow-sm">
+                                    <option th:each="tipo : ${tiposReferenciaAsunto}" th:value="${tipo.name()}" th:text="${tipo.descripcion}"></option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de referencia *</label>
+                                <input type="date" name="fechaReferenciaAsunto" id="input-fecha-referencia-asunto-termino"
+                                    th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}"
+                                    class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 sm:text-sm shadow-sm">
+                            </div>
+                        </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div id="div-gerencia-termino">
                                 <label class="block text-sm font-bold text-gray-700 mb-1">Gerencia *</label>
@@ -96,14 +125,16 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Referencia</label>
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">Número o referencia *</label>
                                 <input type="text" name="contextoNumeroReferencia" id="input-contexto-referencia"
+                                    required
                                     placeholder="Ej. Oficio, folio o referencia interna"
                                     class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm">
                             </div>
                             <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Partes / Interesado</label>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Parte interesada *</label>
                                 <input type="text" name="contextoPartes" id="input-contexto-partes"
+                                    required
                                     placeholder="Persona, área o contraparte"
                                     class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm">
                             </div>
@@ -111,7 +142,7 @@
 
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-1">Descripción del asunto *</label>
-                            <textarea name="contextoDescripcion" id="input-contexto-descripcion" rows="2"
+                            <textarea name="contextoDescripcion" id="input-contexto-descripcion" rows="2" required
                                 class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm resize-none"
                                 placeholder="Describe el asunto que origina este término..."></textarea>
                         </div>
@@ -183,7 +214,7 @@
                                 </select>
                             </div>
                             <p class="mt-1 text-xs text-gray-500">
-                                <i class="fas fa-lock text-xs"></i> Vinculado automáticamente al expediente.
+                                <i class="fas fa-info-circle text-xs"></i> Responsable de atender esta actuación.
                             </p>
                         </div>
                     </div>

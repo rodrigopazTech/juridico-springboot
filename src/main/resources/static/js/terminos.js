@@ -4,6 +4,11 @@
  */
 
 document.addEventListener('DOMContentLoaded', function () {
+    const mensajeRecarga = sessionStorage.getItem('siajTerminoGuardado');
+    if (mensajeRecarga) {
+        sessionStorage.removeItem('siajTerminoGuardado');
+        setTimeout(() => showSuccessToast(mensajeRecarga), 150);
+    }
     inicializarSelectsTerminos();
     //console.log("Sistema de Terminos Cargado");
     initMiniCalendar();
@@ -818,6 +823,13 @@ document.addEventListener('submit', function (e) {
             .then(({ ok, data }) => {
                 Swal.close();
                 if (ok && data.success) {
+                    const creoAsuntoIndependiente = fd.get('origenTermino') === 'ASUNTO_UNICO'
+                        && !fd.get('asuntoIndependienteId') && !fd.get('id');
+                    if (creoAsuntoIndependiente) {
+                        sessionStorage.setItem('siajTerminoGuardado', data.mensaje || '¡Datos guardados correctamente!');
+                        window.location.reload();
+                        return;
+                    }
                     cerrarModal('modal-nuevo-termino');
                     showSuccessToast(data.mensaje || '¡Datos guardados correctamente!');
                     actualizarTablaAsincrono();
@@ -863,6 +875,7 @@ function abrirModalNuevo() {
     const abogadoSelect = document.getElementById('select-abogado-termino');
     const observacionesInput = document.getElementById('input-observaciones-termino');
     const titulo = document.getElementById('modal-titulo');
+    const asuntoIndependienteSelect = document.getElementById('select-asunto-independiente-termino');
 
     // Limpiar campos
     if (idInput) idInput.value = "";
@@ -875,6 +888,11 @@ function abrirModalNuevo() {
     if (fechaOrigenInput) fechaOrigenInput.value = new Date().toISOString().slice(0, 10);
     if (tipoTerminoSelect) tipoTerminoSelect.value = "";
     if (observacionesInput) observacionesInput.value = "";
+    if (asuntoIndependienteSelect) {
+        if (asuntoIndependienteSelect.tomselect) asuntoIndependienteSelect.tomselect.setValue('');
+        else asuntoIndependienteSelect.value = '';
+        seleccionarAsuntoIndependienteTermino(asuntoIndependienteSelect);
+    }
     ['select-contexto-materia', 'input-contexto-descripcion', 'input-contexto-partes', 'input-contexto-referencia']
         .forEach(id => {
             const el = document.getElementById(id);
@@ -929,6 +947,8 @@ function abrirModalNuevo() {
     if (modal) {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        const scrollContainer = modal.querySelector('.overflow-y-auto');
+        if (scrollContainer) scrollContainer.scrollTop = 0;
     }
     
     ajustarVisibilidadCamposPorRolYOrigen();
@@ -1025,7 +1045,8 @@ function toggleOrigenTermino() {
     grupoContexto?.classList.toggle('hidden', !esAsuntoUnico);
 
     if (expSelect) expSelect.required = !esAsuntoUnico;
-    ['select-contexto-materia', 'select-contexto-gerencia', 'input-contexto-descripcion'].forEach(id => {
+    ['select-contexto-materia', 'select-contexto-gerencia', 'input-contexto-referencia',
+        'input-contexto-partes', 'input-contexto-descripcion'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.required = esAsuntoUnico;
     });
@@ -1042,15 +1063,13 @@ function toggleOrigenTermino() {
         const gerenciaSelect = document.getElementById('select-contexto-gerencia');
         if (gerenciaSelect) {
             let currentGerenciaVal = gerenciaSelect.tomselect ? gerenciaSelect.tomselect.getValue() : gerenciaSelect.value;
-            let alreadyLoaded = false;
 
             // Auto-seleccionar si solo hay 1 opción real
             const realOptions = Array.from(gerenciaSelect.options).filter(opt => opt.value !== "");
             if (realOptions.length === 1 && !currentGerenciaVal) {
                 if (gerenciaSelect.tomselect) {
-                    gerenciaSelect.tomselect.setValue(realOptions[0].value);
+                    gerenciaSelect.tomselect.setValue(realOptions[0].value, true);
                     currentGerenciaVal = realOptions[0].value;
-                    alreadyLoaded = true;
                 } else {
                     gerenciaSelect.selectedIndex = 1;
                     currentGerenciaVal = gerenciaSelect.value;
@@ -1069,13 +1088,11 @@ function toggleOrigenTermino() {
                 }
             }
             
-            // Cargar materias y abogados dinámicamente si hay una gerencia seleccionada
-            if (!alreadyLoaded) {
-                if (currentGerenciaVal) {
-                    cargarMateriasYAbogadosPorGerencia(currentGerenciaVal);
-                } else {
-                    cargarMateriasYAbogadosPorGerencia('');
-                }
+            // Cargar materias y abogados dinámicamente si hay una gerencia seleccionada.
+            if (currentGerenciaVal) {
+                cargarMateriasYAbogadosPorGerencia(currentGerenciaVal);
+            } else {
+                cargarMateriasYAbogadosPorGerencia('');
             }
         }
     } else if (abogadoSelect) {
@@ -1094,6 +1111,35 @@ function toggleOrigenTermino() {
     }
 
     ajustarVisibilidadCamposPorRolYOrigen();
+}
+
+function seleccionarAsuntoIndependienteTermino(select) {
+    if (!select) return;
+    const option = select.options[select.selectedIndex];
+    const existente = Boolean(option && option.value);
+    const asignar = (id, valor) => {
+        const campo = document.getElementById(id);
+        if (!campo || !valor) return;
+        if (campo.tomselect) campo.tomselect.setValue(String(valor));
+        else campo.value = valor;
+    };
+    if (existente) {
+        asignar('select-contexto-gerencia', option.dataset.gerencia);
+        asignar('select-contexto-materia', option.dataset.materia);
+        asignar('input-contexto-referencia', option.dataset.referencia);
+        asignar('input-contexto-partes', option.dataset.partes);
+        asignar('input-contexto-descripcion', option.dataset.descripcion);
+    }
+    document.querySelectorAll('.campos-nuevo-asunto-termino input, .campos-nuevo-asunto-termino select')
+        .forEach(campo => campo.disabled = existente);
+    ['select-contexto-gerencia', 'select-contexto-materia', 'input-contexto-referencia',
+        'input-contexto-partes', 'input-contexto-descripcion'].forEach(id => {
+        const campo = document.getElementById(id);
+        if (campo) {
+            campo.readOnly = existente;
+            if (campo.tomselect) existente ? campo.tomselect.disable() : campo.tomselect.enable();
+        }
+    });
 }
 
 function ajustarVisibilidadCamposPorRolYOrigen() {
@@ -1246,7 +1292,7 @@ function cargarMateriasYAbogadosPorGerencia(gerenciaId, callbackMateria = null, 
     }
 }
 
-function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogadoId, prioridad, observaciones = "", origenTermino = 'EXPEDIENTE', materiaId = '', gerenciaId = '', descripcion = '', partes = '', referencia = '', tipoTerminoId = '', fechaOrigen = '') {
+function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogadoId, prioridad, observaciones = "", origenTermino = 'EXPEDIENTE', materiaId = '', gerenciaId = '', descripcion = '', partes = '', referencia = '', tipoTerminoId = '', fechaOrigen = '', asuntoIndependienteId = '') {
 
     // Llenar datos en el formulario
     const idInput = document.getElementById('input-termino-id');
@@ -1283,6 +1329,12 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
     });
 
     if (origenTermino === 'ASUNTO_UNICO') {
+        const asuntoSelect = document.getElementById('select-asunto-independiente-termino');
+        if (asuntoSelect && asuntoIndependienteId) {
+            if (asuntoSelect.tomselect) asuntoSelect.tomselect.setValue(String(asuntoIndependienteId), true);
+            else asuntoSelect.value = asuntoIndependienteId;
+            seleccionarAsuntoIndependienteTermino(asuntoSelect);
+        }
         if (gerenciaSelect) {
             if (gerenciaSelect.tomselect) {
                 if (gerenciaId) {
@@ -1489,6 +1541,14 @@ function inicializarSelectsTerminos() {
     const selectGerencia = document.getElementById('select-contexto-gerencia');
     const selectMateria = document.getElementById('select-contexto-materia');
     const selectAbogado = document.getElementById('select-abogado-termino');
+    const selectAsunto = document.getElementById('select-asunto-independiente-termino');
+
+    if (selectAsunto && !selectAsunto.tomselect) {
+        initSearchableSelect(selectAsunto, {
+            placeholder: 'Buscar por folio, referencia o parte interesada...',
+            onChange: function() { seleccionarAsuntoIndependienteTermino(selectAsunto); }
+        });
+    }
 
     if (selectExpediente && !selectExpediente.tomselect) {
         initSearchableSelect(selectExpediente, { 
