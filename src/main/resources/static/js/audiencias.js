@@ -38,16 +38,14 @@ function toggleMenu(id) {
             const spacing = 8;
             const viewportPadding = 12;
             const menuHeight = menu.offsetHeight;
-            const resultsPanel = menu.closest('#grid-resultados-audiencias') || menu.closest('#tabla-audiencias-container');
-            const visibleBottom = Math.min(
-                window.innerHeight - viewportPadding,
-                resultsPanel ? resultsPanel.getBoundingClientRect().bottom - viewportPadding : window.innerHeight - viewportPadding
-            );
-            const spaceBelow = visibleBottom - rect.bottom;
-            const openAbove = spaceBelow < menuHeight + spacing && rect.top > menuHeight + spacing + viewportPadding;
-            const top = openAbove
+            const spaceBelow = window.innerHeight - viewportPadding - rect.bottom;
+            const spaceAbove = rect.top - viewportPadding;
+            const openAbove = spaceBelow < menuHeight + spacing && spaceAbove > spaceBelow;
+            const preferredTop = openAbove
                 ? rect.top - menuHeight - spacing
-                : Math.min(rect.bottom + spacing, visibleBottom - menuHeight);
+                : rect.bottom + spacing;
+            const maxTop = Math.max(viewportPadding, window.innerHeight - menuHeight - viewportPadding);
+            const top = Math.min(Math.max(viewportPadding, preferredTop), maxTop);
             const left = Math.min(
                 Math.max(viewportPadding, rect.right - menuWidth),
                 window.innerWidth - menuWidth - viewportPadding
@@ -56,7 +54,7 @@ function toggleMenu(id) {
             menu.style.position = 'fixed';
             menu.style.zIndex = '9999';
             menu.style.margin = '0';
-            menu.style.top = `${Math.max(viewportPadding, top)}px`;
+            menu.style.top = `${top}px`;
             menu.style.left = `${left}px`;
         }
     } else {

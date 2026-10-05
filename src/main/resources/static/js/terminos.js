@@ -305,11 +305,28 @@ function toggleMenu(id) {
         const btn = menu.parentElement.querySelector('button[onclick*="toggleMenu"]');
         if (btn) {
             const rect = btn.getBoundingClientRect();
+            const menuWidth = 256;
+            const menuHeight = menu.offsetHeight;
+            const spacing = 8;
+            const viewportPadding = 12;
+            const spaceBelow = window.innerHeight - viewportPadding - rect.bottom;
+            const spaceAbove = rect.top - viewportPadding;
+            const openAbove = spaceBelow < menuHeight + spacing && spaceAbove > spaceBelow;
+            const preferredTop = openAbove
+                ? rect.top - menuHeight - spacing
+                : rect.bottom + spacing;
+            const maxTop = Math.max(viewportPadding, window.innerHeight - menuHeight - viewportPadding);
+            const top = Math.min(Math.max(viewportPadding, preferredTop), maxTop);
+            const left = Math.min(
+                Math.max(viewportPadding, rect.right - menuWidth),
+                window.innerWidth - menuWidth - viewportPadding
+            );
+
             menu.style.position = 'fixed';
             menu.style.zIndex = '9999';
-            menu.style.top = `${rect.bottom + 4}px`;
-            const menuWidth = 256; // Ancho del menú (w-64)
-            menu.style.left = `${rect.right - menuWidth}px`;
+            menu.style.margin = '0';
+            menu.style.top = `${top}px`;
+            menu.style.left = `${left}px`;
         }
     } else {
         menu.classList.add('hidden');
