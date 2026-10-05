@@ -142,6 +142,7 @@ function abrirModalAudiencia() {
         else asuntoSelect.value = '';
         seleccionarAsuntoIndependienteAudiencia(asuntoSelect);
     }
+    mostrarSelectorAsuntoExistenteAudiencia(false);
 
     const gerenciaSelect = document.getElementById('aud-contexto-gerencia');
     if (gerenciaSelect && gerenciaSelect.tomselect) {
@@ -212,6 +213,7 @@ function abrirModalEditar(id, expedienteId, tipoId, fecha, hora, isVirtual, sala
         // Llenar campos de Asunto Único
         const asuntoSelect = document.getElementById('aud-select-asunto-independiente');
         if (asuntoSelect && asuntoIndependienteId) {
+            mostrarSelectorAsuntoExistenteAudiencia(true);
             if (asuntoSelect.tomselect) asuntoSelect.tomselect.setValue(String(asuntoIndependienteId), true);
             else asuntoSelect.value = asuntoIndependienteId;
             seleccionarAsuntoIndependienteAudiencia(asuntoSelect);
@@ -377,9 +379,9 @@ function switchModoRegistro(modo) {
     if (!tabExpediente || !tabAsuntoUnico || !seccionExpediente || !seccionAsuntoUnico) return;
 
     if (modo === 'EXPEDIENTE') {
-        // Estilo de pestañas
-        tabExpediente.className = "flex-1 py-3 px-4 text-center font-bold border-b-2 transition-all border-gob-guinda text-gob-guinda bg-gob-guinda/5";
-        tabAsuntoUnico.className = "flex-1 py-3 px-4 text-center font-bold border-b-2 transition-all border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50/50";
+        // Estado visual del origen
+        tabExpediente.className = "flex items-center gap-3 rounded-lg border border-gob-guinda bg-white px-4 py-3 text-left text-sm font-bold text-gob-guinda transition-colors focus:outline-none focus:ring-2 focus:ring-gob-oro";
+        tabAsuntoUnico.className = "flex items-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-left text-sm font-bold text-gray-700 transition-colors hover:border-gob-guinda hover:text-gob-guinda focus:outline-none focus:ring-2 focus:ring-gob-oro";
 
         // Secciones visibles
         seccionExpediente.classList.remove('hidden');
@@ -433,9 +435,9 @@ function switchModoRegistro(modo) {
         cargarAbogadosPosibles();
 
     } else if (modo === 'ASUNTO_UNICO') {
-        // Estilo de pestañas
-        tabAsuntoUnico.className = "flex-1 py-3 px-4 text-center font-bold border-b-2 transition-all border-gob-guinda text-gob-guinda bg-gob-guinda/5";
-        tabExpediente.className = "flex-1 py-3 px-4 text-center font-bold border-b-2 transition-all border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50/50";
+        // Estado visual del origen
+        tabAsuntoUnico.className = "flex items-center gap-3 rounded-lg border border-gob-guinda bg-white px-4 py-3 text-left text-sm font-bold text-gob-guinda transition-colors focus:outline-none focus:ring-2 focus:ring-gob-oro";
+        tabExpediente.className = "flex items-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-left text-sm font-bold text-gray-700 transition-colors hover:border-gob-guinda hover:text-gob-guinda focus:outline-none focus:ring-2 focus:ring-gob-oro";
 
         // Secciones visibles
         seccionAsuntoUnico.classList.remove('hidden');
@@ -505,6 +507,35 @@ function seleccionarAsuntoIndependienteAudiencia(select) {
             if (campo.tomselect) existente ? campo.tomselect.disable() : campo.tomselect.enable();
         }
     });
+}
+
+function mostrarSelectorAsuntoExistenteAudiencia(forzarVisible = null) {
+    const grupo = document.getElementById('grupo-asunto-existente-audiencia');
+    const boton = document.getElementById('btn-usar-asunto-existente-audiencia');
+    if (!grupo) return;
+    const mostrar = forzarVisible === null ? grupo.classList.contains('hidden') : Boolean(forzarVisible);
+    grupo.classList.toggle('hidden', !mostrar);
+    if (boton) {
+        boton.innerHTML = mostrar
+            ? '<i class="fas fa-times mr-2"></i>Cancelar selección'
+            : '<i class="fas fa-link mr-2"></i>Usar un asunto existente';
+    }
+    if (!mostrar) {
+        const select = document.getElementById('aud-select-asunto-independiente');
+        if (select) {
+            const teniaAsuntoSeleccionado = Boolean(select.tomselect ? select.tomselect.getValue() : select.value);
+            if (select.tomselect) select.tomselect.setValue('', true);
+            else select.value = '';
+            seleccionarAsuntoIndependienteAudiencia(select);
+            if (teniaAsuntoSeleccionado) {
+                const materia = document.getElementById('aud-contexto-materia');
+                if (materia?.tomselect) materia.tomselect.setValue('');
+                else if (materia) materia.value = '';
+                ['aud-contexto-referencia', 'aud-contexto-partes', 'aud-contexto-descripcion']
+                    .forEach(id => setValueIfExists(id, ''));
+            }
+        }
+    }
 }
 
 function activarSubidaActa(id) {

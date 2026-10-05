@@ -5,12 +5,12 @@
         <div class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm transition-opacity"></div>
 
         <div class="fixed inset-0 z-10 overflow-y-auto">
-            <div class="flex min-h-full items-start justify-center p-4 py-8 text-center sm:py-10">
+            <div class="flex min-h-full items-start justify-center p-1 py-1 text-center lg:items-center">
                 <div
-                    class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all w-full max-w-2xl mx-4 sm:mx-auto border border-gray-200">
+                    class="relative max-h-[calc(100vh-0.5rem)] transform overflow-y-auto rounded-xl bg-white text-left shadow-2xl transition-all w-full max-w-7xl mx-2 sm:mx-auto border border-gray-200">
 
                     <div
-                        class="flex justify-between items-center px-6 py-4 border-b border-gob-guinda bg-gob-guinda text-white rounded-t-xl shadow-sm">
+                        class="flex justify-between items-center px-6 py-3 border-b border-gob-guinda bg-gob-guinda text-white rounded-t-xl shadow-sm">
                         <h3 class="text-lg font-bold flex items-center gap-2 font-headings" id="modal-titulo-audiencia">
                             <i class="fas fa-gavel"></i> Nueva Audiencia
                         </h3>
@@ -23,28 +23,28 @@
                     </div>
 
                     <form id="form-audiencia" th:action="@{/audiencias/guardar}" method="post"
-                        class="p-6 bg-gray-50/50">
+                        class="p-4 bg-gray-50/50">
                         <input type="hidden" id="input-audiencia-id" name="id" />
                         <input type="hidden" id="input-origen-audiencia" name="origenAudiencia" value="EXPEDIENTE" />
                         <input type="hidden" id="current-user-id"
                             th:value="${usuarioActual != null ? usuarioActual.id : ''}" />
 
-                        <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
 
-                            <!-- TABS PARA SELECCIONAR TIPO DE AUDIENCIA (EXPEDIENTE O ASUNTO UNICO) -->
-                            <div class="col-span-1 sm:col-span-2 flex rounded-lg bg-gray-200/80 p-1 border border-gray-300">
+                            <!-- Origen de la audiencia: mismo patrón utilizado por Términos -->
+                            <div id="contenedor-tabs-audiencia" class="col-span-1 sm:col-span-2 lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <button type="button" id="tab-expediente" onclick="switchModoRegistro('EXPEDIENTE')"
-                                    class="w-1/2 rounded-md py-1.5 text-xs font-bold transition-all shadow-sm bg-white text-gray-800 focus:outline-none">
-                                    <i class="fas fa-folder-open mr-1"></i> Por Expediente
+                                    class="flex items-center gap-3 rounded-lg border border-gob-guinda bg-white px-4 py-3 text-left text-sm font-bold text-gob-guinda transition-colors focus:outline-none focus:ring-2 focus:ring-gob-oro">
+                                    <i class="fas fa-folder-open"></i> Asociada a expediente
                                 </button>
                                 <button type="button" id="tab-asunto-unico" onclick="switchModoRegistro('ASUNTO_UNICO')"
-                                    class="w-1/2 rounded-md py-1.5 text-xs font-bold transition-all text-gray-600 hover:text-gray-800 focus:outline-none">
-                                    <i class="fas fa-file-alt mr-1"></i> Asunto Independiente
+                                    class="flex items-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-left text-sm font-bold text-gray-700 transition-colors hover:border-gob-guinda hover:text-gob-guinda focus:outline-none focus:ring-2 focus:ring-gob-oro">
+                                    <i class="fas fa-file-circle-plus"></i> Sin expediente
                                 </button>
                             </div>
 
                             <!-- SECCIÓN: POR EXPEDIENTE -->
-                            <div id="seccion-expediente" class="col-span-1 sm:col-span-2">
+                            <div id="seccion-expediente" class="col-span-1 sm:col-span-2 lg:col-span-4">
                                 <label for="input-expediente" class="block text-sm font-bold text-gray-700">Expediente *</label>
                                 <div class="mt-1 flex rounded-md shadow-sm">
                                     <span
@@ -64,35 +64,54 @@
                             </div>
 
                             <!-- SECCIÓN: ASUNTO ÚNICO -->
-                            <div id="seccion-asunto-unico" class="col-span-1 sm:col-span-2 hidden grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-2">
-                                <div class="col-span-1 sm:col-span-2">
-                                    <label class="block text-sm font-bold text-gray-700">Asunto Independiente existente</label>
+                            <div id="seccion-asunto-unico" class="col-span-1 sm:col-span-2 lg:col-span-4 hidden space-y-3 rounded-lg border border-gray-200 bg-white p-3">
+                                <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                                    <p class="text-sm font-bold text-amber-900">Esta audiencia se registrará sin expediente.</p>
+                                    <p class="mt-1 text-xs text-amber-800">SIAJ creará un Asunto Independiente para conservarla, localizarla y vincularla a un expediente posteriormente.</p>
+                                </div>
+                                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <p class="text-sm font-bold text-gray-800">Crear un asunto nuevo</p>
+                                        <p class="text-xs text-gray-500">Es la opción normal para una audiencia nueva sin expediente.</p>
+                                    </div>
+                                    <button type="button" id="btn-usar-asunto-existente-audiencia"
+                                        onclick="mostrarSelectorAsuntoExistenteAudiencia()"
+                                        class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:border-gob-guinda hover:text-gob-guinda">
+                                        <i class="fas fa-link mr-2"></i>Usar un asunto existente
+                                    </button>
+                                </div>
+                                <div id="grupo-asunto-existente-audiencia" class="hidden rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
+                                    <div class="mb-2 flex items-center justify-between gap-3">
+                                        <label class="block text-sm font-bold text-indigo-900">Buscar asunto existente</label>
+                                        <a th:href="@{/asuntos-independientes}" target="_blank" class="text-xs font-bold text-indigo-700 hover:underline">Consultar todos</a>
+                                    </div>
                                     <select name="asuntoIndependienteId" id="aud-select-asunto-independiente"
                                         onchange="seleccionarAsuntoIndependienteAudiencia(this)"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm py-2 px-3 bg-white">
-                                        <option value="">Crear un nuevo Asunto Independiente</option>
+                                        class="block w-full rounded-lg border-gray-300 bg-white px-3 py-2.5 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm">
+                                        <option value="">No usar un asunto existente</option>
                                         <option th:each="ai : ${asuntosIndependientesList}" th:value="${ai.id}"
                                             th:text="${ai.folioSiaj + ' · ' + ai.referencia + ' · ' + ai.parteInteresada}"
                                             th:data-gerencia="${ai.gerencia?.id}" th:data-materia="${ai.materia?.id}"
                                             th:data-referencia="${ai.referencia}" th:data-partes="${ai.parteInteresada}"
                                             th:data-descripcion="${ai.descripcion}"></option>
                                     </select>
-                                    <p class="mt-1 text-[11px] text-gray-500">Selecciónalo para registrar la audiencia en un asunto ya abierto.</p>
+                                    <p class="mt-2 text-[11px] text-indigo-800">Úsalo sólo si esta audiencia pertenece al mismo asunto que ya registraste antes.</p>
                                 </div>
-                                <div class="col-span-1 campos-nuevo-asunto-audiencia">
+                                <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+                                <div class="campos-nuevo-asunto-audiencia">
                                     <label class="block text-sm font-bold text-gray-700">Tipo de referencia *</label>
                                     <select name="tipoReferenciaAsunto" id="aud-tipo-referencia"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm py-2 px-3 bg-white">
                                         <option th:each="tipo : ${tiposReferenciaAsunto}" th:value="${tipo.name()}" th:text="${tipo.descripcion}"></option>
                                     </select>
                                 </div>
-                                <div class="col-span-1 campos-nuevo-asunto-audiencia">
+                                <div class="campos-nuevo-asunto-audiencia">
                                     <label class="block text-sm font-bold text-gray-700">Fecha de referencia *</label>
                                     <input type="date" name="fechaReferenciaAsunto" id="aud-fecha-referencia"
                                         th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm px-3 py-2">
                                 </div>
-                                <div class="col-span-1">
+                                <div>
                                     <label class="block text-sm font-bold text-gray-700">Gerencia *</label>
 
                                     <!-- ABOGADO / JEFE_DEPTO / GERENTE: gerencia fija, no editable -->
@@ -119,7 +138,7 @@
                                     </select>
                                 </div>
 
-                                <div class="col-span-1">
+                                <div>
                                     <label for="aud-contexto-materia" class="block text-sm font-bold text-gray-700">Materia *</label>
                                     <select id="aud-contexto-materia" name="contextoMateriaId"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm py-2 px-3">
@@ -129,26 +148,27 @@
                                     </select>
                                 </div>
 
-                                <div class="col-span-1 sm:col-span-2">
-                                    <label for="aud-contexto-referencia" class="block text-sm font-bold text-gray-700">Número o referencia *</label>
-                                    <input type="text" name="contextoNumeroReferencia" id="aud-contexto-referencia" required placeholder="Ej. REF-2026-01"
+                                <div class="lg:col-span-2">
+                                    <label for="aud-contexto-referencia" class="block text-sm font-bold text-gray-700">Nombre del asunto independiente *</label>
+                                    <input type="text" name="contextoNumeroReferencia" id="aud-contexto-referencia" required placeholder="Ej. Audiencia por requerimiento"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2">
                                 </div>
 
-                                <div class="col-span-1 sm:col-span-2">
+                                <div class="lg:col-span-2">
                                     <label for="aud-contexto-partes" class="block text-sm font-bold text-gray-700">Parte interesada *</label>
                                     <input type="text" name="contextoPartes" id="aud-contexto-partes" required placeholder="Persona, área o contraparte"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2">
                                 </div>
 
-                                <div class="col-span-1 sm:col-span-2">
+                                <div class="md:col-span-2 lg:col-span-4">
                                     <label for="aud-contexto-descripcion" class="block text-sm font-bold text-gray-700">Descripción del asunto *</label>
-                                    <textarea name="contextoDescripcion" id="aud-contexto-descripcion" rows="2" required placeholder="Detalles específicos del asunto independiente..."
+                                    <textarea name="contextoDescripcion" id="aud-contexto-descripcion" rows="1" required placeholder="Detalles específicos del asunto independiente..."
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2 resize-none"></textarea>
+                                </div>
                                 </div>
                             </div>
 
-                            <div class="col-span-1 sm:col-span-2">
+                            <div class="lg:col-span-2">
                                 <label for="input-tipo" class="block text-sm font-bold text-gray-700">Tipo de Audiencia
                                     *</label>
                                 <select id="input-tipo" name="tipoAudiencia.id" required
@@ -171,7 +191,7 @@
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2">
                             </div>
 
-                            <div class="col-span-1 sm:col-span-2">
+                            <div>
                                 <span class="block text-sm font-bold text-gray-700 mb-2">Modalidad</span>
                                 <div class="flex items-center space-x-4">
                                     <div class="flex items-center">
@@ -194,7 +214,7 @@
                                 </div>
                             </div>
 
-                            <div id="campo-sala" class="col-span-1 sm:col-span-2">
+                            <div id="campo-sala">
                                 <label for="input-sala" class="block text-sm font-bold text-gray-700">Sede / Sala
                                     *</label>
                                 <div class="relative mt-1">
@@ -212,7 +232,7 @@
                                 </p>
                             </div>
 
-                            <div id="campo-url" class="col-span-1 sm:col-span-2 hidden">
+                            <div id="campo-url" class="hidden">
                                 <label for="input-url" class="block text-sm font-bold text-gray-700">Enlace de Reunión
                                     (URL) *</label>
                                 <input type="url" name="urlReunion" id="input-url"
@@ -221,7 +241,7 @@
                             </div>
 
                             <div
-                                class="col-span-1 sm:col-span-2 bg-yellow-50 p-3 rounded-lg border border-yellow-200 mt-2">
+                                class="bg-yellow-50 p-3 rounded-lg border border-yellow-200 lg:col-span-2">
                                 <label for="input-abogado" class="block text-sm font-bold text-gray-700 mb-1">
                                     <i class="fas fa-user-shield text-gob-oro mr-1"></i> Abogado que Comparece
                                 </label>
@@ -240,9 +260,9 @@
 
 
 
-                            <div class="col-span-1 sm:col-span-2 mt-2">
+                            <div class="sm:col-span-2 lg:col-span-4">
                                 <label for="input-observaciones-aud" class="block text-sm font-bold text-gray-700">Notas / Observaciones</label>
-                                <textarea name="observaciones" id="input-observaciones-aud" rows="3"
+                                <textarea name="observaciones" id="input-observaciones-aud" rows="1"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2 resize-none"
                                     placeholder="Agregue comentarios internos o notas preliminares..."></textarea>
                             </div>
@@ -251,7 +271,7 @@
                         </div>
 
                         <div
-                            class="mt-8 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t border-gray-200">
+                            class="mt-3 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2 border-t border-gray-200">
                             <button type="button"
                                 onclick="document.getElementById('modal-audiencia').classList.add('hidden')"
                                 class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2.5 border border-gray-300 shadow-sm text-sm font-bold rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gob-oro transition-colors">

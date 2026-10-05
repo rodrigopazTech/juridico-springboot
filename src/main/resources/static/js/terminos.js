@@ -1059,6 +1059,16 @@ function toggleOrigenTermino() {
     const abogadoSelect = document.getElementById('select-abogado-termino');
     const userRol = document.getElementById('hdnUsuarioRol')?.value;
 
+    document.querySelectorAll('input[name="origenTermino"]').forEach(radio => {
+        const tarjeta = radio.closest('label');
+        if (!tarjeta) return;
+        const seleccionada = radio.checked;
+        tarjeta.classList.toggle('border-gob-guinda', seleccionada);
+        tarjeta.classList.toggle('text-gob-guinda', seleccionada);
+        tarjeta.classList.toggle('border-gray-300', !seleccionada);
+        tarjeta.classList.toggle('text-gray-700', !seleccionada);
+    });
+
     grupoExpediente?.classList.toggle('hidden', esAsuntoUnico);
     grupoContexto?.classList.toggle('hidden', !esAsuntoUnico);
 
@@ -1174,9 +1184,20 @@ function mostrarSelectorAsuntoExistenteTermino(forzarVisible = null) {
     if (!mostrar) {
         const select = document.getElementById('select-asunto-independiente-termino');
         if (select) {
+            const teniaAsuntoSeleccionado = Boolean(select.tomselect ? select.tomselect.getValue() : select.value);
             if (select.tomselect) select.tomselect.setValue('', true);
             else select.value = '';
             seleccionarAsuntoIndependienteTermino(select);
+            if (teniaAsuntoSeleccionado) {
+                const materia = document.getElementById('select-contexto-materia');
+                if (materia?.tomselect) materia.tomselect.setValue('');
+                else if (materia) materia.value = '';
+                ['input-contexto-referencia', 'input-contexto-partes', 'input-contexto-descripcion']
+                    .forEach(id => {
+                        const campo = document.getElementById(id);
+                        if (campo) campo.value = '';
+                    });
+            }
         }
     }
 }
