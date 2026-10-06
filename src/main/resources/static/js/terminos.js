@@ -904,6 +904,8 @@ function abrirModalNuevo() {
     if (vencimientoInput) vencimientoInput.value = "";
     if (fechaOrigenInput) fechaOrigenInput.value = new Date().toISOString().slice(0, 10);
     if (tipoTerminoSelect) tipoTerminoSelect.value = "";
+    if (tipoTerminoSelect) tipoTerminoSelect.disabled = false;
+    if (fechaOrigenInput) fechaOrigenInput.disabled = false;
     if (observacionesInput) observacionesInput.value = "";
     if (asuntoIndependienteSelect) {
         if (asuntoIndependienteSelect.tomselect) asuntoIndependienteSelect.tomselect.setValue('');
@@ -1031,6 +1033,47 @@ function mostrarReglaTipoTermino(conservarVencimiento = false) {
         if (ayuda) ayuda.textContent = 'Este tipo se seguirá sin una fecha límite ni nivel de urgencia.';
         if (grupoVencimiento) grupoVencimiento.classList.add('opacity-60');
     }
+    actualizarVistaPreviaPlazo();
+}
+
+let solicitudVistaPreviaPlazo = 0;
+function actualizarVistaPreviaPlazo() {
+    const contenedor = document.getElementById('vista-previa-plazo');
+    const texto = document.getElementById('texto-vista-previa-plazo');
+    const tipo = document.getElementById('select-tipo-termino');
+    const origen = document.getElementById('input-fecha-origen');
+    const vencimiento = document.getElementById('input-vencimiento');
+    const terminoId = document.getElementById('input-termino-id')?.value;
+    if (!contenedor || !texto || !tipo?.value || !origen?.value || terminoId) {
+        contenedor?.classList.add('hidden');
+        return;
+    }
+    const modo = tipo.selectedOptions?.[0]?.dataset?.modo;
+    if (modo === 'CAPTURADO' && !vencimiento?.value) {
+        contenedor.classList.add('hidden');
+        return;
+    }
+    const secuencia = ++solicitudVistaPreviaPlazo;
+    const params = new URLSearchParams({ tipoTerminoId: tipo.value, fechaOrigen: origen.value });
+    if (modo === 'CAPTURADO') params.set('fechaVencimiento', vencimiento.value);
+    texto.textContent = 'Calculando con el calendario institucional vigente…';
+    contenedor.classList.remove('hidden');
+    fetch(`/terminos/previsualizar-plazo?${params.toString()}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(async res => {
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || data.detail || 'No fue posible calcular la vista previa.');
+            return data;
+        })
+        .then(data => {
+            if (secuencia !== solicitudVistaPreviaPlazo) return;
+            if (modo === 'CALCULADO' && data.fechaAdoptada) vencimiento.value = data.fechaAdoptada;
+            const version = data.calendarioVersion ? ` Calendario versión ${data.calendarioVersion}.` : '';
+            texto.textContent = `${data.explicacion || 'Plazo validado.'}${version}`;
+        })
+        .catch(error => {
+            if (secuencia !== solicitudVistaPreviaPlazo) return;
+            texto.textContent = error.message;
+        });
 }
 
 function calcularVistaPreviaVencimiento(fechaOrigen, dias, tipoDias) {
@@ -1482,6 +1525,9 @@ function editarTermino(id, actuacion, fecha, expedienteId, expedienteNum, abogad
     
     ajustarVisibilidadCamposPorRolYOrigen();
     mostrarReglaTipoTermino(true);
+    if (tipoTerminoSelect) tipoTerminoSelect.disabled = true;
+    if (fechaOrigenInput) fechaOrigenInput.disabled = true;
+    if (vencimientoInput) vencimientoInput.disabled = true;
 }
 
 function recargarDatosTerminoActual() {
@@ -1678,6 +1724,61 @@ function cerrarModal(id) {
             }
         }
     }
+}
+
+function verCalculoPlazo(boton) {
+    const d = boton.dataset;
+    const partes = [d.explicacion || 'Este término no tiene una explicación de cálculo disponible.'];
+    if (d.version) partes.push(`Calendario institucional: versión ${d.version}.`);
+    if (d.calculada) partes.push(`Fecha calculada originalmente: ${d.calculada}.`);
+    if (d.adoptada) partes.push(`Fecha vigente adoptada: ${d.adoptada}.`);
+    if (d.excepcion) partes.push(`Excepción autorizada por ${d.autor || 'un superior'}: ${d.excepcion}`);
+    Swal.fire({
+        title: 'Cómo se calculó el plazo',
+        text: partes.join('\n\n'),
+        icon: 'info',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#691228'
+    });
+}
+
+function abrirExcepcionFecha(terminoId, fechaActual) {
+    Swal.fire({
+        title: 'Autorizar nueva fecha',
+        html: `<p class="text-sm text-gray-600 mb-3">La fecha calculada original permanecerá en la trazabilidad.</p>
+               <label class="block text-left text-sm font-bold">Nueva fecha<input id="swal-nueva-fecha" type="date" min="${new Date().toISOString().slice(0, 10)}" value="${fechaActual || ''}" class="swal2-input !mx-0 !w-full"></label>
+               <label class="block text-left text-sm font-bold mt-3">Motivo de la excepción<textarea id="swal-motivo-fecha" class="swal2-textarea !mx-0 !w-full" minlength="10" placeholder="Explica la autorización institucional"></textarea></label>`,
+        showCancelButton: true,
+        confirmButtonText: 'Autorizar fecha',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#691228',
+        focusConfirm: false,
+        preConfirm: () => {
+            const nuevaFecha = document.getElementById('swal-nueva-fecha').value;
+            const motivo = document.getElementById('swal-motivo-fecha').value.trim();
+            if (!nuevaFecha || motivo.length < 10) {
+                Swal.showValidationMessage('Captura la nueva fecha y un motivo de al menos 10 caracteres.');
+                return false;
+            }
+            return { nuevaFecha, motivo };
+        }
+    }).then(resultado => {
+        if (!resultado.isConfirmed) return;
+        const datos = new URLSearchParams(resultado.value);
+        Swal.fire({ title: 'Registrando autorización…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        fetch(`/terminos/${terminoId}/excepcion-fecha`, {
+            method: 'POST',
+            body: datos,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(async res => {
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || data.detail || 'No fue posible autorizar la nueva fecha.');
+            return data;
+        }).then(data => Swal.fire({
+            title: 'Fecha autorizada', text: data.mensaje, icon: 'success', confirmButtonColor: '#691228'
+        }).then(() => actualizarTablaAsincrono()))
+          .catch(error => Swal.fire({ title: 'No se guardó el cambio', text: error.message, icon: 'error', confirmButtonColor: '#691228' }));
+    });
 }
 
 // ==========================================

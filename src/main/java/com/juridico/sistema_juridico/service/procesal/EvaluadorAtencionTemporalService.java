@@ -63,7 +63,9 @@ public class EvaluadorAtencionTemporalService {
                 ? new int[] {termino.getAlertaAmarilloDias(), termino.getAlertaRojoDias()}
                 : resolverUmbrales(termino, perfil);
         String tipoDias = resolverTipoDias(termino);
-        long restantes = calculadoraPlazo.diasEntre(fechaEvaluacion, termino.getFechaVencimiento(), tipoDias);
+        long restantes = termino.getPlazoCalendarioVersion() != null
+                ? calculadoraPlazo.diasEntreSnapshot(termino, fechaEvaluacion, termino.getFechaVencimiento())
+                : calculadoraPlazo.diasEntre(fechaEvaluacion, termino.getFechaVencimiento(), tipoDias);
         String unidad = "HABILES".equalsIgnoreCase(tipoDias) ? "días hábiles" : "días naturales";
         String nombreRegla = tieneSnapshot ? termino.getAlertaPerfilNombre() : perfil.getNombre();
         String explicacion = "Regla “" + nombreRegla + "”: amarillo con " + umbrales[0]
@@ -153,8 +155,9 @@ public class EvaluadorAtencionTemporalService {
         }
         LocalDate origen = termino.getFechaIngreso() != null ? termino.getFechaIngreso() : termino.getFechaCreacion();
         if (origen == null) origen = LocalDate.now();
-        long duracion = Math.max(1, calculadoraPlazo.diasEntre(
-                origen, termino.getFechaVencimiento(), resolverTipoDias(termino)));
+        long duracion = Math.max(1, termino.getPlazoCalendarioVersion() != null
+                ? calculadoraPlazo.diasEntreSnapshot(termino, origen, termino.getFechaVencimiento())
+                : calculadoraPlazo.diasEntre(origen, termino.getFechaVencimiento(), resolverTipoDias(termino)));
         int amarillo = limitar((int) Math.ceil(duracion * perfil.getAmarilloPorcentaje() / 100.0),
                 perfil.getAmarilloMinimoDias(), perfil.getAmarilloMaximoDias());
         int rojo = limitar((int) Math.ceil(duracion * perfil.getRojoPorcentaje() / 100.0),
@@ -175,6 +178,33 @@ public class EvaluadorAtencionTemporalService {
         termino.setAlertaModo(perfil.getModo());
         termino.setAlertaAmarilloDias(umbrales[0]);
         termino.setAlertaRojoDias(umbrales[1]);
+        termino.setAlertaAmarilloPorcentajeSnapshot(perfil.getAmarilloPorcentaje());
+        termino.setAlertaAmarilloMinimoSnapshot(perfil.getAmarilloMinimoDias());
+        termino.setAlertaAmarilloMaximoSnapshot(perfil.getAmarilloMaximoDias());
+        termino.setAlertaRojoPorcentajeSnapshot(perfil.getRojoPorcentaje());
+        termino.setAlertaRojoMinimoSnapshot(perfil.getRojoMinimoDias());
+        termino.setAlertaRojoMaximoSnapshot(perfil.getRojoMaximoDias());
+    }
+
+    public void recalcularUmbralesDesdeSnapshot(Termino termino) {
+        if (termino == null || termino.getFechaVencimiento() == null
+                || termino.getAlertaModo() != ModoPerfilAlerta.PROPORCIONAL_LIMITADO) return;
+        if (termino.getAlertaAmarilloPorcentajeSnapshot() == null
+                || termino.getAlertaRojoPorcentajeSnapshot() == null
+                || termino.getAlertaAmarilloMinimoSnapshot() == null
+                || termino.getAlertaAmarilloMaximoSnapshot() == null
+                || termino.getAlertaRojoMinimoSnapshot() == null
+                || termino.getAlertaRojoMaximoSnapshot() == null) return;
+        LocalDate origen = termino.getFechaIngreso() != null ? termino.getFechaIngreso() : termino.getFechaCreacion();
+        long duracion = Math.max(1, calculadoraPlazo.diasEntreSnapshot(
+                termino, origen, termino.getFechaVencimiento()));
+        termino.setPlazoDuracionAdoptada(duracion);
+        termino.setAlertaAmarilloDias(limitar(
+                (int) Math.ceil(duracion * termino.getAlertaAmarilloPorcentajeSnapshot() / 100.0),
+                termino.getAlertaAmarilloMinimoSnapshot(), termino.getAlertaAmarilloMaximoSnapshot()));
+        termino.setAlertaRojoDias(limitar(
+                (int) Math.ceil(duracion * termino.getAlertaRojoPorcentajeSnapshot() / 100.0),
+                termino.getAlertaRojoMinimoSnapshot(), termino.getAlertaRojoMaximoSnapshot()));
     }
 
     public void fijarSnapshot(Audiencia audiencia) {

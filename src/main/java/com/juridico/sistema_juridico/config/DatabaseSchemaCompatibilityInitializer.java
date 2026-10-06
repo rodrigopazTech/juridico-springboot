@@ -43,6 +43,9 @@ public class DatabaseSchemaCompatibilityInitializer implements ApplicationRunner
         eliminarUnicidadLegacyDeCodigo("perfiles_alerta_termino");
         eliminarUnicidadLegacyDeCodigo("perfiles_recordatorio_audiencia");
         jdbcTemplate.execute("ALTER TABLE tipos_termino ALTER COLUMN dias_predeterminados DROP NOT NULL");
+        jdbcTemplate.execute("UPDATE tipos_termino SET ajusta_siguiente_habil = false WHERE ajusta_siguiente_habil IS NULL");
+        jdbcTemplate.execute("ALTER TABLE tipos_termino ALTER COLUMN ajusta_siguiente_habil SET DEFAULT false");
+        jdbcTemplate.execute("ALTER TABLE tipos_termino ALTER COLUMN ajusta_siguiente_habil SET NOT NULL");
         reemplazarCheckEnum("termino_archivos", "tipo_documento", "ck_termino_archivos_tipo_documento",
                 "tipo_documento IN ('BORRADOR','ACUSE','NOTA_INFORMATIVA')");
         reemplazarCheckEnum("audiencias", "estatus_audiencia", "ck_audiencias_estatus_audiencia",

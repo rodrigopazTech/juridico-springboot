@@ -57,6 +57,10 @@ public class TipoTermino {
     @Builder.Default
     private String tipoDias = "HABILES"; // HABILES, NATURALES
 
+    @Column(name = "ajusta_siguiente_habil")
+    @Builder.Default
+    private Boolean ajustaAlSiguienteHabil = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "perfil_alerta_id")
     private PerfilAlertaTermino perfilAlerta;

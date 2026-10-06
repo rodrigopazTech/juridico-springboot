@@ -119,6 +119,70 @@ public class Termino {
     @Column(name = "alerta_rojo_dias")
     private Integer alertaRojoDias;
 
+    @Column(name = "alerta_amarillo_porcentaje_snapshot", updatable = false)
+    private Integer alertaAmarilloPorcentajeSnapshot;
+
+    @Column(name = "alerta_amarillo_minimo_snapshot", updatable = false)
+    private Integer alertaAmarilloMinimoSnapshot;
+
+    @Column(name = "alerta_amarillo_maximo_snapshot", updatable = false)
+    private Integer alertaAmarilloMaximoSnapshot;
+
+    @Column(name = "alerta_rojo_porcentaje_snapshot", updatable = false)
+    private Integer alertaRojoPorcentajeSnapshot;
+
+    @Column(name = "alerta_rojo_minimo_snapshot", updatable = false)
+    private Integer alertaRojoMinimoSnapshot;
+
+    @Column(name = "alerta_rojo_maximo_snapshot", updatable = false)
+    private Integer alertaRojoMaximoSnapshot;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "plazo_modo_snapshot", length = 30, updatable = false)
+    private com.juridico.sistema_juridico.Entity.enums.ModoPlazoTermino plazoModoSnapshot;
+
+    @Column(name = "plazo_cantidad_snapshot", updatable = false)
+    private Integer plazoCantidadSnapshot;
+
+    @Column(name = "plazo_duracion_detectada", updatable = false)
+    private Long plazoDuracionDetectada;
+
+    @Column(name = "plazo_duracion_adoptada")
+    private Long plazoDuracionAdoptada;
+
+    @Column(name = "plazo_tipo_dias_snapshot", length = 20, updatable = false)
+    private String plazoTipoDiasSnapshot;
+
+    @Column(name = "plazo_calendario_version", updatable = false)
+    private Integer plazoCalendarioVersion;
+
+    @Column(name = "plazo_calendario_fechas", columnDefinition = "TEXT", updatable = false)
+    private String plazoCalendarioFechas;
+
+    @Column(name = "plazo_regla_computo", length = 120, updatable = false)
+    private String plazoReglaComputo;
+
+    @Column(name = "plazo_fecha_calculada", updatable = false)
+    private LocalDate plazoFechaCalculada;
+
+    @Column(name = "plazo_fecha_adoptada")
+    private LocalDate plazoFechaAdoptada;
+
+    @Column(name = "plazo_explicacion", columnDefinition = "TEXT", updatable = false)
+    private String plazoExplicacion;
+
+    @Column(name = "plazo_excepcion_motivo", columnDefinition = "TEXT")
+    private String plazoExcepcionMotivo;
+
+    @Column(name = "plazo_excepcion_autor_id")
+    private Integer plazoExcepcionAutorId;
+
+    @Column(name = "plazo_excepcion_autor", length = 180)
+    private String plazoExcepcionAutor;
+
+    @Column(name = "plazo_excepcion_fecha")
+    private LocalDateTime plazoExcepcionFecha;
+
     @PrePersist
     protected void onCreate() {
         LocalDateTime ahora = LocalDateTime.now();

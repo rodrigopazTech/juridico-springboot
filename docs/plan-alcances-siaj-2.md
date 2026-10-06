@@ -266,7 +266,7 @@ El vencimiento mostrado puede ser explicado y reproducido sin depender de la con
 
 ### Estado actual
 
-**En desarrollo.** Ya existen fecha origen, días naturales y hábiles, días inhábiles individuales y los tres modos. Faltan el snapshot completo, calendario versionado, suspensiones formales, excepción de fecha, explicación integral y sus pruebas.
+**Cerrado técnicamente el 6 de octubre de 2026.** Se implementaron los tres modos de plazo, snapshot inmutable y reproducible, calendario versionado, suspensiones formales, ajuste al siguiente día hábil, excepción autorizada con trazabilidad, vista previa y explicación posterior. Compilación y pruebas críticas de cálculo, calendario e integración aprobadas. La repetición manual exhaustiva en navegador queda como validación delegable y no modifica el modelo funcional entregado.
 
 ---
 
@@ -549,7 +549,7 @@ El orden formal de cierre es:
 ```text
 Alcance 1 — Reglas y motor temporal                CERRADO
         ↓
-Alcance 2 — Cálculo reproducible                   EN DESARROLLO
+Alcance 2 — Cálculo reproducible                   CERRADO TÉCNICAMENTE
         ↓
 Alcance 3 — Flujo de Términos                      PENDIENTE DE CIERRE
         ↓
@@ -659,15 +659,6 @@ Estos elementos requieren una solicitud independiente o una nueva versión de es
 
 # 10. Próximo paso aprobado
 
-El siguiente trabajo debe ser **cerrar el Alcance 2 — Cálculo reproducible de plazos y calendarios**.
+El siguiente trabajo debe ser **revisar y cerrar el Alcance 3 — Flujo completo y controlado de Términos**, aprovechando la implementación ya adelantada.
 
-No se requiere rediseñar Reglas de alerta. El trabajo debe concentrarse en:
-
-1. snapshot completo e inmutable;
-2. calendario versionado;
-3. suspensiones formales;
-4. excepción autorizada de fecha;
-5. explicación visible y reproducible;
-6. pruebas unitarias, de integración y navegador.
-
-Una vez satisfecho su criterio de cierre se realizará la revisión formal del Alcance 3 aprovechando la implementación ya existente.
+La primera actividad del siguiente agente será ejecutar la matriz funcional del Alcance 3 y comprobar especialmente permisos de Expedientes, transiciones en servidor, evidencias Acuse/Nota Informativa, visualización de PDF y filtros de concluidos. La comprobación manual de los tres modos de plazo del Alcance 2 puede incluirse como prueba de regresión, sin reabrir su diseño ni reimplementar el motor.

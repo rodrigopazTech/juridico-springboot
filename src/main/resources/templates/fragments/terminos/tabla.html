@@ -87,6 +87,11 @@
                                         <span th:text="${at.etiqueta()}">A tiempo</span>
                                     </span>
                                     <span class="text-[10px] text-gray-500" th:text="${at.detalle()}">Quedan 5 días</span>
+                                    <button type="button" th:if="${t.plazoExplicacion != null}"
+                                        th:attr="data-explicacion=${t.plazoExplicacion},data-version=${t.plazoCalendarioVersion},data-calculada=${t.plazoFechaCalculada},data-adoptada=${t.plazoFechaAdoptada},data-excepcion=${t.plazoExcepcionMotivo},data-autor=${t.plazoExcepcionAutor}"
+                                        onclick="verCalculoPlazo(this)" class="w-fit text-[10px] font-bold text-gob-guinda hover:underline">
+                                        <i class="fas fa-circle-info mr-1"></i>Cómo se calculó
+                                    </button>
                                 </div>
                             </td>
 
@@ -151,6 +156,13 @@
                                         </button>
 
                                         <div class="border-t border-gray-100"></div>
+
+                                        <button th:if="${usuarioActual != null and (usuarioActual.rol.name() == 'ADMIN' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'SUBDIRECTOR' or usuarioActual.rol.name() == 'GERENTE' or usuarioActual.rol.name() == 'JEFE_DEPTO') and t.estatusTermino?.name() != 'PRESENTADO' and t.estatusTermino?.name() != 'CONCLUIDO' and t.fechaVencimiento != null}"
+                                            th:attr="data-id=${t.id},data-fecha=${t.fechaVencimiento}"
+                                            onclick="abrirExcepcionFecha(this.dataset.id,this.dataset.fecha)"
+                                            class="w-full text-left px-4 py-3 text-sm text-blue-700 hover:bg-blue-50 font-bold">
+                                            <i class="fas fa-calendar-pen mr-3 w-4 text-center"></i>Autorizar nueva fecha
+                                        </button>
 
                                         <button
                                             th:if="${t.estatusTermino?.name() == 'PROYECTISTA' or t.estatusTermino?.name() == 'REVISION' or t.estatusTermino?.name() == 'GERENCIA' or t.estatusTermino?.name() == 'DIRECCION'}"
@@ -272,6 +284,9 @@
                         th:classappend="${at.clasesBadge()}" th:title="${at.explicacion()}">
                         <i class="fas" th:classappend="${at.icono()}"></i><span th:text="${at.etiqueta()}">A tiempo</span>
                     </span>
+                    <button type="button" th:if="${t.plazoExplicacion != null}"
+                        th:attr="data-explicacion=${t.plazoExplicacion},data-version=${t.plazoCalendarioVersion},data-calculada=${t.plazoFechaCalculada},data-adoptada=${t.plazoFechaAdoptada},data-excepcion=${t.plazoExcepcionMotivo},data-autor=${t.plazoExcepcionAutor}"
+                        onclick="verCalculoPlazo(this)" class="text-[10px] font-bold text-gob-guinda hover:underline">Cómo se calculó</button>
                     <a th:if="${t.expediente != null}"
                         th:href="@{/expedientes/{id}(id=${t.expediente?.id})}"
                         class="font-bold text-gob-guinda hover:underline text-sm truncate"
@@ -352,6 +367,13 @@
                         </button>
 
                         <div class="border-t border-gray-100"></div>
+
+                        <button th:if="${usuarioActual != null and (usuarioActual.rol.name() == 'ADMIN' or usuarioActual.rol.name() == 'DIRECTOR_PRINCIPAL' or usuarioActual.rol.name() == 'DIRECTOR' or usuarioActual.rol.name() == 'SUBDIRECTOR' or usuarioActual.rol.name() == 'GERENTE' or usuarioActual.rol.name() == 'JEFE_DEPTO') and t.estatusTermino?.name() != 'PRESENTADO' and t.estatusTermino?.name() != 'CONCLUIDO' and t.fechaVencimiento != null}"
+                            th:attr="data-id=${t.id},data-fecha=${t.fechaVencimiento}"
+                            onclick="abrirExcepcionFecha(this.dataset.id,this.dataset.fecha)"
+                            class="w-full text-left px-4 py-3 text-sm text-blue-700 hover:bg-blue-50 font-bold">
+                            <i class="fas fa-calendar-pen mr-3 w-4 text-center"></i>Autorizar nueva fecha
+                        </button>
 
                         <button
                             th:if="${t.estatusTermino?.name() == 'PROYECTISTA' or

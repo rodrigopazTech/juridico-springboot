@@ -77,6 +77,7 @@ import com.juridico.sistema_juridico.util.TerminoExcelExporter;
 import com.juridico.sistema_juridico.service.procesal.TerminoArchivoService;
 import com.juridico.sistema_juridico.service.procesal.CalculadoraPlazoService;
 import com.juridico.sistema_juridico.service.procesal.EvaluadorAtencionTemporalService;
+import com.juridico.sistema_juridico.service.procesal.ResultadoCalculoPlazo;
 import com.juridico.sistema_juridico.service.FileStorageService;
 import com.juridico.sistema_juridico.Entity.enums.TipoDocumentoTermino;
 import com.juridico.sistema_juridico.Entity.enums.TipoEvidenciaPresentacion;
@@ -424,14 +425,14 @@ public class TerminosController {
             if (terminoForm.getAsunto() == null || terminoForm.getAsunto().trim().isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El campo asunto/actuación es obligatorio.");
             }
-            if (tipoSeleccionado != null) {
+            if (tipoSeleccionado != null && terminoForm.getId() == null) {
                 LocalDate fechaOrigen = terminoForm.getFechaIngreso() != null
                         ? terminoForm.getFechaIngreso() : LocalDate.now();
                 terminoForm.setFechaIngreso(fechaOrigen);
-                terminoForm.setFechaVencimiento(calculadoraPlazoService.resolverVencimiento(
-                        tipoSeleccionado, fechaOrigen, terminoForm.getFechaVencimiento()));
-                terminoForm.setEsTiempoDinamico(tipoSeleccionado.getModoPlazo() == ModoPlazoTermino.CAPTURADO);
-            } else if (terminoForm.getFechaVencimiento() == null) {
+                calculadoraPlazoService.aplicarSnapshot(terminoForm,
+                        calculadoraPlazoService.calcularResultado(
+                                tipoSeleccionado, fechaOrigen, terminoForm.getFechaVencimiento()));
+            } else if (terminoForm.getId() == null && terminoForm.getFechaVencimiento() == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "El término no tiene un Tipo de Término válido ni una fecha de vencimiento.");
             }
@@ -494,13 +495,6 @@ public class TerminosController {
                 validarAccesoTermino(existente, actor);
 
                 existente.setAsunto(terminoForm.getAsunto());
-                existente.setFechaIngreso(terminoForm.getFechaIngreso());
-                existente.setFechaVencimiento(terminoForm.getFechaVencimiento());
-                existente.setEsTiempoDinamico(terminoForm.getEsTiempoDinamico());
-                if (terminoForm.getTipoTerminoRef() != null) {
-                    existente.setTipoTerminoRef(terminoForm.getTipoTerminoRef());
-                    existente.setTipoDiasCalculado(terminoForm.getTipoDiasCalculado());
-                }
 
                 if (terminoForm.getAbogadoResponsable() != null) {
                     existente.setAbogadoResponsable(terminoForm.getAbogadoResponsable());
@@ -1105,6 +1099,87 @@ public class TerminosController {
             default:
                 return actual;
         }
+    }
+
+    @GetMapping("/previsualizar-plazo")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> previsualizarPlazo(
+            @RequestParam Integer tipoTerminoId,
+            @RequestParam LocalDate fechaOrigen,
+            @RequestParam(required = false) LocalDate fechaVencimiento) {
+        TipoTermino tipo = tipoTerminoService.obtenerPorId(tipoTerminoId);
+        ResultadoCalculoPlazo resultado = calculadoraPlazoService.calcularResultado(
+                tipo, fechaOrigen, fechaVencimiento);
+        Map<String, Object> respuesta = new HashMap<>();
+        respuesta.put("modo", resultado.modo().name());
+        respuesta.put("fechaCalculada", resultado.fechaCalculada());
+        respuesta.put("fechaAdoptada", resultado.fechaAdoptada());
+        respuesta.put("calendarioVersion", resultado.calendarioVersion());
+        respuesta.put("explicacion", resultado.explicacion());
+        return ResponseEntity.ok(respuesta);
+    }
+
+    @PostMapping("/{id}/excepcion-fecha")
+    @ResponseBody
+    @Transactional
+    public ResponseEntity<Map<String, Object>> registrarExcepcionFecha(
+            @PathVariable Integer id,
+            @RequestParam LocalDate nuevaFecha,
+            @RequestParam String motivo) {
+        Usuario actor = getUsuarioActual();
+        Termino termino = terminoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("El término no existe."));
+        validarAccesoTermino(termino, actor);
+        if (!puedeAutorizarExcepcion(actor)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Sólo una jefatura o nivel superior puede autorizar una excepción de fecha.");
+        }
+        if (termino.getEstatusTermino() == EstatusTermino.PRESENTADO
+                || termino.getEstatusTermino() == EstatusTermino.CONCLUIDO) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "No se puede cambiar el vencimiento de un término presentado o concluido.");
+        }
+        LocalDate origen = termino.getFechaIngreso() != null ? termino.getFechaIngreso() : termino.getFechaCreacion();
+        if (nuevaFecha == null || origen == null || !nuevaFecha.isAfter(origen)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La nueva fecha debe ser posterior a la fecha origen.");
+        }
+        if (motivo == null || motivo.isBlank() || motivo.trim().length() < 10) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Describe el motivo de la excepción con al menos 10 caracteres.");
+        }
+        LocalDate fechaAnterior = termino.getFechaVencimiento();
+        termino.setFechaVencimiento(nuevaFecha);
+        termino.setPlazoFechaAdoptada(nuevaFecha);
+        termino.setPlazoExcepcionMotivo(motivo.trim());
+        termino.setPlazoExcepcionAutorId(actor.getId());
+        termino.setPlazoExcepcionAutor(actor.getNombreCompleto());
+        termino.setPlazoExcepcionFecha(LocalDateTime.now());
+        termino.setUpdatedAt(LocalDateTime.now());
+        evaluadorAtencionTemporalService.recalcularUmbralesDesdeSnapshot(termino);
+        terminoRepository.save(termino);
+
+        String detalle = "Se autorizó una excepción de vencimiento de " + fechaAnterior + " a " + nuevaFecha
+                + ". Motivo: " + motivo.trim();
+        if (termino.getExpediente() != null) {
+            auditoriaService.registrar(termino.getExpediente(), "Excepción de plazo", detalle, "CALENDAR", actor);
+        } else {
+            auditoriaService.registrarActividadGeneral(actor, "Excepción de plazo", detalle, "CALENDAR");
+        }
+        Map<String, Object> respuesta = new HashMap<>();
+        respuesta.put("mensaje", "La nueva fecha fue autorizada y quedó registrada en la trazabilidad.");
+        respuesta.put("fechaAnterior", fechaAnterior);
+        respuesta.put("nuevaFecha", nuevaFecha);
+        return ResponseEntity.ok(respuesta);
+    }
+
+    private boolean puedeAutorizarExcepcion(Usuario usuario) {
+        return usuario.getRol() == RolUsuario.ADMIN
+                || usuario.getRol() == RolUsuario.DIRECTOR_PRINCIPAL
+                || usuario.getRol() == RolUsuario.DIRECTOR
+                || usuario.getRol() == RolUsuario.SUBDIRECTOR
+                || usuario.getRol() == RolUsuario.GERENTE
+                || usuario.getRol() == RolUsuario.JEFE_DEPTO;
     }
 
     private Usuario getUsuarioActual() {

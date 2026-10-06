@@ -57,7 +57,9 @@ class Alcance1PantallasIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("id=\"reglas-termino\"")))
                 .andExpect(content().string(containsString("Guardar y publicar")))
-                .andExpect(content().string(containsString("id=\"tipos-audiencia\"")));
+                .andExpect(content().string(containsString("id=\"tipos-audiencia\"")))
+                .andExpect(content().string(containsString("Versión vigente")))
+                .andExpect(content().string(containsString("Registrar suspensión")));
     }
 
     @Test
@@ -75,7 +77,8 @@ class Alcance1PantallasIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("id=\"select-tipo-termino\"")))
                 .andExpect(content().string(containsString("id=\"input-fecha-origen\"")))
-                .andExpect(content().string(containsString("id=\"resumen-regla-tipo\"")));
+                .andExpect(content().string(containsString("id=\"resumen-regla-tipo\"")))
+                .andExpect(content().string(containsString("id=\"vista-previa-plazo\"")));
     }
 
     @Test

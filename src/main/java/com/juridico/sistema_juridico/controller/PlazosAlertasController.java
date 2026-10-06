@@ -26,6 +26,7 @@ import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository
 import com.juridico.sistema_juridico.service.catalogo.TipoTerminoService;
 import com.juridico.sistema_juridico.service.catalogo.TipoAudienciaService;
 import com.juridico.sistema_juridico.Entity.configuracion.DiaInhabil;
+import com.juridico.sistema_juridico.Entity.configuracion.SuspensionPlazo;
 import com.juridico.sistema_juridico.service.configuracion.CalendarioInstitucionalService;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -83,6 +84,8 @@ public class PlazosAlertasController {
                 .version(1).estado(EstadoPerfil.BORRADOR).build());
         model.addAttribute("modosPerfil", ModoPerfilAlerta.values());
         model.addAttribute("diasInhabiles", calendario.listar());
+        model.addAttribute("suspensionesPlazo", calendario.listarSuspensiones());
+        model.addAttribute("versionCalendario", calendario.snapshotActual().version());
         model.addAttribute("pageTitle", "Plazos y alertas");
         model.addAttribute("activePage", "plazos-alertas");
         return "views/admin/plazos-alertas";
@@ -228,7 +231,7 @@ public class PlazosAlertasController {
     @PostMapping("/calendario")
     public String guardarDiaInhabil(@ModelAttribute DiaInhabil dia, RedirectAttributes flash) {
         try {
-            calendario.guardar(dia);
+            calendario.guardar(dia, usuarioActual().getNombreCompleto());
             flash.addFlashAttribute("mensajeExito", "Día inhábil agregado al calendario institucional.");
         } catch (RuntimeException ex) {
             flash.addFlashAttribute("mensajeError", ex.getMessage());
@@ -239,8 +242,31 @@ public class PlazosAlertasController {
     @PostMapping("/calendario/{id}/estado")
     public String cambiarDiaInhabil(@PathVariable Integer id, @RequestParam boolean activo, RedirectAttributes flash) {
         try {
-            calendario.cambiarEstado(id, activo);
+            calendario.cambiarEstado(id, activo, usuarioActual().getNombreCompleto());
             flash.addFlashAttribute("mensajeExito", activo ? "Día inhábil activado." : "Día inhábil inactivado.");
+        } catch (RuntimeException ex) {
+            flash.addFlashAttribute("mensajeError", ex.getMessage());
+        }
+        return "redirect:/administracion/plazos-alertas#calendario";
+    }
+
+    @PostMapping("/calendario/suspensiones")
+    public String guardarSuspension(@ModelAttribute SuspensionPlazo suspension, RedirectAttributes flash) {
+        try {
+            calendario.guardarSuspension(suspension, usuarioActual().getNombreCompleto());
+            flash.addFlashAttribute("mensajeExito", "Suspensión institucional registrada. Se publicó una nueva versión del calendario.");
+        } catch (RuntimeException ex) {
+            flash.addFlashAttribute("mensajeError", ex.getMessage());
+        }
+        return "redirect:/administracion/plazos-alertas#calendario";
+    }
+
+    @PostMapping("/calendario/suspensiones/{id}/estado")
+    public String cambiarSuspension(@PathVariable Integer id, @RequestParam boolean activo,
+            RedirectAttributes flash) {
+        try {
+            calendario.cambiarEstadoSuspension(id, activo, usuarioActual().getNombreCompleto());
+            flash.addFlashAttribute("mensajeExito", activo ? "Suspensión activada." : "Suspensión inactivada.");
         } catch (RuntimeException ex) {
             flash.addFlashAttribute("mensajeError", ex.getMessage());
         }
