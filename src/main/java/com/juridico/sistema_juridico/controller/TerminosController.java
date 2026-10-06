@@ -78,6 +78,7 @@ import com.juridico.sistema_juridico.service.procesal.TerminoArchivoService;
 import com.juridico.sistema_juridico.service.procesal.CalculadoraPlazoService;
 import com.juridico.sistema_juridico.service.procesal.EvaluadorAtencionTemporalService;
 import com.juridico.sistema_juridico.service.procesal.ResultadoCalculoPlazo;
+import com.juridico.sistema_juridico.service.procesal.FlujoTerminoService;
 import com.juridico.sistema_juridico.service.FileStorageService;
 import com.juridico.sistema_juridico.Entity.enums.TipoDocumentoTermino;
 import com.juridico.sistema_juridico.Entity.enums.TipoEvidenciaPresentacion;
@@ -127,6 +128,8 @@ public class TerminosController {
     private EvaluadorAtencionTemporalService evaluadorAtencionTemporalService;
     @Autowired
     private AsuntoIndependienteService asuntoIndependienteService;
+    @Autowired
+    private FlujoTerminoService flujoTerminoService;
 
     // --- MATRIZ DE PERMISOS ---
     private static final Map<EstatusTermino, List<RolUsuario>> PERMISOS_ETAPAS = new HashMap<>();
@@ -717,13 +720,17 @@ public class TerminosController {
             return "redirect:/terminos";
         }
 
-        if (etapaAnterior == EstatusTermino.PROYECTISTA && termino.getAcuse() == null) {
-            redirectAttrs.addFlashAttribute("mensaje", "Sube el archivo Word antes de avanzar.");
+        boolean tieneDocumento = terminoArchivoService
+                .obtenerUltimoPorTipo(id, TipoDocumentoTermino.BORRADOR).isPresent()
+                || (termino.getAcuse() != null && !termino.getAcuse().isBlank());
+        EstatusTermino siguienteEtapa;
+        try {
+            siguienteEtapa = flujoTerminoService.validarYResolverAvance(termino, tieneDocumento);
+        } catch (RuntimeException ex) {
+            redirectAttrs.addFlashAttribute("mensaje", ex.getMessage());
             redirectAttrs.addFlashAttribute("tipo", "error");
             return "redirect:/terminos";
         }
-
-        EstatusTermino siguienteEtapa = calcularSiguienteEstado(etapaAnterior);
         termino.setEstatusTermino(siguienteEtapa);
         if (siguienteEtapa == EstatusTermino.PRESENTADO) {
             termino.setFechaPresentacion(LocalDate.now());
@@ -889,6 +896,7 @@ public class TerminosController {
             validarAccesoTermino(termino, actor);
 
             if (termino.getEstatusTermino() == EstatusTermino.LIBERADO) {
+                flujoTerminoService.validarPresentacion(termino, TipoEvidenciaPresentacion.ACUSE);
                 // Guardar acuse con persistencia avanzada
                 TerminoArchivo ta = terminoArchivoService.guardarArchivo(termino, archivo, TipoDocumentoTermino.ACUSE, actor);
 
@@ -971,6 +979,7 @@ public class TerminosController {
             if (termino.getEstatusTermino() != EstatusTermino.LIBERADO) {
                 throw new IllegalStateException("La Nota Informativa sólo puede cargarse cuando el término está Liberado.");
             }
+            flujoTerminoService.validarPresentacion(termino, TipoEvidenciaPresentacion.NOTA_INFORMATIVA);
             TerminoArchivo ta = terminoArchivoService.guardarArchivo(termino, archivo,
                     TipoDocumentoTermino.NOTA_INFORMATIVA, actor);
             terminoPresentadoRepository.save(TerminoPresentado.builder()
@@ -1023,6 +1032,7 @@ public class TerminosController {
         try {
             Termino termino = terminoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Término no encontrado"));
             validarAccesoTermino(termino, actor);
+            flujoTerminoService.validarConclusion(termino);
 
             if (termino.getEstatusTermino() == EstatusTermino.PRESENTADO) {
                 termino.setEstatusTermino(EstatusTermino.CONCLUIDO);
@@ -1079,26 +1089,6 @@ public class TerminosController {
 
     private boolean tienePermiso(EstatusTermino etapaActual, RolUsuario rolUsuario) {
         return true;
-    }
-
-    private EstatusTermino calcularSiguienteEstado(EstatusTermino actual) {
-        if (actual == null) {
-            return EstatusTermino.PROYECTISTA;
-        }
-        switch (actual) {
-            case PROYECTISTA:
-                return EstatusTermino.REVISION;
-            case REVISION:
-                return EstatusTermino.GERENCIA;
-            case GERENCIA:
-                return EstatusTermino.DIRECCION;
-            case DIRECCION:
-                return EstatusTermino.LIBERADO;
-            case LIBERADO:
-                return EstatusTermino.PRESENTADO;
-            default:
-                return actual;
-        }
     }
 
     @GetMapping("/previsualizar-plazo")
