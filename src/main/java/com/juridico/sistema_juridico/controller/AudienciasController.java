@@ -108,6 +108,13 @@ public class AudienciasController {
     @Autowired
     private EstadoRepository estadoRepository;
 
+    private Usuario getUsuarioActual() {
+        String identidad = SecurityContextHolder.getContext().getAuthentication().getName();
+        return usuarioRepository.findByEmail(identidad)
+                .or(() -> usuarioRepository.findByUsernameIgnoreCase(identidad))
+                .orElseThrow(() -> new ForbiddenException("No fue posible identificar al usuario de la sesión."));
+    }
+
     private void validarAccesoExpediente(Expediente e, Usuario usuario) {
         RolUsuario rol = usuario.getRol();
         if (rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL 
@@ -137,6 +144,18 @@ public class AudienciasController {
             }
         }
         throw new ForbiddenException("No tienes acceso a este expediente.");
+    }
+
+    private void validarAccesoAudiencia(Audiencia audiencia, Usuario usuario) {
+        if (audiencia.getExpediente() != null) {
+            validarAccesoExpediente(audiencia.getExpediente(), usuario);
+            return;
+        }
+        if (audiencia.getAsuntoIndependiente() != null) {
+            asuntoIndependienteService.validarAcceso(audiencia.getAsuntoIndependiente(), usuario);
+            return;
+        }
+        throw new ForbiddenException("La Audiencia no tiene un contexto operativo válido.");
     }
 
     private void validarPermisoEliminarAudiencia(Audiencia audiencia, Usuario usuario) {
@@ -720,30 +739,54 @@ public String guardar(@ModelAttribute Audiencia audiencia,
     @GetMapping("/obtener/{id}")
     @ResponseBody
     public ResponseEntity<Audiencia> obtenerPorId(@PathVariable("id") Integer id) {
-        return audienciaRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Audiencia audiencia = audienciaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Audiencia no encontrada."));
+        validarAccesoAudiencia(audiencia, getUsuarioActual());
+        return ResponseEntity.ok(audiencia);
+    }
+
+    @PostMapping("/registrar-resultado")
+    public Object registrarResultado(@RequestParam("id") Integer id,
+            @RequestParam("resultado") String resultado, RedirectAttributes redirectAttrs,
+            HttpServletRequest request) {
+        try {
+            Usuario actor = getUsuarioActual();
+            Audiencia audiencia = audienciaRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Audiencia no encontrada."));
+            validarAccesoAudiencia(audiencia, actor);
+            audienciaService.registrarResultado(id, resultado, actor);
+            redirectAttrs.addFlashAttribute("mensaje", "Resultado registrado correctamente.");
+            redirectAttrs.addFlashAttribute("tipo", "success");
+            if (esAjax(request)) return ResponseEntity.ok(Map.of("success", true));
+        } catch (RuntimeException ex) {
+            redirectAttrs.addFlashAttribute("mensaje", ex.getMessage());
+            redirectAttrs.addFlashAttribute("tipo", "error");
+            if (esAjax(request)) return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "mensaje", ex.getMessage()));
+        }
+        return "redirect:/audiencias";
     }
 
     @PostMapping("/subir-acta")
-    public String subirActa(@RequestParam("id") Integer id,
+    public Object subirActa(@RequestParam("id") Integer id,
             @RequestParam("archivo") MultipartFile archivo,
-            RedirectAttributes redirectAttrs) {
+            RedirectAttributes redirectAttrs, HttpServletRequest request) {
         try {
             Audiencia aud = audienciaRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Audiencia no encontrada"));
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
-            if (aud.getExpediente() != null) {
-                validarAccesoExpediente(aud.getExpediente(), usuario);
-            }
+            validarAccesoAudiencia(aud, usuario);
 
             audienciaService.subirActa(id, archivo);
-            redirectAttrs.addFlashAttribute("mensaje", "Acta subida correctamente. Estatus actualizado.");
+            redirectAttrs.addFlashAttribute("mensaje", "Acta subida correctamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
+            if (esAjax(request)) return ResponseEntity.ok(Map.of("success", true));
         } catch (Exception e) {
             redirectAttrs.addFlashAttribute("mensaje", "Error al subir acta: " + e.getMessage());
             redirectAttrs.addFlashAttribute("tipo", "error");
+            if (esAjax(request)) return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "mensaje", e.getMessage()));
         }
         return "redirect:/audiencias";
     }
@@ -758,7 +801,7 @@ public String guardar(@ModelAttribute Audiencia audiencia,
             String identidad = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuario = usuarioRepository.findByEmail(identidad)
                     .or(() -> usuarioRepository.findByUsernameIgnoreCase(identidad)).orElseThrow();
-            if (audiencia.getExpediente() != null) validarAccesoExpediente(audiencia.getExpediente(), usuario);
+            validarAccesoAudiencia(audiencia, usuario);
             audienciaService.suspenderConNotaInformativa(id, archivo);
             redirectAttrs.addFlashAttribute("mensaje", "Audiencia suspendida con Nota Informativa.");
             redirectAttrs.addFlashAttribute("tipo", "success");
@@ -770,25 +813,34 @@ public String guardar(@ModelAttribute Audiencia audiencia,
     }
 
     @PostMapping("/concluir")
-    public String concluir(@RequestParam("id") Integer id,
-            @RequestParam("observaciones") String observaciones,
-            RedirectAttributes redirectAttrs) {
+    public Object concluir(@RequestParam("id") Integer id,
+            @RequestParam(value = "observaciones", defaultValue = "") String observaciones,
+            RedirectAttributes redirectAttrs, HttpServletRequest request) {
         try {
             // 1. OBTENER USUARIO ACTUAL
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
-            // 2. EJECUTAR LÓGICA (La seguridad ahora se valida en el Service)
+            Audiencia audiencia = audienciaRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Audiencia no encontrada."));
+            validarAccesoAudiencia(audiencia, usuario);
             audienciaService.concluirAudiencia(id, observaciones, usuario);
 
             redirectAttrs.addFlashAttribute("mensaje", "Audiencia validada y concluida exitosamente.");
             redirectAttrs.addFlashAttribute("tipo", "success");
+            if (esAjax(request)) return ResponseEntity.ok(Map.of("success", true));
 
         } catch (Exception e) {
             redirectAttrs.addFlashAttribute("mensaje", "Error: " + e.getMessage());
             redirectAttrs.addFlashAttribute("tipo", "error");
+            if (esAjax(request)) return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "mensaje", e.getMessage()));
         }
         return "redirect:/audiencias";
+    }
+
+    private boolean esAjax(HttpServletRequest request) {
+        return "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
     }
 
     @PostMapping("/eliminar/{id}")
@@ -845,9 +897,7 @@ public String guardar(@ModelAttribute Audiencia audiencia,
 
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
-            if (audiencia.getExpediente() != null) {
-                validarAccesoExpediente(audiencia.getExpediente(), usuario);
-            }
+            validarAccesoAudiencia(audiencia, usuario);
 
             if (audiencia.getActaDocumento() == null) {
                 return ResponseEntity.notFound().build();
@@ -881,6 +931,7 @@ public String guardar(@ModelAttribute Audiencia audiencia,
         try {
             Audiencia audiencia = audienciaRepository.findById(id)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Audiencia no encontrada"));
+            validarAccesoAudiencia(audiencia, getUsuarioActual());
             if (audiencia.getNotaInformativaDocumento() == null) return ResponseEntity.notFound().build();
             java.nio.file.Path ruta = fileStorageService.obtenerArchivo(rutaActaRelativa(audiencia.getNotaInformativaDocumento()));
             Resource recurso = new UrlResource(ruta.toUri());
@@ -903,9 +954,7 @@ public String guardar(@ModelAttribute Audiencia audiencia,
 
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
-            if (audiencia.getExpediente() != null) {
-                validarAccesoExpediente(audiencia.getExpediente(), usuario);
-            }
+            validarAccesoAudiencia(audiencia, usuario);
 
             if (audiencia.getActaDocumento() == null) {
                 return ResponseEntity.notFound().build();

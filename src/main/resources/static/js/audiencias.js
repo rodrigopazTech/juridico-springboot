@@ -607,6 +607,29 @@ function showErrorModal(mensaje) {
 // ROD-186: Listener para subida de acta y conclusión vía AJAX (Preserva filtros)
 document.addEventListener('submit', async function (e) {
     const formAudiencia = e.target.closest('#form-audiencia');
+    const formResultado = e.target.closest('#form-resultado');
+    if (formResultado) {
+        e.preventDefault();
+        if (!formResultado.checkValidity()) {
+            formResultado.reportValidity();
+            return;
+        }
+        const response = await fetch(formResultado.action, {
+            method: 'POST',
+            body: new FormData(formResultado),
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if (response.ok) {
+            document.getElementById('modal-resultado').classList.add('hidden');
+            formResultado.reset();
+            showSuccessToast('Resultado registrado correctamente.');
+            actualizarTablaAsincrono();
+        } else {
+            const data = await response.json().catch(() => ({}));
+            showErrorModal(data.mensaje || 'No fue posible registrar el resultado.');
+        }
+        return;
+    }
     // A. Concluir Audiencia
     const formConcluir = e.target.closest('#form-concluir');
     if (formConcluir) {
@@ -624,17 +647,18 @@ document.addEventListener('submit', async function (e) {
             body: formData,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-            .then(response => {
+            .then(async response => {
                 if (response.ok) {
                     document.getElementById('modal-concluir').classList.add('hidden');
                     showSuccessToast('¡Audiencia Concluida correctamente!');
                     actualizarTablaAsincrono();
                 } else {
-                    throw new Error('Error al concluir');
+                    const data = await response.json().catch(() => ({}));
+                    throw new Error(data.mensaje || 'No fue posible concluir la Audiencia.');
                 }
             })
             .catch(error => {
-                showErrorModal('No se pudo completar la acción.');
+                showErrorModal(error.message || 'No se pudo completar la acción.');
             });
     }
 
@@ -659,7 +683,7 @@ document.addEventListener('submit', async function (e) {
             body: formData,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-            .then(response => {
+            .then(async response => {
                 if (response.ok) {
                     const creoAsuntoIndependiente = formData.get('origenAudiencia') === 'ASUNTO_UNICO'
                         && !formData.get('asuntoIndependienteId') && !formData.get('id');
@@ -705,11 +729,12 @@ document.addEventListener('change', function (e) {
                     showSuccessToast('¡Acta subida correctamente!');
                     actualizarTablaAsincrono();
                 } else {
-                    throw new Error('Error en la subida');
+                    const data = await response.json().catch(() => ({}));
+                    throw new Error(data.mensaje || 'No fue posible subir el Acta.');
                 }
             })
             .catch(error => {
-                showErrorModal('No se pudo subir el archivo. Intente de nuevo.');
+                showErrorModal(error.message || 'No se pudo subir el archivo. Intente de nuevo.');
             });
     }
 });
@@ -719,6 +744,12 @@ function abrirModalConcluir(id) {
     if (inputId) inputId.value = id;
 
     document.getElementById('modal-concluir').classList.remove('hidden');
+}
+
+function abrirModalResultado(id) {
+    const inputId = document.getElementById('resultado-audiencia-id');
+    if (inputId) inputId.value = id;
+    document.getElementById('modal-resultado').classList.remove('hidden');
 }
 
 // ==========================================

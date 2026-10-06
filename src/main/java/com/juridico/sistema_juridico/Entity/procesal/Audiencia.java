@@ -77,6 +77,18 @@ public class Audiencia {
     @Column(name = "nota_informativa_documento", length = 500)
     private String notaInformativaDocumento;
 
+    @Column(name = "resultado", columnDefinition = "TEXT")
+    private String resultado;
+
+    @Column(name = "resultado_registrado_por_id")
+    private Integer resultadoRegistradoPorId;
+
+    @Column(name = "resultado_registrado_por", length = 180)
+    private String resultadoRegistradoPor;
+
+    @Column(name = "resultado_registrado_en")
+    private LocalDateTime resultadoRegistradoEn;
+
     @Column(name = "recordatorio_perfil_nombre", length = 120)
     private String recordatorioPerfilNombre;
 

@@ -75,6 +75,8 @@ public class AudienciaService {
 
     @Autowired
     private CarpetaRepository carpetaRepository;
+    @Autowired
+    private FlujoAudienciaService flujoAudienciaService;
 
     // 1. PASO INTERMEDIO: SUBIR ACTA (Cambia a CON_ACTA)
     @Transactional
@@ -91,11 +93,8 @@ public class AudienciaService {
         String nombreArchivo = java.nio.file.Paths.get(rutaActa).getFileName().toString();
 
         audiencia.setActaDocumento(nombreArchivo);
-        // Lógica de Estatus: Si estaba pendiente, ahora tiene acta
-        if (EstatusAudiencia.PENDIENTE.equals(audiencia.getEstatusAudiencia())) {
-            audiencia.setEstatusAudiencia(EstatusAudiencia.CON_ACTA);
-            notificarSubidaActa(audiencia);
-        }
+        // El Acta es evidencia documental; registrar el resultado es una acción separada.
+        notificarSubidaActa(audiencia);
         audienciaRepository.save(audiencia);
 
         // Sincronizar con el Gestor Documental
@@ -153,6 +152,22 @@ public class AudienciaService {
         registrarActividad(audiencia.getExpediente(), "ARCHIVO CARGADO",
                 "Acta: " + archivo.getOriginalFilename(),
                 "UPLOAD");
+    }
+
+    @Transactional
+    public void registrarResultado(Integer id, String resultado, Usuario actor) {
+        Audiencia audiencia = audienciaRepository.findById(id)
+                .orElseThrow(() -> new com.juridico.sistema_juridico.exception.ResourceNotFoundException(
+                        "Audiencia no encontrada."));
+        flujoAudienciaService.validarRegistroResultado(audiencia, resultado);
+        audiencia.setResultado(resultado.trim());
+        audiencia.setResultadoRegistradoPorId(actor.getId());
+        audiencia.setResultadoRegistradoPor(actor.getNombreCompleto());
+        audiencia.setResultadoRegistradoEn(LocalDateTime.now());
+        audiencia.setEstatusAudiencia(EstatusAudiencia.CON_ACTA);
+        audienciaRepository.save(audiencia);
+        registrarActividad(audiencia.getExpediente(), "RESULTADO DE AUDIENCIA REGISTRADO",
+                "Resultado registrado por " + actor.getNombreCompleto() + ": " + resultado.trim(), "CHECK");
     }
 
     @Transactional
@@ -271,20 +286,7 @@ public class AudienciaService {
         Audiencia audiencia = audienciaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Audiencia no encontrada"));
 
-        // --- SEGURIDAD: Validar permisos de conclusión ---
-        validarPermisoConclusion(audiencia, usuarioActual);
-
-        if (EstatusAudiencia.CON_ACTA.equals(audiencia.getEstatusAudiencia())) {
-            if (audiencia.getActaDocumento() == null || audiencia.getActaDocumento().isBlank()) {
-                throw new com.juridico.sistema_juridico.exception.BadRequestException("La Audiencia requiere Acta antes de concluir.");
-            }
-        } else if (EstatusAudiencia.SUSPENDIDA.equals(audiencia.getEstatusAudiencia())) {
-            if (audiencia.getNotaInformativaDocumento() == null || audiencia.getNotaInformativaDocumento().isBlank()) {
-                throw new com.juridico.sistema_juridico.exception.BadRequestException("La Audiencia suspendida requiere Nota Informativa antes de concluir.");
-            }
-        } else {
-            throw new com.juridico.sistema_juridico.exception.BadRequestException("Registra el resultado o suspende la Audiencia antes de concluir.");
-        }
+        flujoAudienciaService.validarConclusion(audiencia);
 
         audiencia.setEstatusAudiencia(EstatusAudiencia.CONCLUIDA);
         audiencia.setFechaDesahogo(LocalDate.now());
@@ -347,62 +349,6 @@ public class AudienciaService {
             );
         }
 
-    }
-
-    private void validarPermisoConclusion(Audiencia audiencia, Usuario usuario) {
-        String rol = usuario.getRol().name();
-
-        // 1. Admin y Dirección pueden concluir todo
-        if (rol.equals("ADMIN") || rol.equals("DIRECTOR") || rol.equals("DIRECTOR_PRINCIPAL") || rol.equals("SUBDIRECTOR")) {
-            return;
-        }
-
-        // 2. Abogados pueden concluir si son responsables del caso, comparecientes o colaboradores activos
-        if (rol.equals("ABOGADO")) {
-            boolean tienePermiso = false;
-            if (audiencia.getExpediente() != null) {
-                Expediente exp = audiencia.getExpediente();
-                if (exp.getAbogadoResponsable() != null && exp.getAbogadoResponsable().getId().equals(usuario.getId())) {
-                    tienePermiso = true;
-                } else if (colaboradorExpedienteRepository.existsByExpedienteIdAndUsuarioIdAndFechaExpiracionAfter(
-                        exp.getId(), usuario.getId(), LocalDateTime.now())) {
-                    tienePermiso = true;
-                }
-            }
-            if (audiencia.getAbogadoComparece() != null && audiencia.getAbogadoComparece().getId().equals(usuario.getId())) {
-                tienePermiso = true;
-            }
-            
-            if (!tienePermiso) {
-                throw new com.juridico.sistema_juridico.exception.ForbiddenException(
-                        "Acceso denegado: Solo el abogado responsable, compareciente o colaborador activo puede concluir esta audiencia.");
-            }
-            return;
-        }
-
-        // 3. Gerentes deben ser de la misma Gerencia
-        if (rol.equals("GERENTE")) {
-            com.juridico.sistema_juridico.Entity.catalogo.Gerencia ger = audiencia.getGerenciaReferencia();
-            if (usuario.getGerencia() == null || ger == null ||
-                    !usuario.getGerencia().getId().equals(ger.getId())) {
-                throw new com.juridico.sistema_juridico.exception.ForbiddenException(
-                        "Acceso denegado: Solo el Gerente del área correspondiente puede concluir esta audiencia.");
-            }
-            return;
-        }
-
-        // 4. Jefes de Departamento deben tener la materia asignada
-        if (rol.equals("JEFE_DEPTO")) {
-            com.juridico.sistema_juridico.Entity.catalogo.Materia mat = audiencia.getMateriaReferencia();
-            if (mat == null || !usuario.tieneMateria(mat.getId())) {
-                throw new com.juridico.sistema_juridico.exception.ForbiddenException(
-                        "Acceso denegado: Solo el Jefe de Departamento de la materia correspondiente puede concluir esta audiencia.");
-            }
-            return;
-        }
-
-        // Por defecto, denegar
-        throw new com.juridico.sistema_juridico.exception.ForbiddenException("Acceso denegado para realizar esta acción.");
     }
 
     @Transactional
