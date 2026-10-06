@@ -1499,12 +1499,21 @@ public class TerminosController {
             return;
         }
         Gerencia gt = termino.getGerenciaReferencia();
-        if (gt != null && usuario.getGerencia() != null && gt.getId().equals(usuario.getGerencia().getId())) {
+        if (usuario.getRol() == RolUsuario.GERENTE && gt != null && usuario.getGerencia() != null
+                && gt.getId().equals(usuario.getGerencia().getId())) {
             return;
         }
+        if (usuario.getRol() == RolUsuario.JEFE_DEPTO && gt != null && usuario.getGerencia() != null
+                && gt.getId().equals(usuario.getGerencia().getId())
+                && termino.getMateriaReferencia() != null
+                && usuario.tieneMateria(termino.getMateriaReferencia().getId())) return;
         Expediente e = termino.getExpediente();
         if (e != null) {
             validarAccesoExpediente(e, usuario);
+            return;
+        }
+        if (termino.getAsuntoIndependiente() != null) {
+            asuntoIndependienteService.validarAcceso(termino.getAsuntoIndependiente(), usuario);
             return;
         }
         throw new ForbiddenException("No tienes acceso a este término.");

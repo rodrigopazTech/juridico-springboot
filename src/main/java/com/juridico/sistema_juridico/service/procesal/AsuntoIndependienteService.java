@@ -57,7 +57,10 @@ public class AsuntoIndependienteService {
                         || contiene(asunto.getFolioSiaj(), criterio)
                         || contiene(asunto.getReferencia(), criterio)
                         || contiene(asunto.getParteInteresada(), criterio)
-                        || contiene(asunto.getDescripcion(), criterio))
+                        || contiene(asunto.getDescripcion(), criterio)
+                        || (asunto.getMateria() != null && contiene(asunto.getMateria().getNombre(), criterio))
+                        || (asunto.getResponsable() != null
+                                && contiene(asunto.getResponsable().getNombreCompleto(), criterio)))
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .toList();
     }
