@@ -341,7 +341,7 @@ public class CatalogosController {
         } catch (Exception ex) {
             ra.addFlashAttribute("mensajeError", "No se pudo guardar el Tipo de Audiencia: " + ex.getMessage());
         }
-        return "redirect:/administracion/plazos-alertas#tipos-audiencia";
+        return "redirect:/administracion/plazos-alertas#audiencias";
     }
 
     @DeleteMapping("/tipos-audiencia/eliminar/{id}")
@@ -873,7 +873,7 @@ public class CatalogosController {
         } catch (Exception e) {
             ra.addFlashAttribute("mensajeError", "Error al guardar el tipo de término: " + e.getMessage());
         }
-        return "redirect:/administracion/plazos-alertas#tipos-termino";
+        return "redirect:/administracion/plazos-alertas#terminos";
     }
 
     @PostMapping("/tipos-termino/estado/{id}")
@@ -884,6 +884,6 @@ public class CatalogosController {
         } catch (Exception e) {
             ra.addFlashAttribute("mensajeError", "Error al cambiar el estado del tipo de término: " + e.getMessage());
         }
-        return "redirect:/administracion/plazos-alertas#tipos-termino";
+        return "redirect:/administracion/plazos-alertas#terminos";
     }
 }

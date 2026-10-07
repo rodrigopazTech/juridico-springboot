@@ -718,7 +718,7 @@
                             </tbody>
                         </table>
                         <form id="form-tipo-audiencia-completo" th:if="${puedeEditar}" th:action="@{/catalogos/tipos-audiencia/guardar-completo}" method="post" class="m-5 p-5 border border-gray-200 bg-gray-50 rounded-xl space-y-3">
-                            <div class="flex justify-between"><div><h4 class="font-bold text-gray-900">Configurar Tipo de Audiencia</h4><p class="text-xs text-gray-500">La proximidad y los recordatorios proceden del perfil publicado.</p></div><a th:href="@{/administracion/plazos-alertas#audiencias}" class="text-xs font-bold text-gob-guinda hover:underline">Administrar perfiles</a></div>
+                            <div class="flex justify-between"><div><h4 class="font-bold text-gray-900">Configurar Tipo de Audiencia</h4><p class="text-xs text-gray-500">La proximidad y los avisos se configuran junto con cada tipo.</p></div><a th:href="@{/administracion/plazos-alertas#audiencias}" class="text-xs font-bold text-gob-guinda hover:underline">Configurar avisos</a></div>
                             <input type="hidden" name="id" id="ta-id"><input type="hidden" name="gerenciaId" th:value="${gerenciaSeleccionada.id}"><input type="hidden" name="activo" value="true">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><label class="text-xs font-bold">Código<input name="codigo" id="ta-codigo" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label><label class="text-xs font-bold">Nombre<input name="nombre" id="ta-nombre" required class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></label></div>
                             <label class="block text-xs font-bold">Descripción de uso<textarea name="descripcion" id="ta-descripcion" required rows="2" class="mt-1 w-full border rounded-lg px-3 py-2 font-normal"></textarea></label>
@@ -980,7 +980,7 @@
                         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-start justify-between gap-4">
                                 <div><h3 class="text-lg font-bold text-gray-900"><i class="fas fa-hourglass-start text-gob-oro mr-2"></i>Tipos de Término</h3><p class="text-xs text-gray-500 mt-1">El tipo define el modo y selecciona una regla publicada compatible.</p></div>
-                                <a th:href="@{/administracion/plazos-alertas}" class="text-xs font-bold text-gob-guinda hover:underline">Administrar perfiles</a>
+                                <a th:href="@{/administracion/plazos-alertas#terminos}" class="text-xs font-bold text-gob-guinda hover:underline">Configurar plazos y avisos</a>
                             </div>
                             <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-gray-50 text-xs uppercase text-gray-500"><tr><th class="text-left px-5 py-3">Tipo</th><th class="text-left px-5 py-3">Modo</th><th class="text-left px-5 py-3">Perfil</th><th class="text-left px-5 py-3">Estado</th><th class="px-5 py-3"></th></tr></thead><tbody class="divide-y divide-gray-100">
                                 <tr th:each="t : ${listaTiposTermino}">

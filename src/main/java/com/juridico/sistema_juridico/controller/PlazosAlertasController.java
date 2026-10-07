@@ -13,9 +13,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.juridico.sistema_juridico.Entity.configuracion.PerfilAlertaTermino;
 import com.juridico.sistema_juridico.Entity.configuracion.PerfilRecordatorioAudiencia;
-import com.juridico.sistema_juridico.Entity.enums.EstadoPerfil;
-import com.juridico.sistema_juridico.Entity.enums.ModoPerfilAlerta;
 import com.juridico.sistema_juridico.service.configuracion.PerfilAtencionService;
+import com.juridico.sistema_juridico.service.configuracion.PlazosAlertasConfiguracionService;
 import com.juridico.sistema_juridico.Entity.catalogo.TipoTermino;
 import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
@@ -25,7 +24,6 @@ import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.service.catalogo.TipoTerminoService;
-import com.juridico.sistema_juridico.service.catalogo.TipoAudienciaService;
 import com.juridico.sistema_juridico.Entity.configuracion.DiaInhabil;
 import com.juridico.sistema_juridico.Entity.configuracion.SuspensionPlazo;
 import com.juridico.sistema_juridico.service.configuracion.CalendarioInstitucionalService;
@@ -39,29 +37,27 @@ public class PlazosAlertasController {
 
     private final PerfilAtencionService perfiles;
     private final TipoTerminoService tiposTermino;
-    private final TipoAudienciaService tiposAudiencia;
     private final TipoAudienciaRepository tipoAudienciaRepository;
     private final UsuarioRepository usuarioRepository;
     private final CalendarioInstitucionalService calendario;
     private final MateriaRepository materiaRepository;
+    private final PlazosAlertasConfiguracionService configuracion;
 
     public PlazosAlertasController(PerfilAtencionService perfiles, TipoTerminoService tiposTermino,
-            TipoAudienciaService tiposAudiencia, TipoAudienciaRepository tipoAudienciaRepository,
+            TipoAudienciaRepository tipoAudienciaRepository,
             UsuarioRepository usuarioRepository, CalendarioInstitucionalService calendario,
-            MateriaRepository materiaRepository) {
+            MateriaRepository materiaRepository, PlazosAlertasConfiguracionService configuracion) {
         this.perfiles = perfiles;
         this.tiposTermino = tiposTermino;
-        this.tiposAudiencia = tiposAudiencia;
         this.tipoAudienciaRepository = tipoAudienciaRepository;
         this.usuarioRepository = usuarioRepository;
         this.calendario = calendario;
         this.materiaRepository = materiaRepository;
+        this.configuracion = configuracion;
     }
 
     @GetMapping
     public String index(Model model) {
-        model.addAttribute("perfilesTermino", perfiles.listarTerminos());
-        model.addAttribute("perfilesAudiencia", perfiles.listarAudiencias());
         Usuario usuario = usuarioActual();
         boolean alcanceGlobal = esAlcanceGlobal(usuario);
         model.addAttribute("usuarioActual", usuario);
@@ -88,21 +84,7 @@ public class PlazosAlertasController {
                 .filter(t -> usuario.getRol() != RolUsuario.JEFE_DEPTO
                         || (t.getMateria() != null && usuario.tieneMateria(t.getMateria().getId())))
                 .toList());
-        model.addAttribute("perfilesTerminoDias", perfiles.publicados(ModoPerfilAlerta.DIAS_RESTANTES));
-        model.addAttribute("perfilesTerminoProporcionales", perfiles.publicados(ModoPerfilAlerta.PROPORCIONAL_LIMITADO));
-        model.addAttribute("perfilesAudienciaPublicados", perfiles.audienciasPublicadas());
         model.addAttribute("modosPlazoTermino", ModoPlazoTermino.values());
-        model.addAttribute("nuevoPerfilTermino", PerfilAlertaTermino.builder()
-                .modo(ModoPerfilAlerta.DIAS_RESTANTES)
-                .amarilloDias(5).rojoDias(2)
-                .amarilloPorcentaje(50).amarilloMinimoDias(3).amarilloMaximoDias(10)
-                .rojoPorcentaje(20).rojoMinimoDias(1).rojoMaximoDias(4)
-                .version(1).estado(EstadoPerfil.BORRADOR).build());
-        model.addAttribute("nuevoPerfilAudiencia", PerfilRecordatorioAudiencia.builder()
-                .anticipacionAmarillaHoras(72).anticipacionRojaHoras(24)
-                .recordatoriosMinutos("10080,4320,1440,120")
-                .version(1).estado(EstadoPerfil.BORRADOR).build());
-        model.addAttribute("modosPerfil", ModoPerfilAlerta.values());
         model.addAttribute("diasInhabiles", calendario.listar());
         model.addAttribute("suspensionesPlazo", calendario.listarSuspensiones());
         model.addAttribute("versionCalendario", calendario.snapshotActual().version());
@@ -178,22 +160,21 @@ public class PlazosAlertasController {
     }
 
     @PostMapping("/tipos-termino")
-    public String guardarTipoTermino(@ModelAttribute TipoTermino tipo, RedirectAttributes flash) {
+    public String guardarTipoTermino(@ModelAttribute TipoTermino tipo,
+            @RequestParam(defaultValue = "5") Integer atencionDias,
+            @RequestParam(defaultValue = "2") Integer criticoDias,
+            RedirectAttributes flash) {
         try {
             tipo.setMateria(resolverMateria(tipo.getMateria()));
             tipo.setGerencia(tipo.getMateria().getGerencia());
             validarGestionTipo(tipo.getMateria());
             aplicarPoliticaDocumental(tipo);
-            if (tipo.getId() == null) {
-                tiposTermino.crear(tipo);
-            } else {
-                tiposTermino.actualizar(tipo.getId(), tipo);
-            }
+            configuracion.guardarTipoTermino(tipo, atencionDias, criticoDias);
             flash.addFlashAttribute("mensajeExito", "Tipo de Término guardado correctamente.");
         } catch (RuntimeException ex) {
             flash.addFlashAttribute("mensajeError", ex.getMessage());
         }
-        return "redirect:/administracion/plazos-alertas#tipos-termino";
+        return "redirect:/administracion/plazos-alertas#terminos";
     }
 
     @PostMapping("/tipos-termino/{id}/estado")
@@ -208,7 +189,10 @@ public class PlazosAlertasController {
     }
 
     @PostMapping("/tipos-audiencia")
-    public String guardarTipoAudiencia(@ModelAttribute TipoAudiencia tipo, RedirectAttributes flash) {
+    public String guardarTipoAudiencia(@ModelAttribute TipoAudiencia tipo,
+            @RequestParam(defaultValue = "3") Integer atencionDias,
+            @RequestParam(defaultValue = "1") Integer criticoDias,
+            RedirectAttributes flash) {
         try {
             Usuario actor = usuarioActual();
             tipo.setMateria(resolverMateria(tipo.getMateria()));
@@ -220,12 +204,12 @@ public class PlazosAlertasController {
             tipo.setRequiereActa(true);
             tipo.setPermiteExcepcionSinActa(false);
             tipo.setRequiereValidacionActa(true);
-            tiposAudiencia.guardar(tipo);
+            configuracion.guardarTipoAudiencia(tipo, atencionDias, criticoDias);
             flash.addFlashAttribute("mensajeExito", "Tipo de Audiencia guardado correctamente.");
         } catch (RuntimeException ex) {
             flash.addFlashAttribute("mensajeError", ex.getMessage());
         }
-        return "redirect:/administracion/plazos-alertas#tipos-audiencia";
+        return "redirect:/administracion/plazos-alertas#audiencias";
     }
 
     @PostMapping("/tipos-audiencia/{id}/estado")

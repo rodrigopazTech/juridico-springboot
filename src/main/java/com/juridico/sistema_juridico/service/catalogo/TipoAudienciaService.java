@@ -31,7 +31,7 @@ public class TipoAudienciaService {
                         .orElseThrow(() -> new ResourceNotFoundException("Tipo de Audiencia no encontrado."));
         validar(datos);
         PerfilRecordatorioAudiencia perfil = perfilRepository.findById(datos.getPerfilRecordatorio().getId())
-                .orElseThrow(() -> new BadRequestException("La Regla de alerta seleccionada no existe."));
+                .orElseThrow(() -> new BadRequestException("La configuración de avisos seleccionada no existe."));
         if (perfil.getEstado() != EstadoPerfil.PUBLICADO) {
             throw new BadRequestException("Sólo se pueden utilizar Reglas de alerta publicadas.");
         }
@@ -52,6 +52,11 @@ public class TipoAudienciaService {
         return tipoRepository.save(destino);
     }
 
+    public TipoAudiencia obtenerPorId(Integer id) {
+        return tipoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tipo de Audiencia no encontrado."));
+    }
+
     private void validar(TipoAudiencia tipo) {
         if (tipo.getNombre() == null || tipo.getNombre().isBlank()) {
             throw new BadRequestException("El nombre es obligatorio.");
@@ -63,7 +68,7 @@ public class TipoAudienciaService {
             throw new BadRequestException("La descripción de uso es obligatoria.");
         }
         if (tipo.getPerfilRecordatorio() == null || tipo.getPerfilRecordatorio().getId() == null) {
-            throw new BadRequestException("Selecciona una Regla de alerta.");
+            throw new BadRequestException("No fue posible asociar la configuración de avisos.");
         }
         if (tipo.getDuracionPredeterminadaMinutos() != null && tipo.getDuracionPredeterminadaMinutos() <= 0) {
             throw new BadRequestException("La duración predeterminada debe ser mayor que cero.");
@@ -82,6 +87,6 @@ public class TipoAudienciaService {
 
     private String normalizarCodigo(String codigo, String nombre, Integer id) {
         String base = codigo == null || codigo.isBlank() ? nombre : codigo;
-        return CodigoNormalizer.normalizar(base, id);
+        return CodigoNormalizer.normalizar(base);
     }
 }

@@ -71,6 +71,7 @@ public class TipoTerminoService {
         if (datosActualizados.getTipoDias() != null) {
             exist.setTipoDias(datosActualizados.getTipoDias());
         }
+        exist.setAjustaAlSiguienteHabil(Boolean.TRUE.equals(datosActualizados.getAjustaAlSiguienteHabil()));
         exist.setPerfilAlerta(datosActualizados.getPerfilAlerta());
         exist.setMateria(datosActualizados.getMateria());
         exist.setGerencia(datosActualizados.getGerencia());
@@ -100,7 +101,7 @@ public class TipoTerminoService {
         }
         tipo.setNombre(tipo.getNombre().trim());
         String baseCodigo = (tipo.getCodigo() == null || tipo.getCodigo().isBlank()) ? tipo.getNombre() : tipo.getCodigo();
-        tipo.setCodigo(CodigoNormalizer.normalizar(baseCodigo, tipo.getId()));
+        tipo.setCodigo(CodigoNormalizer.normalizar(baseCodigo));
         if (tipo.getDescripcion() == null || tipo.getDescripcion().isBlank()) {
             throw new BadRequestException("La descripción de uso es obligatoria.");
         }
@@ -126,17 +127,19 @@ public class TipoTerminoService {
             throw new BadRequestException("Los términos calculados requieren una cantidad de días mayor que cero.");
         }
         if (tipo.getPerfilAlerta() == null || tipo.getPerfilAlerta().getId() == null) {
-            throw new BadRequestException("Selecciona una Regla de alerta compatible.");
+            throw new BadRequestException("No fue posible asociar la configuración de avisos.");
         }
         PerfilAlertaTermino perfil = perfilRepository.findById(tipo.getPerfilAlerta().getId())
-                .orElseThrow(() -> new BadRequestException("La Regla de alerta seleccionada no existe."));
+                .orElseThrow(() -> new BadRequestException("La configuración de avisos seleccionada no existe."));
         if (perfil.getEstado() != EstadoPerfil.PUBLICADO) {
             throw new BadRequestException("Sólo se pueden utilizar Reglas de alerta publicadas.");
         }
-        ModoPerfilAlerta esperado = tipo.getModoPlazo() == ModoPlazoTermino.CALCULADO
-                ? ModoPerfilAlerta.DIAS_RESTANTES : ModoPerfilAlerta.PROPORCIONAL_LIMITADO;
-        if (perfil.getModo() != esperado) {
-            throw new BadRequestException("La Regla de alerta no es compatible con el modo de plazo seleccionado.");
+        boolean compatible = tipo.getModoPlazo() == ModoPlazoTermino.CALCULADO
+                ? perfil.getModo() == ModoPerfilAlerta.DIAS_RESTANTES
+                : perfil.getModo() == ModoPerfilAlerta.DIAS_RESTANTES
+                        || perfil.getModo() == ModoPerfilAlerta.PROPORCIONAL_LIMITADO;
+        if (!compatible) {
+            throw new BadRequestException("La configuración de avisos no es compatible con el tipo de cálculo seleccionado.");
         }
         tipo.setPerfilAlerta(perfil);
     }

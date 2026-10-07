@@ -2,10 +2,13 @@ package com.juridico.sistema_juridico.controller;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -19,8 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
+import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.TipoTerminoRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 
 @SpringBootTest
@@ -32,6 +39,9 @@ class Alcance1PantallasIntegrationTest {
     @Autowired private MockMvc mvc;
     @Autowired private UsuarioRepository usuarios;
     @Autowired private GerenciaRepository gerencias;
+    @Autowired private MateriaRepository materias;
+    @Autowired private TipoTerminoRepository tiposTermino;
+    @Autowired private TipoAudienciaRepository tiposAudiencia;
 
     @BeforeEach
     void prepararUsuario() {
@@ -52,14 +62,70 @@ class Alcance1PantallasIntegrationTest {
     }
 
     @Test
-    void renderizaAdministracionDePlazosYPerfiles() throws Exception {
+    void renderizaConfiguracionContextualDePlazosYAlertas() throws Exception {
         mvc.perform(get("/administracion/plazos-alertas").with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("id=\"reglas-termino\"")))
-                .andExpect(content().string(containsString("Guardar y publicar")))
-                .andExpect(content().string(containsString("id=\"tipos-audiencia\"")))
+                .andExpect(content().string(containsString("id=\"panel-terminos\"")))
+                .andExpect(content().string(containsString("id=\"panel-audiencias\"")))
+                .andExpect(content().string(containsString("id=\"panel-calendario\"")))
+                .andExpect(content().string(containsString("id=\"tt-preview\"")))
+                .andExpect(content().string(containsString("Plantillas sugeridas")))
                 .andExpect(content().string(containsString("Versión vigente")))
-                .andExpect(content().string(containsString("Registrar suspensión")));
+                .andExpect(content().string(containsString("Registrar suspensión")))
+                .andExpect(content().string(not(containsString("Reglas de Término"))))
+                .andExpect(content().string(not(containsString("Reglas de Audiencia"))))
+                .andExpect(content().string(not(containsString("id=\"reglas-termino\""))));
+    }
+
+    @Test
+    void guardaTipoTerminoYPublicaSuConfiguracionDeAvisos() throws Exception {
+        Materia materia = materiaDePrueba();
+
+        mvc.perform(post("/administracion/plazos-alertas/tipos-termino").with(csrf())
+                        .param("materia.id", materia.getId().toString())
+                        .param("nombre", "Contestación UX")
+                        .param("codigo", "CONTESTACION_UX")
+                        .param("descripcion", "Plazo configurado en una sola pantalla")
+                        .param("modoPlazo", "CALCULADO")
+                        .param("diasPredeterminados", "15")
+                        .param("tipoDias", "HABILES")
+                        .param("ajustaAlSiguienteHabil", "true")
+                        .param("activo", "true")
+                        .param("atencionDias", "5")
+                        .param("criticoDias", "2"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/administracion/plazos-alertas#terminos"));
+
+        var tipo = tiposTermino.findByNombreIgnoreCase("Contestación UX").orElseThrow();
+        assertNotNull(tipo.getPerfilAlerta());
+        assertEquals(5, tipo.getPerfilAlerta().getAmarilloDias());
+        assertEquals(2, tipo.getPerfilAlerta().getRojoDias());
+        assertEquals("PUBLICADO", tipo.getPerfilAlerta().getEstado().name());
+    }
+
+    @Test
+    void guardaTipoAudienciaYConvierteSusAvisosADias() throws Exception {
+        Materia materia = materiaDePrueba();
+
+        mvc.perform(post("/administracion/plazos-alertas/tipos-audiencia").with(csrf())
+                        .param("materia.id", materia.getId().toString())
+                        .param("nombre", "Audiencia UX")
+                        .param("codigo", "AUDIENCIA_UX")
+                        .param("descripcion", "Recordatorios configurados en contexto")
+                        .param("duracionPredeterminadaMinutos", "60")
+                        .param("modalidadPredeterminada", "PRESENCIAL")
+                        .param("modalidadesPermitidas", "PRESENCIAL,VIRTUAL,HIBRIDA")
+                        .param("activo", "true")
+                        .param("atencionDias", "3")
+                        .param("criticoDias", "1"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/administracion/plazos-alertas#audiencias"));
+
+        var tipo = tiposAudiencia.findByNombreIgnoreCase("Audiencia UX").orElseThrow();
+        assertNotNull(tipo.getPerfilRecordatorio());
+        assertEquals(72, tipo.getPerfilRecordatorio().getAnticipacionAmarillaHoras());
+        assertEquals(24, tipo.getPerfilRecordatorio().getAnticipacionRojaHoras());
+        assertEquals("PUBLICADO", tipo.getPerfilRecordatorio().getEstado().name());
     }
 
     @Test
@@ -83,7 +149,7 @@ class Alcance1PantallasIntegrationTest {
 
     @Test
     @WithMockUser(username = "ui.abogado@siaj.test", authorities = "ABOGADO")
-    void abogadoPuedeConsultarYModificarCatalogosYPerfilesSinAprobacion() throws Exception {
+    void abogadoPuedeConsultarElDetalleSinModificarLaConfiguracionCompartida() throws Exception {
         Gerencia gerencia = gerencias.findAll().get(0);
         if (usuarios.findByEmail("ui.abogado@siaj.test").isEmpty()) {
             Usuario abogado = Usuario.builder()
@@ -102,12 +168,20 @@ class Alcance1PantallasIntegrationTest {
         mvc.perform(get("/catalogos"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Lectura y escritura")));
-        mvc.perform(post("/catalogos/tipos-termino/guardar").with(csrf()))
-                .andExpect(status().is3xxRedirection());
         mvc.perform(get("/administracion/plazos-alertas"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Configuración compartida")));
-        mvc.perform(post("/administracion/plazos-alertas/terminos").with(csrf()))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(content().string(containsString("Configuración compartida")))
+                .andExpect(content().string(containsString("id=\"form-tipo-termino\"")))
+                .andExpect(content().string(containsString("data-readonly=\"true\"")))
+                .andExpect(content().string(not(containsString("id=\"nuevo-tipo-termino\""))));
+    }
+
+    private Materia materiaDePrueba() {
+        return materias.findByNombreIgnoreCase("Materia de prueba UI")
+                .orElseGet(() -> materias.save(Materia.builder()
+                        .nombre("Materia de prueba UI")
+                        .gerencia(gerencias.findAll().get(0))
+                        .activo(true)
+                        .build()));
     }
 }
