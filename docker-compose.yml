@@ -10,7 +10,7 @@ services:
     container_name: postgres-juridico
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DB_USER:-villalobos_admin}
+      POSTGRES_USER: ${DB_USER:-agendajuridicodbdev}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD requerido}
       POSTGRES_DB: ${DB_NAME:-sistema_juridico}
     ports:
@@ -20,7 +20,7 @@ services:
     networks:
       - juridico-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-villalobos_admin} -d ${DB_NAME:-sistema_juridico}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-agendajuridicodbdev} -d ${DB_NAME:-sistema_juridico}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,7 +31,7 @@ services:
     container_name: pgadmin-juridico
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-ricardo@juridico.com}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@juridico.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASS:?PGADMIN_PASS requerido}
     ports:
       - "5051:80"

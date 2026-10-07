@@ -31,7 +31,7 @@ Fecha de revision: 2026-07-23
 | Imagen Docker | postgres:latest |
 | Puerto publicado | 5432 |
 | Base de datos usada por SIAJ | sistema_juridico |
-| Usuario usado por SIAJ | villalobos_admin |
+| Usuario usado por SIAJ | agendajuridicodbdev |
 
 ## Servicios identificados
 
@@ -42,4 +42,3 @@ Fecha de revision: 2026-07-23
 | pgadmin4 | Activo en puerto 5050 |
 | PostgreSQL instalado en host | psql 13.22 |
 | Servicio PostgreSQL del host | No activo; la BD operativa corre en Docker |
-

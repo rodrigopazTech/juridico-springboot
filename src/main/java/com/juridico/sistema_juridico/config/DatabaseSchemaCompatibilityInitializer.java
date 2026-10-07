@@ -55,6 +55,15 @@ public class DatabaseSchemaCompatibilityInitializer implements ApplicationRunner
         jdbcTemplate.execute("ALTER TABLE audiencias ADD COLUMN IF NOT EXISTS resultado_registrado_por VARCHAR(180)");
         jdbcTemplate.execute("ALTER TABLE audiencias ADD COLUMN IF NOT EXISTS resultado_registrado_en TIMESTAMP");
         jdbcTemplate.execute("ALTER TABLE tipos_audiencia ADD COLUMN IF NOT EXISTS materia_id INTEGER");
+        jdbcTemplate.execute("ALTER TABLE tipos_audiencia ADD COLUMN IF NOT EXISTS codigo VARCHAR(50)");
+        jdbcTemplate.execute("ALTER TABLE tipos_audiencia ADD COLUMN IF NOT EXISTS modalidades_permitidas VARCHAR(80) NOT NULL DEFAULT 'PRESENCIAL,VIRTUAL,HIBRIDA'");
+        jdbcTemplate.execute("ALTER TABLE tipos_audiencia ADD COLUMN IF NOT EXISTS modalidad_predeterminada VARCHAR(20) DEFAULT 'PRESENCIAL'");
+        jdbcTemplate.execute("ALTER TABLE tipos_audiencia ADD COLUMN IF NOT EXISTS duracion_predeterminada_minutos INTEGER DEFAULT 60");
+        jdbcTemplate.execute("ALTER TABLE tipos_audiencia ADD COLUMN IF NOT EXISTS requiere_acta BOOLEAN NOT NULL DEFAULT true");
+        jdbcTemplate.execute("ALTER TABLE tipos_audiencia ADD COLUMN IF NOT EXISTS permite_excepcion_sin_acta BOOLEAN NOT NULL DEFAULT false");
+        jdbcTemplate.execute("ALTER TABLE tipos_audiencia ADD COLUMN IF NOT EXISTS requiere_validacion_acta BOOLEAN NOT NULL DEFAULT true");
+        jdbcTemplate.execute("DELETE FROM terminos WHERE expediente_id IS NULL AND asunto_independiente_id IS NULL");
+        jdbcTemplate.execute("DELETE FROM audiencias WHERE expediente_id IS NULL AND asunto_independiente_id IS NULL");
         reemplazarCheck("terminos", "ck_terminos_origen_exclusivo",
                 "(expediente_id IS NOT NULL) <> (asunto_independiente_id IS NOT NULL)");
         reemplazarCheck("audiencias", "ck_audiencias_origen_exclusivo",

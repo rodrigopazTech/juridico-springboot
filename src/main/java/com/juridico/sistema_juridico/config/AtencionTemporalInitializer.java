@@ -50,7 +50,7 @@ public class AtencionTemporalInitializer implements ApplicationRunner {
         for (TipoTermino tipo : tiposTermino.findAll()) {
             if (tipo.getModoPlazo() == null) tipo.setModoPlazo(ModoPlazoTermino.CALCULADO);
             if (tipo.getCodigo() == null || tipo.getCodigo().isBlank()) {
-                tipo.setCodigo(codigo(tipo.getNombre(), "TIPO_TERMINO_" + tipo.getId()));
+                tipo.setCodigo(codigo(tipo.getNombre(), tipo.getId(), "TERMINO"));
             }
             if (tipo.getModoPlazo() == ModoPlazoTermino.SIN_VENCIMIENTO) {
                 tipo.setPerfilAlerta(null);
@@ -62,7 +62,7 @@ public class AtencionTemporalInitializer implements ApplicationRunner {
 
         for (TipoAudiencia tipo : tiposAudiencia.findAll()) {
             if (tipo.getCodigo() == null || tipo.getCodigo().isBlank()) {
-                tipo.setCodigo(codigo(tipo.getNombre(), "TIPO_AUDIENCIA_" + tipo.getId()));
+                tipo.setCodigo(codigo(tipo.getNombre(), tipo.getId(), "AUDIENCIA"));
             }
             if (tipo.getRequiereActa() == null) tipo.setRequiereActa(false);
             if (tipo.getPermiteExcepcionSinActa() == null) tipo.setPermiteExcepcionSinActa(false);
@@ -106,8 +106,11 @@ public class AtencionTemporalInitializer implements ApplicationRunner {
                         .build()));
     }
 
-    private String codigo(String nombre, String respaldo) {
-        if (nombre == null || nombre.isBlank()) return respaldo;
-        return nombre.trim().toUpperCase().replaceAll("[^A-Z0-9]+", "_");
+    private String codigo(String nombre, Integer id, String respaldo) {
+        String base = (nombre == null || nombre.isBlank()) ? respaldo : nombre.trim().toUpperCase().replaceAll("[^A-Z0-9]+", "_");
+        if (base.length() > 38) {
+            base = base.substring(0, 38);
+        }
+        return base + "_" + (id != null ? id : "0");
     }
 }

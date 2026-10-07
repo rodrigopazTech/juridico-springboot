@@ -6,8 +6,8 @@ const { chromium } = require('playwright');
   
   // Login
   await page.goto('http://127.0.0.1:8080/login');
-  await page.fill('#username', 'villalobos_admin');
-  await page.fill('#password', 'password123'); // Asumiendo based on docker
+  await page.fill('#username', 'agendajuridicodbdev');
+  await page.fill('#password', 'DBag3$#38');
   await page.click('button[type="submit"]');
   await page.waitForTimeout(2000);
   

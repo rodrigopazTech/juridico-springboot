@@ -58,12 +58,12 @@ docker-compose up -d
 
 **Servicios incluidos:**
 - ✅ **Base de Datos:** PostgreSQL en `localhost:5433`
-- ✅ **Gestor BD:** pgAdmin en `http://localhost:5050` (Email: `ricardo@juridico.com`, Pass: `admin`)
+- ✅ **Gestor BD:** pgAdmin en `http://localhost:5050` (Email: `admin@juridico.com`, Pass: `admin123`)
 
 **Credenciales de Base de Datos:**
 - **DB Name:** `sistema_juridico`
-- **User:** `villalobos_admin`
-- **Password:** `password123`
+- **User:** `agendajuridicodbdev`
+- **Password:** `DBag3$#38`
 
 ### 3. Configurar application.properties
 
@@ -71,8 +71,8 @@ Asegúrate de que `src/main/resources/application.properties` apunte al contened
 
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5433/sistema_juridico
-spring.datasource.username=villalobos_admin
-spring.datasource.password=password123
+spring.datasource.username=agendajuridicodbdev
+spring.datasource.password=DBag3$#38
 ```
 
 ### 4. Compilar y Ejecutar la Aplicación

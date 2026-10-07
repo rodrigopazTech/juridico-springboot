@@ -27,13 +27,13 @@ Antes de iniciar las pruebas, asegúrese de que el entorno esté correctamente c
         ```
     *   Verifique que ambos servicios estén levantados y accesibles.
         *   **PostgreSQL:** `localhost:5433`
-        *   **pgAdmin:** `http://localhost:5050` (Credenciales: Email: `ricardo@juridico.com`, Pass: `admin`)
+        *   **pgAdmin:** `http://localhost:5050` (Credenciales: Email: `admin@juridico.com`, Pass: `admin123`)
 3.  **Configurar `application.properties`:**
     *   Confirme que `src/main/resources/application.properties` tenga las credenciales de la base de datos correctas:
         ```properties
         spring.datasource.url=jdbc:postgresql://localhost:5433/sistema_juridico
-        spring.datasource.username=villalobos_admin
-        spring.datasource.password=password123
+        spring.datasource.username=agendajuridicodbdev
+        spring.datasource.password=DBag3$#38
         ```
 4.  **Compilar y Ejecutar la Aplicación Spring Boot:**
     *   Limpiar y compilar el proyecto:

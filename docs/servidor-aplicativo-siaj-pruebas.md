@@ -39,5 +39,4 @@ Fecha de revision: 2026-07-23
 | Perfil activo | test |
 | Puerto aplicacion | 8080 |
 | Base de datos configurada | jdbc:postgresql://30.0.0.150:5432/sistema_juridico |
-| Usuario de BD configurado | villalobos_admin |
-
+| Usuario de BD configurado | agendajuridicodbdev |
