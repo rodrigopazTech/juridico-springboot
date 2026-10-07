@@ -14,6 +14,7 @@ import com.juridico.sistema_juridico.exception.BadRequestException;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoTerminoRepository;
 import com.juridico.sistema_juridico.repository.configuracion.PerfilAlertaTerminoRepository;
+import com.juridico.sistema_juridico.util.CodigoNormalizer;
 
 @Service
 public class TipoTerminoService {
@@ -41,12 +42,13 @@ public class TipoTerminoService {
     }
 
     @Transactional
-    public TipoTermino crear(TipoTermino tipoTermino) {
-        validarYNormalizar(tipoTermino);
-        if (tipoTerminoRepository.findByNombreIgnoreCase(tipoTermino.getNombre().trim()).isPresent()) {
-            throw new BadRequestException("Ya existe un tipo de término con el nombre: " + tipoTermino.getNombre());
-        }
-        return tipoTerminoRepository.save(tipoTermino);
+    public TipoTermino crear(TipoTermino tipo) {
+        tipoTerminoRepository.findByNombreIgnoreCase(tipo.getNombre().trim())
+                .ifPresent(exist -> {
+                    throw new BadRequestException("Ya existe un tipo de término con el nombre: " + tipo.getNombre());
+                });
+        validarYNormalizar(tipo);
+        return tipoTerminoRepository.save(tipo);
     }
 
     @Transactional
@@ -97,11 +99,8 @@ public class TipoTerminoService {
             throw new BadRequestException("Selecciona la Materia a la que pertenece el Tipo de Término.");
         }
         tipo.setNombre(tipo.getNombre().trim());
-        if (tipo.getCodigo() == null || tipo.getCodigo().isBlank()) {
-            tipo.setCodigo(tipo.getNombre().toUpperCase().replaceAll("[^A-Z0-9]+", "_"));
-        } else {
-            tipo.setCodigo(tipo.getCodigo().trim().toUpperCase().replaceAll("[^A-Z0-9_]+", "_"));
-        }
+        String baseCodigo = (tipo.getCodigo() == null || tipo.getCodigo().isBlank()) ? tipo.getNombre() : tipo.getCodigo();
+        tipo.setCodigo(CodigoNormalizer.normalizar(baseCodigo, tipo.getId()));
         if (tipo.getDescripcion() == null || tipo.getDescripcion().isBlank()) {
             throw new BadRequestException("La descripción de uso es obligatoria.");
         }

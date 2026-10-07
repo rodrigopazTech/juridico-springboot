@@ -5,6 +5,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 import com.juridico.sistema_juridico.Entity.configuracion.PerfilRecordatorioAudiencia;
+import com.juridico.sistema_juridico.util.CodigoNormalizer;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,7 +22,6 @@ public class TipoAudiencia {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "materia_id")
     private Materia materia;
-
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -72,7 +73,9 @@ public class TipoAudiencia {
     @PrePersist
     protected void onCreate() {
         if (codigo == null || codigo.isBlank()) {
-            codigo = nombre == null ? "TIPO_AUDIENCIA" : nombre.trim().toUpperCase().replaceAll("[^A-Z0-9]+", "_");
+            codigo = CodigoNormalizer.normalizar(nombre != null ? nombre : "TIPO_AUDIENCIA", id);
+        } else {
+            codigo = CodigoNormalizer.normalizar(codigo);
         }
         if (createdAt == null) createdAt = LocalDateTime.now();
     }

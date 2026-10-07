@@ -9,16 +9,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 /**
- * Ajustes idempotentes para instalaciones creadas antes del modelo versionado
- * de reglas de alerta.
+ * Deshabilitado en favor de migraciones versionadas con Flyway.
+ * Para activar sólo en escenarios legados puntuales, definir app.legacy-schema-compatibility.enabled=true
  */
 @Component
+@ConditionalOnProperty(name = "app.legacy-schema-compatibility.enabled", havingValue = "true", matchIfMissing = false)
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class DatabaseSchemaCompatibilityInitializer implements ApplicationRunner {
 
@@ -40,6 +42,7 @@ public class DatabaseSchemaCompatibilityInitializer implements ApplicationRunner
             }
         }
 
+        log.warn("ADVERTENCIA: DatabaseSchemaCompatibilityInitializer está ejecutando DDL legado. Debería migrarse mediante Flyway.");
         eliminarUnicidadLegacyDeCodigo("perfiles_alerta_termino");
         eliminarUnicidadLegacyDeCodigo("perfiles_recordatorio_audiencia");
         jdbcTemplate.execute("ALTER TABLE tipos_termino ALTER COLUMN dias_predeterminados DROP NOT NULL");

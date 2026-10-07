@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import com.juridico.sistema_juridico.Entity.configuracion.PerfilAlertaTermino;
 import com.juridico.sistema_juridico.Entity.enums.ModoPlazoTermino;
+import com.juridico.sistema_juridico.util.CodigoNormalizer;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -102,7 +103,9 @@ public class TipoTermino {
     protected void onCreate() {
         LocalDateTime ahora = LocalDateTime.now();
         if (codigo == null || codigo.isBlank()) {
-            codigo = nombre == null ? "TIPO_TERMINO" : nombre.trim().toUpperCase().replaceAll("[^A-Z0-9]+", "_");
+            codigo = CodigoNormalizer.normalizar(nombre != null ? nombre : "TIPO_TERMINO", id);
+        } else {
+            codigo = CodigoNormalizer.normalizar(codigo);
         }
         if (createdAt == null) createdAt = ahora;
         if (updatedAt == null) updatedAt = ahora;

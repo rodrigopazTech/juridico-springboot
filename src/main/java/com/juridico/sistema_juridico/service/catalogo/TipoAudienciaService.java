@@ -10,6 +10,7 @@ import com.juridico.sistema_juridico.exception.BadRequestException;
 import com.juridico.sistema_juridico.exception.ResourceNotFoundException;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
 import com.juridico.sistema_juridico.repository.configuracion.PerfilRecordatorioAudienciaRepository;
+import com.juridico.sistema_juridico.util.CodigoNormalizer;
 
 @Service
 public class TipoAudienciaService {
@@ -34,7 +35,7 @@ public class TipoAudienciaService {
         if (perfil.getEstado() != EstadoPerfil.PUBLICADO) {
             throw new BadRequestException("Sólo se pueden utilizar Reglas de alerta publicadas.");
         }
-        destino.setCodigo(normalizarCodigo(datos.getCodigo(), datos.getNombre()));
+        destino.setCodigo(normalizarCodigo(datos.getCodigo(), datos.getNombre(), datos.getId()));
         destino.setNombre(datos.getNombre().trim());
         destino.setDescripcion(datos.getDescripcion().trim());
         destino.setPerfilRecordatorio(perfil);
@@ -79,8 +80,8 @@ public class TipoAudienciaService {
         }
     }
 
-    private String normalizarCodigo(String codigo, String nombre) {
+    private String normalizarCodigo(String codigo, String nombre, Integer id) {
         String base = codigo == null || codigo.isBlank() ? nombre : codigo;
-        return base.trim().toUpperCase().replaceAll("[^A-Z0-9_]+", "_");
+        return CodigoNormalizer.normalizar(base, id);
     }
 }

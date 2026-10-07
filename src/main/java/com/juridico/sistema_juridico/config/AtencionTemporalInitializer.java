@@ -2,8 +2,11 @@ package com.juridico.sistema_juridico.config;
 
 import java.time.LocalDate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,10 +22,19 @@ import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository
 import com.juridico.sistema_juridico.repository.Catalogo.TipoTerminoRepository;
 import com.juridico.sistema_juridico.repository.configuracion.PerfilAlertaTerminoRepository;
 import com.juridico.sistema_juridico.repository.configuracion.PerfilRecordatorioAudienciaRepository;
+import com.juridico.sistema_juridico.util.CodigoNormalizer;
 
+/**
+ * Inicializador de perfiles y códigos de atención temporal.
+ * Deshabilitado por defecto para no modificar silenciosamente catálogos en cada arranque.
+ * La siembra inicial estándar es gestionada por Flyway (V2__catalogo_datos_iniciales.sql).
+ */
 @Component
+@ConditionalOnProperty(name = "app.seed.temporal-atencion.enabled", havingValue = "true", matchIfMissing = false)
 @Order(20)
 public class AtencionTemporalInitializer implements ApplicationRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(AtencionTemporalInitializer.class);
 
     private final PerfilAlertaTerminoRepository perfilesTermino;
     private final PerfilRecordatorioAudienciaRepository perfilesAudiencia;
@@ -42,6 +54,7 @@ public class AtencionTemporalInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
+        log.info("Ejecutando inicialización manual de atención temporal y catálogos...");
         PerfilAlertaTermino corto = perfilDias("PLAZO_CORTO", "Plazo corto", 2, 1);
         PerfilAlertaTermino medio = perfilDias("PLAZO_MEDIO", "Plazo medio", 5, 2);
         PerfilAlertaTermino variable = perfilVariable();
@@ -50,7 +63,7 @@ public class AtencionTemporalInitializer implements ApplicationRunner {
         for (TipoTermino tipo : tiposTermino.findAll()) {
             if (tipo.getModoPlazo() == null) tipo.setModoPlazo(ModoPlazoTermino.CALCULADO);
             if (tipo.getCodigo() == null || tipo.getCodigo().isBlank()) {
-                tipo.setCodigo(codigo(tipo.getNombre(), tipo.getId(), "TERMINO"));
+                tipo.setCodigo(CodigoNormalizer.normalizar(tipo.getNombre() != null ? tipo.getNombre() : "TERMINO", tipo.getId()));
             }
             if (tipo.getModoPlazo() == ModoPlazoTermino.SIN_VENCIMIENTO) {
                 tipo.setPerfilAlerta(null);
@@ -62,7 +75,7 @@ public class AtencionTemporalInitializer implements ApplicationRunner {
 
         for (TipoAudiencia tipo : tiposAudiencia.findAll()) {
             if (tipo.getCodigo() == null || tipo.getCodigo().isBlank()) {
-                tipo.setCodigo(codigo(tipo.getNombre(), tipo.getId(), "AUDIENCIA"));
+                tipo.setCodigo(CodigoNormalizer.normalizar(tipo.getNombre() != null ? tipo.getNombre() : "AUDIENCIA", tipo.getId()));
             }
             if (tipo.getRequiereActa() == null) tipo.setRequiereActa(false);
             if (tipo.getPermiteExcepcionSinActa() == null) tipo.setPermiteExcepcionSinActa(false);
@@ -104,13 +117,5 @@ public class AtencionTemporalInitializer implements ApplicationRunner {
                         .recordatoriosMinutos("10080,4320,1440,120")
                         .version(1).estado(EstadoPerfil.PUBLICADO).vigenteDesde(LocalDate.now())
                         .build()));
-    }
-
-    private String codigo(String nombre, Integer id, String respaldo) {
-        String base = (nombre == null || nombre.isBlank()) ? respaldo : nombre.trim().toUpperCase().replaceAll("[^A-Z0-9]+", "_");
-        if (base.length() > 38) {
-            base = base.substring(0, 38);
-        }
-        return base + "_" + (id != null ? id : "0");
     }
 }
