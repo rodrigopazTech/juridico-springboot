@@ -47,6 +47,12 @@ def page(context: BrowserContext, web_logger: BrowserConsoleObserver, backend_lo
     page = context.new_page()
     web_logger.attach_to_page(page)
     yield page
+    # Cerrar la sesión también en el servidor evita acumular sesiones activas
+    # entre pruebas y alcanzar el límite de concurrencia configurado.
+    try:
+        page.goto(f"{BASE_URL}/logout", wait_until="domcontentloaded", timeout=5000)
+    except Exception:
+        pass
 
 
 @pytest.hookimpl(hookwrapper=True)

@@ -97,7 +97,7 @@ ROLES_CONFIG = {
         "forbidden_routes": ["/admin/importar", "/admin/auditoria"]
     },
     "ABOGADO": {
-        "username": "abogado",
+        "username": "qa.abogado",
         "password": "12345",
         "label": "Abogado Operativo",
         "allowed_menus": [

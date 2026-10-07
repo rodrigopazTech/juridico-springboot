@@ -769,8 +769,8 @@ public class TerminosController {
         String mensajeBase = String.format("Movimiento de '%s' a '%s' por %s", 
                 etapaAnterior.getDescripcion(), nuevaEtapa.getDescripcion(), actor.getNombreCompleto());
 
-        List<Usuario> destinatarios = usuarioRepository.findByGerenciasIdAndActivoTrueOrderByNombreCompletoAsc(g.getId());
-        Set<Usuario> unicos = new HashSet<>(destinatarios);
+        Set<Usuario> unicos = destinatariosCambioEtapa(termino, nuevaEtapa);
+        unicos.removeIf(u -> u.getId().equals(actor.getId()));
         String expedienteNum = termino.getNumeroReferencia();
         String tituloExp = titulo + ": " + expedienteNum;
 
@@ -789,6 +789,32 @@ public class TerminosController {
                     termino.getId().toString(),
                     true);
         }
+    }
+
+    private Set<Usuario> destinatariosCambioEtapa(Termino termino, EstatusTermino nuevaEtapa) {
+        Set<Usuario> destinatarios = new HashSet<>();
+        if (termino.getAbogadoResponsable() != null) destinatarios.add(termino.getAbogadoResponsable());
+        Gerencia gerencia = termino.getGerenciaReferencia();
+        Materia materia = termino.getMateriaReferencia();
+        if (gerencia == null) return destinatarios;
+
+        if (nuevaEtapa == EstatusTermino.REVISION || nuevaEtapa == EstatusTermino.GERENCIA
+                || nuevaEtapa == EstatusTermino.LIBERADO || nuevaEtapa == EstatusTermino.PRESENTADO
+                || nuevaEtapa == EstatusTermino.CONCLUIDO) {
+            usuarioRepository.findByRolAndGerenciasIdAndActivoTrue(RolUsuario.JEFE_DEPTO, gerencia.getId()).stream()
+                    .filter(jefe -> materia == null || jefe.tieneMateria(materia.getId()))
+                    .forEach(destinatarios::add);
+        }
+        if (nuevaEtapa == EstatusTermino.GERENCIA || nuevaEtapa == EstatusTermino.LIBERADO
+                || nuevaEtapa == EstatusTermino.PRESENTADO || nuevaEtapa == EstatusTermino.CONCLUIDO) {
+            destinatarios.addAll(usuarioRepository.findByRolAndGerenciasIdAndActivoTrue(
+                    RolUsuario.GERENTE, gerencia.getId()));
+        }
+        if (nuevaEtapa == EstatusTermino.DIRECCION) {
+            destinatarios.addAll(usuarioRepository.findByRolInAndActivoTrue(
+                    List.of(RolUsuario.DIRECTOR, RolUsuario.SUBDIRECTOR)));
+        }
+        return destinatarios;
     }
 
     @PostMapping("/subir-archivo")
@@ -917,6 +943,7 @@ public class TerminosController {
                 }
                 termino.setUpdatedAt(LocalDateTime.now());
                 terminoRepository.save(termino);
+                notificarCambioDeEtapa(termino, EstatusTermino.LIBERADO, EstatusTermino.PRESENTADO, actor);
 
                 String logDesc = "Se ha cargado el acuse: " + archivo.getOriginalFilename();
                 if (observaciones != null && !observaciones.trim().isEmpty()) {
@@ -995,6 +1022,7 @@ public class TerminosController {
             if (observaciones != null && !observaciones.isBlank()) termino.setObservaciones(observaciones);
             termino.setUpdatedAt(LocalDateTime.now());
             terminoRepository.save(termino);
+            notificarCambioDeEtapa(termino, EstatusTermino.LIBERADO, EstatusTermino.PRESENTADO, actor);
             String descripcion = "Nota Informativa cargada como evidencia alternativa: " + archivo.getOriginalFilename();
             if (termino.getExpediente() != null) {
                 auditoriaService.registrar(termino.getExpediente(), "ARCHIVO CARGADO", descripcion, "UPLOAD", actor);

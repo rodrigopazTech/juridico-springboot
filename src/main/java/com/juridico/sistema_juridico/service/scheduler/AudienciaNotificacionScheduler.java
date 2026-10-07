@@ -35,7 +35,7 @@ public class AudienciaNotificacionScheduler {
     @Autowired
     private ConfiguracionAlertaService configuracionAlertaService;
 
-    @Scheduled(cron = "0 0 8 * * ?")
+    // Reemplazado por MotorNotificacionesTemporalesService.
     @Transactional
     public void notificarAudienciasProximas() {
         LocalDate hoy = LocalDate.now();

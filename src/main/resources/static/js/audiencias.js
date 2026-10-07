@@ -724,7 +724,7 @@ document.addEventListener('change', function (e) {
             body: formData,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-            .then(response => {
+            .then(async response => {
                 if (response.ok) {
                     showSuccessToast('¡Acta subida correctamente!');
                     actualizarTablaAsincrono();

@@ -46,7 +46,7 @@ public class NotificacionAutomaticaService {
 
     private final List<EstatusTermino> ESTATUS_FINALES = Arrays.asList(EstatusTermino.CONCLUIDO);
 
-    @Scheduled(cron = "0 0 8 * * ?")
+    // Reemplazado por MotorNotificacionesTemporalesService.
     @Transactional
     public void verificarVencimientosProximos() {
         LocalDate hoy = LocalDate.now();

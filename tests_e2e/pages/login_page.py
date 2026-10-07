@@ -24,12 +24,13 @@ class LoginPage(BasePage):
         self.page.wait_for_load_state("domcontentloaded")
 
     def is_login_successful(self) -> bool:
-        # Tras login exitoso, debe redirigir a /dashboard o mostrar el sidebar
+        # El éxito requiere una señal autenticada real. Una URL como
+        # /?error=true no debe considerarse válida por tener query string.
         try:
             self.page.wait_for_selector(self.SIDEBAR_LOGO, timeout=8000)
             return True
         except Exception:
-            return "/dashboard" in self.page.url or ("/login" not in self.page.url and "/" != self.get_current_path())
+            return "/dashboard" in self.page.url and "error=true" not in self.page.url
 
     def get_error_message(self) -> str:
         try:
