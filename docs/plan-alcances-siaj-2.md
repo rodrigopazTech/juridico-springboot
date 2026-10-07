@@ -48,6 +48,9 @@ Las siguientes decisiones forman parte de la línea base del proyecto:
 10. La prueba integral con un abogado real se realizará al terminar todos los alcances.
 11. Microsoft Graph es una línea de trabajo independiente y no bloquea SIAJ 2.0.
 12. El sistema se encuentra en desarrollo. No se exige migrar datos históricos para cerrar estos alcances; sí se exige que el esquema pueda generarse de forma reproducible en una base limpia y que las restricciones sean verificables.
+13. Las etapas operativas de Términos y Audiencias son flexibles: cualquier usuario con acceso al registro puede participar. La matriz de roles dirige notificaciones, no bloquea la operación.
+14. Jefatura de Departamento tiene la misma autoridad funcional que Gerencia únicamente dentro de sus Materias asignadas.
+15. Plazos y alertas es visible para todos los usuarios autenticados. Jefatura y Gerencia administran Reglas y Tipos dentro de su alcance; el calendario institucional, por su impacto global, queda reservado a Dirección y Administración.
 
 ---
 
@@ -340,7 +343,7 @@ Todas las etapas, evidencias y autorizaciones del flujo institucional funcionan 
 
 ### Estado actual
 
-**Implementación adelantada, pendiente de revisión formal.** Existen etapas, documento final, Acuse, Nota Informativa, Presentado y Concluido, pero deben contrastarse sistemáticamente contra todos los criterios anteriores después de cerrar el Alcance 2.
+**Cerrado técnicamente el 6 de octubre de 2026.** El flujo secuencial impide saltos, exige documento de trabajo para avanzar, reserva la presentación para Acuse o Nota Informativa desde Liberado y exige evidencia para concluir. Las validaciones se aplican en servidor y las pruebas automatizadas cubren transiciones válidas e inválidas. La matriz de roles se usa para notificar; no impide que otro usuario autorizado participe en una etapa.
 
 ---
 
@@ -412,7 +415,7 @@ Resultado, Acta, suspensión y conclusión son conceptos separados y todas las r
 
 ### Estado actual
 
-**Implementación adelantada, pendiente de revisión formal.** Ya existen Resultado registrado, Concluida y Suspendida con Nota Informativa; falta ejecutar la matriz completa de cierre.
+**Cerrado técnicamente el 6 de octubre de 2026.** Resultado, Acta y conclusión quedaron separados. El Acta ya no cambia el estado por sí sola; la suspensión exige Nota Informativa y la conclusión normal exige resultado y Acta. Los PDF se abren mediante vista previa y los recordatorios se detienen al abandonar Pendiente.
 
 ---
 
@@ -478,7 +481,7 @@ Toda actuación tiene exactamente un contexto válido, la seguridad se aplica en
 
 ### Estado actual
 
-**Implementación avanzada, pendiente de revisión formal.** Ya existen creación, consulta, reutilización, permisos y vinculación; falta validar la matriz completa, especialmente integridad XOR en base de datos, atomicidad y trazabilidad de vinculación.
+**Cerrado técnicamente el 6 de octubre de 2026.** La creación, consulta, reutilización y vinculación respetan Gerencia, Materia y responsable. La base protege el XOR Expediente/Asunto Independiente y la vinculación mueve Términos y Audiencias dentro de una transacción, conservando folio, autor, fecha y motivo.
 
 ---
 
@@ -538,7 +541,7 @@ El sistema completo supera las pruebas de regresión, no genera alertas duplicad
 
 ### Estado actual
 
-**Pendiente.** Existen componentes previos de notificación y pruebas, pero la estabilización integral sólo puede cerrarse después de los Alcances 2 a 5.
+**En validación funcional desde el 6 de octubre de 2026.** Se sustituyeron los programadores heredados por un único motor que consume el evaluador temporal de las pantallas, se incorporó deduplicación y se aplicó la matriz de destinatarios por etapa, Gerencia y Materia. Pasan 96 pruebas Java y tres recorridos Playwright por roles sin errores de navegador o servidor. La aplicación inicia correctamente sobre una base PostgreSQL limpia. Sólo falta la aceptación final con un abogado real; Microsoft Graph permanece fuera de alcance.
 
 ---
 
@@ -551,13 +554,13 @@ Alcance 1 — Reglas y motor temporal                CERRADO
         ↓
 Alcance 2 — Cálculo reproducible                   CERRADO TÉCNICAMENTE
         ↓
-Alcance 3 — Flujo de Términos                      PENDIENTE DE CIERRE
+Alcance 3 — Flujo de Términos                      CERRADO TÉCNICAMENTE
         ↓
-Alcance 4 — Audiencias                             PENDIENTE DE CIERRE
+Alcance 4 — Audiencias                             CERRADO TÉCNICAMENTE
         ↓
-Alcance 5 — Asuntos Independientes                 PENDIENTE DE CIERRE
+Alcance 5 — Asuntos Independientes                 CERRADO TÉCNICAMENTE
         ↓
-Alcance 6 — Alertas y estabilización               PENDIENTE
+Alcance 6 — Alertas y estabilización               EN VALIDACIÓN FUNCIONAL
 ```
 
 Puede existir implementación adelantada de un alcance posterior, pero no se declarará cerrado hasta cumplir sus propios criterios y los cimientos de los alcances anteriores.
@@ -659,6 +662,6 @@ Estos elementos requieren una solicitud independiente o una nueva versión de es
 
 # 10. Próximo paso aprobado
 
-El siguiente trabajo debe ser **revisar y cerrar el Alcance 3 — Flujo completo y controlado de Términos**, aprovechando la implementación ya adelantada.
+El único paso restante para el cierre formal de SIAJ 2.0 es la **validación funcional con un abogado real** y el registro de sus observaciones. No queda una fase técnica pendiente dentro de los Alcances 1 a 5.
 
-La primera actividad del siguiente agente será ejecutar la matriz funcional del Alcance 3 y comprobar especialmente permisos de Expedientes, transiciones en servidor, evidencias Acuse/Nota Informativa, visualización de PDF y filtros de concluidos. La comprobación manual de los tres modos de plazo del Alcance 2 puede incluirse como prueba de regresión, sin reabrir su diseño ni reimplementar el motor.
+La prueba debe concentrarse en un recorrido completo con Acuse, otro con Nota Informativa, una Audiencia celebrada, una Audiencia suspendida y una actuación mediante Asunto Independiente. Cualquier defecto crítico de permisos, integridad, documentos o transición reabrirá el alcance correspondiente; las preferencias de presentación se registrarán como mejoras posteriores.
