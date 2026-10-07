@@ -653,13 +653,11 @@ public class CatalogosController {
             Usuario usuarioActual = getUsuarioActual();
             Materia materiaActual = materiaRepository.findById(id).orElseThrow();
             validarAlcanceGerencia(materiaActual.getGerencia(), usuarioActual, "materias");
-            materiaRepository.deleteById(id);
-            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Materia eliminada correctamente."));
-        } catch (DataIntegrityViolationException e) {
-            Materia m = materiaRepository.findById(id).orElseThrow();
-            m.setActivo(false);
-            materiaRepository.save(m);
-            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "La materia estaba en uso. Ha sido ocultada del catÃ¡logo."));
+            // Las materias pueden estar vinculadas a usuarios, expedientes y etapas.
+            // Se conservan para no romper el historial y se retiran de las nuevas capturas.
+            materiaActual.setActivo(false);
+            materiaRepository.save(materiaActual);
+            return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Materia desactivada correctamente."));
         } catch (org.springframework.security.access.AccessDeniedException e) {
             return forbidden(e.getMessage());
         } catch (Exception e) {
@@ -724,6 +722,10 @@ public class CatalogosController {
                 etapa = etapaCatalogoRepository.findById(Integer.parseInt(idStr))
                         .orElseThrow(() -> new IllegalArgumentException("Etapa no encontrada."));
                 validarMateriaPermitida(etapa.getMateria().getId(), usuarioActual);
+                if (!etapa.getMateria().getId().equals(materia.getId())) {
+                    return ResponseEntity.badRequest().body(Map.of("error",
+                            "No puedes cambiar la materia de una etapa existente. Crea una nueva etapa en la materia destino."));
+                }
                 if (parent != null && parent.getId().equals(etapa.getId())) {
                     return ResponseEntity.badRequest().body(Map.of("error", "Una etapa no puede ser padre de si misma."));
                 }
@@ -735,6 +737,21 @@ public class CatalogosController {
                 etapa.setMateria(materia);
                 etapa.setUsuario(usuarioActual);
                 etapa.setActivo(true);
+            }
+
+            Integer etapaId = etapa.getId();
+            Integer parentId = parent != null ? parent.getId() : null;
+            boolean nombreDuplicado = etapaCatalogoRepository
+                    .findByMateriaIdOrderByOrdenAscNombreAsc(materia.getId())
+                    .stream()
+                    .anyMatch(existente -> !java.util.Objects.equals(existente.getId(), etapaId)
+                            && existente.getNombre().equalsIgnoreCase(nombre.trim())
+                            && java.util.Objects.equals(
+                                    existente.getParent() != null ? existente.getParent().getId() : null,
+                                    parentId));
+            if (nombreDuplicado) {
+                return ResponseEntity.badRequest().body(Map.of("error",
+                        "Ya existe una etapa con ese nombre y nivel dentro de la materia."));
             }
 
             etapa.setNombre(nombre.trim());

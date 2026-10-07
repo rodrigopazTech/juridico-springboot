@@ -942,6 +942,10 @@ public class ExpedientesController {
         if (etapaCatalogoId != null) {
             EtapaCatalogo etapaNueva = etapaCatalogoRepository.findById(etapaCatalogoId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Etapa procesal no encontrada"));
+            if (!Boolean.TRUE.equals(etapaNueva.getActivo())) {
+                return ResponseEntity.badRequest().body(Map.of("error",
+                        "La etapa procesal seleccionada ya no está activa."));
+            }
             if (exp.getMateria() == null || etapaNueva.getMateria() == null
                     || !etapaNueva.getMateria().getId().equals(exp.getMateria().getId())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La etapa no pertenece a la materia del expediente.");
