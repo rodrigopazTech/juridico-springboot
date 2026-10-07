@@ -17,6 +17,10 @@ public class TipoAudiencia {
     @JoinColumn(name = "gerencia_id")
     private Gerencia gerencia;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "materia_id")
+    private Materia materia;
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

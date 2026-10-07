@@ -23,11 +23,13 @@ import com.juridico.sistema_juridico.Entity.enums.ModoPlazoTermino;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
+import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.service.catalogo.TipoTerminoService;
 import com.juridico.sistema_juridico.service.catalogo.TipoAudienciaService;
 import com.juridico.sistema_juridico.Entity.configuracion.DiaInhabil;
 import com.juridico.sistema_juridico.Entity.configuracion.SuspensionPlazo;
 import com.juridico.sistema_juridico.service.configuracion.CalendarioInstitucionalService;
+import com.juridico.sistema_juridico.exception.ForbiddenException;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @Controller
@@ -41,16 +43,19 @@ public class PlazosAlertasController {
     private final TipoAudienciaRepository tipoAudienciaRepository;
     private final UsuarioRepository usuarioRepository;
     private final CalendarioInstitucionalService calendario;
+    private final MateriaRepository materiaRepository;
 
     public PlazosAlertasController(PerfilAtencionService perfiles, TipoTerminoService tiposTermino,
             TipoAudienciaService tiposAudiencia, TipoAudienciaRepository tipoAudienciaRepository,
-            UsuarioRepository usuarioRepository, CalendarioInstitucionalService calendario) {
+            UsuarioRepository usuarioRepository, CalendarioInstitucionalService calendario,
+            MateriaRepository materiaRepository) {
         this.perfiles = perfiles;
         this.tiposTermino = tiposTermino;
         this.tiposAudiencia = tiposAudiencia;
         this.tipoAudienciaRepository = tipoAudienciaRepository;
         this.usuarioRepository = usuarioRepository;
         this.calendario = calendario;
+        this.materiaRepository = materiaRepository;
     }
 
     @GetMapping
@@ -60,13 +65,28 @@ public class PlazosAlertasController {
         Usuario usuario = usuarioActual();
         boolean alcanceGlobal = esAlcanceGlobal(usuario);
         model.addAttribute("usuarioActual", usuario);
+        model.addAttribute("puedeGestionarReglas", puedeGestionarReglas(usuario));
+        model.addAttribute("puedeGestionarTipos", puedeGestionarTipos(usuario));
+        model.addAttribute("puedeGestionarCalendario", puedeGestionarCalendario(usuario));
+        var materiasDisponibles = esAlcanceGlobal(usuario)
+                ? materiaRepository.findByActivoTrueOrderByNombreAsc()
+                : usuario.getRol() == RolUsuario.JEFE_DEPTO
+                        ? usuario.getMaterias().stream().filter(m -> Boolean.TRUE.equals(m.getActivo()))
+                                .sorted(java.util.Comparator.comparing(com.juridico.sistema_juridico.Entity.catalogo.Materia::getNombre)).toList()
+                        : usuario.getGerencia() == null ? java.util.List.<com.juridico.sistema_juridico.Entity.catalogo.Materia>of()
+                                : materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(usuario.getGerencia().getId());
+        model.addAttribute("materiasDisponibles", materiasDisponibles);
         model.addAttribute("listaTiposTermino", tiposTermino.listarTodos().stream()
                 .filter(t -> alcanceGlobal || t.getGerencia() == null || (usuario.getGerencia() != null
                         && t.getGerencia().getId().equals(usuario.getGerencia().getId())))
+                .filter(t -> usuario.getRol() != RolUsuario.JEFE_DEPTO
+                        || (t.getMateria() != null && usuario.tieneMateria(t.getMateria().getId())))
                 .toList());
         model.addAttribute("listaTiposAudiencia", tipoAudienciaRepository.findAll().stream()
                 .filter(t -> alcanceGlobal || t.getGerencia() == null || (usuario.getGerencia() != null
                         && t.getGerencia().getId().equals(usuario.getGerencia().getId())))
+                .filter(t -> usuario.getRol() != RolUsuario.JEFE_DEPTO
+                        || (t.getMateria() != null && usuario.tieneMateria(t.getMateria().getId())))
                 .toList());
         model.addAttribute("perfilesTerminoDias", perfiles.publicados(ModoPerfilAlerta.DIAS_RESTANTES));
         model.addAttribute("perfilesTerminoProporcionales", perfiles.publicados(ModoPerfilAlerta.PROPORCIONAL_LIMITADO));
@@ -95,6 +115,7 @@ public class PlazosAlertasController {
     public String guardarTermino(@ModelAttribute PerfilAlertaTermino perfil,
             @RequestParam(defaultValue = "borrador") String accion, RedirectAttributes flash) {
         try {
+            exigirGestionReglas();
             PerfilAlertaTermino guardado = perfiles.guardarTermino(perfil);
             if ("publicar".equals(accion)) {
                 perfiles.publicarTermino(guardado.getId());
@@ -112,6 +133,7 @@ public class PlazosAlertasController {
     public String guardarAudiencia(@ModelAttribute PerfilRecordatorioAudiencia perfil,
             @RequestParam(defaultValue = "borrador") String accion, RedirectAttributes flash) {
         try {
+            exigirGestionReglas();
             PerfilRecordatorioAudiencia guardado = perfiles.guardarAudiencia(perfil);
             if ("publicar".equals(accion)) {
                 perfiles.publicarAudiencia(guardado.getId());
@@ -127,22 +149,22 @@ public class PlazosAlertasController {
 
     @PostMapping("/terminos/{id}/publicar")
     public String publicarTermino(@PathVariable Integer id, RedirectAttributes flash) {
-        return ejecutar(() -> perfiles.publicarTermino(id), "Regla de alerta para Términos publicada.", flash);
+        return ejecutar(() -> { exigirGestionReglas(); perfiles.publicarTermino(id); }, "Regla de alerta para Términos publicada.", flash);
     }
 
     @PostMapping("/audiencias/{id}/publicar")
     public String publicarAudiencia(@PathVariable Integer id, RedirectAttributes flash) {
-        return ejecutar(() -> perfiles.publicarAudiencia(id), "Regla de alerta para Audiencias publicada.", flash);
+        return ejecutar(() -> { exigirGestionReglas(); perfiles.publicarAudiencia(id); }, "Regla de alerta para Audiencias publicada.", flash);
     }
 
     @PostMapping("/terminos/{id}/inactivar")
     public String inactivarTermino(@PathVariable Integer id, RedirectAttributes flash) {
-        return ejecutar(() -> perfiles.inactivarTermino(id), "Regla de alerta para Términos inactivada.", flash);
+        return ejecutar(() -> { exigirGestionReglas(); perfiles.inactivarTermino(id); }, "Regla de alerta para Términos inactivada.", flash);
     }
 
     @PostMapping("/audiencias/{id}/inactivar")
     public String inactivarAudiencia(@PathVariable Integer id, RedirectAttributes flash) {
-        return ejecutar(() -> perfiles.inactivarAudiencia(id), "Regla de alerta para Audiencias inactivada.", flash);
+        return ejecutar(() -> { exigirGestionReglas(); perfiles.inactivarAudiencia(id); }, "Regla de alerta para Audiencias inactivada.", flash);
     }
 
     private String ejecutar(Runnable accion, String mensaje, RedirectAttributes flash) {
@@ -158,9 +180,11 @@ public class PlazosAlertasController {
     @PostMapping("/tipos-termino")
     public String guardarTipoTermino(@ModelAttribute TipoTermino tipo, RedirectAttributes flash) {
         try {
+            tipo.setMateria(resolverMateria(tipo.getMateria()));
+            tipo.setGerencia(tipo.getMateria().getGerencia());
+            validarGestionTipo(tipo.getMateria());
             aplicarPoliticaDocumental(tipo);
             if (tipo.getId() == null) {
-                tipo.setGerencia(usuarioActual().getGerencia());
                 tiposTermino.crear(tipo);
             } else {
                 tiposTermino.actualizar(tipo.getId(), tipo);
@@ -175,7 +199,11 @@ public class PlazosAlertasController {
     @PostMapping("/tipos-termino/{id}/estado")
     public String cambiarTipoTermino(@PathVariable Integer id, @RequestParam boolean activo,
             RedirectAttributes flash) {
-        return ejecutar(() -> tiposTermino.cambiarEstado(id, activo),
+        return ejecutar(() -> {
+            TipoTermino tipo = tiposTermino.obtenerPorId(id);
+            validarGestionTipo(tipo.getMateria());
+            tiposTermino.cambiarEstado(id, activo);
+        },
                 activo ? "Tipo de Término activado." : "Tipo de Término inactivado.", flash);
     }
 
@@ -183,10 +211,12 @@ public class PlazosAlertasController {
     public String guardarTipoAudiencia(@ModelAttribute TipoAudiencia tipo, RedirectAttributes flash) {
         try {
             Usuario actor = usuarioActual();
+            tipo.setMateria(resolverMateria(tipo.getMateria()));
+            tipo.setGerencia(tipo.getMateria().getGerencia());
             if (tipo.getId() == null) {
-                tipo.setGerencia(actor.getGerencia());
                 tipo.setUsuario(actor);
             }
+            validarGestionTipo(tipo.getMateria());
             tipo.setRequiereActa(true);
             tipo.setPermiteExcepcionSinActa(false);
             tipo.setRequiereValidacionActa(true);
@@ -204,6 +234,7 @@ public class PlazosAlertasController {
         return ejecutar(() -> {
             TipoAudiencia tipo = tipoAudienciaRepository.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Tipo de Audiencia no encontrado."));
+            validarGestionTipo(tipo.getMateria());
             tipo.setActivo(activo);
             tipoAudienciaRepository.save(tipo);
         }, activo ? "Tipo de Audiencia activado." : "Tipo de Audiencia inactivado.", flash);
@@ -221,6 +252,56 @@ public class PlazosAlertasController {
                 || usuario.getRol() == RolUsuario.DIRECTOR || usuario.getRol() == RolUsuario.SUBDIRECTOR;
     }
 
+    private boolean puedeGestionarReglas(Usuario usuario) {
+        return esAlcanceGlobal(usuario) || usuario.getRol() == RolUsuario.GERENTE
+                || usuario.getRol() == RolUsuario.JEFE_DEPTO;
+    }
+
+    private boolean puedeGestionarTipos(Usuario usuario) {
+        return puedeGestionarReglas(usuario);
+    }
+
+    private boolean puedeGestionarCalendario(Usuario usuario) {
+        return esAlcanceGlobal(usuario);
+    }
+
+    private void exigirGestionReglas() {
+        if (!puedeGestionarReglas(usuarioActual())) {
+            throw new ForbiddenException("Puedes consultar esta configuración, pero sólo Jefatura, Gerencia o Dirección pueden modificarla.");
+        }
+    }
+
+    private void validarGestionTipo(com.juridico.sistema_juridico.Entity.catalogo.Materia materia) {
+        Usuario actor = usuarioActual();
+        if (!puedeGestionarTipos(actor)) {
+            throw new ForbiddenException("No tienes permiso para modificar Tipos.");
+        }
+        if (actor.getRol() == RolUsuario.JEFE_DEPTO
+                && (materia == null || !actor.tieneMateria(materia.getId()))) {
+            throw new ForbiddenException("Sólo puedes modificar Tipos de las materias asignadas a tu Jefatura.");
+        }
+        if (actor.getRol() == RolUsuario.GERENTE
+                && (materia == null || materia.getGerencia() == null || actor.getGerencia() == null
+                        || !actor.getGerencia().getId().equals(materia.getGerencia().getId()))) {
+            throw new ForbiddenException("Sólo puedes modificar Tipos de tu Gerencia.");
+        }
+    }
+
+    private com.juridico.sistema_juridico.Entity.catalogo.Materia resolverMateria(
+            com.juridico.sistema_juridico.Entity.catalogo.Materia materia) {
+        if (materia == null || materia.getId() == null) {
+            throw new IllegalArgumentException("La Materia es obligatoria.");
+        }
+        return materiaRepository.findById(materia.getId())
+                .orElseThrow(() -> new IllegalArgumentException("La Materia seleccionada no existe."));
+    }
+
+    private void exigirGestionCalendario() {
+        if (!puedeGestionarCalendario(usuarioActual())) {
+            throw new ForbiddenException("El calendario institucional modifica los plazos de toda la organización y requiere autorización de Dirección.");
+        }
+    }
+
     private void aplicarPoliticaDocumental(TipoTermino tipo) {
         tipo.setRequiereDocumentoLiberado(true);
         tipo.setRequiereAcuse(true);
@@ -231,6 +312,7 @@ public class PlazosAlertasController {
     @PostMapping("/calendario")
     public String guardarDiaInhabil(@ModelAttribute DiaInhabil dia, RedirectAttributes flash) {
         try {
+            exigirGestionCalendario();
             calendario.guardar(dia, usuarioActual().getNombreCompleto());
             flash.addFlashAttribute("mensajeExito", "Día inhábil agregado al calendario institucional.");
         } catch (RuntimeException ex) {
@@ -242,6 +324,7 @@ public class PlazosAlertasController {
     @PostMapping("/calendario/{id}/estado")
     public String cambiarDiaInhabil(@PathVariable Integer id, @RequestParam boolean activo, RedirectAttributes flash) {
         try {
+            exigirGestionCalendario();
             calendario.cambiarEstado(id, activo, usuarioActual().getNombreCompleto());
             flash.addFlashAttribute("mensajeExito", activo ? "Día inhábil activado." : "Día inhábil inactivado.");
         } catch (RuntimeException ex) {
@@ -253,6 +336,7 @@ public class PlazosAlertasController {
     @PostMapping("/calendario/suspensiones")
     public String guardarSuspension(@ModelAttribute SuspensionPlazo suspension, RedirectAttributes flash) {
         try {
+            exigirGestionCalendario();
             calendario.guardarSuspension(suspension, usuarioActual().getNombreCompleto());
             flash.addFlashAttribute("mensajeExito", "Suspensión institucional registrada. Se publicó una nueva versión del calendario.");
         } catch (RuntimeException ex) {
@@ -265,6 +349,7 @@ public class PlazosAlertasController {
     public String cambiarSuspension(@PathVariable Integer id, @RequestParam boolean activo,
             RedirectAttributes flash) {
         try {
+            exigirGestionCalendario();
             calendario.cambiarEstadoSuspension(id, activo, usuarioActual().getNombreCompleto());
             flash.addFlashAttribute("mensajeExito", activo ? "Suspensión activada." : "Suspensión inactivada.");
         } catch (RuntimeException ex) {

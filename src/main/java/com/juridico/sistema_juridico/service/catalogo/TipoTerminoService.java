@@ -70,6 +70,8 @@ public class TipoTerminoService {
             exist.setTipoDias(datosActualizados.getTipoDias());
         }
         exist.setPerfilAlerta(datosActualizados.getPerfilAlerta());
+        exist.setMateria(datosActualizados.getMateria());
+        exist.setGerencia(datosActualizados.getGerencia());
         exist.setRequiereDocumentoLiberado(datosActualizados.getRequiereDocumentoLiberado());
         exist.setRequiereAcuse(datosActualizados.getRequiereAcuse());
         exist.setPermiteExcepcionSinAcuse(datosActualizados.getPermiteExcepcionSinAcuse());
@@ -90,6 +92,9 @@ public class TipoTerminoService {
     private void validarYNormalizar(TipoTermino tipo) {
         if (tipo.getNombre() == null || tipo.getNombre().trim().isEmpty()) {
             throw new BadRequestException("El nombre del tipo de término es obligatorio.");
+        }
+        if (tipo.getMateria() == null || tipo.getMateria().getId() == null) {
+            throw new BadRequestException("Selecciona la Materia a la que pertenece el Tipo de Término.");
         }
         tipo.setNombre(tipo.getNombre().trim());
         if (tipo.getCodigo() == null || tipo.getCodigo().isBlank()) {

@@ -54,6 +54,7 @@ public class DatabaseSchemaCompatibilityInitializer implements ApplicationRunner
         jdbcTemplate.execute("ALTER TABLE audiencias ADD COLUMN IF NOT EXISTS resultado_registrado_por_id INTEGER");
         jdbcTemplate.execute("ALTER TABLE audiencias ADD COLUMN IF NOT EXISTS resultado_registrado_por VARCHAR(180)");
         jdbcTemplate.execute("ALTER TABLE audiencias ADD COLUMN IF NOT EXISTS resultado_registrado_en TIMESTAMP");
+        jdbcTemplate.execute("ALTER TABLE tipos_audiencia ADD COLUMN IF NOT EXISTS materia_id INTEGER");
         reemplazarCheck("terminos", "ck_terminos_origen_exclusivo",
                 "(expediente_id IS NOT NULL) <> (asunto_independiente_id IS NOT NULL)");
         reemplazarCheck("audiencias", "ck_audiencias_origen_exclusivo",

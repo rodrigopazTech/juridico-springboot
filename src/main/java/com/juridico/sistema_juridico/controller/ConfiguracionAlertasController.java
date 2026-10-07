@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.juridico.sistema_juridico.Entity.catalogo.Gerencia;
+import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.enums.NivelConfiguracionAlerta;
 import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.enums.TipoEventoAlerta;
@@ -134,9 +135,10 @@ public class ConfiguracionAlertasController {
         if (actor.getRol() == RolUsuario.ADMIN) {
             return gerencia;
         }
-        if (actor.getRol() != RolUsuario.GERENTE || actor.getGerencia() == null
+        if ((actor.getRol() != RolUsuario.GERENTE && actor.getRol() != RolUsuario.JEFE_DEPTO)
+                || actor.getGerencia() == null
                 || !actor.getGerencia().getId().equals(gerencia.getId())) {
-            throw new ForbiddenException("Solo el gerente del área puede modificar esta configuración.");
+            throw new ForbiddenException("Sólo Jefatura o Gerencia del área pueden modificar esta configuración.");
         }
         return gerencia;
     }
@@ -149,24 +151,30 @@ public class ConfiguracionAlertasController {
         if (tipoEvento == TipoEventoAlerta.TERMINO) {
             Termino termino = terminoRepository.findById(parseId(asuntoId))
                     .orElseThrow(() -> new ResourceNotFoundException("Término no encontrado."));
-            validarResponsableOGerencia(actor, termino.getAbogadoResponsable(), termino.getGerenciaReferencia());
+            validarResponsableOGerencia(actor, termino.getAbogadoResponsable(),
+                    termino.getGerenciaReferencia(), termino.getMateriaReferencia());
             return;
         }
         Audiencia audiencia = audienciaRepository.findById(parseId(asuntoId))
                 .orElseThrow(() -> new ResourceNotFoundException("Audiencia no encontrada."));
-        Usuario responsable = audiencia.getAbogadoComparece() != null
-                ? audiencia.getAbogadoComparece()
-                : audiencia.getExpediente().getAbogadoResponsable();
-        validarResponsableOGerencia(actor, responsable, audiencia.getExpediente().getGerencia());
+        Usuario responsable = audiencia.getAbogadoComparece() != null ? audiencia.getAbogadoComparece()
+                : audiencia.getExpediente() != null ? audiencia.getExpediente().getAbogadoResponsable()
+                : audiencia.getAsuntoIndependiente() != null ? audiencia.getAsuntoIndependiente().getResponsable() : null;
+        validarResponsableOGerencia(actor, responsable,
+                audiencia.getGerenciaReferencia(), audiencia.getMateriaReferencia());
     }
 
-    private void validarResponsableOGerencia(Usuario actor, Usuario responsable, Gerencia gerencia) {
+    private void validarResponsableOGerencia(Usuario actor, Usuario responsable, Gerencia gerencia, Materia materia) {
         if (responsable != null && responsable.getId().equals(actor.getId())) {
             return;
         }
         boolean supervisorDeGerencia = (actor.getRol() == RolUsuario.GERENTE || actor.getRol() == RolUsuario.JEFE_DEPTO)
                 && actor.getGerencia() != null && gerencia != null
                 && actor.getGerencia().getId().equals(gerencia.getId());
+        if (supervisorDeGerencia && actor.getRol() == RolUsuario.JEFE_DEPTO
+                && (materia == null || !actor.tieneMateria(materia.getId()))) {
+            supervisorDeGerencia = false;
+        }
         if (!supervisorDeGerencia) {
             throw new ForbiddenException("No tienes permisos para configurar alertas de este asunto.");
         }

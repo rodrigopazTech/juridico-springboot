@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.juridico.sistema_juridico.Entity.catalogo.TipoTermino;
+import com.juridico.sistema_juridico.Entity.catalogo.Materia;
 import com.juridico.sistema_juridico.Entity.configuracion.PerfilAlertaTermino;
 import com.juridico.sistema_juridico.Entity.enums.EstadoPerfil;
 import com.juridico.sistema_juridico.Entity.enums.ModoPerfilAlerta;
@@ -52,6 +53,7 @@ class TipoTerminoServiceTest {
                 .modoPlazo(ModoPlazoTermino.CALCULADO)
                 .diasPredeterminados(15)
                 .tipoDias("HABILES")
+                .materia(Materia.builder().id(1).nombre("Civil").build())
                 .perfilAlerta(perfil)
                 .activo(true)
                 .build();

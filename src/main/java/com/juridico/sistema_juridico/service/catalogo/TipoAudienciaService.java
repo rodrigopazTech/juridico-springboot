@@ -45,6 +45,7 @@ public class TipoAudienciaService {
         destino.setPermiteExcepcionSinActa(Boolean.TRUE.equals(datos.getPermiteExcepcionSinActa()));
         destino.setRequiereValidacionActa(Boolean.TRUE.equals(datos.getRequiereValidacionActa()));
         destino.setActivo(datos.getActivo() == null || datos.getActivo());
+        destino.setMateria(datos.getMateria());
         if (datos.getGerencia() != null || datos.getId() == null) destino.setGerencia(datos.getGerencia());
         if (datos.getUsuario() != null || datos.getId() == null) destino.setUsuario(datos.getUsuario());
         return tipoRepository.save(destino);
@@ -53,6 +54,9 @@ public class TipoAudienciaService {
     private void validar(TipoAudiencia tipo) {
         if (tipo.getNombre() == null || tipo.getNombre().isBlank()) {
             throw new BadRequestException("El nombre es obligatorio.");
+        }
+        if (tipo.getMateria() == null || tipo.getMateria().getId() == null) {
+            throw new BadRequestException("Selecciona la Materia a la que pertenece el Tipo de Audiencia.");
         }
         if (tipo.getDescripcion() == null || tipo.getDescripcion().isBlank()) {
             throw new BadRequestException("La descripción de uso es obligatoria.");
