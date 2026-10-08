@@ -417,8 +417,8 @@
                     const self = this;
 
                     loadScripts([
-                        'https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js',
-                        'https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js'
+                        '/lib/sockjs.min.js',
+                        '/lib/stomp.min.js'
                     ], function() {
                         const socket = new SockJS('/ws-realtime');
                         const stompClient = Stomp.over(socket);
