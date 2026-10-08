@@ -81,6 +81,23 @@ class Alcance1PantallasIntegrationTest {
     }
 
     @Test
+    void conservaIdentidadDeNavegacionEnPlazosYConcluidos() throws Exception {
+        mvc.perform(get("/administracion/plazos-alertas"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("siaj-brand-name")))
+                .andExpect(content().string(containsString("siaj-user-identity")))
+                .andExpect(content().string(containsString("siaj-user-chevron")))
+                .andExpect(content().string(not(containsString("hidden md:flex"))));
+
+        mvc.perform(get("/agenda"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("siaj-brand-name")))
+                .andExpect(content().string(containsString("siaj-user-identity")))
+                .andExpect(content().string(containsString("siaj-user-chevron")))
+                .andExpect(content().string(not(containsString("hidden md:flex"))));
+    }
+
+    @Test
     void guardaTipoTerminoYPublicaSuConfiguracionDeAvisos() throws Exception {
         Materia materia = materiaDePrueba();
 

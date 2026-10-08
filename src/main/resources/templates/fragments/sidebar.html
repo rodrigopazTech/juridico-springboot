@@ -6,6 +6,18 @@
 
     <th:block th:fragment="sidebar">
 
+    <!--
+        Navegación compartida: la fuente del identificador debe estar disponible
+        para todas las vistas, no sólo para las que importan fuentes por separado.
+    -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap');
+
+        #logo-sidebar .siaj-brand-name {
+            font-family: 'Montserrat', Arial, sans-serif;
+        }
+    </style>
+
     <!-- Overlay oscuro para móvil (FUERA del aside para evitar que el transform del aside afecte el fixed positioning) -->
     <div id="sidebar-overlay"
          class="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm hidden transition-opacity duration-300"
@@ -23,7 +35,7 @@
                         <i class="fas fa-balance-scale text-white text-xl group-hover:scale-110 transition-transform duration-300"></i>
                     </div>
                     <div class="ms-3 flex flex-col">
-                        <span class="text-xl font-bold whitespace-nowrap text-white font-headings tracking-wide leading-tight">
+                        <span class="siaj-brand-name text-xl font-bold whitespace-nowrap text-white tracking-wide leading-tight">
                             Agenda Legal
                         </span>
                         <span class="text-[10px] text-white/50 tracking-widest uppercase font-bold">Sistema Jurídico</span>
