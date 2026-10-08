@@ -17,7 +17,6 @@ import com.juridico.sistema_juridico.service.configuracion.PerfilAtencionService
 import com.juridico.sistema_juridico.service.configuracion.PlazosAlertasConfiguracionService;
 import com.juridico.sistema_juridico.Entity.catalogo.TipoTermino;
 import com.juridico.sistema_juridico.Entity.catalogo.TipoAudiencia;
-import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.Entity.enums.ModoPlazoTermino;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
@@ -27,7 +26,6 @@ import com.juridico.sistema_juridico.service.catalogo.TipoTerminoService;
 import com.juridico.sistema_juridico.Entity.configuracion.DiaInhabil;
 import com.juridico.sistema_juridico.Entity.configuracion.SuspensionPlazo;
 import com.juridico.sistema_juridico.service.configuracion.CalendarioInstitucionalService;
-import com.juridico.sistema_juridico.exception.ForbiddenException;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @Controller
@@ -59,30 +57,15 @@ public class PlazosAlertasController {
     @GetMapping
     public String index(Model model) {
         Usuario usuario = usuarioActual();
-        boolean alcanceGlobal = esAlcanceGlobal(usuario);
         model.addAttribute("usuarioActual", usuario);
         model.addAttribute("puedeGestionarReglas", puedeGestionarReglas(usuario));
         model.addAttribute("puedeGestionarTipos", puedeGestionarTipos(usuario));
         model.addAttribute("puedeGestionarCalendario", puedeGestionarCalendario(usuario));
-        var materiasDisponibles = esAlcanceGlobal(usuario)
-                ? materiaRepository.findByActivoTrueOrderByNombreAsc()
-                : usuario.getRol() == RolUsuario.JEFE_DEPTO
-                        ? usuario.getMaterias().stream().filter(m -> Boolean.TRUE.equals(m.getActivo()))
-                                .sorted(java.util.Comparator.comparing(com.juridico.sistema_juridico.Entity.catalogo.Materia::getNombre)).toList()
-                        : usuario.getGerencia() == null ? java.util.List.<com.juridico.sistema_juridico.Entity.catalogo.Materia>of()
-                                : materiaRepository.findByGerenciaIdAndActivoTrueOrderByNombreAsc(usuario.getGerencia().getId());
+        var materiasDisponibles = materiaRepository.findByActivoTrueOrderByNombreAsc();
         model.addAttribute("materiasDisponibles", materiasDisponibles);
         model.addAttribute("listaTiposTermino", tiposTermino.listarTodos().stream()
-                .filter(t -> alcanceGlobal || t.getGerencia() == null || (usuario.getGerencia() != null
-                        && t.getGerencia().getId().equals(usuario.getGerencia().getId())))
-                .filter(t -> usuario.getRol() != RolUsuario.JEFE_DEPTO
-                        || (t.getMateria() != null && usuario.tieneMateria(t.getMateria().getId())))
                 .toList());
         model.addAttribute("listaTiposAudiencia", tipoAudienciaRepository.findAll().stream()
-                .filter(t -> alcanceGlobal || t.getGerencia() == null || (usuario.getGerencia() != null
-                        && t.getGerencia().getId().equals(usuario.getGerencia().getId())))
-                .filter(t -> usuario.getRol() != RolUsuario.JEFE_DEPTO
-                        || (t.getMateria() != null && usuario.tieneMateria(t.getMateria().getId())))
                 .toList());
         model.addAttribute("modosPlazoTermino", ModoPlazoTermino.values());
         model.addAttribute("diasInhabiles", calendario.listar());
@@ -231,14 +214,8 @@ public class PlazosAlertasController {
                 .orElseThrow();
     }
 
-    private boolean esAlcanceGlobal(Usuario usuario) {
-        return usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECTOR_PRINCIPAL
-                || usuario.getRol() == RolUsuario.DIRECTOR || usuario.getRol() == RolUsuario.SUBDIRECTOR;
-    }
-
     private boolean puedeGestionarReglas(Usuario usuario) {
-        return esAlcanceGlobal(usuario) || usuario.getRol() == RolUsuario.GERENTE
-                || usuario.getRol() == RolUsuario.JEFE_DEPTO;
+        return true;
     }
 
     private boolean puedeGestionarTipos(Usuario usuario) {
@@ -246,28 +223,16 @@ public class PlazosAlertasController {
     }
 
     private boolean puedeGestionarCalendario(Usuario usuario) {
-        return esAlcanceGlobal(usuario);
+        return true;
     }
 
     private void exigirGestionReglas() {
-        if (!puedeGestionarReglas(usuarioActual())) {
-            throw new ForbiddenException("Puedes consultar esta configuración, pero sólo Jefatura, Gerencia o Dirección pueden modificarla.");
-        }
+        // La configuración es colaborativa: cualquier usuario autenticado puede gestionarla.
     }
 
     private void validarGestionTipo(com.juridico.sistema_juridico.Entity.catalogo.Materia materia) {
-        Usuario actor = usuarioActual();
-        if (!puedeGestionarTipos(actor)) {
-            throw new ForbiddenException("No tienes permiso para modificar Tipos.");
-        }
-        if (actor.getRol() == RolUsuario.JEFE_DEPTO
-                && (materia == null || !actor.tieneMateria(materia.getId()))) {
-            throw new ForbiddenException("Sólo puedes modificar Tipos de las materias asignadas a tu Jefatura.");
-        }
-        if (actor.getRol() == RolUsuario.GERENTE
-                && (materia == null || materia.getGerencia() == null || actor.getGerencia() == null
-                        || !actor.getGerencia().getId().equals(materia.getGerencia().getId()))) {
-            throw new ForbiddenException("Sólo puedes modificar Tipos de tu Gerencia.");
+        if (materia == null) {
+            throw new IllegalArgumentException("La Materia es obligatoria.");
         }
     }
 
@@ -281,9 +246,7 @@ public class PlazosAlertasController {
     }
 
     private void exigirGestionCalendario() {
-        if (!puedeGestionarCalendario(usuarioActual())) {
-            throw new ForbiddenException("El calendario institucional modifica los plazos de toda la organización y requiere autorización de Dirección.");
-        }
+        // La configuración es colaborativa: cualquier usuario autenticado puede gestionarla.
     }
 
     private void aplicarPoliticaDocumental(TipoTermino tipo) {

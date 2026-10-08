@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -28,6 +29,7 @@ import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoAudienciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.TipoTerminoRepository;
+import com.juridico.sistema_juridico.repository.configuracion.DiaInhabilRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 
 @SpringBootTest
@@ -42,6 +44,7 @@ class Alcance1PantallasIntegrationTest {
     @Autowired private MateriaRepository materias;
     @Autowired private TipoTerminoRepository tiposTermino;
     @Autowired private TipoAudienciaRepository tiposAudiencia;
+    @Autowired private DiaInhabilRepository diasInhabiles;
 
     @BeforeEach
     void prepararUsuario() {
@@ -144,12 +147,14 @@ class Alcance1PantallasIntegrationTest {
                 .andExpect(content().string(containsString("id=\"select-tipo-termino\"")))
                 .andExpect(content().string(containsString("id=\"input-fecha-origen\"")))
                 .andExpect(content().string(containsString("id=\"resumen-regla-tipo\"")))
-                .andExpect(content().string(containsString("id=\"vista-previa-plazo\"")));
+                .andExpect(content().string(containsString("id=\"vista-previa-plazo\"")))
+                .andExpect(content().string(containsString("fa-folder-plus")))
+                .andExpect(content().string(containsString("Asuntos sin expediente")));
     }
 
     @Test
     @WithMockUser(username = "ui.abogado@siaj.test", authorities = "ABOGADO")
-    void abogadoPuedeConsultarElDetalleSinModificarLaConfiguracionCompartida() throws Exception {
+    void abogadoPuedeGestionarLaConfiguracionCompartida() throws Exception {
         Gerencia gerencia = gerencias.findAll().get(0);
         if (usuarios.findByEmail("ui.abogado@siaj.test").isEmpty()) {
             Usuario abogado = Usuario.builder()
@@ -172,8 +177,32 @@ class Alcance1PantallasIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Configuración compartida")))
                 .andExpect(content().string(containsString("id=\"form-tipo-termino\"")))
-                .andExpect(content().string(containsString("data-readonly=\"true\"")))
-                .andExpect(content().string(not(containsString("id=\"nuevo-tipo-termino\""))));
+                .andExpect(content().string(containsString("data-readonly=\"false\"")))
+                .andExpect(content().string(containsString("id=\"nuevo-tipo-termino\"")))
+                .andExpect(content().string(containsString("data-puede-calendario=\"true\"")));
+
+        Materia materia = materiaDePrueba();
+        mvc.perform(post("/administracion/plazos-alertas/tipos-termino").with(csrf())
+                        .param("materia.id", materia.getId().toString())
+                        .param("nombre", "Tipo creado por abogado")
+                        .param("codigo", "TIPO_ABOGADO")
+                        .param("descripcion", "Configuración colaborativa")
+                        .param("modoPlazo", "CALCULADO")
+                        .param("diasPredeterminados", "10")
+                        .param("tipoDias", "HABILES")
+                        .param("activo", "true")
+                        .param("atencionDias", "3")
+                        .param("criticoDias", "1"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/administracion/plazos-alertas#terminos"));
+        assertTrue(tiposTermino.findByNombreIgnoreCase("Tipo creado por abogado").isPresent());
+
+        mvc.perform(post("/administracion/plazos-alertas/calendario").with(csrf())
+                        .param("fecha", "2035-08-15")
+                        .param("descripcion", "Prueba colaborativa de calendario"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/administracion/plazos-alertas#calendario"));
+        assertTrue(diasInhabiles.existsByFechaAndActivoTrue(java.time.LocalDate.of(2035, 8, 15)));
     }
 
     private Materia materiaDePrueba() {
