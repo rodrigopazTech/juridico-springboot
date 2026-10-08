@@ -3,13 +3,14 @@ package com.juridico.sistema_juridico.service;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
+import com.juridico.sistema_juridico.service.configuracion.DynamicMailSenderProvider;
 
 import java.nio.charset.StandardCharsets;
 
@@ -19,7 +20,7 @@ import java.nio.charset.StandardCharsets;
 @ConditionalOnProperty(name = "app.email.maintenance", havingValue = "false", matchIfMissing = true)
 public class PasswordResetEmailService implements PasswordResetMailer {
 
-    private final ObjectProvider<JavaMailSender> mailSenderProvider;
+    private final DynamicMailSenderProvider dynamicMailSenderProvider;
     private final ThreadLocal<String> lastFailureSummary = new ThreadLocal<>();
 
     @Value("${app.email.from:siaj@finabien.gob.mx}")
@@ -101,7 +102,7 @@ public class PasswordResetEmailService implements PasswordResetMailer {
 
     private boolean sendMessage(String to, String subject, String text, String html, String emailType) {
         lastFailureSummary.remove();
-        JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
+        JavaMailSender mailSender = dynamicMailSenderProvider.getMailSender();
         if (mailSender == null) {
             String failure = "No hay servidor de correo configurado para enviar mensajes.";
             lastFailureSummary.set(failure);
