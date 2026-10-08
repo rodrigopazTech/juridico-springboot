@@ -1,7 +1,9 @@
 package com.juridico.sistema_juridico.controller.api;
 
 import com.juridico.sistema_juridico.Entity.usuario.PushSubscription;
+import com.juridico.sistema_juridico.Entity.usuario.PreferenciaNotificacion;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
+import com.juridico.sistema_juridico.repository.Usuarios.PreferenciaNotificacionRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.PushSubscriptionRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.service.WebPushService;
@@ -37,6 +39,9 @@ public class WebPushController {
     private UsuarioRepository usuarioRepository;
 
     @Autowired
+    private PreferenciaNotificacionRepository preferenciaRepository;
+
+    @Autowired
     private WebPushService webPushService;
 
     @GetMapping("/test-send")
@@ -59,6 +64,39 @@ public class WebPushController {
     @GetMapping("/public-key")
     public ResponseEntity<?> getPublicKey() {
         return ResponseEntity.ok(Map.of("publicKey", publicKey));
+    }
+
+    @GetMapping("/preference")
+    public ResponseEntity<?> getPreference() {
+        Usuario usuario = getAuthenticatedUser();
+        if (usuario == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "No fue posible identificar tu cuenta."));
+        }
+
+        boolean appEnabled = preferenciaRepository.findByUsuarioId(usuario.getId())
+                .map(PreferenciaNotificacion::isNotificarEnTiempoReal)
+                .orElse(true);
+        return ResponseEntity.ok(Map.of("appEnabled", appEnabled));
+    }
+
+    @PostMapping("/preference")
+    @Transactional
+    public ResponseEntity<?> updatePreference(@RequestBody PreferenceRequest request) {
+        if (request == null || request.getAppEnabled() == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Indica si deseas recibir avisos."));
+        }
+
+        Usuario usuario = getAuthenticatedUser();
+        if (usuario == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "No fue posible identificar tu cuenta."));
+        }
+
+        PreferenciaNotificacion preference = preferenciaRepository.findByUsuarioId(usuario.getId())
+                .orElseGet(() -> PreferenciaNotificacion.builder().usuario(usuario).build());
+        preference.setNotificarEnTiempoReal(request.getAppEnabled());
+        preferenciaRepository.save(preference);
+
+        return ResponseEntity.ok(Map.of("appEnabled", preference.isNotificarEnTiempoReal()));
     }
 
     @PostMapping("/subscribe")
@@ -163,5 +201,17 @@ public class WebPushController {
             public String getAuth() { return auth; }
             public void setAuth(String auth) { this.auth = auth; }
         }
+    }
+
+    public static class PreferenceRequest {
+        private Boolean appEnabled;
+
+        public Boolean getAppEnabled() { return appEnabled; }
+        public void setAppEnabled(Boolean appEnabled) { this.appEnabled = appEnabled; }
+    }
+
+    private Usuario getAuthenticatedUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return usuarioRepository.findByEmail(email).orElse(null);
     }
 }

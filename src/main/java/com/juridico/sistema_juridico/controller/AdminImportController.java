@@ -139,7 +139,7 @@ public class AdminImportController {
     public String avanzarPaso(@RequestParam("loteId") Long loteId, RedirectAttributes redirectAttributes) {
         LoteMigracion lote = loteMigracionService.avanzarPaso(loteId);
         if(lote.getEstatus().equals("COMPLETADO")) {
-            redirectAttributes.addFlashAttribute("mensaje", "¡Migración completada e inyectada con éxito!");
+            redirectAttributes.addFlashAttribute("mensaje", "Los datos se importaron correctamente.");
         }
         return "redirect:/admin/importar";
     }
@@ -299,7 +299,7 @@ public class AdminImportController {
             
             return ResponseEntity.ok(Map.of("status", "ok", "mensaje", "Registro actualizado correctamente."));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.internalServerError().body(Map.of("error", "No pudimos actualizar el registro. Inténtalo de nuevo."));
         }
     }
 
@@ -332,7 +332,7 @@ public class AdminImportController {
             catalogoMigracionRepository.save(cat);
             return ResponseEntity.ok(Map.of("status", "ok", "catId", catId, "nuevoTexto", textoLimpio));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.internalServerError().body(Map.of("error", "No pudimos actualizar el catálogo. Inténtalo de nuevo."));
         }
     }
 
@@ -615,7 +615,7 @@ public class AdminImportController {
                 "mensaje", "Materia \"" + materia.getNombre() + "\" asignada a " + usuario.getNombreCompleto()
             ));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.internalServerError().body(Map.of("error", "No pudimos guardar los cambios. Inténtalo de nuevo."));
         }
     }
 }

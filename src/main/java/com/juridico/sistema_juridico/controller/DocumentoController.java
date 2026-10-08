@@ -79,10 +79,10 @@ public class DocumentoController {
                     .body(Map.of("error", e.getMessage()));
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al guardar el archivo: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos guardar el archivo. Inténtalo de nuevo."));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error inesperado: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos guardar el archivo. Inténtalo de nuevo."));
         }
     }
 
@@ -108,7 +108,7 @@ public class DocumentoController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al listar documentos: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos cargar los documentos. Inténtalo de nuevo."));
         }
     }
 
@@ -134,7 +134,7 @@ public class DocumentoController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al listar documentos: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos cargar los documentos. Inténtalo de nuevo."));
         }
     }
 
@@ -162,7 +162,7 @@ public class DocumentoController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error en búsqueda: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos realizar la búsqueda. Inténtalo de nuevo."));
         }
     }
 
@@ -193,7 +193,7 @@ public class DocumentoController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al calcular espacio: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos calcular el espacio utilizado. Inténtalo de nuevo."));
         }
     }
 
@@ -292,7 +292,7 @@ public class DocumentoController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al mover a papelera: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos enviar el documento a la papelera. Inténtalo de nuevo."));
         }
     }
 
@@ -320,7 +320,7 @@ public class DocumentoController {
                     .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al recuperar documento: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos recuperar el documento. Inténtalo de nuevo."));
         }
     }
 
@@ -346,7 +346,7 @@ public class DocumentoController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al listar documentos: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos cargar los documentos. Inténtalo de nuevo."));
         }
     }
 
@@ -377,7 +377,7 @@ public class DocumentoController {
                     .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al mover documento: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos mover el documento. Inténtalo de nuevo."));
         }
     }
 
@@ -404,7 +404,7 @@ public class DocumentoController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al cargar la papelera: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos cargar la papelera. Inténtalo de nuevo."));
         }
     }
 
@@ -432,7 +432,7 @@ public class DocumentoController {
                     .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al restaurar documento: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos restaurar el documento. Inténtalo de nuevo."));
         }
     }
 
@@ -460,7 +460,7 @@ public class DocumentoController {
                     .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al eliminar permanentemente: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos eliminar el documento. Inténtalo de nuevo."));
         }
     }
 
@@ -486,7 +486,7 @@ public class DocumentoController {
                     .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al vaciar la papelera: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos vaciar la papelera. Inténtalo de nuevo."));
         }
     }
 }

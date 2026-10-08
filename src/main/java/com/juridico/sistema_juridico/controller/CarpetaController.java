@@ -49,7 +49,7 @@ public class CarpetaController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al obtener árbol de carpetas: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos cargar las carpetas. Inténtalo de nuevo."));
         }
     }
 
@@ -74,7 +74,7 @@ public class CarpetaController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al obtener carpetas: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos cargar las carpetas. Inténtalo de nuevo."));
         }
     }
 
@@ -101,7 +101,7 @@ public class CarpetaController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al obtener subcarpetas: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos cargar las subcarpetas. Inténtalo de nuevo."));
         }
     }
 
@@ -133,7 +133,7 @@ public class CarpetaController {
                     .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al crear carpeta: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos crear la carpeta. Inténtalo de nuevo."));
         }
     }
 
@@ -166,7 +166,7 @@ public class CarpetaController {
                     .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al renombrar carpeta: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos cambiar el nombre de la carpeta. Inténtalo de nuevo."));
         }
     }
 
@@ -196,7 +196,7 @@ public class CarpetaController {
                     .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al eliminar carpeta: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos eliminar la carpeta. Inténtalo de nuevo."));
         }
     }
 
@@ -229,7 +229,7 @@ public class CarpetaController {
                     .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al mover carpeta: " + e.getMessage()));
+                    .body(Map.of("error", "No pudimos mover la carpeta. Inténtalo de nuevo."));
         }
     }
 }

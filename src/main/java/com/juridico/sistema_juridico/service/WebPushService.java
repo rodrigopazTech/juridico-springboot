@@ -2,9 +2,11 @@ package com.juridico.sistema_juridico.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.juridico.sistema_juridico.Entity.usuario.PushSubscription;
+import com.juridico.sistema_juridico.Entity.usuario.PreferenciaNotificacion;
 import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 import com.juridico.sistema_juridico.listener.SessionListener;
 import com.juridico.sistema_juridico.repository.Usuarios.PushSubscriptionRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.PreferenciaNotificacionRepository;
 import jakarta.annotation.PostConstruct;
 import nl.martijndwars.webpush.Notification;
 import nl.martijndwars.webpush.PushService;
@@ -44,6 +46,9 @@ public class WebPushService {
     private PushSubscriptionRepository subscriptionRepository;
 
     @Autowired
+    private PreferenciaNotificacionRepository preferenciaRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private PushService pushService;
@@ -70,6 +75,14 @@ public class WebPushService {
     public void enviarNotificacion(Usuario usuario, String titulo, String mensaje, String url) {
         if (pushService == null) {
             log.debug("Notificacion Web Push omitida: servicio no inicializado.");
+            return;
+        }
+
+        boolean avisosHabilitados = preferenciaRepository.findByUsuarioId(usuario.getId())
+                .map(PreferenciaNotificacion::isNotificarEnTiempoReal)
+                .orElse(true);
+        if (!avisosHabilitados) {
+            log.debug("Notificación Web Push omitida por preferencia del usuario {}.", usuario.getId());
             return;
         }
 

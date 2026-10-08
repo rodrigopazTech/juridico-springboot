@@ -1,4 +1,27 @@
 <div th:fragment="form">
+    <section id="webpush-settings"
+             th:attr="data-app-enabled=${preferencias.notificarEnTiempoReal}"
+             class="mb-7 rounded-2xl border border-gob-guinda/15 bg-gob-guinda/[0.03] p-5">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div class="pr-2">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-bell text-gob-guinda" aria-hidden="true"></i>
+                    <h4 class="text-sm font-extrabold text-gray-800">Avisos en este navegador</h4>
+                </div>
+                <p id="webpush-status" class="mt-2 text-sm leading-relaxed text-gray-600" role="status" aria-live="polite">
+                    Revisando la configuración de avisos…
+                </p>
+                <p id="webpush-help" class="mt-1 hidden text-xs leading-relaxed text-gray-500"></p>
+            </div>
+            <label class="relative inline-flex cursor-pointer items-center self-start">
+                <input id="webpush-enabled" type="checkbox" class="peer sr-only"
+                       th:checked="${preferencias.notificarEnTiempoReal}"
+                       aria-describedby="webpush-status webpush-help">
+                <span class="h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-green-600 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-gob-guinda after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-full"></span>
+                <span class="ml-3 text-sm font-bold text-gray-700">Activar avisos</span>
+            </label>
+        </div>
+    </section>
     <form th:action="@{/perfil/preferencias/guardar}" method="post" id="formPreferenciasNotificaciones">
         <div class="mb-7 rounded-2xl border border-gob-oro/25 bg-amber-50/60 p-4">
             <div class="flex items-start gap-3">
@@ -7,7 +30,7 @@
                     <p class="text-sm font-extrabold text-gray-800">Controla qué avisos deseas recibir</p>
                     <p class="mt-1 text-xs leading-relaxed text-gray-600">
                         Para tareas recibirás un solo aviso, 15 minutos antes de la hora programada.
-                        Aquí puedes activarlo o desactivarlo; la anticipación es una regla general del sistema.
+                        Aquí puedes activarlo o desactivarlo; el aviso se envía 15 minutos antes de la hora programada.
                     </p>
                 </div>
             </div>

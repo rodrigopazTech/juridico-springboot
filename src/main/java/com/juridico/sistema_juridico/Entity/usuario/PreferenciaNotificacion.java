@@ -34,4 +34,12 @@ public class PreferenciaNotificacion {
     @Builder.Default
     @Column(name = "notificar_reasignacion")
     private boolean notificarReasignacion = true;
+
+    /**
+     * Preferencia propia de la cuenta. El permiso del navegador se consulta en
+     * el cliente y no se almacena aquí, porque puede variar por dispositivo.
+     */
+    @Builder.Default
+    @Column(name = "notificar_en_tiempo_real", columnDefinition = "boolean default true")
+    private boolean notificarEnTiempoReal = true;
 }

@@ -27,7 +27,8 @@
             <div class="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
 
                 <!-- Campana de Notificaciones con Dropdown -->
-                <div class="relative" id="notif-bell-wrapper">
+                <div class="relative" id="notif-bell-wrapper"
+                     th:attr="data-webpush-user-id=${usuarioGlobal != null ? usuarioGlobal.id : ''}">
                     <button id="notif-bell-btn" type="button" title="Centro de Notificaciones"
                         onclick="toggleNotifDropdown()"
                         class="relative p-2.5 rounded-full hover:bg-gray-100 transition-colors focus:outline-none">
@@ -81,14 +82,14 @@
                     </div>
                 </div>
 
-                <div class="siaj-user-divider h-8 w-px bg-gray-200 mx-0.5 sm:mx-2"></div>
+                <div class="h-8 w-px bg-gray-200 mx-0.5 sm:mx-2 hidden sm:block"></div>
 
                 <div class="relative group cursor-pointer" th:if="${usuarioGlobal != null}">
 
                     <div
                         class="flex items-center gap-1.5 sm:gap-3 hover:bg-gray-50 p-1.5 sm:pr-4 rounded-full border border-transparent hover:border-gray-200 transition-all duration-300">
-                        <!-- Identidad siempre disponible; no depende de estilos locales de cada pantalla. -->
-                        <div class="siaj-user-identity text-right flex-col justify-center">
+                        <!-- Nombre y rol ocultos en móvil -->
+                        <div class="text-right flex-col justify-center hidden md:flex">
                             <p class="text-sm font-bold text-gray-800 leading-none font-headings"
                                 th:text="${usuarioGlobal.nombreCompleto}">Usuario</p>
                             <p class="text-[10px] text-gray-500 leading-none mt-1 uppercase tracking-widest font-bold"
@@ -98,7 +99,7 @@
                         <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-gob-oro to-yellow-600 flex items-center justify-center text-white font-bold text-sm shadow-md border-2 border-white"
                             th:text="${#strings.substring(usuarioGlobal.nombreCompleto, 0, 1)}">U</div>
                         <i
-                            class="siaj-user-chevron fas fa-chevron-down text-xs text-gray-400 group-hover:text-gob-guinda transition-transform duration-300 group-hover:rotate-180"></i>
+                            class="fas fa-chevron-down text-xs text-gray-400 group-hover:text-gob-guinda transition-transform duration-300 group-hover:rotate-180 hidden sm:inline"></i>
                     </div>
 
                     <div
@@ -141,18 +142,6 @@
     </div>
 
         <style>
-            .siaj-user-identity {
-                display: flex;
-            }
-
-            .siaj-user-divider {
-                display: block;
-            }
-
-            .siaj-user-chevron {
-                display: inline-block;
-            }
-
             .notif-item-opening {
                 opacity: 0.55;
                 transform: translateX(10px) scale(0.985);
