@@ -220,80 +220,30 @@ document.addEventListener('DOMContentLoaded', () => {
 let stompClientExpediente = null;
 
 function iniciarWebSocketExpediente() {
-    function loadScripts(urls, callback) {
-        let loadedCount = 0;
-        let scriptsToLoad = [];
-        
-        urls.forEach(url => {
-            if (url.includes('sockjs') && typeof SockJS !== 'undefined') {
-                loadedCount++;
-            } else if (url.includes('stomp') && typeof Stomp !== 'undefined') {
-                loadedCount++;
-            } else {
-                scriptsToLoad.push(url);
+    if (window.WebSocketManager) {
+        const dest = '/topic/expedientes/' + EXPEDIENTE_ID;
+        window.WebSocketManager.subscribe(dest, function (message) {
+            try {
+                const payload = JSON.parse(message.body);
+                if (payload.tabla === 'expedientes' || payload.tabla === 'actividad_expedientes' || payload.tabla === 'documentos') {
+                    recargarDetalleExpediente();
+                    if (payload.tabla === 'documentos') {
+                        cargarArchivosRecientes();
+                    }
+                } else if (payload.tabla === 'comentarios') {
+                    const modalObs = document.getElementById('modal-observaciones');
+                    if (modalObs && !modalObs.classList.contains('hidden')) {
+                        loadObservaciones(true);
+                    }
+                    recargarDetalleExpediente();
+                }
+            } catch (e) {
+                console.error("Error al procesar mensaje en detalle:", e);
             }
         });
-
-        if (loadedCount === urls.length) {
-            callback();
-            return;
-        }
-
-        let loadedScriptsCount = 0;
-        scriptsToLoad.forEach(url => {
-            const script = document.createElement('script');
-            script.type = 'text/javascript';
-            script.src = url;
-            script.onload = () => {
-                loadedScriptsCount++;
-                if (loadedScriptsCount === scriptsToLoad.length) {
-                    callback();
-                }
-            };
-            document.head.appendChild(script);
-        });
+    } else {
+        setTimeout(iniciarWebSocketExpediente, 200);
     }
-
-    loadScripts([
-        '/lib/sockjs.min.js',
-        '/lib/stomp.min.js'
-    ], function() {
-        if (stompClientExpediente) return;
-
-        const socket = new SockJS('/ws-realtime');
-        stompClientExpediente = Stomp.over(socket);
-        stompClientExpediente.debug = null;
-
-        stompClientExpediente.connect({}, function (frame) {
-            //console.log('🔔 Detalle Expediente: Conexión WebSocket establecida.');
-            
-            const dest = '/topic/expedientes/' + EXPEDIENTE_ID;
-            stompClientExpediente.subscribe(dest, function (message) {
-                try {
-                    const payload = JSON.parse(message.body);
-                    //console.log("🔔 Cambio detectado:", payload.tabla, payload.operacion);
-                    
-                    if (payload.tabla === 'expedientes' || payload.tabla === 'actividad_expedientes' || payload.tabla === 'documentos') {
-                        recargarDetalleExpediente();
-                        if (payload.tabla === 'documentos') {
-                            cargarArchivosRecientes();
-                        }
-                    } else if (payload.tabla === 'comentarios') {
-                        const modalObs = document.getElementById('modal-observaciones');
-                        if (modalObs && !modalObs.classList.contains('hidden')) {
-                            loadObservaciones(true);
-                        }
-                        recargarDetalleExpediente();
-                    }
-                } catch (e) {
-                    console.error("Error al procesar mensaje en detalle:", e);
-                }
-            });
-        }, function (error) {
-            stompClientExpediente = null;
-            setTimeout(iniciarWebSocketExpediente, 5000);
-        });
-    });
 }
 
 function recargarDetalleExpediente() {

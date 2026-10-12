@@ -10,6 +10,7 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -25,8 +26,18 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Habilita un broker simple en memoria en /topic y /queue
-        config.enableSimpleBroker("/topic", "/queue");
+        // Scheduler dedicado para pulsos de latido (heartbeats) STOMP
+        ThreadPoolTaskScheduler heartbeatScheduler = new ThreadPoolTaskScheduler();
+        heartbeatScheduler.setPoolSize(1);
+        heartbeatScheduler.setThreadNamePrefix("ws-heartbeat-");
+        heartbeatScheduler.initialize();
+
+        // Habilita un broker simple en memoria en /topic y /queue con Heartbeats
+        // [20000, 20000] -> Envia heartbeat cada 20s y espera recibir heartbeat cada 20s
+        // Esto mantiene vivas las conexiones a traves de proxies inversos (Nginx) y firewalls sin caidas
+        config.enableSimpleBroker("/topic", "/queue")
+                .setTaskScheduler(heartbeatScheduler)
+                .setHeartbeatValue(new long[]{20000, 20000});
         
         // Prefijo para enviar mensajes desde los clientes al backend
         config.setApplicationDestinationPrefixes("/app");

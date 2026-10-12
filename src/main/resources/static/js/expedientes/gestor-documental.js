@@ -1799,77 +1799,26 @@ function cambiarVista(vista) {
 let stompClientDocumentos = null;
 
 function iniciarWebSocketDocumentos() {
-    function loadScripts(urls, callback) {
-        let loadedCount = 0;
-        let scriptsToLoad = [];
-        
-        urls.forEach(url => {
-            if (url.includes('sockjs') && typeof SockJS !== 'undefined') {
-                loadedCount++;
-            } else if (url.includes('stomp') && typeof Stomp !== 'undefined') {
-                loadedCount++;
-            } else {
-                scriptsToLoad.push(url);
+    if (window.WebSocketManager) {
+        const dest = '/topic/expedientes/' + expedienteIdGlobal;
+        window.WebSocketManager.subscribe(dest, function (message) {
+            try {
+                const payload = JSON.parse(message.body);
+                if (payload.tabla === 'documentos' || payload.tabla === 'carpetas') {
+                    cargarArbolCarpetas();
+                    cargarEspacioOcupado();
+                    cargarDocumentos();
+                    if (typeof cargarArchivosRecientes === 'function') {
+                        cargarArchivosRecientes();
+                    }
+                }
+            } catch (e) {
+                console.error("Error al procesar mensaje de WebSocket en el Gestor Documental:", e);
             }
         });
-
-        if (loadedCount === urls.length) {
-            callback();
-            return;
-        }
-
-        let loadedScriptsCount = 0;
-        scriptsToLoad.forEach(url => {
-            const script = document.createElement('script');
-            script.type = 'text/javascript';
-            script.src = url;
-            script.onload = () => {
-                loadedScriptsCount++;
-                if (loadedScriptsCount === scriptsToLoad.length) {
-                    callback();
-                }
-            };
-            document.head.appendChild(script);
-        });
+    } else {
+        setTimeout(iniciarWebSocketDocumentos, 200);
     }
-
-    loadScripts([
-        '/lib/sockjs.min.js',
-        '/lib/stomp.min.js'
-    ], function() {
-        if (stompClientDocumentos) return;
-
-        const socket = new SockJS('/ws-realtime');
-        stompClientDocumentos = Stomp.over(socket);
-        stompClientDocumentos.debug = null; // Desactivar logs ruidosos en la consola
-
-        stompClientDocumentos.connect({}, function (frame) {
-            //console.log('🔔 Gestor Documental: Conexión WebSocket establecida de forma permanente.');
-            
-            const dest = '/topic/expedientes/' + expedienteIdGlobal;
-            stompClientDocumentos.subscribe(dest, function (message) {
-                try {
-                    const payload = JSON.parse(message.body);
-                    
-                    if (payload.tabla === 'documentos' || payload.tabla === 'carpetas') {
-                       // console.log(`🔔 Cambio detectado en la tabla '${payload.tabla}' (${payload.operacion}). Actualizando gestor documental...`);
-                        cargarArbolCarpetas();
-                        cargarEspacioOcupado();
-                        cargarDocumentos();
-                        if (typeof cargarArchivosRecientes === 'function') {
-                            cargarArchivosRecientes();
-                        }
-                    }
-                } catch (e) {
-                    console.error("Error al procesar mensaje de WebSocket en el Gestor Documental:", e);
-                }
-            });
-        }, function (error) {
-            //console.warn('⚠️ Gestor Documental: Conexión WebSocket perdida. Reintentando en 5 segundos...', error);
-            stompClientDocumentos = null;
-            setTimeout(iniciarWebSocketDocumentos, 5000);
-        });
-    });
 }
 
 // ========================================

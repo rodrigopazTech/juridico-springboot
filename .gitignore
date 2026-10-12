@@ -82,3 +82,7 @@ reports/
 tests_e2e/reports/
 .pytest_cache/
 tmp/
+
+run-local.cmd
+*.log.*.gz
+

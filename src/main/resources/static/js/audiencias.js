@@ -1766,35 +1766,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // ==========================================
-// 🔔 WEBSOCKET: ACTUALIZACIÓN EN TIEMPO REAL
+// 🔔 WEBSOCKET: ACTUALIZACIÓN EN TIEMPO REAL (UNIFICADO)
 // ==========================================
 function iniciarWebSocketAudiencias() {
-    if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
-        setTimeout(iniciarWebSocketAudiencias, 1000);
-        return;
-    }
-    const socket = new SockJS('/ws-realtime');
-    const stompClient = Stomp.over(socket);
-    stompClient.debug = null; // Silenciar logs de debug en consola
-
-    stompClient.connect({}, function (frame) {
-        console.log('Conectado a WebSockets para Audiencias en tiempo real.');
-        stompClient.subscribe('/topic/alertas', function (message) {
+    if (window.WebSocketManager) {
+        window.WebSocketManager.subscribe('/topic/alertas', function (message) {
             try {
                 const payload = JSON.parse(message.body);
-                // Escuchar eventos específicamente para la tabla 'audiencias'
                 if (payload.tabla === 'audiencias') {
                     console.log('Cambio detectado en audiencias vía WS:', payload);
-
-
-                    // Refrescar la tabla y KPIs de forma asíncrona, y LUEGO alumbrar la tarjeta
                     const fetchPromise = actualizarTablaAsincrono();
                     if (fetchPromise && fetchPromise.then) {
                         fetchPromise.then(() => {
                             animarTarjetaKPI(payload.estatus);
                         });
                     } else {
-                        // Por si falló o retornó algo nulo
                         setTimeout(() => animarTarjetaKPI(payload.estatus), 800);
                     }
                 }
@@ -1802,10 +1788,9 @@ function iniciarWebSocketAudiencias() {
                 console.error("Error parseando notificación de websocket", e);
             }
         });
-    }, function (error) {
-        console.warn('Conexión WS perdida. Reconectando en 5s...');
-        setTimeout(iniciarWebSocketAudiencias, 5000);
-    });
+    } else {
+        setTimeout(iniciarWebSocketAudiencias, 200);
+    }
 }
 
 function animarTarjetaKPI(estatus) {

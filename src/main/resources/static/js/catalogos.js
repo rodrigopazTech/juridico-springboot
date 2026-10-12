@@ -651,36 +651,19 @@ async function refrescarTablaCatalogo(tabla, force = false) {
 }
 
 function initWebSocketCatalogos() {
-    const intentarConectar = () => {
-        if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
-            setTimeout(intentarConectar, 1000);
-            return;
-        }
-
-        const socket = new SockJS('/ws-realtime');
-        const stompClient = Stomp.over(socket);
-        stompClient.debug = null;
-
-        stompClient.connect({}, (frame) => {
-            console.log('[Catálogos] Conectado a WebSockets en tiempo real.');
-
-            stompClient.subscribe('/topic/catalogos', (message) => {
-                try {
-                    const payload = JSON.parse(message.body);
-                    console.log(`[Catálogos] Cambio detectado en '${payload.tabla}' (${payload.operacion})`);
-                    refrescarTablaCatalogo(payload.tabla);
-                } catch (e) {
-                    console.error('[Catálogos] Error parseando mensaje WS:', e);
-                }
-            });
-        }, (error) => {
-            console.warn('[Catálogos] Conexión WS perdida. Reconectando en 5s...');
-            setTimeout(intentarConectar, 5000);
+    if (window.WebSocketManager) {
+        window.WebSocketManager.subscribe('/topic/catalogos', function (message) {
+            try {
+                const payload = JSON.parse(message.body);
+                console.log(`[Catálogos] Cambio detectado en '${payload.tabla}' (${payload.operacion})`);
+                refrescarTablaCatalogo(payload.tabla);
+            } catch (e) {
+                console.error('[Catálogos] Error parseando mensaje WS:', e);
+            }
         });
-    };
-
-    // Retrasar ligeramente para no competir con el WS del Navbar
-    setTimeout(intentarConectar, 2500);
+    } else {
+        setTimeout(initWebSocketCatalogos, 200);
+    }
 }
 
 function actualizarTipoTermino() {
