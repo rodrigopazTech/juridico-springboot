@@ -15,10 +15,14 @@
 .PARAMETER SkipBuild
     (Opcional) Si se especifica, no compila con Maven y utiliza el último JAR existente en /target.
 
+.PARAMETER Force
+    (Opcional) Omite la solicitud interactiva de confirmación al desplegar a Producción.
+
 .EXAMPLE
     .\deploy.ps1 -Env dev
     .\deploy.ps1 -Env dev -Branch develop
     .\deploy.ps1 -Env prod -Branch main
+    .\deploy.ps1 -Env prod -Force
     .\deploy.ps1 -Env dev -SkipBuild
 #>
 
@@ -31,7 +35,10 @@ param(
     [string]$Branch = "",
 
     [Parameter(Mandatory = $false)]
-    [switch]$SkipBuild
+    [switch]$SkipBuild,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$Force
 )
 
 $ErrorActionPreference = "Stop"
@@ -43,7 +50,7 @@ function Write-Warn($msg) { Write-Host "[AVISO] $msg" -ForegroundColor Yellow }
 function Write-Err($msg) { Write-Host "[ERROR] $msg" -ForegroundColor Red }
 
 # Validar confirmación en Producción
-if ($Env -eq "prod") {
+if ($Env -eq "prod" -and -not $Force) {
     Write-Warn "*****************************************************"
     Write-Warn " ATENCION: Estas a punto de desplegar a PRODUCCION   "
     Write-Warn " Servidor: 40.0.0.61 (ajappprod)                     "
@@ -150,8 +157,9 @@ if ($Env -eq "dev") {
     }
     Write-Success "Archivo transferido a $prodHost."
 
-    Write-Info "Reiniciando servicio siaj.service en Produccion..."
-    ssh -o BatchMode=yes "${prodUser}@${prodHost}" "sudo systemctl restart siaj"
+    Write-Info "Reiniciando servicio siaj en Produccion via ciclo de vida Systemd..."
+    $restartCmd = 'old_pid=$(systemctl show siaj -p MainPID --value 2>/dev/null); if [ -n "$old_pid" ] && [ "$old_pid" != "0" ]; then kill -INT "$old_pid"; fi; for i in $(seq 1 45); do sleep 1; new_pid=$(systemctl show siaj -p MainPID --value 2>/dev/null); active=$(systemctl show siaj -p ActiveState --value 2>/dev/null); if [ "$active" = "active" ] && [ -n "$new_pid" ] && [ "$new_pid" != "0" ] && [ "$new_pid" != "$old_pid" ]; then echo "SIAJ reiniciado con exito en PID: $new_pid"; exit 0; fi; done; exit 1'
+    ssh -o BatchMode=yes "${prodUser}@${prodHost}" "$restartCmd"
     if ($LASTEXITCODE -ne 0) {
         Write-Err "Fallo al reiniciar el servicio siaj en Produccion."
         exit 1
