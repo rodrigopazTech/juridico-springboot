@@ -171,6 +171,6 @@ if ($Env -eq "dev") {
 
     Write-Success "=========================================================="
     Write-Success " ¡DESPLIEGUE EN PRODUCCION FINALIZADO CON EXITO!           "
-    Write-Success " URL: https://siaj.finabien.gob.mx o http://40.0.0.61:8080 "
+    Write-Success " URL: https://siaj.finabien o http://40.0.0.61:8080        "
     Write-Success "=========================================================="
 }

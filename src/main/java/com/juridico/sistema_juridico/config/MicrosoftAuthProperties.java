@@ -89,11 +89,18 @@ public class MicrosoftAuthProperties {
     }
 
     public String getRedirectUri() {
+        if (redirectUri != null && redirectUri.contains("siaj.finabien.gob.mx")) {
+            return redirectUri.replace("siaj.finabien.gob.mx", "siaj.finabien");
+        }
         return redirectUri;
     }
 
     public void setRedirectUri(String redirectUri) {
-        this.redirectUri = redirectUri;
+        if (redirectUri != null && redirectUri.contains("siaj.finabien.gob.mx")) {
+            this.redirectUri = redirectUri.replace("siaj.finabien.gob.mx", "siaj.finabien");
+        } else {
+            this.redirectUri = redirectUri;
+        }
     }
 
     public List<String> getScopes() {

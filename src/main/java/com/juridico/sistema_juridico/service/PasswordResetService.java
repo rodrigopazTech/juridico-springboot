@@ -300,20 +300,23 @@ public class PasswordResetService {
         return ConfirmResetResult.SUCCESS;
     }
 
-    private String buildResetUrl(String token) {
+    private String resolveCleanBase() {
         String cleanBase = baseUrl != null ? baseUrl.trim() : "";
+        if (cleanBase.contains("siaj.finabien.gob.mx")) {
+            cleanBase = cleanBase.replace("siaj.finabien.gob.mx", "siaj.finabien");
+        }
         if (cleanBase.endsWith("/")) {
             cleanBase = cleanBase.substring(0, cleanBase.length() - 1);
         }
-        return cleanBase + "/auth/reset-password?token=" + token;
+        return cleanBase;
+    }
+
+    private String buildResetUrl(String token) {
+        return resolveCleanBase() + "/auth/reset-password?token=" + token;
     }
 
     private String buildActivationUrl(String token) {
-        String cleanBase = baseUrl != null ? baseUrl.trim() : "";
-        if (cleanBase.endsWith("/")) {
-            cleanBase = cleanBase.substring(0, cleanBase.length() - 1);
-        }
-        return cleanBase + "/auth/activar?token=" + token;
+        return resolveCleanBase() + "/auth/activar?token=" + token;
     }
 
     private PasswordResetToken createToken(Usuario usuario) {

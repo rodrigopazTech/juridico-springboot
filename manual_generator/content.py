@@ -66,7 +66,7 @@ SCREENS_CONTENT = {
             ("Enlace ¿Olvidaste tu contraseña?", "Permite solicitar el restablecimiento de contraseña al correo registrado."),
         ],
         "pasos": [
-            "Abra su navegador web actualizado (Google Chrome v90+, Microsoft Edge v90+, Mozilla Firefox v88+ o Safari v14+) y acceda a la dirección: siaj.finabien.gob.mx",
+            "Abra su navegador web actualizado (Google Chrome v90+, Microsoft Edge v90+, Mozilla Firefox v88+ o Safari v14+) y acceda a la dirección: siaj.finabien",
             "Ingrese su nombre de usuario en el campo 'Usuario'.",
             "Ingrese su contraseña idónea en el campo 'Contraseña'.",
             "Haga clic en el botón 'Ingresar'.",
@@ -432,6 +432,6 @@ FAQ = [
 # ─── DATOS DE CONTACTO ────────────────────────────────────────────────────────
 CONTACTO = {
     "area":   "Coordinación de Tecnologías de la Información",
-    "correo": "siaj@finabien.gob.mx",
-    "sistema":"siaj.finabien.gob.mx",
+    "correo": "siaj@finabien.gob.mx.gob.mx",
+    "sistema":"siaj.finabien",
 }

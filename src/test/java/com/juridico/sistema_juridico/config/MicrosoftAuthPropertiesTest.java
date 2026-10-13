@@ -2,6 +2,7 @@ package com.juridico.sistema_juridico.config;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -22,6 +23,14 @@ class MicrosoftAuthPropertiesTest {
 
         assertFalse(properties.isConfigured());
         assertFalse(properties.isVisibleInUi());
+    }
+
+    @Test
+    void redirectUriNormalizesLegacyDomainToSiajFinabien() {
+        MicrosoftAuthProperties properties = configuredProperties();
+        properties.setRedirectUri("https://siaj.finabien.gob.mx/auth/microsoft/callback");
+
+        assertEquals("https://siaj.finabien/auth/microsoft/callback", properties.getRedirectUri());
     }
 
     private MicrosoftAuthProperties configuredProperties() {

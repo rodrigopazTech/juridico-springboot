@@ -94,7 +94,7 @@ Ambos servidores de BD (`30.0.0.150` y `40.0.0.60`) operan con una estructura de
 * **Variables de Entorno:** `/etc/siaj/siaj.env`
 * **Configuración Hibernate:** `/home/ajappprod/siaj/config/application.properties` (`spring.jpa.hibernate.ddl-auto=validate`)
 * **Certificados SSL:** `/home/ajappprod/certs/` (permisos de carpeta `0700`, llaves `0600`)
-* **Nginx:** Proxy inverso en puerto 443 HTTPS hacia `http://127.0.0.1:8080` para `siaj.finabien.gob.mx`
+* **Nginx:** Proxy inverso en puerto 443 HTTPS hacia `http://127.0.0.1:8080` para `siaj.finabien`
 
 ### Servidor de Desarrollo (`30.0.0.151`):
 * **Binario JAR:** `/opt/siaj/app/sistema-juridico.jar`

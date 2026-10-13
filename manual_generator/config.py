@@ -14,7 +14,7 @@ OUTPUT_PATH     = os.path.join(BASE_DIR, "..", "Manual_Usuario_SIAJ_v1.0.docx")
 
 # ─── SERVIDOR ────────────────────────────────────────────────────────────────
 BASE_URL = "http://30.0.0.151"      # Servidor de pruebas (app corriendo)
-# BASE_URL = "http://siaj.finabien.gob.mx"  # Producción (cuando esté listo)
+# BASE_URL = "https://siaj.finabien"  # Producción (cuando esté listo)
 
 # ─── CREDENCIALES ROL ABOGADO Y ADMIN ─────────────────────────────────────────
 LOGIN_USER = "qa.abogado"
