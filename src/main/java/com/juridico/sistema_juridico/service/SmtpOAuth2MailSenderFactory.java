@@ -24,10 +24,10 @@ public class SmtpOAuth2MailSenderFactory {
     @Value("${spring.mail.properties.mail.smtp.connectiontimeout:10000}")
     private int connectionTimeout;
 
-    @Value("${spring.mail.properties.mail.smtp.timeout:10000}")
+    @Value("${spring.mail.properties.mail.smtp.timeout:25000}")
     private int readTimeout;
 
-    @Value("${spring.mail.properties.mail.smtp.writetimeout:10000}")
+    @Value("${spring.mail.properties.mail.smtp.writetimeout:15000}")
     private int writeTimeout;
 
     public SmtpOAuth2MailSenderFactory(SmtpOAuth2AccessTokenProvider accessTokenProvider) {
@@ -56,6 +56,7 @@ public class SmtpOAuth2MailSenderFactory {
         mail.put("mail.smtp.connectiontimeout", String.valueOf(connectionTimeout));
         mail.put("mail.smtp.timeout", String.valueOf(readTimeout));
         mail.put("mail.smtp.writetimeout", String.valueOf(writeTimeout));
+        mail.put("mail.smtp.quitwait", "false");
         return sender;
     }
 }

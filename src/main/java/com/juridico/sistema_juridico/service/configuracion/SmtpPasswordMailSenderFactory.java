@@ -35,8 +35,8 @@ public class SmtpPasswordMailSenderFactory {
             @Value("${spring.mail.properties.mail.smtp.starttls.enable:true}") boolean startTls,
             @Value("${spring.mail.properties.mail.smtp.starttls.required:false}") boolean startTlsRequired,
             @Value("${spring.mail.properties.mail.smtp.connectiontimeout:10000}") int connectionTimeout,
-            @Value("${spring.mail.properties.mail.smtp.timeout:10000}") int readTimeout,
-            @Value("${spring.mail.properties.mail.smtp.writetimeout:10000}") int writeTimeout) {
+            @Value("${spring.mail.properties.mail.smtp.timeout:25000}") int readTimeout,
+            @Value("${spring.mail.properties.mail.smtp.writetimeout:15000}") int writeTimeout) {
         this.host = host;
         this.port = port;
         this.username = username;
@@ -64,6 +64,9 @@ public class SmtpPasswordMailSenderFactory {
         mail.put("mail.smtp.connectiontimeout", String.valueOf(connectionTimeout));
         mail.put("mail.smtp.timeout", String.valueOf(readTimeout));
         mail.put("mail.smtp.writetimeout", String.valueOf(writeTimeout));
+        mail.put("mail.smtp.quitwait", "false");
+        mail.put("mail.smtp.auth.mechanisms", "LOGIN PLAIN");
+        mail.put("mail.smtp.ssl.protocols", "TLSv1.2 TLSv1.3");
         return sender;
     }
 

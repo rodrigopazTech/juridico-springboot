@@ -111,11 +111,11 @@ public class PasswordResetEmailService implements PasswordResetMailer {
         }
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, false, StandardCharsets.UTF_8.name());
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, StandardCharsets.UTF_8.name());
             helper.setFrom(from);
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(html, true);
+            helper.setText(text, html);
             mailSender.send(mimeMessage);
             return true;
         } catch (Exception htmlError) {
