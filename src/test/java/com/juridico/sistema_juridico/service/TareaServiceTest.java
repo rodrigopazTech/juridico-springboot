@@ -1,6 +1,7 @@
 package com.juridico.sistema_juridico.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -125,6 +126,56 @@ class TareaServiceTest {
         when(recordatorioRepository.findByIdAndUsuario(99, usuario)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> tareaService.actualizar(99, request, usuario));
+    }
+
+    @Test
+    void toggleCompletadoAlternaDePendienteACompletado() {
+        Recordatorio existente = tareaExistente();
+        existente.setCompletado(false);
+        when(recordatorioRepository.findByIdAndUsuario(10, usuario)).thenReturn(Optional.of(existente));
+        when(recordatorioRepository.save(any(Recordatorio.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        boolean resultado = tareaService.toggleCompletado(10, usuario);
+
+        assertTrue(resultado);
+        assertTrue(existente.getCompletado());
+        verify(recordatorioRepository).save(existente);
+    }
+
+    @Test
+    void toggleCompletadoAlternaDeCompletadoAPendiente() {
+        Recordatorio existente = tareaExistente();
+        existente.setCompletado(true);
+        when(recordatorioRepository.findByIdAndUsuario(10, usuario)).thenReturn(Optional.of(existente));
+        when(recordatorioRepository.save(any(Recordatorio.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        boolean resultado = tareaService.toggleCompletado(10, usuario);
+
+        assertFalse(resultado);
+        assertFalse(existente.getCompletado());
+        verify(recordatorioRepository).save(existente);
+    }
+
+    @Test
+    void toggleCompletadoLanzaExcepcionSiNoExiste() {
+        when(recordatorioRepository.findByIdAndUsuario(99, usuario)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> tareaService.toggleCompletado(99, usuario));
+    }
+
+    @Test
+    void eliminarBorraTareaExistente() {
+        Recordatorio existente = tareaExistente();
+        when(recordatorioRepository.findByIdAndUsuario(10, usuario)).thenReturn(Optional.of(existente));
+
+        tareaService.eliminar(10, usuario);
+
+        verify(recordatorioRepository).delete(existente);
+    }
+
+    @Test
+    void eliminarLanzaExcepcionSiNoExiste() {
+        when(recordatorioRepository.findByIdAndUsuario(99, usuario)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> tareaService.eliminar(99, usuario));
     }
 
     private RecordatorioRequest requestFuturo(LocalDate fecha, LocalTime hora) {

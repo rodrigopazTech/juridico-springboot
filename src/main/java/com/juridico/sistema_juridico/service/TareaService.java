@@ -95,6 +95,24 @@ public class TareaService {
         return recordatorioRepository.save(recordatorio);
     }
 
+    @Transactional
+    public boolean toggleCompletado(Integer id, Usuario usuario) {
+        Recordatorio recordatorio = recordatorioRepository.findByIdAndUsuario(id, usuario)
+                .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada."));
+        boolean nuevoEstado = !Boolean.TRUE.equals(recordatorio.getCompletado());
+        recordatorio.setCompletado(nuevoEstado);
+        recordatorio.setUpdatedAt(LocalDateTime.now());
+        recordatorioRepository.save(recordatorio);
+        return nuevoEstado;
+    }
+
+    @Transactional
+    public void eliminar(Integer id, Usuario usuario) {
+        Recordatorio recordatorio = recordatorioRepository.findByIdAndUsuario(id, usuario)
+                .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada."));
+        recordatorioRepository.delete(recordatorio);
+    }
+
     private void validarProgramacion(RecordatorioRequest request) {
         if (request == null || request.getFechaRecordatorio() == null || request.getHoraRecordatorio() == null) {
             throw new BadRequestException("La fecha y la hora son obligatorias.");

@@ -109,19 +109,26 @@ public class TareasController {
     }
 
     @GetMapping("/completar/{id}")
-    public String completar(@PathVariable("id") Integer id) {
-        Usuario usuario = getUsuarioActual();
-        recordatorioRepository.findByIdAndUsuario(id, usuario).ifPresent(r -> {
-            r.setCompletado(true);
-            recordatorioRepository.save(r);
-        });
+    public String completar(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
+        try {
+            boolean nuevoEstado = tareaService.toggleCompletado(id, getUsuarioActual());
+            redirectAttrs.addFlashAttribute("mensaje", nuevoEstado ? "Tarea marcada como completada." : "Tarea desmarcada como completada.");
+            redirectAttrs.addFlashAttribute("tipo", "success");
+        } catch (ResourceNotFoundException ex) {
+            return redirigirConError(ex.getMessage(), redirectAttrs);
+        }
         return "redirect:/tareas";
     }
 
     @GetMapping("/eliminar/{id}")
     public String eliminar(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
-        Usuario usuario = getUsuarioActual();
-        recordatorioRepository.findByIdAndUsuario(id, usuario).ifPresent(recordatorioRepository::delete);
+        try {
+            tareaService.eliminar(id, getUsuarioActual());
+            redirectAttrs.addFlashAttribute("mensaje", "Tarea eliminada correctamente.");
+            redirectAttrs.addFlashAttribute("tipo", "success");
+        } catch (ResourceNotFoundException ex) {
+            return redirigirConError(ex.getMessage(), redirectAttrs);
+        }
         return "redirect:/tareas";
     }
 

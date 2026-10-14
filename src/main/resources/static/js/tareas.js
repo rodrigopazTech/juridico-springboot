@@ -131,28 +131,34 @@ function formatearFechaInput(fecha) {
     return `${anio}-${mes}-${dia}`;
 }
 
-// Función para completar tarea
+// Función para alternar (completar o desmarcar) tarea
 function toggleTarea(id) {
     window.location.href = `/tareas/completar/${id}`;
 }
 
 // Confirmación para eliminar
 function confirmarEliminarTarea(id) {
-    Swal.fire({
-        title: '¿Eliminar tarea?',
-        text: "Esta acción no se puede deshacer.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#bc955c', // Oro Gob
-        cancelButtonColor: '#691c32',  // Guinda Gob
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: '¿Eliminar tarea?',
+            text: "Esta acción no se puede deshacer.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#bc955c', // Oro Gob
+            cancelButtonColor: '#691c32',  // Guinda Gob
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = `/tareas/eliminar/${id}`;
+            }
+        });
+    } else {
+        if (confirm("¿Estás seguro de que deseas eliminar esta tarea?")) {
             window.location.href = `/tareas/eliminar/${id}`;
         }
-    });
-} // <-- Faltaba cerrar esta llave correctamente antes de iniciar la otra función
+    }
+}
 
 // Filtro interactivo para la tabla de tareas (AHORA SÍ ESTÁ GLOBAL)
 function filtrarTareas(estado, btnElement) {
