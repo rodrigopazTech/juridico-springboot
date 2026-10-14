@@ -78,7 +78,8 @@ public class UsuariosController {
     @GetMapping
     public String index(Model model,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "q", defaultValue = "") String q) {
+            @RequestParam(value = "q", defaultValue = "") String q,
+            @RequestParam(value = "estado", defaultValue = "activos") String estado) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuarioActual = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario actual no encontrado."));
@@ -99,50 +100,54 @@ public class UsuariosController {
         }
         boolean hayBusqueda = q != null && !q.trim().isEmpty();
 
-        if (hayBusqueda) {
-            if (!rolesConAccesoTotal.contains(usuarioActual.getRol())) {
-                List<Integer> gerenciasIds = usuarioActual.getGerencias().stream().map(g -> g.getId()).toList();
-                if (usuarioActual.getRol() == RolUsuario.GERENTE) {
-                    if (gerenciasIds.isEmpty()) {
-                        usuariosPage = Page.empty(pageUs);
-                    } else {
-                        usuariosPage = usuarioRepository.buscarPorKeywordYGerenciasInAndRolInAndIdNot(q.trim(), gerenciasIds, rolesVisibles, usuarioActual.getId(), pageUs);
-                    }
+                boolean soloActivos = !"inactivos".equalsIgnoreCase(estado);
+        boolean estadoActivo = soloActivos;
+        long totalActivos = 0;
+        long totalInactivos = 0;
+
+        if (!rolesConAccesoTotal.contains(usuarioActual.getRol())) {
+            List<Integer> gerenciasIds = usuarioActual.getGerencias().stream().map(g -> g.getId()).toList();
+            if (usuarioActual.getRol() == RolUsuario.GERENTE) {
+                if (gerenciasIds.isEmpty()) {
+                    usuariosPage = Page.empty(pageUs);
+                } else if (hayBusqueda) {
+                    usuariosPage = usuarioRepository.buscarPorKeywordYGerenciasInAndRolInAndActivoAndIdNot(q.trim(), gerenciasIds, rolesVisibles, estadoActivo, usuarioActual.getId(), pageUs);
                 } else {
-                    List<Integer> materiasIds = usuarioActual.getMaterias().stream().map(m -> m.getId()).toList();
-                    if (gerenciasIds.isEmpty() || materiasIds.isEmpty()) {
-                        usuariosPage = Page.empty(pageUs);
-                    } else {
-                        usuariosPage = usuarioRepository.buscarPorKeywordYGerenciasInAndMateriasInAndRolInAndIdNot(q.trim(), gerenciasIds, materiasIds, rolesVisibles, usuarioActual.getId(), pageUs);
-                    }
+                    usuariosPage = usuarioRepository.findDistinctByGerenciasIdInAndRolInAndActivoAndIdNot(gerenciasIds, rolesVisibles, estadoActivo, usuarioActual.getId(), pageUs);
+                }
+                if (!gerenciasIds.isEmpty()) {
+                    totalActivos = usuarioRepository.countDistinctByGerenciasIdInAndRolInAndActivoAndIdNot(gerenciasIds, rolesVisibles, true, usuarioActual.getId());
+                    totalInactivos = usuarioRepository.countDistinctByGerenciasIdInAndRolInAndActivoAndIdNot(gerenciasIds, rolesVisibles, false, usuarioActual.getId());
                 }
             } else {
-                usuariosPage = usuarioRepository.buscarPorKeywordAndRolInAndIdNot(q.trim(), rolesVisibles, usuarioActual.getId(), pageUs);
+                List<Integer> materiasIds = usuarioActual.getMaterias().stream().map(m -> m.getId()).toList();
+                if (gerenciasIds.isEmpty() || materiasIds.isEmpty()) {
+                    usuariosPage = Page.empty(pageUs);
+                } else if (hayBusqueda) {
+                    usuariosPage = usuarioRepository.buscarPorKeywordYGerenciasInAndMateriasInAndRolInAndActivoAndIdNot(q.trim(), gerenciasIds, materiasIds, rolesVisibles, estadoActivo, usuarioActual.getId(), pageUs);
+                } else {
+                    usuariosPage = usuarioRepository.findDistinctByGerenciasIdInAndMateriasIdInAndRolInAndActivoAndIdNot(gerenciasIds, materiasIds, rolesVisibles, estadoActivo, usuarioActual.getId(), pageUs);
+                }
+                if (!gerenciasIds.isEmpty() && !materiasIds.isEmpty()) {
+                    totalActivos = usuarioRepository.countDistinctByGerenciasIdInAndMateriasIdInAndRolInAndActivoAndIdNot(gerenciasIds, materiasIds, rolesVisibles, true, usuarioActual.getId());
+                    totalInactivos = usuarioRepository.countDistinctByGerenciasIdInAndMateriasIdInAndRolInAndActivoAndIdNot(gerenciasIds, materiasIds, rolesVisibles, false, usuarioActual.getId());
+                }
             }
         } else {
-            if (!rolesConAccesoTotal.contains(usuarioActual.getRol())) {
-                List<Integer> gerenciasIds = usuarioActual.getGerencias().stream().map(g -> g.getId()).toList();
-                if (usuarioActual.getRol() == RolUsuario.GERENTE) {
-                    if (gerenciasIds.isEmpty()) {
-                        usuariosPage = Page.empty(pageUs);
-                    } else {
-                        usuariosPage = usuarioRepository.findDistinctByGerenciasIdInAndRolInAndIdNot(gerenciasIds, rolesVisibles, usuarioActual.getId(), pageUs);
-                    }
-                } else {
-                    List<Integer> materiasIds = usuarioActual.getMaterias().stream().map(m -> m.getId()).toList();
-                    if (gerenciasIds.isEmpty() || materiasIds.isEmpty()) {
-                        usuariosPage = Page.empty(pageUs);
-                    } else {
-                        usuariosPage = usuarioRepository.findDistinctByGerenciasIdInAndMateriasIdInAndRolInAndIdNot(gerenciasIds, materiasIds, rolesVisibles, usuarioActual.getId(), pageUs);
-                    }
-                }
+            if (hayBusqueda) {
+                usuariosPage = usuarioRepository.buscarPorKeywordAndRolInAndActivoAndIdNot(q.trim(), rolesVisibles, estadoActivo, usuarioActual.getId(), pageUs);
             } else {
-                usuariosPage = usuarioRepository.findByRolInAndIdNot(rolesVisibles, usuarioActual.getId(), pageUs);
+                usuariosPage = usuarioRepository.findByRolInAndActivoAndIdNot(rolesVisibles, estadoActivo, usuarioActual.getId(), pageUs);
             }
+            totalActivos = usuarioRepository.countByRolInAndActivoAndIdNot(rolesVisibles, true, usuarioActual.getId());
+            totalInactivos = usuarioRepository.countByRolInAndActivoAndIdNot(rolesVisibles, false, usuarioActual.getId());
         }
 
         model.addAttribute("listaUsuarios", usuariosPage);
         model.addAttribute("q", q);
+        model.addAttribute("estado", soloActivos ? "activos" : "inactivos");
+        model.addAttribute("totalActivos", totalActivos);
+        model.addAttribute("totalInactivos", totalInactivos);
         model.addAttribute("coincidenciasBusqueda",
                 hayBusqueda ? construirCoincidenciasBusqueda(usuariosPage.getContent(), q.trim()) : Collections.emptyMap());
 
@@ -219,8 +224,10 @@ public class UsuariosController {
         return "redirect:/usuarios";
     }
 
-    @GetMapping("/toggle/{id}")
-    public String toggleStatusUsuario(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
+        @GetMapping("/toggle/{id}")
+    public String toggleStatusUsuario(@PathVariable("id") Integer id,
+            @RequestParam(value = "estado", required = false) String estadoParam,
+            RedirectAttributes redirectAttrs) {
         Usuario usuario = usuarioService.buscarPorId(id);
         validarPuedeVerUsuario(usuario);
         boolean nuevoEstado = !Boolean.TRUE.equals(usuario.getActivo());
@@ -228,7 +235,8 @@ public class UsuariosController {
         String estado = nuevoEstado ? "activado" : "desactivado";
         redirectAttrs.addFlashAttribute("mensaje", "Usuario " + estado + " correctamente.");
         redirectAttrs.addFlashAttribute("tipo", "success");
-        return "redirect:/usuarios";
+        String destino = estadoParam != null ? estadoParam : (nuevoEstado ? "activos" : "inactivos");
+        return "redirect:/usuarios?estado=" + destino;
     }
 
     @GetMapping("/eliminar/{id}")

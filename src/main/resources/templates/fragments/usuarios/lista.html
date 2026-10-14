@@ -5,8 +5,28 @@
             class="w-full bg-gob-guinda text-white py-2.5 rounded-xl text-sm font-bold hover:bg-opacity-90 transition-colors shadow-sm flex justify-center items-center gap-2">
             <i class="fas fa-plus"></i> Agregar Usuario
         </button>
+
+        <!-- Selector de Estado: Activos / Desactivados -->
+        <div class="flex border border-gray-200 bg-gray-100/80 p-1 rounded-xl gap-1">
+            <a th:href="@{/usuarios(estado='activos', q=${q})}" 
+               th:classappend="${estado == 'activos' or estado == null ? 'bg-white text-gob-guinda font-bold shadow-sm' : 'text-gray-500 hover:text-gray-700 font-medium'}"
+               class="flex-1 text-center py-1.5 px-3 rounded-lg text-xs transition-all flex items-center justify-center gap-1.5">
+                <i class="fas fa-user-check text-emerald-600"></i>
+                <span>Activos</span>
+                <span class="ml-1 text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-bold" th:text="${totalActivos}">0</span>
+            </a>
+            <a th:href="@{/usuarios(estado='inactivos', q=${q})}" 
+               th:classappend="${estado == 'inactivos' ? 'bg-white text-gob-guinda font-bold shadow-sm' : 'text-gray-500 hover:text-gray-700 font-medium'}"
+               class="flex-1 text-center py-1.5 px-3 rounded-lg text-xs transition-all flex items-center justify-center gap-1.5">
+                <i class="fas fa-user-slash text-red-600"></i>
+                <span>Desactivados</span>
+                <span class="ml-1 text-[10px] bg-red-100 text-red-800 px-1.5 py-0.5 rounded-full font-bold" th:text="${totalInactivos}">0</span>
+            </a>
+        </div>
+
         <!-- Búsqueda en servidor: al presionar Enter o hacer clic en la lupa se envía el formulario -->
         <form method="get" th:action="@{/usuarios}" class="relative flex items-center gap-2">
+            <input type="hidden" name="estado" th:value="${estado}">
             <div class="relative flex-1">
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
                 <input type="text" name="q" id="input-search-usuarios"
@@ -20,7 +40,7 @@
                 title="Buscar">
                 <i class="fas fa-search"></i>
             </button>
-            <a th:if="${q != null and !#strings.isEmpty(q)}" th:href="@{/usuarios}"
+            <a th:if="${q != null and !#strings.isEmpty(q)}" th:href="@{/usuarios(estado=${estado})}"
                 class="px-3 py-2 bg-gray-200 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-300 transition-colors flex-shrink-0"
                 title="Limpiar búsqueda">
                 <i class="fas fa-times"></i>
@@ -42,6 +62,10 @@
             <p th:if="${q != null and !#strings.isEmpty(q)}" class="text-xs mt-1">
                 No se encontraron usuarios para "<span th:text="${q}"></span>"
             </p>
+            <p th:unless="${q != null and !#strings.isEmpty(q)}" class="text-xs mt-1">
+                <span th:if="${estado == 'inactivos'}">No hay usuarios desactivados en el sistema.</span>
+                <span th:unless="${estado == 'inactivos'}">No hay usuarios activos registrados.</span>
+            </p>
         </div>
 
         <button th:each="u : ${listaUsuarios.content}"
@@ -52,7 +76,7 @@
             th:data-telefono-movil="${u.telefonoMovil}" th:data-ubicacion-oficina="${u.ubicacionOficina}"
             th:data-microsoft-login-enabled="${u.microsoftLoginEnabled}"
             th:data-gerencias-ids="${#strings.listJoin(u.gerencias.![id], ',')}"
-            th:data-gerencia-nombre="${u.gerencia != null ? u.gerencia.nombre : 'Sin Gerencia'}"
+            th:data-gerencia-nombre="${u.gerencia != null ? u.gerencia.nombre : (u.rol.name() == 'ADMIN' or u.rol.name() == 'DIRECTOR_PRINCIPAL' or u.rol.name() == 'DIRECTOR' or u.rol.name() == 'SUBDIRECTOR' ? 'Direccion de Juridico' : 'Sin Gerencia')}"
             th:data-activo="${u.activo}" th:data-materias-ids="${#strings.listJoin(u.materias.![id], ',')}"
             th:data-materias-nombres="${#strings.listJoin(u.materias.![nombre], '|')}"
             onclick="seleccionarAbogado(this)"
@@ -80,15 +104,23 @@
                         class="bg-gray-100 text-gray-600 text-[9px] font-extrabold px-1.5 py-0.5 rounded border border-gray-200"
                         th:text="${u.rol}">ROL</span>
 
-                    <th:block th:each="materia, iter : ${u.materias}" th:if="${iter.index < 2}">
-                        <span
-                            class="bg-yellow-50 text-yellow-700 border border-yellow-200 text-[9px] font-extrabold px-1.5 py-0.5 rounded inline-block truncate max-w-[80px]"
-                            th:text="${materia.nombre}">Materia</span>
-                    </th:block>
+                    <!-- Badge para Directivos sin Gerencia -->
+                    <span th:if="${u.rol.name() == 'ADMIN' or u.rol.name() == 'DIRECTOR_PRINCIPAL' or u.rol.name() == 'DIRECTOR' or u.rol.name() == 'SUBDIRECTOR' or u.gerencia == null}"
+                        class="bg-blue-50 text-blue-800 border border-blue-200 text-[9px] font-extrabold px-1.5 py-0.5 rounded inline-block truncate max-w-[140px]"
+                        title="Direccion de Juridico"><i class="fas fa-landmark mr-1"></i>Direccion de Juridico</span>
 
-                    <span th:if="${u.materias.size() > 2}"
-                        class="bg-gray-100 text-gray-600 text-[9px] font-bold px-1.5 py-0.5 rounded border border-gray-200">+[[${u.materias.size()
-                        - 2}]] MÁS</span>
+                    <!-- Materias solo para no directivos con gerencia -->
+                    <th:block th:unless="${u.rol.name() == 'ADMIN' or u.rol.name() == 'DIRECTOR_PRINCIPAL' or u.rol.name() == 'DIRECTOR' or u.rol.name() == 'SUBDIRECTOR' or u.gerencia == null}">
+                        <th:block th:each="materia, iter : ${u.materias}" th:if="${iter.index < 2}">
+                            <span
+                                class="bg-yellow-50 text-yellow-700 border border-yellow-200 text-[9px] font-extrabold px-1.5 py-0.5 rounded inline-block truncate max-w-[80px]"
+                                th:text="${materia.nombre}">Materia</span>
+                        </th:block>
+
+                        <span th:if="${u.materias.size() > 2}"
+                            class="bg-gray-100 text-gray-600 text-[9px] font-bold px-1.5 py-0.5 rounded border border-gray-200">+[[${u.materias.size()
+                            - 2}]] MÁS</span>
+                    </th:block>
                 </div>
                 <div th:if="${coincidencia != null}"
                     class="mt-2 rounded-md border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] text-blue-900">
@@ -103,16 +135,16 @@
         </button>
     </div>
 
-    <!-- Paginación — incluye el parámetro q para conservar la búsqueda al paginar -->
+    <!-- Paginación — incluye los parámetros q y estado para conservar el filtro al paginar -->
     <div class="p-3 border-t border-gray-100 bg-white flex justify-between items-center text-xs text-gray-500 flex-shrink-0"
         th:if="${!listaUsuarios.empty}">
         <a th:if="${listaUsuarios.hasPrevious()}"
-            th:href="@{/usuarios(page=${listaUsuarios.number - 1}, q=${q})}"
+            th:href="@{/usuarios(page=${listaUsuarios.number - 1}, q=${q}, estado=${estado})}"
             class="hover:text-gob-guinda"><i class="fas fa-chevron-left mr-1"></i> Ant</a>
         <span th:unless="${listaUsuarios.hasPrevious()}"></span>
         <span>Pág. [[${listaUsuarios.number + 1}]] / [[${listaUsuarios.totalPages}]]</span>
         <a th:if="${listaUsuarios.hasNext()}"
-            th:href="@{/usuarios(page=${listaUsuarios.number + 1}, q=${q})}"
+            th:href="@{/usuarios(page=${listaUsuarios.number + 1}, q=${q}, estado=${estado})}"
             class="hover:text-gob-guinda">Sig <i class="fas fa-chevron-right ml-1"></i></a>
         <span th:unless="${listaUsuarios.hasNext()}"></span>
     </div>

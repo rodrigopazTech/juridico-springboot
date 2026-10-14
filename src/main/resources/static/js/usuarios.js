@@ -1,3 +1,7 @@
+function esRolDirectivo(rol) {
+    return ['ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR'].includes(rol);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Usuarios cargados");
     const formulario = document.getElementById('form-editar-abogado');
@@ -23,10 +27,15 @@ let creandoUsuario = false;
 
 function validarAsignacionFormulario(event) {
     const rol = document.getElementById('det-select-rol')?.value || '';
-    const gerencias = Array.from(document.getElementById('det-select-usuario-gerencia')?.selectedOptions || []);
-    const materias = document.querySelectorAll('#det-lista-materias-checkboxes input[name="materiasIds"]:checked');
     const error = document.getElementById('det-asignacion-error');
     if (error) error.classList.add('hidden');
+
+    if (esRolDirectivo(rol)) {
+        return; // Directivos no requieren área ni materias
+    }
+
+    const gerencias = Array.from(document.getElementById('det-select-usuario-gerencia')?.selectedOptions || []);
+    const materias = document.querySelectorAll('#det-lista-materias-checkboxes input[name="materiasIds"]:checked');
 
     let mensaje = '';
     if (gerencias.length !== 1 || !gerencias[0].value) {
@@ -56,7 +65,7 @@ function actualizarNombreUsuarioGenerado() {
     const inputUsername = document.getElementById('det-input-username');
     if (!inputUsername) return;
 
-    if (!nombre || !numeroEmpleado || !rol || !area) {
+    if (!nombre || !numeroEmpleado || !rol || (!esRolDirectivo(rol) && !area)) {
         inputUsername.value = '';
         return;
     }
@@ -157,7 +166,13 @@ function seleccionarAbogado(cardElement) {
 
     // Badges
     let badgesHtml = `<span class="bg-white/10 border border-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">${rol}</span>`;
-    badgesHtml += `<span class="bg-white/10 border border-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fas fa-building mr-1"></i>${gerenciaNombre}</span>`;
+    if (esRolDirectivo(rol)) {
+        badgesHtml += `<span class="bg-blue-500/30 border border-blue-400/50 text-blue-100 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fas fa-landmark mr-1"></i>Direccion de Juridico</span>`;
+    } else if (gerenciaNombre && gerenciaNombre !== 'Sin Gerencia') {
+        badgesHtml += `<span class="bg-white/10 border border-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fas fa-building mr-1"></i>${gerenciaNombre}</span>`;
+    } else {
+        badgesHtml += `<span class="bg-white/10 border border-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fas fa-building mr-1"></i>Sin Gerencia</span>`;
+    }
 
     if (activo) {
         badgesHtml += `<span class="bg-green-500/20 border border-green-400/50 text-green-300 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fas fa-check-circle mr-1"></i>Activo</span>`;
@@ -172,12 +187,14 @@ function seleccionarAbogado(cardElement) {
         badgesHtml += '<span class="bg-amber-500/20 border border-amber-400/50 text-amber-100 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"><i class="fas fa-envelope mr-1"></i>Activacion pendiente</span>';
     }
 
-    // Materias
-    materiasNombres.forEach(m => {
-        if (m.trim() !== '') {
-            badgesHtml += `<span class="bg-yellow-500/20 border border-yellow-500/50 text-yellow-300 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">${m}</span>`;
-        }
-    });
+    // Materias (solo para operativos)
+    if (!esRolDirectivo(rol)) {
+        materiasNombres.forEach(m => {
+            if (m.trim() !== '') {
+                badgesHtml += `<span class="bg-yellow-500/20 border border-yellow-500/50 text-yellow-300 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">${m}</span>`;
+            }
+        });
+    }
 
     document.getElementById('det-badges').innerHTML = badgesHtml;
 
@@ -518,13 +535,16 @@ function actualizarFormularioPorRol() {
     const selectRol = document.getElementById('select-usuario-rol');
     if (!selectRol) return;
     const rol = selectRol.value;
+    const seccionAsignacion = document.getElementById('seccion-asignacion');
     const divGerencia = document.getElementById('div-gerencia-asignada');
     const contenedorMaterias = document.getElementById('contenedor-materias');
 
-    if (rol === 'ADMIN' || rol === 'DIRECTOR_PRINCIPAL' || rol === 'DIRECTOR' || rol === 'SUBDIRECTOR') {
+    if (esRolDirectivo(rol)) {
+        if (seccionAsignacion) seccionAsignacion.classList.add('hidden');
         if (divGerencia) divGerencia.classList.add('hidden');
         if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
     } else {
+        if (seccionAsignacion) seccionAsignacion.classList.remove('hidden');
         const creadorRol = window.usuarioActual ? window.usuarioActual.rol : '';
         if (creadorRol !== 'GERENTE' && creadorRol !== 'JEFE_DEPTO') {
             if (divGerencia) divGerencia.classList.remove('hidden');
@@ -815,13 +835,15 @@ function eliminarUsuarioDesdeModal() {
 }
 
 function confirmarCambioEstatus(id) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const estadoActual = urlParams.get('estado') || 'activos';
     abrirModalConfirmarGenerico({
         titulo: '¿Cambiar acceso al sistema?',
         texto: 'El usuario perderá/recuperará acceso a la plataforma.',
         advertencia: 'El cambio afectará la disponibilidad del registro en el sistema.',
         esPeligro: false,
         callback: () => {
-            window.location.href = `/usuarios/toggle/${id}`;
+            window.location.href = `/usuarios/toggle/${id}?estado=${encodeURIComponent(estadoActual)}`;
         }
     });
 }
@@ -1063,12 +1085,23 @@ function actualizarFormularioEdicionPorRol() {
     const selectRol = document.getElementById('det-select-rol');
     if (!selectRol) return;
     const rol = selectRol.value;
+    const divGerencia = document.getElementById('det-div-gerencia-asignada');
+    const selectGerencias = document.getElementById('det-select-usuario-gerencia');
     const contenedorMaterias = document.getElementById('det-contenedor-materias');
+    const seccionAsignacion = document.getElementById('det-seccion-asignacion');
 
-    if (rol === 'ADMIN' || rol === 'DIRECTOR_PRINCIPAL' || rol === 'DIRECTOR' || rol === 'SUBDIRECTOR') {
+    if (esRolDirectivo(rol)) {
+        if (divGerencia) divGerencia.classList.add('hidden');
         if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
+        if (seccionAsignacion) seccionAsignacion.classList.add('hidden');
+        if (selectGerencias) {
+            selectGerencias.required = false;
+            selectGerencias.value = '';
+        }
     } else {
-        const selectGerencias = document.getElementById('det-select-usuario-gerencia');
+        if (divGerencia) divGerencia.classList.remove('hidden');
+        if (seccionAsignacion) seccionAsignacion.classList.remove('hidden');
+        if (selectGerencias) selectGerencias.required = true;
         const selectedGerencias = selectGerencias
             ? Array.from(selectGerencias.selectedOptions).filter(opt => opt.value)
             : [];
@@ -1078,8 +1111,6 @@ function actualizarFormularioEdicionPorRol() {
             if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
         }
     }
-    const selectGerencias = document.getElementById('det-select-usuario-gerencia');
-    if (selectGerencias) selectGerencias.required = true;
     cargarMateriasDeGerenciaEdicion();
 }
 

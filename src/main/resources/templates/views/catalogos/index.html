@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
@@ -195,62 +195,112 @@
     </style>
 </head>
 
-<body class="bg-gray-50 text-gray-800 font-sans">
+<body class="bg-gray-50 text-gray-800 font-sans overflow-x-hidden">
 
+    <!-- Sidebar Fragment -->
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <main class="catalogos-shell p-4 sm:p-6 sm:ml-64 !pt-[100px] sm:!pt-[110px] md:!pt-[116px]">
+    <div class="sm:ml-64 flex flex-col min-h-screen">
+        <!-- Navbar Fragment -->
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-        <!-- ====== HEADER ====== -->
+        <!-- Main Content -->
+        <main class="p-4 sm:p-6 flex-1 !pt-[90px] sm:!pt-[96px] md:!pt-[104px]">
+            <div class="catalogos-shell w-full max-w-[1440px] mx-auto">
+
+                <!-- ====== HEADER ====== -->
         <div class="catalogos-hero rounded-lg p-5 sm:p-6 mb-5">
-            <div class="flex flex-wrap items-center gap-2 mb-3">
-                <span class="inline-flex items-center gap-2 rounded-md bg-gob-guinda/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-gob-guinda">
-                    <i class="fas fa-database text-gob-oro"></i> Gobierno de datos
-                </span>
-                <span th:if="${gerenciaSeleccionada != null}"
-                    class="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800">
-                    <i class="fas fa-building"></i>
-                    <span th:text="${gerenciaSeleccionada.nombre}">Gerencia</span>
-                </span>
-                <span class="inline-flex items-center gap-2 rounded-md px-3 py-1 text-xs font-bold"
-                    th:classappend="${puedeEditar} ? 'bg-gob-guinda text-white' : 'bg-gray-100 text-gray-600'">
-                    <i th:class="${puedeEditar} ? 'fas fa-pen' : 'fas fa-eye'"></i>
-                    <span th:text="${puedeEditar} ? 'Lectura y escritura' : 'Solo consulta'">Permiso</span>
-                </span>
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="inline-flex items-center gap-2 rounded-md bg-gob-guinda/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-gob-guinda">
+                        <i class="fas fa-database text-gob-oro"></i> Gobierno de datos
+                    </span>
+                    <span th:if="${gerenciaSeleccionada != null}"
+                        class="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800">
+                        <i class="fas fa-building"></i>
+                        <span th:text="${gerenciaSeleccionada.nombre}">Gerencia</span>
+                    </span>
+                    <span th:if="${gerenciaSeleccionada != null and !gerenciaSeleccionada.activo}"
+                        class="inline-flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-3 py-1 text-xs font-bold text-red-800">
+                        <i class="fas fa-ban"></i> Inactiva
+                    </span>
+                    <span class="inline-flex items-center gap-2 rounded-md px-3 py-1 text-xs font-bold"
+                        th:classappend="${puedeEditar} ? 'bg-gob-guinda text-white' : 'bg-gray-100 text-gray-600'">
+                        <i th:class="${puedeEditar} ? 'fas fa-pen' : 'fas fa-eye'"></i>
+                        <span th:text="${puedeEditar} ? 'Lectura y escritura' : 'Solo consulta'">Permiso</span>
+                    </span>
+                </div>
+
+                <!-- Acciones sobre la gerencia seleccionada (Directores y Administradores) -->
+                <div th:if="${esNivelAlto and gerenciaSeleccionada != null}" class="flex flex-wrap items-center gap-2">
+                    <button type="button"
+                        th:data-id="${gerenciaSeleccionada.id}"
+                        th:data-nombre="${gerenciaSeleccionada.nombre}"
+                        th:data-descripcion="${gerenciaSeleccionada.descripcion != null ? gerenciaSeleccionada.descripcion : ''}"
+                        th:data-activo="${gerenciaSeleccionada.activo}"
+                        onclick="abrirModalEditarGerencia(this)"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
+                        title="Editar nombre y descripción de la gerencia seleccionada">
+                        <i class="fas fa-edit text-gob-oro"></i> Editar Gerencia
+                    </button>
+                    <button type="button"
+                        th:data-id="${gerenciaSeleccionada.id}"
+                        th:data-nombre="${gerenciaSeleccionada.nombre}"
+                        th:data-activo="${gerenciaSeleccionada.activo}"
+                        onclick="confirmarToggleGerencia(this)"
+                        class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold shadow-sm transition-colors"
+                        th:classappend="${gerenciaSeleccionada.activo} ? 'border-red-200 bg-white text-red-700 hover:bg-red-50' : 'border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50'"
+                        th:title="${gerenciaSeleccionada.activo ? 'Desactivar gerencia seleccionada' : 'Activar gerencia seleccionada'}">
+                        <i class="fas" th:classappend="${gerenciaSeleccionada.activo} ? 'fa-ban text-red-600' : 'fa-check text-emerald-600'"></i>
+                        <span th:text="${gerenciaSeleccionada.activo ? 'Desactivar Gerencia' : 'Activar Gerencia'}">Desactivar</span>
+                    </button>
+                </div>
             </div>
             <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-normal flex items-center gap-3">
                 <i class="fas fa-cogs text-gob-oro"></i> Cat&aacute;logos
             </h1>
-            <p class="text-base text-gray-500 mt-2 max-w-2xl">Gestiona los catálogos del sistema organizados por
+            <p class="text-base text-gray-500 mt-2 max-w-2xl">Gestiona los cat&aacute;logos del sistema organizados por
                 gerencia.</p>
             <div th:if="${gerenciaSeleccionada != null}"
                 class="mt-4 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
                 <i class="fas fa-triangle-exclamation mt-0.5 text-amber-700"></i>
-                <p><strong>Impacto compartido:</strong> cualquier alta, edición o cambio de estado se aplicará a todos los usuarios de
+                <p><strong>Impacto compartido:</strong> cualquier alta, edici&oacute;n o cambio de estado se aplicar&aacute; a todos los usuarios de
                     <span class="font-bold" th:text="${gerenciaSeleccionada.nombre}">esta gerencia</span>.</p>
             </div>
         </div>
 
         <!-- ====== SELECTOR DE GERENCIA ====== -->
         <div class="mb-5 rounded-lg border border-gray-200 bg-white p-4" th:if="${gerenciasDisponibles != null && !gerenciasDisponibles.isEmpty()}">
-            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-                <i class="fas fa-building mr-1"></i>
-                <span th:if="${esNivelAlto}">Seleccionar Gerencia</span>
-                <span th:unless="${esNivelAlto}">Tu Gerencia</span>
-            </label>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <i class="fas fa-building mr-1"></i>
+                    <span th:if="${esNivelAlto}">Seleccionar Gerencia</span>
+                    <span th:unless="${esNivelAlto}">Tu Gerencia</span>
+                </label>
+                <div class="flex items-center gap-2" th:if="${esNivelAlto}">
+                    <button type="button" onclick="abrirModalNuevaGerencia()"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-gob-guinda px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-[#4f0d1e] transition-colors">
+                        <i class="fas fa-plus"></i> Nueva Gerencia
+                    </button>
+                </div>
+            </div>
             <div class="flex gap-3 overflow-x-auto pb-1">
                 <a th:each="g : ${gerenciasDisponibles}" th:href="@{/catalogos(gerenciaId=${g.id})}"
                     th:classappend="${gerenciaSeleccionada != null && gerenciaSeleccionada.id == g.id ? 'card-gerencia-active' : ''}"
-                    class="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center gap-3 hover:border-gob-oro/60 transition-all cursor-pointer group min-w-[220px]">
-                    <div
-                        class="p-2 bg-gob-guinda/10 text-gob-guinda rounded-lg group-hover:scale-110 transition-transform">
-                        <i class="fas fa-building"></i>
+                    class="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center justify-between gap-3 hover:border-gob-oro/60 transition-all cursor-pointer group min-w-[240px]">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div
+                            class="p-2 bg-gob-guinda/10 text-gob-guinda rounded-lg group-hover:scale-110 transition-transform flex-shrink-0">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="font-bold text-gray-800 text-sm truncate" th:text="${g.nombre}">Gerencia</div>
+                            <div class="text-[10px] text-gray-400 uppercase tracking-wider">Gerencia</div>
+                        </div>
                     </div>
-                    <div>
-                        <div class="font-bold text-gray-800 text-sm" th:text="${g.nombre}">Gerencia</div>
-                        <div class="text-[10px] text-gray-400 uppercase tracking-wider">Gerencia</div>
-                    </div>
+                    <span th:if="${!g.activo}" class="text-[9px] bg-red-100 text-red-700 font-extrabold px-1.5 py-0.5 rounded border border-red-200 flex-shrink-0">
+                        INACTIVA
+                    </span>
                 </a>
             </div>
         </div>
@@ -1018,7 +1068,9 @@
             <p class="text-sm text-gray-400 mt-1">Elige la gerencia cuyo catálogo deseas consultar.</p>
         </div>
 
-    </main>
+            </div> <!-- End catalogos-shell -->
+        </main>
+    </div> <!-- End sm:ml-64 flex flex-col min-h-screen -->
 
     <!-- ====== MODAL UNIVERSAL ====== -->
     <div id="modal-catalogo"
@@ -1172,6 +1224,54 @@
         </div>
     </div>
 
+    <!-- ====== MODAL GERENCIA ====== -->
+    <div id="modal-gerencia"
+        class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
+            <div class="px-6 py-4 flex justify-between items-center bg-gob-guinda text-white">
+                <h3 id="modal-gerencia-titulo" class="text-base font-bold flex items-center gap-2">
+                    <i class="fas fa-building text-gob-oro"></i> Nueva Gerencia
+                </h3>
+                <button type="button" onclick="cerrarModalGerencia()" class="text-white/80 hover:text-white transition-colors">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            <form th:action="@{/catalogos/gerencias/guardar}" method="post" class="p-6 space-y-4">
+                <input type="hidden" name="id" id="modal-gerencia-id" />
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nombre de la Gerencia *</label>
+                    <input type="text" name="nombre" id="modal-gerencia-nombre" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all"
+                        placeholder="Ej. Gerencia de lo Contencioso" />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Descripción</label>
+                    <textarea name="descripcion" id="modal-gerencia-descripcion" rows="3"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 outline-none transition-all"
+                        placeholder="Descripción de las funciones del área..."></textarea>
+                </div>
+
+                <div class="flex items-center gap-2 pt-2">
+                    <input type="checkbox" name="activo" id="modal-gerencia-activo" value="true" checked
+                        class="w-4 h-4 text-gob-guinda border-gray-300 rounded focus:ring-gob-oro">
+                    <label for="modal-gerencia-activo" class="text-xs font-bold text-gray-700">Gerencia Activa</label>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                    <button type="button" onclick="cerrarModalGerencia()"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm hover:bg-gray-50 font-medium transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                        class="bg-gob-guinda text-white px-5 py-2 rounded-lg text-sm hover:bg-opacity-90 font-bold shadow-md transition-all flex items-center gap-1.5">
+                        <i class="fas fa-save"></i> Guardar Gerencia
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
     <script th:src="@{/js/catalogos.js}"></script>
     <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
 </body>

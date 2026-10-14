@@ -1,4 +1,4 @@
-/**
+/***
  * catalogos.js - Catálogos Generales (CRUD completo con AJAX)
  */
 
@@ -748,3 +748,79 @@ function editarTipoAudienciaCompleto(button) {
 }
 
 document.getElementById('form-tipo-audiencia-completo')?.addEventListener('submit', prepararTipoAudiencia);
+
+// ====================================================================
+// GESTIÓN DE GERENCIAS (MODAL Y TOGGLE)
+// ====================================================================
+function abrirModalNuevaGerencia() {
+    const titulo = document.getElementById('modal-gerencia-titulo');
+    if (titulo) titulo.innerHTML = '<i class="fas fa-building text-gob-oro mr-1"></i> Nueva Gerencia';
+    const idInput = document.getElementById('modal-gerencia-id');
+    if (idInput) idInput.value = '';
+    const nomInput = document.getElementById('modal-gerencia-nombre');
+    if (nomInput) nomInput.value = '';
+    const descInput = document.getElementById('modal-gerencia-descripcion');
+    if (descInput) descInput.value = '';
+    const actInput = document.getElementById('modal-gerencia-activo');
+    if (actInput) actInput.checked = true;
+
+    const modal = document.getElementById('modal-gerencia');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => nomInput?.focus(), 150);
+    }
+}
+
+function abrirModalEditarGerencia(btn) {
+    const titulo = document.getElementById('modal-gerencia-titulo');
+    if (titulo) titulo.innerHTML = '<i class="fas fa-edit text-gob-oro mr-1"></i> Editar Gerencia';
+    const idInput = document.getElementById('modal-gerencia-id');
+    if (idInput) idInput.value = btn.dataset.id || '';
+    const nomInput = document.getElementById('modal-gerencia-nombre');
+    if (nomInput) nomInput.value = btn.dataset.nombre || '';
+    const descInput = document.getElementById('modal-gerencia-descripcion');
+    if (descInput) descInput.value = btn.dataset.descripcion || '';
+    const actInput = document.getElementById('modal-gerencia-activo');
+    if (actInput) actInput.checked = btn.dataset.activo === 'true' || btn.dataset.activo === true;
+
+    const modal = document.getElementById('modal-gerencia');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => nomInput?.focus(), 150);
+    }
+}
+
+function cerrarModalGerencia() {
+    const modal = document.getElementById('modal-gerencia');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
+function confirmarToggleGerencia(btn) {
+    const id = btn.dataset.id;
+    const nombre = btn.dataset.nombre;
+    const activo = btn.dataset.activo === 'true' || btn.dataset.activo === true;
+    const titulo = activo ? '¿Desactivar gerencia?' : '¿Activar gerencia?';
+    const texto = activo 
+        ? `Al desactivar "${nombre}", los usuarios no podrán vincular nuevos registros a esta área.`
+        : `Al activar "${nombre}", volverá a estar disponible para todos los procesos.`;
+
+    Swal.fire({
+        title: titulo,
+        text: texto,
+        icon: activo ? 'warning' : 'question',
+        showCancelButton: true,
+        confirmButtonColor: activo ? '#9D2449' : '#10312b',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: activo ? 'Sí, desactivar' : 'Sí, activar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = `/catalogos/gerencias/toggle/${id}`;
+        }
+    });
+}

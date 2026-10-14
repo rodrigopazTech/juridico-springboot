@@ -197,7 +197,11 @@ public class NotificacionService {
             NotificacionEvento evento,
             CatPrioridad prioridad,
             String entidadId) {
-        if (subordinado.getGerencias() == null || subordinado.getGerencias().isEmpty() || subordinado.getRol() == null) {
+        if (subordinado.getRol() == null) {
+            return;
+        }
+        boolean esOperativo = subordinado.getRol() == RolUsuario.ABOGADO || subordinado.getRol() == RolUsuario.JEFE_DEPTO || subordinado.getRol() == RolUsuario.GERENTE;
+        if (esOperativo && (subordinado.getGerencias() == null || subordinado.getGerencias().isEmpty())) {
             return;
         }
 

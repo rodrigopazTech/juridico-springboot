@@ -112,7 +112,7 @@ public class CatalogosController {
 
             final Integer gIdFinal = gerenciaSeleccionada.getId();
             abogados = usuarioRepository.findAll().stream()
-                .filter(u -> u.getGerencia() != null && u.getGerencia().getId().equals(gIdFinal))
+                .filter(u -> !usuarioService.esRolDirectivoOAdmin(u.getRol()) && u.getGerencia() != null && u.getGerencia().getId().equals(gIdFinal))
                 .sorted(Comparator.comparing(Usuario::getNombreCompleto, String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toList());
 
@@ -536,11 +536,31 @@ public class CatalogosController {
     // ===============================================================
     @PostMapping("/gerencias/guardar")
     public String guardarGerencia(@ModelAttribute Gerencia gerencia, RedirectAttributes redirectAttrs) {
-        validarPuedeModificarGerencia(getUsuarioActual(), gerencia);
-        usuarioService.guardarGerencia(gerencia);
-        redirectAttrs.addFlashAttribute("mensaje", "Gerencia guardada.");
-        redirectAttrs.addFlashAttribute("tipo", "success");
-        return "redirect:/catalogos?gerenciaId=" + gerencia.getId();
+        try {
+            validarPuedeModificarGerencia(getUsuarioActual(), gerencia);
+            Gerencia g;
+            if (gerencia.getId() != null) {
+                g = usuarioService.buscarGerenciaPorId(gerencia.getId());
+                g.setNombre(gerencia.getNombre().trim());
+                g.setDescripcion(gerencia.getDescripcion());
+                if (gerencia.getActivo() != null) {
+                    g.setActivo(gerencia.getActivo());
+                }
+            } else {
+                g = gerencia;
+                if (g.getActivo() == null) {
+                    g.setActivo(true);
+                }
+            }
+            usuarioService.guardarGerencia(g);
+            redirectAttrs.addFlashAttribute("mensaje", "Gerencia guardada.");
+            redirectAttrs.addFlashAttribute("tipo", "success");
+            return "redirect:/catalogos?gerenciaId=" + g.getId();
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("mensaje", "Error al guardar gerencia: " + e.getMessage());
+            redirectAttrs.addFlashAttribute("tipo", "error");
+            return "redirect:/catalogos";
+        }
     }
 
     // ===============================================================
@@ -832,13 +852,23 @@ public class CatalogosController {
     }
 
     @GetMapping("/gerencias/toggle/{id}")
-    public String toggleGerencia(@PathVariable("id") Integer id) {
-        Usuario usuarioActual = getUsuarioActual();
-        Gerencia g = usuarioService.buscarGerenciaPorId(id);
-        validarPuedeModificarGerencia(usuarioActual, g);
-        g.setActivo(!g.getActivo());
-        usuarioService.guardarGerencia(g);
-        return "redirect:/catalogos?gerenciaId=" + id;
+    public String toggleGerencia(@PathVariable("id") Integer id, RedirectAttributes redirectAttrs) {
+        try {
+            Usuario usuarioActual = getUsuarioActual();
+            Gerencia g = usuarioService.buscarGerenciaPorId(id);
+            validarPuedeModificarGerencia(usuarioActual, g);
+            boolean nuevoEstado = !Boolean.TRUE.equals(g.getActivo());
+            g.setActivo(nuevoEstado);
+            usuarioService.guardarGerencia(g);
+            String accion = nuevoEstado ? "activada" : "desactivada";
+            redirectAttrs.addFlashAttribute("mensaje", "Gerencia " + accion + " correctamente.");
+            redirectAttrs.addFlashAttribute("tipo", "success");
+            return "redirect:/catalogos?gerenciaId=" + id;
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("mensaje", "Error al cambiar estatus de gerencia: " + e.getMessage());
+            redirectAttrs.addFlashAttribute("tipo", "error");
+            return "redirect:/catalogos";
+        }
     }
 
     @GetMapping("/organos/toggle/{id}")

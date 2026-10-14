@@ -95,6 +95,11 @@ public class UsuarioService {
         return tipoAudienciaRepository.findAll(pageable);
     }
 
+    public boolean esRolDirectivoOAdmin(RolUsuario rol) {
+        return rol == RolUsuario.ADMIN || rol == RolUsuario.DIRECTOR_PRINCIPAL 
+                || rol == RolUsuario.DIRECTOR || rol == RolUsuario.SUBDIRECTOR;
+    }
+
     public List<RolUsuario> getRolesVisiblesPara(RolUsuario rolActor) {
         List<RolUsuario> todos = java.util.Arrays.asList(RolUsuario.values());
         switch (rolActor) {
@@ -136,13 +141,10 @@ public class UsuarioService {
         Usuario actor = obtenerPorUsername(actorEmail);
         validarJerarquia(actor, usuario);
 
-        // Si el rol asignado al usuario es directivo o admin, se le asignan automáticamente TODAS las gerencias y materias
-        if (usuario.getRol() == RolUsuario.ADMIN || usuario.getRol() == RolUsuario.DIRECTOR_PRINCIPAL 
-                || usuario.getRol() == RolUsuario.DIRECTOR || usuario.getRol() == RolUsuario.SUBDIRECTOR) {
+        // Si el rol asignado al usuario es directivo o admin, están desacoplados de gerencias y materias
+        if (esRolDirectivoOAdmin(usuario.getRol())) {
             gerenciasSeleccionadas.clear();
-            gerenciasSeleccionadas.addAll(gerenciaRepository.findByActivoTrueOrderByNombreAsc());
             materiasSeleccionadas.clear();
-            materiasSeleccionadas.addAll(materiaRepository.findByActivoTrueOrderByNombreAsc());
         } else if (usuario.getRol() == RolUsuario.GERENTE || usuario.getRol() == RolUsuario.JEFE_DEPTO || usuario.getRol() == RolUsuario.ABOGADO) {
             if (usuario.getRol() == RolUsuario.GERENTE) {
                 materiasSeleccionadas.clear();
@@ -161,7 +163,10 @@ public class UsuarioService {
             usuario.setMicrosoftLoginEnabled(false);
 
             // Aplicar asignaciones por default basadas en el rol del creador
-            if (actor.getRol() == RolUsuario.GERENTE) {
+            if (esRolDirectivoOAdmin(usuario.getRol())) {
+                usuario.getGerencias().clear();
+                usuario.getMaterias().clear();
+            } else if (actor.getRol() == RolUsuario.GERENTE) {
                 usuario.getGerencias().clear();
                 usuario.getGerencias().addAll(actor.getGerencias());
                 java.util.Set<Integer> gerenciasActorIds = actor.getGerencias().stream()
@@ -246,15 +251,12 @@ public class UsuarioService {
 
             validarAsignacionOperativa(existente.getRol(), gerenciasSeleccionadas, materiasSeleccionadas);
 
-            existente.getGerencias().clear();
-            existente.getGerencias().addAll(gerenciasSeleccionadas);
-
-            if (materiasIds != null || !materiasSeleccionadas.isEmpty()
-                    || existente.getRol() == RolUsuario.ADMIN
-                    || existente.getRol() == RolUsuario.DIRECTOR_PRINCIPAL
-                    || existente.getRol() == RolUsuario.DIRECTOR
-                    || existente.getRol() == RolUsuario.SUBDIRECTOR
-                    || existente.getRol() == RolUsuario.GERENTE) {
+            if (esRolDirectivoOAdmin(existente.getRol())) {
+                existente.getGerencias().clear();
+                existente.getMaterias().clear();
+            } else {
+                existente.getGerencias().clear();
+                existente.getGerencias().addAll(gerenciasSeleccionadas);
                 existente.getMaterias().clear();
                 existente.getMaterias().addAll(materiasSeleccionadas);
             }
@@ -363,13 +365,15 @@ public class UsuarioService {
                 .collect(java.util.stream.Collectors.joining(", "));
         String materias = usuario.getMaterias().stream().map(Materia::getNombre).sorted()
                 .collect(java.util.stream.Collectors.joining(", "));
+        String descGerencia = esRolDirectivoOAdmin(usuario.getRol()) ? "Dirección de Jurídico" : (gerencias.isBlank() ? "Sin asignar" : gerencias);
+        String descMaterias = esRolDirectivoOAdmin(usuario.getRol()) ? "Todas (Institucional)" : (materias.isBlank() ? "Sin asignar" : materias);
         com.juridico.sistema_juridico.Entity.usuario.ActividadUsuario actividad =
                 com.juridico.sistema_juridico.Entity.usuario.ActividadUsuario.builder()
                         .usuario(usuario)
                         .titulo(titulo)
-                        .descripcion("Rol: " + usuario.getRol() + ". Gerencia: "
-                                + (gerencias.isBlank() ? "Sin asignar" : gerencias)
-                                + ". Materias: " + (materias.isBlank() ? "Sin asignar" : materias) + ".")
+                        .descripcion("Rol: " + usuario.getRol() + ". Área: "
+                                + descGerencia
+                                + ". Materias: " + descMaterias + ".")
                         .tipoIcono("USER_TAG")
                         .fechaRegistro(LocalDateTime.now())
                         .build();
@@ -409,8 +413,10 @@ public class UsuarioService {
         if (usuario.getRol() == null) {
             throw new IllegalArgumentException("El rol es obligatorio.");
         }
-        if (gerenciasIds == null || gerenciasIds.size() != 1) {
-            throw new IllegalArgumentException("Selecciona el área del usuario.");
+        if (!esRolDirectivoOAdmin(usuario.getRol())) {
+            if (gerenciasIds == null || gerenciasIds.size() != 1) {
+                throw new IllegalArgumentException("Selecciona el área del usuario.");
+            }
         }
     }
 
