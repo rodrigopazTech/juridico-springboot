@@ -17,4 +17,8 @@ public interface ManualRecoveryCodeRepository extends JpaRepository<ManualRecove
     @Modifying
     @Query("UPDATE ManualRecoveryCode c SET c.activo = false WHERE c.usuario.id = :usuarioId AND c.activo = true")
     int invalidateActiveCodesByUsuarioId(@Param("usuarioId") Integer usuarioId);
+
+    @Modifying
+    @Query("DELETE FROM ManualRecoveryCode c WHERE c.usuario.id = :usuarioId OR c.emitidoPor.id = :usuarioId")
+    void deleteByUsuarioId(@Param("usuarioId") Integer usuarioId);
 }

@@ -114,32 +114,32 @@ public class PlazosAlertasController {
 
     @PostMapping("/terminos/{id}/publicar")
     public String publicarTermino(@PathVariable Integer id, RedirectAttributes flash) {
-        return ejecutar(() -> { exigirGestionReglas(); perfiles.publicarTermino(id); }, "Regla de alerta para Términos publicada.", flash);
+        return ejecutar(() -> { exigirGestionReglas(); perfiles.publicarTermino(id); }, "Regla de alerta para Términos publicada.", "terminos", flash);
     }
 
     @PostMapping("/audiencias/{id}/publicar")
     public String publicarAudiencia(@PathVariable Integer id, RedirectAttributes flash) {
-        return ejecutar(() -> { exigirGestionReglas(); perfiles.publicarAudiencia(id); }, "Regla de alerta para Audiencias publicada.", flash);
+        return ejecutar(() -> { exigirGestionReglas(); perfiles.publicarAudiencia(id); }, "Regla de alerta para Audiencias publicada.", "audiencias", flash);
     }
 
     @PostMapping("/terminos/{id}/inactivar")
     public String inactivarTermino(@PathVariable Integer id, RedirectAttributes flash) {
-        return ejecutar(() -> { exigirGestionReglas(); perfiles.inactivarTermino(id); }, "Regla de alerta para Términos inactivada.", flash);
+        return ejecutar(() -> { exigirGestionReglas(); perfiles.inactivarTermino(id); }, "Regla de alerta para Términos inactivada.", "terminos", flash);
     }
 
     @PostMapping("/audiencias/{id}/inactivar")
     public String inactivarAudiencia(@PathVariable Integer id, RedirectAttributes flash) {
-        return ejecutar(() -> { exigirGestionReglas(); perfiles.inactivarAudiencia(id); }, "Regla de alerta para Audiencias inactivada.", flash);
+        return ejecutar(() -> { exigirGestionReglas(); perfiles.inactivarAudiencia(id); }, "Regla de alerta para Audiencias inactivada.", "audiencias", flash);
     }
 
-    private String ejecutar(Runnable accion, String mensaje, RedirectAttributes flash) {
+    private String ejecutar(Runnable accion, String mensaje, String tab, RedirectAttributes flash) {
         try {
             accion.run();
             flash.addFlashAttribute("mensajeExito", mensaje);
         } catch (RuntimeException ex) {
             flash.addFlashAttribute("mensajeError", ex.getMessage());
         }
-        return "redirect:/administracion/plazos-alertas";
+        return "redirect:/administracion/plazos-alertas" + (tab != null && !tab.isBlank() ? "#" + tab : "");
     }
 
     @PostMapping("/tipos-termino")
@@ -164,11 +164,9 @@ public class PlazosAlertasController {
     public String cambiarTipoTermino(@PathVariable Integer id, @RequestParam boolean activo,
             RedirectAttributes flash) {
         return ejecutar(() -> {
-            TipoTermino tipo = tiposTermino.obtenerPorId(id);
-            validarGestionTipo(tipo.getMateria());
             tiposTermino.cambiarEstado(id, activo);
         },
-                activo ? "Tipo de Término activado." : "Tipo de Término inactivado.", flash);
+                activo ? "Tipo de Término activado." : "Tipo de Término inactivado.", "terminos", flash);
     }
 
     @PostMapping("/tipos-audiencia")
@@ -201,10 +199,9 @@ public class PlazosAlertasController {
         return ejecutar(() -> {
             TipoAudiencia tipo = tipoAudienciaRepository.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Tipo de Audiencia no encontrado."));
-            validarGestionTipo(tipo.getMateria());
             tipo.setActivo(activo);
             tipoAudienciaRepository.save(tipo);
-        }, activo ? "Tipo de Audiencia activado." : "Tipo de Audiencia inactivado.", flash);
+        }, activo ? "Tipo de Audiencia activado." : "Tipo de Audiencia inactivado.", "audiencias", flash);
     }
 
     private Usuario usuarioActual() {

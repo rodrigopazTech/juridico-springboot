@@ -22,7 +22,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <h2 id="det-nombre" class="text-2xl font-bold tracking-tight truncate">Nombre Completo</h2>
-                        <p id="det-identity" class="text-sm text-gray-300 truncate">usuario</p>
+                        <p id="det-identity" class="text-xs text-gray-200 truncate mt-0.5 font-medium">usuario</p>
                         <p id="det-email" class="text-xs text-gray-300 truncate">correo@ejemplo.com</p>
                         <div class="flex flex-wrap gap-2 mt-2" id="det-badges">
                         </div>
@@ -207,14 +207,14 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label for="det-select-rol" class="mb-1 flex items-center justify-between gap-2 text-xs font-bold uppercase text-gray-700">Rol <span class="rounded bg-gob-guinda px-1.5 py-0.5 text-[9px] text-white">Obligatorio</span></label>
-                                <select name="rol" id="det-select-rol" required onchange="actualizarFormularioEdicionPorRol(); actualizarNombreUsuarioGenerado()"
+                                <select name="rol" id="det-select-rol" required onchange="actualizarFormularioEdicionPorRol();"
                                     class="w-full border border-gray-400 rounded-lg p-2.5 text-sm bg-white focus-visible:ring-2 focus-visible:ring-gob-oro focus-visible:border-gob-oro outline-none">
                                     <option th:each="rol : ${listaRoles}" th:value="${rol}" th:text="${rol}"></option>
                                 </select>
                             </div>
                             <div id="det-div-gerencia-asignada">
                                 <label for="det-select-usuario-gerencia" class="mb-1 flex items-center justify-between gap-2 text-xs font-bold uppercase text-gray-700">Área <span class="rounded bg-gob-guinda px-1.5 py-0.5 text-[9px] text-white">Obligatorio</span></label>
-                                <select name="gerenciasIds" id="det-select-usuario-gerencia" required onchange="cargarMateriasDeGerenciaEdicion(event); actualizarNombreUsuarioGenerado()"
+                                <select name="gerenciasIds" id="det-select-usuario-gerencia" required onchange="cargarMateriasDeGerenciaEdicion(event);"
                                     class="w-full border border-gray-400 rounded-lg p-2.5 text-sm bg-white focus-visible:ring-2 focus-visible:ring-gob-oro focus-visible:border-gob-oro outline-none">
                                     <option value="" selected disabled>Selecciona un área</option>
                                     <option th:each="g : ${allGerencias}" th:value="${g.id}" th:text="${g.nombre}"></option>
@@ -223,11 +223,17 @@
                         </div>
 
                         <div>
-                            <label for="det-input-username" class="block text-xs font-bold text-gray-500 mb-1 uppercase">Nombre de usuario</label>
-                            <input type="text" name="username" id="det-input-username" readonly
-                                autocomplete="username" spellcheck="false" aria-describedby="det-username-help"
-                                class="w-full border border-gray-300 rounded-lg bg-gray-100 p-2.5 text-sm font-semibold text-gray-700 outline-none cursor-not-allowed">
-                            <p id="det-username-help" class="mt-1 text-[10px] text-gray-500">Se genera automáticamente al completar nombre, número de empleado, rol y área.</p>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="det-input-username" class="text-xs font-bold uppercase text-gray-700">Nombre de usuario <span class="rounded bg-gob-guinda px-1.5 py-0.5 text-[9px] text-white">Obligatorio</span></label>
+                                <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"><i class="fas fa-pen mr-1"></i>Editable</span>
+                            </div>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 font-mono text-sm">@</span>
+                                <input type="text" name="username" id="det-input-username" required
+                                    autocomplete="username" spellcheck="false" aria-describedby="det-username-help"
+                                    class="w-full pl-8 border border-gray-400 rounded-lg p-2.5 text-sm font-semibold text-gray-800 focus-visible:ring-2 focus-visible:ring-gob-oro focus-visible:border-gob-oro outline-none">
+                            </div>
+                            <p id="det-username-help" class="mt-1 text-[10px] text-gray-500">Se sugiere automáticamente a partir del correo o nombre. Puedes editarlo si lo deseas.</p>
                         </div>
 
                         <div id="det-seccion-asignacion" class="space-y-4 pt-2">
@@ -362,4 +368,3 @@
     </div>
 
 </div>
-

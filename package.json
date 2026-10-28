@@ -11,6 +11,7 @@
   "description": "API REST Backend para el Sistema de Agenda Jurídica Gob.MX V3.",
   "main": "capture_screenshots.js",
   "scripts": {
+    "build:css": "tailwindcss -i src/main/resources/static/css/input.css -o src/main/resources/static/css/output.css --minify",
     "qa:browser-basic": "node scripts/qa-browser-basic.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -21,5 +22,8 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
+  }
 }

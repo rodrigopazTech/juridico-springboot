@@ -9,6 +9,15 @@ import com.juridico.sistema_juridico.Entity.enums.RolUsuario;
 import com.juridico.sistema_juridico.repository.Usuarios.UsuarioRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.ActividadUsuarioRepository;
 import com.juridico.sistema_juridico.repository.Usuarios.PushSubscriptionRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.PasswordResetTokenRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.ManualRecoveryCodeRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.PreferenciaNotificacionRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.PreferenciaNotificacionEventoRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.NotificacionRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.RecordatorioRepository;
+import com.juridico.sistema_juridico.repository.Usuarios.EventoCalendarioRepository;
+import com.juridico.sistema_juridico.repository.auditoria.AuditoriaEventoRepository;
+import com.juridico.sistema_juridico.repository.auditoria.AuditoriaSesionRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.GerenciaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.MateriaRepository;
 import com.juridico.sistema_juridico.repository.Catalogo.OrganoJurisdiccionalRepository;
@@ -42,6 +51,24 @@ public class UsuarioService {
     private ActividadUsuarioRepository actividadUsuarioRepository;
     @Autowired
     private PushSubscriptionRepository pushSubscriptionRepository;
+    @Autowired
+    private PasswordResetTokenRepository passwordResetTokenRepository;
+    @Autowired
+    private ManualRecoveryCodeRepository manualRecoveryCodeRepository;
+    @Autowired
+    private PreferenciaNotificacionRepository preferenciaNotificacionRepository;
+    @Autowired
+    private PreferenciaNotificacionEventoRepository preferenciaNotificacionEventoRepository;
+    @Autowired
+    private NotificacionRepository notificacionRepository;
+    @Autowired
+    private RecordatorioRepository recordatorioRepository;
+    @Autowired
+    private EventoCalendarioRepository eventoCalendarioRepository;
+    @Autowired
+    private AuditoriaEventoRepository auditoriaEventoRepository;
+    @Autowired
+    private AuditoriaSesionRepository auditoriaSesionRepository;
     @Autowired
     private GerenciaRepository gerenciaRepository;
     @Autowired
@@ -308,7 +335,12 @@ public class UsuarioService {
     }
 
     private void prepararIdentidadUsuarioNuevo(Usuario usuario) {
-        usuario.setUsername(usuarioIdentityService.generateUsernameFromName(usuario));
+        String submittedUsername = usuarioIdentityService.normalizeUsername(usuario.getUsername());
+        if (submittedUsername != null && !submittedUsername.isBlank()) {
+            usuario.setUsername(submittedUsername);
+        } else {
+            usuario.setUsername(usuarioIdentityService.generateUsernameFromName(usuario));
+        }
         validarUsernameDisponible(usuario.getUsername(), null);
         usuario.setNumeroEmpleado(normalizeNumeroEmpleado(usuario.getNumeroEmpleado()));
         validarNumeroEmpleadoDisponible(usuario.getNumeroEmpleado(), null);
@@ -316,7 +348,9 @@ public class UsuarioService {
 
     private void actualizarIdentidadUsuarioExistente(Usuario existente, Usuario cambios) {
         String username = usuarioIdentityService.normalizeUsername(cambios.getUsername());
-        existente.setUsername(username != null ? username : existente.getUsername());
+        if (username != null && !username.isBlank()) {
+            existente.setUsername(username);
+        }
         validarUsernameDisponible(existente.getUsername(), existente.getId());
         existente.setNumeroEmpleado(normalizeNumeroEmpleado(cambios.getNumeroEmpleado()));
         validarNumeroEmpleadoDisponible(existente.getNumeroEmpleado(), existente.getId());
@@ -433,7 +467,6 @@ public class UsuarioService {
         usuario.setMicrosoftLoginEnabled(false);
     }
 
-
     @Transactional
     public void eliminarUsuario(Integer id) {
         if (!usuarioRepository.existsById(id)) {
@@ -466,7 +499,18 @@ public class UsuarioService {
             }
         }
 
-        // Eliminar en cascada los registros asociados (actividades y suscripciones push)
+        // Desvincular registros de auditoría (preserva el historial sin bloquear la eliminación)
+        auditoriaEventoRepository.desvincularUsuario(id);
+        auditoriaSesionRepository.desvincularUsuario(id);
+
+        // Eliminar en cascada los registros asociados a la cuenta
+        passwordResetTokenRepository.deleteByUsuarioId(id);
+        manualRecoveryCodeRepository.deleteByUsuarioId(id);
+        notificacionRepository.deleteByUsuarioId(id);
+        recordatorioRepository.deleteByUsuarioId(id);
+        eventoCalendarioRepository.deleteByUsuarioId(id);
+        preferenciaNotificacionRepository.deleteByUsuarioId(id);
+        preferenciaNotificacionEventoRepository.deleteByUsuarioId(id);
         actividadUsuarioRepository.deleteByUsuarioId(id);
         pushSubscriptionRepository.deleteByUsuarioId(id);
 

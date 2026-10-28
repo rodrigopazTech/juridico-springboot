@@ -2,12 +2,20 @@ function esRolDirectivo(rol) {
     return ['ADMIN', 'DIRECTOR_PRINCIPAL', 'DIRECTOR', 'SUBDIRECTOR'].includes(rol);
 }
 
+let detUsernameEditadoManualmente = false;
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Usuarios cargados");
     const formulario = document.getElementById('form-editar-abogado');
     if (formulario) formulario.addEventListener('submit', validarAsignacionFormulario);
-    ['det-input-nombre', 'det-input-numero-empleado'].forEach(id => {
-        document.getElementById(id)?.addEventListener('input', actualizarNombreUsuarioGenerado);
+    ['det-input-nombre', 'det-input-email', 'det-input-numero-empleado'].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', sincronizarIdentidadDetalle);
+    });
+    document.getElementById('det-input-username')?.addEventListener('input', () => {
+        if (creandoUsuario) {
+            detUsernameEditadoManualmente = true;
+        }
+        sincronizarIdentidadDetalle();
     });
     [
         'det-input-email',
@@ -19,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById(id)?.addEventListener('input', actualizarLeyendaAutocompletado);
     });
 });
+
 
 let materiasUsuarioActual = [];
 let materiasUsuarioEdicion = [];
@@ -55,34 +64,107 @@ function validarAsignacionFormulario(event) {
     }
 }
 
-function actualizarNombreUsuarioGenerado() {
-    if (!creandoUsuario) return;
-
-    const nombre = document.getElementById('det-input-nombre')?.value?.trim() || '';
-    const numeroEmpleado = document.getElementById('det-input-numero-empleado')?.value?.trim() || '';
-    const rol = document.getElementById('det-select-rol')?.value || '';
-    const area = document.getElementById('det-select-usuario-gerencia')?.value || '';
-    const inputUsername = document.getElementById('det-input-username');
-    if (!inputUsername) return;
-
-    if (!nombre || !numeroEmpleado || !rol || (!esRolDirectivo(rol) && !area)) {
-        inputUsername.value = '';
-        return;
-    }
-
-    inputUsername.value = normalizarNombreUsuario(nombre);
-}
-
 function normalizarNombreUsuario(nombre) {
+    if (!nombre) return '';
     return nombre
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[̀-ͯ]/g, '')
         .toLowerCase()
         .trim()
         .replace(/[^a-z0-9._-]+/g, '.')
         .replace(/\.{2,}/g, '.')
         .replace(/^\.|\.$/g, '')
         .substring(0, 80);
+}
+
+function sincronizarIdentidadDetalle() {
+    const nombre = document.getElementById('det-input-nombre')?.value?.trim() || '';
+    const email = document.getElementById('det-input-email')?.value?.trim() || '';
+    const numeroEmpleado = document.getElementById('det-input-numero-empleado')?.value?.trim() || '';
+    const inputUsername = document.getElementById('det-input-username');
+    const detIdentity = document.getElementById('det-identity');
+    const detNombre = document.getElementById('det-nombre');
+    const detEmail = document.getElementById('det-email');
+    const detAvatar = document.getElementById('det-avatar');
+
+    if (creandoUsuario) {
+        if (detNombre) detNombre.innerText = nombre || 'Nuevo Usuario';
+        if (detAvatar) detAvatar.innerText = nombre ? nombre.charAt(0).toUpperCase() : '+';
+        if (detEmail) detEmail.innerText = email || 'Correo institucional opcional';
+
+        if (!detUsernameEditadoManualmente && inputUsername) {
+            let generado = '';
+            if (email && email.includes('@')) {
+                const prefix = email.split('@')[0].trim();
+                generado = normalizarNombreUsuario(prefix);
+            } else if (nombre) {
+                generado = extraerPrimerNombreYPrimerApellido(nombre);
+            }
+            inputUsername.value = generado;
+        }
+    } else {
+        if (detNombre && nombre) detNombre.innerText = nombre;
+        if (detAvatar && nombre) detAvatar.innerText = nombre.charAt(0).toUpperCase();
+        if (detEmail) detEmail.innerText = email || 'Sin correo institucional';
+    }
+
+    const usernameActual = inputUsername?.value?.trim() || '';
+
+    if (detIdentity) {
+        if (creandoUsuario) {
+            if (usernameActual) {
+                detIdentity.innerText = numeroEmpleado ? `@${usernameActual} · ${numeroEmpleado}` : `@${usernameActual}`;
+            } else {
+                detIdentity.innerText = 'Captura los datos para crear el acceso';
+            }
+        } else {
+            if (usernameActual) {
+                detIdentity.innerText = numeroEmpleado ? `@${usernameActual} · ${numeroEmpleado}` : `@${usernameActual}`;
+            } else {
+                detIdentity.innerText = '';
+            }
+        }
+    }
+
+    if (detIdentity) {
+        if (creandoUsuario) {
+            if (usernameActual) {
+                detIdentity.innerText = numeroEmpleado ? `@${usernameActual} · ${numeroEmpleado}` : `@${usernameActual}`;
+            } else {
+                detIdentity.innerText = 'Captura los datos para crear el acceso';
+            }
+        } else {
+            if (usernameActual) {
+                detIdentity.innerText = numeroEmpleado ? `${usernameActual} · ${numeroEmpleado}` : usernameActual;
+            }
+        }
+    }
+}
+
+function actualizarNombreUsuarioGenerado() {
+    sincronizarIdentidadDetalle();
+}
+
+function extraerPrimerNombreYPrimerApellido(nombreCompleto) {
+    if (!nombreCompleto || !nombreCompleto.trim()) return '';
+    const tokens = nombreCompleto.trim().split(/\s+/);
+    if (tokens.length === 1) return normalizarNombreUsuario(tokens[0]);
+
+    const preps = new Set(['de', 'del', 'la', 'las', 'los', 'san', 'santa']);
+    const firstName = normalizarNombreUsuario(tokens[0]);
+
+    if (tokens.length === 2) {
+        return firstName + '.' + normalizarNombreUsuario(tokens[1]);
+    }
+    if (tokens.length === 3) {
+        const surname = preps.has(tokens[1].toLowerCase()) ? tokens[2] : tokens[1];
+        return firstName + '.' + normalizarNombreUsuario(surname);
+    }
+    if (tokens.length === 4) {
+        const surname = preps.has(tokens[1].toLowerCase()) ? tokens[3] : tokens[2];
+        return firstName + '.' + normalizarNombreUsuario(surname);
+    }
+    return firstName + '.' + normalizarNombreUsuario(tokens[tokens.length - 2]);
 }
 
 function actualizarLeyendaAutocompletado() {
@@ -144,7 +226,9 @@ function seleccionarAbogado(cardElement) {
     const materiasIdsStr = cardElement.getAttribute('data-materias-ids');
     const materiasIdsArray = materiasIdsStr ? materiasIdsStr.split(',').map(Number) : [];
 
-    usuarioSeleccionadoId = id;
+        usuarioSeleccionadoId = id;
+    detUsernameEditadoManualmente = false;
+
 
     // 4. Ocultar estado vacío, mostrar detalle
     document.getElementById('panel-vacio').classList.add('hidden');
@@ -161,7 +245,7 @@ function seleccionarAbogado(cardElement) {
     document.getElementById('det-email').innerText = email || 'Sin correo institucional';
     const detIdentity = document.getElementById('det-identity');
     if (detIdentity) {
-        detIdentity.innerText = numeroEmpleado ? `${username} · ${numeroEmpleado}` : username;
+        detIdentity.innerText = numeroEmpleado ? `@${username} · ${numeroEmpleado}` : (username ? `@${username}` : '');
     }
 
     // Badges
@@ -296,6 +380,7 @@ function iniciarNuevoUsuarioEnDetalle() {
     document.getElementById('det-email').innerText = 'Correo institucional opcional';
     document.getElementById('det-badges').innerHTML =
         '<span class="bg-white/10 border border-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">ALTA</span>';
+    detUsernameEditadoManualmente = false;
 
     limpiarFormularioDetalleUsuario();
     const selectRol = document.getElementById('det-select-rol');
@@ -433,278 +518,6 @@ function regresarALista() {
     });
 }
 
-// --- 2. LÓGICA DE MODALES ---
-
-function abrirModalUsuario() {
-    const titulo = document.getElementById('titulo-modal-usuario');
-    if (titulo) titulo.innerHTML = '<i class="fas fa-user-plus mr-2"></i> Nuevo Usuario';
-
-    const inputId = document.getElementById('input-usuario-id');
-    if (inputId) inputId.value = '';
-
-    const inputNombre = document.getElementById('input-usuario-nombre');
-    if (inputNombre) inputNombre.value = '';
-
-    const inputEmail = document.getElementById('input-usuario-email');
-    if (inputEmail) inputEmail.value = '';
-
-    const inputUsername = document.getElementById('input-usuario-username');
-    if (inputUsername) inputUsername.value = '';
-
-    const inputNumeroEmpleado = document.getElementById('input-usuario-numero-empleado');
-    if (inputNumeroEmpleado) inputNumeroEmpleado.value = '';
-
-    const inputPuesto = document.getElementById('input-usuario-puesto');
-    if (inputPuesto) inputPuesto.value = '';
-
-    const inputTelefonoInstitucional = document.getElementById('input-usuario-telefono-institucional');
-    if (inputTelefonoInstitucional) inputTelefonoInstitucional.value = '';
-
-    const inputTelefonoMovil = document.getElementById('input-usuario-telefono-movil');
-    if (inputTelefonoMovil) inputTelefonoMovil.value = '';
-
-    const inputUbicacionOficina = document.getElementById('input-usuario-ubicacion-oficina');
-    if (inputUbicacionOficina) inputUbicacionOficina.value = '';
-
-    const selectRol = document.getElementById('select-usuario-rol');
-    if (selectRol) selectRol.value = '';
-
-    // Reset multiple select
-    const selectGerencia = document.getElementById('select-usuario-gerencia');
-    if (selectGerencia) {
-        Array.from(selectGerencia.options).forEach(opt => opt.selected = false);
-    }
-    if (window.usuarioActual && (window.usuarioActual.rol === 'GERENTE' || window.usuarioActual.rol === 'JEFE_DEPTO')) {
-        const creatorGerId = window.usuarioActual.gerenciaId;
-        if (selectGerencia) {
-            Array.from(selectGerencia.options).forEach(opt => {
-                if (Number(opt.value) === Number(creatorGerId)) {
-                    opt.selected = true;
-                }
-            });
-        }
-    }
-
-    const checkActivo = document.getElementById('check-usuario-activo');
-    if (checkActivo) checkActivo.checked = true;
-
-    // CREACIÓN
-    const bloqueNuevo = document.getElementById('bloque-password-nuevo');
-    const bloqueTemporal = document.getElementById('bloque-password-temporal');
-    const inputPass = document.getElementById('input-usuario-password');
-    if (bloqueNuevo) { bloqueNuevo.classList.remove('hidden'); }
-    if (bloqueTemporal) { bloqueTemporal.classList.add('hidden'); }
-    if (inputPass) { inputPass.value = ''; inputPass.required = true; inputPass.placeholder = 'Contraseña inicial'; inputPass.disabled = false; }
-
-    const hiddenPass = document.getElementById('input-password-temporal');
-    const badge = document.getElementById('badge-pass-generado');
-    if (hiddenPass) {
-        hiddenPass.value = '';
-        hiddenPass.disabled = true;
-    }
-    if (badge) badge.classList.add('hidden');
-
-    const fpcOld = document.getElementById('input-force-password-change');
-    if (fpcOld) fpcOld.remove();
-
-    materiasUsuarioActual = [];
-
-    const contMaterias = document.getElementById('contenedor-materias');
-    if (contMaterias) contMaterias.classList.add('hidden');
-
-    const listaMaterias = document.getElementById('lista-materias-checkboxes');
-    if (listaMaterias) listaMaterias.innerHTML = '';
-
-    const seccionAsignacion = document.getElementById('seccion-asignacion');
-    if (seccionAsignacion) seccionAsignacion.classList.remove('hidden');
-
-    const btnEliminar = document.getElementById('btn-eliminar-usuario');
-    if (btnEliminar) btnEliminar.classList.add('hidden');
-
-    actualizarFormularioPorRol();
-    cargarMateriasDeGerencia();
-
-    const modal = document.getElementById('modal-usuario');
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-}
-
-function actualizarFormularioPorRol() {
-    const selectRol = document.getElementById('select-usuario-rol');
-    if (!selectRol) return;
-    const rol = selectRol.value;
-    const seccionAsignacion = document.getElementById('seccion-asignacion');
-    const divGerencia = document.getElementById('div-gerencia-asignada');
-    const contenedorMaterias = document.getElementById('contenedor-materias');
-
-    if (esRolDirectivo(rol)) {
-        if (seccionAsignacion) seccionAsignacion.classList.add('hidden');
-        if (divGerencia) divGerencia.classList.add('hidden');
-        if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
-    } else {
-        if (seccionAsignacion) seccionAsignacion.classList.remove('hidden');
-        const creadorRol = window.usuarioActual ? window.usuarioActual.rol : '';
-        if (creadorRol !== 'GERENTE' && creadorRol !== 'JEFE_DEPTO') {
-            if (divGerencia) divGerencia.classList.remove('hidden');
-        }
-
-        const selectGerencias = document.getElementById('select-usuario-gerencia');
-        const checkedGerencias = selectGerencias ? Array.from(selectGerencias.selectedOptions).map(opt => opt.value) : [];
-
-        if (checkedGerencias.length > 0) {
-            if (contenedorMaterias) contenedorMaterias.classList.remove('hidden');
-        } else {
-            if (contenedorMaterias) contenedorMaterias.classList.add('hidden');
-        }
-    }
-    cargarMateriasDeGerencia();
-}
-
-function cargarMateriasDeGerencia(event) {
-    const selectRol = document.getElementById('select-usuario-rol');
-    const rol = selectRol ? selectRol.value : '';
-    if (rol === 'ADMIN' || rol === 'DIRECTOR_PRINCIPAL' || rol === 'DIRECTOR' || rol === 'SUBDIRECTOR') {
-        const contenedor = document.getElementById('contenedor-materias');
-        if (contenedor) contenedor.classList.add('hidden');
-        return;
-    }
-    const selectGerencias = document.getElementById('select-usuario-gerencia');
-    if (selectGerencias && (rol === 'GERENTE' || rol === 'JEFE_DEPTO' || rol === 'ABOGADO')) {
-        const selectedOptions = Array.from(selectGerencias.selectedOptions);
-        if (selectedOptions.length > 1) {
-            const lastSelected = selectedOptions[selectedOptions.length - 1];
-            Array.from(selectGerencias.options).forEach(opt => {
-                opt.selected = (opt === lastSelected);
-            });
-            materiasUsuarioActual = [];
-        }
-    }
-    const checkedGerencias = selectGerencias ? Array.from(selectGerencias.selectedOptions).map(opt => opt.value) : [];
-    const contenedor = document.getElementById('contenedor-materias');
-    const lista = document.getElementById('lista-materias-checkboxes');
-
-    if (checkedGerencias.length === 0) {
-        if (contenedor) contenedor.classList.add('hidden');
-        if (lista) lista.innerHTML = '';
-        return;
-    }
-
-    if (lista) lista.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
-    if (contenedor) contenedor.classList.remove('hidden');
-
-    const fetchPromises = checkedGerencias.map(gerenciaId =>
-        fetch(`/usuarios/api/materias-por-gerencia/${gerenciaId}`).then(res => res.json())
-    );
-
-    Promise.all(fetchPromises)
-        .then(results => {
-            const todasMaterias = [];
-            const idsVistos = new Set();
-            results.forEach(materias => {
-                materias.forEach(m => {
-                    if (!idsVistos.has(m.id)) {
-                        idsVistos.add(m.id);
-                        todasMaterias.push(m);
-                    }
-                });
-            });
-
-            if (!lista) return;
-            lista.innerHTML = '';
-            if (todasMaterias.length === 0) {
-                lista.innerHTML = '<p class="text-xs text-red-400">Sin materias.</p>';
-                return;
-            }
-            todasMaterias.forEach(m => {
-                const isGerente = (rol === 'GERENTE');
-                const isChecked = (isGerente || materiasUsuarioActual.includes(m.id)) ? 'checked' : '';
-                const clickAttr = isGerente ? 'onclick="return false;" style="pointer-events: none; opacity: 0.7;"' : '';
-                lista.innerHTML += `
-                    <div class="flex items-center space-x-2">
-                        <input type="checkbox" name="materiasIds" value="${m.id}" id="mat-${m.id}" ${isChecked} ${clickAttr} class="rounded text-gob-guinda h-4 w-4 border-gray-300 focus:ring-gob-oro">
-                        <label for="mat-${m.id}" class="text-xs text-gray-700 cursor-pointer select-none">${m.nombre}</label>
-                    </div>`;
-            });
-        })
-        .catch(err => {
-            console.error("Error al cargar materias:", err);
-            if (lista) lista.innerHTML = '<p class="text-xs text-red-400">Error al cargar materias.</p>';
-        });
-}
-
-function editarUsuario(id, nombre, email, rol, gerenciaIdsArray, activo, materiasIdsArray, username = '', numeroEmpleado = '', puesto = '', telefonoInstitucional = '', telefonoMovil = '', ubicacionOficina = '') {
-    abrirModalUsuario();
-
-    const titulo = document.getElementById('titulo-modal-usuario');
-    if (titulo) titulo.innerHTML = '<i class="fas fa-user-edit mr-2"></i> Editar Usuario';
-
-    const inputId = document.getElementById('input-usuario-id');
-    if (inputId) inputId.value = id;
-
-    const inputNombre = document.getElementById('input-usuario-nombre');
-    if (inputNombre) inputNombre.value = nombre;
-
-    const inputEmail = document.getElementById('input-usuario-email');
-    if (inputEmail) inputEmail.value = email;
-
-    const inputUsername = document.getElementById('input-usuario-username');
-    if (inputUsername) inputUsername.value = username;
-
-    const inputNumeroEmpleado = document.getElementById('input-usuario-numero-empleado');
-    if (inputNumeroEmpleado) inputNumeroEmpleado.value = numeroEmpleado;
-
-    const inputPuesto = document.getElementById('input-usuario-puesto');
-    if (inputPuesto) inputPuesto.value = puesto;
-
-    const inputTelefonoInstitucional = document.getElementById('input-usuario-telefono-institucional');
-    if (inputTelefonoInstitucional) inputTelefonoInstitucional.value = telefonoInstitucional;
-
-    const inputTelefonoMovil = document.getElementById('input-usuario-telefono-movil');
-    if (inputTelefonoMovil) inputTelefonoMovil.value = telefonoMovil;
-
-    const inputUbicacionOficina = document.getElementById('input-usuario-ubicacion-oficina');
-    if (inputUbicacionOficina) inputUbicacionOficina.value = ubicacionOficina;
-
-    const selectRol = document.getElementById('select-usuario-rol');
-    if (selectRol) selectRol.value = rol;
-
-    const checkActivo = document.getElementById('check-usuario-activo');
-    if (checkActivo) checkActivo.checked = activo;
-
-    // EDICIÓN
-    const bloqueNuevo = document.getElementById('bloque-password-nuevo');
-    const bloqueTemporal = document.getElementById('bloque-password-temporal');
-    const inputPass = document.getElementById('input-usuario-password');
-    if (bloqueNuevo) { bloqueNuevo.classList.add('hidden'); }
-    if (bloqueTemporal) { bloqueTemporal.classList.remove('hidden'); }
-    if (inputPass) { inputPass.required = false; inputPass.value = ''; inputPass.disabled = true; }
-
-    const hiddenPass = document.getElementById('input-password-temporal');
-    const badge = document.getElementById('badge-pass-generado');
-    if (hiddenPass) {
-        hiddenPass.value = '';
-        hiddenPass.disabled = false;
-    }
-    if (badge) badge.classList.add('hidden');
-
-    materiasUsuarioActual = materiasIdsArray || [];
-
-    const selectGerencia = document.getElementById('select-usuario-gerencia');
-    if (selectGerencia) {
-        Array.from(selectGerencia.options).forEach(opt => {
-            opt.selected = (gerenciaIdsArray || []).includes(Number(opt.value));
-        });
-    }
-
-    actualizarFormularioPorRol();
-    cargarMateriasDeGerencia();
-
-    const btnEliminar = document.getElementById('btn-eliminar-usuario');
-    if (btnEliminar) btnEliminar.classList.remove('hidden');
-}
-
 // -- MODAL DE CONTRASEÑA TEMPORAL ------------------------------------------
 function abrirModalPasswordTemporal() {
     Swal.fire({
@@ -821,17 +634,7 @@ function ejecutarAccionConfirmada() {
 }
 
 function eliminarUsuarioDesdeModal() {
-    const id = document.getElementById('input-usuario-id').value;
-    if (!id) return;
-    abrirModalConfirmarGenerico({
-        titulo: '¿Eliminar usuario?',
-        texto: 'Esta acción no se puede deshacer.',
-        advertencia: 'Se borrarán los accesos y registros asociados permanentemente.',
-        esPeligro: true,
-        callback: () => {
-            window.location.href = `/usuarios/eliminar/${id}`;
-        }
-    });
+    eliminarUsuarioDesdeDetalle();
 }
 
 function confirmarCambioEstatus(id) {
@@ -848,15 +651,19 @@ function confirmarCambioEstatus(id) {
     });
 }
 
-// --- 3. BÚSQUEDA SERVER-SIDE ---
-
 // --- 4. NAVEGACIÓN Y CARGA DE DATOS (PESTAÑAS) ---
 
 function cambiarTabAbogado(tabName) {
     // 1. Ocultar todos y mostrar el activo
-    document.querySelectorAll('.tab-abogado-content').forEach(el => { el.classList.add('hidden'); el.classList.remove('block'); });
+    document.querySelectorAll('.tab-abogado-content').forEach(el => {
+        el.classList.add('hidden');
+        el.classList.remove('block');
+    });
     const contenidoActivo = document.getElementById('tab-content-' + tabName);
-    if (contenidoActivo) { contenidoActivo.classList.remove('hidden'); contenidoActivo.classList.add('block'); }
+    if (contenidoActivo) {
+        contenidoActivo.classList.remove('hidden');
+        contenidoActivo.classList.add('block');
+    }
 
     // 2. Estilos de los botones
     document.querySelectorAll('.tab-abogado').forEach(btn => {

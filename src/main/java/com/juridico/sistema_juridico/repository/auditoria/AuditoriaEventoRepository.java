@@ -4,6 +4,7 @@ import com.juridico.sistema_juridico.Entity.auditoria.AuditoriaEvento;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -35,4 +36,8 @@ public interface AuditoriaEventoRepository extends JpaRepository<AuditoriaEvento
             order by e.fecha desc
             """)
     Page<AuditoriaEvento> findOperativos(@Param("rutasExcluidas") Collection<String> rutasExcluidas, Pageable pageable);
+
+    @Modifying
+    @Query("UPDATE AuditoriaEvento e SET e.usuario = null WHERE e.usuario.id = :usuarioId")
+    void desvincularUsuario(@Param("usuarioId") Integer usuarioId);
 }

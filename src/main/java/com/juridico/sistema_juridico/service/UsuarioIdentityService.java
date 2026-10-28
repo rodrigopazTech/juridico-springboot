@@ -81,24 +81,45 @@ public class UsuarioIdentityService implements ApplicationRunner {
     }
 
     public String generateUsernameFromName(Usuario usuario) {
-        Set<String> usernames = new HashSet<>();
-        usuarioRepository.findAll().forEach(u -> {
-            if (u.getUsername() != null && !u.getUsername().isBlank()
-                    && (usuario.getId() == null || !u.getId().equals(usuario.getId()))) {
-                usernames.add(u.getUsername().trim().toLowerCase(Locale.ROOT));
-            }
-        });
-        return uniqueUsername(normalizeUsername(usuario.getNombreCompleto()), usernames);
+        return generateUsername(usuario);
     }
 
     private String baseUsername(Usuario usuario) {
-        if (usuario.getUsername() != null && !usuario.getUsername().isBlank()) {
-            return normalizeUsername(usuario.getUsername());
-        }
         if (usuario.getEmail() != null && usuario.getEmail().contains("@")) {
-            return normalizeUsername(usuario.getEmail().substring(0, usuario.getEmail().indexOf('@')));
+            String prefix = usuario.getEmail().substring(0, usuario.getEmail().indexOf('@')).trim();
+            if (!prefix.isBlank()) {
+                return normalizeUsername(prefix);
+            }
         }
-        return normalizeUsername(usuario.getNombreCompleto());
+        return extractPrimerNombreYPrimerApellido(usuario.getNombreCompleto());
+    }
+
+    public String extractPrimerNombreYPrimerApellido(String nombreCompleto) {
+        if (nombreCompleto == null || nombreCompleto.isBlank()) {
+            return "usuario";
+        }
+        String[] tokens = nombreCompleto.trim().split("\\s+");
+        if (tokens.length == 1) {
+            return normalizeUsername(tokens[0]);
+        }
+        Set<String> preps = Set.of("de", "del", "la", "las", "los", "san", "santa");
+        String firstName = normalizeUsername(tokens[0]);
+        if (tokens.length == 2) {
+            return firstName + "." + normalizeUsername(tokens[1]);
+        }
+        if (tokens.length == 3) {
+            String surname = preps.contains(tokens[1].toLowerCase(Locale.ROOT))
+                    ? normalizeUsername(tokens[2])
+                    : normalizeUsername(tokens[1]);
+            return firstName + "." + surname;
+        }
+        if (tokens.length == 4) {
+            if (preps.contains(tokens[1].toLowerCase(Locale.ROOT))) {
+                return firstName + "." + normalizeUsername(tokens[3]);
+            }
+            return firstName + "." + normalizeUsername(tokens[2]);
+        }
+        return firstName + "." + normalizeUsername(tokens[tokens.length - 2]);
     }
 
     private String uniqueUsername(String base, Set<String> used) {

@@ -89,9 +89,9 @@
 
             <div class="flex-1 min-w-0">
                 <p class="text-sm font-bold text-gray-800 truncate group-hover:text-gob-guinda transition-colors"
-                    th:text="${u.username ?: 'sin usuario'}">usuario</p>
+                    th:text="${u.nombreCompleto}">Nombre completo</p>
                 <p class="text-xs text-gray-500 truncate mb-1">
-                    <span th:text="${u.nombreCompleto}">Nombre completo</span>
+                    <span th:text="${u.username != null and !#strings.isEmpty(u.username) ? '@' + u.username : 'sin usuario'}">usuario</span>
                     <span th:if="${u.numeroEmpleado != null and !#strings.isEmpty(u.numeroEmpleado)}"> · [[${u.numeroEmpleado}]]</span>
                 </p>
 

@@ -90,8 +90,31 @@
 
     function termMode() { return document.querySelector('input[name="modoPlazo"]:checked')?.value || 'CALCULADO'; }
 
+    function clearTermValidity() {
+        byId('tt-atencion')?.setCustomValidity('');
+        byId('tt-critico')?.setCustomValidity('');
+    }
+
+    function validateTermAlerts() {
+        const attentionInput = byId('tt-atencion');
+        if (!attentionInput) return true;
+        if (termMode() === 'SIN_VENCIMIENTO') {
+            attentionInput.setCustomValidity('');
+            return true;
+        }
+        const attention = number('tt-atencion');
+        const critical = number('tt-critico');
+        if (attention <= critical) {
+            attentionInput.setCustomValidity('Los días de anticipación de Atención deben ser mayores que los de Crítico (ej. 5 días de atención y 2 días de crítico).');
+            return false;
+        }
+        attentionInput.setCustomValidity('');
+        return true;
+    }
+
     function updateTermPreview() {
         if (!termForm) return;
+        clearTermValidity();
         const mode = termMode();
         const calculated = mode === 'CALCULADO';
         const captured = mode === 'CAPTURADO';
@@ -153,6 +176,7 @@
 
     function editTerm(button) {
         if (!termForm) return;
+        clearTermValidity();
         const data = button.dataset;
         value('tt-id', data.id); value('tt-materia', data.materia); value('tt-nombre', data.nombre);
         value('tt-codigo', data.codigo); value('tt-descripcion', data.descripcion); value('tt-dias', data.dias || 15);
@@ -170,6 +194,7 @@
 
     function newTerm() {
         if (!termForm) return;
+        clearTermValidity();
         termForm.reset();
         value('tt-id', ''); value('tt-activo', 'true');
         termCode.dataset.manual = '';
@@ -189,6 +214,7 @@
     termCode?.addEventListener('input', () => { termCode.dataset.manual = termCode.value ? 'true' : ''; });
     byId('tt-nombre')?.addEventListener('input', (event) => { if (termCode && !termCode.dataset.manual) termCode.value = slug(event.target.value); });
     document.querySelectorAll('[data-term-preset]').forEach((button) => button.addEventListener('click', () => {
+        clearTermValidity();
         const [attention, critical] = button.dataset.termPreset.split(',');
         value('tt-atencion', attention); value('tt-critico', critical);
         document.querySelectorAll('[data-term-preset]').forEach((item) => item.classList.toggle('is-selected', item === button));
@@ -197,16 +223,36 @@
     termForm?.addEventListener('submit', (event) => {
         if (termForm.dataset.readonly === 'true') { event.preventDefault(); return; }
         if (termMode() === 'SIN_VENCIMIENTO') return;
-        const attention = number('tt-atencion'); const critical = number('tt-critico');
-        byId('tt-atencion').setCustomValidity(attention <= critical ? 'Atención debe comenzar antes que Crítico.' : '');
-        if (attention <= critical) { event.preventDefault(); byId('tt-atencion').reportValidity(); }
+        if (!validateTermAlerts()) {
+            event.preventDefault();
+            byId('tt-atencion')?.reportValidity();
+        }
     });
 
     const audienceForm = byId('form-tipo-audiencia');
     const audienceCode = byId('ta-codigo');
 
+    function clearAudienceValidity() {
+        byId('ta-atencion')?.setCustomValidity('');
+        byId('ta-critico')?.setCustomValidity('');
+    }
+
+    function validateAudienceAlerts() {
+        const attentionInput = byId('ta-atencion');
+        if (!attentionInput) return true;
+        const attention = number('ta-atencion');
+        const critical = number('ta-critico');
+        if (attention <= critical) {
+            attentionInput.setCustomValidity('La anticipación de Atención debe ser mayor que la de Crítico (ej. 3 días de atención y 1 día de crítico).');
+            return false;
+        }
+        attentionInput.setCustomValidity('');
+        return true;
+    }
+
     function updateAudiencePreview() {
         if (!audienceForm) return;
+        clearAudienceValidity();
         const attention = Math.max(1, number('ta-atencion', 3));
         const critical = Math.max(0, number('ta-critico', 1));
         setTimeline('ta', Math.max(attention * 2, attention + 3), attention, critical);
@@ -218,6 +264,7 @@
 
     function editAudience(button) {
         if (!audienceForm) return;
+        clearAudienceValidity();
         const data = button.dataset;
         value('ta-id', data.id); value('ta-materia', data.materia); value('ta-nombre', data.nombre);
         value('ta-codigo', data.codigo); value('ta-descripcion', data.descripcion); value('ta-duracion', data.duracion || 60);
@@ -234,6 +281,7 @@
 
     function newAudience() {
         if (!audienceForm) return;
+        clearAudienceValidity();
         audienceForm.reset(); value('ta-id', ''); value('ta-activo', 'true');
         audienceCode.dataset.manual = '';
         byId('titulo-tipo-audiencia').textContent = 'Nuevo tipo de audiencia';
@@ -247,10 +295,14 @@
     byId('nuevo-tipo-audiencia')?.addEventListener('click', newAudience);
     byId('cancelar-tipo-audiencia')?.addEventListener('click', newAudience);
     byId('limpiar-tipo-audiencia')?.addEventListener('click', () => setTimeout(newAudience));
-    ['ta-atencion', 'ta-critico'].forEach((id) => { byId(id)?.addEventListener('input', updateAudiencePreview); byId(id)?.addEventListener('change', updateAudiencePreview); });
+    ['ta-atencion', 'ta-critico'].forEach((id) => {
+        byId(id)?.addEventListener('input', updateAudiencePreview);
+        byId(id)?.addEventListener('change', updateAudiencePreview);
+    });
     audienceCode?.addEventListener('input', () => { audienceCode.dataset.manual = audienceCode.value ? 'true' : ''; });
     byId('ta-nombre')?.addEventListener('input', (event) => { if (audienceCode && !audienceCode.dataset.manual) audienceCode.value = slug(event.target.value); });
     document.querySelectorAll('[data-audience-preset]').forEach((button) => button.addEventListener('click', () => {
+        clearAudienceValidity();
         const [attention, critical] = button.dataset.audiencePreset.split(',');
         value('ta-atencion', attention); value('ta-critico', critical);
         document.querySelectorAll('[data-audience-preset]').forEach((item) => item.classList.toggle('is-selected', item === button));
@@ -258,9 +310,78 @@
     }));
     audienceForm?.addEventListener('submit', (event) => {
         if (audienceForm.dataset.readonly === 'true') { event.preventDefault(); return; }
-        const attention = number('ta-atencion'); const critical = number('ta-critico');
-        byId('ta-atencion').setCustomValidity(attention <= critical ? 'Atención debe comenzar antes que Crítico.' : '');
-        if (attention <= critical) { event.preventDefault(); byId('ta-atencion').reportValidity(); }
+        if (!validateAudienceAlerts()) {
+            event.preventDefault();
+            byId('ta-atencion')?.reportValidity();
+        }
+    });
+
+    // Gestión asíncrona de los botones de toggle en la lista
+    document.querySelectorAll('.pa-record-state').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const icon = form.querySelector('i.fa-solid');
+            const record = form.closest('.pa-record');
+            const recordMain = record?.querySelector('.pa-record-main');
+            const statusBadge = record?.querySelector('.pa-status');
+            const hiddenActivo = form.querySelector('input[name="activo"]');
+            const targetActivo = hiddenActivo?.value === 'true';
+
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(new FormData(form)).toString()
+                });
+
+                if (response.ok || response.redirected) {
+                    const nextActivo = !targetActivo;
+                    if (hiddenActivo) hiddenActivo.value = String(nextActivo);
+                    if (submitBtn) submitBtn.title = targetActivo ? 'Inactivar tipo' : 'Activar tipo';
+
+                    if (icon) {
+                        icon.classList.toggle('fa-toggle-on', targetActivo);
+                        icon.classList.toggle('fa-toggle-off', !targetActivo);
+                    }
+                    if (statusBadge) {
+                        statusBadge.textContent = targetActivo ? 'Activo' : 'Inactivo';
+                        statusBadge.classList.toggle('is-active', targetActivo);
+                        statusBadge.classList.toggle('is-inactive', !targetActivo);
+                    }
+                    if (recordMain) {
+                        recordMain.dataset.activo = String(targetActivo);
+                        const termId = byId('tt-id')?.value;
+                        if (termId && termId === recordMain.dataset.id) {
+                            value('tt-activo', String(targetActivo));
+                        }
+                        const audId = byId('ta-id')?.value;
+                        if (audId && audId === recordMain.dataset.id) {
+                            value('ta-activo', String(targetActivo));
+                        }
+                    }
+
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'success',
+                            title: targetActivo ? 'Tipo activado' : 'Tipo inactivado',
+                            showConfirmButton: false,
+                            timer: 2000
+                        });
+                    }
+                } else {
+                    form.submit();
+                }
+            } catch (err) {
+                form.submit();
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        });
     });
 
     [termForm, audienceForm].forEach((form) => {

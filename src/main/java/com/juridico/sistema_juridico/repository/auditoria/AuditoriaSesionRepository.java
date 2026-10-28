@@ -4,6 +4,7 @@ import com.juridico.sistema_juridico.Entity.auditoria.AuditoriaSesion;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -28,4 +29,8 @@ public interface AuditoriaSesionRepository extends JpaRepository<AuditoriaSesion
     List<AuditoriaSesion> findTop12ByOrderByFechaUltimaActividadDesc();
     Page<AuditoriaSesion> findAllByOrderByFechaInicioDesc(Pageable pageable);
     Page<AuditoriaSesion> findByEstadoAndFechaUltimaActividadAfterOrderByFechaUltimaActividadDesc(String estado, LocalDateTime fecha, Pageable pageable);
+
+    @Modifying
+    @Query("UPDATE AuditoriaSesion s SET s.usuario = null WHERE s.usuario.id = :usuarioId")
+    void desvincularUsuario(@Param("usuarioId") Integer usuarioId);
 }

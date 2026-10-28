@@ -4,9 +4,12 @@ import java.util.List;
 import java.time.LocalDate;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import com.juridico.sistema_juridico.Entity.usuario.Recordatorio;
-import com.juridico.sistema_juridico.Entity.usuario.Usuario; // Importar Usuario
+import com.juridico.sistema_juridico.Entity.usuario.Usuario;
 
 @Repository
 public interface RecordatorioRepository extends JpaRepository<Recordatorio, Integer> {
@@ -24,10 +27,13 @@ public interface RecordatorioRepository extends JpaRepository<Recordatorio, Inte
 
      long countByUsuarioAndCompletadoFalseAndFechaRecordatorioBetween(Usuario usuario, LocalDate inicio, LocalDate fin);
 
-     // Agrega esta línea debajo de las demás
      List<Recordatorio> findByUsuarioOrderByFechaRecordatorioDesc(Usuario usuario);
 
      List<Recordatorio> findByFechaRecordatorioAndCompletadoFalse(LocalDate fechaRecordatorio);
 
      Optional<Recordatorio> findByIdAndUsuario(Integer id, Usuario usuario);
+
+     @Modifying
+     @Query("DELETE FROM Recordatorio r WHERE r.usuario.id = :usuarioId")
+     void deleteByUsuarioId(@Param("usuarioId") Integer usuarioId);
 }
