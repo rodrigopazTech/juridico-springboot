@@ -12,6 +12,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Detalle Expediente | Sistema Jurídico</title>
     <link rel="stylesheet" th:href="@{/css/output.css}" />
+    <link rel="stylesheet" th:href="@{/lib/driver.css}" />
+    <link rel="stylesheet" th:href="@{/css/tours-onboarding.css}" />
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <script th:src="@{/lib/chart.umd.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -232,6 +234,8 @@
     <!-- Gestor Documental -->
     <div th:replace="~{fragments/expedientes/gestor-documental :: gestor-documental}"></div>
 
+    <script th:src="@{/lib/driver.js}"></script>
+    <script th:src="@{/js/tours/tour-detalle-expediente.js}"></script>
     <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
 </body>
 

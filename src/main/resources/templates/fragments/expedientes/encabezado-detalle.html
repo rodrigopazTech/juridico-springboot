@@ -13,33 +13,47 @@
             <p class="text-gray-500 text-sm mt-1">Detalle general del asunto jurídico y seguimiento.</p>
         </div>
 
-        <div class="flex flex-wrap gap-2">
+        <div id="contenedor-acciones-detalle" class="flex flex-wrap gap-2 items-center">
+            <!-- Botón de Guía Interactiva del Detalle -->
+            <button type="button" id="btn-iniciar-tour-detalle"
+                class="px-3 sm:px-4 py-2 bg-gob-guinda/10 text-gob-guinda border border-gob-guinda/20 rounded hover:bg-gob-guinda hover:text-white text-sm font-bold transition inline-flex items-center gap-1.5 shadow-sm"
+                title="Iniciar recorrido guiado interactivo de esta pantalla">
+                <i class="fas fa-question-circle"></i>
+                <span class="hidden sm:inline">Guía rápida</span>
+            </button>
+
             <a th:href="@{/expedientes}"
-                class="px-3 sm:px-4 py-2 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 text-sm font-medium transition inline-flex items-center gap-1">
+                class="px-3 sm:px-4 py-2 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 text-sm font-medium transition inline-flex items-center gap-1"
+                title="Regresar al listado general de expedientes">
                 <i class="fas fa-arrow-left"></i>
                 <span class="hidden sm:inline">Volver</span>
             </a>
 
             <button onclick="openObservaciones()"
-                class="px-3 sm:px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition inline-flex items-center gap-1">
+                class="px-3 sm:px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition inline-flex items-center gap-1"
+                title="Registrar o consultar notas y observaciones de trabajo">
                 <i class="fas fa-comment-dots"></i>
                 <span class="hidden sm:inline">Observaciones</span>
             </button>
             <a th:href="@{/expedientes/{id}/trazabilidad(id=${expediente.id})}"
-                class="px-3 sm:px-4 py-2 border border-gob-oro text-gob-guinda rounded hover:bg-yellow-50 text-sm font-medium transition inline-flex items-center gap-1">
+                class="px-3 sm:px-4 py-2 border border-gob-oro text-gob-guinda rounded hover:bg-yellow-50 text-sm font-medium transition inline-flex items-center gap-1"
+                title="Consultar la bitácora cronológica y auditoría de actuaciones">
                 <i class="fas fa-route"></i>
                 <span class="hidden sm:inline">Trazabilidad</span>
             </a>
             <button onclick="openModal('modal-editar')"
-                class="px-3 sm:px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition inline-flex items-center gap-1">
+                class="px-3 sm:px-4 py-2 border border-gob-guinda text-gob-guinda rounded hover:bg-red-50 text-sm font-medium transition inline-flex items-center gap-1"
+                title="Editar la información técnica de este expediente">
                 <i class="fas fa-edit"></i>
                 <span class="hidden sm:inline">Editar</span>
             </button>
 
-            <button th:data-expediente-id="${expediente.id}" 
+            <button id="btn-gestor-documental-header"
+                th:data-expediente-id="${expediente.id}" 
                 th:data-expediente-numero="${expediente.numero}"
                 onclick="openGestorDocumental(this.dataset.expedienteId, this.dataset.expedienteNumero)"
-                class="px-3 sm:px-4 py-2 bg-gob-guinda text-white rounded hover:bg-gob-guinda-claro text-sm font-medium transition shadow-sm inline-flex items-center gap-1">
+                class="px-3 sm:px-4 py-2 bg-gob-guinda text-white rounded hover:bg-gob-guinda-claro text-sm font-medium transition shadow-sm inline-flex items-center gap-1"
+                title="Abrir el repositorio digital de documentos del expediente">
                 <i class="fas fa-file-archive"></i>
                 <span class="hidden sm:inline">Gestor Documental</span>
             </button>
