@@ -96,8 +96,11 @@
             },
             {
                 popover: {
-                    title: '🎉 ¡Listo para comenzar!',
-                    description: 'Ya conoces la estructura del módulo de expedientes. Recuerda que puedes volver a consultar esta guía en cualquier momento desde el botón <strong>"? Guía rápida"</strong>.',
+                    title: '<div class="siaj-tour-final-header"><div class="siaj-tour-final-icon"><i class="fas fa-check"></i></div><span>¡Todo listo para comenzar!</span></div>',
+                    description: '<p class="text-gray-600 text-sm leading-relaxed mb-1">Ya conoces los elementos clave para consultar, filtrar y gestionar expedientes en el sistema.</p><p class="text-xs text-gray-500 mt-2">Puedes volver a activar este recorrido cuando lo desees desde el botón <strong>"? Guía rápida"</strong> en la barra superior.</p>',
+                    popoverClass: 'siaj-tour-popover siaj-tour-popover-final',
+                    doneBtnText: '¡Comenzar a trabajar!',
+                    prevBtnText: '← Repasar pasos anteriores',
                     side: 'over',
                     align: 'center'
                 }
@@ -115,7 +118,7 @@
             popoverClass: 'siaj-tour-popover',
             nextBtnText: 'Siguiente →',
             prevBtnText: '← Anterior',
-            doneBtnText: 'Entendido, ¡a trabajar!',
+            doneBtnText: '¡Comenzar a trabajar!',
             progressText: 'Paso {{current}} de {{total}}',
             steps: steps,
             onDestroyed: function () {
