@@ -8,7 +8,7 @@
                     <tr>
                         <th class="px-2 py-3 bg-gray-50 rounded-tl-2xl">
                             <a th:href="@{/terminos(page=${terminos.number}, keyword=${keyword}, estatus=${paramEstatus}, prioridadId=${paramPrioridadId}, abogadoId=${paramAbogadoId}, materiaId=${paramMateriaId}, gerenciaId=${paramGerenciaId}, periodo=${paramPeriodo}, mes=${param.mes}, anio=${param.anio}, sortBy='id', sortDir=${sortBy == 'id' && sortDir == 'asc' ? 'desc' : 'asc'})}"
-                               class="pagina-link-ter flex items-center gap-1 hover:text-gob-guinda transition justify-center">
+                                class="pagina-link-ter flex items-center gap-1 hover:text-gob-guinda transition justify-center">
                                 <span title="ID del término">#ID</span>
                                 <i th:if="${sortBy == 'id'}" th:class="${sortDir == 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'}"></i>
                                 <i th:if="${sortBy != 'id'}" class="fas fa-sort text-gray-300 text-[10px]"></i>
@@ -17,7 +17,7 @@
                         <th class="px-2.5 py-3 bg-gray-50">Origen</th>
                         <th class="px-2.5 py-3 bg-gray-50">
                             <a th:href="@{/terminos(page=${terminos.number}, keyword=${keyword}, estatus=${paramEstatus}, prioridadId=${paramPrioridadId}, abogadoId=${paramAbogadoId}, materiaId=${paramMateriaId}, gerenciaId=${paramGerenciaId}, periodo=${paramPeriodo}, mes=${param.mes}, anio=${param.anio}, sortBy='fechaVencimiento', sortDir=${sortBy == 'fechaVencimiento' && sortDir == 'asc' ? 'desc' : 'asc'})}"
-                               class="pagina-link-ter flex items-center gap-1 hover:text-gob-guinda transition">
+                                class="pagina-link-ter flex items-center gap-1 hover:text-gob-guinda transition">
                                 <span>Vencimiento</span>
                                 <i th:if="${sortBy == 'fechaVencimiento'}" th:class="${sortDir == 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'}"></i>
                                 <i th:if="${sortBy != 'fechaVencimiento'}" class="fas fa-sort text-gray-300 text-[10px]"></i>
@@ -31,7 +31,32 @@
                 </thead>
                 <tbody id="tabla-terminos-body">
                     <tr th:if="${terminos.empty}">
-                        <td colspan="7" class="px-4 py-6 text-center text-gray-400">No hay términos registrados.</td>
+                        <td colspan="7" class="px-4 py-12 text-center">
+                            <div class="max-w-md mx-auto flex flex-col items-center">
+                                <div class="w-14 h-14 rounded-full bg-gob-guinda/10 text-gob-guinda flex items-center justify-center text-2xl mb-3 shadow-inner">
+                                    <i class="fas fa-hourglass-half"></i>
+                                </div>
+                                <h3 class="text-base font-bold text-gray-800 mb-1"
+                                    th:text="${(keyword != null and keyword != '') or (paramEstatus != null and paramEstatus != '') ? 'Sin resultados con los filtros actuales' : 'No hay términos registrados'}">
+                                    No hay términos registrados
+                                </h3>
+                                <p class="text-xs text-gray-500 text-center leading-relaxed mb-4"
+                                    th:text="${(keyword != null and keyword != '') or (paramEstatus != null and paramEstatus != '') ? 'Intenta modificar el término de búsqueda o pulsa VerTodos para restablecer la vista.' : 'Los términos procesales te alertan sobre vencimientos judiciales calculados en días hábiles. Crea tu primer término para iniciar el control de plazos.'}">
+                                    Los términos procesales te alertan sobre vencimientos judiciales calculados en días hábiles. Crea tu primer término para iniciar el control de plazos.
+                                </p>
+                                <div class="flex items-center gap-2">
+                                    <a th:if="${(keyword != null and keyword != '') or (paramEstatus != null and paramEstatus != '')}"
+                                        th:href="@{/terminos}"
+                                        class="inline-flex items-center gap-1.5 text-xs font-bold text-gob-guinda bg-gob-guinda/10 hover:bg-gob-guinda hover:text-white px-3.5 py-2 rounded-lg transition-colors">
+                                        <i class="fas fa-list-ul"></i> Restablecer filtros
+                                    </a>
+                                    <button type="button" onclick="abrirModalNuevo()"
+                                        class="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-gob-guinda hover:bg-gob-guindaDark px-3.5 py-2 rounded-lg shadow-sm transition-colors">
+                                        <i class="fas fa-plus"></i> Registrar término
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
                     </tr>
 
                     <th:block th:each="t : ${terminos}" th:with="at=${@atencionTemporal.evaluarTermino(t)}">
@@ -247,12 +272,32 @@
     <!-- VISTA MÓVIL (Tarjetas Premium Adaptativas) -->
     <div th:fragment="tabla-resultados-movil" id="tabla-resultados-movil-container">
         <div class="block lg:hidden bg-gray-100 p-2 space-y-2">
-            <div th:if="${terminos.empty}" class="bg-white p-12 rounded-2xl text-center border border-dashed border-gray-200">
-            <i class="fas fa-hourglass-empty text-4xl text-gray-200 mb-4"></i>
-            <p class="text-gray-400 text-sm">No hay términos registrados.</p>
-        </div>
+            <div th:if="${terminos.empty}" class="bg-white p-8 rounded-2xl text-center border border-dashed border-gray-200">
+                <div class="w-12 h-12 rounded-full bg-gob-guinda/10 text-gob-guinda flex items-center justify-center text-xl mx-auto mb-3">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+                <h4 class="text-sm font-bold text-gray-800 mb-1"
+                    th:text="${(keyword != null and keyword != '') or (paramEstatus != null and paramEstatus != '') ? 'Sin resultados con los filtros actuales' : 'No hay términos registrados'}">
+                    No hay términos registrados
+                </h4>
+                <p class="text-xs text-gray-500 mb-4 leading-relaxed"
+                    th:text="${(keyword != null and keyword != '') or (paramEstatus != null and paramEstatus != '') ? 'Prueba con otros filtros o restablece la búsqueda con VerTodos.' : 'Registra un término para supervisar semáforos de vencimiento y plazos judiciales.'}">
+                    Registra un término para supervisar semáforos de vencimiento y plazos judiciales.
+                </p>
+                <div class="flex items-center justify-center gap-2">
+                    <a th:if="${(keyword != null and keyword != '') or (paramEstatus != null and paramEstatus != '')}"
+                        th:href="@{/terminos}"
+                        class="inline-flex items-center gap-1 text-xs font-bold text-gob-guinda bg-gob-guinda/10 px-3 py-1.5 rounded-lg">
+                        <i class="fas fa-list-ul"></i> VerTodos
+                    </a>
+                    <button type="button" onclick="abrirModalNuevo()"
+                        class="inline-flex items-center gap-1 text-xs font-bold text-white bg-gob-guinda hover:bg-gob-guindaDark px-3 py-1.5 rounded-lg shadow-sm">
+                        <i class="fas fa-plus"></i> Nuevo término
+                    </button>
+                </div>
+            </div>
 
-        <div th:each="t : ${terminos}" th:with="at=${@atencionTemporal.evaluarTermino(t)}" class="bg-white rounded-2xl border border-gray-200 p-5 shadow-md space-y-3 relative">
+            <div th:each="t : ${terminos}" th:with="at=${@atencionTemporal.evaluarTermino(t)}" class="bg-white rounded-2xl border border-gray-200 p-5 shadow-md space-y-3 relative">
             
             <!-- Encabezado de la Tarjeta (Vencimiento + Prioridad) -->
             <div class="flex items-center justify-between">

@@ -1,229 +1,301 @@
 <div th:fragment="modals">
 
-    <div id="modal-audiencia" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-titulo-audiencia" role="dialog"
-        aria-modal="true">
-        <div class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm transition-opacity"></div>
+    <!-- MODAL NUEVA / EDITAR AUDIENCIA -->
+    <div id="modal-audiencia" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto custom-scrollbar"
+        aria-labelledby="modal-titulo-audiencia" role="dialog" aria-modal="true">
 
-        <div class="fixed inset-0 z-10 overflow-y-auto">
-            <div class="flex min-h-full items-start justify-center p-1 py-1 text-center lg:items-center">
-                <div
-                    class="relative max-h-[calc(100vh-0.5rem)] transform overflow-y-auto rounded-xl bg-white text-left shadow-2xl transition-all w-full max-w-7xl mx-2 sm:mx-auto border border-gray-200">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl border-t-4 border-gob-guinda transform transition-all my-6">
 
-                    <div
-                        class="flex justify-between items-center px-6 py-3 border-b border-gob-guinda bg-gob-guinda text-white rounded-t-xl shadow-sm">
-                        <h3 class="text-lg font-bold flex items-center gap-2 font-headings" id="modal-titulo-audiencia">
-                            <i class="fas fa-gavel"></i> Nueva Audiencia
-                        </h3>
-                        <button type="button"
-                            onclick="document.getElementById('modal-audiencia').classList.add('hidden')"
-                            class="text-white/80 hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/10 focus:outline-none">
-                            <span class="sr-only">Cerrar</span>
-                            <i class="fas fa-times text-xl"></i>
-                        </button>
+            <!-- HEADER CON STEPPER INTEGRADO (IDÉNTICO A EXPEDIENTES) -->
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center px-6 py-4 border-b border-gray-100 gap-3">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-xl font-bold text-gob-guinda flex items-center gap-2">
+                        <i class="fas fa-gavel text-gob-oro"></i> <span id="modal-titulo-audiencia">Nueva Audiencia</span>
+                    </h3>
+                </div>
+
+                <!-- STEPPER BREADCRUMBS -->
+                <div class="flex items-center gap-1.5 self-start sm:self-auto bg-gray-100 p-1 rounded-lg text-xs font-bold">
+                    <button type="button" id="btn-step-1-audiencia" onclick="cambiarPasoAudiencia(1)"
+                        class="flex items-center gap-1.5 px-3 py-1 rounded-md bg-white text-gob-guinda shadow-xs transition-all">
+                        <span id="badge-step-1-audiencia" class="w-4 h-4 rounded-full bg-gob-guinda text-white text-[10px] flex items-center justify-center font-bold">1</span>
+                        <span>Origen y Asunto</span>
+                    </button>
+                    <i class="fas fa-chevron-right text-gray-400 text-[10px] px-0.5"></i>
+                    <button type="button" id="btn-step-2-audiencia" onclick="cambiarPasoAudiencia(2)"
+                        class="flex items-center gap-1.5 px-3 py-1 rounded-md text-gray-500 hover:text-gray-800 transition-all">
+                        <span id="badge-step-2-audiencia" class="w-4 h-4 rounded-full bg-gray-300 text-gray-600 text-[10px] flex items-center justify-center font-bold">2</span>
+                        <span>Cita y Modalidad</span>
+                    </button>
+                </div>
+
+                <button type="button" onclick="document.getElementById('modal-audiencia').classList.add('hidden')"
+                    class="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form id="form-audiencia" th:action="@{/audiencias/guardar}" method="post"
+                class="p-6 space-y-5 text-sm bg-white">
+                <input type="hidden" id="input-audiencia-id" name="id" />
+                <input type="hidden" id="input-origen-audiencia" name="origenAudiencia" value="EXPEDIENTE" />
+                <input type="hidden" id="current-user-id"
+                    th:value="${usuarioActual != null ? usuarioActual.id : ''}" />
+
+                <!-- ===================== PASO 1: ORIGEN Y ASUNTO ===================== -->
+                <div id="paso-1-audiencia" class="space-y-4">
+                    
+                    <!-- SECCIÓN 1: ORIGEN DE LA ACTUACIÓN -->
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 pb-1.5 border-b border-gray-100 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">1</span>
+                            <span>Origen de la Actuación</span>
+                        </div>
+
+                        <div id="contenedor-tabs-audiencia" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                            <button type="button" id="tab-expediente" onclick="switchModoRegistro('EXPEDIENTE')"
+                                class="flex items-start gap-3 rounded-lg border-2 border-gob-guinda bg-white p-3 text-left text-xs font-bold text-gob-guinda shadow-xs transition-colors focus:outline-none focus:ring-1 focus:ring-gob-guinda">
+                                <i class="fas fa-folder-open text-gob-guinda text-sm mt-0.5"></i>
+                                <div>
+                                    <div class="text-xs font-bold text-gob-guinda">Asociada a Expediente</div>
+                                    <p class="text-[11px] text-gray-500 font-normal mt-1 leading-tight">La comparecencia corresponde a un expediente registrado en el sistema.</p>
+                                </div>
+                            </button>
+                            <button type="button" id="tab-asunto-unico" onclick="switchModoRegistro('ASUNTO_UNICO')"
+                                class="flex items-start gap-3 rounded-lg border border-gray-300 bg-white p-3 text-left text-xs font-bold text-gray-700 shadow-xs transition-colors hover:border-gob-guinda focus:outline-none focus:ring-1 focus:ring-gob-guinda">
+                                <i class="fas fa-file-circle-plus text-sm mt-0.5"></i>
+                                <div>
+                                    <div class="text-xs font-bold text-gray-700">Sin Expediente (Asunto Único)</div>
+                                    <p class="text-[11px] text-gray-500 font-normal mt-1 leading-tight">Audiencia o citatorio no vinculado a un juicio o expediente formal.</p>
+                                </div>
+                            </button>
+                        </div>
                     </div>
 
-                    <form id="form-audiencia" th:action="@{/audiencias/guardar}" method="post"
-                        class="p-4 bg-gray-50/50">
-                        <input type="hidden" id="input-audiencia-id" name="id" />
-                        <input type="hidden" id="input-origen-audiencia" name="origenAudiencia" value="EXPEDIENTE" />
-                        <input type="hidden" id="current-user-id"
-                            th:value="${usuarioActual != null ? usuarioActual.id : ''}" />
+                    <!-- SECCIÓN 2A: SI ES POR EXPEDIENTE -->
+                    <div id="seccion-expediente" class="space-y-2 pt-1">
+                        <div class="flex items-center gap-2 pb-1.5 border-b border-gray-100 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">2</span>
+                            <span>Selección de Expediente</span>
+                        </div>
 
-                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-
-                            <!-- Origen de la audiencia: mismo patrón utilizado por Términos -->
-                            <div id="contenedor-tabs-audiencia" class="col-span-1 sm:col-span-2 lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <button type="button" id="tab-expediente" onclick="switchModoRegistro('EXPEDIENTE')"
-                                    class="flex items-center gap-3 rounded-lg border border-gob-guinda bg-white px-4 py-3 text-left text-sm font-bold text-gob-guinda transition-colors focus:outline-none focus:ring-2 focus:ring-gob-oro">
-                                    <i class="fas fa-folder-open"></i> Asociada a expediente
-                                </button>
-                                <button type="button" id="tab-asunto-unico" onclick="switchModoRegistro('ASUNTO_UNICO')"
-                                    class="flex items-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-left text-sm font-bold text-gray-700 transition-colors hover:border-gob-guinda hover:text-gob-guinda focus:outline-none focus:ring-2 focus:ring-gob-oro">
-                                    <i class="fas fa-file-circle-plus"></i> Sin expediente
-                                </button>
+                        <div class="pt-1">
+                            <label for="input-expediente" class="block font-bold text-gray-700 text-xs mb-1">Expediente *</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                    <i class="fas fa-folder text-xs"></i>
+                                </span>
+                                <select id="input-expediente" name="expediente.id" required
+                                    onchange="cargarAbogadosPosibles()"
+                                    class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda text-xs bg-white shadow-sm outline-none">
+                                    <option value="">Buscar expediente...</option>
+                                    <option th:each="e : ${expedientesList}" th:value="${e.id}"
+                                        th:data-gerencia-id="${e.materia != null && e.materia.gerencia != null ? e.materia.gerencia.id : ''}"
+                                        th:text="${e.numero + ' - ' + (e.materia != null ? e.materia.nombre : '')}">
+                                    </option>
+                                </select>
                             </div>
+                            <p class="mt-1.5 text-[11px] text-gray-500">Selecciona el expediente en el cual se celebrará la audiencia.</p>
+                        </div>
+                    </div>
 
-                            <!-- SECCIÓN: POR EXPEDIENTE -->
-                            <div id="seccion-expediente" class="col-span-1 sm:col-span-2 lg:col-span-4">
-                                <label for="input-expediente" class="block text-sm font-bold text-gray-700">Expediente *</label>
-                                <div class="mt-1 flex rounded-md shadow-sm">
-                                    <span
-                                        class="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500">
-                                        <i class="fas fa-folder-open"></i>
-                                    </span>
-                                    <select id="input-expediente" name="expediente.id" required
-                                        onchange="cargarAbogadosPosibles()"
-                                        class="block w-full min-w-0 flex-1 rounded-none rounded-r-md border-gray-300 focus:border-gob-oro focus:ring-gob-oro sm:text-sm py-2 px-3">
-                                        <option value="">Buscar expediente...</option>
-                                        <option th:each="e : ${expedientesList}" th:value="${e.id}"
-                                            th:data-gerencia-id="${e.materia != null && e.materia.gerencia != null ? e.materia.gerencia.id : ''}"
-                                            th:text="${e.numero + ' - ' + (e.materia != null ? e.materia.nombre : '')}">
-                                        </option>
-                                    </select>
-                                </div>
+                    <!-- SECCIÓN 2B: SI ES SIN EXPEDIENTE (ASUNTO INDEPENDIENTE) -->
+                    <div id="seccion-asunto-unico" class="hidden space-y-3 pt-1">
+                        <div class="flex items-center justify-between pb-1.5 border-b border-gray-100">
+                            <div class="flex items-center gap-2 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                                <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">2</span>
+                                <span>Datos del Asunto Independiente</span>
                             </div>
+                            <button type="button" id="btn-usar-asunto-existente-audiencia"
+                                onclick="mostrarSelectorAsuntoExistenteAudiencia()"
+                                class="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-1 text-[11px] font-bold text-gray-700 hover:border-gob-guinda hover:text-gob-guinda shadow-2xs transition-colors">
+                                <i class="fas fa-link mr-1.5"></i> Usar asunto existente
+                            </button>
+                        </div>
 
-                            <!-- SECCIÓN: ASUNTO ÚNICO -->
-                            <div id="seccion-asunto-unico" class="col-span-1 sm:col-span-2 lg:col-span-4 hidden space-y-3 rounded-lg border border-gray-200 bg-white p-3">
-                                <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-                                    <p class="text-sm font-bold text-amber-900">Esta audiencia se registrará sin expediente.</p>
-                                    <p class="mt-1 text-xs text-amber-800">SIAJ creará un Asunto Independiente para conservarla, localizarla y vincularla a un expediente posteriormente.</p>
-                                </div>
-                                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                    <div>
-                                        <p class="text-sm font-bold text-gray-800">Crear un asunto nuevo</p>
-                                        <p class="text-xs text-gray-500">Es la opción normal para una audiencia nueva sin expediente.</p>
-                                    </div>
-                                    <button type="button" id="btn-usar-asunto-existente-audiencia"
-                                        onclick="mostrarSelectorAsuntoExistenteAudiencia()"
-                                        class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:border-gob-guinda hover:text-gob-guinda">
-                                        <i class="fas fa-link mr-2"></i>Usar un asunto existente
-                                    </button>
-                                </div>
-                                <div id="grupo-asunto-existente-audiencia" class="hidden rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
-                                    <div class="mb-2 flex items-center justify-between gap-3">
-                                        <label class="block text-sm font-bold text-indigo-900">Buscar asunto existente</label>
-                                        <a th:href="@{/asuntos-independientes}" target="_blank" class="text-xs font-bold text-indigo-700 hover:underline">Consultar todos</a>
-                                    </div>
-                                    <select name="asuntoIndependienteId" id="aud-select-asunto-independiente"
-                                        onchange="seleccionarAsuntoIndependienteAudiencia(this)"
-                                        class="block w-full rounded-lg border-gray-300 bg-white px-3 py-2.5 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm">
-                                        <option value="">No usar un asunto existente</option>
-                                        <option th:each="ai : ${asuntosIndependientesList}" th:value="${ai.id}"
-                                            th:text="${ai.folioSiaj + ' · ' + ai.referencia + ' · ' + ai.parteInteresada}"
-                                            th:data-gerencia="${ai.gerencia?.id}" th:data-materia="${ai.materia?.id}"
-                                            th:data-referencia="${ai.referencia}" th:data-partes="${ai.parteInteresada}"
-                                            th:data-descripcion="${ai.descripcion}"></option>
-                                    </select>
-                                    <p class="mt-2 text-[11px] text-indigo-800">Úsalo sólo si esta audiencia pertenece al mismo asunto que ya registraste antes.</p>
-                                </div>
-                                <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+                        <!-- Selector Asunto Existente -->
+                        <div id="grupo-asunto-existente-audiencia" class="hidden rounded-lg border border-gray-200 bg-gray-50 p-3">
+                            <div class="flex items-center justify-between gap-3 mb-1.5">
+                                <label class="block text-xs font-bold text-gray-700">Buscar asunto existente</label>
+                                <a th:href="@{/asuntos-independientes}" target="_blank" class="text-[11px] font-bold text-gob-guinda hover:underline">Consultar todos</a>
+                            </div>
+                            <select name="asuntoIndependienteId" id="aud-select-asunto-independiente"
+                                onchange="seleccionarAsuntoIndependienteAudiencia(this)"
+                                class="block w-full border border-gray-300 rounded-lg px-3 py-2 text-xs bg-white shadow-sm outline-none">
+                                <option value="">No usar un asunto existente</option>
+                                <option th:each="ai : ${asuntosIndependientesList}" th:value="${ai.id}"
+                                    th:text="${ai.folioSiaj + ' · ' + ai.referencia + ' · ' + ai.parteInteresada}"
+                                    th:data-gerencia="${ai.gerencia?.id}" th:data-materia="${ai.materia?.id}"
+                                    th:data-referencia="${ai.referencia}" th:data-partes="${ai.parteInteresada}"
+                                    th:data-descripcion="${ai.descripcion}"></option>
+                            </select>
+                        </div>
+
+                        <!-- Campos de nuevo asunto -->
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div class="campos-nuevo-asunto-audiencia">
-                                    <label class="block text-sm font-bold text-gray-700">Tipo de referencia *</label>
+                                    <label class="block font-bold text-gray-700 text-xs mb-1">Tipo de Referencia *</label>
                                     <select name="tipoReferenciaAsunto" id="aud-tipo-referencia"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm py-2 px-3 bg-white">
+                                        class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none bg-white text-xs shadow-sm">
                                         <option th:each="tipo : ${tiposReferenciaAsunto}" th:value="${tipo.name()}" th:text="${tipo.descripcion}"></option>
                                     </select>
                                 </div>
                                 <div class="campos-nuevo-asunto-audiencia">
-                                    <label class="block text-sm font-bold text-gray-700">Fecha de referencia *</label>
+                                    <label class="block font-bold text-gray-700 text-xs mb-1">Fecha de Referencia *</label>
                                     <input type="date" name="fechaReferenciaAsunto" id="aud-fecha-referencia"
                                         th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm px-3 py-2">
+                                        class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white">
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700">Gerencia *</label>
+                            </div>
 
-                                    <!-- ABOGADO / JEFE_DEPTO / GERENTE: gerencia fija, no editable -->
-                                    <div th:if="${usuarioActual != null &&
-                                                 (usuarioActual.rol.name() == 'ABOGADO' ||
-                                                  usuarioActual.rol.name() == 'JEFE_DEPTO' ||
-                                                  usuarioActual.rol.name() == 'GERENTE')}">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block font-bold text-gray-700 text-xs mb-1">Gerencia *</label>
+                                    <div th:if="${usuarioActual != null && (usuarioActual.rol.name() == 'ABOGADO' || usuarioActual.rol.name() == 'JEFE_DEPTO' || usuarioActual.rol.name() == 'GERENTE')}">
                                         <input type="hidden" name="contextoGerenciaId" id="aud-contexto-gerencia"
                                                th:value="${usuarioActual.gerencia != null ? usuarioActual.gerencia.id : ''}"/>
-                                        <div class="mt-1 block w-full rounded-md border border-gray-200 bg-gray-100 sm:text-sm py-2 px-3 text-gray-700 font-medium"
+                                        <div class="w-full rounded-lg border border-gray-200 bg-gray-100 text-xs py-2 px-3 text-gray-700 font-medium"
                                              th:text="${usuarioActual.gerencia != null ? usuarioActual.gerencia.nombre : 'Sin gerencia asignada'}">
                                         </div>
                                     </div>
-
-                                    <!-- Roles superiores: dropdown completo -->
-                                    <select th:unless="${usuarioActual != null &&
-                                                         (usuarioActual.rol.name() == 'ABOGADO' ||
-                                                          usuarioActual.rol.name() == 'JEFE_DEPTO' ||
-                                                          usuarioActual.rol.name() == 'GERENTE')}"
+                                    <select th:unless="${usuarioActual != null && (usuarioActual.rol.name() == 'ABOGADO' || usuarioActual.rol.name() == 'JEFE_DEPTO' || usuarioActual.rol.name() == 'GERENTE')}"
                                             id="aud-contexto-gerencia" name="contextoGerenciaId"
-                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm py-2 px-3">
+                                            class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white">
                                         <option value="">Seleccione gerencia...</option>
                                         <option th:each="g : ${listaGerencias}" th:value="${g.id}" th:text="${g.nombre}"></option>
                                     </select>
                                 </div>
 
                                 <div>
-                                    <label for="aud-contexto-materia" class="block text-sm font-bold text-gray-700">Materia *</label>
+                                    <label for="aud-contexto-materia" class="block font-bold text-gray-700 text-xs mb-1">Materia *</label>
                                     <select id="aud-contexto-materia" name="contextoMateriaId"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm py-2 px-3">
+                                        class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white">
                                         <option value="">Seleccione materia...</option>
                                         <option th:each="m : ${listaMaterias}" th:value="${m.id}" th:text="${m.nombre}"
                                             th:data-gerencia-id="${m.gerencia != null ? m.gerencia.id : ''}"></option>
                                     </select>
                                 </div>
+                            </div>
 
-                                <div class="lg:col-span-2">
-                                    <label for="aud-contexto-referencia" class="block text-sm font-bold text-gray-700">Nombre del asunto independiente *</label>
-                                    <input type="text" name="contextoNumeroReferencia" id="aud-contexto-referencia" required placeholder="Ej. Audiencia por requerimiento"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label for="aud-contexto-referencia" class="block font-bold text-gray-700 text-xs mb-1">Nombre del Asunto *</label>
+                                    <input type="text" name="contextoNumeroReferencia" id="aud-contexto-referencia"
+                                        placeholder="Ej. Audiencia por requerimiento"
+                                        class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white">
                                 </div>
-
-                                <div class="lg:col-span-2">
-                                    <label for="aud-contexto-partes" class="block text-sm font-bold text-gray-700">Parte interesada *</label>
-                                    <input type="text" name="contextoPartes" id="aud-contexto-partes" required placeholder="Persona, área o contraparte"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2">
-                                </div>
-
-                                <div class="md:col-span-2 lg:col-span-4">
-                                    <label for="aud-contexto-descripcion" class="block text-sm font-bold text-gray-700">Descripción del asunto *</label>
-                                    <textarea name="contextoDescripcion" id="aud-contexto-descripcion" rows="1" required placeholder="Detalles específicos del asunto independiente..."
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2 resize-none"></textarea>
-                                </div>
+                                <div>
+                                    <label for="aud-contexto-partes" class="block font-bold text-gray-700 text-xs mb-1">Parte Interesada *</label>
+                                    <input type="text" name="contextoPartes" id="aud-contexto-partes"
+                                        placeholder="Persona, área o contraparte"
+                                        class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white">
                                 </div>
                             </div>
 
-                            <div class="lg:col-span-2">
-                                <label for="input-tipo" class="block text-sm font-bold text-gray-700">Tipo de Audiencia
-                                    *</label>
+                            <div>
+                                <label for="aud-contexto-descripcion" class="block font-bold text-gray-700 text-xs mb-1">Descripción del Asunto *</label>
+                                <textarea name="contextoDescripcion" id="aud-contexto-descripcion" rows="2"
+                                    class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white resize-none"
+                                    placeholder="Detalles específicos del asunto independiente..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FOOTER PASO 1 -->
+                    <div class="flex justify-between items-center pt-4 border-t border-gray-100 mt-2">
+                        <button type="button" onclick="document.getElementById('modal-audiencia').classList.add('hidden')"
+                            class="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold text-xs transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="button" onclick="avanzarPasoAudiencia(2)"
+                            class="px-6 py-2 bg-gob-guinda text-white rounded-lg hover:bg-gob-guindaDark font-bold text-xs shadow flex items-center gap-2 transition-colors">
+                            <span>Continuar al Paso 2</span> <i class="fas fa-arrow-right text-[11px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ===================== PASO 2: DETALLE DE LA CITA Y MODALIDAD ===================== -->
+                <div id="paso-2-audiencia" class="hidden space-y-4">
+                    
+                    <!-- PASTILLA DE RESUMEN DEL ASUNTO VINCULADO -->
+                    <div class="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 border border-gray-200">
+                        <div class="flex items-center gap-2 text-xs">
+                            <span class="w-2 h-2 rounded-full bg-gob-guinda"></span>
+                            <span class="font-bold text-gray-700">Asunto Vinculado:</span>
+                            <span id="resumen-origen-audiencia" class="font-semibold text-gob-guinda">Expediente</span>
+                        </div>
+                        <button type="button" onclick="avanzarPasoAudiencia(1)"
+                            class="text-xs text-gray-500 hover:text-gob-guinda font-bold flex items-center gap-1 transition-colors">
+                            <i class="fas fa-pen text-[10px]"></i> Cambiar
+                        </button>
+                    </div>
+
+                    <!-- SECCIÓN: CITA Y TIPO DE AUDIENCIA -->
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 pb-1.5 border-b border-gray-100 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">2</span>
+                            <span>Cita y Tipo de Audiencia</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                            <div class="md:col-span-3">
+                                <label for="input-tipo" class="block font-bold text-gray-700 text-xs mb-1">Tipo de Audiencia *</label>
                                 <select id="input-tipo" name="tipoAudiencia.id" required
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm py-2 px-3">
+                                    class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none bg-white text-xs shadow-sm">
                                     <option value="" disabled selected>Seleccione tipo de audiencia...</option>
                                     <option th:each="t : ${tipos}" th:value="${t.id}" th:text="${t.nombre}"
                                             th:data-gerencia-id="${t.gerencia != null ? t.gerencia.id : ''}"></option>
                                 </select>
                             </div>
 
-                            <div>
-                                <label for="input-fecha" class="block text-sm font-bold text-gray-700">Fecha *</label>
+                            <div class="md:col-span-2">
+                                <label for="input-fecha" class="block font-bold text-gray-700 text-xs mb-1">Fecha de Celebración *</label>
                                 <input type="date" name="fechaAudiencia" id="input-fecha" required
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2">
+                                    class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white">
                             </div>
 
                             <div>
-                                <label for="input-hora" class="block text-sm font-bold text-gray-700">Hora *</label>
+                                <label for="input-hora" class="block font-bold text-gray-700 text-xs mb-1">Hora *</label>
                                 <input type="time" name="horaAudiencia" id="input-hora" required
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2">
+                                    class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white">
                             </div>
+                        </div>
+                    </div>
 
-                            <div>
-                                <span class="block text-sm font-bold text-gray-700 mb-2">Modalidad</span>
-                                <div class="flex items-center space-x-4">
-                                    <div class="flex items-center">
+                    <!-- SECCIÓN: MODALIDAD Y UBICACIÓN -->
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 pb-1.5 border-b border-gray-100 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">3</span>
+                            <span>Modalidad y Ubicación</span>
+                        </div>
+
+                        <div class="space-y-3 pt-1">
+                            <div class="flex items-center justify-between">
+                                <span class="block text-xs font-bold text-gray-700">Modalidad</span>
+                                <div class="flex items-center space-x-3 bg-gray-100 p-1 rounded-lg">
+                                    <label class="flex items-center px-3 py-1 rounded cursor-pointer text-xs font-bold text-gray-700 has-[:checked]:bg-white has-[:checked]:text-gob-guinda has-[:checked]:shadow-xs transition-all">
                                         <input id="mod-presencial" name="esVirtual" type="radio" value="false" checked
-                                            onclick="toggleUbicacion(false)"
-                                            class="h-4 w-4 border-gray-300 text-gob-guinda focus:ring-gob-oro">
-                                        <label for="mod-presencial"
-                                            class="ml-2 block text-sm font-medium text-gray-700">
-                                            <i class="fas fa-building text-gray-400 mr-1"></i> Presencial
-                                        </label>
-                                    </div>
-                                    <div class="flex items-center">
+                                            onclick="toggleUbicacion(false)" class="sr-only">
+                                        <i class="fas fa-building mr-1.5 text-gray-500"></i> Presencial
+                                    </label>
+                                    <label class="flex items-center px-3 py-1 rounded cursor-pointer text-xs font-bold text-gray-700 has-[:checked]:bg-white has-[:checked]:text-gob-guinda has-[:checked]:shadow-xs transition-all">
                                         <input id="mod-virtual" name="esVirtual" type="radio" value="true"
-                                            onclick="toggleUbicacion(true)"
-                                            class="h-4 w-4 border-gray-300 text-gob-guinda focus:ring-gob-oro">
-                                        <label for="mod-virtual" class="ml-2 block text-sm font-medium text-gray-700">
-                                            <i class="fas fa-video text-gray-400 mr-1"></i> Virtual
-                                        </label>
-                                    </div>
+                                            onclick="toggleUbicacion(true)" class="sr-only">
+                                        <i class="fas fa-video mr-1.5 text-gray-500"></i> Virtual
+                                    </label>
                                 </div>
                             </div>
 
                             <div id="campo-sala">
-                                <label for="input-sala" class="block text-sm font-bold text-gray-700">Sede / Sala
-                                    *</label>
-                                <div class="relative mt-1">
+                                <label for="input-sala" class="block font-bold text-gray-700 text-xs mb-1">Sede / Sala *</label>
+                                <div class="relative">
                                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
-                                        <i class="fas fa-map-marker-alt text-sm"></i>
+                                        <i class="fas fa-map-marker-alt text-xs"></i>
                                     </span>
                                     <select name="salaLugar" id="input-sala"
-                                        class="block w-full pl-9 pr-3 rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm py-2 px-3">
-                                        <option value="">Selecciona o cree una sede...</option>
+                                        class="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-300 shadow-sm text-xs bg-white focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none">
+                                        <option value="">Selecciona o escriba una sede...</option>
                                         <option th:each="s : ${listaSedes}" th:value="${s.nombre}" th:text="${s.nombre}"></option>
                                     </select>
                                 </div>
@@ -233,150 +305,264 @@
                             </div>
 
                             <div id="campo-url" class="hidden">
-                                <label for="input-url" class="block text-sm font-bold text-gray-700">Enlace de Reunión
-                                    (URL) *</label>
-                                <input type="url" name="urlReunion" id="input-url"
-                                    placeholder="https://ejemplo.com/reunion"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2">
-                            </div>
-
-                            <div
-                                class="bg-yellow-50 p-3 rounded-lg border border-yellow-200 lg:col-span-2">
-                                <label for="input-abogado" class="block text-sm font-bold text-gray-700 mb-1">
-                                    <i class="fas fa-user-shield text-gob-oro mr-1"></i> Abogado que Comparece
-                                </label>
-                                <p class="text-[11px] text-gray-500 mb-2 italic">
-                                    Selecciona al responsable de asistir. Por defecto se sugiere al titular, pero puedes
-                                    asignar un sustituto de la misma área.
-                                </p>
-
-                                <select id="input-abogado" name="abogadoComparece.id"
-                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2">
-                                    <option value="">Seleccione expediente primero...</option>
-                                    <!-- Abogados del modelo visibles en modo Asunto Único -->
-                                    <option th:each="abg : ${abogados}" th:value="${abg.id}" th:text="${abg.nombreCompleto}" class="abogado-option-all hidden"></option>
-                                </select>
-                            </div>
-
-
-
-                            <div class="sm:col-span-2 lg:col-span-4">
-                                <label for="input-observaciones-aud" class="block text-sm font-bold text-gray-700">Notas / Observaciones</label>
-                                <textarea name="observaciones" id="input-observaciones-aud" rows="1"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gob-oro focus:ring-gob-oro sm:text-sm px-3 py-2 resize-none"
-                                    placeholder="Agregue comentarios internos o notas preliminares..."></textarea>
-                            </div>
-
-
-                        </div>
-
-                        <div
-                            class="mt-3 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2 border-t border-gray-200">
-                            <button type="button"
-                                onclick="document.getElementById('modal-audiencia').classList.add('hidden')"
-                                class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2.5 border border-gray-300 shadow-sm text-sm font-bold rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gob-oro transition-colors">
-                                Cancelar
-                            </button>
-                            <button type="submit"
-                                class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2.5 border border-transparent shadow-sm text-sm font-bold rounded-md text-white bg-gob-guinda hover:bg-gob-guindaDark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gob-guinda transition-colors">
-                                <i class="fas fa-save mr-2"></i> Guardar Audiencia
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-resultado" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
-        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm"></div>
-        <div class="fixed inset-0 z-10 flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
-                <div class="bg-gob-guinda text-white p-5 flex justify-between items-center">
-                    <h3 class="text-lg font-bold"><i class="fas fa-clipboard-check mr-2"></i>Registrar resultado</h3>
-                    <button type="button" onclick="document.getElementById('modal-resultado').classList.add('hidden')"><i class="fas fa-times"></i></button>
-                </div>
-                <form id="form-resultado" th:action="@{/audiencias/registrar-resultado}" method="post" class="p-6">
-                    <input type="hidden" name="id" id="resultado-audiencia-id">
-                    <p class="text-sm text-gray-600 mb-4">Describe qué ocurrió en la Audiencia. El Acta se adjunta por separado como evidencia documental.</p>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Resultado *</label>
-                    <textarea name="resultado" required minlength="5" rows="4"
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-gob-guinda focus:ring-gob-guinda p-3"
-                        placeholder="Ej. Se celebró la Audiencia y se acordó..."></textarea>
-                    <div class="mt-6 flex justify-end gap-3">
-                        <button type="button" onclick="document.getElementById('modal-resultado').classList.add('hidden')" class="px-4 py-2 border rounded-lg">Cancelar</button>
-                        <button type="submit" class="px-4 py-2 bg-gob-guinda text-white font-bold rounded-lg">Guardar resultado</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-concluir" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog"
-        aria-modal="true">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-
-        <div class="fixed inset-0 z-10 overflow-y-auto">
-            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                <div
-                    class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-full max-w-lg mx-4 sm:mx-auto border border-gray-200">
-
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <div class="sm:flex sm:items-start">
-                            <div
-                                class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
-                                <i class="fas fa-check text-green-600 text-lg"></i>
-                            </div>
-                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                <h3 class="text-lg font-bold leading-6 text-gray-900" id="modal-title">Concluir
-                                    Audiencia</h3>
-                                <div class="mt-2">
-                                    <p class="text-sm text-gray-500 mb-4">
-                                        Confirma que el resultado y la evidencia documental ya fueron revisados. Esto moverá la Audiencia al historial.
-                                    </p>
-
-                                    <form id="form-concluir" th:action="@{/audiencias/concluir}" method="post">
-                                        <input type="hidden" name="id" id="concluir-audiencia-id">
-
-                                        <label class="block text-sm font-bold text-gray-700 mb-1">Observaciones finales</label>
-                                        <textarea name="observaciones" rows="3"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm p-3"
-                                            placeholder="Agrega una observación sólo si es necesaria..."></textarea>
-                                    </form>
+                                <label for="input-url" class="block font-bold text-gray-700 text-xs mb-1">Enlace de Reunión (URL) *</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
+                                        <i class="fas fa-link text-xs"></i>
+                                    </span>
+                                    <input type="url" name="urlReunion" id="input-url"
+                                        placeholder="https://teams.microsoft.com/..."
+                                        class="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-300 shadow-sm text-xs bg-white focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none">
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                        <button type="submit" form="form-concluir"
-                            class="inline-flex w-full justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-base font-bold text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
-                            <i class="fas fa-save mr-2"></i> Confirmar Conclusión
+                    <!-- SECCIÓN: COMPARECENCIA -->
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 pb-1.5 border-b border-gray-100 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">4</span>
+                            <span>Comparecencia y Responsabilidad</span>
+                        </div>
+
+                        <div class="pt-1">
+                            <label for="input-abogado" class="block font-bold text-gray-700 text-xs mb-1">
+                                <i class="fas fa-user-shield text-gob-oro mr-1"></i> Abogado que Comparece *
+                            </label>
+                            <select id="input-abogado" name="abogadoComparece.id"
+                                class="w-full rounded-lg border border-gray-300 shadow-sm text-xs py-2 px-3 bg-white focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none">
+                                <option value="">Seleccione expediente primero...</option>
+                                <option th:each="abg : ${abogados}" th:value="${abg.id}" th:text="${abg.nombreCompleto}" class="abogado-option-all hidden"></option>
+                            </select>
+                            <p class="mt-1 text-[11px] text-gray-500">Por defecto titular del caso; editable para asignar sustituto.</p>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN: OBSERVACIONES -->
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 pb-1.5 border-b border-gray-100 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">5</span>
+                            <span>Observaciones</span>
+                        </div>
+
+                        <div class="pt-1">
+                            <label for="input-observaciones-aud" class="block font-bold text-gray-700 text-xs mb-1">Notas / Observaciones Internas</label>
+                            <textarea name="observaciones" id="input-observaciones-aud" rows="2"
+                                class="w-full rounded-lg border border-gray-300 shadow-sm text-xs px-3 py-2 resize-none bg-white focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none"
+                                placeholder="Agregue comentarios internos o notas preliminares..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- FOOTER PASO 2 -->
+                    <div class="flex justify-between items-center pt-4 border-t border-gray-100 mt-2">
+                        <button type="button" onclick="avanzarPasoAudiencia(1)"
+                            class="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold text-xs flex items-center gap-2 transition-colors">
+                            <i class="fas fa-arrow-left text-[11px]"></i> <span>Volver al Paso 1</span>
                         </button>
-                        <button type="button"
-                            onclick="document.getElementById('modal-concluir').classList.add('hidden')"
-                            class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-bold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gob-oro focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
-                            Cancelar
+                        <button type="submit"
+                            class="px-6 py-2 bg-gob-guinda text-white rounded-lg hover:bg-gob-guindaDark font-bold text-xs shadow flex items-center gap-2 transition-colors">
+                            <i class="fas fa-save"></i> <span>Guardar Audiencia</span>
                         </button>
                     </div>
                 </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL REGISTRAR RESULTADO -->
+    <div id="modal-resultado" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg border-t-4 border-gob-guinda transform transition-all my-8 overflow-hidden">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100">
+                <h3 class="text-lg font-bold text-gob-guinda flex items-center gap-2">
+                    <i class="fas fa-clipboard-check text-gob-oro"></i> Registrar Resultado
+                </h3>
+                <button type="button" onclick="document.getElementById('modal-resultado').classList.add('hidden')"
+                    class="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
             </div>
+            <form id="form-resultado" th:action="@{/audiencias/registrar-resultado}" method="post" class="p-6 space-y-4 text-sm bg-white">
+                <input type="hidden" name="id" id="resultado-audiencia-id">
+                <p class="text-xs text-gray-600">Describe qué ocurrió en la Audiencia. El Acta se adjunta por separado como evidencia documental.</p>
+                <div>
+                    <label class="block font-bold text-gray-700 text-xs mb-1">Resultado *</label>
+                    <textarea name="resultado" required minlength="5" rows="4"
+                        class="w-full rounded-lg border border-gray-300 shadow-sm focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda p-2.5 text-xs outline-none"
+                        placeholder="Ej. Se celebró la Audiencia y se acordó..."></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-3 border-t border-gray-100">
+                    <button type="button" onclick="document.getElementById('modal-resultado').classList.add('hidden')"
+                        class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-colors">Cancelar</button>
+                    <button type="submit"
+                        class="px-5 py-2 bg-gob-guinda text-white text-xs font-bold rounded-lg hover:bg-gob-guindaDark shadow transition-colors">Guardar Resultado</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <div id="modal-suspender" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
-      <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm"></div>
-      <div class="fixed inset-0 z-10 flex items-center justify-center p-4">
-        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
-          <div class="bg-gob-guinda text-white p-5 flex justify-between"><h3 class="text-lg font-bold"><i class="fas fa-pause-circle mr-2"></i>Suspender Audiencia</h3><button type="button" onclick="document.getElementById('modal-suspender').classList.add('hidden')"><i class="fas fa-times"></i></button></div>
-          <form th:action="@{/audiencias/suspender}" method="post" enctype="multipart/form-data" class="p-6">
-            <input type="hidden" name="id" id="suspender-audiencia-id">
-            <div class="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-950 mb-4">La Audiencia quedará en estado <strong>Suspendida</strong>. Para conservar la justificación institucional es obligatorio adjuntar una Nota Informativa.</div>
-            <label class="block text-sm font-bold">Nota Informativa *<input type="file" name="archivoNota" required accept=".pdf,image/*" class="mt-1 block w-full border rounded-lg p-2"></label>
-            <div class="mt-6 flex justify-end gap-3"><button type="button" onclick="document.getElementById('modal-suspender').classList.add('hidden')" class="px-4 py-2 border rounded-lg">Cancelar</button><button class="px-4 py-2 bg-gob-guinda text-white font-bold rounded-lg">Suspender Audiencia</button></div>
-          </form>
+    <!-- MODAL CONCLUIR -->
+    <div id="modal-concluir" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg border-t-4 border-gob-guinda transform transition-all my-8 overflow-hidden">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100">
+                <h3 class="text-lg font-bold text-gob-guinda flex items-center gap-2">
+                    <i class="fas fa-flag-checkered text-gob-oro"></i> Concluir Audiencia
+                </h3>
+                <button type="button" onclick="document.getElementById('modal-concluir').classList.add('hidden')"
+                    class="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            <form th:action="@{/audiencias/concluir}" method="post" class="p-6 space-y-4 text-sm bg-white">
+                <input type="hidden" id="concluir-audiencia-id" name="id" />
+                <p class="text-xs text-gray-600">
+                    ¿Está seguro de que desea marcar esta audiencia como concluida? Esta acción registrará que la comparecencia se llevó a cabo.
+                </p>
+                <div>
+                    <label for="concluir-observaciones" class="block font-bold text-gray-700 text-xs mb-1">Observaciones de Cierre</label>
+                    <textarea id="concluir-observaciones" name="observaciones" rows="3"
+                        class="w-full rounded-lg border border-gray-300 shadow-sm focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda text-xs p-2.5 outline-none"
+                        placeholder="Detalles del resultado o acuerdos alcanzados..."></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-3 border-t border-gray-100">
+                    <button type="button" onclick="document.getElementById('modal-concluir').classList.add('hidden')"
+                        class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-colors">Cancelar</button>
+                    <button type="submit"
+                        class="px-5 py-2 bg-gob-guinda text-white text-xs font-bold rounded-lg hover:bg-gob-guindaDark shadow transition-colors">Concluir Audiencia</button>
+                </div>
+            </form>
         </div>
-      </div>
     </div>
 
+    <!-- SCRIPT DE NAVEGACIÓN EN 2 PASOS (AUDIENCIAS) -->
+    <script th:inline="none">
+    function cambiarPasoAudiencia(paso) {
+        avanzarPasoAudiencia(paso);
+    }
+
+    function avanzarPasoAudiencia(paso) {
+        const paso1 = document.getElementById('paso-1-audiencia');
+        const paso2 = document.getElementById('paso-2-audiencia');
+        const btnTab1 = document.getElementById('btn-step-1-audiencia');
+        const btnTab2 = document.getElementById('btn-step-2-audiencia');
+        const badge1 = document.getElementById('badge-step-1-audiencia');
+        const badge2 = document.getElementById('badge-step-2-audiencia');
+        const resumenOrigen = document.getElementById('resumen-origen-audiencia');
+
+        if (paso === 2) {
+            const origen = document.getElementById('input-origen-audiencia')?.value || 'EXPEDIENTE';
+            if (origen === 'EXPEDIENTE') {
+                const expSelect = document.getElementById('input-expediente');
+                const expVal = expSelect?.tomselect ? expSelect.tomselect.getValue() : expSelect?.value;
+                if (!expVal) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Expediente requerido',
+                            text: 'Debes seleccionar un expediente para continuar al registro de la audiencia.',
+                            confirmButtonColor: '#691C32'
+                        });
+                    } else {
+                        alert('Debes seleccionar un expediente para continuar al registro de la audiencia.');
+                    }
+                    return false;
+                }
+                const expText = expSelect?.tomselect ? expSelect.tomselect.getItem(expVal)?.textContent : expSelect?.options[expSelect.selectedIndex]?.text;
+                if (resumenOrigen) resumenOrigen.textContent = expText || 'Expediente Seleccionado';
+            } else {
+                const aiSelect = document.getElementById('aud-select-asunto-independiente');
+                const aiVal = aiSelect?.value;
+                if (!aiVal) {
+                    const ref = document.getElementById('aud-contexto-referencia')?.value?.trim();
+                    const ger = document.getElementById('aud-contexto-gerencia')?.value;
+                    const mat = document.getElementById('aud-contexto-materia')?.value;
+                    const partes = document.getElementById('aud-contexto-partes')?.value?.trim();
+                    const desc = document.getElementById('aud-contexto-descripcion')?.value?.trim();
+                    if (!ref || !ger || !mat || !partes || !desc) {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Datos incompletos',
+                                text: 'Completa todos los campos obligatorios (*) del Asunto Independiente para continuar.',
+                                confirmButtonColor: '#691C32'
+                            });
+                        } else {
+                            alert('Completa todos los campos obligatorios (*) del Asunto Independiente para continuar.');
+                        }
+                        return false;
+                    }
+                    if (resumenOrigen) resumenOrigen.textContent = `${ref} · ${partes}`;
+                } else {
+                    const aiText = aiSelect.options[aiSelect.selectedIndex]?.text;
+                    if (resumenOrigen) resumenOrigen.textContent = aiText || 'Asunto Independiente';
+                }
+            }
+
+            if (paso1) paso1.classList.add('hidden');
+            if (paso2) paso2.classList.remove('hidden');
+
+            if (btnTab1) {
+                btnTab1.classList.remove('bg-white', 'text-gob-guinda', 'shadow-xs');
+                btnTab1.classList.add('text-gray-500');
+            }
+            if (badge1) {
+                badge1.classList.remove('bg-gob-guinda');
+                badge1.classList.add('bg-green-600', 'text-white');
+                badge1.innerHTML = '<i class="fas fa-check text-[9px]"></i>';
+            }
+            if (btnTab2) {
+                btnTab2.classList.add('bg-white', 'text-gob-guinda', 'shadow-xs');
+                btnTab2.classList.remove('text-gray-500');
+            }
+            if (badge2) {
+                badge2.classList.remove('bg-gray-300', 'text-gray-600');
+                badge2.classList.add('bg-gob-guinda', 'text-white');
+                badge2.textContent = '2';
+            }
+        } else {
+            if (paso2) paso2.classList.add('hidden');
+            if (paso1) paso1.classList.remove('hidden');
+
+            if (btnTab1) {
+                btnTab1.classList.add('bg-white', 'text-gob-guinda', 'shadow-xs');
+                btnTab1.classList.remove('text-gray-500');
+            }
+            if (badge1) {
+                badge1.classList.add('bg-gob-guinda', 'text-white');
+                badge1.classList.remove('bg-green-600');
+                badge1.textContent = '1';
+            }
+            if (btnTab2) {
+                btnTab2.classList.remove('bg-white', 'text-gob-guinda', 'shadow-xs');
+                btnTab2.classList.add('text-gray-500');
+            }
+            if (badge2) {
+                badge2.classList.add('bg-gray-300', 'text-gray-600');
+                badge2.classList.remove('bg-gob-guinda', 'text-white');
+                badge2.textContent = '2';
+            }
+        }
+    }
+    window.cambiarPasoAudiencia = cambiarPasoAudiencia;
+    window.avanzarPasoAudiencia = avanzarPasoAudiencia;
+
+    // Enlazar apertura y edición
+    window.addEventListener('DOMContentLoaded', function() {
+        if (typeof window.abrirModalAudiencia === 'function') {
+            const _origNuevoAud = window.abrirModalAudiencia;
+            window.abrirModalAudiencia = function() {
+                avanzarPasoAudiencia(1);
+                return _origNuevoAud.apply(this, arguments);
+            };
+        }
+        if (typeof window.abrirModalEditar === 'function') {
+            const _origEditarAud = window.abrirModalEditar;
+            window.abrirModalEditar = function() {
+                const res = _origEditarAud.apply(this, arguments);
+                avanzarPasoAudiencia(2);
+                return res;
+            };
+        }
+    });
+    </script>
 </div>

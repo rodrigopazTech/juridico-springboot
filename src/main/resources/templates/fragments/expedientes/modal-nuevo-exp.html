@@ -1,138 +1,167 @@
 <div th:fragment="modal" id="modal-nuevo-exp"
     class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto custom-scrollbar">
 
-    <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl border-t-4 border-gob-guinda transform transition-all">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl border-t-4 border-gob-guinda transform transition-all my-6">
 
-        <div class="flex justify-between items-center p-4 border-b border-gray-100">
+        <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100">
             <h3 class="text-xl font-bold text-gob-guinda flex items-center gap-2">
-                <i class="fas fa-plus"></i> Nuevo Expediente
+                <i class="fas fa-folder-plus text-gob-oro"></i> Nuevo Expediente
             </h3>
             <button type="button" onclick="cerrarModalNuevoExpediente()"
-                class="text-gray-400 hover:text-gray-600">
+                class="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors">
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
 
-        <form th:action="@{/expedientes/guardar}" method="post" class="p-6 space-y-4 text-sm">
+        <form th:action="@{/expedientes/guardar}" method="post" class="p-6 space-y-5 text-sm">
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="block font-bold text-gray-600 mb-1">Número de Expediente*</label>
-                    <input type="text" name="numero" placeholder="0000/2025" required
-                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none">
+            <!-- SECCIÓN 1: CLASIFICACIÓN Y MATERIA -->
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 pb-1.5 border-b border-gray-100 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                    <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">1</span>
+                    <span>Clasificación y Materia</span>
                 </div>
-                <div>
-                    <label class="block font-bold text-gray-600 mb-1">Prioridad*</label>
-                    <select name="prioridad.id"
-                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
-                        <option th:each="p : ${prioridades}" th:value="${p.id}" th:text="${p.nombre}"></option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block font-bold text-gray-600 mb-1">Etapa Procesal*</label>
-                    <select name="etapaCatalogo.id" id="select-etapa-exp" required disabled
-                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-gray-50">
-                        <option value="">Primero selecciona una materia...</option>
-                    </select>
-                </div>
-            </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                    <div>
+                        <label class="block font-bold text-gray-700 text-xs mb-1">Gerencia *</label>
+                        <select id="select-gerencia-exp" onchange="cargarMateriasExpediente(); cargarOrganosExpediente();"
+                            class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none bg-white text-xs disabled:bg-gray-100 disabled:text-gray-500 shadow-sm"
+                            required th:disabled="${rolActual.name() == 'GERENTE' or rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ABOGADO'}"
+                            th:name="${(rolActual.name() == 'GERENTE' or rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ABOGADO') ? '' : 'gerencia.id'}">
+                            <option value="">Selecciona gerencia...</option>
+                            <option th:each="g : ${gerencias}" th:value="${g.id}" th:text="${g.nombre}"
+                                th:selected="${(rolActual.name() == 'GERENTE' or rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ABOGADO') and usuarioActual.gerencia != null and usuarioActual.gerencia.id == g.id}">
+                            </option>
+                        </select>
+                        <input type="hidden" name="gerencia.id"
+                            th:if="${(rolActual.name() == 'GERENTE' or rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ABOGADO') and usuarioActual.gerencia != null}"
+                            th:value="${usuarioActual.gerencia.id}">
+                    </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block font-bold text-gray-600 mb-1">Gerencia*</label>
+                    <div>
+                        <label class="block font-bold text-gray-700 text-xs mb-1">Materia *</label>
+                        <select name="materia.id" id="select-materia-exp" onchange="cargarAbogadosExpediente(); cargarEtapasExpediente();"
+                            class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none bg-gray-50 text-xs shadow-sm transition-all"
+                            required disabled>
+                            <option value="">Primero selecciona una gerencia...</option>
+                        </select>
+                    </div>
 
-                    <select id="select-gerencia-exp" onchange="cargarMateriasExpediente(); cargarOrganosExpediente();"
-                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white disabled:bg-gray-100 disabled:text-gray-500"
-                        required th:disabled="${rolActual.name() == 'GERENTE' or rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ABOGADO'}"
-                        th:name="${(rolActual.name() == 'GERENTE' or rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ABOGADO') ? '' : 'gerencia.id'}">
-                        <option value="">Selecciona...</option>
-                        <option th:each="g : ${gerencias}" th:value="${g.id}" th:text="${g.nombre}"
-                            th:selected="${(rolActual.name() == 'GERENTE' or rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ABOGADO') and usuarioActual.gerencia != null and usuarioActual.gerencia.id == g.id}">
-                        </option>
-                    </select>
-
-                    <input type="hidden" name="gerencia.id"
-                        th:if="${(rolActual.name() == 'GERENTE' or rolActual.name() == 'JEFE_DEPTO' or rolActual.name() == 'ABOGADO') and usuarioActual.gerencia != null}"
-                        th:value="${usuarioActual.gerencia.id}">
-                </div>
-                <div>
-                    <label class="block font-bold text-gray-600 mb-1">Estado / Sede*</label>
-                    <select name="sede" id="select-sede-exp"
-                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white"
-                        required>
-                        <option value="">Seleccione estado...</option>
-                        <option th:each="est : ${estados}" th:value="${est.nombre}" th:text="${est.nombre}"></option>
-                    </select>
+                    <div>
+                        <label class="block font-bold text-gray-700 text-xs mb-1">Tipo de Expediente *</label>
+                        <select name="tipoExpediente.id" required
+                            class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none bg-white text-xs shadow-sm">
+                            <option value="">Selecciona tipo...</option>
+                            <option th:each="te : ${tiposExpediente}" th:value="${te.id}" th:text="${te.nombre}"></option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block font-bold text-gray-600 mb-1">Materia*</label>
-                    <select name="materia.id" id="select-materia-exp" onchange="cargarAbogadosExpediente(); cargarEtapasExpediente();"
-                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-gray-50"
-                        required disabled>
-                        <option value="">Primero selecciona una gerencia...</option>
-                    </select>
+            <!-- SECCIÓN 2: RADICACIÓN JURISDICCIONAL -->
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 pb-1.5 border-b border-gray-100 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                    <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">2</span>
+                    <span>Radicación Jurisdiccional</span>
                 </div>
-                <div>
-                    <label class="block font-bold text-gray-600 mb-1">Órgano Jurisdiccional*</label>
-                    <select name="organoJurisdiccional.id" id="select-organo-exp"
-                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-gray-50" required disabled>
-                        <option value="">Primero selecciona una gerencia...</option>
-                    </select>
-                </div>
-            </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                    <div>
+                        <label class="block font-bold text-gray-700 text-xs mb-1">Estado / Sede *</label>
+                        <select name="sede" id="select-sede-exp"
+                            class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none bg-white text-xs shadow-sm"
+                            required>
+                            <option value="">Seleccione estado...</option>
+                            <option th:each="est : ${estados}" th:value="${est.nombre}" th:text="${est.nombre}"></option>
+                        </select>
+                    </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block font-bold text-gray-600 mb-1">Abogado Responsable</label>
-                    <input th:if="${rolActual.name() == 'ABOGADO'}" type="text"
-                        class="w-full border border-gray-300 rounded p-2 bg-gray-100 text-gray-500 outline-none cursor-not-allowed"
-                        th:value="${usuarioActual.nombreCompleto}" disabled>
-                    <select th:unless="${rolActual.name() == 'ABOGADO'}" id="select-abogado-exp"
-                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-gray-50 disabled:bg-gray-100 disabled:text-gray-500"
-                        disabled name="abogadoResponsable.id">
-                        <option value="">Primero selecciona una materia...</option>
-                    </select>
-                    <input type="hidden" name="abogadoResponsable.id"
-                        th:if="${rolActual.name() == 'ABOGADO'}"
-                        th:value="${usuarioActual.id}">
-                </div>
-                <div>
-                    <label class="block font-bold text-gray-600 mb-1">Tipo de Expediente*</label>
-                    <select name="tipoExpediente.id" required
-                        class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none bg-white">
-                        <option value="">Selecciona tipo...</option>
-                        <option th:each="te : ${tiposExpediente}" th:value="${te.id}" th:text="${te.nombre}"></option>
-                    </select>
+                    <div>
+                        <label class="block font-bold text-gray-700 text-xs mb-1">Órgano Jurisdiccional *</label>
+                        <select name="organoJurisdiccional.id" id="select-organo-exp"
+                            class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none bg-gray-50 text-xs shadow-sm transition-all"
+                            required disabled>
+                            <option value="">Primero selecciona una gerencia...</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-gray-700 text-xs mb-1">Número de Expediente *</label>
+                        <input type="text" name="numero" placeholder="Ej. 1234/2025" required
+                            class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm">
+                    </div>
                 </div>
             </div>
 
-            <div>
-                <label class="block font-bold text-gray-600 mb-1">Partes Procesales</label>
-                <input type="text" name="partes" placeholder="Ej: Juan Pérez vs Inmobiliaria S.A."
-                    class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none">
+            <!-- SECCIÓN 3: ESTADO PROCESAL Y ASIGNACIÓN -->
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 pb-1.5 border-b border-gray-100 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                    <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">3</span>
+                    <span>Estado Procesal y Asignación</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                    <div>
+                        <label class="block font-bold text-gray-700 text-xs mb-1">Etapa Procesal *</label>
+                        <select name="etapaCatalogo.id" id="select-etapa-exp" required disabled
+                            class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none bg-gray-50 text-xs shadow-sm transition-all">
+                            <option value="">Primero selecciona una materia...</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-gray-700 text-xs mb-1">Abogado Responsable</label>
+                        <input th:if="${rolActual.name() == 'ABOGADO'}" type="text"
+                            class="w-full border border-gray-300 rounded-lg p-2 bg-gray-100 text-gray-500 outline-none cursor-not-allowed text-xs shadow-sm"
+                            th:value="${usuarioActual.nombreCompleto}" disabled>
+                        <select th:unless="${rolActual.name() == 'ABOGADO'}" id="select-abogado-exp"
+                            class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda outline-none bg-gray-50 disabled:bg-gray-100 disabled:text-gray-500 text-xs shadow-sm"
+                            disabled name="abogadoResponsable.id">
+                            <option value="">Primero selecciona una materia...</option>
+                        </select>
+                        <input type="hidden" name="abogadoResponsable.id"
+                            th:if="${rolActual.name() == 'ABOGADO'}"
+                            th:value="${usuarioActual.id}">
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-gray-700 text-xs mb-1">Prioridad *</label>
+                        <select name="prioridad.id"
+                            class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none bg-white text-xs shadow-sm">
+                            <option th:each="p : ${prioridades}" th:value="${p.id}" th:text="${p.nombre}"></option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
+            <!-- SECCIÓN 4: PARTES Y SÍNTESIS -->
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 pb-1.5 border-b border-gray-100 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                    <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">4</span>
+                    <span>Partes y Procedimiento</span>
+                </div>
+                <div class="grid grid-cols-1 gap-3 pt-1">
+                    <div>
+                        <label class="block font-bold text-gray-700 text-xs mb-1">Partes Procesales</label>
+                        <input type="text" name="partes" placeholder="Ej. Juan Pérez vs Inmobiliaria S.A."
+                            class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm">
+                    </div>
 
-
-            <div class="col-span-1 md:col-span-2">
-                <label class="block font-bold text-gray-600 mb-1">Procedimiento</label>
-                <textarea name="descripcion" rows="4" required
-                    placeholder="Escribe aquí el procedimiento o detalles del expediente. Esta información se verá en la vista detallada."
-                    class="w-full border border-gray-300 rounded p-2 focus:border-gob-guinda outline-none resize-none"></textarea>
+                    <div>
+                        <label class="block font-bold text-gray-700 text-xs mb-1">Procedimiento / Resumen del Caso *</label>
+                        <textarea name="descripcion" rows="3" required
+                            placeholder="Escribe aquí el procedimiento o detalles del expediente. Esta información se verá en la vista detallada."
+                            class="w-full border border-gray-300 rounded-lg p-2.5 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none resize-none text-xs shadow-sm"></textarea>
+                    </div>
+                </div>
             </div>
 
-
-            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-4">
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
                 <button type="button" onclick="cerrarModalNuevoExpediente()"
-                    class="px-4 py-2 border border-gray-300 text-gray-600 rounded hover:bg-gray-50 font-medium">
+                    class="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold text-xs transition-colors">
                     Cancelar
                 </button>
                 <button type="submit"
-                    class="px-6 py-2 bg-gob-guinda text-white rounded hover:bg-gob-guinda-claro font-bold shadow flex items-center gap-2">
-                    <i class="fas fa-save"></i> Guardar
+                    class="px-6 py-2 bg-gob-guinda text-white rounded-lg hover:bg-gob-guindaDark font-bold text-xs shadow flex items-center gap-2 transition-colors">
+                    <i class="fas fa-save"></i> Guardar Expediente
                 </button>
             </div>
 

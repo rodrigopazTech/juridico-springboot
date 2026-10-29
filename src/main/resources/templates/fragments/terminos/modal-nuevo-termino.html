@@ -1,177 +1,250 @@
-<div th:fragment="modal" id="modal-nuevo-termino" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-titulo"
-    role="dialog" aria-modal="true">
-    <div class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm transition-opacity"></div>
+<div th:fragment="modal" id="modal-nuevo-termino"
+    class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto custom-scrollbar"
+    aria-labelledby="modal-titulo-termino" role="dialog" aria-modal="true">
 
-    <div class="fixed inset-0 z-10 overflow-y-auto">
-        <div class="flex min-h-full items-start justify-center p-1 py-1 text-center lg:items-center">
-            <div
-                class="relative max-h-[calc(100vh-0.5rem)] transform overflow-y-auto rounded-xl bg-white text-left shadow-2xl transition-all w-full max-w-7xl mx-2 sm:mx-auto border border-gray-200">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl border-t-4 border-gob-guinda transform transition-all my-6">
 
-                <div
-                    class="flex justify-between items-center px-6 py-3 border-b border-gob-guinda bg-gob-guinda text-white rounded-t-xl shadow-sm">
-                    <h3 class="text-lg font-bold flex items-center gap-2 font-headings" id="modal-titulo">
-                        <i class="fas fa-plus-circle"></i> Nuevo Término
-                    </h3>
-                    <button type="button"
-                        onclick="cerrarModal('modal-nuevo-termino')"
-                        class="text-white/80 hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/10 focus:outline-none">
-                        <span class="sr-only">Cerrar</span>
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
+        <!-- HEADER CON STEPPER INTEGRADO (IDÉNTICO A EXPEDIENTES) -->
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center px-6 py-4 border-b border-gray-100 gap-3">
+            <div class="flex items-center gap-2">
+                <h3 class="text-xl font-bold text-gob-guinda flex items-center gap-2">
+                    <i class="fas fa-calendar-plus text-gob-oro"></i> <span id="modal-titulo-termino">Nuevo Término</span>
+                </h3>
+            </div>
+
+            <!-- STEPPER BREADCRUMBS -->
+            <div class="flex items-center gap-1.5 self-start sm:self-auto bg-gray-100 p-1 rounded-lg text-xs font-bold">
+                <button type="button" id="btn-step-1-termino" onclick="cambiarPasoTermino(1)"
+                    class="flex items-center gap-1.5 px-3 py-1 rounded-md bg-white text-gob-guinda shadow-xs transition-all">
+                    <span id="badge-step-1-termino" class="w-4 h-4 rounded-full bg-gob-guinda text-white text-[10px] flex items-center justify-center font-bold">1</span>
+                    <span>Origen y Asunto</span>
+                </button>
+                <i class="fas fa-chevron-right text-gray-400 text-[10px] px-0.5"></i>
+                <button type="button" id="btn-step-2-termino" onclick="cambiarPasoTermino(2)"
+                    class="flex items-center gap-1.5 px-3 py-1 rounded-md text-gray-500 hover:text-gray-800 transition-all">
+                    <span id="badge-step-2-termino" class="w-4 h-4 rounded-full bg-gray-300 text-gray-600 text-[10px] flex items-center justify-center font-bold">2</span>
+                    <span>Detalle del Plazo</span>
+                </button>
+            </div>
+
+            <button type="button" onclick="cerrarModal('modal-nuevo-termino')"
+                class="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <form th:action="@{/terminos/guardar}" method="post" class="p-6 space-y-5 text-sm bg-white">
+            <!-- Banner de advertencia de edición concurrente (oculto por defecto) -->
+            <div id="banner-concurrencia" class="hidden bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-md">
+                <div class="flex items-center gap-2 text-yellow-800 text-xs font-bold" id="mensaje-concurrencia">
+                    <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+                    <span>Atención: Otro usuario está editando este término en este momento.</span>
+                </div>
+            </div>
+
+            <input type="hidden" name="id" id="input-termino-id">
+            <select id="template-abogados-termino" class="hidden" aria-hidden="true">
+                <option value="">Seleccione abogado...</option>
+                <option th:each="a : ${abogados}" th:value="${a.id}" th:text="${a.nombreCompleto}"></option>
+            </select>
+
+            <!-- ===================== PASO 1: ORIGEN Y ASUNTO ===================== -->
+            <div id="paso-1-termino" class="space-y-4">
+                
+                <!-- SECCIÓN 1: TIPO DE ORIGEN -->
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 pb-1.5 border-b border-gray-100 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                        <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">1</span>
+                        <span>Origen de la Actuación</span>
+                    </div>
+
+                    <div id="contenedor-origen-termino" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <label class="flex items-start gap-3 rounded-lg border-2 border-gob-guinda bg-white p-3 text-xs font-bold text-gob-guinda cursor-pointer shadow-xs transition-all">
+                            <input type="radio" name="origenTermino" value="EXPEDIENTE" checked onchange="toggleOrigenTermino()"
+                                class="text-gob-guinda focus:ring-gob-guinda h-4 w-4 mt-0.5">
+                            <div>
+                                <span class="flex items-center gap-1.5 text-xs font-bold text-gob-guinda"><i class="fas fa-folder-open text-gob-guinda"></i> Asociado a Expediente</span>
+                                <p class="text-[11px] text-gray-500 font-normal mt-1 leading-tight">El término procesal corresponde a un expediente previamente radicado en SIAJ.</p>
+                            </div>
+                        </label>
+                        <label class="flex items-start gap-3 rounded-lg border border-gray-300 bg-white p-3 text-xs font-bold text-gray-700 cursor-pointer shadow-xs hover:border-gob-guinda transition-all">
+                            <input type="radio" name="origenTermino" value="ASUNTO_UNICO" onchange="toggleOrigenTermino()"
+                                class="text-gob-guinda focus:ring-gob-guinda h-4 w-4 mt-0.5">
+                            <div>
+                                <span class="flex items-center gap-1.5 text-xs font-bold text-gray-700"><i class="fas fa-file-circle-plus"></i> Sin Expediente (Asunto Único)</span>
+                                <p class="text-[11px] text-gray-500 font-normal mt-1 leading-tight">Actuación independiente derivada de un oficio, requerimiento o solicitud directa.</p>
+                            </div>
+                        </label>
+                    </div>
                 </div>
 
-                <form th:action="@{/terminos/guardar}" method="post" class="p-4 space-y-3 bg-gray-50/50">
-                    <!-- Banner de advertencia de edición concurrente (oculto por defecto) -->
-                    <div id="banner-concurrencia" class="hidden bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded-r-md">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-exclamation-triangle text-yellow-500"></i>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm text-yellow-700 font-bold" id="mensaje-concurrencia">
-                                    ⚠️ Atención: Otro usuario está editando este término en este momento.
-                                </p>
-                            </div>
-                        </div>
+                <!-- SECCIÓN 2A: SI ES ASOCIADO A EXPEDIENTE -->
+                <div id="grupo-expediente-termino" class="space-y-2 pt-1">
+                    <div class="flex items-center gap-2 pb-1.5 border-b border-gray-100 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                        <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">2</span>
+                        <span>Selección de Expediente</span>
                     </div>
 
-                    <input type="hidden" name="id" id="input-termino-id">
-                    <select id="template-abogados-termino" class="hidden" aria-hidden="true">
-                        <option value="">Seleccione abogado...</option>
-                        <option th:each="a : ${abogados}" th:value="${a.id}" th:text="${a.nombreCompleto}"></option>
-                    </select>
-                    <div id="contenedor-origen-termino" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <label class="flex items-center gap-3 rounded-lg border border-gob-guinda bg-white px-4 py-3 text-sm font-bold text-gob-guinda cursor-pointer">
-                            <input type="radio" name="origenTermino" value="EXPEDIENTE" checked
-                                onchange="toggleOrigenTermino()"
-                                class="text-gob-guinda focus:ring-gob-oro">
-                            <span><i class="fas fa-folder-open mr-2"></i> Asociado a expediente</span>
-                        </label>
-                        <label class="flex items-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-gray-700 cursor-pointer">
-                            <input type="radio" name="origenTermino" value="ASUNTO_UNICO"
-                                onchange="toggleOrigenTermino()"
-                                class="text-gob-guinda focus:ring-gob-oro">
-                            <span><i class="fas fa-file-circle-plus mr-2"></i> Sin expediente</span>
-                        </label>
-                    </div>
-
-                    <div id="grupo-expediente-termino">
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Expediente *</label>
+                    <div class="pt-1">
+                        <label class="block font-bold text-gray-700 text-xs mb-1">Expediente *</label>
                         <div class="relative">
-                            <div
-                                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                                <i class="fas fa-folder-open"></i>
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <i class="fas fa-folder text-xs"></i>
                             </div>
-                            <select name="expedienteId" id="select-expediente-termino" required
-                                onchange="vincularAbogadoTermino()"
-                                class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm bg-white shadow-sm transition-all">
+                            <select name="expedienteId" id="select-expediente-termino" required onchange="vincularAbogadoTermino()"
+                                class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda text-xs bg-white shadow-sm outline-none">
                                 <option value="" disabled selected>Seleccione un expediente...</option>
                                 <option th:each="e : ${expedientesList}" th:value="${e.id}"
                                     th:text="${e.numero + ' - ' + (e.materia != null ? e.materia.nombre : '')}">
                                 </option>
                             </select>
                         </div>
+                        <p class="mt-1.5 text-[11px] text-gray-500">Selecciona el expediente sobre el cual corre este término.</p>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 2B: SI ES SIN EXPEDIENTE (ASUNTO INDEPENDIENTE) -->
+                <div id="grupo-contexto-termino" class="hidden space-y-3 pt-1">
+                    <div class="flex items-center justify-between pb-1.5 border-b border-gray-100">
+                        <div class="flex items-center gap-2 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">2</span>
+                            <span>Datos del Asunto Independiente</span>
+                        </div>
+                        <button type="button" id="btn-usar-asunto-existente-termino" onclick="mostrarSelectorAsuntoExistenteTermino()"
+                            class="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-1 text-[11px] font-bold text-gray-700 hover:border-gob-guinda hover:text-gob-guinda shadow-2xs transition-colors">
+                            <i class="fas fa-link mr-1.5"></i> Usar asunto existente
+                        </button>
                     </div>
 
-                    <div id="grupo-contexto-termino" class="hidden grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-3 md:grid-cols-2 lg:grid-cols-4">
-                        <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 md:col-span-2 lg:col-span-4">
-                            <p class="text-sm font-bold text-amber-900">Este término se registrará sin expediente.</p>
-                            <p class="mt-1 text-xs text-amber-800">SIAJ creará un Asunto Independiente para conservarlo, localizarlo y vincularlo a un expediente posteriormente.</p>
+                    <!-- Selector Asunto Existente -->
+                    <div id="grupo-asunto-existente-termino" class="hidden rounded-lg border border-gray-200 bg-gray-50 p-3">
+                        <div class="flex items-center justify-between gap-3 mb-1.5">
+                            <label class="block text-xs font-bold text-gray-700">Buscar asunto existente</label>
+                            <a th:href="@{/asuntos-independientes}" target="_blank" class="text-[11px] font-bold text-gob-guinda hover:underline">Consultar todos</a>
                         </div>
-                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between md:col-span-2 lg:col-span-4">
+                        <select name="asuntoIndependienteId" id="select-asunto-independiente-termino"
+                            onchange="seleccionarAsuntoIndependienteTermino(this)"
+                            class="block w-full border border-gray-300 rounded-lg px-3 py-2 text-xs bg-white shadow-sm outline-none">
+                            <option value="">No usar un asunto existente</option>
+                            <option th:each="ai : ${asuntosIndependientesList}" th:value="${ai.id}"
+                                th:text="${ai.folioSiaj + ' · ' + ai.referencia + ' · ' + ai.parteInteresada}"
+                                th:data-gerencia="${ai.gerencia?.id}" th:data-materia="${ai.materia?.id}"
+                                th:data-referencia="${ai.referencia}" th:data-partes="${ai.parteInteresada}"
+                                th:data-descripcion="${ai.descripcion}"></option>
+                        </select>
+                    </div>
+
+                    <!-- Campos de nuevo asunto -->
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 campos-nuevo-asunto-termino">
                             <div>
-                                <p class="text-sm font-bold text-gray-800">Crear un asunto nuevo</p>
-                                <p class="text-xs text-gray-500">Es la opción normal para una actuación nueva sin expediente.</p>
-                            </div>
-                            <button type="button" id="btn-usar-asunto-existente-termino"
-                                onclick="mostrarSelectorAsuntoExistenteTermino()"
-                                class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:border-gob-guinda hover:text-gob-guinda">
-                                <i class="fas fa-link mr-2"></i>Usar un asunto existente
-                            </button>
-                        </div>
-                        <div id="grupo-asunto-existente-termino" class="hidden rounded-lg border border-indigo-100 bg-indigo-50/60 p-3 md:col-span-2 lg:col-span-4">
-                            <div class="flex items-center justify-between gap-3 mb-2">
-                                <label class="block text-sm font-bold text-indigo-900">Buscar asunto existente</label>
-                                <a th:href="@{/asuntos-independientes}" target="_blank" class="text-xs font-bold text-indigo-700 hover:underline">Consultar todos</a>
-                            </div>
-                            <select name="asuntoIndependienteId" id="select-asunto-independiente-termino"
-                                onchange="seleccionarAsuntoIndependienteTermino(this)"
-                                class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm bg-white shadow-sm">
-                                <option value="">No usar un asunto existente</option>
-                                <option th:each="ai : ${asuntosIndependientesList}" th:value="${ai.id}"
-                                    th:text="${ai.folioSiaj + ' · ' + ai.referencia + ' · ' + ai.parteInteresada}"
-                                    th:data-gerencia="${ai.gerencia?.id}" th:data-materia="${ai.materia?.id}"
-                                    th:data-referencia="${ai.referencia}" th:data-partes="${ai.parteInteresada}"
-                                    th:data-descripcion="${ai.descripcion}"></option>
-                            </select>
-                            <p class="mt-2 text-[11px] text-indigo-800">Úsalo sólo si esta actuación pertenece al mismo asunto que ya registraste antes.</p>
-                        </div>
-                        <div class="contents campos-nuevo-asunto-termino">
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Tipo de referencia *</label>
+                                <label class="block font-bold text-gray-700 text-xs mb-1">Tipo de Referencia *</label>
                                 <select name="tipoReferenciaAsunto" id="select-tipo-referencia-asunto-termino"
-                                    class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 sm:text-sm bg-white shadow-sm">
+                                    class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none bg-white text-xs shadow-sm">
                                     <option th:each="tipo : ${tiposReferenciaAsunto}" th:value="${tipo.name()}" th:text="${tipo.descripcion}"></option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de referencia *</label>
+                                <label class="block font-bold text-gray-700 text-xs mb-1">Fecha de Referencia *</label>
                                 <input type="date" name="fechaReferenciaAsunto" id="input-fecha-referencia-asunto-termino"
                                     th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}"
-                                    class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 sm:text-sm shadow-sm">
+                                    class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white">
                             </div>
                         </div>
-                        <div class="contents">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div id="div-gerencia-termino">
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Gerencia *</label>
+                                <label class="block font-bold text-gray-700 text-xs mb-1">Gerencia *</label>
                                 <select name="contextoGerenciaId" id="select-contexto-gerencia"
-                                    class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm">
+                                    class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white">
                                     <option value="">Seleccione gerencia...</option>
                                     <option th:each="g : ${gerenciasParaModal}" th:value="${g.id}" th:text="${g.nombre}"
                                         th:selected="${gerenciasParaModal.size() == 1}"></option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Materia *</label>
+                                <label class="block font-bold text-gray-700 text-xs mb-1">Materia *</label>
                                 <select name="contextoMateriaId" id="select-contexto-materia"
-                                    class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm">
+                                    class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white">
                                     <option value="">Seleccione materia...</option>
                                     <option th:each="m : ${listaMaterias}" th:value="${m.id}" th:text="${m.nombre}"></option>
                                 </select>
                             </div>
                         </div>
 
-                        <div class="contents">
-                            <div class="lg:col-span-2">
-                                    <label class="block text-sm font-bold text-gray-700 mb-1">Nombre del asunto independiente *</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-bold text-gray-700 text-xs mb-1">Nombre del Asunto *</label>
                                 <input type="text" name="contextoNumeroReferencia" id="input-contexto-referencia"
-                                    required
-                                    placeholder="Ej. Atención a oficio de requerimiento"
-                                    class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm">
+                                    placeholder="Ej. Oficio de Requerimiento de Información"
+                                    class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white">
                             </div>
-                            <div class="lg:col-span-2">
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Parte interesada *</label>
+                            <div>
+                                <label class="block font-bold text-gray-700 text-xs mb-1">Parte Interesada *</label>
                                 <input type="text" name="contextoPartes" id="input-contexto-partes"
-                                    required
-                                    placeholder="Persona, área o contraparte"
-                                    class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm">
+                                    placeholder="Ej. Delegación Regional / SAT"
+                                    class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white">
                             </div>
                         </div>
 
-                        <div class="md:col-span-2 lg:col-span-4">
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Descripción del asunto *</label>
-                            <textarea name="contextoDescripcion" id="input-contexto-descripcion" rows="1" required
-                                class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm resize-none"
-                                placeholder="Describe el asunto que origina este término..."></textarea>
+                        <div>
+                            <label class="block font-bold text-gray-700 text-xs mb-1">Descripción del Asunto *</label>
+                            <textarea name="contextoDescripcion" id="input-contexto-descripcion" rows="2"
+                                class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white resize-none"
+                                placeholder="Describe el contexto del asunto independiente..."></textarea>
                         </div>
                     </div>
+                </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <!-- FOOTER PASO 1 -->
+                <div class="flex justify-between items-center pt-4 border-t border-gray-100 mt-2">
+                    <button type="button" onclick="cerrarModal('modal-nuevo-termino')"
+                        class="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold text-xs transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="button" onclick="avanzarPasoTermino(2)"
+                        class="px-6 py-2 bg-gob-guinda text-white rounded-lg hover:bg-gob-guindaDark font-bold text-xs shadow flex items-center gap-2 transition-colors">
+                        <span>Continuar al Paso 2</span> <i class="fas fa-arrow-right text-[11px]"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ===================== PASO 2: DETALLE DE LA ACTUACIÓN Y CÓMPUTO ===================== -->
+            <div id="paso-2-termino" class="hidden space-y-4">
+                
+                <!-- PASTILLA DE RESUMEN DEL ASUNTO VINCULADO -->
+                <div class="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 border border-gray-200">
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="w-2 h-2 rounded-full bg-gob-guinda"></span>
+                        <span class="font-bold text-gray-700">Asunto Vinculado:</span>
+                        <span id="resumen-origen-termino" class="font-semibold text-gob-guinda">Expediente</span>
+                    </div>
+                    <button type="button" onclick="avanzarPasoTermino(1)"
+                        class="text-xs text-gray-500 hover:text-gob-guinda font-bold flex items-center gap-1 transition-colors">
+                        <i class="fas fa-pen text-[10px]"></i> Cambiar
+                    </button>
+                </div>
+
+                <!-- SECCIÓN: ACTUACIÓN Y PLAZO -->
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 pb-1.5 border-b border-gray-100 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                        <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">2</span>
+                        <span>Actuación y Plazo Legal</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Tipo de Término / Plazo Legal</label>
+                            <label class="block font-bold text-gray-700 text-xs mb-1">Actuación del Término *</label>
+                            <input type="text" name="asunto" id="input-asunto" required
+                                placeholder="Ej. Contestación de demanda"
+                                class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white">
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-gray-700 text-xs mb-1">Tipo de Término / Plazo Legal *</label>
                             <select name="tipoTerminoId" id="select-tipo-termino" required onchange="mostrarReglaTipoTermino()"
-                                class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm bg-white shadow-sm transition-all">
-                                <option value="">-- Seleccionar Tipo de Término --</option>
+                                class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none bg-white text-xs shadow-sm">
+                                <option value="">-- Seleccionar Tipo --</option>
                                 <option th:each="tt : ${listaTiposTermino}" th:value="${tt.id}"
                                     th:data-modo="${tt.modoPlazo}" th:data-regla-alerta="${tt.perfilAlerta != null ? tt.perfilAlerta.nombre : 'No aplica'}"
                                     th:data-dias="${tt.diasPredeterminados}" th:data-tipo-dias="${tt.tipoDias}"
@@ -179,90 +252,236 @@
                                     th:text="${tt.nombre}"></option>
                             </select>
                         </div>
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Regla aplicable</label>
-                            <div id="resumen-regla-tipo" class="min-h-[42px] border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 text-xs text-gray-600" aria-live="polite">
-                                Selecciona un tipo para consultar cómo se define el plazo y qué Regla de alerta se aplicará.
-                            </div>
-                        </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div id="resumen-regla-tipo" class="border border-gray-200 bg-gray-50 rounded-lg p-2 text-[11px] text-gray-600" aria-live="polite">
+                        Selecciona un tipo para consultar cómo se define el plazo y qué regla de alerta se aplicará.
+                    </div>
+                </div>
+
+                <!-- SECCIÓN: CÓMPUTO DE FECHAS -->
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 pb-1.5 border-b border-gray-100 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                        <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">3</span>
+                        <span>Cómputo de Fechas</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Actuación del término *</label>
-                            <input type="text" name="asunto" id="input-asunto" required
-                                placeholder="Ej. Contestación de demanda"
-                                class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm transition-all">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Fecha origen *</label>
+                            <label class="block font-bold text-gray-700 text-xs mb-1">Fecha de Notificación / Origen *</label>
                             <input type="date" name="fechaIngreso" id="input-fecha-origen" required onchange="mostrarReglaTipoTermino()"
-                                class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm transition-all">
-                            <p class="mt-1 text-[11px] text-gray-500">Fecha desde la que comienza a correr el plazo.</p>
+                                class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white">
+                            <p class="mt-1 text-[11px] text-gray-500">Fecha desde la que corre el cómputo legal.</p>
                         </div>
+
                         <div id="grupo-fecha-vencimiento">
-                            <label id="label-fecha-vencimiento" class="block text-sm font-bold text-gray-700 mb-1">Fecha de vencimiento *</label>
+                            <label id="label-fecha-vencimiento" class="block font-bold text-gray-700 text-xs mb-1">Fecha de Vencimiento *</label>
                             <input type="date" name="fechaVencimiento" id="input-vencimiento" onchange="actualizarVistaPreviaPlazo()"
-                                class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm transition-all">
-                            <p id="ayuda-fecha-vencimiento" class="mt-1 text-[11px] text-gray-500">Se captura sólo cuando el plazo es variable.</p>
+                                class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white">
+                            <p id="ayuda-fecha-vencimiento" class="mt-1 text-[11px] text-gray-500">Calculada automáticamente o capturada manualmente según el tipo.</p>
                         </div>
                     </div>
 
-                    <div id="vista-previa-plazo" class="hidden rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900" aria-live="polite">
-                        <div class="flex items-start gap-3"><i class="fas fa-calendar-check mt-0.5"></i><div><strong>Vista previa del plazo</strong><p id="texto-vista-previa-plazo" class="mt-1 text-xs"></p></div></div>
+                    <div id="vista-previa-plazo" class="hidden rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900" aria-live="polite">
+                        <div class="flex items-start gap-2">
+                            <i class="fas fa-calendar-check mt-0.5 text-blue-600"></i>
+                            <div><strong class="font-bold">Vista previa del plazo:</strong> <span id="texto-vista-previa-plazo"></span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN: ASIGNACIÓN Y PRIORIDAD -->
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 pb-1.5 border-b border-gray-100 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                        <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">4</span>
+                        <span>Asignación y Prioridad</span>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Prioridad</label>
+                            <label class="block font-bold text-gray-700 text-xs mb-1">Prioridad *</label>
                             <select name="prioridad.id" id="select-prioridad"
-                                class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm">
-                                <option th:each="p : ${listaPrioridades}" th:value="${p.id}" th:text="${p.nombre}">
-                                </option>
+                                class="w-full border border-gray-300 rounded-lg p-2 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none bg-white text-xs shadow-sm">
+                                <option th:each="p : ${listaPrioridades}" th:value="${p.id}" th:text="${p.nombre}"></option>
                             </select>
                         </div>
 
                         <div id="div-abogado-termino">
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Abogado Responsable *</label>
+                            <label class="block font-bold text-gray-700 text-xs mb-1">Abogado Responsable *</label>
                             <div class="relative">
-                                <div
-                                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                                    <i class="fas fa-user-tie"></i>
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                    <i class="fas fa-user-tie text-xs"></i>
                                 </div>
                                 <select name="abogadoId" id="select-abogado-termino"
-                                    class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm bg-gray-50 shadow-sm transition-all cursor-not-allowed"
+                                    class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg text-xs bg-gray-50 shadow-sm transition-all cursor-not-allowed outline-none"
                                     readonly>
                                     <option value="">Seleccione expediente primero...</option>
                                 </select>
                             </div>
-                            <p class="mt-1 text-xs text-gray-500">
-                                <i class="fas fa-info-circle text-xs"></i> Responsable de atender esta actuación.
-                            </p>
                         </div>
                     </div>
+                </div>
 
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Notas / Observaciones</label>
-                        <textarea name="observaciones" id="input-observaciones-termino" rows="1"
-                            class="block w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-gob-oro focus:border-gob-oro sm:text-sm shadow-sm transition-all resize-none"
+                <!-- SECCIÓN: OBSERVACIONES -->
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 pb-1.5 border-b border-gray-100 text-gob-guinda font-bold text-xs uppercase tracking-wide">
+                        <span class="flex items-center justify-center w-5 h-5 rounded-full bg-gob-guinda text-white text-[10px] font-black">5</span>
+                        <span>Observaciones</span>
+                    </div>
+
+                    <div class="pt-1">
+                        <label class="block font-bold text-gray-700 text-xs mb-1">Notas / Observaciones Internas</label>
+                        <textarea name="observaciones" id="input-observaciones-termino" rows="2"
+                            class="w-full border border-gray-300 rounded-lg p-2.5 focus:border-gob-guinda focus:ring-1 focus:ring-gob-guinda outline-none text-xs shadow-sm bg-white resize-none"
                             placeholder="Añada notas o comentarios internos sobre esta actuación..."></textarea>
                     </div>
+                </div>
 
-                    <div
-                        class="mt-3 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2 border-t border-gray-200">
-                        <button type="button"
-                            onclick="cerrarModal('modal-nuevo-termino')"
-                            class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2.5 border border-gray-300 shadow-sm text-sm font-bold rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition-colors">
-                            Cancelar
-                        </button>
-                        <button type="submit" id="btn-guardar-termino"
-                            class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2.5 border border-transparent shadow-sm text-sm font-bold rounded-md text-white bg-gob-guinda hover:bg-gob-guindaDark focus:outline-none transition-colors">
-                            <i class="fas fa-save mr-2"></i> Guardar Término
-                        </button>
-                    </div>
-                </form>
+                <!-- FOOTER PASO 2 -->
+                <div class="flex justify-between items-center pt-4 border-t border-gray-100 mt-2">
+                    <button type="button" onclick="avanzarPasoTermino(1)"
+                        class="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold text-xs flex items-center gap-2 transition-colors">
+                        <i class="fas fa-arrow-left text-[11px]"></i> <span>Volver al Paso 1</span>
+                    </button>
+                    <button type="submit" id="btn-guardar-termino"
+                        class="px-6 py-2 bg-gob-guinda text-white rounded-lg hover:bg-gob-guindaDark font-bold text-xs shadow flex items-center gap-2 transition-colors">
+                        <i class="fas fa-save"></i> <span>Guardar Término</span>
+                    </button>
+                </div>
             </div>
-        </div>
 
+        </form>
     </div>
+
+    <!-- SCRIPT DE NAVEGACIÓN EN 2 PASOS (TÉRMINOS) -->
+    <script th:inline="none">
+    function cambiarPasoTermino(paso) {
+        avanzarPasoTermino(paso);
+    }
+
+    function avanzarPasoTermino(paso) {
+        const paso1 = document.getElementById('paso-1-termino');
+        const paso2 = document.getElementById('paso-2-termino');
+        const btnTab1 = document.getElementById('btn-step-1-termino');
+        const btnTab2 = document.getElementById('btn-step-2-termino');
+        const badge1 = document.getElementById('badge-step-1-termino');
+        const badge2 = document.getElementById('badge-step-2-termino');
+        const resumenOrigen = document.getElementById('resumen-origen-termino');
+
+        if (paso === 2) {
+            const origen = document.querySelector('input[name="origenTermino"]:checked')?.value || 'EXPEDIENTE';
+            if (origen === 'EXPEDIENTE') {
+                const expSelect = document.getElementById('select-expediente-termino');
+                const expVal = expSelect?.tomselect ? expSelect.tomselect.getValue() : expSelect?.value;
+                if (!expVal) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Expediente requerido',
+                            text: 'Debes seleccionar un expediente para continuar al registro del plazo.',
+                            confirmButtonColor: '#691C32'
+                        });
+                    } else {
+                        alert('Debes seleccionar un expediente para continuar al registro del plazo.');
+                    }
+                    return false;
+                }
+                const expText = expSelect?.tomselect ? expSelect.tomselect.getItem(expVal)?.textContent : expSelect?.options[expSelect.selectedIndex]?.text;
+                if (resumenOrigen) resumenOrigen.textContent = expText || 'Expediente Seleccionado';
+            } else {
+                const aiSelect = document.getElementById('select-asunto-independiente-termino');
+                const aiVal = aiSelect?.value;
+                if (!aiVal) {
+                    const ref = document.getElementById('input-contexto-referencia')?.value?.trim();
+                    const ger = document.getElementById('select-contexto-gerencia')?.value;
+                    const mat = document.getElementById('select-contexto-materia')?.value;
+                    const partes = document.getElementById('input-contexto-partes')?.value?.trim();
+                    const desc = document.getElementById('input-contexto-descripcion')?.value?.trim();
+                    if (!ref || !ger || !mat || !partes || !desc) {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Datos incompletos',
+                                text: 'Completa todos los campos obligatorios (*) del Asunto Independiente para continuar.',
+                                confirmButtonColor: '#691C32'
+                            });
+                        } else {
+                            alert('Completa todos los campos obligatorios (*) del Asunto Independiente para continuar.');
+                        }
+                        return false;
+                    }
+                    if (resumenOrigen) resumenOrigen.textContent = `${ref} · ${partes}`;
+                } else {
+                    const aiText = aiSelect.options[aiSelect.selectedIndex]?.text;
+                    if (resumenOrigen) resumenOrigen.textContent = aiText || 'Asunto Independiente';
+                }
+            }
+
+            if (paso1) paso1.classList.add('hidden');
+            if (paso2) paso2.classList.remove('hidden');
+
+            if (btnTab1) {
+                btnTab1.classList.remove('bg-white', 'text-gob-guinda', 'shadow-xs');
+                btnTab1.classList.add('text-gray-500');
+            }
+            if (badge1) {
+                badge1.classList.remove('bg-gob-guinda');
+                badge1.classList.add('bg-green-600', 'text-white');
+                badge1.innerHTML = '<i class="fas fa-check text-[9px]"></i>';
+            }
+            if (btnTab2) {
+                btnTab2.classList.add('bg-white', 'text-gob-guinda', 'shadow-xs');
+                btnTab2.classList.remove('text-gray-500');
+            }
+            if (badge2) {
+                badge2.classList.remove('bg-gray-300', 'text-gray-600');
+                badge2.classList.add('bg-gob-guinda', 'text-white');
+                badge2.textContent = '2';
+            }
+        } else {
+            if (paso2) paso2.classList.add('hidden');
+            if (paso1) paso1.classList.remove('hidden');
+
+            if (btnTab1) {
+                btnTab1.classList.add('bg-white', 'text-gob-guinda', 'shadow-xs');
+                btnTab1.classList.remove('text-gray-500');
+            }
+            if (badge1) {
+                badge1.classList.add('bg-gob-guinda', 'text-white');
+                badge1.classList.remove('bg-green-600');
+                badge1.textContent = '1';
+            }
+            if (btnTab2) {
+                btnTab2.classList.remove('bg-white', 'text-gob-guinda', 'shadow-xs');
+                btnTab2.classList.add('text-gray-500');
+            }
+            if (badge2) {
+                badge2.classList.add('bg-gray-300', 'text-gray-600');
+                badge2.classList.remove('bg-gob-guinda', 'text-white');
+                badge2.textContent = '2';
+            }
+        }
+    }
+    window.cambiarPasoTermino = cambiarPasoTermino;
+    window.avanzarPasoTermino = avanzarPasoTermino;
+
+    // Enlazar apertura y edición
+    window.addEventListener('DOMContentLoaded', function() {
+        if (typeof window.abrirModalNuevo === 'function') {
+            const _origNuevo = window.abrirModalNuevo;
+            window.abrirModalNuevo = function() {
+                avanzarPasoTermino(1);
+                return _origNuevo.apply(this, arguments);
+            };
+        }
+        if (typeof window.editarTermino === 'function') {
+            const _origEditar = window.editarTermino;
+            window.editarTermino = function() {
+                const res = _origEditar.apply(this, arguments);
+                avanzarPasoTermino(2);
+                return res;
+            };
+        }
+    });
+    </script>
 </div>
