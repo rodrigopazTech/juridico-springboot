@@ -32,7 +32,32 @@
                     </thead>
                     <tbody id="tabla-audiencias-body-desktop">
                         <tr th:if="${audiencias.empty}">
-                            <td colspan="7" class="px-4 py-6 text-center text-gray-400">No se encontraron audiencias registradas.</td>
+                            <td colspan="7" class="px-4 py-12 text-center">
+                                <div class="max-w-md mx-auto flex flex-col items-center">
+                                    <div class="w-14 h-14 rounded-full bg-gob-guinda/10 text-gob-guinda flex items-center justify-center text-2xl mb-3 shadow-inner">
+                                        <i class="fas fa-gavel"></i>
+                                    </div>
+                                    <h3 class="text-base font-bold text-gray-800 mb-1"
+                                        th:text="${(keyword != null and keyword != '') or (paramEstatus != null and paramEstatus != '') or (paramTipo != null and paramTipo != '') or (paramFecha != null and paramFecha != '') ? 'Sin audiencias con los filtros seleccionados' : 'No hay audiencias programadas'}">
+                                        No hay audiencias programadas
+                                    </h3>
+                                    <p class="text-xs text-gray-500 text-center leading-relaxed mb-4"
+                                        th:text="${(keyword != null and keyword != '') or (paramEstatus != null and paramEstatus != '') or (paramTipo != null and paramTipo != '') or (paramFecha != null and paramFecha != '') ? 'No se encontraron comparecencias programadas para este criterio de búsqueda. Prueba modificando los filtros o pulsa Ver Todos.' : 'La agenda procesal te permite calendarizar citas presenciales y virtuales, notificando con antelación a los abogados. Programa tu primera comparecencia para iniciar el seguimiento.'}">
+                                        La agenda procesal te permite calendarizar citas presenciales y virtuales, notificando con antelación a los abogados. Programa tu primera comparecencia para iniciar el seguimiento.
+                                    </p>
+                                    <div class="flex items-center gap-2">
+                                        <a th:if="${(keyword != null and keyword != '') or (paramEstatus != null and paramEstatus != '') or (paramTipo != null and paramTipo != '') or (paramFecha != null and paramFecha != '')}"
+                                            th:href="@{/audiencias}"
+                                            class="inline-flex items-center gap-1.5 text-xs font-bold text-gob-guinda bg-gob-guinda/10 hover:bg-gob-guinda hover:text-white px-3.5 py-2 rounded-lg transition-colors">
+                                            <i class="fas fa-list-ul"></i> Ver Todos
+                                        </a>
+                                        <button type="button" onclick="abrirModalAudiencia()"
+                                            class="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-gob-guinda hover:bg-gob-guindaDark px-3.5 py-2 rounded-lg shadow-sm transition-colors">
+                                            <i class="fas fa-plus"></i> Programar Audiencia
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
 
                         <tr th:each="a : ${audiencias}" th:with="at=${@atencionTemporal.evaluarAudiencia(a)}" class="border-b hover:bg-gray-50/80 transition-all relative">
@@ -113,7 +138,7 @@
                                         <span th:text="${at.etiqueta()}">Programada</span>
                                     </span>
                                     <span class="text-[10px] text-gray-500" th:text="${at.detalle()}">Audiencia en 3 días</span>
-                                    <span class="text-[9px] text-gray-400" th:text="${a.estatusAudiencia != null ? a.estatusAudiencia.descripcion : 'Pendiente'}">Pendiente</span>
+                                    <span class="text-[9px] text-gray-400" th:text="${a.estatusAudiencia != null ? a.estatusAudiencia.descripcion : 'Pendiente'}" th:classappend="text-gray-400">Pendiente</span>
                                 </div>
                             </td>
 
@@ -213,9 +238,29 @@
 
         <!-- VISTA MÓVIL (Tarjetas Premium Adaptativas) -->
         <div class="block lg:hidden bg-gray-100 p-2 space-y-2">
-            <div th:if="${audiencias.empty}" class="bg-white p-12 rounded-2xl text-center border border-dashed border-gray-200">
-                <i class="fas fa-calendar-times text-4xl text-gray-200 mb-4"></i>
-                <p class="text-gray-400 text-sm">No se encontraron audiencias registradas.</p>
+            <div th:if="${audiencias.empty}" class="bg-white p-8 rounded-2xl text-center border border-dashed border-gray-200">
+                <div class="w-12 h-12 rounded-full bg-gob-guinda/10 text-gob-guinda flex items-center justify-center text-xl mx-auto mb-3">
+                    <i class="fas fa-gavel"></i>
+                </div>
+                <h4 class="text-sm font-bold text-gray-800 mb-1"
+                    th:text="${(keyword != null and keyword != '') or (paramEstatus != null and paramEstatus != '') or (paramTipo != null and paramTipo != '') or (paramFecha != null and paramFecha != '') ? 'Sin audiencias con los filtros seleccionados' : 'No hay audiencias programadas'}">
+                    No hay audiencias programadas
+                </h4>
+                <p class="text-xs text-gray-500 mb-4 leading-relaxed"
+                    th:text="${(keyword != null and keyword != '') or (paramEstatus != null and paramEstatus != '') or (paramTipo != null and paramTipo != '') or (paramFecha != null and paramFecha != '') ? 'Prueba modificando los filtros o pulsa Ver Todos.' : 'Programa una audiencia para supervisar citas, salas y comparecencias.'}">
+                    Programa una audiencia para supervisar citas, salas y comparecencias.
+                </p>
+                <div class="flex items-center justify-center gap-2">
+                    <a th:if="${(keyword != null and keyword != '') or (paramEstatus != null and paramEstatus != '') or (paramTipo != null and paramTipo != '') or (paramFecha != null and paramFecha != '')}"
+                        th:href="@{/audiencias}"
+                        class="inline-flex items-center gap-1 text-xs font-bold text-gob-guinda bg-gob-guinda/10 px-3 py-1.5 rounded-lg">
+                        <i class="fas fa-list-ul"></i> Ver Todos
+                    </a>
+                    <button type="button" onclick="abrirModalAudiencia()"
+                        class="inline-flex items-center gap-1 text-xs font-bold text-white bg-gob-guinda hover:bg-gob-guindaDark px-3 py-1.5 rounded-lg shadow-sm">
+                        <i class="fas fa-plus"></i> Nueva audiencia
+                    </button>
+                </div>
             </div>
 
             <div th:each="a : ${audiencias}" th:with="at=${@atencionTemporal.evaluarAudiencia(a)}" class="bg-white rounded-2xl border border-gray-200 p-5 shadow-md space-y-3 relative">
@@ -414,12 +459,12 @@
         const menu = document.getElementById('menu-mob-' + id);
         if (!menu) return;
         const wasHidden = menu.classList.contains('hidden');
-        document.querySelectorAll('[id^="menu-mob-"]').forEach(function(m) { m.classList.add('hidden'); });
+        document.querySelectorAll('[id^=\"menu-mob-\"]').forEach(function(m) { m.classList.add('hidden'); });
         if (wasHidden) menu.classList.remove('hidden');
     }
     document.addEventListener('click', function(e) {
-        if (!e.target.closest('[id^="menu-mob-"]') && !e.target.closest('button[onclick*="toggleMenuMob"]')) {
-            document.querySelectorAll('[id^="menu-mob-"]').forEach(function(m) { m.classList.add('hidden'); });
+        if (!e.target.closest('[id^=\"menu-mob-\"]') && !e.target.closest('button[onclick*=\"toggleMenuMob\"]')) {
+            document.querySelectorAll('[id^=\"menu-mob-\"]').forEach(function(m) { m.classList.add('hidden'); });
         }
     });
     </script>
