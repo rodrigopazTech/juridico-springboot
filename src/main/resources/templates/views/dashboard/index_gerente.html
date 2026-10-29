@@ -16,6 +16,8 @@
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <script th:src="@{/lib/chart.umd.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" th:href="@{/lib/driver.css}">
+    <link rel="stylesheet" th:href="@{/css/tours-onboarding.css}">
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Noto+Sans:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
@@ -114,6 +116,11 @@
                                     seguimiento por materia, abogado y periodo
                                 </p>
                             </div>
+                        <button type="button" id="btn-iniciar-tour-dashboard"
+                            class="text-gob-guinda bg-gob-guinda/10 hover:bg-gob-guinda hover:text-white border border-gob-guinda/20 font-bold rounded-lg text-xs px-3 py-1.5 transition-colors flex items-center gap-1.5 shadow-sm ml-2"
+                            title="Guía guiada del dashboard">
+                            <i class="fas fa-question-circle"></i> <span>Guía rápida</span>
+                        </button>
                         </div>
 
                         <form id="gerenteDashboardFilters" method="get" th:action="@{/dashboard}" class="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_.9fr_auto] xl:w-[820px]">
@@ -296,7 +303,8 @@
 
                     <div th:if="${#lists.isEmpty(gerenteDashboard.terminosPeriodo)}"
                         class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
-                        Sin términos en el periodo seleccionado.
+                        <i class="fas fa-check-circle text-green-600 text-xl mb-1.5 block"></i>
+                        <span>¡Al corriente! Sin términos en el periodo seleccionado.</span>
                     </div>
                 </div>
 
@@ -333,7 +341,8 @@
 
                     <div th:if="${#lists.isEmpty(gerenteDashboard.audienciasPeriodo)}"
                         class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
-                        Sin audiencias en el periodo seleccionado.
+                        <i class="fas fa-calendar-check text-gob-guinda text-xl mb-1.5 block"></i>
+                        <span>Sin audiencias en el periodo seleccionado.</span>
                     </div>
                 </div>
             </section>
@@ -435,6 +444,8 @@
             }
         });
     </script>
+    <script th:src="@{/lib/driver.js}"></script>
+    <script th:src="@{/js/tours/tour-dashboard.js}"></script>
 </body>
 
 </html>

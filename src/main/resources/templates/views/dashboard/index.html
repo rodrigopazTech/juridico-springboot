@@ -13,12 +13,11 @@
     <title>Dashboard - Sistema Jurídico</title>
 
     <link rel="stylesheet" th:href="@{/css/output.css}" />
-
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
     <script th:src="@{/lib/chart.umd.min.js}"></script>
+    <link rel="stylesheet" th:href="@{/lib/driver.css}">
+    <link rel="stylesheet" th:href="@{/css/tours-onboarding.css}">
 
     <style>
         .chart-container {
@@ -60,9 +59,16 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b pb-4">
 
                 <!-- Título lado izquierdo -->
-                <div>
-                    <h2 class="text-xl font-black text-gray-800 font-headings leading-tight">Dashboard</h2>
-                    <p class="text-xs text-gray-400 font-medium mt-0.5">Resumen general del sistema</p>
+                <div class="flex items-center gap-3">
+                    <div>
+                        <h2 class="text-xl font-black text-gray-800 font-headings leading-tight">Dashboard</h2>
+                        <p class="text-xs text-gray-400 font-medium mt-0.5">Resumen general del sistema</p>
+                    </div>
+                    <button type="button" id="btn-iniciar-tour-dashboard"
+                        class="text-gob-guinda bg-gob-guinda/10 hover:bg-gob-guinda hover:text-white border border-gob-guinda/20 font-bold rounded-lg text-xs px-3 py-1.5 transition-colors flex items-center gap-1.5 shadow-sm ml-2"
+                        title="Guía guiada del dashboard">
+                        <i class="fas fa-question-circle"></i> <span>Guía rápida</span>
+                    </button>
                 </div>
 
                 <div class="flex items-center space-x-3 w-full md:w-auto">
@@ -170,7 +176,9 @@
         /*]]>*/
     </script>
 
+    <script th:src="@{/lib/driver.js}"></script>
     <script th:src="@{/js/dashboard.js}"></script>
+    <script th:src="@{/js/tours/tour-dashboard.js}"></script>
 
 </body>
 

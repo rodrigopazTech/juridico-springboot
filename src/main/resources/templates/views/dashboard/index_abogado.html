@@ -15,6 +15,8 @@
     <link rel="stylesheet" th:href="@{/css/output.css}" />
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" th:href="@{/lib/driver.css}">
+    <link rel="stylesheet" th:href="@{/css/tours-onboarding.css}">
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Noto+Sans:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
@@ -155,6 +157,11 @@
                             <p class="metric-label text-[11px] font-extrabold uppercase text-gray-400">Vista personal</p>
                             <p class="text-sm font-bold text-gray-700">Asuntos asignados, próximos vencimientos y actividad pendiente</p>
                         </div>
+                        <button type="button" id="btn-iniciar-tour-dashboard"
+                            class="text-gob-guinda bg-gob-guinda/10 hover:bg-gob-guinda hover:text-white border border-gob-guinda/20 font-bold rounded-lg text-xs px-3 py-1.5 transition-colors flex items-center gap-1.5 shadow-sm ml-2"
+                            title="Guía guiada del dashboard">
+                            <i class="fas fa-question-circle"></i> <span>Guía rápida</span>
+                        </button>
                     </div>
 
                     <div class="bg-gray-50 p-1.5 rounded-2xl border border-gray-100 flex items-center gap-2 w-full lg:w-auto">
@@ -401,7 +408,8 @@
 
                 <div th:if="${#lists.isEmpty(misAsuntos.terminosCriticos)}"
                     class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
-                    Sin terminos criticos en los proximos dias.
+                    <i class="fas fa-check-circle text-green-600 text-xl mb-1.5 block"></i>
+                    <span>¡Al corriente! Sin términos críticos en los próximos días.</span>
                 </div>
             </div>
 
@@ -435,7 +443,8 @@
 
                 <div th:if="${#lists.isEmpty(misAsuntos.proximasAudiencias)}"
                     class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
-                    Sin audiencias pendientes proximas.
+                    <i class="fas fa-calendar-check text-gob-guinda text-xl mb-1.5 block"></i>
+                    <span>Sin audiencias pendientes próximas en tu calendario.</span>
                 </div>
             </div>
         </section>
@@ -515,8 +524,10 @@
         /*]]>*/
     </script>
 
+    <script th:src="@{/lib/driver.js}"></script>
     <script th:src="@{/lib/chart.umd.min.js}"></script>
     <script th:src="@{/js/dashboard.js}"></script>
+    <script th:src="@{/js/tours/tour-dashboard.js}"></script>
 
     <script>
         const prioridadColores = {
