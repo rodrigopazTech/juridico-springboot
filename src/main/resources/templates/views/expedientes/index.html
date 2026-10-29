@@ -12,6 +12,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title th:text="${pageTitle}">Sistema Jurídico</title>
     <link rel="stylesheet" th:href="@{/css/output.css}" />
+    <link rel="stylesheet" th:href="@{/lib/driver.css}" />
+    <link rel="stylesheet" th:href="@{/css/tours-onboarding.css}" />
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <script th:src="@{/lib/chart.umd.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -243,12 +245,41 @@
                                 </td>
 
                             </tr>
-                            <!-- No Results -->
+
+                            <!-- Educational Empty States (Desktop) -->
                             <tr th:if="${expedientes.empty}">
-                                <td colspan="4" class="px-8 py-20 text-center">
-                                    <div class="flex flex-col items-center gap-3 opacity-30">
-                                        <i class="fas fa-search text-5xl"></i>
-                                        <p class="text-lg font-bold italic">No se encontraron expedientes</p>
+                                <td colspan="4" class="px-8 py-16 text-center bg-gray-50/50">
+                                    <!-- Caso A: Con filtros o búsqueda activos -->
+                                    <div th:if="${(keyword != null and !#strings.isEmpty(keyword)) or (param.gerenciaId != null and !#strings.isEmpty(param.gerenciaId[0])) or (param.materiaId != null and !#strings.isEmpty(param.materiaId[0])) or (param.abogadoId != null and !#strings.isEmpty(param.abogadoId[0])) or (param.etapa != null and !#strings.isEmpty(param.etapa[0])) or (param.prioridadId != null and !#strings.isEmpty(param.prioridadId[0]))}"
+                                        class="max-w-md mx-auto flex flex-col items-center gap-3 py-4">
+                                        <div class="w-14 h-14 rounded-full bg-amber-50 text-gob-oro flex items-center justify-center text-2xl border border-amber-200 shadow-sm">
+                                            <i class="fas fa-filter-circle-xmark"></i>
+                                        </div>
+                                        <h3 class="text-base font-extrabold text-gray-800">Sin coincidencias para los criterios seleccionados</h3>
+                                        <p class="text-xs text-gray-500 leading-relaxed">
+                                            No encontramos ningún expediente que coincida con los filtros o la búsqueda actual. Intenta comprobar la ortografía o limpia los filtros activos para ver todos los casos.
+                                        </p>
+                                        <button type="button" onclick="document.getElementById('btn-limpiar-filtros-expedientes').click()"
+                                            class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg text-xs shadow-sm hover:border-gob-guinda/40 hover:bg-gob-guinda/5 hover:text-gob-guinda transition-colors">
+                                            <i class="fas fa-eraser"></i> Reestablecer todos los filtros
+                                        </button>
+                                    </div>
+
+                                    <!-- Caso B: Base de datos o área vacía -->
+                                    <div th:unless="${(keyword != null and !#strings.isEmpty(keyword)) or (param.gerenciaId != null and !#strings.isEmpty(param.gerenciaId[0])) or (param.materiaId != null and !#strings.isEmpty(param.materiaId[0])) or (param.abogadoId != null and !#strings.isEmpty(param.abogadoId[0])) or (param.etapa != null and !#strings.isEmpty(param.etapa[0])) or (param.prioridadId != null and !#strings.isEmpty(param.prioridadId[0]))}"
+                                        class="max-w-md mx-auto flex flex-col items-center gap-3 py-4">
+                                        <div class="w-14 h-14 rounded-full bg-gob-guinda/10 text-gob-guinda flex items-center justify-center text-2xl border border-gob-guinda/20 shadow-sm">
+                                            <i class="fas fa-folder-open"></i>
+                                        </div>
+                                        <h3 class="text-base font-extrabold text-gray-800">Tu inventario de expedientes está listo</h3>
+                                        <p class="text-xs text-gray-500 leading-relaxed">
+                                            Aún no existen expedientes registrados en tu área. Comienza creando el primer asunto jurídico para dar seguimiento a términos procesales y audiencias.
+                                        </p>
+                                        <button th:if="${rolActual != null}" type="button"
+                                            onclick="document.getElementById('modal-nuevo-exp').classList.remove('hidden')"
+                                            class="mt-2 inline-flex items-center gap-2 px-4 py-2.5 bg-gob-guinda text-white font-bold rounded-lg text-xs shadow-md hover:bg-gob-guindaDark transition-all">
+                                            <i class="fas fa-plus"></i> Registrar Primer Expediente
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -259,11 +290,39 @@
                 <!-- ===== VISTA MÓVIL / TABLET (Tarjetas) ===== -->
                 <div class="block lg:hidden bg-gray-50 p-2 space-y-2">
 
-                    <!-- Sin resultados -->
-                    <div th:if="${expedientes.empty}" class="py-16 text-center">
-                        <div class="flex flex-col items-center gap-3 opacity-30">
-                            <i class="fas fa-search text-5xl"></i>
-                            <p class="text-lg font-bold italic">No se encontraron expedientes</p>
+                    <!-- Educational Empty States (Mobile) -->
+                    <div th:if="${expedientes.empty}" class="py-12 px-4 text-center bg-white rounded-xl border border-gray-200 shadow-sm my-2">
+                        <!-- Caso A: Con filtros o búsqueda activos -->
+                        <div th:if="${(keyword != null and !#strings.isEmpty(keyword)) or (param.gerenciaId != null and !#strings.isEmpty(param.gerenciaId[0])) or (param.materiaId != null and !#strings.isEmpty(param.materiaId[0])) or (param.abogadoId != null and !#strings.isEmpty(param.abogadoId[0])) or (param.etapa != null and !#strings.isEmpty(param.etapa[0])) or (param.prioridadId != null and !#strings.isEmpty(param.prioridadId[0]))}"
+                            class="flex flex-col items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-amber-50 text-gob-oro flex items-center justify-center text-xl border border-amber-200 shadow-sm">
+                                <i class="fas fa-filter-circle-xmark"></i>
+                            </div>
+                            <h3 class="text-sm font-extrabold text-gray-800">Sin coincidencias</h3>
+                            <p class="text-xs text-gray-500 leading-relaxed">
+                                No encontramos expedientes con los filtros aplicados.
+                            </p>
+                            <button type="button" onclick="document.getElementById('btn-limpiar-filtros-expedientes').click()"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg text-xs shadow-sm hover:bg-gray-50">
+                                <i class="fas fa-eraser"></i> Limpiar filtros
+                            </button>
+                        </div>
+
+                        <!-- Caso B: Base de datos o área vacía -->
+                        <div th:unless="${(keyword != null and !#strings.isEmpty(keyword)) or (param.gerenciaId != null and !#strings.isEmpty(param.gerenciaId[0])) or (param.materiaId != null and !#strings.isEmpty(param.materiaId[0])) or (param.abogadoId != null and !#strings.isEmpty(param.abogadoId[0])) or (param.etapa != null and !#strings.isEmpty(param.etapa[0])) or (param.prioridadId != null and !#strings.isEmpty(param.prioridadId[0]))}"
+                            class="flex flex-col items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-gob-guinda/10 text-gob-guinda flex items-center justify-center text-xl border border-gob-guinda/20 shadow-sm">
+                                <i class="fas fa-folder-open"></i>
+                            </div>
+                            <h3 class="text-sm font-extrabold text-gray-800">Sin expedientes registrados</h3>
+                            <p class="text-xs text-gray-500 leading-relaxed">
+                                Registra el primer expediente para comenzar.
+                            </p>
+                            <button th:if="${rolActual != null}" type="button"
+                                onclick="document.getElementById('modal-nuevo-exp').classList.remove('hidden')"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-gob-guinda text-white font-bold rounded-lg text-xs shadow-md">
+                                <i class="fas fa-plus"></i> Registrar Primer Expediente
+                            </button>
                         </div>
                     </div>
 
@@ -382,6 +441,8 @@
     <script th:src="@{/js/custom-selects.js}"></script>
     <script th:src="@{/js/main-EXP.js}"></script>
     <script th:src="@{/js/realtime-search.js}"></script>
+    <script th:src="@{/lib/driver.js}"></script>
+    <script th:src="@{/js/tours/tour-expedientes.js}"></script>
     <script>
         document.addEventListener('click', function (event) {
             const item = event.target.closest('.expedientes-clickable[data-href]');
@@ -392,7 +453,5 @@
 </div>
 <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
 </body>
-
-</html>
 
 </html>

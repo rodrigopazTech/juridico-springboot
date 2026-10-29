@@ -4,7 +4,6 @@
         <input type="hidden" name="materiaId" th:value="${paramMateriaId}">
         <input type="hidden" name="abogadoId" th:value="${paramAbogadoId}">
         <input type="hidden" name="etapa" th:value="${paramEtapa}">
-
         <input type="hidden" name="prioridadId" th:value="${paramPrioridadId}">
         
         <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
@@ -12,40 +11,51 @@
         </div>
         <input type="text" id="input-search-expedientes" name="keyword" th:value="${keyword}"
             class="bg-white border border-gray-200 text-gray-900 text-sm rounded-md focus:border-gob-oro focus:ring-2 focus:ring-gob-oro/10 block w-full ps-10 pe-10 py-2.5 outline-none transition-all font-medium"
-            placeholder="Buscar expediente o partes...">
+            placeholder="Buscar expediente o partes..."
+            title="Busca en tiempo real por número oficial o nombre de las partes involucradas">
 
         <!-- Botón para limpiar (Solo visible si hay texto) -->
         <button type="button" id="btn-clear-search-expedientes" th:classappend="${keyword == null || keyword == '' ? 'hidden' : ''}"
-            class="absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400 hover:text-gray-600">
+            class="absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400 hover:text-gray-600"
+            title="Borrar texto de búsqueda">
             <i class="fas fa-times-circle"></i>
         </button>
     </form>
 
     <button type="button" id="btn-limpiar-filtros-expedientes"
         class="w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gob-gris shadow-sm transition-colors hover:border-gob-guinda/40 hover:bg-gob-guinda/5 hover:text-gob-guinda focus:outline-none focus:ring-2 focus:ring-gob-oro/30"
-        aria-label="Limpiar filtro">
+        aria-label="Limpiar filtro"
+        title="Restablecer todos los filtros y términos de búsqueda">
         <i class="fas fa-eraser text-xs" aria-hidden="true"></i>
         <span>Limpiar filtro</span>
     </button>
 
-    <div class="flex gap-2 w-full md:w-auto md:ml-auto">
-        <a th:href="@{/expedientes/exportar-excel(
+    <div class="flex gap-2 w-full md:w-auto md:ml-auto items-center">
+        <!-- Botón de Disparo del Tour / Guía Interactiva Contextual -->
+        <button type="button" id="btn-iniciar-tour-expedientes"
+            class="flex-1 md:flex-none text-gob-guinda bg-gob-guinda/10 hover:bg-gob-guinda hover:text-white border border-gob-guinda/20 font-bold rounded-md text-sm px-3.5 py-2.5 shadow-sm transition-all flex items-center justify-center gap-1.5 whitespace-nowrap"
+            title="Iniciar guía interactiva paso a paso de este módulo">
+            <i class="fas fa-question-circle"></i>
+            <span class="hidden sm:inline">Guía rápida</span>
+        </button>
+
+        <a id="btn-exportar-expedientes" th:href="@{/expedientes/exportar-excel(
                 keyword=${keyword},
                 gerenciaId=${paramGerenciaId},
                 materiaId=${paramMateriaId},
                 abogadoId=${paramAbogadoId},
                 etapa=${paramEtapa},
-
                 prioridadId=${paramPrioridadId}
            )}"
             class="flex-1 md:flex-none text-gob-gris bg-white border border-gray-300 hover:bg-gray-50 font-semibold rounded-md text-sm px-4 py-2.5 shadow-sm transition-colors flex items-center justify-center decoration-0"
-            title="Descargar Reporte Excel">
+            title="Descargar relación de expedientes filtrados en formato Excel (.xlsx)">
             <i class="fas fa-file-excel text-green-600 mr-2"></i> Exportar
         </a>
 
-        <button th:if="${rolActual != null}"
+        <button th:if="${rolActual != null}" id="btn-nuevo-expediente"
             onclick="document.getElementById('modal-nuevo-exp').classList.remove('hidden')"
-            class="flex-1 md:flex-none text-white bg-gob-guinda hover:bg-gob-guindaDark font-bold rounded-md text-sm px-5 py-2.5 shadow-md transition-colors flex items-center justify-center gap-2 whitespace-nowrap">
+            class="flex-1 md:flex-none text-white bg-gob-guinda hover:bg-gob-guindaDark font-bold rounded-md text-sm px-5 py-2.5 shadow-md transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+            title="Registrar un nuevo asunto jurídico">
             <i class="fas fa-plus"></i> Nuevo Expediente
         </button>
     </div>
