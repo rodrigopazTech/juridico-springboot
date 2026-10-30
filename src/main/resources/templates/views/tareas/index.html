@@ -14,6 +14,8 @@
     <link rel="stylesheet" th:href="@{/css/output.css}" />
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" th:href="@{/lib/driver.css}">
+    <link rel="stylesheet" th:href="@{/css/tours-onboarding.css}">
 </head>
 
 <body class="bg-gray-50 text-gray-800 font-sans overflow-x-hidden">
@@ -27,11 +29,17 @@
         <div th:replace="~{fragments/navbar :: navbar}"></div>
 
         <!-- Main Content with padding to avoid overlapping -->
-        <!-- Main Content with padding to avoid overlapping -->
         <main class="p-4 md:p-6 flex-1 animate-fade-in pt-[116px] sm:pt-[116px] md:pt-[116px] lg:pt-[116px]">
-            <div class="flex justify-between items-center mb-8">
-                <h1 class="text-4xl font-extrabold text-gob-guinda font-headings">Mis Tareas</h1>
-                <button onclick="abrirModalTarea()"
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <div class="flex items-center gap-3">
+                    <h1 id="titulo-mis-tareas" class="text-3xl sm:text-4xl font-extrabold text-gob-guinda font-headings">Mis Tareas</h1>
+                    <button type="button" id="btn-iniciar-tour-tareas"
+                        class="text-gob-guinda bg-gob-guinda/10 hover:bg-gob-guinda hover:text-white border border-gob-guinda/20 font-bold rounded-lg text-xs px-2.5 py-1.5 transition-colors flex items-center gap-1.5 shadow-sm"
+                        title="Guía guiada de tareas">
+                        <i class="fas fa-question-circle"></i> <span>Guía rápida</span>
+                    </button>
+                </div>
+                <button id="btn-nueva-tarea" onclick="abrirModalTarea()"
                     class="bg-gob-guinda text-white px-5 py-2.5 rounded-full font-bold shadow-lg hover:bg-gob-guindaDark transition-all flex items-center gap-2">
                     <i class="fas fa-plus-circle"></i> Nueva tarea
                 </button>
@@ -78,7 +86,9 @@
             </div>
         </main>
     </div>
+    <script th:src="@{/lib/driver.js}"></script>
     <script th:src="@{/js/tareas.js}"></script>
+    <script th:src="@{/js/tours/tour-tareas.js}"></script>
     <div th:replace="~{fragments/tareas/modal-recordatorio :: modal}"></div>
 
     <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>

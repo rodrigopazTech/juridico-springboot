@@ -120,8 +120,16 @@
             </tr>
 
             <tr th:if="${recordatoriosTodos.empty}">
-                <td colspan="8" class="text-center py-16">
-                    <p class="text-gray-400 font-bold">No tienes tareas registradas</p>
+                <td colspan="8" class="text-center py-16 px-4">
+                    <div class="w-14 h-14 mx-auto mb-3 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center border border-green-200">
+                        <i class="fas fa-check-circle text-2xl"></i>
+                    </div>
+                    <p class="text-base font-extrabold text-gray-800">¡Al corriente! No tienes tareas registradas</p>
+                    <p class="text-xs text-gray-500 mt-1 max-w-sm mx-auto">Organiza tu jornada jurídica registrando recordatorios para elaboración de promociones, entrevistas o revisión de acuerdos.</p>
+                    <button type="button" onclick="abrirModalTarea()"
+                        class="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-gob-guinda px-4 py-2 text-xs font-bold text-white shadow-sm hover:opacity-95">
+                        <i class="fas fa-plus-circle"></i> Nueva tarea
+                    </button>
                 </td>
             </tr>
         </tbody>
@@ -132,8 +140,16 @@
     <div class="block lg:hidden bg-gray-100 p-2 space-y-2" id="body-tareas-mobile">
 
         <!-- Sin tareas -->
-        <div th:if="${recordatoriosTodos.empty}" class="bg-white rounded-2xl border border-gray-100 p-12 text-center">
-            <p class="text-gray-400 font-bold">No tienes tareas registradas</p>
+        <div th:if="${recordatoriosTodos.empty}" class="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+            <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center border border-green-200">
+                <i class="fas fa-check-circle text-xl"></i>
+            </div>
+            <p class="text-sm font-extrabold text-gray-800">¡Al corriente! No tienes tareas registradas</p>
+            <p class="text-xs text-gray-500 mt-1 max-w-xs mx-auto">Organiza tus pendientes diarios con recordatorios y alertas tempranas.</p>
+            <button type="button" onclick="abrirModalTarea()"
+                class="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-gob-guinda px-4 py-2 text-xs font-bold text-white shadow-sm hover:opacity-95">
+                <i class="fas fa-plus-circle"></i> Nueva tarea
+            </button>
         </div>
 
         <!-- Tarjeta por tarea -->
