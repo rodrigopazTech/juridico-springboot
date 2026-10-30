@@ -1,10 +1,17 @@
 <div th:fragment="lista"
     class="w-full lg:w-1/3 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
     <div class="p-4 border-b border-gray-100 bg-gray-50/50 flex-shrink-0 space-y-3">
-        <button onclick="iniciarNuevoUsuarioEnDetalle()"
-            class="w-full bg-gob-guinda text-white py-2.5 rounded-xl text-sm font-bold hover:bg-opacity-90 transition-colors shadow-sm flex justify-center items-center gap-2">
-            <i class="fas fa-plus"></i> Agregar Usuario
-        </button>
+        <div class="flex items-center gap-2">
+            <button id="btn-agregar-usuario" onclick="iniciarNuevoUsuarioEnDetalle()"
+                class="flex-1 bg-gob-guinda text-white py-2.5 rounded-xl text-sm font-bold hover:bg-opacity-90 transition-colors shadow-sm flex justify-center items-center gap-2">
+                <i class="fas fa-plus"></i> Agregar Usuario
+            </button>
+            <button type="button" id="btn-iniciar-tour-usuarios"
+                class="text-gob-guinda bg-gob-guinda/10 hover:bg-gob-guinda hover:text-white border border-gob-guinda/20 font-bold rounded-xl text-xs px-3 py-2.5 transition-colors flex items-center gap-1.5 shadow-sm"
+                title="Guía guiada de usuarios">
+                <i class="fas fa-question-circle"></i> <span>Guía rápida</span>
+            </button>
+        </div>
 
         <!-- Selector de Estado: Activos / Desactivados -->
         <div class="flex border border-gray-200 bg-gray-100/80 p-1 rounded-xl gap-1">
