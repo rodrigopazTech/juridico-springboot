@@ -23,7 +23,7 @@
         <header class="pa-heading">
             <div>
                 <h1>Plazos y alertas</h1>
-                <p>Configura cómo se calculan y cuándo avisan los nuevos términos y audiencias.</p>
+                <p>Configura las reglas de cómputo procesal, semáforos de alerta y calendario de días inhábiles.</p>
             </div>
             <div class="flex items-center gap-3">
                 <button type="button" id="btn-iniciar-tour-plazos"
@@ -41,131 +41,599 @@
         <div th:if="${mensajeExito}" role="status" class="pa-message pa-message-success"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span th:text="${mensajeExito}"></span></div>
         <div th:if="${mensajeError}" role="alert" class="pa-message pa-message-error"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><span th:text="${mensajeError}"></span></div>
 
-        <div class="pa-scope-note">
-            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-            <div><strong>Configuración compartida.</strong> Los cambios se aplicarán a los nuevos registros de esta materia. Los registros existentes conservan la configuración con la que fueron creados.</div>
+        <!-- Banner de Certeza Jurídica / Blindaje Procesal -->
+        <div class="pa-scope-note pa-trust-note">
+            <div class="pa-trust-icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></div>
+            <div>
+                <strong>Certeza jurídica y blindaje procesal:</strong>
+                Cualquier cambio en las reglas de cálculo o días inhábiles aplica exclusivamente a los <strong>nuevos registros</strong> que se creen a partir de su publicación. Los expedientes, términos y audiencias en trámite <strong>conservan de forma inalterable</strong> la regla y el calendario con el que fueron iniciados.
+            </div>
         </div>
 
         <nav class="pa-tabs" aria-label="Secciones de Plazos y alertas" role="tablist">
-            <button id="tab-terminos" class="pa-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="panel-terminos" data-tab="terminos">Términos</button>
-            <button id="tab-audiencias" class="pa-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-audiencias" data-tab="audiencias">Audiencias</button>
-            <button id="tab-calendario" class="pa-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-calendario" data-tab="calendario">Calendario</button>
+            <button id="tab-terminos" class="pa-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="panel-terminos" data-tab="terminos">
+                <i class="fa-solid fa-hourglass-half mr-1.5" aria-hidden="true"></i> Términos
+            </button>
+            <button id="tab-audiencias" class="pa-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-audiencias" data-tab="audiencias">
+                <i class="fa-solid fa-gavel mr-1.5" aria-hidden="true"></i> Audiencias
+            </button>
+            <button id="tab-calendario" class="pa-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-calendario" data-tab="calendario">
+                <i class="fa-solid fa-calendar-xmark mr-1.5" aria-hidden="true"></i> Días inhábiles y suspensiones
+            </button>
         </nav>
 
+        <!-- PANEL DE TÉRMINOS -->
         <section id="panel-terminos" class="pa-panel" role="tabpanel" aria-labelledby="tab-terminos" data-panel="terminos">
             <aside class="pa-master" aria-label="Tipos de término">
                 <div class="pa-master-head">
-                    <div><h2>Tipos de término</h2><p th:text="${#lists.size(listaTiposTermino) + ' configurados'}">0 configurados</p></div>
-                    <button th:if="${puedeGestionarTipos}" id="nuevo-tipo-termino" type="button" class="pa-primary pa-primary-compact"><i class="fa-solid fa-plus" aria-hidden="true"></i> Nuevo tipo</button>
+                    <div>
+                        <h2>Tipos de término</h2>
+                        <p id="contador-terminos" th:text="${#lists.size(listaTiposTermino) + ' configurados'}">0 configurados</p>
+                    </div>
+                    <button th:if="${puedeGestionarTipos}" id="nuevo-tipo-termino" type="button" class="pa-primary pa-primary-compact">
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i> Nuevo tipo
+                    </button>
                 </div>
-                <label class="pa-search"><span class="sr-only">Buscar tipo de término</span><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input id="buscar-tipo-termino" type="search" placeholder="Buscar tipo…" autocomplete="off"></label>
+
+                <!-- Filtro rápido por Materia -->
+                <div class="pa-master-filter">
+                    <label for="filtro-materia-termino" class="sr-only">Filtrar por materia</label>
+                    <div class="pa-select-filter-wrap">
+                        <i class="fa-solid fa-filter text-stone-400 text-xs"></i>
+                        <select id="filtro-materia-termino" class="pa-filter-select">
+                            <option value="">Todas las materias</option>
+                            <option th:each="m:${materiasDisponibles}" th:value="${m.id}" th:text="${m.nombre}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <label class="pa-search">
+                    <span class="sr-only">Buscar tipo de término</span>
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <input id="buscar-tipo-termino" type="search" placeholder="Buscar por nombre o código…" autocomplete="off">
+                </label>
+
                 <div id="lista-tipos-termino" class="pa-record-list">
-                    <article th:each="t:${listaTiposTermino}" class="pa-record" th:attr="data-search=${#strings.toLowerCase(t.nombre + ' ' + t.codigo)}">
+                    <article th:each="t:${listaTiposTermino}" class="pa-record" 
+                             th:attr="data-search=${#strings.toLowerCase(t.nombre + ' ' + (t.codigo != null ? t.codigo : '') + ' ' + (t.materia != null ? t.materia.nombre : ''))},data-materia=${t.materia != null ? t.materia.id : ''}">
                         <button type="button" class="pa-record-main"
                                 th:attr="data-edit-term=true,data-id=${t.id},data-materia=${t.materia != null ? t.materia.id : ''},data-nombre=${t.nombre},data-codigo=${t.codigo},data-descripcion=${t.descripcion},data-modo=${t.modoPlazo.name()},data-dias=${t.diasPredeterminados},data-tipodias=${t.tipoDias},data-ajusta=${t.ajustaAlSiguienteHabil},data-activo=${t.activo},data-atencion=${t.perfilAlerta != null ? (t.perfilAlerta.amarilloDias != null ? t.perfilAlerta.amarilloDias : (t.perfilAlerta.amarilloMinimoDias != null ? t.perfilAlerta.amarilloMinimoDias : 5)) : 5},data-critico=${t.perfilAlerta != null ? (t.perfilAlerta.rojoDias != null ? t.perfilAlerta.rojoDias : (t.perfilAlerta.rojoMinimoDias != null ? t.perfilAlerta.rojoMinimoDias : 2)) : 2}">
-                            <span class="pa-record-title-row"><strong th:text="${t.nombre}">Contestación</strong><span class="pa-status" th:classappend="${t.activo ? ' is-active' : ' is-inactive'}" th:text="${t.activo ? 'Activo' : 'Inactivo'}">Activo</span></span>
-                            <span class="pa-record-detail" th:if="${t.modoPlazo.name() == 'CALCULADO'}" th:text="${t.diasPredeterminados + ' días ' + #strings.toLowerCase(t.tipoDias)}">15 días hábiles</span>
-                            <span class="pa-record-detail" th:if="${t.modoPlazo.name() == 'CAPTURADO'}">Definido por caso</span>
-                            <span class="pa-record-detail" th:if="${t.modoPlazo.name() == 'SIN_VENCIMIENTO'}">Sin vencimiento</span>
+                            <span class="pa-record-title-row">
+                                <strong th:text="${t.nombre}">Contestación</strong>
+                                <span class="pa-status" th:classappend="${t.activo ? ' is-active' : ' is-inactive'}" th:text="${t.activo ? 'Activo' : 'Inactivo'}">Activo</span>
+                            </span>
+                            <div class="pa-record-badges">
+                                <span class="pa-materia-pill" th:if="${t.materia != null}" th:text="${t.materia.nombre}">Civil</span>
+                                <span class="pa-record-detail" th:if="${t.modoPlazo.name() == 'CALCULADO'}" th:text="${t.diasPredeterminados + ' días ' + #strings.toLowerCase(t.tipoDias)}">15 días hábiles</span>
+                                <span class="pa-record-detail" th:if="${t.modoPlazo.name() == 'CAPTURADO'}">Definido por caso</span>
+                                <span class="pa-record-detail" th:if="${t.modoPlazo.name() == 'SIN_VENCIMIENTO'}">Sin vencimiento</span>
+                            </div>
                         </button>
-                        <form th:if="${puedeGestionarTipos}" class="pa-record-state" th:action="@{/administracion/plazos-alertas/tipos-termino/{id}/estado(id=${t.id})}" method="post"><input type="hidden" name="activo" th:value="${!t.activo}"><button type="submit" th:title="${t.activo ? 'Inactivar tipo' : 'Activar tipo'}"><i class="fa-solid" th:classappend="${t.activo ? ' fa-toggle-on' : ' fa-toggle-off'}" aria-hidden="true"></i><span class="sr-only" th:text="${t.activo ? 'Inactivar' : 'Activar'}"></span></button></form>
+                        <form th:if="${puedeGestionarTipos}" class="pa-record-state" th:action="@{/administracion/plazos-alertas/tipos-termino/{id}/estado(id=${t.id})}" method="post">
+                            <input type="hidden" name="activo" th:value="${!t.activo}">
+                            <button type="submit" th:title="${t.activo ? 'Inactivar tipo' : 'Activar tipo'}">
+                                <i class="fa-solid" th:classappend="${t.activo ? ' fa-toggle-on text-emerald-600' : ' fa-toggle-off text-stone-400'}" aria-hidden="true"></i>
+                                <span class="sr-only" th:text="${t.activo ? 'Inactivar' : 'Activar'}"></span>
+                            </button>
+                        </form>
                     </article>
-                    <div th:if="${#lists.isEmpty(listaTiposTermino)}" class="pa-empty"><i class="fa-regular fa-clock" aria-hidden="true"></i><strong>Aún no hay tipos de término</strong><span>Crea el primero para definir su plazo y avisos.</span></div>
-                    <div id="sin-resultados-termino" class="pa-empty hidden"><strong>Sin coincidencias</strong><span>Prueba con otro nombre o código.</span></div>
+                    <div th:if="${#lists.isEmpty(listaTiposTermino)}" class="pa-empty">
+                        <i class="fa-regular fa-clock" aria-hidden="true"></i>
+                        <strong>Aún no hay tipos de término</strong>
+                        <span>Crea el primero para definir su plazo y avisos.</span>
+                    </div>
+                    <div id="sin-resultados-termino" class="pa-empty hidden">
+                        <strong>Sin coincidencias</strong>
+                        <span>Prueba con otro término o filtro de materia.</span>
+                    </div>
                 </div>
             </aside>
 
+            <!-- FORMULARIO TÉRMINO -->
             <form id="form-tipo-termino" class="pa-detail" th:action="@{/administracion/plazos-alertas/tipos-termino}" method="post" th:attr="data-readonly=${!puedeGestionarTipos}">
-                <div class="pa-detail-head"><div><p class="pa-context">Configuración de término</p><h2 id="titulo-tipo-termino">Nuevo tipo de término</h2></div><span th:unless="${puedeGestionarTipos}" class="pa-readonly-badge"><i class="fa-solid fa-eye"></i> Solo consulta</span><button th:if="${puedeGestionarTipos}" id="cancelar-tipo-termino" type="button" class="pa-secondary hidden">Cancelar edición</button></div>
-                <input type="hidden" name="id" id="tt-id"><input type="hidden" name="activo" id="tt-activo" value="true">
-                <fieldset class="pa-form-section" th:disabled="${!puedeGestionarTipos}">
-                    <legend>Información general</legend>
-                    <div class="pa-grid pa-grid-2">
-                        <label>Nombre <span aria-hidden="true">*</span><input class="pa-field" name="nombre" id="tt-nombre" required maxlength="100" placeholder="Ej. Contestación"></label>
-                        <label>Código<input class="pa-field" name="codigo" id="tt-codigo" maxlength="50" placeholder="Se genera automáticamente"><small>Puedes editarlo antes de guardar.</small></label>
+                <div class="pa-detail-head">
+                    <div>
+                        <p class="pa-context">Parámetros institucionales</p>
+                        <h2 id="titulo-tipo-termino">Nuevo tipo de término</h2>
                     </div>
+                    <span th:unless="${puedeGestionarTipos}" class="pa-readonly-badge"><i class="fa-solid fa-eye"></i> Solo consulta</span>
+                    <button th:if="${puedeGestionarTipos}" id="cancelar-tipo-termino" type="button" class="pa-secondary hidden">Cancelar edición</button>
+                </div>
+                <input type="hidden" name="id" id="tt-id">
+                <input type="hidden" name="activo" id="tt-activo" value="true">
+
+                <!-- PASO 1: Identificación y Materia -->
+                <fieldset class="pa-form-section" th:disabled="${!puedeGestionarTipos}">
+                    <legend>1. Identificación procesal</legend>
                     <div class="pa-grid pa-grid-2">
-                        <label>Materia <span aria-hidden="true">*</span><select class="pa-field" name="materia.id" id="tt-materia" required><option value="">Selecciona una materia</option><option th:each="m:${materiasDisponibles}" th:value="${m.id}" th:text="${m.nombre}"></option></select></label>
-                        <label>Descripción <span aria-hidden="true">*</span><textarea class="pa-field" name="descripcion" id="tt-descripcion" rows="2" required placeholder="Indica cuándo debe usarse este tipo"></textarea></label>
+                        <label>Nombre del término <span aria-hidden="true">*</span>
+                            <input class="pa-field" name="nombre" id="tt-nombre" required maxlength="100" placeholder="Ej. Contestación de demanda">
+                        </label>
+                        <label>Materia aplicable <span aria-hidden="true">*</span>
+                            <select class="pa-field" name="materia.id" id="tt-materia" required>
+                                <option value="">Selecciona una materia</option>
+                                <option th:each="m:${materiasDisponibles}" th:value="${m.id}" th:text="${m.nombre}"></option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <!-- Código del sistema colapsable -->
+                    <div class="pa-code-drawer-wrap">
+                        <button type="button" id="btn-toggle-codigo-termino" class="pa-code-toggle" aria-expanded="false">
+                            <i class="fa-solid fa-code text-stone-400"></i>
+                            <span>Código en sistema: <strong id="preview-codigo-termino" class="font-mono text-stone-700 font-semibold">AUTOMÁTICO</strong></span>
+                            <span class="pa-code-toggle-action"><i class="fa-solid fa-sliders text-xs"></i> Editar código</span>
+                        </button>
+                        <div id="wrap-codigo-termino" class="pa-code-drawer hidden">
+                            <label>Código técnico del término
+                                <input class="pa-field font-mono text-xs uppercase" name="codigo" id="tt-codigo" maxlength="50" placeholder="Se genera a partir del nombre">
+                                <small>Identificador único en base de datos. Se sugiere mantener el generado automáticamente.</small>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="pa-mt-2">
+                        <label>Descripción procesal <small class="text-stone-500 font-normal">(Opcional)</small>
+                            <textarea class="pa-field" name="descripcion" id="tt-descripcion" rows="2" placeholder="Opcional: orientaciones prácticas sobre cuándo se debe registrar este tipo de término"></textarea>
+                        </label>
                     </div>
                 </fieldset>
+
+                <!-- PASO 2: Definición del Plazo -->
                 <fieldset class="pa-form-section" th:disabled="${!puedeGestionarTipos}">
-                    <legend>Definición del plazo</legend><p class="pa-help">Selecciona cómo se obtiene la fecha límite de cada término.</p>
+                    <legend>2. Regla de cómputo del vencimiento</legend>
+                    <p class="pa-help">Indica cómo debe determinarse la fecha de vencimiento de cada término de este tipo.</p>
                     <div class="pa-segmented" id="tt-modos">
                         <label><input type="radio" name="modoPlazo" value="CALCULADO" checked><span><i class="fa-solid fa-calculator"></i>Calculado por el sistema</span></label>
                         <label><input type="radio" name="modoPlazo" value="CAPTURADO"><span><i class="fa-regular fa-calendar"></i>Definido por caso</span></label>
                         <label><input type="radio" name="modoPlazo" value="SIN_VENCIMIENTO"><span><i class="fa-solid fa-infinity"></i>Sin vencimiento</span></label>
                     </div>
                     <div id="tt-config-plazo" class="pa-grid pa-grid-3 pa-subfields">
-                        <label id="tt-duracion-wrap">Duración <span aria-hidden="true">*</span><input class="pa-field" type="number" min="1" max="3650" name="diasPredeterminados" id="tt-dias" value="15"></label>
-                        <label>Unidad de tiempo<select class="pa-field" name="tipoDias" id="tt-tipodias"><option value="HABILES">Días hábiles</option><option value="NATURALES">Días naturales</option></select></label>
-                        <label id="tt-ajuste-wrap" class="pa-check"><input type="checkbox" name="ajustaAlSiguienteHabil" id="tt-ajusta" value="true"><span><strong>Ajustar al siguiente día hábil</strong><small>Cuando la fecha calculada sea inhábil.</small></span></label>
+                        <label id="tt-duracion-wrap">Duración del plazo <span aria-hidden="true">*</span>
+                            <input class="pa-field" type="number" min="1" max="3650" name="diasPredeterminados" id="tt-dias" value="15">
+                        </label>
+                        <label>Tipo de cómputo
+                            <select class="pa-field" name="tipoDias" id="tt-tipodias">
+                                <option value="HABILES">Días hábiles (excluye fines de semana e inhábiles)</option>
+                                <option value="NATURALES">Días naturales (días corridos)</option>
+                            </select>
+                        </label>
+                        <label id="tt-ajuste-wrap" class="pa-check">
+                            <input type="checkbox" name="ajustaAlSiguienteHabil" id="tt-ajusta" value="true">
+                            <span>
+                                <strong>Ajustar al siguiente hábil</strong>
+                                <small>Si vence en día inhábil oficial.</small>
+                            </span>
+                        </label>
                     </div>
-                    <div id="tt-capturado-note" class="pa-inline-note hidden"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>La fecha límite se solicitará al crear cada término. Aquí sólo defines cómo se medirán sus avisos.</div>
-                    <div id="tt-sin-vencimiento-note" class="pa-inline-note hidden"><i class="fa-solid fa-infinity" aria-hidden="true"></i>Este tipo no tendrá fecha límite ni generará avisos de vencimiento.</div>
+                    <div id="tt-capturado-note" class="pa-inline-note hidden">
+                        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                        <span><strong>Plazo libre:</strong> La fecha de vencimiento será capturada por el proyectista en cada caso particular. El sistema activará los semáforos de alerta según la anticipación que configures abajo.</span>
+                    </div>
+                    <div id="tt-sin-vencimiento-note" class="pa-inline-note hidden">
+                        <i class="fa-solid fa-infinity" aria-hidden="true"></i>
+                        <span><strong>Trámite abierto:</strong> Este término no generará fecha límite ni encenderá semáforos de advertencia.</span>
+                    </div>
                 </fieldset>
+
+                <!-- PASO 3: Semáforos de Alerta -->
                 <fieldset id="tt-alertas" class="pa-form-section" th:disabled="${!puedeGestionarTipos}">
-                    <legend>Avisos de vencimiento</legend><p class="pa-help">Define cuándo el término requiere atención y cuándo debe considerarse crítico (los días de anticipación de Atención deben ser mayores a los de Crítico).</p>
+                    <legend>3. Semáforos de advertencia y alertas</legend>
+                    <p class="pa-help">Configura con cuántos días de anticipación el sistema encenderá los semáforos de atención.</p>
                     <div class="pa-alert-fields">
-                        <label><span class="pa-dot pa-dot-warning"></span>Atención<span class="pa-input-suffix"><input type="number" min="1" max="3650" name="atencionDias" id="tt-atencion" value="5" required><span>días antes</span></span></label>
-                        <label><span class="pa-dot pa-dot-danger"></span>Crítico<span class="pa-input-suffix"><input type="number" min="0" max="3650" name="criticoDias" id="tt-critico" value="2" required><span>días antes</span></span></label>
+                        <label>
+                            <span class="flex items-center gap-1.5"><span class="pa-dot pa-dot-warning"></span> <strong>Semáforo Atención (Amarillo)</strong></span>
+                            <span class="pa-input-suffix">
+                                <input type="number" min="1" max="3650" name="atencionDias" id="tt-atencion" value="5" required>
+                                <span>días antes</span>
+                            </span>
+                        </label>
+                        <label>
+                            <span class="flex items-center gap-1.5"><span class="pa-dot pa-dot-danger"></span> <strong>Semáforo Crítico (Rojo)</strong></span>
+                            <span class="pa-input-suffix">
+                                <input type="number" min="0" max="3650" name="criticoDias" id="tt-critico" value="2" required>
+                                <span>días antes</span>
+                            </span>
+                        </label>
                     </div>
-                    <div class="pa-presets" aria-label="Plantillas sugeridas para términos"><span>Plantillas sugeridas</span><button type="button" data-term-preset="7,3">Conservadora</button><button type="button" class="is-selected" data-term-preset="5,2">Estándar</button><button type="button" data-term-preset="2,1">Urgente</button></div>
+                    <div class="pa-presets" aria-label="Plantillas sugeridas para términos">
+                        <span>Plantillas recomendadas:</span>
+                        <button type="button" data-term-preset="7,3">Conservadora (7 / 3 d)</button>
+                        <button type="button" class="is-selected" data-term-preset="5,2">Estándar (5 / 2 d)</button>
+                        <button type="button" data-term-preset="2,1">Urgente (2 / 1 d)</button>
+                    </div>
                 </fieldset>
+
+                <!-- PASO 4: SIMULADOR PROCESAL EN VIVO (MÁXIMA CONFIANZA) -->
                 <section id="tt-preview" class="pa-preview" aria-live="polite">
-                    <div class="pa-preview-head"><div><span>Vista previa</span><strong id="tt-preview-total">Plazo total: 15 días hábiles</strong></div><i class="fa-solid fa-chart-simple" aria-hidden="true"></i></div>
-                    <div class="pa-timeline" aria-hidden="true"><span id="tt-segment-green" class="is-green"></span><span id="tt-segment-yellow" class="is-yellow"></span><span id="tt-segment-red" class="is-red"></span></div>
-                    <div class="pa-timeline-labels"><span><i class="pa-dot pa-dot-ok"></i><strong>En tiempo</strong><small id="tt-label-green">Más de 5 días</small></span><span><i class="pa-dot pa-dot-warning"></i><strong>Atención</strong><small id="tt-label-yellow">De 5 a 3 días</small></span><span><i class="pa-dot pa-dot-danger"></i><strong>Crítico</strong><small id="tt-label-red">2 días o menos</small></span></div>
-                    <p id="tt-preview-copy">SIAJ mostrará Atención 5 días antes y Crítico 2 días antes del vencimiento.</p><p id="tt-preview-dates" class="pa-preview-dates"></p>
+                    <div class="pa-preview-head">
+                        <div>
+                            <span>Comprobación en vivo del cómputo judicial</span>
+                            <strong id="tt-preview-total">Plazo total: 15 días hábiles</strong>
+                        </div>
+                        <i class="fa-solid fa-scale-balanced text-gob-guinda text-lg" aria-hidden="true"></i>
+                    </div>
+
+                    <!-- Barra de progreso de semáforos -->
+                    <div class="pa-timeline" aria-hidden="true">
+                        <span id="tt-segment-green" class="is-green"></span>
+                        <span id="tt-segment-yellow" class="is-yellow"></span>
+                        <span id="tt-segment-red" class="is-red"></span>
+                    </div>
+                    <div class="pa-timeline-labels">
+                        <span><i class="pa-dot pa-dot-ok"></i><strong>En tiempo</strong><small id="tt-label-green">Más de 5 días</small></span>
+                        <span><i class="pa-dot pa-dot-warning"></i><strong>Atención</strong><small id="tt-label-yellow">De 5 a 3 días</small></span>
+                        <span><i class="pa-dot pa-dot-danger"></i><strong>Crítico</strong><small id="tt-label-red">2 días o menos</small></span>
+                    </div>
+
+                    <!-- Tarjeta interactiva de simulación con calendario activo -->
+                    <div class="pa-sim-card">
+                        <div class="pa-sim-badge"><i class="fa-solid fa-calendar-day"></i> Ejemplo real si se notifica hoy:</div>
+                        <div class="pa-sim-grid">
+                            <div class="pa-sim-node">
+                                <span class="pa-sim-node-title">Notificación</span>
+                                <strong id="tt-sim-inicio">--</strong>
+                                <small>Día origen (no cuenta)</small>
+                            </div>
+                            <div class="pa-sim-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                            <div class="pa-sim-node pa-sim-node-yellow">
+                                <span class="pa-sim-node-title">🟡 Alerta Amarilla</span>
+                                <strong id="tt-sim-atencion">--</strong>
+                                <small id="tt-sim-atencion-sub">5 días hábiles antes</small>
+                            </div>
+                            <div class="pa-sim-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                            <div class="pa-sim-node pa-sim-node-red">
+                                <span class="pa-sim-node-title">🔴 Alerta Roja</span>
+                                <strong id="tt-sim-critico">--</strong>
+                                <small id="tt-sim-critico-sub">2 días hábiles antes</small>
+                            </div>
+                            <div class="pa-sim-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                            <div class="pa-sim-node pa-sim-node-fatal">
+                                <span class="pa-sim-node-title">⏰ Vencimiento Fatal</span>
+                                <strong id="tt-sim-vence">--</strong>
+                                <small id="tt-sim-vence-sub">Fecha límite fatal</small>
+                            </div>
+                        </div>
+                        <p id="tt-preview-copy" class="pa-sim-legend">SIAJ mostrará Atención 5 días antes y Crítico 2 días antes del vencimiento.</p>
+                        <p id="tt-preview-dates" class="hidden"></p>
+                    </div>
                 </section>
-                <div class="pa-evidence"><i class="fa-solid fa-file-shield"></i><span><strong>Evidencia institucional fija:</strong> proyecto final aprobado y Acuse o Nota Informativa para registrar la presentación.</span></div>
-                <div th:if="${puedeGestionarTipos}" class="pa-actions"><button type="reset" class="pa-secondary" id="limpiar-tipo-termino">Limpiar</button><button type="submit" class="pa-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar cambios</button></div>
+
+                <div class="pa-evidence">
+                    <i class="fa-solid fa-file-shield text-gob-guinda"></i>
+                    <span><strong>Blindaje documental:</strong> Se requerirá proyecto final aprobado y Acuse oficial o Nota Informativa motivada para validar la presentación y detener el riesgo.</span>
+                </div>
+
+                <div th:if="${puedeGestionarTipos}" class="pa-actions">
+                    <button type="reset" class="pa-secondary" id="limpiar-tipo-termino">Limpiar</button>
+                    <button type="submit" class="pa-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar regla institucional</button>
+                </div>
             </form>
         </section>
 
+        <!-- PANEL DE AUDIENCIAS -->
         <section id="panel-audiencias" class="pa-panel hidden" role="tabpanel" aria-labelledby="tab-audiencias" data-panel="audiencias">
             <aside class="pa-master" aria-label="Tipos de audiencia">
-                <div class="pa-master-head"><div><h2>Tipos de audiencia</h2><p th:text="${#lists.size(listaTiposAudiencia) + ' configurados'}">0 configurados</p></div><button th:if="${puedeGestionarTipos}" id="nuevo-tipo-audiencia" type="button" class="pa-primary pa-primary-compact"><i class="fa-solid fa-plus"></i> Nuevo tipo</button></div>
-                <label class="pa-search"><span class="sr-only">Buscar tipo de audiencia</span><i class="fa-solid fa-magnifying-glass"></i><input id="buscar-tipo-audiencia" type="search" placeholder="Buscar tipo…" autocomplete="off"></label>
+                <div class="pa-master-head">
+                    <div>
+                        <h2>Tipos de audiencia</h2>
+                        <p id="contador-audiencias" th:text="${#lists.size(listaTiposAudiencia) + ' configurados'}">0 configurados</p>
+                    </div>
+                    <button th:if="${puedeGestionarTipos}" id="nuevo-tipo-audiencia" type="button" class="pa-primary pa-primary-compact">
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i> Nuevo tipo
+                    </button>
+                </div>
+
+                <!-- Filtro rápido por Materia -->
+                <div class="pa-master-filter">
+                    <label for="filtro-materia-audiencia" class="sr-only">Filtrar por materia</label>
+                    <div class="pa-select-filter-wrap">
+                        <i class="fa-solid fa-filter text-stone-400 text-xs"></i>
+                        <select id="filtro-materia-audiencia" class="pa-filter-select">
+                            <option value="">Todas las materias</option>
+                            <option th:each="m:${materiasDisponibles}" th:value="${m.id}" th:text="${m.nombre}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <label class="pa-search">
+                    <span class="sr-only">Buscar tipo de audiencia</span>
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input id="buscar-tipo-audiencia" type="search" placeholder="Buscar por nombre o código…" autocomplete="off">
+                </label>
+
                 <div id="lista-tipos-audiencia" class="pa-record-list">
-                    <article th:each="t:${listaTiposAudiencia}" class="pa-record" th:attr="data-search=${#strings.toLowerCase(t.nombre + ' ' + t.codigo)}">
+                    <article th:each="t:${listaTiposAudiencia}" class="pa-record" 
+                             th:attr="data-search=${#strings.toLowerCase(t.nombre + ' ' + (t.codigo != null ? t.codigo : '') + ' ' + (t.materia != null ? t.materia.nombre : ''))},data-materia=${t.materia != null ? t.materia.id : ''}">
                         <button type="button" class="pa-record-main"
                                 th:attr="data-edit-audience=true,data-id=${t.id},data-materia=${t.materia != null ? t.materia.id : ''},data-nombre=${t.nombre},data-codigo=${t.codigo},data-descripcion=${t.descripcion},data-duracion=${t.duracionPredeterminadaMinutos != null ? t.duracionPredeterminadaMinutos : 60},data-modalidad=${t.modalidadPredeterminada != null ? t.modalidadPredeterminada : 'PRESENCIAL'},data-modalidades=${t.modalidadesPermitidas != null ? t.modalidadesPermitidas : 'PRESENCIAL,VIRTUAL,HIBRIDA'},data-activo=${t.activo},data-atencion-horas=${t.perfilRecordatorio != null ? t.perfilRecordatorio.anticipacionAmarillaHoras : 72},data-critico-horas=${t.perfilRecordatorio != null ? t.perfilRecordatorio.anticipacionRojaHoras : 24}">
-                            <span class="pa-record-title-row"><strong th:text="${t.nombre}">Audiencia inicial</strong><span class="pa-status" th:classappend="${t.activo ? ' is-active' : ' is-inactive'}" th:text="${t.activo ? 'Activo' : 'Inactivo'}">Activo</span></span>
-                            <span class="pa-record-detail" th:text="${(t.modalidadPredeterminada != null ? #strings.capitalize(#strings.toLowerCase(t.modalidadPredeterminada)) : 'Sin modalidad') + ' · ' + (t.duracionPredeterminadaMinutos != null ? t.duracionPredeterminadaMinutos + ' min' : 'Sin duración')}"></span>
+                            <span class="pa-record-title-row">
+                                <strong th:text="${t.nombre}">Audiencia inicial</strong>
+                                <span class="pa-status" th:classappend="${t.activo ? ' is-active' : ' is-inactive'}" th:text="${t.activo ? 'Activo' : 'Inactivo'}">Activo</span>
+                            </span>
+                            <div class="pa-record-badges">
+                                <span class="pa-materia-pill" th:if="${t.materia != null}" th:text="${t.materia.nombre}">Penal</span>
+                                <span class="pa-record-detail" th:text="${(t.modalidadPredeterminada != null ? #strings.capitalize(#strings.toLowerCase(t.modalidadPredeterminada)) : 'Presencial') + ' · ' + (t.duracionPredeterminadaMinutos != null ? t.duracionPredeterminadaMinutos + ' min' : '60 min')}"></span>
+                            </div>
                         </button>
-                        <form th:if="${puedeGestionarTipos}" class="pa-record-state" th:action="@{/administracion/plazos-alertas/tipos-audiencia/{id}/estado(id=${t.id})}" method="post"><input type="hidden" name="activo" th:value="${!t.activo}"><button type="submit" th:title="${t.activo ? 'Inactivar tipo' : 'Activar tipo'}"><i class="fa-solid" th:classappend="${t.activo ? ' fa-toggle-on' : ' fa-toggle-off'}" aria-hidden="true"></i><span class="sr-only" th:text="${t.activo ? 'Inactivar' : 'Activar'}"></span></button></form>
+                        <form th:if="${puedeGestionarTipos}" class="pa-record-state" th:action="@{/administracion/plazos-alertas/tipos-audiencia/{id}/estado(id=${t.id})}" method="post">
+                            <input type="hidden" name="activo" th:value="${!t.activo}">
+                            <button type="submit" th:title="${t.activo ? 'Inactivar tipo' : 'Activar tipo'}">
+                                <i class="fa-solid" th:classappend="${t.activo ? ' fa-toggle-on text-emerald-600' : ' fa-toggle-off text-stone-400'}"></i>
+                                <span class="sr-only" th:text="${t.activo ? 'Inactivar' : 'Activar'}"></span>
+                            </button>
+                        </form>
                     </article>
-                    <div th:if="${#lists.isEmpty(listaTiposAudiencia)}" class="pa-empty"><i class="fa-solid fa-gavel"></i><strong>Aún no hay tipos de audiencia</strong><span>Crea el primero para definir sus avisos.</span></div>
-                    <div id="sin-resultados-audiencia" class="pa-empty hidden"><strong>Sin coincidencias</strong><span>Prueba con otro nombre o código.</span></div>
+                    <div th:if="${#lists.isEmpty(listaTiposAudiencia)}" class="pa-empty">
+                        <i class="fa-solid fa-gavel"></i>
+                        <strong>Aún no hay tipos de audiencia</strong>
+                        <span>Crea el primero para definir sus avisos.</span>
+                    </div>
+                    <div id="sin-resultados-audiencia" class="pa-empty hidden">
+                        <strong>Sin coincidencias</strong>
+                        <span>Prueba con otro término o filtro de materia.</span>
+                    </div>
                 </div>
             </aside>
+
+            <!-- FORMULARIO AUDIENCIA -->
             <form id="form-tipo-audiencia" class="pa-detail" th:action="@{/administracion/plazos-alertas/tipos-audiencia}" method="post" th:attr="data-readonly=${!puedeGestionarTipos}">
-                <div class="pa-detail-head"><div><p class="pa-context">Configuración de audiencia</p><h2 id="titulo-tipo-audiencia">Nuevo tipo de audiencia</h2></div><span th:unless="${puedeGestionarTipos}" class="pa-readonly-badge"><i class="fa-solid fa-eye"></i> Solo consulta</span><button th:if="${puedeGestionarTipos}" id="cancelar-tipo-audiencia" type="button" class="pa-secondary hidden">Cancelar edición</button></div>
-                <input type="hidden" name="id" id="ta-id"><input type="hidden" name="activo" id="ta-activo" value="true"><input type="hidden" name="modalidadesPermitidas" id="ta-modalidades" value="PRESENCIAL,VIRTUAL,HIBRIDA">
-                <fieldset class="pa-form-section"><legend>Información general</legend><div class="pa-grid pa-grid-2"><label>Nombre <span aria-hidden="true">*</span><input class="pa-field" name="nombre" id="ta-nombre" required maxlength="100" placeholder="Ej. Audiencia inicial"></label><label>Código<input class="pa-field" name="codigo" id="ta-codigo" maxlength="50" placeholder="Se genera automáticamente"><small>Puedes editarlo antes de guardar.</small></label></div><div class="pa-grid pa-grid-2"><label>Materia <span aria-hidden="true">*</span><select class="pa-field" name="materia.id" id="ta-materia" required><option value="">Selecciona una materia</option><option th:each="m:${materiasDisponibles}" th:value="${m.id}" th:text="${m.nombre}"></option></select></label><label>Descripción <span aria-hidden="true">*</span><textarea class="pa-field" name="descripcion" id="ta-descripcion" rows="2" required placeholder="Indica cuándo debe usarse este tipo"></textarea></label></div></fieldset>
-                <fieldset class="pa-form-section"><legend>Programación habitual</legend><div class="pa-grid pa-grid-2"><label>Duración estimada<input class="pa-field" type="number" min="1" max="1440" name="duracionPredeterminadaMinutos" id="ta-duracion" value="60"><small>En minutos.</small></label><label>Modalidad predeterminada<select class="pa-field" name="modalidadPredeterminada" id="ta-modalidad"><option value="PRESENCIAL">Presencial</option><option value="VIRTUAL">Virtual</option><option value="HIBRIDA">Híbrida</option></select></label></div></fieldset>
-                <fieldset class="pa-form-section"><legend>Avisos de proximidad</legend><p class="pa-help">Define con cuánta anticipación la audiencia requiere atención (los días de anticipación de Atención deben ser mayores a los de Crítico).</p><div class="pa-alert-fields"><label><span class="pa-dot pa-dot-warning"></span>Atención<span class="pa-input-suffix"><input type="number" min="1" max="365" name="atencionDias" id="ta-atencion" value="3" required><span>días antes</span></span></label><label><span class="pa-dot pa-dot-danger"></span>Crítico<span class="pa-input-suffix"><input type="number" min="0" max="365" name="criticoDias" id="ta-critico" value="1" required><span>días antes</span></span></label></div><div class="pa-presets" aria-label="Plantillas sugeridas para audiencias"><span>Plantillas sugeridas</span><button type="button" data-audience-preset="7,3">Conservadora</button><button type="button" class="is-selected" data-audience-preset="3,1">Estándar</button><button type="button" data-audience-preset="1,0">Urgente</button></div></fieldset>
-                <section class="pa-preview" aria-live="polite"><div class="pa-preview-head"><div><span>Vista previa</span><strong id="ta-preview-total">Seguimiento previo a la audiencia</strong></div><i class="fa-solid fa-gavel"></i></div><div class="pa-timeline" aria-hidden="true"><span id="ta-segment-green" class="is-green"></span><span id="ta-segment-yellow" class="is-yellow"></span><span id="ta-segment-red" class="is-red"></span></div><div class="pa-timeline-labels"><span><i class="pa-dot pa-dot-ok"></i><strong>Programada</strong><small id="ta-label-green">Más de 3 días</small></span><span><i class="pa-dot pa-dot-warning"></i><strong>Próxima</strong><small id="ta-label-yellow">De 3 a 2 días</small></span><span><i class="pa-dot pa-dot-danger"></i><strong>Inminente</strong><small id="ta-label-red">1 día o menos</small></span></div><p id="ta-preview-copy">SIAJ mostrará Atención 3 días antes y Crítico 1 día antes de la audiencia.</p></section>
-                <div class="pa-evidence"><i class="fa-solid fa-file-shield"></i><span><strong>Evidencia institucional fija:</strong> Acta para registrar el resultado o Nota Informativa cuando la audiencia se suspenda.</span></div>
-                <div th:if="${puedeGestionarTipos}" class="pa-actions"><button type="reset" class="pa-secondary" id="limpiar-tipo-audiencia">Limpiar</button><button type="submit" class="pa-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar cambios</button></div>
+                <div class="pa-detail-head">
+                    <div>
+                        <p class="pa-context">Parámetros institucionales</p>
+                        <h2 id="titulo-tipo-audiencia">Nuevo tipo de audiencia</h2>
+                    </div>
+                    <span th:unless="${puedeGestionarTipos}" class="pa-readonly-badge"><i class="fa-solid fa-eye"></i> Solo consulta</span>
+                    <button th:if="${puedeGestionarTipos}" id="cancelar-tipo-audiencia" type="button" class="pa-secondary hidden">Cancelar edición</button>
+                </div>
+                <input type="hidden" name="id" id="ta-id">
+                <input type="hidden" name="activo" id="ta-activo" value="true">
+                <input type="hidden" name="modalidadesPermitidas" id="ta-modalidades" value="PRESENCIAL,VIRTUAL,HIBRIDA">
+
+                <!-- PASO 1: Identificación y Materia -->
+                <fieldset class="pa-form-section">
+                    <legend>1. Identificación de la audiencia</legend>
+                    <div class="pa-grid pa-grid-2">
+                        <label>Nombre de la audiencia <span aria-hidden="true">*</span>
+                            <input class="pa-field" name="nombre" id="ta-nombre" required maxlength="100" placeholder="Ej. Audiencia intermedia">
+                        </label>
+                        <label>Materia procesal <span aria-hidden="true">*</span>
+                            <select class="pa-field" name="materia.id" id="ta-materia" required>
+                                <option value="">Selecciona una materia</option>
+                                <option th:each="m:${materiasDisponibles}" th:value="${m.id}" th:text="${m.nombre}"></option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <!-- Código del sistema colapsable -->
+                    <div class="pa-code-drawer-wrap">
+                        <button type="button" id="btn-toggle-codigo-audiencia" class="pa-code-toggle" aria-expanded="false">
+                            <i class="fa-solid fa-code text-stone-400"></i>
+                            <span>Código en sistema: <strong id="preview-codigo-audiencia" class="font-mono text-stone-700 font-semibold">AUTOMÁTICO</strong></span>
+                            <span class="pa-code-toggle-action"><i class="fa-solid fa-sliders text-xs"></i> Editar código</span>
+                        </button>
+                        <div id="wrap-codigo-audiencia" class="pa-code-drawer hidden">
+                            <label>Código técnico de la audiencia
+                                <input class="pa-field font-mono text-xs uppercase" name="codigo" id="ta-codigo" maxlength="50" placeholder="Se genera a partir del nombre">
+                                <small>Identificador técnico inmutable en base de datos.</small>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="pa-mt-2">
+                        <label>Descripción procesal <small class="text-stone-500 font-normal">(Opcional)</small>
+                            <textarea class="pa-field" name="descripcion" id="ta-descripcion" rows="2" placeholder="Opcional: naturaleza procesal de la audiencia o formalidades requeridas"></textarea>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <!-- PASO 2: Programación habitual -->
+                <fieldset class="pa-form-section">
+                    <legend>2. Formato y duración habitual</legend>
+                    <div class="pa-grid pa-grid-2">
+                        <label>Duración estimada (minutos)
+                            <input class="pa-field" type="number" min="1" max="1440" name="duracionPredeterminadaMinutos" id="ta-duracion" value="60">
+                            <small>Tiempo estimado para reservar sala o agenda.</small>
+                        </label>
+                        <label>Modalidad predeterminada
+                            <select class="pa-field" name="modalidadPredeterminada" id="ta-modalidad">
+                                <option value="PRESENCIAL">Presencial (Sede judicial)</option>
+                                <option value="VIRTUAL">Virtual (Videoconferencia)</option>
+                                <option value="HIBRIDA">Híbrida</option>
+                            </select>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <!-- PASO 3: Avisos de proximidad -->
+                <fieldset class="pa-form-section">
+                    <legend>3. Avisos de proximidad de audiencia</legend>
+                    <p class="pa-help">Anticipación con la que el sistema alertará a los abogados sobre la celebración de la audiencia.</p>
+                    <div class="pa-alert-fields">
+                        <label>
+                            <span class="flex items-center gap-1.5"><span class="pa-dot pa-dot-warning"></span> <strong>Aviso de preparación (Amarillo)</strong></span>
+                            <span class="pa-input-suffix">
+                                <input type="number" min="1" max="365" name="atencionDias" id="ta-atencion" value="3" required>
+                                <span>días antes</span>
+                            </span>
+                        </label>
+                        <label>
+                            <span class="flex items-center gap-1.5"><span class="pa-dot pa-dot-danger"></span> <strong>Aviso inminente (Rojo)</strong></span>
+                            <span class="pa-input-suffix">
+                                <input type="number" min="0" max="365" name="criticoDias" id="ta-critico" value="1" required>
+                                <span>días antes</span>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="pa-presets" aria-label="Plantillas sugeridas para audiencias">
+                        <span>Plantillas recomendadas:</span>
+                        <button type="button" data-audience-preset="7,3">Foránea / Compleja (7 / 3 d)</button>
+                        <button type="button" class="is-selected" data-audience-preset="3,1">Estándar local (3 / 1 d)</button>
+                        <button type="button" data-audience-preset="1,0">Urgente / Flagrancia (1 / 0 d)</button>
+                    </div>
+                </fieldset>
+
+                <!-- PASO 4: SIMULADOR DE AUDIENCIA -->
+                <section class="pa-preview" aria-live="polite">
+                    <div class="pa-preview-head">
+                        <div>
+                            <span>Comprobación de avisos de audiencia</span>
+                            <strong id="ta-preview-total">Seguimiento previo a la audiencia</strong>
+                        </div>
+                        <i class="fa-solid fa-gavel text-gob-guinda text-lg"></i>
+                    </div>
+                    <div class="pa-timeline" aria-hidden="true">
+                        <span id="ta-segment-green" class="is-green"></span>
+                        <span id="ta-segment-yellow" class="is-yellow"></span>
+                        <span id="ta-segment-red" class="is-red"></span>
+                    </div>
+                    <div class="pa-timeline-labels">
+                        <span><i class="pa-dot pa-dot-ok"></i><strong>Programada</strong><small id="ta-label-green">Más de 3 días</small></span>
+                        <span><i class="pa-dot pa-dot-warning"></i><strong>Próxima</strong><small id="ta-label-yellow">De 3 a 2 días</small></span>
+                        <span><i class="pa-dot pa-dot-danger"></i><strong>Inminente</strong><small id="ta-label-red">1 día o menos</small></span>
+                    </div>
+                    <div class="pa-sim-card">
+                        <div class="pa-sim-badge"><i class="fa-solid fa-bell"></i> Calendario de notificaciones:</div>
+                        <p id="ta-preview-copy" class="pa-sim-legend">SIAJ mostrará Atención 3 días antes y Crítico 1 día antes de la audiencia.</p>
+                    </div>
+                </section>
+
+                <div class="pa-evidence">
+                    <i class="fa-solid fa-file-shield text-gob-guinda"></i>
+                    <span><strong>Evidencia institucional obligatoria:</strong> Acta circunstanciada de comparecencia o Nota Informativa oficial cuando la audiencia se difiera o suspenda.</span>
+                </div>
+
+                <div th:if="${puedeGestionarTipos}" class="pa-actions">
+                    <button type="reset" class="pa-secondary" id="limpiar-tipo-audiencia">Limpiar</button>
+                    <button type="submit" class="pa-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar regla institucional</button>
+                </div>
             </form>
         </section>
 
+        <!-- PANEL DE DÍAS INHÁBILES Y SUSPENSIONES (EX-CALENDARIO) -->
         <section id="panel-calendario" class="pa-calendar hidden" role="tabpanel" aria-labelledby="tab-calendario" data-panel="calendario">
-            <div class="pa-calendar-summary"><div><p class="pa-context">Cómputo institucional</p><h2>Calendario</h2><p>Los días inhábiles y las suspensiones se excluyen de los nuevos cálculos en días hábiles.</p></div><span class="pa-version" th:text="${'Versión vigente ' + versionCalendario}">Versión vigente 1</span></div>
+            <div class="pa-calendar-summary">
+                <div>
+                    <p class="pa-context">Cómputo jurisdiccional institucional</p>
+                    <h2>Días inhábiles y suspensiones procesales</h2>
+                    <p>Las fechas registradas se descuentan automáticamente del cómputo de términos legales en días hábiles.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="pa-version" th:text="${'Versión vigente ' + versionCalendario}">Versión vigente 1</span>
+                </div>
+            </div>
+
             <div class="pa-calendar-grid">
-                <section class="pa-calendar-list"><div class="pa-calendar-title"><h3>Días inhábiles</h3><span th:text="${#lists.size(diasInhabiles)}">0</span></div><div class="pa-calendar-row" th:each="d:${diasInhabiles}"><time th:text="${#temporals.format(d.fecha,'dd/MM/yyyy')}"></time><div><strong th:text="${d.descripcion}"></strong><small th:text="${d.activo ? 'Activo' : 'Inactivo'}"></small></div><form th:if="${puedeGestionarCalendario}" th:action="@{/administracion/plazos-alertas/calendario/{id}/estado(id=${d.id})}" method="post"><input type="hidden" name="activo" th:value="${!d.activo}"><button class="pa-link" th:text="${d.activo ? 'Inactivar' : 'Activar'}"></button></form></div><div th:if="${#lists.isEmpty(diasInhabiles)}" class="pa-empty pa-empty-small">Sin días inhábiles registrados.</div></section>
-                <section class="pa-calendar-list"><div class="pa-calendar-title"><h3>Suspensiones formales</h3><span th:text="${#lists.size(suspensionesPlazo)}">0</span></div><div class="pa-calendar-row" th:each="s:${suspensionesPlazo}"><time th:text="${#temporals.format(s.fechaInicio,'dd/MM/yyyy') + ' – ' + #temporals.format(s.fechaFin,'dd/MM/yyyy')}"></time><div><strong th:text="${s.motivo}"></strong><small th:text="${s.activo ? 'Activa' : 'Inactiva'}"></small></div><form th:if="${puedeGestionarCalendario}" th:action="@{/administracion/plazos-alertas/calendario/suspensiones/{id}/estado(id=${s.id})}" method="post"><input type="hidden" name="activo" th:value="${!s.activo}"><button class="pa-link" th:text="${s.activo ? 'Inactivar' : 'Activar'}"></button></form></div><div th:if="${#lists.isEmpty(suspensionesPlazo)}" class="pa-empty pa-empty-small">Sin suspensiones registradas.</div></section>
+                <!-- DÍAS INHÁBILES -->
+                <section class="pa-calendar-list">
+                    <div class="pa-calendar-title">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-day text-gob-guinda"></i>
+                            <h3>Días inhábiles oficiales</h3>
+                        </div>
+                        <span th:text="${#lists.size(diasInhabiles)}">0</span>
+                    </div>
+                    <div class="pa-calendar-items">
+                        <div class="pa-calendar-row" th:each="d:${diasInhabiles}">
+                            <time th:text="${#temporals.format(d.fecha,'dd/MM/yyyy')}"></time>
+                            <div>
+                                <strong th:text="${d.descripcion}"></strong>
+                                <small th:text="${d.activo ? 'Activo en cómputo' : 'Inactivo'}"></small>
+                            </div>
+                            <form th:if="${puedeGestionarCalendario}" th:action="@{/administracion/plazos-alertas/calendario/{id}/estado(id=${d.id})}" method="post">
+                                <input type="hidden" name="activo" th:value="${!d.activo}">
+                                <button class="pa-link" th:text="${d.activo ? 'Inactivar' : 'Activar'}"></button>
+                            </form>
+                        </div>
+                        <div th:if="${#lists.isEmpty(diasInhabiles)}" class="pa-empty pa-empty-small">
+                            <i class="fa-regular fa-calendar-check text-stone-300"></i>
+                            <span>Sin días inhábiles registrados.</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SUSPENSIONES FORMALES -->
+                <section class="pa-calendar-list">
+                    <div class="pa-calendar-title">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-ban text-gob-guinda"></i>
+                            <h3>Suspensiones jurisdiccionales</h3>
+                        </div>
+                        <span th:text="${#lists.size(suspensionesPlazo)}">0</span>
+                    </div>
+                    <div class="pa-calendar-items">
+                        <div class="pa-calendar-row" th:each="s:${suspensionesPlazo}">
+                            <time th:text="${#temporals.format(s.fechaInicio,'dd/MM/yyyy') + ' – ' + #temporals.format(s.fechaFin,'dd/MM/yyyy')}"></time>
+                            <div>
+                                <strong th:text="${s.motivo}"></strong>
+                                <small th:text="${s.activo ? 'Suspensión activa' : 'Inactiva'}"></small>
+                            </div>
+                            <form th:if="${puedeGestionarCalendario}" th:action="@{/administracion/plazos-alertas/calendario/suspensiones/{id}/estado(id=${s.id})}" method="post">
+                                <input type="hidden" name="activo" th:value="${!s.activo}">
+                                <button class="pa-link" th:text="${s.activo ? 'Inactivar' : 'Activar'}"></button>
+                            </form>
+                        </div>
+                        <div th:if="${#lists.isEmpty(suspensionesPlazo)}" class="pa-empty pa-empty-small">
+                            <i class="fa-regular fa-calendar-check text-stone-300"></i>
+                            <span>Sin suspensiones registradas.</span>
+                        </div>
+                    </div>
+                </section>
             </div>
+
+            <!-- FORMULARIOS DE DÍAS Y PERIODOS -->
             <div th:if="${puedeGestionarCalendario}" class="pa-calendar-forms">
-                <form class="pa-detail" th:action="@{/administracion/plazos-alertas/calendario}" method="post"><div class="pa-detail-head"><div><p class="pa-context">Fecha individual</p><h2>Agregar día inhábil</h2></div></div><label>Fecha <span aria-hidden="true">*</span><input class="pa-field" type="date" name="fecha" required></label><label>Motivo <span aria-hidden="true">*</span><input class="pa-field" name="descripcion" maxlength="160" required placeholder="Ej. Día oficial no laborable"></label><div class="pa-actions"><button class="pa-primary">Publicar día inhábil</button></div></form>
-                <form class="pa-detail" th:action="@{/administracion/plazos-alertas/calendario/suspensiones}" method="post"><div class="pa-detail-head"><div><p class="pa-context">Periodo institucional</p><h2>Registrar suspensión</h2></div></div><p class="pa-help">El periodo se excluirá de los nuevos cálculos. Los términos existentes conservan su calendario original.</p><div class="pa-grid pa-grid-2"><label>Desde <span aria-hidden="true">*</span><input class="pa-field" type="date" name="fechaInicio" required></label><label>Hasta <span aria-hidden="true">*</span><input class="pa-field" type="date" name="fechaFin" required></label></div><label>Motivo institucional <span aria-hidden="true">*</span><textarea class="pa-field" name="motivo" maxlength="300" rows="2" required></textarea></label><div class="pa-actions"><button class="pa-primary">Publicar suspensión</button></div></form>
+                <form class="pa-detail" th:action="@{/administracion/plazos-alertas/calendario}" method="post">
+                    <div class="pa-detail-head">
+                        <div>
+                            <p class="pa-context">Fecha inhábil individual</p>
+                            <h2>Publicar día inhábil</h2>
+                        </div>
+                    </div>
+                    <label>Fecha del día inhábil <span aria-hidden="true">*</span>
+                        <input class="pa-field" type="date" name="fecha" required>
+                    </label>
+                    <label>Motivo oficial o fundamento <span aria-hidden="true">*</span>
+                        <input class="pa-field" name="descripcion" maxlength="160" required placeholder="Ej. Aniversario de la Constitución / Día oficial no laborable">
+                    </label>
+                    <div class="pa-actions">
+                        <button class="pa-primary"><i class="fa-solid fa-plus"></i> Publicar día inhábil</button>
+                    </div>
+                </form>
+
+                <form class="pa-detail" th:action="@{/administracion/plazos-alertas/calendario/suspensiones}" method="post">
+                    <div class="pa-detail-head">
+                        <div>
+                            <p class="pa-context">Periodo jurisdiccional</p>
+                            <h2>Registrar suspensión de plazos</h2>
+                        </div>
+                    </div>
+                    <p class="pa-help">El periodo completo se excluirá automáticamente de los cálculos de días hábiles.</p>
+                    <div class="pa-grid pa-grid-2">
+                        <label>Desde <span aria-hidden="true">*</span>
+                            <input class="pa-field" type="date" name="fechaInicio" required>
+                        </label>
+                        <label>Hasta <span aria-hidden="true">*</span>
+                            <input class="pa-field" type="date" name="fechaFin" required>
+                        </label>
+                    </div>
+                    <label>Acuerdo institucional o motivo de suspensión <span aria-hidden="true">*</span>
+                        <textarea class="pa-field" name="motivo" maxlength="300" rows="2" required placeholder="Ej. Acuerdo Plenario 12/2026: Suspensión de labores y términos por contingencia"></textarea>
+                    </label>
+                    <div class="pa-actions">
+                        <button class="pa-primary"><i class="fa-solid fa-ban"></i> Publicar suspensión</button>
+                    </div>
+                </form>
             </div>
-            <div th:unless="${puedeGestionarCalendario}" class="pa-inline-note"><i class="fa-solid fa-lock"></i>El calendario afecta a toda la organización y sólo Dirección puede modificarlo.</div>
+            <div th:unless="${puedeGestionarCalendario}" class="pa-inline-note">
+                <i class="fa-solid fa-lock"></i> El calendario institucional afecta el cómputo de toda la organización; su modificación está reservada a la Dirección General.
+            </div>
         </section>
 
-        <div id="pa-calendar-data" hidden><span th:each="d:${diasInhabiles}" th:if="${d.activo}" data-inhabil th:attr="data-date=${d.fecha}"></span><span th:each="s:${suspensionesPlazo}" th:if="${s.activo}" data-suspension th:attr="data-start=${s.fechaInicio},data-end=${s.fechaFin}"></span></div>
+        <div id="pa-calendar-data" hidden>
+            <span th:each="d:${diasInhabiles}" th:if="${d.activo}" data-inhabil th:attr="data-date=${d.fecha}"></span>
+            <span th:each="s:${suspensionesPlazo}" th:if="${s.activo}" data-suspension th:attr="data-start=${s.fechaInicio},data-end=${s.fechaFin}"></span>
+        </div>
     </div>
 </main>
 <script th:src="@{/lib/driver.js}"></script>

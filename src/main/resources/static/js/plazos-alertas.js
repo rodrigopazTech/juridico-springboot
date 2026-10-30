@@ -23,23 +23,36 @@
     document.querySelectorAll('[data-tab]').forEach((tab) => tab.addEventListener('click', () => selectTab(tab.dataset.tab)));
     selectTab(window.location.hash.replace('#', ''), false);
 
-    function bindSearch(inputId, listId, emptyId) {
-        const input = byId(inputId);
-        if (!input) return;
-        input.addEventListener('input', () => {
-            const query = normalizeSearch(input.value.trim());
+    // Filtro combinado de búsqueda y materia para paneles maestros
+    function bindMateriaAndSearchFilter(selectId, searchId, listId, emptyId, countId) {
+        const select = byId(selectId);
+        const searchInput = byId(searchId);
+        const emptyElem = byId(emptyId);
+        const countElem = byId(countId);
+
+        function filterRecords() {
+            const selectedMateria = select?.value || '';
+            const query = normalizeSearch(searchInput?.value.trim());
             let visible = 0;
             document.querySelectorAll(`#${listId} .pa-record`).forEach((record) => {
-                const match = normalizeSearch(record.dataset.search).includes(query);
-                record.classList.toggle('hidden', !match);
-                if (match) visible += 1;
+                const matchSearch = normalizeSearch(record.dataset.search).includes(query);
+                const matchMateria = !selectedMateria || record.dataset.materia === selectedMateria;
+                const isMatch = matchSearch && matchMateria;
+                record.classList.toggle('hidden', !isMatch);
+                if (isMatch) visible += 1;
             });
             toggle(emptyId, visible === 0);
-        });
+            if (countElem) {
+                countElem.textContent = `${visible} ${visible === 1 ? 'disponible' : 'configurados'}`;
+            }
+        }
+
+        select?.addEventListener('change', filterRecords);
+        searchInput?.addEventListener('input', filterRecords);
     }
 
-    bindSearch('buscar-tipo-termino', 'lista-tipos-termino', 'sin-resultados-termino');
-    bindSearch('buscar-tipo-audiencia', 'lista-tipos-audiencia', 'sin-resultados-audiencia');
+    bindMateriaAndSearchFilter('filtro-materia-termino', 'buscar-tipo-termino', 'lista-tipos-termino', 'sin-resultados-termino', 'contador-terminos');
+    bindMateriaAndSearchFilter('filtro-materia-audiencia', 'buscar-tipo-audiencia', 'lista-tipos-audiencia', 'sin-resultados-audiencia', 'contador-audiencias');
 
     const calendar = (() => {
         const holidays = new Set([...document.querySelectorAll('[data-inhabil]')].map((item) => item.dataset.date));
@@ -85,8 +98,34 @@
         });
     }
 
+    // Toggle de códigos técnicos colapsables
+    function setupCodeDrawer(btnId, drawerId) {
+        const btn = byId(btnId);
+        const drawer = byId(drawerId);
+        if (!btn || !drawer) return;
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const isHidden = drawer.classList.contains('hidden');
+            drawer.classList.toggle('hidden', !isHidden);
+            btn.setAttribute('aria-expanded', String(isHidden));
+            if (isHidden) {
+                drawer.querySelector('input')?.focus();
+            }
+        });
+    }
+
+    setupCodeDrawer('btn-toggle-codigo-termino', 'wrap-codigo-termino');
+    setupCodeDrawer('btn-toggle-codigo-audiencia', 'wrap-codigo-audiencia');
+
     const termForm = byId('form-tipo-termino');
     const termCode = byId('tt-codigo');
+    const previewCodigoTermino = byId('preview-codigo-termino');
+
+    function syncTermCodePreview() {
+        if (!previewCodigoTermino) return;
+        const codeVal = termCode?.value.trim();
+        previewCodigoTermino.textContent = codeVal || 'AUTOMÁTICO';
+    }
 
     function termMode() { return document.querySelector('input[name="modoPlazo"]:checked')?.value || 'CALCULADO'; }
 
@@ -115,6 +154,8 @@
     function updateTermPreview() {
         if (!termForm) return;
         clearTermValidity();
+        syncTermCodePreview();
+
         const mode = termMode();
         const calculated = mode === 'CALCULADO';
         const captured = mode === 'CAPTURADO';
@@ -146,6 +187,7 @@
 
         const horizon = calculated ? duration : Math.max(attention * 2, attention + 3);
         setTimeline('tt', horizon, attention, critical);
+
         byId('tt-preview-total').textContent = calculated
             ? `Plazo total: ${plural(duration, 'día', 'días')} ${business ? 'hábiles' : 'naturales'}`
             : `Seguimiento en días ${business ? 'hábiles' : 'naturales'}`;
@@ -155,17 +197,41 @@
         byId('tt-label-red').textContent = critical === 0 ? 'Al vencer' : `${plural(critical, 'día', 'días')} o menos`;
         byId('tt-preview-copy').textContent = `SIAJ mostrará Atención ${plural(attention, 'día', 'días')} antes y Crítico ${critical === 0 ? 'al vencer' : `${plural(critical, 'día', 'días')} antes`} del vencimiento.`;
 
-        const dateCopy = byId('tt-preview-dates');
-        if (!calculated) {
-            dateCopy.textContent = 'Las fechas exactas se mostrarán cuando captures el vencimiento del caso.';
-            return;
-        }
+        // Simulador de Fechas Procesales en Vivo (Cálculo Judicial Real)
         const today = new Date();
-        let due = calendar.shift(today, duration, business);
-        if (!business && byId('tt-ajusta').checked) due = calendar.nextBusiness(due);
-        const warningDate = calendar.shift(due, -attention, business);
-        const criticalDate = calendar.shift(due, -critical, business);
-        dateCopy.textContent = `Si inicia hoy: Atención ${formatDate(warningDate)} · Crítico ${formatDate(criticalDate)} · Vencimiento ${formatDate(due)}.`;
+        const simInicio = byId('tt-sim-inicio');
+        const simAtencion = byId('tt-sim-atencion');
+        const simAtencionSub = byId('tt-sim-atencion-sub');
+        const simCritico = byId('tt-sim-critico');
+        const simCriticoSub = byId('tt-sim-critico-sub');
+        const simVence = byId('tt-sim-vence');
+        const simVenceSub = byId('tt-sim-vence-sub');
+
+        if (calculated) {
+            let due = calendar.shift(today, duration, business);
+            if (!business && byId('tt-ajusta').checked) due = calendar.nextBusiness(due);
+            const warningDate = calendar.shift(due, -attention, business);
+            const criticalDate = calendar.shift(due, -critical, business);
+
+            if (simInicio) simInicio.textContent = formatDate(today);
+            if (simAtencion) simAtencion.textContent = formatDate(warningDate);
+            if (simAtencionSub) simAtencionSub.textContent = `${plural(attention, 'día', 'días')} ${business ? 'hábiles' : 'naturales'} antes`;
+            if (simCritico) simCritico.textContent = formatDate(criticalDate);
+            if (simCriticoSub) simCriticoSub.textContent = `${critical === 0 ? 'Mismo día' : `${plural(critical, 'día', 'días')} ${business ? 'hábiles' : 'naturales'} antes`}`;
+            if (simVence) simVence.textContent = formatDate(due);
+            if (simVenceSub) {
+                const weekday = due.toLocaleDateString('es-MX', { weekday: 'long' });
+                simVenceSub.textContent = `Vence en ${weekday}`;
+            }
+        } else if (captured) {
+            if (simInicio) simInicio.textContent = 'Al radicar';
+            if (simAtencion) simAtencion.textContent = `-${attention} días`;
+            if (simAtencionSub) simAtencionSub.textContent = 'Anticipación amarilla';
+            if (simCritico) simCritico.textContent = `-${critical} días`;
+            if (simCriticoSub) simCriticoSub.textContent = 'Anticipación roja';
+            if (simVence) simVence.textContent = 'Por acuerdo';
+            if (simVenceSub) simVenceSub.textContent = 'Fecha fijada por juzgado';
+        }
     }
 
     function markSelected(button) {
@@ -186,6 +252,7 @@
         if (mode) mode.checked = true;
         byId('tt-ajusta').checked = data.ajusta === 'true';
         termCode.dataset.manual = 'true';
+        syncTermCodePreview();
         byId('titulo-tipo-termino').textContent = `Editar: ${data.nombre}`;
         byId('cancelar-tipo-termino')?.classList.remove('hidden');
         markSelected(button);
@@ -198,6 +265,7 @@
         termForm.reset();
         value('tt-id', ''); value('tt-activo', 'true');
         termCode.dataset.manual = '';
+        syncTermCodePreview();
         byId('titulo-tipo-termino').textContent = 'Nuevo tipo de término';
         byId('cancelar-tipo-termino')?.classList.add('hidden');
         document.querySelectorAll('#lista-tipos-termino .pa-record').forEach((record) => record.classList.remove('is-selected'));
@@ -211,8 +279,18 @@
     byId('limpiar-tipo-termino')?.addEventListener('click', () => setTimeout(newTerm));
     document.querySelectorAll('input[name="modoPlazo"], #tt-dias, #tt-tipodias, #tt-ajusta, #tt-atencion, #tt-critico').forEach((input) => input.addEventListener('change', updateTermPreview));
     ['tt-dias', 'tt-atencion', 'tt-critico'].forEach((id) => byId(id)?.addEventListener('input', updateTermPreview));
-    termCode?.addEventListener('input', () => { termCode.dataset.manual = termCode.value ? 'true' : ''; });
-    byId('tt-nombre')?.addEventListener('input', (event) => { if (termCode && !termCode.dataset.manual) termCode.value = slug(event.target.value); });
+    
+    termCode?.addEventListener('input', () => { 
+        termCode.dataset.manual = termCode.value ? 'true' : ''; 
+        syncTermCodePreview();
+    });
+    byId('tt-nombre')?.addEventListener('input', (event) => { 
+        if (termCode && !termCode.dataset.manual) {
+            termCode.value = slug(event.target.value);
+            syncTermCodePreview();
+        }
+    });
+
     document.querySelectorAll('[data-term-preset]').forEach((button) => button.addEventListener('click', () => {
         clearTermValidity();
         const [attention, critical] = button.dataset.termPreset.split(',');
@@ -220,6 +298,7 @@
         document.querySelectorAll('[data-term-preset]').forEach((item) => item.classList.toggle('is-selected', item === button));
         updateTermPreview();
     }));
+
     termForm?.addEventListener('submit', (event) => {
         if (termForm.dataset.readonly === 'true') { event.preventDefault(); return; }
         if (termMode() === 'SIN_VENCIMIENTO') return;
@@ -229,8 +308,16 @@
         }
     });
 
+    // Panel de Audiencias
     const audienceForm = byId('form-tipo-audiencia');
     const audienceCode = byId('ta-codigo');
+    const previewCodigoAudience = byId('preview-codigo-audiencia');
+
+    function syncAudienceCodePreview() {
+        if (!previewCodigoAudience) return;
+        const codeVal = audienceCode?.value.trim();
+        previewCodigoAudience.textContent = codeVal || 'AUTOMÁTICO';
+    }
 
     function clearAudienceValidity() {
         byId('ta-atencion')?.setCustomValidity('');
@@ -253,13 +340,15 @@
     function updateAudiencePreview() {
         if (!audienceForm) return;
         clearAudienceValidity();
+        syncAudienceCodePreview();
+
         const attention = Math.max(1, number('ta-atencion', 3));
         const critical = Math.max(0, number('ta-critico', 1));
         setTimeline('ta', Math.max(attention * 2, attention + 3), attention, critical);
         byId('ta-label-green').textContent = `Más de ${plural(attention, 'día', 'días')}`;
         byId('ta-label-yellow').textContent = critical + 1 <= attention ? `De ${attention} a ${plural(critical + 1, 'día', 'días')}` : `${attention} días`;
         byId('ta-label-red').textContent = critical === 0 ? 'El mismo día' : `${plural(critical, 'día', 'días')} o menos`;
-        byId('ta-preview-copy').textContent = `SIAJ mostrará Atención ${plural(attention, 'día', 'días')} antes y Crítico ${critical === 0 ? 'el mismo día' : `${plural(critical, 'día', 'días')} antes`} de la audiencia.`;
+        byId('ta-preview-copy').textContent = `SIAJ alertará con Atención ${plural(attention, 'día', 'días')} antes e Inminente ${critical === 0 ? 'el mismo día' : `${plural(critical, 'día', 'días')} antes`} de la celebración de la audiencia.`;
     }
 
     function editAudience(button) {
@@ -273,6 +362,7 @@
         value('ta-atencion', Math.max(1, Math.ceil(Number(data.atencionHoras || 72) / 24)));
         value('ta-critico', Math.max(1, Math.ceil(Number(data.criticoHoras || 24) / 24)));
         audienceCode.dataset.manual = 'true';
+        syncAudienceCodePreview();
         byId('titulo-tipo-audiencia').textContent = `Editar: ${data.nombre}`;
         byId('cancelar-tipo-audiencia')?.classList.remove('hidden');
         markSelected(button);
@@ -284,6 +374,7 @@
         clearAudienceValidity();
         audienceForm.reset(); value('ta-id', ''); value('ta-activo', 'true');
         audienceCode.dataset.manual = '';
+        syncAudienceCodePreview();
         byId('titulo-tipo-audiencia').textContent = 'Nuevo tipo de audiencia';
         byId('cancelar-tipo-audiencia')?.classList.add('hidden');
         document.querySelectorAll('#lista-tipos-audiencia .pa-record').forEach((record) => record.classList.remove('is-selected'));
@@ -299,8 +390,18 @@
         byId(id)?.addEventListener('input', updateAudiencePreview);
         byId(id)?.addEventListener('change', updateAudiencePreview);
     });
-    audienceCode?.addEventListener('input', () => { audienceCode.dataset.manual = audienceCode.value ? 'true' : ''; });
-    byId('ta-nombre')?.addEventListener('input', (event) => { if (audienceCode && !audienceCode.dataset.manual) audienceCode.value = slug(event.target.value); });
+    
+    audienceCode?.addEventListener('input', () => { 
+        audienceCode.dataset.manual = audienceCode.value ? 'true' : ''; 
+        syncAudienceCodePreview();
+    });
+    byId('ta-nombre')?.addEventListener('input', (event) => { 
+        if (audienceCode && !audienceCode.dataset.manual) {
+            audienceCode.value = slug(event.target.value);
+            syncAudienceCodePreview();
+        }
+    });
+
     document.querySelectorAll('[data-audience-preset]').forEach((button) => button.addEventListener('click', () => {
         clearAudienceValidity();
         const [attention, critical] = button.dataset.audiencePreset.split(',');
@@ -308,6 +409,7 @@
         document.querySelectorAll('[data-audience-preset]').forEach((item) => item.classList.toggle('is-selected', item === button));
         updateAudiencePreview();
     }));
+
     audienceForm?.addEventListener('submit', (event) => {
         if (audienceForm.dataset.readonly === 'true') { event.preventDefault(); return; }
         if (!validateAudienceAlerts()) {
@@ -345,6 +447,8 @@
                     if (icon) {
                         icon.classList.toggle('fa-toggle-on', targetActivo);
                         icon.classList.toggle('fa-toggle-off', !targetActivo);
+                        icon.classList.toggle('text-emerald-600', targetActivo);
+                        icon.classList.toggle('text-stone-400', !targetActivo);
                     }
                     if (statusBadge) {
                         statusBadge.textContent = targetActivo ? 'Activo' : 'Inactivo';
@@ -368,7 +472,7 @@
                             toast: true,
                             position: 'top-end',
                             icon: 'success',
-                            title: targetActivo ? 'Tipo activado' : 'Tipo inactivado',
+                            title: targetActivo ? 'Tipo activado institucionalmente' : 'Tipo inactivado',
                             showConfirmButton: false,
                             timer: 2000
                         });

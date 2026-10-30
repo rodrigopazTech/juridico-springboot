@@ -47,7 +47,7 @@
                 element: 'nav.pa-tabs',
                 popover: {
                     title: '<i class="fas fa-layer-group text-gob-guinda mr-1"></i> 1. Pestañas Maestras',
-                    description: 'Navega entre <strong>Términos</strong>, <strong>Audiencias</strong> y <strong>Calendario Oficial</strong>. Cada sección define cómo responderá el sistema ante los plazos y actuaciones legales.',
+                    description: 'Navega entre <strong>Términos</strong>, <strong>Audiencias</strong> y <strong>Días Inhábiles y Suspensiones</strong>. Cada sección define cómo responderá el sistema ante los plazos y actuaciones legales.',
                     side: 'bottom',
                     align: 'start'
                 }
