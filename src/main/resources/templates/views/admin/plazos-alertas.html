@@ -31,10 +31,6 @@
                     title="Guía de configuración institucional">
                     <i class="fas fa-question-circle"></i> <span>Guía rápida</span>
                 </button>
-                <div class="pa-version" aria-label="Versión vigente del calendario">
-                    <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
-                    <span th:text="${'Calendario v' + versionCalendario}">Calendario v1</span>
-                </div>
             </div>
         </header>
 
@@ -519,7 +515,7 @@
                     <p>Las fechas registradas se descuentan automáticamente del cómputo de términos legales en días hábiles.</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="pa-version" th:text="${'Versión vigente ' + versionCalendario}">Versión vigente 1</span>
+                    <span class="pa-version"><i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Cómputo procesal oficial</span>
                 </div>
             </div>
 
