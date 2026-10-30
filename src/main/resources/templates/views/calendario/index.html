@@ -21,6 +21,8 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <script th:src="@{/lib/sweetalert2.all.min.js}"></script>
+    <link rel="stylesheet" th:href="@{/lib/driver.css}">
+    <link rel="stylesheet" th:href="@{/css/tours-onboarding.css}">
     <!-- Google Fonts -->
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Noto+Sans:wght@400;600&display=swap"
@@ -62,6 +64,9 @@
 
     <div th:replace="~{fragments/calendario/event-detail-modal :: detailModal}"></div>
     <div th:replace="~{fragments/common/notifications :: notificaciones}"></div>
+
+    <script th:src="@{/lib/driver.js}"></script>
+    <script th:src="@{/js/tours/tour-calendario.js}"></script>
 
     <script type="module">
         // Agrega el parámetro de versión para evitar caché vieja

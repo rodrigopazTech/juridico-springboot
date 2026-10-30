@@ -7,6 +7,8 @@
     <title>Asuntos sin expediente - Agenda Legal</title>
     <link rel="stylesheet" th:href="@{/css/output.css}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/lib/driver.css}">
+    <link rel="stylesheet" th:href="@{/css/tours-onboarding.css}">
 </head>
 <body class="bg-gray-100 text-gray-800 overflow-x-hidden">
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
@@ -14,14 +16,21 @@
         <div th:replace="~{fragments/navbar :: navbar}"></div>
         <main class="pt-[92px] px-4 pb-10 sm:px-7">
             <section class="mx-auto max-w-7xl space-y-5">
-                <div class="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-white p-5 shadow-sm">
+                <div id="asuntos-banner-intro" class="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-white p-5 shadow-sm">
                     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div class="max-w-3xl">
-                            <p class="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Actuaciones sin expediente</p>
+                            <div class="flex items-center gap-3">
+                                <p class="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Actuaciones sin expediente</p>
+                                <button type="button" id="btn-iniciar-tour-asuntos"
+                                    class="text-amber-800 bg-amber-100/80 hover:bg-amber-200 border border-amber-300 font-bold rounded-lg text-xs px-2.5 py-1 transition-colors flex items-center gap-1.5 shadow-sm"
+                                    title="Guía guiada de asuntos independientes">
+                                    <i class="fas fa-question-circle"></i> <span>Guía rápida</span>
+                                </button>
+                            </div>
                             <h2 class="mt-1 text-2xl font-black text-gray-900">Asuntos Independientes</h2>
                             <p class="mt-2 text-sm leading-6 text-gray-600">Aquí puedes consultar los asuntos creados sin expediente. Un mismo asunto puede agrupar términos y audiencias relacionadas y después vincularse a un expediente.</p>
                         </div>
-                        <div class="flex flex-wrap gap-2">
+                        <div id="asuntos-acciones-rapidas" class="flex flex-wrap gap-2">
                             <a th:href="@{/terminos}" class="rounded-lg bg-gob-guinda px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90"><i class="fas fa-hourglass-half mr-2"></i>Ir a Términos</a>
                             <a th:href="@{/audiencias}" class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 hover:border-gob-guinda"><i class="fas fa-gavel mr-2"></i>Ir a Audiencias</a>
                         </div>
@@ -40,9 +49,21 @@
                 </form>
 
                 <div th:if="${#lists.isEmpty(asuntos)}" class="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center">
-                    <i class="fas fa-folder-open text-4xl text-gray-300"></i>
-                    <h3 class="mt-3 font-bold text-gray-700">No se encontraron asuntos sin expediente</h3>
-                    <p class="mt-1 text-sm text-gray-500">Se crean desde los formularios de Términos o Audiencias al elegir “Sin expediente”.</p>
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-200">
+                        <i class="fas fa-folder-open text-2xl"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-gray-800">No se encontraron asuntos independientes</h3>
+                    <p class="mt-2 max-w-md mx-auto text-sm text-gray-500 leading-relaxed">
+                        Los asuntos independientes concentran diligencias o plazos previos a juicio. Se generan automáticamente desde los formularios de Términos o Audiencias al marcar la casilla <strong>«Sin expediente»</strong>.
+                    </p>
+                    <div class="mt-6 flex flex-wrap justify-center gap-3">
+                        <a th:href="@{/terminos}" class="inline-flex items-center gap-2 rounded-xl bg-gob-guinda px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:opacity-95">
+                            <i class="fas fa-hourglass-half"></i> Crear término sin expediente
+                        </a>
+                        <a th:href="@{/audiencias}" class="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-xs font-bold text-gray-700 hover:border-gob-guinda">
+                            <i class="fas fa-gavel"></i> Crear audiencia sin expediente
+                        </a>
+                    </div>
                 </div>
 
                 <div th:unless="${#lists.isEmpty(asuntos)}" class="grid gap-4 xl:grid-cols-2">
@@ -75,5 +96,8 @@
             </section>
         </main>
     </div>
+
+    <script th:src="@{/lib/driver.js}"></script>
+    <script th:src="@{/js/tours/tour-asuntos-independientes.js}"></script>
 </body>
 </html>
